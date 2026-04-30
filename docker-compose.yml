@@ -1,0 +1,166 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - control_net
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - control_net
+
+  data-plane-gemma:
+    build:
+      context: .
+      dockerfile: docker/data-plane/Dockerfile
+    environment:
+      MODEL_FILE: ${MODEL_FILE}
+      LLAMA_CTX_SIZE: ${LLAMA_CTX_SIZE}
+      LLAMA_N_GPU_LAYERS: ${LLAMA_N_GPU_LAYERS}
+      LLAMA_THREADS: ${LLAMA_THREADS}
+      LLAMA_BATCH_SIZE: ${LLAMA_BATCH_SIZE}
+      LLAMA_UBATCH_SIZE: ${LLAMA_UBATCH_SIZE}
+      LLAMA_PARALLEL: ${LLAMA_PARALLEL}
+      LLAMA_CONT_BATCHING: ${LLAMA_CONT_BATCHING}
+      LLAMA_FLASH_ATTN: ${LLAMA_FLASH_ATTN}
+    volumes:
+      - ./models:/models
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    gpus: all
+    networks:
+      - control_net
+      - data_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  data-plane-ollama:
+    image: ollama/ollama:0.9.5
+    profiles: ["ollama"]
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    gpus: all
+    networks:
+      - control_net
+      - data_net
+
+  control-plane:
+    build:
+      context: .
+      dockerfile: docker/control-plane/Dockerfile
+    env_file:
+      - ${STACK_ENV_FILE:-.env.local}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      data-plane-gemma:
+        condition: service_started
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    restart: unless-stopped
+    networks:
+      - control_net
+
+  control-plane-worker:
+    build:
+      context: .
+      dockerfile: docker/control-plane/Dockerfile
+    env_file:
+      - ${STACK_ENV_FILE:-.env.local}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
+    command: ["bash", "-lc", "alembic upgrade head && python -m app.workers.generation_worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      data-plane-gemma:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - control_net
+
+  prometheus:
+    image: prom/prometheus:v2.53.4
+    profiles: ["observability"]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - control_net
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - control_net
+
+volumes:
+  postgres_data:
+  ollama_data:
+
+networks:
+  control_net:
+  data_net:
+    internal: true

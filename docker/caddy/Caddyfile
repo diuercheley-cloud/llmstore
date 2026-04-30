@@ -1,0 +1,8 @@
+{
+  email {$LETSENCRYPT_EMAIL}
+}
+
+{$SERVER_NAME} {
+  encode zstd gzip
+  reverse_proxy control-plane:8080
+}

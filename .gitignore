@@ -1,0 +1,27 @@
+# Env / secrets
+.env*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node (se houver)
+node_modules/
+
+# Docker volumes / data
+postgres-data/
+redis-data/
+
+# Artifacts
+artifacts/
+*.log
+
+# Models (IMPORTANT)
+models/
+*.gguf
+
+# OS
+.DS_Store
+Thumbs.db

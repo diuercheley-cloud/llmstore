@@ -1,0 +1,70 @@
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    depends_on:
+      control-plane:
+        condition: service_started
+    ports:
+      - "${PROXY_HTTP_PORT:-80}:80"
+      - "${PROXY_HTTPS_PORT:-443}:443"
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - control_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  postgres:
+    ports: !reset []
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  redis:
+    ports: !reset []
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  data-plane-gemma:
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  control-plane:
+    env_file:
+      - ${STACK_ENV_FILE:-.env.prod}
+    ports: !reset []
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+  control-plane-worker:
+    env_file:
+      - ${STACK_ENV_FILE:-.env.prod}
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-5}"
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,57 @@
+import json
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import get_settings
+from app.models.inference_backend import InferenceBackend
+
+
+async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceBackend]:
+    settings = get_settings()
+    existing = {
+        item.name: item
+        for item in (await session.execute(select(InferenceBackend))).scalars().all()
+    }
+    backends = [
+        {
+            "name": "gemma-local",
+            "provider": "llama.cpp",
+            "backend_url": settings.data_plane_base_url,
+            "healthcheck_path": "/health",
+            "is_active": True,
+            "is_default": True,
+            "status": "configured",
+            "max_parallel_requests": 1,
+            "metadata_json": json.dumps({"service_name": "data-plane-gemma"}),
+        },
+        {
+            "name": "ollama-local",
+            "provider": "ollama",
+            "backend_url": settings.ollama_base_url,
+            "healthcheck_path": "/api/tags",
+            "is_active": False,
+            "is_default": False,
+            "status": "optional",
+            "max_parallel_requests": 1,
+            "metadata_json": json.dumps({"service_name": "data-plane-ollama"}),
+        },
+    ]
+    created_or_updated: dict[str, InferenceBackend] = {}
+    for payload in backends:
+        backend = existing.get(payload["name"])
+        if backend is None:
+            backend = InferenceBackend(**payload)
+            session.add(backend)
+            await session.flush()
+        else:
+            for key, value in payload.items():
+                if backend.name == "ollama-local" and key in {"is_active", "status"}:
+                    continue
+                setattr(backend, key, value)
+        created_or_updated[backend.name] = backend
+
+    default_backend = created_or_updated["gemma-local"]
+    for item in created_or_updated.values():
+        item.is_default = item.id == default_backend.id
+    return created_or_updated

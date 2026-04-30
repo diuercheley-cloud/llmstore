@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Stack Admin</title>
+    <style>
+      :root {
+        --bg: #f3f0e8;
+        --panel: #fffdf8;
+        --ink: #1d1f1f;
+        --muted: #6a6d69;
+        --accent: #0f766e;
+        --danger: #b91c1c;
+        --border: #d6d1c4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.16), transparent 28%),
+          linear-gradient(180deg, #f7f4ec 0%, var(--bg) 100%);
+        color: var(--ink);
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(8px);
+      }
+      h1 { margin: 0 0 6px; font-size: 28px; }
+      p { margin: 0; color: var(--muted); }
+      main {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(20, 20, 20, 0.06);
+      }
+      h2 { margin-top: 0; font-size: 18px; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(214, 209, 196, 0.7);
+        vertical-align: top;
+      }
+      th { color: var(--muted); font-weight: 600; }
+      .pill {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.12);
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .danger { color: var(--danger); }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 12px;
+      }
+      input, button {
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        border: none;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #f7f5ef;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+      }
+      .wide { grid-column: 1 / -1; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LLM Inference Admin</h1>
+      <p>Painel local para clientes, chaves, uso, erros, latência e status do modelo.</p>
+      <div class="toolbar">
+        <input id="adminToken" type="password" placeholder="X-Admin-Token" />
+        <button id="saveToken">Conectar</button>
+        <button id="refresh">Atualizar</button>
+      </div>
+    </header>
+    <main>
+      <section>
+        <h2>Health Deep</h2>
+        <pre id="healthDeep">carregando...</pre>
+      </section>
+      <section>
+        <h2>Resumo de Uso</h2>
+        <pre id="usageTotals">carregando...</pre>
+      </section>
+      <section>
+        <h2>Cache</h2>
+        <pre id="cacheStats">carregando...</pre>
+      </section>
+      <section>
+        <h2>Billing Cycle</h2>
+        <pre id="billingCycle">carregando...</pre>
+      </section>
+      <section class="wide">
+        <h2>Consumo por Plano</h2>
+        <div id="plans"></div>
+      </section>
+      <section class="wide">
+        <h2>Previsão de Cobrança</h2>
+        <div id="invoices"></div>
+      </section>
+      <section class="wide">
+        <h2>Invoices e Pagamentos</h2>
+        <div id="billingInvoices"></div>
+        <div id="billingPayments" style="margin-top: 18px;"></div>
+      </section>
+      <section class="wide">
+        <h2>Clientes</h2>
+        <div id="clients"></div>
+      </section>
+      <section class="wide">
+        <h2>Chaves</h2>
+        <div id="keys"></div>
+      </section>
+      <section class="wide">
+        <h2>Erros e Latência</h2>
+        <div id="requests"></div>
+      </section>
+      <section class="wide">
+        <h2>Fila e Jobs</h2>
+        <pre id="jobsSummary">carregando...</pre>
+        <div id="jobs"></div>
+      </section>
+      <section class="wide">
+        <h2>Security</h2>
+        <div id="securityEvents"></div>
+      </section>
+      <section class="wide">
+        <h2>Observability</h2>
+        <pre id="observabilitySummary">carregando...</pre>
+      </section>
+      <section class="wide">
+        <h2>Reports</h2>
+        <pre id="monthlyReport">carregando...</pre>
+      </section>
+      <section class="wide">
+        <h2>Status do Modelo</h2>
+        <pre id="models">carregando...</pre>
+      </section>
+      <section class="wide">
+        <h2>Acesso por Plano</h2>
+        <div id="planModelAccess"></div>
+      </section>
+      <section class="wide">
+        <h2>Backends</h2>
+        <div id="backends"></div>
+      </section>
+      <section class="wide">
+        <h2>Roteamento e Fallback</h2>
+        <pre id="routingSummary">carregando...</pre>
+        <div id="routingTable"></div>
+      </section>
+    </main>
+    <script>
+      const tokenInput = document.getElementById("adminToken");
+      const saveToken = document.getElementById("saveToken");
+      const refresh = document.getElementById("refresh");
+      tokenInput.value = localStorage.getItem("adminToken") || "";
+
+      saveToken.addEventListener("click", async () => {
+        localStorage.setItem("adminToken", tokenInput.value.trim());
+        await loadDashboard();
+      });
+      refresh.addEventListener("click", loadDashboard);
+
+      async function api(path) {
+        const token = localStorage.getItem("adminToken") || tokenInput.value.trim();
+        if (!token) throw new Error("defina o X-Admin-Token");
+        const response = await fetch(path, { headers: { "X-Admin-Token": token } });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`${response.status} ${text}`);
+        }
+        return response.json();
+      }
+
+      function renderTable(targetId, columns, rows) {
+        const host = document.getElementById(targetId);
+        if (!rows.length) {
+          host.innerHTML = "<p>sem dados</p>";
+          return;
+        }
+        const header = columns.map((column) => `<th>${column.label}</th>`).join("");
+        const body = rows.map((row) => {
+          const cells = columns.map((column) => {
+            const value = column.render ? column.render(row[column.key], row) : row[column.key];
+            return `<td>${value ?? ""}</td>`;
+          }).join("");
+          return `<tr>${cells}</tr>`;
+        }).join("");
+        host.innerHTML = `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+      }
+
+      async function loadDashboard() {
+        try {
+          const [healthDeep, usageSummary, invoicesPreview, invoicesLive, apiKeys, requests, models, routing, cacheStats, jobs, securityEvents, monthlyReport] = await Promise.all([
+            api("/admin/health/deep"),
+            api("/admin/usage/summary"),
+            api("/admin/billing/invoices/preview"),
+            api("/admin/billing/invoices"),
+            api("/admin/api-keys"),
+            api("/admin/requests"),
+            api("/admin/models"),
+            api("/admin/backends/routing"),
+            api("/admin/cache/stats"),
+            api("/admin/jobs"),
+            api("/admin/security/events"),
+            api("/admin/reports/monthly"),
+          ]);
+
+          document.getElementById("healthDeep").textContent = JSON.stringify(healthDeep, null, 2);
+          document.getElementById("usageTotals").textContent = JSON.stringify(usageSummary.totals, null, 2);
+          document.getElementById("cacheStats").textContent = JSON.stringify(cacheStats, null, 2);
+          document.getElementById("models").textContent = JSON.stringify(models.registry, null, 2);
+          document.getElementById("billingCycle").textContent = JSON.stringify(invoicesLive.summary, null, 2);
+          document.getElementById("routingSummary").textContent = JSON.stringify(routing.summary, null, 2);
+          document.getElementById("jobsSummary").textContent = JSON.stringify(jobs.summary, null, 2);
+          document.getElementById("monthlyReport").textContent = JSON.stringify(monthlyReport, null, 2);
+          document.getElementById("observabilitySummary").textContent = JSON.stringify({
+            correlation_sample: requests[0]?.correlation_id || null,
+            cache_hit_rate: cacheStats.cache_hit_rate,
+            billing_statuses: usageSummary.clients.reduce((acc, row) => {
+              acc[row.billing_status] = (acc[row.billing_status] || 0) + 1;
+              return acc;
+            }, {}),
+            async_queue: jobs.summary,
+            request_totals: healthDeep.requests,
+          }, null, 2);
+
+          renderTable("clients", [
+            { key: "name", label: "Cliente" },
+            { key: "billing_plan_code", label: "Plano" },
+            { key: "billing_status", label: "Billing", render: (value) => `<span class="pill${value !== "active" ? " danger" : ""}">${value}</span>` },
+            { key: "is_blocked", label: "Acesso", render: (value) => value ? '<span class="pill danger">blocked</span>' : '<span class="pill">active</span>' },
+            { key: "requests_total", label: "Requests" },
+            { key: "daily_usage", label: "Consumo diário", render: (value) => `${value.used_tokens} / ${value.used_tokens + value.remaining_tokens}` },
+            { key: "monthly_usage", label: "Consumo mensal", render: (value) => `${value.used_tokens} / ${value.used_tokens + value.remaining_tokens}` },
+            { key: "daily_usage", label: "Restante diário", render: (value) => value.remaining_tokens },
+            { key: "monthly_usage", label: "Restante mensal", render: (value) => value.remaining_tokens },
+            { key: "invoice_preview", label: "Cobrança USD", render: (value) => Number(value.total_estimated).toFixed(4) },
+            { key: "errors_total", label: "Erros" },
+            { key: "avg_latency_ms", label: "Latência média (ms)" },
+            { key: "last_request_at", label: "Último request" },
+          ], usageSummary.clients);
+
+          renderTable("plans", [
+            { key: "billing_plan_code", label: "Plano" },
+            { key: "clients_total", label: "Clientes" },
+            { key: "requests_total", label: "Requests" },
+            { key: "tokens_estimated_total", label: "Tokens" },
+            { key: "estimated_cost_usd", label: "Cobrança USD", render: (value) => Number(value).toFixed(4) },
+            { key: "daily_used_tokens", label: "Consumo diário" },
+            { key: "monthly_used_tokens", label: "Consumo mensal" },
+            { key: "errors_total", label: "Erros" },
+          ], usageSummary.plans);
+
+          renderTable("invoices", [
+            { key: "name", label: "Cliente" },
+            { key: "billing_plan_code", label: "Plano" },
+            { key: "invoice_preview", label: "Mensalidade", render: (value) => `${value.currency} ${Number(value.monthly_price).toFixed(4)}` },
+            { key: "invoice_preview", label: "Incluídos", render: (value) => value.included_tokens },
+            { key: "invoice_preview", label: "Excedentes", render: (value) => value.overage_tokens },
+            { key: "invoice_preview", label: "Valor excedente", render: (value) => Number(value.overage_cost).toFixed(4) },
+            { key: "invoice_preview", label: "Total estimado", render: (value) => Number(value.total_estimated).toFixed(4) },
+          ], invoicesPreview.clients);
+
+          renderTable("billingInvoices", [
+            { key: "client_name", label: "Cliente" },
+            { key: "billing_plan_code", label: "Plano" },
+            { key: "client_billing_status", label: "Billing cliente", render: (value) => `<span class="pill${value !== "active" ? " danger" : ""}">${value}</span>` },
+            { key: "status", label: "Invoice", render: (value) => `<span class="pill${value === "paid" ? "" : value === "cancelled" ? " danger" : value === "overdue" ? " danger" : ""}">${value}</span>` },
+            { key: "total_amount", label: "Total", render: (value, row) => `${row.currency} ${Number(value).toFixed(4)}` },
+            { key: "used_tokens", label: "Usados" },
+            { key: "overage_tokens", label: "Excedentes" },
+            { key: "payment_method", label: "Pagamento" },
+            { key: "due_at", label: "Vencimento" },
+            { key: "paid_at", label: "Pago em" },
+          ], invoicesLive.invoices.filter((row) => row.status === "overdue" || row.client_billing_status !== "active" || row.paid_at));
+
+          renderTable("billingPayments", [
+            { key: "invoice_id", label: "Invoice" },
+            { key: "client_id", label: "Cliente" },
+            { key: "status", label: "Status", render: (value) => `<span class="pill${value !== "paid" ? " danger" : ""}">${value}</span>` },
+            { key: "amount", label: "Valor", render: (value, row) => `${row.currency} ${Number(value).toFixed(4)}` },
+            { key: "payment_method", label: "Método" },
+            { key: "payment_reference", label: "Referência" },
+            { key: "paid_at", label: "Pago em" },
+            { key: "created_at", label: "Criado em" },
+          ], invoicesLive.payments);
+
+          renderTable("planModelAccess", [
+            { key: "billing_plan_code", label: "Plano" },
+            { key: "allowed_models_json", label: "Modelos permitidos" },
+          ], models.plan_access);
+
+          renderTable("backends", [
+            { key: "name", label: "Backend" },
+            { key: "provider", label: "Provider" },
+            { key: "backend_url", label: "URL" },
+            { key: "ok", label: "Health", render: (value) => value ? '<span class="pill">ok</span>' : '<span class="pill danger">down</span>' },
+            { key: "latency_ms", label: "Latência (ms)" },
+            { key: "max_parallel_requests", label: "Max paralelo" },
+            { key: "current_running", label: "Running atual" },
+          ], models.backends);
+
+          renderTable("routingTable", [
+            { key: "model_public_name", label: "Modelo" },
+            { key: "routing_policy", label: "Policy" },
+            { key: "backend_name", label: "Backend" },
+            { key: "state", label: "Estado", render: (value) => `<span class="pill${value !== "healthy" ? " danger" : ""}">${value}</span>` },
+            { key: "health", label: "Health", render: (value) => value ? '<span class="pill">ok</span>' : '<span class="pill danger">down</span>' },
+            { key: "priority", label: "Priority" },
+            { key: "weight", label: "Weight" },
+            { key: "latency_ms", label: "Latência (ms)" },
+          ], routing.models.flatMap((model) => model.routes.map((route) => ({
+            model_public_name: model.model_alias || model.model_id,
+            routing_policy: model.routing_policy,
+            backend_name: route.backend_name,
+            state: route.state,
+            health: route.health,
+            priority: route.priority,
+            weight: route.weight,
+            latency_ms: route.latency_ms,
+          }))));
+
+          renderTable("keys", [
+            { key: "client_name", label: "Cliente" },
+            { key: "name", label: "Nome" },
+            { key: "key_prefix", label: "Prefixo" },
+            { key: "created_at", label: "Criada em" },
+            { key: "last_used_at", label: "Último uso" },
+            { key: "revoked_at", label: "Revogada em" },
+          ], apiKeys);
+
+          renderTable("requests", [
+            { key: "created_at", label: "Quando" },
+            { key: "correlation_id", label: "Correlation" },
+            { key: "source_ip", label: "IP" },
+            { key: "client_id", label: "Cliente" },
+            { key: "status", label: "HTTP" },
+            { key: "backend_name", label: "Backend" },
+            { key: "attempts", label: "Tentativas" },
+            { key: "fallback_used", label: "Fallback", render: (value) => value ? '<span class="pill danger">yes</span>' : '<span class="pill">no</span>' },
+            { key: "cache_hit", label: "Cache", render: (value) => value ? '<span class="pill">hit</span>' : '<span class="pill danger">miss</span>' },
+            { key: "latency_ms", label: "Latência (ms)" },
+            { key: "error", label: "Erro", render: (value) => value ? `<span class="danger">${value}</span>` : "" },
+            { key: "backend_errors", label: "Erros por backend", render: (value) => value?.length ? value.map((item) => `${item.backend_name || "unknown"}: ${item.error}`).join("<br>") : "" },
+            { key: "model", label: "Modelo" },
+          ], requests.slice(0, 25));
+
+          renderTable("jobs", [
+            { key: "created_at", label: "Criado em" },
+            { key: "id", label: "Job" },
+            { key: "status", label: "Status", render: (value) => `<span class="pill${value === "failed" || value === "cancelled" ? " danger" : ""}">${value}</span>` },
+            { key: "requested_model", label: "Modelo solicitado" },
+            { key: "resolved_model", label: "Modelo resolvido" },
+            { key: "backend_name", label: "Backend" },
+            { key: "attempts", label: "Tentativas" },
+            { key: "prompt_tokens_estimated", label: "Prompt tokens" },
+            { key: "completion_tokens_estimated", label: "Completion tokens" },
+            { key: "estimated_cost_usd", label: "USD estimado", render: (value) => Number(value).toFixed(4) },
+            { key: "error", label: "Erro", render: (value) => value ? `<span class="danger">${value}</span>` : "" },
+          ], jobs.jobs.slice(0, 50));
+
+          renderTable("securityEvents", [
+            { key: "created_at", label: "Quando" },
+            { key: "severity", label: "Severidade", render: (value) => `<span class="pill${value === "high" ? " danger" : ""}">${value}</span>` },
+            { key: "event_type", label: "Tipo" },
+            { key: "client_id", label: "Cliente" },
+            { key: "source_ip", label: "IP" },
+            { key: "api_key_prefix", label: "API key" },
+            { key: "correlation_id", label: "Correlation" },
+            { key: "title", label: "Título" },
+          ], securityEvents.slice(0, 50));
+        } catch (error) {
+          document.getElementById("healthDeep").textContent = String(error);
+        }
+      }
+
+      loadDashboard();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+.git
+.venv
+.venv-download
+__pycache__
+*.pyc
+logs
+models
+*.gguf
+

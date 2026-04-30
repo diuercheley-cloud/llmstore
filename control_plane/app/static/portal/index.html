@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Client Portal</title>
+    <style>
+      :root {
+        --bg: #f6f3ee;
+        --panel: #fffdf9;
+        --ink: #1f2321;
+        --muted: #68706b;
+        --accent: #1f6f5f;
+        --border: #d9d3c8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(31, 111, 95, 0.18), transparent 30%),
+          linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
+      }
+      header {
+        padding: 28px 28px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      h1 { margin: 0 0 6px; font-size: 30px; }
+      p { margin: 0; color: var(--muted); }
+      main {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.05);
+      }
+      .wide { grid-column: 1 / -1; }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      input, textarea, button {
+        font: inherit;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #f7f5ef;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(217, 211, 200, 0.7);
+        vertical-align: top;
+      }
+      th { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Client Portal</h1>
+      <p>Portal do cliente para plano, uso, invoices e teste rápido de prompt com API key.</p>
+      <div class="toolbar">
+        <input id="apiKey" type="password" placeholder="Bearer API key" style="min-width: 320px;" />
+        <button id="connect">Conectar</button>
+        <button id="refresh">Atualizar</button>
+      </div>
+    </header>
+    <main>
+      <div class="security-warning wide" style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 10px; margin-bottom: 18px; font-size: 14px;">
+        <strong>Aviso de Segurança:</strong> Nunca compartilhe sua API Key. O uso em produção requer HTTPS.
+      </div>
+      <section>
+        <h2>Minha Conta</h2>
+        <pre id="me">carregando...</pre>
+      </section>
+      <section>
+        <h2>Uso</h2>
+        <pre id="usage">carregando...</pre>
+      </section>
+      <section class="wide">
+        <h2>Invoices</h2>
+        <div id="invoices"></div>
+      </section>
+      <section class="wide">
+        <h2>Pagamentos</h2>
+        <div id="payments"></div>
+      </section>
+      <section class="wide">
+        <h2>Test Chat</h2>
+        <textarea id="prompt">Responda em uma frase curta: o portal do cliente está funcional?</textarea>
+        <div class="toolbar">
+          <input id="model" type="text" placeholder="Modelo opcional" />
+          <button id="runTest">Enviar</button>
+        </div>
+        <pre id="testChat">sem execução</pre>
+      </section>
+    </main>
+    <script>
+      const apiKeyInput = document.getElementById("apiKey");
+      const connectButton = document.getElementById("connect");
+      const refreshButton = document.getElementById("refresh");
+      const runTestButton = document.getElementById("runTest");
+      const promptInput = document.getElementById("prompt");
+      const modelInput = document.getElementById("model");
+      apiKeyInput.value = localStorage.getItem("portalApiKey") || "";
+
+      function renderTable(targetId, columns, rows) {
+        const host = document.getElementById(targetId);
+        if (!rows.length) {
+          host.innerHTML = "<p>sem dados</p>";
+          return;
+        }
+        const header = columns.map((column) => `<th>${column.label}</th>`).join("");
+        const body = rows.map((row) => {
+          const cells = columns.map((column) => {
+            const value = column.render ? column.render(row[column.key], row) : row[column.key];
+            return `<td>${value ?? ""}</td>`;
+          }).join("");
+          return `<tr>${cells}</tr>`;
+        }).join("");
+        host.innerHTML = `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+      }
+
+      async function portalApi(path, options = {}) {
+        const apiKey = localStorage.getItem("portalApiKey") || apiKeyInput.value.trim();
+        if (!apiKey) throw new Error("defina a API key do cliente");
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`${response.status} ${text}`);
+        }
+        return response.json();
+      }
+
+      async function loadPortal() {
+        try {
+          const [me, usage, invoices] = await Promise.all([
+            portalApi("/portal/me"),
+            portalApi("/portal/usage"),
+            portalApi("/portal/invoices"),
+          ]);
+          document.getElementById("me").textContent = JSON.stringify(me, null, 2);
+          document.getElementById("usage").textContent = JSON.stringify(usage, null, 2);
+          renderTable("invoices", [
+            { key: "status", label: "Status" },
+            { key: "period_start", label: "Início" },
+            { key: "period_end", label: "Fim" },
+            { key: "currency", label: "Moeda" },
+            { key: "total_amount", label: "Total" },
+            { key: "due_at", label: "Vencimento" },
+            { key: "paid_at", label: "Pago em" },
+          ], invoices.invoices);
+          renderTable("payments", [
+            { key: "status", label: "Status" },
+            { key: "amount", label: "Valor" },
+            { key: "currency", label: "Moeda" },
+            { key: "payment_method", label: "Método" },
+            { key: "payment_reference", label: "Referência" },
+            { key: "paid_at", label: "Pago em" },
+          ], invoices.payments);
+        } catch (error) {
+          document.getElementById("me").textContent = String(error);
+          document.getElementById("usage").textContent = String(error);
+        }
+      }
+
+      connectButton.addEventListener("click", async () => {
+        localStorage.setItem("portalApiKey", apiKeyInput.value.trim());
+        await loadPortal();
+      });
+
+      refreshButton.addEventListener("click", loadPortal);
+
+      runTestButton.addEventListener("click", async () => {
+        try {
+          const payload = {
+            prompt: promptInput.value.trim(),
+          };
+          if (modelInput.value.trim()) payload.model = modelInput.value.trim();
+          const result = await portalApi("/portal/test-chat", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          document.getElementById("testChat").textContent = JSON.stringify(result, null, 2);
+        } catch (error) {
+          document.getElementById("testChat").textContent = String(error);
+        }
+      });
+
+      loadPortal();
+    </script>
+  </body>
+</html>

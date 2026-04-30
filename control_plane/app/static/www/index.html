@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Inference Stack Cloud</title>
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --panel: rgba(255, 252, 245, 0.88);
+        --ink: #181512;
+        --muted: #6b6257;
+        --line: rgba(24, 21, 18, 0.12);
+        --accent: #c84c2f;
+        --accent-dark: #8f2f1f;
+        --accent-soft: #f5d6c7;
+        --shadow: 0 20px 60px rgba(44, 28, 16, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(200, 76, 47, 0.24), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(68, 110, 95, 0.2), transparent 30%),
+          linear-gradient(180deg, #fbf6ec 0%, var(--bg) 100%);
+      }
+      a { color: inherit; text-decoration: none; }
+      .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 0;
+      }
+      .brand { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; }
+      .links { display: flex; gap: 18px; align-items: center; color: var(--muted); }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        transition: transform 160ms ease, background 160ms ease;
+      }
+      .cta.primary {
+        background: var(--ink);
+        color: #fff7f0;
+      }
+      .cta.secondary {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.45);
+      }
+      .cta:hover { transform: translateY(-1px); }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 28px;
+        align-items: center;
+        padding: 28px 0 56px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-dark);
+        font-size: 13px;
+        letter-spacing: 0.04em;
+      }
+      h1 {
+        margin: 18px 0 16px;
+        font-size: clamp(44px, 7vw, 78px);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+      }
+      .lead {
+        font-size: 19px;
+        line-height: 1.6;
+        color: var(--muted);
+        max-width: 58ch;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 28px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 30px;
+      }
+      .metric, .panel, .plan {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .metric { padding: 18px; }
+      .metric strong { display: block; font-size: 28px; margin-bottom: 6px; }
+      .panel {
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+      .panel::after {
+        content: "";
+        position: absolute;
+        inset: auto -30px -40px auto;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(200, 76, 47, 0.28), transparent 72%);
+      }
+      .stack {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .stack div {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(24, 21, 18, 0.08);
+      }
+      .section {
+        padding: 24px 0 64px;
+      }
+      .section h2 {
+        margin: 0 0 12px;
+        font-size: 34px;
+        letter-spacing: -0.04em;
+      }
+      .section p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 17px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 22px;
+      }
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .plan {
+        padding: 24px;
+        min-height: 250px;
+      }
+      .plan.highlight {
+        border-color: rgba(200, 76, 47, 0.4);
+        transform: translateY(-6px);
+      }
+      .plan .price {
+        font-size: 42px;
+        letter-spacing: -0.05em;
+        margin: 12px 0;
+      }
+      .plan ul {
+        margin: 16px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+      .footer {
+        padding: 12px 0 40px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      @media (max-width: 920px) {
+        .hero, .grid-3, .plans { grid-template-columns: 1fr; }
+        .metrics { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 640px) {
+        .nav { flex-direction: column; align-items: flex-start; gap: 14px; }
+        .links { flex-wrap: wrap; }
+        .metrics { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <nav class="nav">
+        <div class="brand">LLM Inference Stack Cloud</div>
+        <div class="links">
+          <a href="/pricing">Pricing</a>
+          <a href="/client-portal">Client Portal</a>
+          <a class="cta primary" href="/signup">Start Free</a>
+        </div>
+      </nav>
+
+      <section class="hero">
+        <div>
+          <span class="eyebrow">Private inference, public product</span>
+          <h1>Ship your own LLM API without building the SaaS wrapper from scratch.</h1>
+          <p class="lead">
+            Landing pages, self-serve onboarding, automatic API key issuance, quota-based plans,
+            billing primitives and HTTPS are already wired around the inference stack.
+          </p>
+          <div class="hero-actions">
+            <a class="cta primary" href="/signup">Create a free workspace</a>
+            <a class="cta secondary" href="/pricing">See plans</a>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong>5 min</strong> from signup to first request</div>
+            <div class="metric"><strong>4 plans</strong> including a limited free tier</div>
+            <div class="metric"><strong>/v1 API</strong> OpenAI-compatible surface</div>
+          </div>
+        </div>
+        <div class="panel">
+          <strong>Commercial baseline included</strong>
+          <div class="stack">
+            <div><span>Public signup</span><span>Auto-provisioned tenant</span></div>
+            <div><span>API keys</span><span>Generated on first conversion</span></div>
+            <div><span>Client portal</span><span>Usage, invoices and test prompt</span></div>
+            <div><span>Caddy edge</span><span>Automatic HTTPS on your VPS</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Designed for a product funnel, not just a demo stack</h2>
+        <p>The stack now exposes the customer-facing surfaces needed to sell access instead of manually provisioning every client.</p>
+        <div class="grid-3">
+          <div class="card">
+            <strong>Acquisition</strong>
+            <p>Public landing and pricing pages make the offer legible before the API docs ever show up.</p>
+          </div>
+          <div class="card">
+            <strong>Activation</strong>
+            <p>Signup creates the client, binds the plan and returns the API key only once, ready for first use.</p>
+          </div>
+          <div class="card">
+            <strong>Retention</strong>
+            <p>Built-in quotas, billing snapshots and a customer portal keep support overhead down after launch.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Plans built into the stack</h2>
+        <p>These cards are backed by the same plan records used by the API runtime.</p>
+        <div class="plans" id="plans">
+          <div class="plan">Loading plans...</div>
+        </div>
+      </section>
+
+      <div class="footer">Self-hosted SaaS packaging for the local LLM inference stack.</div>
+    </div>
+
+    <script>
+      async function loadPlans() {
+        const host = document.getElementById("plans");
+        try {
+          const response = await fetch("/public/plans");
+          const data = await response.json();
+          host.innerHTML = data.plans.slice(0, 3).map((plan) => `
+            <article class="plan ${plan.highlight ? "highlight" : ""}">
+              <div>${plan.name}</div>
+              <div class="price">$${Number(plan.monthly_price).toFixed(0)}<span style="font-size:16px;color:#6b6257;">/mo</span></div>
+              <div style="color:#6b6257;">${plan.description || ""}</div>
+              <ul>${(plan.features || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+            </article>
+          `).join("");
+        } catch (error) {
+          host.innerHTML = `<div class="plan">Unable to load plans: ${String(error)}</div>`;
+        }
+      }
+
+      loadPlans();
+    </script>
+  </body>
+</html>

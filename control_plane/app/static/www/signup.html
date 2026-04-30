@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signup | LLM Inference Stack Cloud</title>
+    <style>
+      :root {
+        --bg: #f5efe5;
+        --panel: rgba(255, 251, 244, 0.92);
+        --ink: #191511;
+        --muted: #6f655d;
+        --line: rgba(25, 21, 17, 0.12);
+        --accent: #9e3d26;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(158, 61, 38, 0.18), transparent 26%),
+          linear-gradient(180deg, #fff8ef 0%, var(--bg) 100%);
+      }
+      .shell {
+        width: min(1100px, calc(100% - 32px));
+        margin: 0 auto;
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 24px;
+        align-items: center;
+        padding: 28px 0;
+      }
+      .copy h1 {
+        margin: 18px 0 14px;
+        font-size: clamp(40px, 6vw, 70px);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+      }
+      .copy p, .copy li { color: var(--muted); font-size: 17px; line-height: 1.6; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 28px;
+        box-shadow: 0 22px 56px rgba(40, 24, 13, 0.1);
+        backdrop-filter: blur(10px);
+      }
+      form { display: grid; gap: 14px; }
+      label { display: grid; gap: 8px; font-size: 14px; }
+      input, textarea, select, button {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        font: inherit;
+        background: white;
+      }
+      textarea { min-height: 100px; resize: vertical; }
+      button {
+        background: var(--ink);
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      pre {
+        margin: 0;
+        padding: 16px;
+        border-radius: 16px;
+        background: #fff;
+        border: 1px solid var(--line);
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+      }
+      .notice {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+      @media (max-width: 920px) {
+        .shell { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="copy">
+        <div>Self-serve onboarding</div>
+        <h1>Create a tenant and receive an API key instantly.</h1>
+        <p>
+          This page provisions a client account on the control plane, binds the selected billing
+          plan and returns the API key only once. Store it immediately.
+        </p>
+        <ul>
+          <li>Free plan is limited and intended for sandbox validation.</li>
+          <li>Paid plans are provisioned immediately for faster sales activation.</li>
+          <li>Use the client portal to inspect quota, invoices and a test prompt.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <form id="signupForm">
+          <label>
+            Full name
+            <input name="full_name" required minlength="3" maxlength="120" placeholder="Jane Doe" />
+          </label>
+          <label>
+            Work email
+            <input name="email" type="email" required placeholder="jane@company.com" />
+          </label>
+          <label>
+            Company
+            <input name="company" maxlength="120" placeholder="Acme AI" />
+          </label>
+          <label>
+            Plan
+            <select name="plan_code" id="planSelect">
+              <option value="free">Free</option>
+              <option value="basic">Basic</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </label>
+          <label>
+            Use case
+            <textarea name="use_case" maxlength="500" placeholder="Internal copilots, customer support, evaluation traffic..."></textarea>
+          </label>
+          <button type="submit">Create account</button>
+        </form>
+        <div class="notice">The API key below is only returned in this response.</div>
+        <pre id="result">No signup submitted yet.</pre>
+      </section>
+    </div>
+
+    <script>
+      const form = document.getElementById("signupForm");
+      const result = document.getElementById("result");
+      const planSelect = document.getElementById("planSelect");
+      const queryPlan = new URLSearchParams(window.location.search).get("plan");
+      if (queryPlan) {
+        planSelect.value = queryPlan;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        result.textContent = "Creating account...";
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+        try {
+          const response = await fetch("/public/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const body = await response.json();
+          if (!response.ok) {
+            throw new Error(body.detail || JSON.stringify(body));
+          }
+          result.textContent = JSON.stringify(body, null, 2);
+        } catch (error) {
+          result.textContent = `Signup failed: ${String(error)}`;
+        }
+      });
+    </script>
+  </body>
+</html>

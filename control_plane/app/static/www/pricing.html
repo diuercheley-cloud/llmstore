@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pricing | LLM Inference Stack Cloud</title>
+    <style>
+      :root {
+        --bg: #fbf5ec;
+        --panel: #fffdf9;
+        --ink: #1f1a16;
+        --muted: #70655d;
+        --line: rgba(31, 26, 22, 0.12);
+        --accent: #16605a;
+        --accent-soft: #d9efe8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, rgba(22, 96, 90, 0.18), transparent 25%),
+          linear-gradient(180deg, #fff9f0 0%, var(--bg) 100%);
+      }
+      .shell { width: min(1140px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 56px; }
+      .nav, .footer { display: flex; justify-content: space-between; align-items: center; }
+      .nav a, .footer a { color: var(--muted); text-decoration: none; }
+      h1 {
+        margin: 54px 0 14px;
+        font-size: clamp(40px, 6vw, 72px);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+      }
+      .lead { max-width: 62ch; font-size: 18px; line-height: 1.6; color: var(--muted); }
+      .pricing {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-top: 34px;
+      }
+      .plan {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 18px 46px rgba(34, 20, 9, 0.08);
+      }
+      .plan.highlight {
+        border-color: rgba(22, 96, 90, 0.3);
+        background: linear-gradient(180deg, #ffffff 0%, #f3fbf8 100%);
+      }
+      .badge {
+        display: inline-flex;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .price { margin: 14px 0 8px; font-size: 42px; letter-spacing: -0.05em; }
+      .plan p { color: var(--muted); min-height: 64px; }
+      ul { margin: 18px 0; padding-left: 18px; color: var(--muted); }
+      li { margin-bottom: 8px; }
+      .meta {
+        display: grid;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .cta {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 18px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: var(--ink);
+        color: white;
+        text-decoration: none;
+      }
+      .cta.secondary {
+        background: white;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .footer { margin-top: 34px; color: var(--muted); font-size: 14px; }
+      @media (max-width: 1080px) {
+        .pricing { grid-template-columns: repeat(2, 1fr); }
+      }
+      @media (max-width: 720px) {
+        .pricing { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="nav">
+        <a href="/">LLM Inference Stack Cloud</a>
+        <a href="/signup">Start onboarding</a>
+      </div>
+
+      <h1>Usage-based plans with a built-in free tier.</h1>
+      <p class="lead">
+        Pricing cards come from the same billing plan records enforced by the control plane, so the
+        commercial offer and runtime quotas stay aligned.
+      </p>
+
+      <section class="pricing" id="pricing">
+        <article class="plan">Loading pricing...</article>
+      </section>
+
+      <div class="footer">
+        <span>Need a custom rollout? Use the enterprise plan and adapt quotas in the admin API.</span>
+        <a href="/client-portal">Client portal</a>
+      </div>
+    </div>
+
+    <script>
+      async function loadPricing() {
+        const host = document.getElementById("pricing");
+        try {
+          const response = await fetch("/public/plans");
+          const data = await response.json();
+          host.innerHTML = data.plans.map((plan) => `
+            <article class="plan ${plan.highlight ? "highlight" : ""}">
+              ${plan.highlight ? '<div class="badge">Most popular</div>' : ""}
+              <h2 style="margin:14px 0 0;font-size:28px;">${plan.name}</h2>
+              <div class="price">$${Number(plan.monthly_price).toFixed(0)}<span style="font-size:15px;color:#70655d;">/mo</span></div>
+              <p>${plan.description || ""}</p>
+              <ul>${(plan.features || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+              <div class="meta">
+                <div>${plan.rate_limit_per_minute} req/min</div>
+                <div>${plan.daily_token_quota.toLocaleString()} tokens/day</div>
+                <div>${plan.monthly_token_quota.toLocaleString()} tokens/month</div>
+                <div>${plan.allow_streaming ? "Streaming enabled" : "Streaming disabled"}</div>
+              </div>
+              <a class="cta ${plan.code === "free" ? "secondary" : ""}" href="/signup?plan=${plan.code}">
+                ${plan.code === "free" ? "Create free account" : "Start ${plan.name}"}
+              </a>
+            </article>
+          `).join("");
+        } catch (error) {
+          host.innerHTML = `<article class="plan">Unable to load pricing: ${String(error)}</article>`;
+        }
+      }
+
+      loadPricing();
+    </script>
+  </body>
+</html>
