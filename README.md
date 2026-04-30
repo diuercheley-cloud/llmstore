@@ -572,3 +572,4 @@ docker compose config
 - Implementar fila distribuída e workers externos para múltiplos data planes.
 - Adicionar tokenizer real para contabilidade de tokens.
 - Incluir tracing distribuído e retenção externa de métricas/logs.
+# llmstore
