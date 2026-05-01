@@ -20,3 +20,9 @@ class PublicSignupResponse(BaseModel):
     api_base_url: str
     support_email: str
     next_steps: list[str]
+
+
+class WebhookPayload(BaseModel):
+    invoice_id: str = Field(min_length=36, max_length=36)
+    status: str = Field(pattern=r"^(paid|failed)$")
+    payment_reference: str | None = Field(default=None, max_length=120)

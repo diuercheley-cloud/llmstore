@@ -84,3 +84,7 @@ class GenerationJobResponse(BaseModel):
     cancelled_at: str | None = None
     created_at: str
     updated_at: str
+
+
+class OnboardingEventRequest(BaseModel):
+    event: str = Field(min_length=1, max_length=100)

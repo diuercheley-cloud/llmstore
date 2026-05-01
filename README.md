@@ -141,6 +141,30 @@ Na camada `prod`, o acesso externo passa pelo Caddy com HTTPS automático:
 - HTTP de validação ACME: `http://SEU_DOMINIO`
 - HTTPS público: `https://SEU_DOMINIO`
 
+## Rodando como produção local
+
+Para uma experiência que simula o comportamento de produção (com interface amigável, landing page e portal completo) em `localhost:18080`:
+
+1. Inicie a stack:
+```bash
+./scripts/local-production-up.sh
+```
+
+2. Valide as interfaces:
+```bash
+./scripts/ui-health.sh
+```
+
+3. Teste o fluxo completo (opcionalmente passe uma API Key):
+```bash
+./scripts/local-production-smoke.sh [API_KEY]
+```
+
+Acesse:
+- Landing Page: http://localhost:18080/
+- Portal do Cliente: http://localhost:18080/client-portal
+- Admin Dashboard: http://localhost:18080/admin-dashboard
+
 ## Health, readiness e conectividade
 
 ```bash

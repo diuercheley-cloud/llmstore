@@ -149,9 +149,10 @@ async def create_client(payload: ClientCreate, session: AsyncSession = Depends(g
     if await session.get(BillingPlan, billing_plan_id) is None:
         raise HTTPException(status_code=404, detail="billing plan not found")
     client_data["billing_plan_id"] = billing_plan_id
-    client_data["allowed_models_json"] = json.dumps(client_data.pop("allowed_models")) if client_data.get("allowed_models") is not None else None
-    client_data["ip_allowlist_json"] = json.dumps(client_data.pop("ip_allowlist")) if client_data.get("ip_allowlist") is not None else None
-    client_data["ip_blocklist_json"] = json.dumps(client_data.pop("ip_blocklist")) if client_data.get("ip_blocklist") is not None else None
+    for field in ["allowed_models", "ip_allowlist", "ip_blocklist"]:
+        if field in client_data:
+            val = client_data.pop(field)
+            client_data[f"{field}_json"] = json.dumps(val) if val is not None else None
     client = Client(**client_data)
     session.add(client)
     await session.commit()
@@ -591,6 +592,24 @@ async def get_usage_summary(session: AsyncSession = Depends(get_db_session)):
         "totals": totals,
         "plans": list(by_plan.values()),
         "clients": clients,
+    }
+
+
+@router.get("/revenue/summary")
+async def get_revenue_summary(session: AsyncSession = Depends(get_db_session)):
+    invoices = (await session.execute(select(BillingInvoice))).scalars().all()
+    total_paid = sum(inv.total_amount for inv in invoices if inv.status == "paid")
+    total_pending = sum(inv.total_amount for inv in invoices if inv.status == "pending")
+    total_overdue = sum(inv.total_amount for inv in invoices if inv.status == "overdue")
+    
+    return {
+        "generated_at": utc_now().isoformat(),
+        "revenue_usd": float(total_paid),
+        "pending_usd": float(total_pending),
+        "overdue_usd": float(total_overdue),
+        "invoices_paid": len([inv for inv in invoices if inv.status == "paid"]),
+        "invoices_pending": len([inv for inv in invoices if inv.status == "pending"]),
+        "invoices_overdue": len([inv for inv in invoices if inv.status == "overdue"]),
     }
 
 

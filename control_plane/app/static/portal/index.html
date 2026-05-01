@@ -3,232 +3,524 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Client Portal</title>
+    <title>Client Portal - LLM Inference Stack</title>
     <style>
       :root {
-        --bg: #f6f3ee;
-        --panel: #fffdf9;
-        --ink: #1f2321;
-        --muted: #68706b;
-        --accent: #1f6f5f;
-        --border: #d9d3c8;
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         color: var(--ink);
-        background:
-          radial-gradient(circle at top left, rgba(31, 111, 95, 0.18), transparent 30%),
-          linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
+        background-color: var(--bg);
+        line-height: 1.5;
       }
       header {
-        padding: 28px 28px 16px;
+        background: white;
         border-bottom: 1px solid var(--border);
-      }
-      h1 { margin: 0 0 6px; font-size: 30px; }
-      p { margin: 0; color: var(--muted); }
-      main {
-        padding: 24px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 18px;
-      }
-      section {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px;
-        box-shadow: 0 10px 24px rgba(20, 20, 20, 0.05);
-      }
-      .wide { grid-column: 1 / -1; }
-      .toolbar {
+        padding: 1.5rem 2rem;
         display: flex;
-        gap: 10px;
+        justify-content: space-between;
         align-items: center;
-        margin-top: 14px;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .brand h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+      .brand p { margin: 0; color: var(--muted); font-size: 0.875rem; }
+      
+      .auth-box {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
         flex-wrap: wrap;
       }
       input, textarea, button {
         font: inherit;
-        border-radius: 10px;
+        border-radius: 0.5rem;
         border: 1px solid var(--border);
-        padding: 10px 12px;
+        padding: 0.5rem 0.75rem;
       }
-      textarea {
-        width: 100%;
-        min-height: 120px;
-        resize: vertical;
+      input[type="password"], input[type="text"] {
+        background: white;
+        min-width: 280px;
       }
       button {
         background: var(--accent);
         color: white;
         border: none;
         cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
       }
-      pre {
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: #f7f5ef;
-        padding: 12px;
-        border-radius: 12px;
+      button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+      button:active { transform: translateY(0); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+      button.secondary {
+        background: white;
+        color: var(--muted);
         border: 1px solid var(--border);
-        font-size: 12px;
       }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
+      button.secondary:hover { background: var(--bg); color: var(--ink); }
+
+      main {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
       }
-      th, td {
-        text-align: left;
-        padding: 8px 6px;
-        border-bottom: 1px solid rgba(217, 211, 200, 0.7);
-        vertical-align: top;
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
       }
-      th { color: var(--muted); }
+      .wide { grid-column: 1 / -1; }
+      h2 { margin-top: 0; font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+      
+      .field { margin-bottom: 1rem; }
+      .field-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.25rem; }
+      .field-value { font-size: 1rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+      
+      .badge {
+        display: inline-block;
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge-active { background: #d1fae5; color: #065f46; }
+      .badge-blocked { background: #fee2e2; color: #991b1b; }
+      .badge-warning { background: #fef3c7; color: #92400e; }
+
+      .plan-card {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+      .plan-name { font-size: 1.125rem; font-weight: 700; color: #1e40af; }
+      .plan-meta { font-size: 0.875rem; color: #60a5fa; margin-top: 0.25rem; }
+
+      .usage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .usage-box { background: #f1f5f9; border-radius: 0.75rem; padding: 1rem; }
+      .usage-box h3 { margin: 0 0 0.5rem; font-size: 0.875rem; color: var(--muted); font-weight: 500; }
+      .usage-num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+      .usage-total { font-size: 0.875rem; color: var(--muted); }
+      .progress-bg { height: 0.5rem; background: #e2e8f0; border-radius: 999px; margin-top: 0.75rem; overflow: hidden; }
+      .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+
+      .table-wrapper { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.875rem; white-space: nowrap; }
+      th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+      th { color: var(--muted); font-weight: 600; background: #f8fafc; }
+
+      .chat-box { display: flex; flex-direction: column; gap: 1rem; }
+      textarea { width: 100%; min-height: 100px; resize: vertical; }
+      .chat-response {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        min-height: 50px;
+        white-space: pre-wrap;
+      }
+      .debug-json {
+        margin-top: 1rem;
+        font-size: 0.75rem;
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        display: none;
+      }
+      
+      .copy-btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--ink);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        display: none;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+      }
+      @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+      .loading { opacity: 0.5; pointer-events: none; }
+      .hidden { display: none; }
+      
+      @media (max-width: 640px) {
+        header { flex-direction: column; align-items: flex-start; padding: 1rem; }
+        .auth-box { width: 100%; flex-direction: column; align-items: stretch; }
+        input[type="password"] { min-width: 0; }
+        .usage-grid { grid-template-columns: 1fr; }
+        main { margin: 1rem auto; gap: 1rem; }
+        section { padding: 1rem; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>Client Portal</h1>
-      <p>Portal do cliente para plano, uso, invoices e teste rápido de prompt com API key.</p>
-      <div class="toolbar">
-        <input id="apiKey" type="password" placeholder="Bearer API key" style="min-width: 320px;" />
-        <button id="connect">Conectar</button>
-        <button id="refresh">Atualizar</button>
+      <div class="brand">
+        <h1>Client Portal</h1>
+        <p>Manage your LLM access, usage and billing</p>
+      </div>
+      <div class="auth-box">
+        <div style="position: relative;">
+          <input id="apiKey" type="password" placeholder="sk-..." />
+          <button id="toggleVisible" class="secondary" style="position: absolute; right: 2px; top: 2px; bottom: 2px; padding: 0 10px; border: none; background: transparent; font-size: 12px;">Show</button>
+        </div>
+        <button id="connect">Connect</button>
+        <button id="clearKey" class="secondary">Clear</button>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 4px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="rememberMe" />
+            <label for="rememberMe">Remember me</label>
+          </div>
+          <a href="/docs" style="color: var(--accent); text-decoration: none; font-weight: 600;">API Docs</a>
+        </div>
       </div>
     </header>
-    <main>
-      <div class="security-warning wide" style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 10px; margin-bottom: 18px; font-size: 14px;">
-        <strong>Aviso de Segurança:</strong> Nunca compartilhe sua API Key. O uso em produção requer HTTPS.
+
+    <div id="connectionWarning" class="wide" style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">
+      <div style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">
+        <strong>Security Tip:</strong> Never share your API key. In production, always use HTTPS.
       </div>
-      <section>
-        <h2>Minha Conta</h2>
-        <pre id="me">carregando...</pre>
+    </div>
+
+    <main id="portalContent" class="hidden">
+      <section id="accountSection">
+        <h2>My Account</h2>
+        <div id="meContent"></div>
       </section>
-      <section>
-        <h2>Uso</h2>
-        <pre id="usage">carregando...</pre>
+
+      <section id="usageSection">
+        <h2>Current Usage</h2>
+        <div id="usageContent"></div>
       </section>
-      <section class="wide">
+
+      <section id="billingSection" class="wide">
         <h2>Invoices</h2>
-        <div id="invoices"></div>
+        <div id="invoicesContent" class="table-wrapper"></div>
       </section>
-      <section class="wide">
-        <h2>Pagamentos</h2>
-        <div id="payments"></div>
-      </section>
-      <section class="wide">
-        <h2>Test Chat</h2>
-        <textarea id="prompt">Responda em uma frase curta: o portal do cliente está funcional?</textarea>
-        <div class="toolbar">
-          <input id="model" type="text" placeholder="Modelo opcional" />
-          <button id="runTest">Enviar</button>
+
+      <section id="testChatSection" class="wide">
+        <h2>
+          Quick Test Chat
+          <button id="copyCurl" class="secondary copy-btn">Copy cURL Example</button>
+        </h2>
+        <div class="chat-box">
+          <div style="display: flex; gap: 0.5rem;">
+            <input id="modelId" type="text" placeholder="Default model (optional)" style="flex: 1;" />
+            <button id="runChat">Send Prompt</button>
+          </div>
+          <textarea id="promptText" placeholder="Ask something to the LLM..."></textarea>
+          <div id="chatResponse" class="chat-response">Response will appear here...</div>
+          <button id="toggleDebug" class="secondary" style="width: fit-content;">View Technical Response (JSON)</button>
+          <pre id="debugOutput" class="debug-json"></pre>
         </div>
-        <pre id="testChat">sem execução</pre>
       </section>
     </main>
-    <script>
-      const apiKeyInput = document.getElementById("apiKey");
-      const connectButton = document.getElementById("connect");
-      const refreshButton = document.getElementById("refresh");
-      const runTestButton = document.getElementById("runTest");
-      const promptInput = document.getElementById("prompt");
-      const modelInput = document.getElementById("model");
-      apiKeyInput.value = localStorage.getItem("portalApiKey") || "";
 
-      function renderTable(targetId, columns, rows) {
-        const host = document.getElementById(targetId);
-        if (!rows.length) {
-          host.innerHTML = "<p>sem dados</p>";
-          return;
-        }
-        const header = columns.map((column) => `<th>${column.label}</th>`).join("");
-        const body = rows.map((row) => {
-          const cells = columns.map((column) => {
-            const value = column.render ? column.render(row[column.key], row) : row[column.key];
-            return `<td>${value ?? ""}</td>`;
-          }).join("");
-          return `<tr>${cells}</tr>`;
-        }).join("");
-        host.innerHTML = `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+    <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted); padding: 0 1rem;">
+      <p>Please enter your API Key above to access the portal.</p>
+    </div>
+
+    <div id="toast" class="toast">Copied to clipboard!</div>
+
+    <div id="onboardingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
+      <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+        <h2 style="margin-top: 0; color: var(--accent);">🚀 Welcome to the Portal!</h2>
+        <p style="color: var(--muted); line-height: 1.6;">You're successfully connected. Here's how to start:</p>
+        <ul style="color: var(--muted); line-height: 1.6; padding-left: 1.25rem;">
+          <li><strong>Track Usage:</strong> Monitor your token quota in real-time.</li>
+          <li><strong>Test Models:</strong> Use the "Quick Test Chat" below to run your first prompt.</li>
+          <li><strong>Invoices:</strong> Check your billing history in the wide card below.</li>
+        </ul>
+        <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+          <button id="closeOnboarding">Got it, let's go!</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const elements = {
+        apiKey: document.getElementById('apiKey'),
+        toggleVisible: document.getElementById('toggleVisible'),
+        connect: document.getElementById('connect'),
+        clearKey: document.getElementById('clearKey'),
+        rememberMe: document.getElementById('rememberMe'),
+        portalContent: document.getElementById('portalContent'),
+        loginPrompt: document.getElementById('loginPrompt'),
+        meContent: document.getElementById('meContent'),
+        usageContent: document.getElementById('usageContent'),
+        invoicesContent: document.getElementById('invoicesContent'),
+        promptText: document.getElementById('promptText'),
+        modelId: document.getElementById('modelId'),
+        runChat: document.getElementById('runChat'),
+        chatResponse: document.getElementById('chatResponse'),
+        toggleDebug: document.getElementById('toggleDebug'),
+        debugOutput: document.getElementById('debugOutput'),
+        copyCurl: document.getElementById('copyCurl'),
+        toast: document.getElementById('toast'),
+        onboardingModal: document.getElementById('onboardingModal'),
+        closeOnboarding: document.getElementById('closeOnboarding')
+      };
+
+      elements.closeOnboarding.addEventListener('click', () => {
+        elements.onboardingModal.classList.add('hidden');
+        elements.onboardingModal.style.display = 'none';
+        recordOnboardingEvent('portal_tutorial_closed');
+      });
+
+      async function recordOnboardingEvent(event) {
+        try {
+          await apiFetch('/portal/onboarding/event', {
+            method: 'POST',
+            body: JSON.stringify({ event })
+          });
+        } catch (err) { console.warn('Failed to record event:', err); }
       }
 
-      async function portalApi(path, options = {}) {
-        const apiKey = localStorage.getItem("portalApiKey") || apiKeyInput.value.trim();
-        if (!apiKey) throw new Error("defina a API key do cliente");
-        const response = await fetch(path, {
-          ...options,
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-          },
-        });
+      // Load saved state
+      const savedKey = localStorage.getItem('portalApiKey');
+      if (savedKey) {
+        elements.apiKey.value = savedKey;
+        elements.rememberMe.checked = true;
+        initPortal();
+      }
+
+      function esc(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function showToast(msg) {
+        elements.toast.textContent = msg || 'Copied to clipboard!';
+        elements.toast.style.display = 'block';
+        setTimeout(() => { elements.toast.style.display = 'none'; }, 2000);
+      }
+
+      elements.toggleVisible.addEventListener('click', () => {
+        const type = elements.apiKey.type === 'password' ? 'text' : 'password';
+        elements.apiKey.type = type;
+        elements.toggleVisible.textContent = type === 'password' ? 'Show' : 'Hide';
+      });
+
+      elements.clearKey.addEventListener('click', () => {
+        elements.apiKey.value = '';
+        localStorage.removeItem('portalApiKey');
+        elements.portalContent.classList.add('hidden');
+        elements.loginPrompt.classList.remove('hidden');
+      });
+
+      elements.connect.addEventListener('click', () => {
+        if (elements.rememberMe.checked) {
+          localStorage.setItem('portalApiKey', elements.apiKey.value.trim());
+        } else {
+          localStorage.removeItem('portalApiKey');
+        }
+        initPortal();
+      });
+
+      elements.toggleDebug.addEventListener('click', () => {
+        const isVisible = elements.debugOutput.style.display === 'block';
+        elements.debugOutput.style.display = isVisible ? 'none' : 'block';
+        elements.toggleDebug.textContent = isVisible ? 'View Technical Response (JSON)' : 'Hide Technical Response';
+      });
+
+      elements.copyCurl.addEventListener('click', () => {
+        const key = elements.apiKey.value.trim();
+        const model = elements.modelId.value.trim() || 'default';
+        const prompt = elements.promptText.value.trim() || 'Hello';
+        const baseUrl = window.location.origin;
+        const curl = `curl ${baseUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "${model}",
+    "messages": [{"role": "user", "content": "${prompt}"}]
+  }'`;
+        navigator.clipboard.writeText(curl).then(() => showToast('cURL example copied!'));
+      });
+
+      async function apiFetch(path, options = {}) {
+        const key = elements.apiKey.value.trim();
+        const headers = {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          ...options.headers
+        };
+        const response = await fetch(path, { ...options, headers });
         if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`${response.status} ${text}`);
+          const err = await response.text();
+          throw new Error(err || response.statusText);
         }
         return response.json();
       }
 
-      async function loadPortal() {
+      async function initPortal() {
+        if (!elements.apiKey.value.trim()) return;
+        elements.portalContent.classList.add('loading');
+        elements.loginPrompt.classList.add('hidden');
+        elements.portalContent.classList.remove('hidden');
+
         try {
           const [me, usage, invoices] = await Promise.all([
-            portalApi("/portal/me"),
-            portalApi("/portal/usage"),
-            portalApi("/portal/invoices"),
+            apiFetch('/portal/me'),
+            apiFetch('/portal/usage'),
+            apiFetch('/portal/invoices')
           ]);
-          document.getElementById("me").textContent = JSON.stringify(me, null, 2);
-          document.getElementById("usage").textContent = JSON.stringify(usage, null, 2);
-          renderTable("invoices", [
-            { key: "status", label: "Status" },
-            { key: "period_start", label: "Início" },
-            { key: "period_end", label: "Fim" },
-            { key: "currency", label: "Moeda" },
-            { key: "total_amount", label: "Total" },
-            { key: "due_at", label: "Vencimento" },
-            { key: "paid_at", label: "Pago em" },
-          ], invoices.invoices);
-          renderTable("payments", [
-            { key: "status", label: "Status" },
-            { key: "amount", label: "Valor" },
-            { key: "currency", label: "Moeda" },
-            { key: "payment_method", label: "Método" },
-            { key: "payment_reference", label: "Referência" },
-            { key: "paid_at", label: "Pago em" },
-          ], invoices.payments);
-        } catch (error) {
-          document.getElementById("me").textContent = String(error);
-          document.getElementById("usage").textContent = String(error);
+
+          renderMe(me);
+          renderUsage(usage);
+          renderInvoices(invoices);
+
+          const metadata = JSON.parse(me.metadata_json || '{}');
+          if (!metadata.onboarding_finished) {
+            elements.onboardingModal.classList.remove('hidden');
+            elements.onboardingModal.style.display = 'flex';
+          }
+        } catch (err) {
+          console.error(err);
+          elements.chatResponse.innerHTML = `<span style="color: var(--danger);">Connection failed: ${esc(err.message)}</span>`;
+          elements.portalContent.classList.add('hidden');
+          elements.loginPrompt.classList.remove('hidden');
+        } finally {
+          elements.portalContent.classList.remove('loading');
         }
       }
 
-      connectButton.addEventListener("click", async () => {
-        localStorage.setItem("portalApiKey", apiKeyInput.value.trim());
-        await loadPortal();
-      });
+      function renderMe(me) {
+        const statusClass = me.is_blocked ? 'badge-blocked' : (me.billing_status === 'active' ? 'badge-active' : 'badge-warning');
+        const plan = me.plan || {};
+        elements.meContent.innerHTML = `
+          <div class="field"><div class="field-label">Account Name</div><div class="field-value">${esc(me.name)}</div></div>
+          <div class="field"><div class="field-label">Status</div><div class="field-value"><span class="badge ${statusClass}">${esc(me.billing_status)} ${me.is_blocked ? '(BLOCKED)' : ''}</span></div></div>
+          <div class="field">
+            <div class="field-label">API Key</div>
+            <div class="field-value">
+              <span style="font-family: monospace; font-size: 0.8rem;">${elements.apiKey.value.substring(0, 12)}...</span>
+              <button class="secondary copy-btn" onclick="navigator.clipboard.writeText(elements.apiKey.value).then(() => showToast('API Key copied!'))">Copy</button>
+            </div>
+          </div>
+          <div class="plan-card">
+            <div class="plan-name">${esc(plan.name)}</div>
+            <div class="plan-meta">${plan.rate_limit_per_minute} RPM • ${plan.max_output_tokens} max tokens</div>
+            <div style="margin-top: 0.5rem; font-size: 0.875rem;">${plan.monthly_price > 0 ? `$${plan.monthly_price}/mo` : 'Free Plan'}</div>
+          </div>
+        `;
+      }
 
-      refreshButton.addEventListener("click", loadPortal);
+      function renderUsage(usage) {
+        const daily = usage.daily_usage || { used_tokens: 0, quota: 1 };
+        const monthly = usage.monthly_usage || { used_tokens: 0, quota: 1 };
+        const dailyPct = Math.min((daily.used_tokens / daily.quota) * 100, 100);
+        const monthlyPct = Math.min((monthly.used_tokens / monthly.quota) * 100, 100);
+        const inv = usage.invoice_preview || {};
 
-      runTestButton.addEventListener("click", async () => {
+        elements.usageContent.innerHTML = `
+          <div class="usage-grid">
+            <div class="usage-box">
+              <h3>Daily Tokens</h3>
+              <div class="usage-num">${daily.used_tokens.toLocaleString()}</div>
+              <div class="usage-total">of ${daily.quota.toLocaleString()}</div>
+              <div class="progress-bg"><div class="progress-fill" style="width: ${dailyPct}%"></div></div>
+            </div>
+            <div class="usage-box">
+              <h3>Monthly Tokens</h3>
+              <div class="usage-num">${monthly.used_tokens.toLocaleString()}</div>
+              <div class="usage-total">of ${monthly.quota.toLocaleString()}</div>
+              <div class="progress-bg"><div class="progress-fill" style="width: ${monthlyPct}%"></div></div>
+            </div>
+          </div>
+          <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            <div class="field-label">Estimated Bill (Current Cycle)</div>
+            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 1.25rem;">
+              <span>${inv.currency} ${inv.total_estimated.toFixed(2)}</span>
+            </div>
+            <div style="font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem;">
+              Includes ${inv.included_tokens.toLocaleString()} tokens. 
+              Overage: ${inv.overage_tokens.toLocaleString()} tokens ($${inv.overage_cost.toFixed(2)})
+            </div>
+          </div>
+        `;
+      }
+
+      function renderInvoices(data) {
+        if (!data.invoices || data.invoices.length === 0) {
+          elements.invoicesContent.innerHTML = '<p style="color: var(--muted);">No invoices yet.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead><tbody>';
+        data.invoices.forEach(inv => {
+          html += `
+            <tr>
+              <td>${inv.period_start} to ${inv.period_end}</td>
+              <td>${inv.currency} ${inv.total_amount.toFixed(2)}</td>
+              <td><span class="badge ${inv.status === 'paid' ? 'badge-active' : 'badge-warning'}">${inv.status}</span></td>
+              <td>${inv.due_at}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        elements.invoicesContent.innerHTML = html;
+      }
+
+      elements.runChat.addEventListener('click', async () => {
+        const prompt = elements.promptText.value.trim();
+        if (!prompt) return;
+
+        elements.runChat.disabled = true;
+        elements.chatResponse.textContent = 'Thinking...';
+        elements.debugOutput.textContent = '';
+        
         try {
-          const payload = {
-            prompt: promptInput.value.trim(),
-          };
-          if (modelInput.value.trim()) payload.model = modelInput.value.trim();
-          const result = await portalApi("/portal/test-chat", {
-            method: "POST",
-            body: JSON.stringify(payload),
+          const payload = { prompt };
+          if (elements.modelId.value.trim()) payload.model = elements.modelId.value.trim();
+          
+          const result = await apiFetch('/portal/test-chat', {
+            method: 'POST',
+            body: JSON.stringify(payload)
           });
-          document.getElementById("testChat").textContent = JSON.stringify(result, null, 2);
-        } catch (error) {
-          document.getElementById("testChat").textContent = String(error);
+
+          elements.chatResponse.innerHTML = `<div style="font-size: 1.1rem; font-weight: 500;">${esc(result.text)}</div>
+            <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 0.5rem;">
+              Model: ${esc(result.model)} | Tokens: ${result.usage?.total_tokens || '?'} | Cached: ${result.cached ? 'Yes' : 'No'}
+            </div>`;
+          elements.debugOutput.textContent = JSON.stringify(result, null, 2);
+        } catch (err) {
+          elements.chatResponse.innerHTML = `<span style="color: var(--danger);">Error: ${esc(err.message)}</span>`;
+        } finally {
+          elements.runChat.disabled = false;
         }
       });
-
-      loadPortal();
     </script>
   </body>
 </html>

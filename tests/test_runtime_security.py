@@ -1,3 +1,5 @@
+import pytest
+
 from app.core.config import Settings
 from app.core.runtime_security import is_strong_admin_token, validate_runtime_security
 
@@ -59,9 +61,6 @@ def test_validate_runtime_security_blocks_public_exposure_with_weak_admin_token(
         model_file="demo.gguf",
     )
 
-    try:
+    with pytest.raises(RuntimeError) as exc_info:
         validate_runtime_security(settings)
-    except RuntimeError as exc:
-        assert "PUBLIC_EXPOSURE=true" in str(exc)
-    else:
-        raise AssertionError("expected runtime security validation to fail")
+    assert "PUBLIC_EXPOSURE=true" in str(exc_info.value)

@@ -79,7 +79,8 @@ def test_should_generate_monthly_invoices_only_on_configured_day():
 
 
 def test_normalize_invoice_status_promotes_pending_to_overdue():
-    status = normalize_invoice_status("pending", datetime.now(timezone.utc) - timedelta(minutes=1))
+    overdue_since = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc) - timedelta(minutes=1)
+    status = normalize_invoice_status("pending", overdue_since)
     assert status == "overdue"
 
 

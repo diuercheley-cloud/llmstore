@@ -1,5 +1,4 @@
-import asyncio
-
+import pytest
 from fastapi import HTTPException
 from starlette.responses import JSONResponse
 
@@ -27,7 +26,8 @@ class FakeProxy:
         )
 
 
-def test_chat_with_fallback_moves_to_next_backend_without_losing_error_context():
+@pytest.mark.asyncio
+async def test_chat_with_fallback_moves_to_next_backend_without_losing_error_context():
     model = ModelRegistry(model_id="gemma", provider="llama.cpp", model_file="gemma.gguf", context_length=2048, is_active=True, is_default=True, status="configured")
     primary = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
     secondary = InferenceBackend(name="secondary", provider="llama.cpp", backend_url="http://secondary", is_active=True, status="healthy")
@@ -37,10 +37,12 @@ def test_chat_with_fallback_moves_to_next_backend_without_losing_error_context()
     ]
     proxy = FakeProxy()
 
-    result = asyncio.run(_chat_with_fallback(proxy, model, {"model": "gemma"}, False, False))
+    result = await _chat_with_fallback(proxy, model, {"model": "gemma"}, False, False)
 
     assert proxy.calls == ["primary", "secondary"]
     assert result.backend_name == "secondary"
     assert result.attempts == 2
     assert result.fallback_used is True
     assert result.backend_errors[0]["backend_name"] == "primary"
+    assert result.backend_errors[0]["status_code"] == 503
+    assert result.response.body == b'{"ok":true,"backend":"secondary"}'

@@ -1,3 +1,5 @@
+import pytest
+
 from app.models.billing_plan import BillingPlan
 from app.models.pricing_rule import PricingRule
 from app.services.public_onboarding import build_account_name, marketing_summary, normalize_email
@@ -10,12 +12,9 @@ def test_build_account_name_is_deterministic_and_slugged():
 
 
 def test_normalize_email_rejects_invalid_values():
-    try:
+    with pytest.raises(Exception) as exc_info:
         normalize_email("invalid-email")
-    except Exception as exc:
-        assert getattr(exc, "status_code", None) == 422
-    else:
-        raise AssertionError("expected invalid email to fail")
+    assert getattr(exc_info.value, "status_code", None) == 422
 
 
 def test_marketing_summary_exposes_customer_facing_plan_fields():

@@ -5,8 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 load_env_file() {
   local env_path="$1"
   while IFS= read -r line || [[ -n "${line}" ]]; do
-    [[ -z "${line}" ]] && continue
-    [[ "${line}" =~ ^[[:space:]]*# ]] && continue
+    if [[ -z "${line}" ]] || [[ "${line}" =~ ^[[:space:]]*# ]]; then
+      continue
+    fi
     if [[ "${line}" != *=* ]]; then
       continue
     fi
@@ -45,18 +46,28 @@ resolve_stack_env_file() {
 init_stack_env() {
   STACK_ENV_FILE="$(resolve_stack_env_file)"
   export STACK_ENV_FILE
-  if [[ -f "${ROOT_DIR}/${STACK_ENV_FILE}" ]]; then
+  local stack_env_path
+  if [[ "${STACK_ENV_FILE}" = /* ]]; then
+    stack_env_path="${STACK_ENV_FILE}"
+  else
+    stack_env_path="${ROOT_DIR}/${STACK_ENV_FILE}"
+  fi
+  if [[ -f "${stack_env_path}" ]]; then
     set -a
-    load_env_file "${ROOT_DIR}/${STACK_ENV_FILE}"
+    load_env_file "${stack_env_path}"
     set +a
   fi
-  DOCKER_COMPOSE_ARGS=(--env-file "${STACK_ENV_FILE}" -f docker-compose.yml)
+  DOCKER_COMPOSE_ARGS=(--env-file "${stack_env_path}" -f "${ROOT_DIR}/docker-compose.yml")
   if [[ "${STACK_MODE:-local}" == "prod" ]]; then
-    DOCKER_COMPOSE_ARGS+=(-f docker-compose.prod.yml)
+    DOCKER_COMPOSE_ARGS+=(-f "${ROOT_DIR}/docker-compose.prod.yml")
   fi
   if [[ -n "${EXTRA_COMPOSE_FILES:-}" ]]; then
     for compose_file in ${EXTRA_COMPOSE_FILES}; do
-      DOCKER_COMPOSE_ARGS+=(-f "${compose_file}")
+      if [[ "${compose_file}" = /* ]]; then
+        DOCKER_COMPOSE_ARGS+=(-f "${compose_file}")
+      else
+        DOCKER_COMPOSE_ARGS+=(-f "${ROOT_DIR}/${compose_file}")
+      fi
     done
   fi
 }

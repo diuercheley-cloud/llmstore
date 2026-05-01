@@ -64,6 +64,26 @@ Teste de disaster recovery:
 
 O script sobe uma stack temporária isolada, restaura o backup, valida `health` e `ready`, roda um chat de teste e grava um relatório em `artifacts/dr-tests/`.
 
+## Experiência de Produção Local
+
+Para testar o stack como se estivesse em um ambiente de produção real (com landing page, pricing e portal amigável):
+
+```bash
+./scripts/local-production-up.sh
+```
+
+Este script configura a stack, garante que o cliente `demo-client` exista e gera um resumo em `artifacts/local-production/`.
+
+### Saúde da UI
+```bash
+./scripts/ui-health.sh
+```
+
+### Smoke Test Completo
+```bash
+./scripts/local-production-smoke.sh [SUA_API_KEY]
+```
+
 ## Operação comercial
 
 Criar plano:

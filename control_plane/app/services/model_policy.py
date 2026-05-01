@@ -71,8 +71,10 @@ async def resolve_requested_model(
         ),
         None,
     )
-    if selected is None:
+    if selected is None and requested_model in {"", "default"}:
         selected = next((item for item in active_models if item.is_default), None) or active_models[0]
+    if selected is None:
+        raise HTTPException(status_code=404, detail="requested model not found")
     routes = get_routing_candidates(selected)
     if not routes:
         raise HTTPException(status_code=503, detail="model backend is not active")

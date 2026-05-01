@@ -19,12 +19,13 @@
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         color: var(--ink);
         background:
           radial-gradient(circle at top left, rgba(200, 76, 47, 0.24), transparent 28%),
           radial-gradient(circle at bottom right, rgba(68, 110, 95, 0.2), transparent 30%),
           linear-gradient(180deg, #fbf6ec 0%, var(--bg) 100%);
+        line-height: 1.5;
       }
       a { color: inherit; text-decoration: none; }
       .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
@@ -34,256 +35,228 @@
         align-items: center;
         padding: 24px 0;
       }
-      .brand { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; }
-      .links { display: flex; gap: 18px; align-items: center; color: var(--muted); }
+      .brand { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800; color: var(--accent); }
+      .links { display: flex; gap: 18px; align-items: center; color: var(--muted); font-weight: 500; font-size: 14px; }
       .cta {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 12px 18px;
+        padding: 10px 20px;
         border-radius: 999px;
         border: 1px solid transparent;
-        transition: transform 160ms ease, background 160ms ease;
+        transition: all 0.2s ease;
+        font-weight: 600;
       }
       .cta.primary {
         background: var(--ink);
         color: #fff7f0;
       }
+      .cta.primary:hover { transform: translateY(-1px); background: #000; }
       .cta.secondary {
         border-color: var(--line);
         background: rgba(255, 255, 255, 0.45);
       }
-      .cta:hover { transform: translateY(-1px); }
+      .cta.secondary:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.6); }
+
       .hero {
         display: grid;
         grid-template-columns: 1.15fr 0.85fr;
-        gap: 28px;
+        gap: 48px;
         align-items: center;
-        padding: 28px 0 56px;
+        padding: 48px 0 80px;
       }
       .eyebrow {
         display: inline-flex;
-        padding: 8px 12px;
+        padding: 6px 12px;
         border-radius: 999px;
         background: var(--accent-soft);
         color: var(--accent-dark);
-        font-size: 13px;
+        font-size: 12px;
+        font-weight: 700;
         letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
       }
       h1 {
-        margin: 18px 0 16px;
-        font-size: clamp(44px, 7vw, 78px);
-        line-height: 0.96;
-        letter-spacing: -0.05em;
+        margin: 0 0 24px;
+        font-size: clamp(36px, 6vw, 64px);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        font-weight: 800;
       }
       .lead {
-        font-size: 19px;
+        font-size: 18px;
         line-height: 1.6;
         color: var(--muted);
         max-width: 58ch;
+        margin-bottom: 32px;
       }
       .hero-actions {
         display: flex;
-        gap: 14px;
+        gap: 16px;
         flex-wrap: wrap;
-        margin-top: 28px;
       }
       .metrics {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin-top: 30px;
+        gap: 16px;
+        margin-top: 40px;
       }
       .metric, .panel, .plan {
         background: var(--panel);
         border: 1px solid var(--line);
-        border-radius: 24px;
+        border-radius: 20px;
         box-shadow: var(--shadow);
         backdrop-filter: blur(10px);
       }
-      .metric { padding: 18px; }
-      .metric strong { display: block; font-size: 28px; margin-bottom: 6px; }
+      .metric { padding: 20px; }
+      .metric strong { display: block; font-size: 24px; margin-bottom: 4px; color: var(--accent); }
+      .metric span { font-size: 13px; color: var(--muted); font-weight: 500; }
+      
       .panel {
-        padding: 24px;
+        padding: 32px;
         position: relative;
         overflow: hidden;
       }
-      .panel::after {
-        content: "";
-        position: absolute;
-        inset: auto -30px -40px auto;
-        width: 160px;
-        height: 160px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(200, 76, 47, 0.28), transparent 72%);
-      }
+      .panel h3 { margin: 0 0 16px; font-size: 18px; }
       .stack {
         display: grid;
         gap: 12px;
-        margin-top: 18px;
       }
       .stack div {
         display: flex;
         justify-content: space-between;
         gap: 16px;
-        padding: 14px 16px;
-        border-radius: 16px;
+        padding: 12px 16px;
+        border-radius: 12px;
         background: rgba(255, 255, 255, 0.72);
         border: 1px solid rgba(24, 21, 18, 0.08);
+        font-size: 14px;
       }
-      .section {
-        padding: 24px 0 64px;
-      }
-      .section h2 {
-        margin: 0 0 12px;
-        font-size: 34px;
-        letter-spacing: -0.04em;
-      }
-      .section p {
-        margin: 0 0 20px;
-        color: var(--muted);
-        font-size: 17px;
-      }
+
+      .section { padding: 80px 0; }
+      .section h2 { margin: 0 0 16px; font-size: 32px; letter-spacing: -0.02em; font-weight: 700; }
+      .section-lead { margin: 0 0 48px; color: var(--muted); font-size: 18px; max-width: 60ch; }
+      
       .grid-3 {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
       }
       .card {
         background: rgba(255, 255, 255, 0.72);
         border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 22px;
+        border-radius: 20px;
+        padding: 24px;
+        transition: transform 0.2s;
       }
+      .card:hover { transform: translateY(-4px); }
+      .card strong { display: block; font-size: 18px; margin-bottom: 12px; }
+      .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+
       .plans {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
       }
       .plan {
-        padding: 24px;
-        min-height: 250px;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
       }
-      .plan.highlight {
-        border-color: rgba(200, 76, 47, 0.4);
-        transform: translateY(-6px);
-      }
-      .plan .price {
-        font-size: 42px;
-        letter-spacing: -0.05em;
-        margin: 12px 0;
-      }
-      .plan ul {
-        margin: 16px 0 0;
-        padding-left: 18px;
-        color: var(--muted);
-      }
+      .plan.highlight { border-color: var(--accent); border-width: 2px; }
+      .plan .price { font-size: 40px; font-weight: 800; margin: 16px 0; }
+      .plan ul { margin: 24px 0; padding: 0; list-style: none; flex-grow: 1; }
+      .plan li { margin-bottom: 12px; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+      .plan li::before { content: "✓"; color: var(--accent); font-weight: 800; }
+
       .footer {
-        padding: 12px 0 40px;
+        padding: 48px 0;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
         color: var(--muted);
-        font-size: 14px;
       }
+
       @media (max-width: 920px) {
-        .hero, .grid-3, .plans { grid-template-columns: 1fr; }
-        .metrics { grid-template-columns: 1fr 1fr; }
-      }
-      @media (max-width: 640px) {
-        .nav { flex-direction: column; align-items: flex-start; gap: 14px; }
-        .links { flex-wrap: wrap; }
+        .hero { grid-template-columns: 1fr; padding: 40px 0; text-align: center; }
+        .hero-actions { justify-content: center; }
+        .lead { margin-left: auto; margin-right: auto; }
         .metrics { grid-template-columns: 1fr; }
+        .nav { flex-direction: column; gap: 16px; }
       }
     </style>
   </head>
   <body>
     <div class="shell">
       <nav class="nav">
-        <div class="brand">LLM Inference Stack Cloud</div>
+        <div class="brand">LLM Stack</div>
         <div class="links">
           <a href="/pricing">Pricing</a>
-          <a href="/client-portal">Client Portal</a>
-          <a class="cta primary" href="/signup">Start Free</a>
+          <a href="/docs">API Docs</a>
+          <a href="/client-portal">Portal</a>
+          <a class="cta primary" href="/signup">Get Started</a>
         </div>
       </nav>
 
       <section class="hero">
         <div>
-          <span class="eyebrow">Private inference, public product</span>
-          <h1>Ship your own LLM API without building the SaaS wrapper from scratch.</h1>
+          <span class="eyebrow">Local Production v1.1</span>
+          <h1>Deploy your own LLM API in minutes.</h1>
           <p class="lead">
-            Landing pages, self-serve onboarding, automatic API key issuance, quota-based plans,
-            billing primitives and HTTPS are already wired around the inference stack.
+            A complete inference stack with a professional SaaS wrapper. 
+            Self-serve onboarding, multi-tenant quotas, and OpenAI-compatible endpoints—all in one containerized solution.
           </p>
           <div class="hero-actions">
-            <a class="cta primary" href="/signup">Create a free workspace</a>
-            <a class="cta secondary" href="/pricing">See plans</a>
+            <a class="cta primary" href="/signup">Create Free Account</a>
+            <a class="cta secondary" href="/docs">Read API Docs</a>
           </div>
           <div class="metrics">
-            <div class="metric"><strong>5 min</strong> from signup to first request</div>
-            <div class="metric"><strong>4 plans</strong> including a limited free tier</div>
-            <div class="metric"><strong>/v1 API</strong> OpenAI-compatible surface</div>
+            <div class="metric"><strong>Fast</strong><span>Ready in < 5 min</span></div>
+            <div class="metric"><strong>Compatible</strong><span>OpenAI /v1 Spec</span></div>
+            <div class="metric"><strong>Secure</strong><span>Private Inference</span></div>
           </div>
         </div>
         <div class="panel">
-          <strong>Commercial baseline included</strong>
+          <h3>SaaS Wrapper Included</h3>
           <div class="stack">
-            <div><span>Public signup</span><span>Auto-provisioned tenant</span></div>
-            <div><span>API keys</span><span>Generated on first conversion</span></div>
-            <div><span>Client portal</span><span>Usage, invoices and test prompt</span></div>
-            <div><span>Caddy edge</span><span>Automatic HTTPS on your VPS</span></div>
+            <div><span>Automatic Signup</span><span>✓</span></div>
+            <div><span>API Key Management</span><span>✓</span></div>
+            <div><span>Usage & Billing</span><span>✓</span></div>
+            <div><span>Admin Dashboard</span><span>✓</span></div>
+            <div><span>Client Portal</span><span>✓</span></div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Designed for a product funnel, not just a demo stack</h2>
-        <p>The stack now exposes the customer-facing surfaces needed to sell access instead of manually provisioning every client.</p>
+        <h2>Everything you need to ship.</h2>
+        <p class="section-lead">We built the boring parts so you can focus on your AI models and business logic.</p>
         <div class="grid-3">
           <div class="card">
             <strong>Acquisition</strong>
-            <p>Public landing and pricing pages make the offer legible before the API docs ever show up.</p>
+            <p>Ready-to-use landing and pricing pages to showcase your offering immediately.</p>
           </div>
           <div class="card">
             <strong>Activation</strong>
-            <p>Signup creates the client, binds the plan and returns the API key only once, ready for first use.</p>
+            <p>Automated onboarding flow that generates API keys and sets up quotas instantly.</p>
           </div>
           <div class="card">
             <strong>Retention</strong>
-            <p>Built-in quotas, billing snapshots and a customer portal keep support overhead down after launch.</p>
+            <p>Comprehensive client portal for usage tracking, invoice history, and quick testing.</p>
           </div>
         </div>
       </section>
 
-      <section class="section">
-        <h2>Plans built into the stack</h2>
-        <p>These cards are backed by the same plan records used by the API runtime.</p>
-        <div class="plans" id="plans">
-          <div class="plan">Loading plans...</div>
+      <div class="footer">
+        <div>© 2026 LLM Inference Stack • Local Production Edition</div>
+        <div style="display: flex; gap: 16px;">
+          <a href="/docs">Documentation</a>
+          <a href="/admin-dashboard">Admin Login</a>
         </div>
-      </section>
-
-      <div class="footer">Self-hosted SaaS packaging for the local LLM inference stack.</div>
+      </div>
     </div>
-
-    <script>
-      async function loadPlans() {
-        const host = document.getElementById("plans");
-        try {
-          const response = await fetch("/public/plans");
-          const data = await response.json();
-          host.innerHTML = data.plans.slice(0, 3).map((plan) => `
-            <article class="plan ${plan.highlight ? "highlight" : ""}">
-              <div>${plan.name}</div>
-              <div class="price">$${Number(plan.monthly_price).toFixed(0)}<span style="font-size:16px;color:#6b6257;">/mo</span></div>
-              <div style="color:#6b6257;">${plan.description || ""}</div>
-              <ul>${(plan.features || []).map((item) => `<li>${item}</li>`).join("")}</ul>
-            </article>
-          `).join("");
-        } catch (error) {
-          host.innerHTML = `<div class="plan">Unable to load plans: ${String(error)}</div>`;
-        }
-      }
-
-      loadPlans();
-    </script>
   </body>
 </html>

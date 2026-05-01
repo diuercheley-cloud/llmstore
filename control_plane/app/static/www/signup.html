@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Signup | LLM Inference Stack Cloud</title>
+    <title>Sign Up | LLM Inference Stack</title>
     <style>
       :root {
         --bg: #f5efe5;
-        --panel: rgba(255, 251, 244, 0.92);
+        --panel: rgba(255, 251, 244, 0.95);
         --ink: #191511;
         --muted: #6f655d;
         --line: rgba(25, 21, 17, 0.12);
@@ -16,11 +16,12 @@
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         color: var(--ink);
         background:
           radial-gradient(circle at top left, rgba(158, 61, 38, 0.18), transparent 26%),
           linear-gradient(180deg, #fff8ef 0%, var(--bg) 100%);
+        line-height: 1.5;
       }
       .shell {
         width: min(1100px, calc(100% - 32px));
@@ -28,120 +29,163 @@
         min-height: 100vh;
         display: grid;
         grid-template-columns: 0.9fr 1.1fr;
-        gap: 24px;
+        gap: 48px;
         align-items: center;
-        padding: 28px 0;
+        padding: 40px 0;
       }
+      .nav { position: absolute; top: 24px; left: 0; right: 0; }
+      .nav-inner { width: min(1100px, calc(100% - 32px)); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+      .nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+      .nav .brand { font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; }
+
       .copy h1 {
-        margin: 18px 0 14px;
-        font-size: clamp(40px, 6vw, 70px);
-        line-height: 0.96;
-        letter-spacing: -0.05em;
+        margin: 18px 0 24px;
+        font-size: clamp(32px, 5vw, 56px);
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+        font-weight: 800;
       }
       .copy p, .copy li { color: var(--muted); font-size: 17px; line-height: 1.6; }
+      .copy ul { margin: 24px 0; padding-left: 20px; }
+      .copy li { margin-bottom: 12px; }
+
       .card {
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 28px;
-        padding: 28px;
+        padding: 40px;
         box-shadow: 0 22px 56px rgba(40, 24, 13, 0.1);
         backdrop-filter: blur(10px);
       }
-      form { display: grid; gap: 14px; }
-      label { display: grid; gap: 8px; font-size: 14px; }
+      form { display: grid; gap: 20px; }
+      label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); }
       input, textarea, select, button {
         width: 100%;
-        padding: 13px 14px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
         border: 1px solid var(--line);
         font: inherit;
         background: white;
+        transition: border-color 0.2s;
       }
+      input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
       textarea { min-height: 100px; resize: vertical; }
       button {
         background: var(--ink);
         color: white;
         border: none;
         cursor: pointer;
+        font-weight: 700;
+        margin-top: 10px;
       }
+      button:hover { opacity: 0.9; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      #resultWrapper { margin-top: 24px; display: none; }
+      .result-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--accent); }
       pre {
         margin: 0;
-        padding: 16px;
+        padding: 20px;
         border-radius: 16px;
         background: #fff;
-        border: 1px solid var(--line);
+        border: 2px solid var(--accent);
         white-space: pre-wrap;
         word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-size: 13px;
+        color: var(--ink);
       }
       .notice {
-        margin-top: 14px;
-        padding: 14px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.68);
-        border: 1px solid var(--line);
-        color: var(--muted);
-        font-size: 14px;
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+        font-size: 13px;
+        font-weight: 500;
       }
+
       @media (max-width: 920px) {
-        .shell { grid-template-columns: 1fr; }
+        .shell { grid-template-columns: 1fr; padding-top: 80px; }
+        .nav-inner { justify-content: center; gap: 24px; }
+        .copy { text-align: center; }
+        .copy ul { text-align: left; }
       }
     </style>
   </head>
   <body>
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="/" class="brand">LLM Stack</a>
+        <div style="display: flex; gap: 20px;">
+          <a href="/pricing">Pricing</a>
+          <a href="/docs">Docs</a>
+          <a href="/client-portal">Portal</a>
+        </div>
+      </div>
+    </nav>
+
     <div class="shell">
       <section class="copy">
-        <div>Self-serve onboarding</div>
-        <h1>Create a tenant and receive an API key instantly.</h1>
+        <div style="font-weight: 700; color: var(--accent); text-transform: uppercase; font-size: 12px; letter-spacing: 0.1em;">Onboarding</div>
+        <h1>Get your API key in seconds.</h1>
         <p>
-          This page provisions a client account on the control plane, binds the selected billing
-          plan and returns the API key only once. Store it immediately.
+          Instant provisioning for your LLM infrastructure. Choose a plan, fill your details, and start building.
         </p>
         <ul>
-          <li>Free plan is limited and intended for sandbox validation.</li>
-          <li>Paid plans are provisioned immediately for faster sales activation.</li>
-          <li>Use the client portal to inspect quota, invoices and a test prompt.</li>
+          <li><strong>Instant Access:</strong> API keys are generated immediately.</li>
+          <li><strong>Secure:</strong> Your inference runs in an isolated environment.</li>
+          <li><strong>Scale Ready:</strong> Upgrade your plan anytime via the admin API.</li>
         </ul>
       </section>
 
       <section class="card">
         <form id="signupForm">
           <label>
-            Full name
+            Full Name
             <input name="full_name" required minlength="3" maxlength="120" placeholder="Jane Doe" />
           </label>
           <label>
-            Work email
+            Work Email
             <input name="email" type="email" required placeholder="jane@company.com" />
           </label>
           <label>
-            Company
-            <input name="company" maxlength="120" placeholder="Acme AI" />
+            Organization
+            <input name="company" maxlength="120" placeholder="Acme AI Corp" />
           </label>
           <label>
-            Plan
+            Selected Plan
             <select name="plan_code" id="planSelect">
-              <option value="free">Free</option>
-              <option value="basic">Basic</option>
-              <option value="pro">Pro</option>
+              <option value="free">Free Tier</option>
+              <option value="basic">Basic Plan</option>
+              <option value="pro">Pro Plan</option>
               <option value="enterprise">Enterprise</option>
             </select>
           </label>
-          <label>
-            Use case
-            <textarea name="use_case" maxlength="500" placeholder="Internal copilots, customer support, evaluation traffic..."></textarea>
-          </label>
-          <button type="submit">Create account</button>
+          <button type="submit" id="submitBtn">Create My Account</button>
         </form>
-        <div class="notice">The API key below is only returned in this response.</div>
-        <pre id="result">No signup submitted yet.</pre>
+
+        <div id="resultWrapper">
+          <div class="result-title">Success! Account Created</div>
+          <pre id="result"></pre>
+          <div class="notice">
+            <strong>Important:</strong> Copy your API key now. For security reasons, it will not be shown again.
+          </div>
+          <div style="margin-top: 16px;">
+            <a href="/client-portal" style="display: block; text-align: center; font-weight: 700; color: var(--ink); text-decoration: underline;">Go to Client Portal</a>
+          </div>
+        </div>
       </section>
     </div>
 
     <script>
       const form = document.getElementById("signupForm");
       const result = document.getElementById("result");
+      const resultWrapper = document.getElementById("resultWrapper");
+      const submitBtn = document.getElementById("submitBtn");
       const planSelect = document.getElementById("planSelect");
+      
       const queryPlan = new URLSearchParams(window.location.search).get("plan");
       if (queryPlan) {
         planSelect.value = queryPlan;
@@ -149,9 +193,12 @@
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        result.textContent = "Creating account...";
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Provisioning...";
+        
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
+        
         try {
           const response = await fetch("/public/signup", {
             method: "POST",
@@ -160,11 +207,19 @@
           });
           const body = await response.json();
           if (!response.ok) {
-            throw new Error(body.detail || JSON.stringify(body));
+            throw new Error(body.detail || "Signup failed");
           }
+          
+          form.style.display = "none";
+          resultWrapper.style.display = "block";
           result.textContent = JSON.stringify(body, null, 2);
+          
+          // If we have an API key, we can pre-fill it for the portal link if we wanted, 
+          // but security first: let them copy it.
         } catch (error) {
-          result.textContent = `Signup failed: ${String(error)}`;
+          alert(error.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create My Account";
         }
       });
     </script>

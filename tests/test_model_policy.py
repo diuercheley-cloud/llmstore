@@ -1,12 +1,15 @@
 import json
 import random
 
+import pytest
+from fastapi import HTTPException
+
 from app.models.billing_plan import BillingPlan
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
-from app.services.model_policy import get_effective_allowed_models, plan_routing_order, serialize_model_card
+from app.services.model_policy import get_effective_allowed_models, plan_routing_order, resolve_requested_model, serialize_model_card
 
 
 def test_get_effective_allowed_models_prefers_client_override():
@@ -95,3 +98,55 @@ def test_plan_routing_order_uses_weight_inside_same_priority_group():
         first_choices[ordered[0].inference_backend.name] += 1
 
     assert first_choices["high-weight"] > first_choices["low-weight"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_requested_model_rejects_unknown_model(monkeypatch):
+    model = ModelRegistry(
+        model_id="gemma",
+        model_alias="gemma",
+        provider="llama.cpp",
+        model_file="gemma.gguf",
+        context_length=2048,
+        is_active=True,
+        is_default=True,
+        status="configured",
+    )
+    backend = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
+    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+
+    async def fake_models(_session):
+        return [model]
+
+    monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
+
+    with pytest.raises(HTTPException) as exc:
+        await resolve_requested_model(None, client=Client(name="demo"), requested_model="model-not-allowed")
+
+    assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_resolve_requested_model_allows_explicit_default(monkeypatch):
+    model = ModelRegistry(
+        model_id="gemma",
+        model_alias="gemma",
+        provider="llama.cpp",
+        model_file="gemma.gguf",
+        context_length=2048,
+        is_active=True,
+        is_default=True,
+        status="configured",
+    )
+    backend = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
+    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+
+    async def fake_models(_session):
+        return [model]
+
+    monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
+
+    selected, requested = await resolve_requested_model(None, client=Client(name="demo"), requested_model="default")
+
+    assert selected is model
+    assert requested == "default"

@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     model_id: str = Field(default="unsloth/gemma-4-E4B-it-GGUF", alias="MODEL_ID")
     model_file: str = Field(default="gemma-4-E4B-it-Q4_K_M.gguf", alias="MODEL_FILE")
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
+    app_env: str = Field(default="local", alias="APP_ENV")
+    app_public_url: str = Field(default="http://localhost:18080", alias="APP_PUBLIC_URL")
     jwt_secret: str = Field(default="change-me-at-all-costs", alias="JWT_SECRET")
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
 

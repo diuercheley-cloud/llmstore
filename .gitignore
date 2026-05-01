@@ -6,6 +6,8 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-*/
+.cache/
 
 # Node (se houver)
 node_modules/
@@ -17,10 +19,15 @@ redis-data/
 # Artifacts
 artifacts/
 *.log
+tmp_client.txt
+tmp_key.txt
 
 # Models (IMPORTANT)
+/bin
 models/
 *.gguf
+*.so*
+*.bin*
 
 # OS
 .DS_Store

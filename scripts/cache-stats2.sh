@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TOKEN="sk-local-cnUVXsp5b_0N3KJLE3uzHYg1-l3WzUcy"
+API_KEY="${API_KEY:?set API_KEY to test response cache}"
+BASE_URL="${BASE_URL:-http://localhost:18080}"
 
 REQ='{
   "model": "gemma",
@@ -14,12 +15,12 @@ REQ='{
   "stream": false
 }'
 
-curl -s http://localhost:18080/v1/chat/completions \
-  -H "Authorization: Bearer $TOKEN" \
+curl -s "${BASE_URL}/v1/chat/completions" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "$REQ" | jq
 
-curl -s http://localhost:18080/v1/chat/completions \
-  -H "Authorization: Bearer $TOKEN" \
+curl -s "${BASE_URL}/v1/chat/completions" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "$REQ" | jq

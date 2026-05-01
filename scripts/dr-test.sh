@@ -18,14 +18,16 @@ mkdir -p "${REPORT_DIR}"
 TEMP_ENV_FILE="/tmp/llm-inference-stack-dr-${TIMESTAMP}.env"
 TEMP_OVERRIDE_FILE="/tmp/llm-inference-stack-dr-${TIMESTAMP}.override.yml"
 PROJECT_NAME="llmstackdr$(printf '%s' "${TIMESTAMP}" | tr '[:upper:]' '[:lower:]')"
-BASE_URL="http://localhost:18180"
+DR_HOST_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+export DR_HOST_PORT
+BASE_URL="http://localhost:${DR_HOST_PORT}"
 BACKUP_ENV_FILE="$(find "${BACKUP_DIR}/env" -maxdepth 1 -type f | head -n1 || true)"
 [[ -n "${BACKUP_ENV_FILE}" ]] || { echo "[dr-test][error] backup env file not found in ${BACKUP_DIR}/env" >&2; exit 1; }
 
 cleanup() {
   local status=$?
+  docker compose -p "${PROJECT_NAME}" down -v >/dev/null 2>&1 || true
   if [[ -f "${TEMP_ENV_FILE}" ]]; then
-    ENV_FILE="${TEMP_ENV_FILE}" COMPOSE_PROJECT_NAME="${PROJECT_NAME}" dc down -v >/dev/null 2>&1 || true
     rm -f "${TEMP_ENV_FILE}"
   fi
   rm -f "${TEMP_OVERRIDE_FILE}"
@@ -37,12 +39,13 @@ cp "${BACKUP_ENV_FILE}" "${TEMP_ENV_FILE}"
 chmod 600 "${TEMP_ENV_FILE}"
 python3 - "${TEMP_ENV_FILE}" <<'PY'
 from pathlib import Path
+import os
 import sys
 
 path = Path(sys.argv[1])
 lines = path.read_text(encoding="utf-8").splitlines()
 updates = {
-    "HOST_PORT": "18180",
+    "HOST_PORT": os.environ["DR_HOST_PORT"],
     "POSTGRES_PORT": "15432",
     "REDIS_PORT": "16379",
     "PROMETHEUS_PORT": "19090",
@@ -71,6 +74,8 @@ services:
     ports: !reset []
   redis:
     ports: !reset []
+  data-plane-gemma:
+    ports: !reset []
 EOF
 
 ENV_FILE="${TEMP_ENV_FILE}"
@@ -78,7 +83,7 @@ export ENV_FILE
 export COMPOSE_PROJECT_NAME="${PROJECT_NAME}"
 export EXTRA_COMPOSE_FILES="${TEMP_OVERRIDE_FILE}"
 init_stack_env
-export HOST_PORT=18180
+export HOST_PORT="${DR_HOST_PORT}"
 export PROMETHEUS_PORT=19090
 export GRAFANA_PORT=13001
 export PUBLIC_EXPOSURE=false
@@ -139,6 +144,11 @@ ready_status=ok
 chat_test=ok
 report_dir=${REPORT_DIR}
 EOF
+
+log_step "cleaning temporary environment"
+dc down -v >"${REPORT_DIR}/cleanup.log" 2>&1
+rm -f "${TEMP_ENV_FILE}" "${TEMP_OVERRIDE_FILE}"
+trap - EXIT
 
 printf '[dr-test] success\n'
 printf '[dr-test] report=%s\n' "${REPORT_DIR}/report.txt"

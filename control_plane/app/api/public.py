@@ -1,12 +1,19 @@
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
+from app.core.time import utc_now
 from app.db.session import get_db_session
-from app.schemas.public import PublicSignupRequest, PublicSignupResponse
+from app.models.billing_invoice import BillingInvoice
+from app.models.customer_payment import CustomerPayment
+from app.schemas.public import PublicSignupRequest, PublicSignupResponse, WebhookPayload
+from app.services.billing import refresh_billing_statuses
 from app.services.public_onboarding import create_public_signup, list_public_plans
 
 router = APIRouter(tags=["public"])
@@ -33,6 +40,16 @@ async def pricing_page():
 @router.get("/signup", include_in_schema=False)
 async def signup_page():
     return FileResponse(static_dir / "signup.html")
+
+
+@router.get("/docs", include_in_schema=False)
+async def docs_page():
+    return FileResponse(static_dir / "docs.html")
+
+
+@router.get("/getting-started", include_in_schema=False)
+async def getting_started_page():
+    return FileResponse(static_dir / "getting-started.html")
 
 
 @router.get("/public/plans")
@@ -66,3 +83,61 @@ async def public_signup(
             "Store the API key now. It is only returned once.",
         ],
     )
+
+
+@router.post("/public/webhooks/pix", status_code=200)
+async def pix_webhook(
+    payload: WebhookPayload,
+    session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        invoice_uuid = UUID(payload.invoice_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid invoice_id format")
+
+    invoice = (
+        await session.execute(
+            select(BillingInvoice)
+            .options(selectinload(BillingInvoice.payments))
+            .where(BillingInvoice.id == invoice_uuid)
+        )
+    ).scalar_one_or_none()
+
+    if not invoice:
+        raise HTTPException(status_code=404, detail="invoice not found")
+
+    if invoice.status == "paid":
+        return {"status": "already_paid"}
+
+    if payload.status == "paid":
+        current_time = utc_now()
+        invoice.status = "paid"
+        invoice.paid_at = current_time
+        invoice.updated_at = current_time
+
+        pending_payment = next((p for p in invoice.payments if p.status in {"pending", "overdue"}), None)
+        if pending_payment:
+            pending_payment.status = "paid"
+            pending_payment.payment_reference = payload.payment_reference or "pix_webhook"
+            pending_payment.paid_at = current_time
+            pending_payment.updated_at = current_time
+        else:
+            session.add(
+                CustomerPayment(
+                    invoice_id=invoice.id,
+                    client_id=invoice.client_id,
+                    status="paid",
+                    amount=invoice.total_amount,
+                    currency=invoice.currency,
+                    payment_method=invoice.payment_method,
+                    payment_reference=payload.payment_reference or "pix_webhook",
+                    paid_at=current_time,
+                )
+            )
+
+        # Trigger unsuspend logic if applicable
+        await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
+        await session.commit()
+        return {"status": "paid_successfully"}
+
+    return {"status": "ignored"}

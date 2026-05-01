@@ -13,7 +13,7 @@ def test_prompt_fingerprint_is_stable():
 
 
 def test_serialize_security_event_preserves_details():
-    now = datetime.now(timezone.utc)
+    now = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
     event = SecurityEvent(
         id=uuid.uuid4(),
         client_id=uuid.uuid4(),
@@ -32,3 +32,4 @@ def test_serialize_security_event_preserves_details():
     assert payload["event_type"] == "invalid_api_key_attempts"
     assert payload["details"]["attempts"] == 5
     assert payload["correlation_id"] == "corr-123"
+    assert payload["created_at"] == now.isoformat()

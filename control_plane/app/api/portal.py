@@ -13,7 +13,7 @@ from app.db.session import get_db_session, get_redis
 from app.models.billing_invoice import BillingInvoice
 from app.models.client import Client
 from app.models.customer_payment import CustomerPayment
-from app.schemas.inference import ChatCompletionRequest, PortalTestChatRequest
+from app.schemas.inference import ChatCompletionRequest, PortalTestChatRequest, OnboardingEventRequest
 from app.services.audit import log_request
 from app.services.auth import require_client
 from app.services.billing import (
@@ -32,7 +32,7 @@ from app.services.response_cache import build_chat_cache_key, lookup_exact_cache
 from app.utils.request_summary import summarize_chat_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 
-router = APIRouter(prefix="/portal", tags=["portal"])
+router = APIRouter(tags=["portal"])
 
 
 @router.get("/me")
@@ -46,6 +46,7 @@ async def portal_me(
         "description": client.description,
         "billing_status": client.billing_status,
         "is_blocked": client.is_blocked,
+        "metadata_json": client.metadata_json,
         "plan": {
             "code": effective_plan.code,
             "name": effective_plan.name,
@@ -162,6 +163,20 @@ async def portal_invoices(
             for payment in payments
         ],
     }
+
+
+@router.post("/onboarding/event")
+async def record_onboarding_event(
+    payload: OnboardingEventRequest,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    metadata = json.loads(client.metadata_json) if client.metadata_json else {}
+    if payload.event == "portal_tutorial_closed":
+        metadata["onboarding_finished"] = True
+    client.metadata_json = json.dumps(metadata)
+    await session.commit()
+    return {"status": "ok"}
 
 
 @router.post("/test-chat")

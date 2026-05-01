@@ -58,7 +58,7 @@ app.include_router(system_router)
 app.include_router(public_router)
 app.include_router(admin_router)
 app.include_router(client_router)
-app.include_router(portal_router)
+app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account
 
 static_dir = Path(__file__).resolve().parent / "static"

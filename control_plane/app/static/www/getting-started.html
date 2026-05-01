@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Getting Started | LLM Inference Stack</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --border: #e2e8f0;
+        --success: #10b981;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.6;
+      }
+      .shell { max-width: 800px; margin: 4rem auto; padding: 0 1.5rem; }
+      header { text-align: center; margin-bottom: 3rem; }
+      h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+      .lead { font-size: 1.25rem; color: var(--muted); }
+
+      .steps { display: grid; gap: 2rem; margin-top: 3rem; }
+      .step {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        display: flex;
+        gap: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+      .step-num {
+        width: 40px;
+        height: 40px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .step-content h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+      .step-content p { margin: 0; color: var(--muted); }
+      
+      .checklist {
+        background: #f1f5f9;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-top: 3rem;
+      }
+      .checklist h3 { margin-top: 0; font-size: 1.1rem; margin-bottom: 1rem; }
+      .check-item { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-weight: 500; }
+      .check-item input { width: 18px; height: 18px; cursor: pointer; }
+
+      .cta-box { text-align: center; margin-top: 4rem; }
+      .btn {
+        display: inline-block;
+        background: var(--accent);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 700;
+        transition: transform 0.2s;
+      }
+      .btn:hover { transform: translateY(-2px); }
+
+      @media (max-width: 640px) {
+        .step { flex-direction: column; padding: 1.5rem; }
+        h1 { font-size: 2rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <h1>Welcome to the Stack!</h1>
+        <p class="lead">Your multi-tenant inference infrastructure is ready. Let's get you set up in 3 minutes.</p>
+      </header>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h2>Get your API Key</h2>
+            <p>Go to the <a href="/signup">Sign Up</a> page to create your first tenant. Copy the API Key shown at the end—you'll only see it once.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h2>Access the Portal</h2>
+            <p>Use your key to log into the <a href="/client-portal">Client Portal</a>. Here you can track usage, view invoices, and test models in real-time.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h2>Run your first Prompt</h2>
+            <p>Head over to the "Quick Test Chat" section in the portal or check the <a href="/docs">Docs</a> for a cURL example to integrate with your app.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="checklist">
+        <h3>Onboarding Checklist</h3>
+        <div class="check-item"><input type="checkbox" id="c1"> <label for="c1">Created a tenant account</label></div>
+        <div class="check-item"><input type="checkbox" id="c2"> <label for="c2">Saved the API Key securely</label></div>
+        <div class="check-item"><input type="checkbox" id="c3"> <label for="c3">Verified access in the Client Portal</label></div>
+        <div class="check-item"><input type="checkbox" id="c4"> <label for="c4">Performed a test chat completion</label></div>
+        <div class="check-item"><input type="checkbox" id="c5"> <label for="c5">Read the API Documentation</label></div>
+      </div>
+
+      <div class="cta-box">
+        <a href="/client-portal" class="btn">Go to My Portal</a>
+        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--muted);">Need help? Check our <a href="/docs">Docs</a>.</p>
+      </div>
+    </div>
+
+    <script>
+      // Persist checklist in local storage
+      const checks = document.querySelectorAll('input[type="checkbox"]');
+      checks.forEach(c => {
+        const id = 'onboarding-' + c.id;
+        c.checked = localStorage.getItem(id) === 'true';
+        c.addEventListener('change', () => localStorage.setItem(id, c.checked));
+      });
+    </script>
+  </body>
+</html>

@@ -8,19 +8,55 @@ source "${SCRIPT_DIR}/common.sh"
 
 init_stack_env
 
+QUICK=false
+APPLY=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --quick)
+      QUICK=true
+      shift
+      ;;
+    --apply)
+      APPLY=true
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Uso: ./scripts/benchmark.sh [--quick] [--apply]
+
+Opcoes:
+  --quick   Roda uma unica configuracao smoke para validar o benchmark.
+  --apply   Aplica a recomendacao gerada ao .env.local.
+EOF
+      exit 0
+      ;;
+    *)
+      printf '[benchmark][error] opcao invalida: %s\n' "$1" >&2
+      exit 2
+      ;;
+  esac
+done
+
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 OUTPUT_DIR="${ROOT_DIR}/artifacts/benchmarks/${TIMESTAMP}"
 mkdir -p "${OUTPUT_DIR}"
 RESULTS_FILE="${OUTPUT_DIR}/results.jsonl"
 
-echo "--- Iniciando Benchmark para RTX 4050 (Release 0.4.0-local) ---"
+echo "--- Iniciando Benchmark para RTX 4050 ---"
 echo "Resultados serão salvos em: ${OUTPUT_DIR}"
 
 # Combinações de teste
-CTX_SIZES=(1024 2048 3072)
-LAYERS=(12 16 20 24)
-BATCH_SIZES=(128 512)
-UBATCH_SIZES=(64 128)
+if [[ "${QUICK}" == "true" ]]; then
+  CTX_SIZES=("${LLAMA_CTX_SIZE:-1024}")
+  LAYERS=("${LLAMA_N_GPU_LAYERS:-12}")
+  BATCH_SIZES=("${LLAMA_BATCH_SIZE:-128}")
+  UBATCH_SIZES=("${LLAMA_UBATCH_SIZE:-64}")
+else
+  CTX_SIZES=(1024 2048 3072)
+  LAYERS=(12 16 20 24)
+  BATCH_SIZES=(128 512)
+  UBATCH_SIZES=(64 128)
+fi
 
 # Garantir que o stack está parado antes de começar
 echo "Limpando ambiente..."
@@ -92,7 +128,7 @@ with open('${OUTPUT_DIR}/recommendation.json', 'w') as f:
 
 echo "Para aplicar esta config no .env.local, rode: scripts/benchmark.sh --apply"
 
-if [[ "${1:-}" == "--apply" ]]; then
+if [[ "${APPLY}" == "true" ]]; then
     RECOMMENDATION_FILE="${OUTPUT_DIR}/recommendation.json"
     if [[ -f "${RECOMMENDATION_FILE}" ]]; then
         CTX=$(jq -r '.config.ctx' "${RECOMMENDATION_FILE}")

@@ -8,7 +8,7 @@ from app.services.generation_jobs import serialize_job
 def test_serialize_job_preserves_cancelled_state_and_backend_errors():
     job_id = uuid.uuid4()
     client_id = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
     job = GenerationJob(
         id=job_id,
         client_id=client_id,
@@ -34,3 +34,5 @@ def test_serialize_job_preserves_cancelled_state_and_backend_errors():
     assert payload["status"] == "cancelled"
     assert payload["backend_errors"][0]["backend_name"] == "gemma-local"
     assert payload["cancelled_at"] == now.isoformat()
+    assert payload["response"] is None
+    assert payload["attempts"] is None

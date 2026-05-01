@@ -3,412 +3,375 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LLM Stack Admin</title>
+    <title>Admin Dashboard - LLM Inference Stack</title>
     <style>
       :root {
-        --bg: #f3f0e8;
-        --panel: #fffdf8;
-        --ink: #1d1f1f;
-        --muted: #6a6d69;
+        --bg: #f1f5f9;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #64748b;
         --accent: #0f766e;
-        --danger: #b91c1c;
-        --border: #d6d1c4;
+        --accent-hover: #0d9488;
+        --border: #e2e8f0;
+        --danger: #ef4444;
+        --success: #10b981;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-        background:
-          radial-gradient(circle at top right, rgba(15, 118, 110, 0.16), transparent 28%),
-          linear-gradient(180deg, #f7f4ec 0%, var(--bg) 100%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
         color: var(--ink);
+        line-height: 1.5;
       }
       header {
-        padding: 24px 28px 16px;
+        background: white;
         border-bottom: 1px solid var(--border);
-        backdrop-filter: blur(8px);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
-      h1 { margin: 0 0 6px; font-size: 28px; }
-      p { margin: 0; color: var(--muted); }
+      .brand h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+      .auth-box { display: flex; gap: 0.5rem; }
+      
+      input, button {
+        font: inherit;
+        border-radius: 0.375rem;
+        border: 1px solid var(--border);
+        padding: 0.5rem 0.75rem;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover { background: var(--accent-hover); }
+      button.secondary { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
+      button.secondary:hover { background: #f1f5f9; color: var(--ink); }
+
       main {
-        padding: 24px;
+        padding: 2rem;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        max-width: 1600px;
+        margin: 0 auto;
       }
       section {
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px;
-        box-shadow: 0 10px 30px rgba(20, 20, 20, 0.06);
-      }
-      h2 { margin-top: 0; font-size: 18px; }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      th, td {
-        text-align: left;
-        padding: 8px 6px;
-        border-bottom: 1px solid rgba(214, 209, 196, 0.7);
-        vertical-align: top;
-      }
-      th { color: var(--muted); font-weight: 600; }
-      .pill {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: rgba(15, 118, 110, 0.12);
-        color: var(--accent);
-        font-size: 12px;
-      }
-      .danger { color: var(--danger); }
-      .toolbar {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-top: 12px;
-      }
-      input, button {
-        border-radius: 10px;
-        border: 1px solid var(--border);
-        padding: 10px 12px;
-        font: inherit;
-      }
-      button {
-        cursor: pointer;
-        background: var(--accent);
-        color: white;
-        border: none;
-      }
-      pre {
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: #f7f5ef;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        font-size: 12px;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       }
       .wide { grid-column: 1 / -1; }
+      h2 { margin-top: 0; font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+      
+      table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+      th, td { text-align: left; padding: 0.625rem; border-bottom: 1px solid var(--border); }
+      th { background: #f8fafc; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.025em; }
+      
+      .pill {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .pill-success { background: #d1fae5; color: #065f46; }
+      .pill-danger { background: #fee2e2; color: #991b1b; }
+      .pill-muted { background: #f1f5f9; color: #475569; }
+
+      pre.debug {
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        max-height: 300px;
+        overflow: auto;
+        display: none;
+        margin-top: 1rem;
+      }
+      
+      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+      .stat-card { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); }
+      .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+      .stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+
+      .hidden { display: none; }
     </style>
   </head>
   <body>
     <header>
-      <h1>LLM Inference Admin</h1>
-      <p>Painel local para clientes, chaves, uso, erros, latência e status do modelo.</p>
-      <div class="toolbar">
-        <input id="adminToken" type="password" placeholder="X-Admin-Token" />
-        <button id="saveToken">Conectar</button>
-        <button id="refresh">Atualizar</button>
+      <div class="brand">
+        <h1>LLM Stack Admin</h1>
+      </div>
+      <div class="auth-box">
+        <input id="adminToken" type="password" placeholder="Admin Token" />
+        <button id="connect">Connect</button>
+        <button id="refresh" class="secondary">Refresh</button>
       </div>
     </header>
-    <main>
+
+    <main id="adminContent" class="hidden">
+      <!-- Health & Status -->
       <section>
-        <h2>Health Deep</h2>
-        <pre id="healthDeep">carregando...</pre>
+        <h2>System Health <button class="secondary" onclick="toggleDebug('healthDebug')">JSON</button></h2>
+        <div id="healthStats" class="stat-grid"></div>
+        <pre id="healthDebug" class="debug"></pre>
       </section>
+
       <section>
-        <h2>Resumo de Uso</h2>
-        <pre id="usageTotals">carregando...</pre>
+        <h2>Model Status <button class="secondary" onclick="toggleDebug('modelDebug')">JSON</button></h2>
+        <div id="modelStats" class="stat-grid"></div>
+        <pre id="modelDebug" class="debug"></pre>
       </section>
-      <section>
-        <h2>Cache</h2>
-        <pre id="cacheStats">carregando...</pre>
-      </section>
-      <section>
-        <h2>Billing Cycle</h2>
-        <pre id="billingCycle">carregando...</pre>
-      </section>
+
+      <!-- Revenue & Financials -->
       <section class="wide">
-        <h2>Consumo por Plano</h2>
-        <div id="plans"></div>
+        <h2>Revenue Summary <button class="secondary" onclick="toggleDebug('revenueDebug')">JSON</button></h2>
+        <div id="revenueStats" class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"></div>
+        <pre id="revenueDebug" class="debug"></pre>
       </section>
+
+      <!-- Usage & Billing -->
       <section class="wide">
-        <h2>Previsão de Cobrança</h2>
-        <div id="invoices"></div>
+        <h2>Client Usage <button class="secondary" onclick="toggleDebug('usageDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="clientUsageTable"></div></div>
+        <pre id="usageDebug" class="debug"></pre>
       </section>
+
+      <!-- Infrastructure -->
       <section class="wide">
-        <h2>Invoices e Pagamentos</h2>
-        <div id="billingInvoices"></div>
-        <div id="billingPayments" style="margin-top: 18px;"></div>
+        <h2>Inference Backends <button class="secondary" onclick="toggleDebug('backendDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="backendTable"></div></div>
+        <pre id="backendDebug" class="debug"></pre>
       </section>
+
+      <!-- Security & Logs -->
       <section class="wide">
-        <h2>Clientes</h2>
-        <div id="clients"></div>
+        <h2>Security Events <button class="secondary" onclick="toggleDebug('securityDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="securityTable"></div></div>
+        <pre id="securityDebug" class="debug"></pre>
       </section>
+
       <section class="wide">
-        <h2>Chaves</h2>
-        <div id="keys"></div>
-      </section>
-      <section class="wide">
-        <h2>Erros e Latência</h2>
-        <div id="requests"></div>
-      </section>
-      <section class="wide">
-        <h2>Fila e Jobs</h2>
-        <pre id="jobsSummary">carregando...</pre>
-        <div id="jobs"></div>
-      </section>
-      <section class="wide">
-        <h2>Security</h2>
-        <div id="securityEvents"></div>
-      </section>
-      <section class="wide">
-        <h2>Observability</h2>
-        <pre id="observabilitySummary">carregando...</pre>
-      </section>
-      <section class="wide">
-        <h2>Reports</h2>
-        <pre id="monthlyReport">carregando...</pre>
-      </section>
-      <section class="wide">
-        <h2>Status do Modelo</h2>
-        <pre id="models">carregando...</pre>
-      </section>
-      <section class="wide">
-        <h2>Acesso por Plano</h2>
-        <div id="planModelAccess"></div>
-      </section>
-      <section class="wide">
-        <h2>Backends</h2>
-        <div id="backends"></div>
-      </section>
-      <section class="wide">
-        <h2>Roteamento e Fallback</h2>
-        <pre id="routingSummary">carregando...</pre>
-        <div id="routingTable"></div>
+        <h2>Recent Requests <button class="secondary" onclick="toggleDebug('requestDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="requestTable"></div></div>
+        <pre id="requestDebug" class="debug"></pre>
       </section>
     </main>
+
+    <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted);">
+      <p>Please enter your Admin Token to access the dashboard.</p>
+    </div>
+
     <script>
-      const tokenInput = document.getElementById("adminToken");
-      const saveToken = document.getElementById("saveToken");
-      const refresh = document.getElementById("refresh");
-      tokenInput.value = localStorage.getItem("adminToken") || "";
+      const elements = {
+        adminToken: document.getElementById('adminToken'),
+        connect: document.getElementById('connect'),
+        refresh: document.getElementById('refresh'),
+        adminContent: document.getElementById('adminContent'),
+        loginPrompt: document.getElementById('loginPrompt')
+      };
 
-      saveToken.addEventListener("click", async () => {
-        localStorage.setItem("adminToken", tokenInput.value.trim());
-        await loadDashboard();
+      const savedToken = localStorage.getItem('adminToken');
+      if (savedToken) {
+        elements.adminToken.value = savedToken;
+        initAdmin();
+      }
+
+      elements.connect.addEventListener('click', () => {
+        localStorage.setItem('adminToken', elements.adminToken.value.trim());
+        initAdmin();
       });
-      refresh.addEventListener("click", loadDashboard);
 
-      async function api(path) {
-        const token = localStorage.getItem("adminToken") || tokenInput.value.trim();
-        if (!token) throw new Error("defina o X-Admin-Token");
-        const response = await fetch(path, { headers: { "X-Admin-Token": token } });
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`${response.status} ${text}`);
-        }
+      elements.refresh.addEventListener('click', initAdmin);
+
+      function toggleDebug(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      }
+
+      async function adminFetch(path) {
+        const token = elements.adminToken.value.trim();
+        const response = await fetch(path, {
+          headers: { 'X-Admin-Token': token }
+        });
+        if (!response.ok) throw new Error(response.statusText);
         return response.json();
       }
 
-      function renderTable(targetId, columns, rows) {
-        const host = document.getElementById(targetId);
-        if (!rows.length) {
-          host.innerHTML = "<p>sem dados</p>";
-          return;
-        }
-        const header = columns.map((column) => `<th>${column.label}</th>`).join("");
-        const body = rows.map((row) => {
-          const cells = columns.map((column) => {
-            const value = column.render ? column.render(row[column.key], row) : row[column.key];
-            return `<td>${value ?? ""}</td>`;
-          }).join("");
-          return `<tr>${cells}</tr>`;
-        }).join("");
-        host.innerHTML = `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
-      }
+      async function initAdmin() {
+        if (!elements.adminToken.value.trim()) return;
+        elements.adminContent.classList.remove('hidden');
+        elements.loginPrompt.classList.add('hidden');
 
-      async function loadDashboard() {
         try {
-          const [healthDeep, usageSummary, invoicesPreview, invoicesLive, apiKeys, requests, models, routing, cacheStats, jobs, securityEvents, monthlyReport] = await Promise.all([
-            api("/admin/health/deep"),
-            api("/admin/usage/summary"),
-            api("/admin/billing/invoices/preview"),
-            api("/admin/billing/invoices"),
-            api("/admin/api-keys"),
-            api("/admin/requests"),
-            api("/admin/models"),
-            api("/admin/backends/routing"),
-            api("/admin/cache/stats"),
-            api("/admin/jobs"),
-            api("/admin/security/events"),
-            api("/admin/reports/monthly"),
+          const [health, usage, models, security, requests, revenue] = await Promise.all([
+            adminFetch('/admin/health/deep'),
+            adminFetch('/admin/usage/summary'),
+            adminFetch('/admin/models'),
+            adminFetch('/admin/security/events'),
+            adminFetch('/admin/requests'),
+            adminFetch('/admin/revenue/summary')
           ]);
 
-          document.getElementById("healthDeep").textContent = JSON.stringify(healthDeep, null, 2);
-          document.getElementById("usageTotals").textContent = JSON.stringify(usageSummary.totals, null, 2);
-          document.getElementById("cacheStats").textContent = JSON.stringify(cacheStats, null, 2);
-          document.getElementById("models").textContent = JSON.stringify(models.registry, null, 2);
-          document.getElementById("billingCycle").textContent = JSON.stringify(invoicesLive.summary, null, 2);
-          document.getElementById("routingSummary").textContent = JSON.stringify(routing.summary, null, 2);
-          document.getElementById("jobsSummary").textContent = JSON.stringify(jobs.summary, null, 2);
-          document.getElementById("monthlyReport").textContent = JSON.stringify(monthlyReport, null, 2);
-          document.getElementById("observabilitySummary").textContent = JSON.stringify({
-            correlation_sample: requests[0]?.correlation_id || null,
-            cache_hit_rate: cacheStats.cache_hit_rate,
-            billing_statuses: usageSummary.clients.reduce((acc, row) => {
-              acc[row.billing_status] = (acc[row.billing_status] || 0) + 1;
-              return acc;
-            }, {}),
-            async_queue: jobs.summary,
-            request_totals: healthDeep.requests,
-          }, null, 2);
+          renderHealth(health);
+          renderModels(models);
+          renderUsage(usage);
+          renderBackends(models.backends);
+          renderSecurity(security);
+          renderRequests(requests);
+          renderRevenue(revenue);
 
-          renderTable("clients", [
-            { key: "name", label: "Cliente" },
-            { key: "billing_plan_code", label: "Plano" },
-            { key: "billing_status", label: "Billing", render: (value) => `<span class="pill${value !== "active" ? " danger" : ""}">${value}</span>` },
-            { key: "is_blocked", label: "Acesso", render: (value) => value ? '<span class="pill danger">blocked</span>' : '<span class="pill">active</span>' },
-            { key: "requests_total", label: "Requests" },
-            { key: "daily_usage", label: "Consumo diário", render: (value) => `${value.used_tokens} / ${value.used_tokens + value.remaining_tokens}` },
-            { key: "monthly_usage", label: "Consumo mensal", render: (value) => `${value.used_tokens} / ${value.used_tokens + value.remaining_tokens}` },
-            { key: "daily_usage", label: "Restante diário", render: (value) => value.remaining_tokens },
-            { key: "monthly_usage", label: "Restante mensal", render: (value) => value.remaining_tokens },
-            { key: "invoice_preview", label: "Cobrança USD", render: (value) => Number(value.total_estimated).toFixed(4) },
-            { key: "errors_total", label: "Erros" },
-            { key: "avg_latency_ms", label: "Latência média (ms)" },
-            { key: "last_request_at", label: "Último request" },
-          ], usageSummary.clients);
+          // Fill debugs
+          document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
+          document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
+          document.getElementById('usageDebug').textContent = JSON.stringify(usage, null, 2);
+          document.getElementById('backendDebug').textContent = JSON.stringify(models.backends, null, 2);
+          document.getElementById('securityDebug').textContent = JSON.stringify(security, null, 2);
+          document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
+          document.getElementById('revenueDebug').textContent = JSON.stringify(revenue, null, 2);
 
-          renderTable("plans", [
-            { key: "billing_plan_code", label: "Plano" },
-            { key: "clients_total", label: "Clientes" },
-            { key: "requests_total", label: "Requests" },
-            { key: "tokens_estimated_total", label: "Tokens" },
-            { key: "estimated_cost_usd", label: "Cobrança USD", render: (value) => Number(value).toFixed(4) },
-            { key: "daily_used_tokens", label: "Consumo diário" },
-            { key: "monthly_used_tokens", label: "Consumo mensal" },
-            { key: "errors_total", label: "Erros" },
-          ], usageSummary.plans);
-
-          renderTable("invoices", [
-            { key: "name", label: "Cliente" },
-            { key: "billing_plan_code", label: "Plano" },
-            { key: "invoice_preview", label: "Mensalidade", render: (value) => `${value.currency} ${Number(value.monthly_price).toFixed(4)}` },
-            { key: "invoice_preview", label: "Incluídos", render: (value) => value.included_tokens },
-            { key: "invoice_preview", label: "Excedentes", render: (value) => value.overage_tokens },
-            { key: "invoice_preview", label: "Valor excedente", render: (value) => Number(value.overage_cost).toFixed(4) },
-            { key: "invoice_preview", label: "Total estimado", render: (value) => Number(value.total_estimated).toFixed(4) },
-          ], invoicesPreview.clients);
-
-          renderTable("billingInvoices", [
-            { key: "client_name", label: "Cliente" },
-            { key: "billing_plan_code", label: "Plano" },
-            { key: "client_billing_status", label: "Billing cliente", render: (value) => `<span class="pill${value !== "active" ? " danger" : ""}">${value}</span>` },
-            { key: "status", label: "Invoice", render: (value) => `<span class="pill${value === "paid" ? "" : value === "cancelled" ? " danger" : value === "overdue" ? " danger" : ""}">${value}</span>` },
-            { key: "total_amount", label: "Total", render: (value, row) => `${row.currency} ${Number(value).toFixed(4)}` },
-            { key: "used_tokens", label: "Usados" },
-            { key: "overage_tokens", label: "Excedentes" },
-            { key: "payment_method", label: "Pagamento" },
-            { key: "due_at", label: "Vencimento" },
-            { key: "paid_at", label: "Pago em" },
-          ], invoicesLive.invoices.filter((row) => row.status === "overdue" || row.client_billing_status !== "active" || row.paid_at));
-
-          renderTable("billingPayments", [
-            { key: "invoice_id", label: "Invoice" },
-            { key: "client_id", label: "Cliente" },
-            { key: "status", label: "Status", render: (value) => `<span class="pill${value !== "paid" ? " danger" : ""}">${value}</span>` },
-            { key: "amount", label: "Valor", render: (value, row) => `${row.currency} ${Number(value).toFixed(4)}` },
-            { key: "payment_method", label: "Método" },
-            { key: "payment_reference", label: "Referência" },
-            { key: "paid_at", label: "Pago em" },
-            { key: "created_at", label: "Criado em" },
-          ], invoicesLive.payments);
-
-          renderTable("planModelAccess", [
-            { key: "billing_plan_code", label: "Plano" },
-            { key: "allowed_models_json", label: "Modelos permitidos" },
-          ], models.plan_access);
-
-          renderTable("backends", [
-            { key: "name", label: "Backend" },
-            { key: "provider", label: "Provider" },
-            { key: "backend_url", label: "URL" },
-            { key: "ok", label: "Health", render: (value) => value ? '<span class="pill">ok</span>' : '<span class="pill danger">down</span>' },
-            { key: "latency_ms", label: "Latência (ms)" },
-            { key: "max_parallel_requests", label: "Max paralelo" },
-            { key: "current_running", label: "Running atual" },
-          ], models.backends);
-
-          renderTable("routingTable", [
-            { key: "model_public_name", label: "Modelo" },
-            { key: "routing_policy", label: "Policy" },
-            { key: "backend_name", label: "Backend" },
-            { key: "state", label: "Estado", render: (value) => `<span class="pill${value !== "healthy" ? " danger" : ""}">${value}</span>` },
-            { key: "health", label: "Health", render: (value) => value ? '<span class="pill">ok</span>' : '<span class="pill danger">down</span>' },
-            { key: "priority", label: "Priority" },
-            { key: "weight", label: "Weight" },
-            { key: "latency_ms", label: "Latência (ms)" },
-          ], routing.models.flatMap((model) => model.routes.map((route) => ({
-            model_public_name: model.model_alias || model.model_id,
-            routing_policy: model.routing_policy,
-            backend_name: route.backend_name,
-            state: route.state,
-            health: route.health,
-            priority: route.priority,
-            weight: route.weight,
-            latency_ms: route.latency_ms,
-          }))));
-
-          renderTable("keys", [
-            { key: "client_name", label: "Cliente" },
-            { key: "name", label: "Nome" },
-            { key: "key_prefix", label: "Prefixo" },
-            { key: "created_at", label: "Criada em" },
-            { key: "last_used_at", label: "Último uso" },
-            { key: "revoked_at", label: "Revogada em" },
-          ], apiKeys);
-
-          renderTable("requests", [
-            { key: "created_at", label: "Quando" },
-            { key: "correlation_id", label: "Correlation" },
-            { key: "source_ip", label: "IP" },
-            { key: "client_id", label: "Cliente" },
-            { key: "status", label: "HTTP" },
-            { key: "backend_name", label: "Backend" },
-            { key: "attempts", label: "Tentativas" },
-            { key: "fallback_used", label: "Fallback", render: (value) => value ? '<span class="pill danger">yes</span>' : '<span class="pill">no</span>' },
-            { key: "cache_hit", label: "Cache", render: (value) => value ? '<span class="pill">hit</span>' : '<span class="pill danger">miss</span>' },
-            { key: "latency_ms", label: "Latência (ms)" },
-            { key: "error", label: "Erro", render: (value) => value ? `<span class="danger">${value}</span>` : "" },
-            { key: "backend_errors", label: "Erros por backend", render: (value) => value?.length ? value.map((item) => `${item.backend_name || "unknown"}: ${item.error}`).join("<br>") : "" },
-            { key: "model", label: "Modelo" },
-          ], requests.slice(0, 25));
-
-          renderTable("jobs", [
-            { key: "created_at", label: "Criado em" },
-            { key: "id", label: "Job" },
-            { key: "status", label: "Status", render: (value) => `<span class="pill${value === "failed" || value === "cancelled" ? " danger" : ""}">${value}</span>` },
-            { key: "requested_model", label: "Modelo solicitado" },
-            { key: "resolved_model", label: "Modelo resolvido" },
-            { key: "backend_name", label: "Backend" },
-            { key: "attempts", label: "Tentativas" },
-            { key: "prompt_tokens_estimated", label: "Prompt tokens" },
-            { key: "completion_tokens_estimated", label: "Completion tokens" },
-            { key: "estimated_cost_usd", label: "USD estimado", render: (value) => Number(value).toFixed(4) },
-            { key: "error", label: "Erro", render: (value) => value ? `<span class="danger">${value}</span>` : "" },
-          ], jobs.jobs.slice(0, 50));
-
-          renderTable("securityEvents", [
-            { key: "created_at", label: "Quando" },
-            { key: "severity", label: "Severidade", render: (value) => `<span class="pill${value === "high" ? " danger" : ""}">${value}</span>` },
-            { key: "event_type", label: "Tipo" },
-            { key: "client_id", label: "Cliente" },
-            { key: "source_ip", label: "IP" },
-            { key: "api_key_prefix", label: "API key" },
-            { key: "correlation_id", label: "Correlation" },
-            { key: "title", label: "Título" },
-          ], securityEvents.slice(0, 50));
-        } catch (error) {
-          document.getElementById("healthDeep").textContent = String(error);
+        } catch (err) {
+          alert('Failed to load admin data: ' + err.message);
         }
       }
 
-      loadDashboard();
+      function renderHealth(data) {
+        const h = data.dependencies || {};
+        const req = data.requests || {};
+        document.getElementById('healthStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Postgres</div>
+            <div class="stat-value ${h.postgres?.ok ? '' : 'pill-danger'}">${h.postgres?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Redis</div>
+            <div class="stat-value ${h.redis?.ok ? '' : 'pill-danger'}">${h.redis?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Data Plane</div>
+            <div class="stat-value ${h.data_plane?.ok ? '' : 'pill-danger'}">${h.data_plane?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Latency</div>
+            <div class="stat-value">${req.avg_latency_ms || 0}ms</div>
+          </div>
+        `;
+      }
+
+      function renderModels(data) {
+        const m = data.registry || [];
+        const activeCount = m.filter(i => i.is_active).length;
+        document.getElementById('modelStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Active Models</div>
+            <div class="stat-value">${activeCount}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Models</div>
+            <div class="stat-value">${m.length}</div>
+          </div>
+        `;
+      }
+
+      function renderRevenue(data) {
+        document.getElementById('revenueStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value" style="color: var(--success);">$${data.revenue_usd.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_paid} paid invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Revenue</div>
+            <div class="stat-value">$${data.pending_usd.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_pending} pending invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Overdue Revenue</div>
+            <div class="stat-value" style="color: var(--danger);">$${data.overdue_usd.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_overdue} overdue invoices</div>
+          </div>
+        `;
+      }
+
+      function renderUsage(data) {
+        const clients = data.clients || [];
+        let html = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Usage (Daily)</th><th>Billing Est.</th></tr></thead><tbody>';
+        clients.forEach(c => {
+          html += `
+            <tr>
+              <td><strong>${c.name}</strong><br/><small style="color:var(--muted)">${c.id.substring(0,8)}</small></td>
+              <td>${c.billing_plan_code}</td>
+              <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status}</span></td>
+              <td>${c.daily_usage.used_tokens.toLocaleString()} / ${c.daily_usage.quota.toLocaleString()}</td>
+              <td>${c.invoice_preview.currency} ${c.invoice_preview.total_estimated.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('clientUsageTable').innerHTML = html;
+      }
+
+      function renderBackends(backends) {
+        let html = '<table><thead><tr><th>Name</th><th>URL</th><th>Status</th><th>Latency</th><th>Current Jobs</th></tr></thead><tbody>';
+        backends.forEach(b => {
+          html += `
+            <tr>
+              <td>${b.name}</td>
+              <td><small>${b.backend_url}</small></td>
+              <td><span class="pill ${b.ok ? 'pill-success' : 'pill-danger'}">${b.ok ? 'Healthy' : 'Down'}</span></td>
+              <td>${b.latency_ms}ms</td>
+              <td>${b.current_running} / ${b.max_parallel_requests}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('backendTable').innerHTML = html;
+      }
+
+      function renderSecurity(events) {
+        let html = '<table><thead><tr><th>Time</th><th>Type</th><th>Severity</th><th>Client</th><th>Message</th></tr></thead><tbody>';
+        events.slice(0, 10).forEach(e => {
+          html += `
+            <tr>
+              <td><small>${e.created_at}</small></td>
+              <td>${e.event_type}</td>
+              <td><span class="pill ${e.severity === 'high' ? 'pill-danger' : 'pill-muted'}">${e.severity}</span></td>
+              <td><small>${e.client_id?.substring(0,8) || 'N/A'}</small></td>
+              <td>${e.title}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('securityTable').innerHTML = html;
+      }
+
+      function renderRequests(reqs) {
+        let html = '<table><thead><tr><th>Time</th><th>Method</th><th>Status</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
+        reqs.slice(0, 15).forEach(r => {
+          html += `
+            <tr>
+              <td><small>${r.created_at}</small></td>
+              <td>${r.method || 'POST'}</td>
+              <td><span class="pill ${r.status < 400 ? 'pill-success' : 'pill-danger'}">${r.status}</span></td>
+              <td>${r.latency_ms}ms</td>
+              <td><span class="pill pill-muted">${r.cache_hit ? 'HIT' : 'MISS'}</span></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('requestTable').innerHTML = html;
+      }
     </script>
   </body>
 </html>

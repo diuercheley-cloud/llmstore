@@ -43,7 +43,7 @@ key_json="$(
 printf '%s\n' "${key_json}" | python3 -c '
 import json, sys
 data = json.load(sys.stdin)
-print(f"client_id={data['client_id']}")
-print(f"api_key={data['api_key']}")
-print(f"key_prefix={data['key_prefix']}")
+print("client_id=" + str(data["client_id"]))
+print("api_key=" + str(data["api_key"]))
+print("key_prefix=" + str(data["key_prefix"]))
 '
