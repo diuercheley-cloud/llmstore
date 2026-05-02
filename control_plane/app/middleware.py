@@ -34,9 +34,12 @@ async def request_context_middleware(request: Request, call_next):
         return JSONResponse({"detail": "request body too large"}, status_code=413)
 
     if settings.public_exposure and (
-        request.url.path == "/admin-dashboard" or request.url.path.startswith("/static/admin/")
+        request.url.path in {"/admin-dashboard", "/admin-lab"}
+        or request.url.path.startswith("/static/admin/")
+        or request.url.path.startswith("/static/admin-lab/")
     ):
-        return JSONResponse({"detail": "admin dashboard disabled in public exposure mode"}, status_code=404)
+        detail = "admin lab disabled in public exposure mode" if "admin-lab" in request.url.path else "admin dashboard disabled in public exposure mode"
+        return JSONResponse({"detail": detail}, status_code=404)
     correlation_id = request.headers.get("x-correlation-id", "").strip() or str(uuid.uuid4())
     source_ip = resolve_source_ip(request)
     request.state.correlation_id = correlation_id

@@ -36,6 +36,7 @@ from app.services.security_monitor import (
 )
 from app.utils.request_summary import summarize_chat_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.utils.validation import normalize_messages, validate_params
 
 
 @dataclass
@@ -48,23 +49,6 @@ class PreparedAsyncChatJob:
     max_tokens: int
     estimated_request_cost: float
     request_summary: str
-
-
-def _validated_params(client: Client, payload: ChatCompletionRequest):
-    settings = get_settings()
-    effective_plan = resolve_effective_plan(client)
-    max_tokens = payload.max_tokens or min(settings.default_max_tokens, effective_plan.max_output_tokens)
-    temperature = payload.temperature if payload.temperature is not None else settings.default_temperature
-    top_p = payload.top_p if payload.top_p is not None else settings.default_top_p
-    if max_tokens > effective_plan.max_output_tokens:
-        raise HTTPException(status_code=422, detail="requested max_tokens exceeds client limit")
-    if payload.stream and not effective_plan.allow_streaming:
-        raise HTTPException(status_code=403, detail="streaming is not allowed for this billing plan")
-    if temperature > settings.max_temperature:
-        raise HTTPException(status_code=422, detail="temperature exceeds configured maximum")
-    if top_p > settings.max_top_p:
-        raise HTTPException(status_code=422, detail="top_p exceeds configured maximum")
-    return max_tokens, temperature, top_p, effective_plan
 
 
 def _parse_json(raw: str | None):
@@ -119,10 +103,13 @@ async def prepare_async_chat_job(
         client=client,
         requested_model=payload.model,
     )
-    prompt_tokens = estimate_prompt_tokens(messages=[item.model_dump() for item in payload.messages])
+    # Normalize messages (handling content parts)
+    messages = normalize_messages([item.model_dump() for item in payload.messages])
+    
+    prompt_tokens = estimate_prompt_tokens(messages=messages)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = _validated_params(client, payload)
+    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
@@ -139,6 +126,7 @@ async def prepare_async_chat_job(
         raise HTTPException(status_code=429, detail=str(exc)) from exc
 
     body = payload.model_dump(exclude={"include_reasoning"})
+    body["messages"] = messages
     body["model"] = selected_model.model_id
     body["max_tokens"] = max_tokens
     body["temperature"] = temperature
@@ -155,7 +143,7 @@ async def prepare_async_chat_job(
         )
     )
     request_summary = summarize_chat_request(
-        [item.model_dump() for item in payload.messages],
+        messages,
         include_reasoning=payload.include_reasoning,
     )
     await maybe_record_repeated_large_prompt(
@@ -163,7 +151,7 @@ async def prepare_async_chat_job(
         redis,
         client=client,
         prompt_tokens=prompt_tokens,
-        prompt_key=prompt_fingerprint(json.dumps([item.model_dump() for item in payload.messages], sort_keys=True, ensure_ascii=True)),
+        prompt_key=prompt_fingerprint(json.dumps(messages, sort_keys=True, ensure_ascii=True)),
         endpoint="/v1/chat/completions/async",
     )
     await maybe_record_plan_usage_anomaly(
@@ -400,6 +388,7 @@ async def process_generation_job(
             backend_url=chosen_route.inference_backend.backend_url,
             backend_name=chosen_route.inference_backend.name,
             backend_id=chosen_route.inference_backend.id,
+            prompt_template=selected_model.prompt_template,
             manage_slot=False,
         )
         response_payload = json.loads(result.response.body.decode("utf-8"))

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 MODEL_PATH="/models/${MODEL_FILE}"
+LLAMA_SERVER_PORT="${LLAMA_SERVER_PORT:-8081}"
 export LD_LIBRARY_PATH="/opt/llama/bin:${LD_LIBRARY_PATH:-}"
 
 if [[ ! -f "${MODEL_PATH}" ]]; then
@@ -21,9 +22,14 @@ else
   LLAMA_ARG_FLASH_ATTN="--flash-attn off"
 fi
 
+LLAMA_ARG_CHAT_TEMPLATE=""
+if [[ -n "${LLAMA_CHAT_TEMPLATE:-}" ]]; then
+  LLAMA_ARG_CHAT_TEMPLATE="--chat-template ${LLAMA_CHAT_TEMPLATE}"
+fi
+
 exec /opt/llama/bin/llama-server \
   --host 0.0.0.0 \
-  --port 8081 \
+  --port "${LLAMA_SERVER_PORT}" \
   --model "${MODEL_PATH}" \
   -fit off \
   --ctx-size "${LLAMA_CTX_SIZE:-4096}" \
@@ -33,4 +39,5 @@ exec /opt/llama/bin/llama-server \
   --parallel "${LLAMA_PARALLEL:-1}" \
   --n-gpu-layers "${LLAMA_N_GPU_LAYERS:-20}" \
   ${LLAMA_ARG_CONT_BATCHING} \
-  ${LLAMA_ARG_FLASH_ATTN}
+  ${LLAMA_ARG_FLASH_ATTN} \
+  ${LLAMA_ARG_CHAT_TEMPLATE}

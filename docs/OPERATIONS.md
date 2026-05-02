@@ -84,6 +84,16 @@ Este script configura a stack, garante que o cliente `demo-client` exista e gera
 ./scripts/local-production-smoke.sh [SUA_API_KEY]
 ```
 
+### Circuit Breaker
+
+Reset explícito do circuit breaker do data plane:
+
+```bash
+./scripts/reset-circuit-breaker.sh
+```
+
+O circuit breaker fica em memória dentro do processo `control-plane`. Reiniciar o container `control-plane` também limpa esse estado.
+
 ## Operação comercial
 
 Criar plano:
@@ -107,10 +117,11 @@ Criar cliente demo com portal:
 ## Portais
 
 - Admin: `/admin-dashboard`
+- Admin Lab: `/admin-lab` (Laboratório financeiro e operacional)
 - Cliente: `/client-portal`
 
 Nunca use `X-Admin-Token` no portal do cliente.
-Se `PUBLIC_EXPOSURE=true`, o `/admin-dashboard` fica desabilitado por segurança.
+Se `PUBLIC_EXPOSURE=true`, os endpoints `/admin-dashboard` e `/admin-lab` ficam desabilitados por segurança.
 
 ## Exposição Externa Segura
 

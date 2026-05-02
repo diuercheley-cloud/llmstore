@@ -13,7 +13,9 @@ check_ui_pattern() {
   local pattern="$2"
   local description="$3"
   printf '[ui-health] Checking %s for %s... ' "${path}" "${description}"
-  if curl -fsS "${BASE_URL}${path}" | grep -q "${pattern}"; then
+  local response
+  response="$(curl -fsS "${BASE_URL}${path}")"
+  if grep -q "${pattern}" <<<"${response}"; then
     printf 'OK\n'
   else
     printf 'FAILED (pattern "%s" not found)\n' "${pattern}"
@@ -26,7 +28,9 @@ check_ui_not_pattern() {
   local pattern="$2"
   local description="$3"
   printf '[ui-health] Checking %s for absence of %s... ' "${path}" "${description}"
-  if curl -fsS "${BASE_URL}${path}" | grep -q "${pattern}"; then
+  local response
+  response="$(curl -fsS "${BASE_URL}${path}")"
+  if grep -q "${pattern}" <<<"${response}"; then
     printf 'FAILED (pattern "%s" found, should NOT be there)\n' "${pattern}"
     exit 1
   else
@@ -43,5 +47,9 @@ check_ui_not_pattern "/client-portal" "pre id=\"me\"" "old raw JSON element"
 check_ui_pattern "/admin-dashboard" "toggleDebug" "Debug toggle function"
 check_ui_pattern "/admin-dashboard" "System Health <button" "Health debug button"
 check_ui_not_pattern "/admin-dashboard" "<pre id=\"healthDeep\">carregando...</pre>" "old raw JSON placeholder"
+
+# Admin Lab Checks
+check_ui_pattern "/admin-lab" "Clientes" "Admin Lab clients tab"
+check_ui_pattern "/admin-lab" "runFlow('client-full')" "Admin Lab financial flow action"
 
 printf '[ui-health] UI Health checks passed!\n'

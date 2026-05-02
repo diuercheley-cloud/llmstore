@@ -235,8 +235,11 @@
           <button id="copyCurl" class="secondary copy-btn">Copy cURL Example</button>
         </h2>
         <div class="chat-box">
-          <div style="display: flex; gap: 0.5rem;">
-            <input id="modelId" type="text" placeholder="Default model (optional)" style="flex: 1;" />
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; position: relative;">
+              <input id="modelId" type="text" placeholder="Search or type model ID..." style="width: 100%;" list="modelList" />
+              <datalist id="modelList"></datalist>
+            </div>
             <button id="runChat">Send Prompt</button>
           </div>
           <textarea id="promptText" placeholder="Ask something to the LLM..."></textarea>
@@ -392,15 +395,17 @@
         elements.portalContent.classList.remove('hidden');
 
         try {
-          const [me, usage, invoices] = await Promise.all([
+          const [me, usage, invoices, models] = await Promise.all([
             apiFetch('/portal/me'),
             apiFetch('/portal/usage'),
-            apiFetch('/portal/invoices')
+            apiFetch('/portal/invoices'),
+            apiFetch('/v1/models')
           ]);
 
           renderMe(me);
           renderUsage(usage);
           renderInvoices(invoices);
+          renderModels(models);
 
           const metadata = JSON.parse(me.metadata_json || '{}');
           if (!metadata.onboarding_finished) {
@@ -491,6 +496,20 @@
         });
         html += '</tbody></table>';
         elements.invoicesContent.innerHTML = html;
+      }
+
+      function renderModels(data) {
+        const datalist = document.getElementById('modelList');
+        if (!datalist || !data.data) return;
+        datalist.innerHTML = '';
+        data.data.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.id;
+          if (model.id !== model.id) { // This is just for safety, usually they match
+             option.textContent = model.id;
+          }
+          datalist.appendChild(option);
+        });
       }
 
       elements.runChat.addEventListener('click', async () => {

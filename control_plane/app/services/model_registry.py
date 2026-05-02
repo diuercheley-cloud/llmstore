@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,60 +9,149 @@ from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.services.backend_registry import ensure_default_backends
+from app.utils.model_prompting import detect_architecture, detect_prompt_template
 
 
 async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
     settings = get_settings()
     backends = await ensure_default_backends(session)
-    default_backend = backends["gemma-local"]
-    result = await session.execute(
-        select(ModelRegistry)
-        .options(selectinload(ModelRegistry.inference_backend))
-        .where(ModelRegistry.model_id == settings.model_id)
-    )
-    model = result.scalar_one_or_none()
-    metadata = json.dumps(
-        {
-            "recommended_quantization": "Q4_K_M",
-            "gpu_profile": "RTX 4050 6GB",
-            "backend": "llama.cpp",
-        }
-    )
-    if model:
-        model.model_alias = model.model_alias or "gemma"
-        model.inference_backend_id = default_backend.id
-        model.model_file = settings.model_file
-        model.context_length = settings.max_context_tokens
-        model.provider = "llama.cpp"
-        model.is_default = True
-        model.is_active = True
-        model.status = "configured"
-        model.metadata_json = metadata
-        existing_defaults = (
-            await session.execute(select(ModelRegistry).where(ModelRegistry.id != model.id, ModelRegistry.is_default.is_(True)))
-        ).scalars().all()
-        for item in existing_defaults:
-            item.is_default = False
-        await _ensure_default_route(session, model, default_backend)
-        if "fallback-local" in backends:
-            await _ensure_fallback_route(session, model, backends["fallback-local"])
-        return model
-    model = ModelRegistry(
+    gemma_model = await _ensure_model_entry(
+        session,
         model_id=settings.model_id,
         model_alias="gemma",
-        inference_backend_id=default_backend.id,
-        provider="llama.cpp",
         model_file=settings.model_file,
-        context_length=settings.max_context_tokens,
+        backend=backends["gemma-local"],
         is_default=True,
-        status="configured",
+        is_active=True,
+        metadata=_build_metadata(
+            recommended_quantization="Q4_K_M",
+            gpu_profile="RTX 4050 6GB",
+            backend_name="gemma-local",
+            architecture="gemma",
+        ),
+    )
+    if "fallback-local" in backends:
+        await _ensure_fallback_route(session, gemma_model, backends["fallback-local"])
+    await _ensure_model_entry(
+        session,
+        model_id=settings.bonsai_model_id,
+        model_alias="bonsai",
+        model_file=settings.bonsai_model_file,
+        backend=backends["bonsai-local"],
+        is_default=False,
+        is_active=backends["bonsai-local"].is_active,
+        metadata=_build_metadata(
+            recommended_quantization="Q4_K_M",
+            gpu_profile="RTX 4050 6GB",
+            backend_name="bonsai-local",
+            architecture="qwen3",
+        ),
+    )
+    # Also register 'bonzai' alias for common misspelling
+    await _ensure_model_entry(
+        session,
+        model_id=settings.bonsai_model_id + "/alias-bonzai",
+        model_alias="bonzai",
+        model_file=settings.bonsai_model_file,
+        backend=backends["bonsai-local"],
+        is_default=False,
+        is_active=backends["bonsai-local"].is_active,
+        metadata=_build_metadata(
+            recommended_quantization="Q4_K_M",
+            gpu_profile="RTX 4050 6GB",
+            backend_name="bonsai-local",
+            architecture="qwen3",
+        ),
+    )
+    existing_defaults = (
+        await session.execute(select(ModelRegistry).where(ModelRegistry.id != gemma_model.id, ModelRegistry.is_default.is_(True)))
+    ).scalars().all()
+    for item in existing_defaults:
+        item.is_default = False
+    return gemma_model
+
+
+def _build_metadata(
+    *,
+    recommended_quantization: str,
+    gpu_profile: str,
+    backend_name: str,
+    architecture: str | None = None,
+) -> str:
+    payload = {
+        "recommended_quantization": recommended_quantization,
+        "gpu_profile": gpu_profile,
+        "backend": "llama.cpp",
+        "backend_name": backend_name,
+    }
+    if architecture:
+        payload["architecture"] = architecture
+    return json.dumps(payload)
+
+
+async def _ensure_model_entry(
+    session: AsyncSession,
+    *,
+    model_id: str,
+    model_alias: str,
+    model_file: str,
+    backend: InferenceBackend,
+    is_default: bool,
+    is_active: bool,
+    metadata: str,
+) -> ModelRegistry:
+    settings = get_settings()
+    result = await session.execute(
+        select(ModelRegistry)
+        .options(
+            selectinload(ModelRegistry.inference_backend),
+            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
+        )
+        .where(or_(ModelRegistry.model_id == model_id, ModelRegistry.model_alias == model_alias))
+    )
+    model = result.scalar_one_or_none()
+    detected_architecture = detect_architecture(
+        model_id=model_id,
+        model_file=model_file,
+        model_alias=model_alias,
         metadata_json=metadata,
     )
-    session.add(model)
-    await session.flush()
-    await _ensure_default_route(session, model, default_backend)
-    if "fallback-local" in backends:
-        await _ensure_fallback_route(session, model, backends["fallback-local"])
+    detected_prompt_template = detect_prompt_template(
+        model_id=model_id,
+        model_file=model_file,
+        model_alias=model_alias,
+        metadata_json=metadata,
+    )
+    if model is None:
+        model = ModelRegistry(
+            model_id=model_id,
+            model_alias=model_alias,
+            inference_backend_id=backend.id,
+            provider="llama.cpp",
+            model_file=model_file,
+            context_length=settings.max_context_tokens,
+            is_active=is_active,
+            is_default=is_default,
+            status="configured" if is_active else "optional-disabled",
+            prompt_template=detected_prompt_template,
+            metadata_json=metadata,
+        )
+        session.add(model)
+        await session.flush()
+    else:
+        model.model_alias = model_alias
+        model.inference_backend_id = backend.id
+        model.provider = "llama.cpp"
+        model.model_file = model_file
+        model.context_length = settings.max_context_tokens
+        model.is_default = is_default
+        model.is_active = is_active
+        model.status = "configured" if is_active else "optional-disabled"
+        model.prompt_template = detected_prompt_template
+        model.metadata_json = metadata
+    if detected_architecture and model.metadata_json != metadata:
+        model.metadata_json = metadata
+    await _ensure_default_route(session, model, backend)
     return model
 
 
@@ -80,14 +169,16 @@ async def _ensure_fallback_route(session: AsyncSession, model: ModelRegistry, ba
             inference_backend_id=backend.id,
             priority=2,
             weight=100,
-            state="healthy",
+            state="disabled" if not backend.is_active else "healthy",
         )
         session.add(route)
         await session.flush()
         return
     route.priority = 2
     route.weight = 100
-    if route.state == "disabled":
+    if not backend.is_active:
+        route.state = "disabled"
+    elif route.state == "disabled":
         route.state = "healthy"
 
 
@@ -105,12 +196,14 @@ async def _ensure_default_route(session: AsyncSession, model: ModelRegistry, bac
             inference_backend_id=backend.id,
             priority=1,
             weight=100,
-            state="healthy",
+            state="healthy" if backend.is_active else "disabled",
         )
         session.add(route)
         await session.flush()
         return
     route.priority = 1
     route.weight = 100
-    if route.state == "disabled":
+    if not backend.is_active:
+        route.state = "disabled"
+    elif route.state == "disabled":
         route.state = "healthy"

@@ -61,6 +61,9 @@ init_stack_env() {
   if [[ "${STACK_MODE:-local}" == "prod" ]]; then
     DOCKER_COMPOSE_ARGS+=(-f "${ROOT_DIR}/docker-compose.prod.yml")
   fi
+  if [[ "${BONSAI_ENABLED:-false}" == "true" ]]; then
+    DOCKER_COMPOSE_ARGS+=(--profile bonsai)
+  fi
   if [[ -n "${EXTRA_COMPOSE_FILES:-}" ]]; then
     for compose_file in ${EXTRA_COMPOSE_FILES}; do
       if [[ "${compose_file}" = /* ]]; then
@@ -95,11 +98,25 @@ default_base_url() {
 curl_base_url() {
   local url="$1"
   shift
+  local curl_status=0
   if [[ "${url}" == https://localhost* ]] || [[ "${url}" == https://127.0.0.1* ]]; then
-    curl -k "$@" "${url}"
-    return
+    curl -k "$@" "${url}" || curl_status=$?
+  else
+    curl "$@" "${url}" || curl_status=$?
   fi
-  curl "$@" "${url}"
+  if [[ "${curl_status}" -eq 0 ]]; then
+    return 0
+  fi
+
+  if [[ "${curl_status}" -eq 7 ]] && { [[ "${url}" == http://localhost* ]] || [[ "${url}" == http://127.0.0.1* ]]; }; then
+    local internal_url="${url}"
+    internal_url="${internal_url/http:\/\/localhost:${HOST_PORT:-18080}/http://localhost:8080}"
+    internal_url="${internal_url/http:\/\/127.0.0.1:${HOST_PORT:-18080}/http://localhost:8080}"
+    dc exec -T control-plane curl "$@" "${internal_url}"
+    return $?
+  fi
+
+  return "${curl_status}"
 }
 
 lookup_demo_client_id() {

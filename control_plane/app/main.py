@@ -44,7 +44,23 @@ async def lifespan(_: FastAPI):
     await engine.dispose()
 
 
-app = FastAPI(title=settings.project_name, debug=settings.debug, lifespan=lifespan)
+app = FastAPI(
+    title=settings.project_name,
+    description="""
+Stack local e portátil para servir modelos de linguagem com separação explícita entre Control Plane e Data Plane.
+Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteamento com fallback.
+""",
+    version="1.0.0",
+    debug=settings.debug,
+    lifespan=lifespan,
+    openapi_tags=[
+        {"name": "system", "description": "Endpoints de saúde e métricas do sistema."},
+        {"name": "public", "description": "Endpoints públicos para onboarding e listagem de planos."},
+        {"name": "client", "description": "API compatível com OpenAI para consumo dos modelos."},
+        {"name": "portal", "description": "API do portal do cliente para gestão de conta e faturas."},
+        {"name": "admin", "description": "API administrativa para gestão de clientes, chaves e infraestrutura."},
+    ]
+)
 app.middleware("http")(request_context_middleware)
 app.add_middleware(
     CORSMiddleware,

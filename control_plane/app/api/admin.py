@@ -1,6 +1,9 @@
 import json
+import subprocess
+import time
 from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,7 +12,7 @@ from sqlalchemy import case, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_inference_proxy
+from app.api.deps import get_circuit_breaker, get_inference_proxy
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
@@ -30,7 +33,9 @@ from app.schemas.admin import (
     ApiKeyCreate,
     ApiKeyCreated,
     ApiKeyRotateResponse,
+    BackendRoutePatch,
     BillingPlanCreate,
+    BillingPlanPatch,
     BillingPlanModelsPatch,
     BillingPlanRead,
     ClientBillingPlanPatch,
@@ -44,8 +49,25 @@ from app.schemas.admin import (
     ModelRegistryCreate,
     ModelRegistryPatch,
     ModelReloadResponse,
+    PaymentCreate,
+    PaymentRead,
     PricingRuleRead,
+    TestCommand,
+    TestRunRequest,
+    TestRunResponse,
 )
+
+WHITELISTED_COMMANDS = {
+    "health-full": {"name": "Health full", "description": "Run full system health validation", "command": "./scripts/validate-system-health.sh --full"},
+    "local-smoke": {"name": "Local production smoke", "description": "Run local production smoke tests", "command": "./scripts/local-production-smoke.sh"},
+    "ui-health": {"name": "UI health", "description": "Check UI health", "command": "./scripts/ui-health.sh"},
+    "validate-e2e": {"name": "Validate E2E", "description": "Run full E2E validation", "command": "./scripts/validate-e2e.sh"},
+    "backup": {"name": "Backup", "description": "Trigger system backup", "command": "./scripts/backup.sh"},
+    "dr-test": {"name": "DR test", "description": "Run Disaster Recovery test", "command": "./scripts/dr-test.sh"},
+    "benchmark": {"name": "Benchmark quick", "description": "Run quick benchmark", "command": "./scripts/benchmark.sh --quick"},
+    "test-bonsai": {"name": "Bonsai test", "description": "Test Bonsai backend", "command": "./scripts/test-bonsai.sh"},
+    "test-fallback": {"name": "Real fallback test", "description": "Test real-world fallback routing", "command": "./scripts/test-real-fallback.sh"},
+}
 from app.services.billing import (
     build_invoice_preview,
     ensure_default_billing_plans,
@@ -82,6 +104,21 @@ from app.services.security_monitor import (
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 settings = get_settings()
+
+
+def _load_backend_metadata(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _is_test_backend(backend: InferenceBackend) -> bool:
+    metadata = _load_backend_metadata(backend.metadata_json)
+    return bool(metadata.get("test_backend")) or backend.name.startswith("fallback-")
 
 
 def _serialize_api_key_created(api_key: ApiKey, plaintext: str) -> ApiKeyCreated:
@@ -162,8 +199,32 @@ async def create_client(payload: ClientCreate, session: AsyncSession = Depends(g
 
 @router.get("/clients", response_model=list[ClientRead])
 async def list_clients(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(Client).order_by(Client.created_at.desc()))
+    result = await session.execute(
+        select(Client).where(Client.deleted_at.is_(None)).order_by(Client.created_at.desc())
+    )
     return result.scalars().all()
+
+
+@router.delete("/clients/{client_id}", status_code=204)
+async def delete_client(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    client = await session.get(Client, client_id)
+    if client is None or client.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="client not found")
+    
+    # não deletar se houver invoices pagas
+    paid_invoices = await session.execute(
+        select(BillingInvoice).where(BillingInvoice.client_id == client_id, BillingInvoice.status == "paid")
+    )
+    if paid_invoices.first() is not None:
+        raise HTTPException(status_code=409, detail="cannot delete client with paid invoices")
+    
+    client.deleted_at = utc_now()
+    # Revogar chaves
+    keys = await session.execute(select(ApiKey).where(ApiKey.client_id == client_id))
+    for key in keys.scalars().all():
+        key.revoked_at = utc_now()
+    
+    await session.commit()
 
 
 @router.patch("/clients/{client_id}", response_model=ClientRead)
@@ -203,6 +264,27 @@ async def create_billing_plan(payload: BillingPlanCreate, session: AsyncSession 
     plan_data = _serialize_billing_plan_payload(payload)
     plan = BillingPlan(**plan_data)
     session.add(plan)
+    await session.commit()
+    await session.refresh(plan)
+    return plan
+
+
+@router.patch("/billing/plans/{plan_id}", response_model=BillingPlanRead)
+async def patch_billing_plan(
+    plan_id: uuid.UUID,
+    payload: BillingPlanPatch,
+    session: AsyncSession = Depends(get_db_session),
+):
+    plan = await session.get(BillingPlan, plan_id)
+    if plan is None:
+        raise HTTPException(status_code=404, detail="billing plan not found")
+    patch_data = payload.model_dump(exclude_unset=True)
+    if "allowed_models" in patch_data:
+        allowed_models = patch_data.pop("allowed_models")
+        patch_data["allowed_models_json"] = json.dumps(allowed_models) if allowed_models is not None else None
+    for key, value in patch_data.items():
+        setattr(plan, key, value)
+    plan.updated_at = utc_now()
     await session.commit()
     await session.refresh(plan)
     return plan
@@ -774,6 +856,73 @@ async def list_invoices(session: AsyncSession = Depends(get_db_session)):
     }
 
 
+@router.patch("/billing/invoices/{invoice_id}/mark-overdue")
+async def mark_invoice_overdue(invoice_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    invoice = await session.get(BillingInvoice, invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="invoice not found")
+    if invoice.status == "paid":
+        raise HTTPException(status_code=409, detail="paid invoice cannot be marked overdue")
+    invoice.status = "overdue"
+    invoice.updated_at = utc_now()
+    await session.commit()
+    await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
+    await session.commit()
+    return {"status": "overdue", "invoice_id": str(invoice.id)}
+
+
+@router.get("/billing/payments", response_model=list[PaymentRead])
+async def list_payments(session: AsyncSession = Depends(get_db_session)):
+    result = await session.execute(select(CustomerPayment).order_by(desc(CustomerPayment.created_at)).limit(500))
+    return result.scalars().all()
+
+
+@router.post("/billing/payments", response_model=PaymentRead, status_code=201)
+async def create_payment(payload: PaymentCreate, session: AsyncSession = Depends(get_db_session)):
+    invoice = await session.get(BillingInvoice, payload.invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="invoice not found")
+    payment = CustomerPayment(
+        invoice_id=payload.invoice_id,
+        client_id=invoice.client_id,
+        amount=Decimal(str(payload.amount)),
+        currency=payload.currency,
+        payment_method=payload.payment_method,
+        payment_reference=payload.payment_reference,
+        note=payload.note,
+        status="paid" if payload.paid_at else "pending",
+        paid_at=payload.paid_at,
+    )
+    session.add(payment)
+    if payload.paid_at and invoice.status != "paid":
+        # If paying full amount or more, mark invoice as paid
+        # Simple logic: if any payment is 'paid', we consider it progress. 
+        # For simplicity, if this payment is marked 'paid', we mark invoice paid.
+        invoice.status = "paid"
+        invoice.paid_at = payload.paid_at
+        if invoice.client:
+            invoice.client.billing_status = "active"
+    await session.commit()
+    await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
+    await session.commit()
+    await session.refresh(payment)
+    return payment
+
+
+@router.patch("/billing/payments/{payment_id}/cancel")
+async def cancel_payment(payment_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    payment = await session.get(CustomerPayment, payment_id)
+    if payment is None:
+        raise HTTPException(status_code=404, detail="payment not found")
+    if payment.status == "cancelled":
+        raise HTTPException(status_code=409, detail="payment already cancelled")
+    payment.status = "cancelled"
+    payment.cancelled_at = utc_now()
+    payment.updated_at = utc_now()
+    await session.commit()
+    return {"status": "cancelled", "payment_id": str(payment.id)}
+
+
 @router.patch("/billing/invoices/{invoice_id}/mark-paid")
 async def mark_invoice_paid(
     invoice_id: uuid.UUID,
@@ -1169,6 +1318,52 @@ async def patch_backend(
     }
 
 
+@router.patch("/models/{model_id}/routes/{backend_id}")
+async def patch_model_backend_route(
+    model_id: uuid.UUID,
+    backend_id: uuid.UUID,
+    payload: BackendRoutePatch,
+    session: AsyncSession = Depends(get_db_session),
+):
+    route = (
+        await session.execute(
+            select(ModelBackendRoute).where(
+                ModelBackendRoute.model_registry_id == model_id,
+                ModelBackendRoute.inference_backend_id == backend_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if route is None:
+        raise HTTPException(status_code=404, detail="model backend route not found")
+    patch_data = payload.model_dump(exclude_unset=True)
+    for key, value in patch_data.items():
+        setattr(route, key, value)
+    route.updated_at = utc_now()
+    await session.commit()
+    await session.refresh(route)
+    return {
+        "id": str(route.id),
+        "model_id": str(route.model_registry_id),
+        "backend_id": str(route.inference_backend_id),
+        "priority": route.priority,
+        "weight": route.weight,
+        "state": route.state,
+        "updated_at": route.updated_at.isoformat(),
+    }
+
+
+@router.post("/backends/circuit-breaker/reset")
+async def reset_backend_circuit_breaker():
+    breaker = get_circuit_breaker()
+    await breaker.reset()
+    return {
+        "status": "ok",
+        "detail": "circuit breaker reset",
+        "reset_at": utc_now().isoformat(),
+        "scope": "in-memory control-plane process",
+    }
+
+
 @router.get("/jobs")
 async def list_generation_jobs(
     session: AsyncSession = Depends(get_db_session),
@@ -1214,13 +1409,37 @@ async def backends_routing(
     model_rows = []
     summary = {"healthy": 0, "degraded": 0, "unhealthy": 0, "disabled": 0}
     for item in models:
-        routes = serialize_routing_table(item)
-        for route in routes:
-            summary[route["state"]] = summary.get(route["state"], 0) + 1
-            route["health"] = backend_health.get(route["backend_id"], {}).get("ok")
-            route["latency_ms"] = backend_health.get(route["backend_id"], {}).get("latency_ms")
+        routes = []
+        for route in sorted(
+            item.backend_routes,
+            key=lambda entry: (entry.priority, -(entry.weight or 0), entry.created_at),
+        ):
+            backend = route.inference_backend
+            if backend is None:
+                continue
+            summary[route.state] = summary.get(route.state, 0) + 1
+            backend_snapshot = backend_health.get(str(backend.id), {})
+            routes.append(
+                {
+                    "route_id": str(route.id) if route.id else None,
+                    "backend_id": str(backend.id),
+                    "backend_name": backend.name,
+                    "backend_url": backend.backend_url,
+                    "provider": backend.provider,
+                    "priority": route.priority,
+                    "weight": route.weight,
+                    "state": route.state,
+                    "health": backend_snapshot.get("ok"),
+                    "latency_ms": backend_snapshot.get("latency_ms"),
+                    "backend_is_active": backend.is_active,
+                    "backend_status": backend.status,
+                    "is_test_backend": _is_test_backend(backend),
+                    "eligible_for_routing": bool(backend.is_active and route.state != "disabled"),
+                }
+            )
         model_rows.append(
             {
+                "id": str(item.id),
                 "model_id": item.model_id,
                 "model_alias": item.model_alias,
                 "is_default": item.is_default,
@@ -1362,3 +1581,91 @@ async def reload_models(
         status="accepted",
         detail="registry reloaded from configuration; for a new GGUF file, restart the data-plane container",
     )
+
+
+@router.post("/test/clients/{client_id}/reset-usage")
+async def reset_client_usage(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    if not settings.test_tools_enabled or settings.public_exposure:
+        raise HTTPException(status_code=403, detail="test tools disabled")
+    client = await session.get(Client, client_id)
+    if client is None:
+        raise HTTPException(status_code=404, detail="client not found")
+    
+    await session.execute(
+        select(QuotaCounter).where(QuotaCounter.client_id == client_id)
+    )
+    # Delete all quota counters for this client to reset usage
+    from sqlalchemy import delete
+    await session.execute(delete(QuotaCounter).where(QuotaCounter.client_id == client_id))
+    await session.execute(delete(UsageRecord).where(UsageRecord.client_id == client_id))
+    await session.commit()
+    return {"status": "reset", "client_id": str(client_id)}
+
+
+@router.get("/test/commands", response_model=list[TestCommand])
+async def list_test_commands():
+    if not settings.test_tools_enabled or settings.public_exposure:
+        raise HTTPException(status_code=403, detail="test tools disabled")
+    return [
+        TestCommand(id=k, name=v["name"], description=v["description"], command=v["command"])
+        for k, v in WHITELISTED_COMMANDS.items()
+    ]
+
+
+@router.post("/test/run", response_model=TestRunResponse)
+async def run_test_command(payload: TestRunRequest):
+    if not settings.test_tools_enabled or settings.public_exposure:
+        raise HTTPException(status_code=403, detail="test tools disabled")
+    
+    cmd_info = WHITELISTED_COMMANDS.get(payload.command_id)
+    if not cmd_info:
+        raise HTTPException(status_code=404, detail="command not found")
+    
+    start_time = time.time()
+    run_id = str(uuid.uuid4())
+    
+    try:
+        # Run command with 60s timeout
+        # Using shell=True because we trust WHITELISTED_COMMANDS and it's local test only
+        result = subprocess.run(
+            cmd_info["command"],
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=str(Path(__file__).resolve().parents[3]) # project root
+        )
+        duration = time.time() - start_time
+        return TestRunResponse(
+            run_id=run_id,
+            command_id=payload.command_id,
+            status="completed" if result.returncode == 0 else "failed",
+            stdout=result.stdout,
+            stderr=result.stderr,
+            exit_code=result.returncode,
+            duration_seconds=round(duration, 2),
+            created_at=utc_now()
+        )
+    except subprocess.TimeoutExpired as e:
+        duration = time.time() - start_time
+        return TestRunResponse(
+            run_id=run_id,
+            command_id=payload.command_id,
+            status="timeout",
+            stdout=e.stdout.decode() if e.stdout else "",
+            stderr=e.stderr.decode() if e.stderr else "Timeout after 60s",
+            exit_code=124,
+            duration_seconds=round(duration, 2),
+            created_at=utc_now()
+        )
+    except Exception as e:
+        duration = time.time() - start_time
+        return TestRunResponse(
+            run_id=run_id,
+            command_id=payload.command_id,
+            status="error",
+            stderr=str(e),
+            exit_code=1,
+            duration_seconds=round(duration, 2),
+            created_at=utc_now()
+        )

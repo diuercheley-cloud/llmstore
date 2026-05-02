@@ -1,12 +1,18 @@
-from typing import Any, Literal
+from typing import Any, Literal, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
 
+class ChatContentPart(BaseModel):
+    type: Literal["text", "image_url"]
+    text: str | None = None
+    image_url: dict[str, Any] | None = None
+
+
 class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant", "tool"]
-    content: str = Field(min_length=1, max_length=20000)
+    content: Union[str, list[ChatContentPart]]
 
 
 class ChatCompletionRequest(BaseModel):
@@ -14,7 +20,7 @@ class ChatCompletionRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=128)
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
-    max_tokens: int | None = Field(default=None, ge=1, le=4096)
+    max_tokens: int | None = Field(default=None, ge=1, le=1000000)
     stream: bool = False
     safety_profile: Literal["default", "strict", "relaxed"] = "default"
     include_reasoning: bool = False
@@ -31,7 +37,7 @@ class CompletionRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=20000)
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
-    max_tokens: int | None = Field(default=None, ge=1, le=4096)
+    max_tokens: int | None = Field(default=None, ge=1, le=1000000)
     stream: bool = False
     safety_profile: Literal["default", "strict", "relaxed"] = "default"
 
@@ -88,3 +94,29 @@ class GenerationJobResponse(BaseModel):
 
 class OnboardingEventRequest(BaseModel):
     event: str = Field(min_length=1, max_length=100)
+
+
+class ChatCompletionChoiceMessage(BaseModel):
+    role: str = "assistant"
+    content: str
+
+
+class ChatCompletionChoice(BaseModel):
+    index: int
+    message: ChatCompletionChoiceMessage
+    finish_reason: str | None = "stop"
+
+
+class UsageInfo(BaseModel):
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+
+class ChatCompletionResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: list[ChatCompletionChoice]
+    usage: UsageInfo

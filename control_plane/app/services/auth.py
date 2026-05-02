@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPBearer, APIKeyHeader
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -15,20 +16,23 @@ from app.models.billing_plan import BillingPlan
 from app.models.client import Client
 from app.services.security_monitor import enforce_client_ip_policy, record_invalid_api_key_attempt
 
+bearer_scheme = HTTPBearer(auto_error=False)
+admin_key_scheme = APIKeyHeader(name="X-Admin-Token", auto_error=False)
 
-async def require_admin(x_admin_token: str = Header(default="")) -> None:
+
+async def require_admin(x_admin_token: str = Depends(admin_key_scheme)) -> None:
     settings = get_settings()
-    if x_admin_token != settings.admin_token:
+    if not x_admin_token or x_admin_token != settings.admin_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
 
 
 async def require_client(
-    authorization: str = Header(default=""),
+    auth_creds: str = Depends(bearer_scheme),
     request: Request = None,
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
 ) -> Client:
-    if not authorization.startswith("Bearer "):
+    if not auth_creds:
         if request is not None:
             await record_invalid_api_key_attempt(
                 session,
@@ -38,7 +42,8 @@ async def require_client(
                 reason="missing bearer token",
             )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer token")
-    plaintext = authorization.removeprefix("Bearer ").strip()
+    
+    plaintext = auth_creds.credentials.strip()
     prefix = plaintext[:12]
     result = await session.execute(
         select(ApiKey).where(ApiKey.key_prefix == prefix, ApiKey.revoked_at.is_(None)).order_by(ApiKey.created_at.desc())

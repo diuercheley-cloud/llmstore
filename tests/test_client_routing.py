@@ -13,7 +13,18 @@ class FakeProxy:
     def __init__(self):
         self.calls = []
 
-    async def chat(self, payload, stream, include_reasoning, backend, backend_url, backend_name, backend_id=None, manage_slot=True):
+    async def chat(
+        self,
+        payload,
+        stream,
+        include_reasoning,
+        backend,
+        backend_url,
+        backend_name,
+        backend_id=None,
+        prompt_template=None,
+        manage_slot=True,
+    ):
         self.calls.append(backend_name)
         if backend_name == "primary":
             raise HTTPException(status_code=503, detail="data plane unavailable")

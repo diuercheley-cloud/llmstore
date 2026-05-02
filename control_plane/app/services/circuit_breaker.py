@@ -44,3 +44,8 @@ class CircuitBreaker:
                 self.opened_at = time.monotonic()
                 CIRCUIT_BREAKER_STATE.set(1)
 
+    async def reset(self) -> None:
+        async with self.lock:
+            self.failures = 0
+            self.opened_at = 0.0
+            CIRCUIT_BREAKER_STATE.set(0)

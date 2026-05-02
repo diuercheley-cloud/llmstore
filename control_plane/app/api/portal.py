@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse
 
-from app.api.client import _chat_with_fallback, _error_message_for_log, _backend_errors_for_log, _validated_params
+from app.api.client import _chat_with_fallback, _error_message_for_log, _backend_errors_for_log
+from app.utils.validation import validate_params
 from app.api.deps import get_inference_proxy
 from app.db.session import get_db_session, get_redis
 from app.models.billing_invoice import BillingInvoice
@@ -202,7 +203,7 @@ async def portal_test_chat(
     prompt_tokens = estimate_prompt_tokens(messages=[item.model_dump() for item in chat_payload.messages])
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = _validated_params(client, chat_payload)
+    max_tokens, temperature, top_p, effective_plan = validate_params(client, chat_payload)
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)

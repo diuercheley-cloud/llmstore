@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     database_url: str = Field(alias="DATABASE_URL")
     redis_url: str = Field(alias="REDIS_URL")
     data_plane_base_url: str = Field(alias="DATA_PLANE_BASE_URL")
+    bonsai_enabled: bool = Field(default=False, alias="BONSAI_ENABLED")
+    bonsai_base_url: str = Field(default="http://data-plane-bonsai:8082", alias="BONSAI_BASE_URL")
     ollama_base_url: str = Field(default="http://data-plane-ollama:11434", alias="OLLAMA_BASE_URL")
     data_plane_timeout_seconds: int = Field(default=120, alias="DATA_PLANE_TIMEOUT_SECONDS")
     request_timeout_seconds: int = Field(default=120, alias="REQUEST_TIMEOUT_SECONDS")
@@ -30,8 +32,8 @@ class Settings(BaseSettings):
     max_queue_size: int = Field(default=8, alias="MAX_QUEUE_SIZE")
     async_job_queue_name: str = Field(default="generation_jobs:queue", alias="ASYNC_JOB_QUEUE_NAME")
     async_worker_block_seconds: int = Field(default=5, alias="ASYNC_WORKER_BLOCK_SECONDS")
-    max_context_tokens: int = Field(default=4096, alias="MAX_CONTEXT_TOKENS")
-    max_input_tokens: int = Field(default=4096, alias="MAX_INPUT_TOKENS")
+    max_context_tokens: int = Field(default=32768, alias="MAX_CONTEXT_TOKENS")
+    max_input_tokens: int = Field(default=32768, alias="MAX_INPUT_TOKENS")
     default_max_tokens: int = Field(default=512, alias="DEFAULT_MAX_TOKENS")
     max_completion_tokens: int = Field(
         default=2048,
@@ -57,9 +59,13 @@ class Settings(BaseSettings):
     demo_monthly_token_quota: int = Field(default=300000, alias="DEMO_MONTHLY_TOKEN_QUOTA")
     model_id: str = Field(default="unsloth/gemma-4-E4B-it-GGUF", alias="MODEL_ID")
     model_file: str = Field(default="gemma-4-E4B-it-Q4_K_M.gguf", alias="MODEL_FILE")
+    bonsai_model_id: str = Field(default="bonsai/bonsai-8B-GGUF", alias="BONSAI_MODEL_ID")
+    bonsai_model_file: str = Field(default="bonsai-8B.gguf", alias="BONSAI_MODEL_FILE")
+    bonsai_chat_template: str | None = Field(default=None, alias="BONSAI_CHAT_TEMPLATE")
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
     app_env: str = Field(default="local", alias="APP_ENV")
     app_public_url: str = Field(default="http://localhost:18080", alias="APP_PUBLIC_URL")
+    test_tools_enabled: bool = Field(default=False, alias="TEST_TOOLS_ENABLED")
     jwt_secret: str = Field(default="change-me-at-all-costs", alias="JWT_SECRET")
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
 

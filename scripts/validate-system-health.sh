@@ -150,6 +150,9 @@ wait_compose_services() {
   if [[ "${STACK_MODE:-local}" == "prod" ]]; then
     expected_services+=(caddy)
   fi
+  if [[ "${BONSAI_ENABLED:-false}" == "true" ]]; then
+    expected_services+=(data-plane-bonsai)
+  fi
   local snapshot_file
   snapshot_file="${ARTIFACTS_DIR}/compose-ps-wait.jsonl"
 
@@ -260,6 +263,11 @@ unauth_status="$(curl_base_url "${BASE_URL}/v1/models" -sS -o /dev/null -w '%{ht
 [[ "${unauth_status}" == "401" ]] || fail "models sem API key deveria retornar 401"
 admin_unauth_status="$(curl_base_url "${BASE_URL}/admin/clients" -sS -o /dev/null -w '%{http_code}' || true)"
 [[ "${admin_unauth_status}" == "401" ]] || fail "admin sem token deveria retornar 401"
+
+log "limpando cache de respostas antes da validacao de inferencia"
+curl_base_url "${BASE_URL}/admin/cache/responses" -fsS -X DELETE \
+  -H "X-Admin-Token: ${ADMIN_TOKEN}" \
+  >"${ARTIFACTS_DIR}/cache-clear.json" || fail "cache clear falhou" "control-plane"
 
 log "checando inferencia sincrona"
 curl_base_url "${BASE_URL}/v1/chat/completions" -fsS \

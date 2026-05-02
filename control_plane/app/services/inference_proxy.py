@@ -13,6 +13,8 @@ from app.core.metrics import BACKEND_ERROR_COUNTER, BACKEND_LATENCY, REQUEST_COU
 from app.models.inference_backend import InferenceBackend
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
+from app.utils.anti_loop import detect_repetition, truncate_at_repetition
+from app.utils.model_prompting import apply_prompt_template_settings
 from app.utils.openai_response import normalize_chat_completion, normalize_chat_stream_line
 from app.utils.token_estimator import estimate_tokens_from_text
 
@@ -83,7 +85,11 @@ class InferenceProxy:
             await self.circuit_breaker.record_success()
             return response.json()
         except (CircuitBreakerOpen, httpx.HTTPStatusError, httpx.TransportError) as exc:
-            await self.circuit_breaker.record_failure()
+            if self._should_trip_circuit_breaker(exc):
+                await self.circuit_breaker.record_failure()
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
+            if isinstance(exc, httpx.HTTPStatusError):
+                raise HTTPException(status_code=exc.response.status_code, detail=self._backend_error_detail(exc)) from exc
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
@@ -91,15 +97,41 @@ class InferenceProxy:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="unsupported model backend")
         return self._get_client(backend_url)
 
-    def _prepare_chat_payload(self, payload: dict, *, include_reasoning: bool, backend: str) -> dict:
-        request_payload = dict(payload)
-        if backend != "llama.cpp" or include_reasoning:
-            return request_payload
-        request_payload["reasoning_format"] = "none"
-        template_kwargs = dict(request_payload.get("chat_template_kwargs") or {})
-        template_kwargs["enable_thinking"] = False
-        request_payload["chat_template_kwargs"] = template_kwargs
-        return request_payload
+    def _should_trip_circuit_breaker(self, exc: Exception) -> bool:
+        if isinstance(exc, httpx.TransportError):
+            return True
+        if isinstance(exc, httpx.HTTPStatusError):
+            return exc.response.status_code >= 500
+        return False
+
+    def _backend_error_detail(self, exc: httpx.HTTPStatusError | httpx.TransportError) -> object:
+        if isinstance(exc, httpx.HTTPStatusError):
+            try:
+                backend_response = exc.response.json()
+            except ValueError:
+                backend_response = exc.response.text[:500] or exc.response.reason_phrase
+            return {
+                "message": "data plane rejected request",
+                "backend_status_code": exc.response.status_code,
+                "backend_response": backend_response,
+            }
+        return "data plane unavailable"
+
+    def _prepare_chat_payload(
+        self,
+        payload: dict,
+        *,
+        include_reasoning: bool,
+        backend: str,
+        prompt_template: str | None = None,
+    ) -> dict:
+        return apply_prompt_template_settings(
+            payload,
+            prompt_template=prompt_template,
+            include_reasoning=include_reasoning,
+            backend=backend,
+            bonsai_template_fallback=self.settings.bonsai_chat_template,
+        )
 
     async def chat(
         self,
@@ -110,8 +142,20 @@ class InferenceProxy:
         backend_url: str,
         backend_name: str,
         backend_id=None,
+        prompt_template: str | None = None,
         manage_slot: bool = True,
     ):
+        logger.debug(
+            "inference proxy chat started",
+            extra={
+                "extra_data": {
+                    "model_requested": payload.get("model"),
+                    "backend_selected": backend_name or backend,
+                    "stream": stream,
+                    "prompt_template": prompt_template,
+                }
+            },
+        )
         return await self._forward(
             "/v1/chat/completions",
             payload,
@@ -121,6 +165,7 @@ class InferenceProxy:
             backend_url=backend_url,
             backend_name=backend_name,
             backend_id=backend_id,
+            prompt_template=prompt_template,
             manage_slot=manage_slot,
         )
 
@@ -134,6 +179,16 @@ class InferenceProxy:
         backend_id=None,
         manage_slot: bool = True,
     ):
+        logger.debug(
+            "inference proxy completion started",
+            extra={
+                "extra_data": {
+                    "model_requested": payload.get("model"),
+                    "backend_selected": backend_name or backend,
+                    "stream": stream,
+                }
+            },
+        )
         return await self._forward(
             "/v1/completions",
             payload,
@@ -155,6 +210,7 @@ class InferenceProxy:
         backend_url: str | None = None,
         backend_name: str = "",
         backend_id=None,
+        prompt_template: str | None = None,
         manage_slot: bool = True,
     ):
         try:
@@ -169,6 +225,7 @@ class InferenceProxy:
                             backend=backend,
                             backend_url=backend_url or self.settings.data_plane_base_url,
                             backend_name=backend_name,
+                            prompt_template=prompt_template,
                         )
                     return await self._json_forward(
                         endpoint,
@@ -177,6 +234,7 @@ class InferenceProxy:
                         backend=backend,
                         backend_url=backend_url or self.settings.data_plane_base_url,
                         backend_name=backend_name,
+                        prompt_template=prompt_template,
                     )
             if stream:
                 return await self._streaming_forward(
@@ -186,6 +244,7 @@ class InferenceProxy:
                     backend=backend,
                     backend_url=backend_url or self.settings.data_plane_base_url,
                     backend_name=backend_name,
+                    prompt_template=prompt_template,
                 )
             return await self._json_forward(
                 endpoint,
@@ -194,6 +253,7 @@ class InferenceProxy:
                 backend=backend,
                 backend_url=backend_url or self.settings.data_plane_base_url,
                 backend_name=backend_name,
+                prompt_template=prompt_template,
             )
         except CircuitBreakerOpen as exc:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
@@ -210,14 +270,40 @@ class InferenceProxy:
         backend: str = "llama.cpp",
         backend_url: str = "",
         backend_name: str = "",
+        prompt_template: str | None = None,
     ) -> JSONResponse:
         started = perf_counter()
         last_error: Exception | None = None
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
-        request_payload = self._prepare_chat_payload(payload, include_reasoning=include_reasoning, backend=backend)
+        request_payload = self._prepare_chat_payload(
+            payload,
+            include_reasoning=include_reasoning,
+            backend=backend,
+            prompt_template=prompt_template,
+        )
         if backend == "ollama":
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=False)
+
+        # Secure debug log for payload
+        logged_payload = dict(request_payload)
+        if "messages" in logged_payload:
+            # Mask message content for safety, keeping roles and length
+            logged_payload["messages"] = [
+                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
+                for m in logged_payload["messages"]
+            ]
+        logger.debug(
+            "forwarding request to data plane",
+            extra={
+                "extra_data": {
+                    "endpoint": target_endpoint,
+                    "payload": logged_payload,
+                    "backend_url": backend_url,
+                }
+            },
+        )
+
         for attempt in range(1, self.settings.retry_attempts + 2):
             try:
                 response = await client.post(target_endpoint, json=request_payload, timeout=self.attempt_timeout)
@@ -230,7 +316,22 @@ class InferenceProxy:
                 if backend == "ollama":
                     response_payload = self._translate_ollama_response(response_payload, endpoint, payload.get("model", ""))
                 if endpoint == "/v1/chat/completions":
-                    response_payload = normalize_chat_completion(response_payload, include_reasoning=include_reasoning)
+                    response_payload = normalize_chat_completion(
+                        response_payload,
+                        include_reasoning=include_reasoning,
+                        prompt_template=prompt_template,
+                    )
+                    
+                    # Apply anti-loop to JSON response
+                    choices = response_payload.get("choices", [])
+                    if choices:
+                        content = choices[0].get("message", {}).get("content", "")
+                        if content and detect_repetition(content, prompt_template=prompt_template):
+                            choices[0]["message"]["content"] = truncate_at_repetition(
+                                content, prompt_template=prompt_template
+                            )
+                            choices[0]["finish_reason"] = "length"
+
                 return ForwardResult(
                     response=JSONResponse(status_code=response.status_code, content=response_payload),
                     backend_name=backend_name,
@@ -244,7 +345,8 @@ class InferenceProxy:
                 if attempt > self.settings.retry_attempts or not retriable:
                     break
                 await asyncio.sleep(self.settings.retry_backoff_seconds * attempt)
-        await self.circuit_breaker.record_failure()
+        if last_error is not None and self._should_trip_circuit_breaker(last_error):
+            await self.circuit_breaker.record_failure()
         REQUEST_COUNTER.labels(endpoint=endpoint, status="error").inc()
         BACKEND_ERROR_COUNTER.labels(
             backend_name=backend_name or backend,
@@ -252,6 +354,8 @@ class InferenceProxy:
             status_code=str(getattr(getattr(last_error, "response", None), "status_code", 503)),
         ).inc()
         logger.warning("data plane request failed", extra={"extra_data": {"endpoint": endpoint, "error": str(last_error)}})
+        if isinstance(last_error, httpx.HTTPStatusError) and last_error.response.status_code < 500:
+            raise HTTPException(status_code=last_error.response.status_code, detail=self._backend_error_detail(last_error))
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable")
 
     async def _streaming_forward(
@@ -262,15 +366,41 @@ class InferenceProxy:
         backend: str = "llama.cpp",
         backend_url: str = "",
         backend_name: str = "",
+        prompt_template: str | None = None,
     ) -> StreamingResponse:
         started = perf_counter()
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
-        request_payload = self._prepare_chat_payload(payload, include_reasoning=include_reasoning, backend=backend)
+        request_payload = self._prepare_chat_payload(
+            payload,
+            include_reasoning=include_reasoning,
+            backend=backend,
+            prompt_template=prompt_template,
+        )
         if backend == "ollama":
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=True)
+        
+        # Secure debug log for payload
+        logged_payload = dict(request_payload)
+        if "messages" in logged_payload:
+            logged_payload["messages"] = [
+                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
+                for m in logged_payload["messages"]
+            ]
+        logger.debug(
+            "forwarding stream request to data plane",
+            extra={
+                "extra_data": {
+                    "endpoint": target_endpoint,
+                    "payload": logged_payload,
+                    "backend_url": backend_url,
+                }
+            },
+        )
+        
         stream_client = httpx.AsyncClient(base_url=backend_url, timeout=self.attempt_timeout)
         request = stream_client.build_request("POST", target_endpoint, json=request_payload)
+
         try:
             response = await stream_client.send(request, stream=True)
             response.raise_for_status()
@@ -278,7 +408,8 @@ class InferenceProxy:
             BACKEND_LATENCY.labels(backend_name=backend_name or backend, endpoint=endpoint).observe(perf_counter() - started)
         except (httpx.HTTPStatusError, httpx.TransportError) as exc:
             await stream_client.aclose()
-            await self.circuit_breaker.record_failure()
+            if self._should_trip_circuit_breaker(exc):
+                await self.circuit_breaker.record_failure()
             REQUEST_COUNTER.labels(endpoint=endpoint, status="error").inc()
             BACKEND_ERROR_COUNTER.labels(
                 backend_name=backend_name or backend,
@@ -289,14 +420,21 @@ class InferenceProxy:
                 "data plane stream setup failed",
                 extra={"extra_data": {"endpoint": endpoint, "backend_name": backend_name, "error": str(exc)}},
             )
+            if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code < 500:
+                raise HTTPException(status_code=exc.response.status_code, detail=self._backend_error_detail(exc)) from exc
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
 
         async def event_stream():
             completion_fragments: list[str] = []
+            loop_detected = False
             try:
                 async for line in response.aiter_lines():
                     if not line:
                         continue
+                    if loop_detected:
+                        # We already detected a loop, stop yielding real content
+                        # We might yield [DONE] if we want to finish gracefully
+                        break
                     if backend == "ollama":
                         translated_line = self._translate_ollama_stream_line(line, endpoint, payload.get("model", ""))
                         if translated_line is None:
@@ -312,17 +450,39 @@ class InferenceProxy:
                                 or parsed.get("choices", [{}])[0].get("text", "")
                             )
                             completion_fragments.append(delta)
+                            
+                            # Anti-loop check on accumulated content
+                            accumulated = "".join(completion_fragments)
+                            if len(completion_fragments) % 5 == 0 and detect_repetition(accumulated, prompt_template=prompt_template):
+                                loop_detected = True
+                                # Yield a final chunk with truncation notice
+                                truncation_chunk = {
+                                    "choices": [{
+                                        "index": 0,
+                                        "delta": {"content": "\n\n[Truncated due to repetition loop]"},
+                                        "finish_reason": "length"
+                                    }]
+                                }
+                                yield f"data: {json.dumps(truncation_chunk)}\n\n"
+                                yield "data: [DONE]\n\n"
+                                break
+
                         except json.JSONDecodeError:
                             pass
                     if endpoint == "/v1/chat/completions":
-                        normalized_line = normalize_chat_stream_line(line, include_reasoning=include_reasoning)
+                        normalized_line = normalize_chat_stream_line(
+                            line,
+                            include_reasoning=include_reasoning,
+                            prompt_template=prompt_template,
+                        )
                         if normalized_line is None:
                             continue
                         yield f"{normalized_line}\n\n"
                         continue
                     yield f"{line}\n\n"
             except (httpx.HTTPStatusError, httpx.TransportError) as exc:
-                await self.circuit_breaker.record_failure()
+                if self._should_trip_circuit_breaker(exc):
+                    await self.circuit_breaker.record_failure()
                 error_event = {"error": {"message": "stream interrupted", "type": exc.__class__.__name__}}
                 yield f"data: {json.dumps(error_event)}\n\n"
             finally:

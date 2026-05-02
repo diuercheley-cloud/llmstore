@@ -130,6 +130,7 @@ Serviços:
 
 - Control plane: `http://localhost:18080`
 - Dashboard admin local: `http://localhost:18080/admin-dashboard`
+- Admin Lab (Testes & Financeiro): `http://localhost:18080/admin-lab`
 - Client portal: `http://localhost:18080/client-portal`
 - PostgreSQL: `localhost:5432`
 - Redis: `localhost:6379`

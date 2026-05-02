@@ -1,4 +1,5 @@
 import json
+import logging
 from time import perf_counter
 
 import uuid
@@ -14,6 +15,7 @@ from app.models.client import Client
 from app.models.model_backend_route import ModelBackendRoute
 from app.schemas.inference import (
     ChatCompletionRequest,
+    ChatCompletionResponse,
     CompletionRequest,
     GenerationJobResponse,
     JobAcceptedResponse,
@@ -47,8 +49,12 @@ from app.services.security_monitor import (
 )
 from app.utils.request_summary import summarize_chat_request, summarize_completion_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.utils.validation import normalize_messages, validate_params
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["client"])
+
 settings = get_settings()
 
 
@@ -94,6 +100,7 @@ async def _chat_with_fallback(
                 backend_url=backend.backend_url,
                 backend_name=backend.name,
                 backend_id=backend.id,
+                prompt_template=selected_model.prompt_template,
             )
             result.attempts = attempt
             result.fallback_used = attempt > 1
@@ -163,6 +170,7 @@ def _error_message_for_log(detail) -> str:
 
 
 def _backend_errors_for_log(detail) -> list[dict]:
+
     if isinstance(detail, dict):
         errors = detail.get("backend_errors")
         if isinstance(errors, list):
@@ -170,27 +178,15 @@ def _backend_errors_for_log(detail) -> list[dict]:
     return []
 
 
-def _validated_params(client: Client, payload):
-    effective_plan = resolve_effective_plan(client)
-    max_tokens = payload.max_tokens or min(settings.default_max_tokens, effective_plan.max_output_tokens)
-    temperature = payload.temperature if payload.temperature is not None else settings.default_temperature
-    top_p = payload.top_p if payload.top_p is not None else settings.default_top_p
-    if max_tokens > effective_plan.max_output_tokens:
-        raise HTTPException(status_code=422, detail="requested max_tokens exceeds client limit")
-    if getattr(payload, "stream", False) and not effective_plan.allow_streaming:
-        raise HTTPException(status_code=403, detail="streaming is not allowed for this billing plan")
-    if temperature > settings.max_temperature:
-        raise HTTPException(status_code=422, detail="temperature exceeds configured maximum")
-    if top_p > settings.max_top_p:
-        raise HTTPException(status_code=422, detail="top_p exceeds configured maximum")
-    return max_tokens, temperature, top_p, effective_plan
-
-
-@router.get("/models")
+@router.get("/models", response_model=ModelList)
 async def list_models(
     session: AsyncSession = Depends(get_db_session),
     client: Client = Depends(require_client),
 ):
+    """
+    Lista os modelos disponíveis para o cliente com base no seu plano.
+    Compatível com o formato da API OpenAI.
+    """
     allowed = get_effective_allowed_models(client)
     models = await list_active_registry_models(session)
     filtered = [
@@ -198,10 +194,10 @@ async def list_models(
         for item in models
         if not allowed or item.model_id in allowed or (item.model_alias or "") in allowed
     ]
-    return ModelList(data=filtered).model_dump()
+    return ModelList(data=filtered)
 
 
-@router.post("/chat/completions")
+@router.post("/chat/completions", response_model=ChatCompletionResponse)
 async def chat_completions(
     payload: ChatCompletionRequest,
     request: Request,
@@ -210,18 +206,37 @@ async def chat_completions(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
+    """
+    Executa uma inferência de chat compatível com OpenAI.
+    Suporta streaming SSE se `stream: true` for enviado.
+    """
     selected_model, _ = await resolve_requested_model(
         session,
         client=client,
         requested_model=payload.model,
     )
-    prompt_tokens = estimate_prompt_tokens(messages=[item.model_dump() for item in payload.messages])
+    
+    logger.debug(
+        "chat completions request resolved",
+        extra={
+            "extra_data": {
+                "requested_model": payload.model,
+                "resolved_model_id": selected_model.model_id,
+                "resolved_model_alias": selected_model.model_alias,
+                "prompt_template": selected_model.prompt_template,
+            }
+        },
+    )
+    
+    # Normalize messages (handling content parts)
+    messages = normalize_messages([item.model_dump() for item in payload.messages])
+    
+    prompt_tokens = estimate_prompt_tokens(messages=messages)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = _validated_params(client, payload)
+    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
     
     # Apply Client System Prompt if available
-    messages = [item.model_dump() for item in payload.messages]
     if client.system_prompt:
         # Check if there is already a system message
         system_msg_idx = next((i for i, m in enumerate(messages) if m["role"] == "system"), None)
@@ -292,7 +307,7 @@ async def chat_completions(
         )
     )
     request_summary = summarize_chat_request(
-        [item.model_dump() for item in payload.messages],
+        messages,
         include_reasoning=payload.include_reasoning,
     )
     await maybe_record_repeated_large_prompt(
@@ -300,7 +315,7 @@ async def chat_completions(
         redis,
         client=client,
         prompt_tokens=prompt_tokens,
-        prompt_key=prompt_fingerprint(json.dumps([item.model_dump() for item in payload.messages], sort_keys=True, ensure_ascii=True)),
+        prompt_key=prompt_fingerprint(json.dumps(messages, sort_keys=True, ensure_ascii=True)),
         endpoint="/v1/chat/completions",
     )
     await maybe_record_plan_usage_anomaly(
@@ -506,6 +521,19 @@ async def completions(
         client=client,
         requested_model=payload.model,
     )
+    
+    logger.debug(
+        "completions request resolved",
+        extra={
+            "extra_data": {
+                "requested_model": payload.model,
+                "resolved_model_id": selected_model.model_id,
+                "resolved_model_alias": selected_model.model_alias,
+                "prompt_template": selected_model.prompt_template,
+            }
+        },
+    )
+    
     prompt_tokens = estimate_prompt_tokens(prompt=payload.prompt)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")

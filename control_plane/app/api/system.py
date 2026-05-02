@@ -26,12 +26,15 @@ router = APIRouter()
 settings = get_settings()
 
 
-@router.get("/health")
+@router.get("/health", tags=["system"])
 async def health(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
+    """
+    Verifica a saúde básica dos componentes (DB, Redis, Data Plane).
+    """
     status = {"postgres": False, "redis": False, "data_plane": False}
     try:
         await session.execute(text("SELECT 1"))
@@ -54,12 +57,15 @@ async def health(
     return {"status": overall, "dependencies": status}
 
 
-@router.get("/ready")
+@router.get("/ready", tags=["system"])
 async def ready(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
+    """
+    Verifica se o sistema está pronto para receber tráfego de inferência.
+    """
     await session.execute(text("SELECT 1"))
     await redis.ping()
     backend_rows = (
@@ -75,8 +81,11 @@ async def ready(
     return {"status": "ready"}
 
 
-@router.get("/metrics")
+@router.get("/metrics", tags=["system"])
 async def metrics():
+    """
+    Expõe métricas no formato Prometheus.
+    """
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
@@ -92,19 +101,35 @@ async def admin_dashboard():
     return FileResponse(static_file)
 
 
+@router.get("/admin-lab", include_in_schema=False)
+async def admin_lab():
+    if settings.public_exposure:
+        return Response(
+            content='{"detail":"admin lab disabled in public exposure mode"}',
+            media_type="application/json",
+            status_code=404,
+        )
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-lab" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/client-portal", include_in_schema=False)
 async def client_portal():
     static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
     return FileResponse(static_file)
 
 
-@router.get("/admin/health/deep")
+@router.get("/admin/health/deep", tags=["system"])
 async def health_deep(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
     _=Depends(require_admin),
 ):
+    """
+    Realiza uma verificação profunda de saúde, incluindo latências e status detalhado de backends.
+    Requer token de administrador.
+    """
     await observe_billing_status_metrics(session)
     postgres_detail = {"ok": False}
     redis_detail = {"ok": False}

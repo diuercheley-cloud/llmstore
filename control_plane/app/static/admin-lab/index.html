@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Lab - LLM Inference Stack</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #0f766e;
+            --accent-light: #14b8a6;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .auth-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        input[type="password"], input[type="text"], input[type="number"], select, textarea {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-light); }
+        .btn-secondary { background: white; border-color: var(--border); color: var(--text); }
+        .btn-secondary:hover { background: var(--bg); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+
+        aside {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: #f1f5f9;
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; background: #f8fafc; }
+        td { font-size: 0.875rem; }
+
+        .pill {
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .pill-success { background: #d1fae5; color: #065f46; }
+        .pill-danger { background: #fee2e2; color: #991b1b; }
+        .pill-warning { background: #fef3c7; color: #92400e; }
+        .pill-info { background: #dbeafe; color: #1e40af; }
+        .pill-muted { background: #f1f5f9; color: #475569; }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; }
+
+        #toast-container {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            display: flex; flex-direction: column; gap: 0.5rem;
+            z-index: 3000;
+        }
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .hidden { display: none !important; }
+        .blur { filter: blur(4px); }
+        .copyable { cursor: pointer; text-decoration: underline dotted; }
+        .copyable:hover { color: var(--accent); }
+
+        /* Test Runner specific */
+        .terminal {
+            background: #1e293b;
+            color: #f8fafc;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 1rem;
+        }
+
+        .flow-card {
+            border: 2px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: border-color 0.2s;
+        }
+        .flow-card:hover { border-color: var(--accent); }
+        .flow-steps { font-size: 0.75rem; color: var(--text-muted); }
+
+        #login-overlay {
+            position: fixed;
+            top: 60px; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .section-title {
+            margin: 0 0 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .actions-row button {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.75rem;
+        }
+
+        .detail-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .detail-item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+        }
+
+        .detail-item strong {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        pre.json-box {
+            margin: 0;
+            padding: 1rem;
+            overflow: auto;
+            border-radius: 0.75rem;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                overflow-x: auto;
+            }
+
+            aside nav {
+                display: flex;
+                min-width: max-content;
+            }
+
+            .nav-item {
+                border-left: none;
+                border-bottom: 3px solid transparent;
+            }
+
+            .nav-item.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--accent);
+            }
+
+            .grid-two {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+            Admin Lab
+        </a>
+        <div class="auth-controls">
+            <div id="connection-status" class="pill pill-muted">Desconectado</div>
+            <input id="admin-token" type="password" placeholder="Admin Token" value="">
+            <button id="btn-connect" class="btn-primary">Conectar</button>
+            <button id="btn-clear" class="btn-secondary">Limpar</button>
+        </div>
+    </header>
+
+    <div id="login-overlay">
+        <h1 style="margin: 0;">Bem-vindo ao Admin Lab</h1>
+        <p style="color: var(--text-muted);">Insira o token administrativo para validar o sistema.</p>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input id="remember-me" type="checkbox">
+            <label for="remember-me" style="font-size: 0.875rem;">Lembrar neste navegador</label>
+        </div>
+    </div>
+
+    <div class="layout">
+        <aside>
+            <nav>
+                <a href="#overview" class="nav-item active" data-tab="overview">Overview</a>
+                <a href="#clients" class="nav-item" data-tab="clients">Clientes</a>
+                <a href="#api-keys" class="nav-item" data-tab="api-keys">API Keys</a>
+                <a href="#plans" class="nav-item" data-tab="plans">Planos</a>
+                <a href="#invoices" class="nav-item" data-tab="invoices">Faturas</a>
+                <a href="#payments" class="nav-item" data-tab="payments">Pagamentos</a>
+                <a href="#usage" class="nav-item" data-tab="usage">Uso & Cotas</a>
+                <a href="#security" class="nav-item" data-tab="security">Segurança</a>
+                <a href="#models" class="nav-item" data-tab="models">Modelos</a>
+                <a href="#backends" class="nav-item" data-tab="backends">Backends</a>
+                <a href="#cache" class="nav-item" data-tab="cache">Cache & Jobs</a>
+                <a href="#reports" class="nav-item" data-tab="reports">Relatórios</a>
+                <a href="#test-runner" class="nav-item" data-tab="test-runner">Test Runner</a>
+            </nav>
+        </aside>
+
+        <main id="content">
+            <!-- TAB: OVERVIEW -->
+            <div id="tab-overview" class="tab-pane">
+                <div class="card-header">
+                    <h2 class="card-title">Resumo do Sistema</h2>
+                    <button class="btn-secondary" onclick="refreshOverview()">Atualizar</button>
+                </div>
+                <div id="health-deep-status" class="card" style="border-left: 5px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <strong id="health-label">Status Global</strong>
+                            <div id="health-details" style="font-size: 0.875rem; color: var(--text-muted);">Aguardando conexão...</div>
+                        </div>
+                        <div id="health-badge" class="pill pill-muted">UNKNOWN</div>
+                    </div>
+                </div>
+                <div class="stats-grid" id="overview-stats">
+                    <div class="stat-card"><span class="stat-label">Clientes</span><span class="stat-value" id="stat-clients">-</span></div>
+                    <div class="stat-card"><span class="stat-label">Invoices Pending</span><span class="stat-value" id="stat-invoices-pending">-</span></div>
+                    <div class="stat-card"><span class="stat-label">Receita Paga</span><span class="stat-value" id="stat-revenue">-</span></div>
+                    <div class="stat-card"><span class="stat-label">Tokens (Estimado)</span><span class="stat-value" id="stat-tokens">-</span></div>
+                    <div class="stat-card"><span class="stat-label">Cache Hit Rate</span><span class="stat-value" id="stat-cache">-</span></div>
+                    <div class="stat-card"><span class="stat-label">Backends Healthy</span><span class="stat-value" id="stat-backends">-</span></div>
+                </div>
+            </div>
+
+            <!-- TAB: CLIENTS -->
+            <div id="tab-clients" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Gestão de Clientes</h2>
+                    <div class="actions-row">
+                        <button class="btn-secondary" onclick="loadClients()">Atualizar</button>
+                        <button class="btn-primary" onclick="openModal('modal-client-create')">+ Novo Cliente</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="toolbar">
+                        <input type="text" id="client-filter" placeholder="Filtrar por nome">
+                    </div>
+                    <table id="table-clients">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Plano</th>
+                                <th>Billing</th>
+                                <th>Status</th>
+                                <th>Criado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: API KEYS -->
+            <div id="tab-api-keys" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">API Keys</h2>
+                    <div class="actions-row">
+                        <button class="btn-secondary" onclick="loadKeys()">Atualizar</button>
+                        <button class="btn-primary" onclick="openModal('modal-key-create')">+ Nova Chave</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="toolbar">
+                        <select id="key-client-filter"><option value="">Todos os clientes</option></select>
+                    </div>
+                    <table id="table-keys">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Cliente</th>
+                                <th>Prefixo</th>
+                                <th>Último Uso</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: INVOICES -->
+            <div id="tab-invoices" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Faturamento</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-secondary" onclick="loadInvoices()">Atualizar</button>
+                        <button class="btn-secondary" onclick="runBillingCycle()">Rodar Ciclo Billing</button>
+                        <button class="btn-primary" onclick="openModal('modal-invoice-generate')">Gerar Invoices</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="toolbar">
+                        <select id="invoice-client-filter"><option value="">Todos os clientes</option></select>
+                        <select id="invoice-status-filter">
+                            <option value="">Todos os status</option>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <table id="table-invoices">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Vencimento</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: TEST RUNNER -->
+            <div id="tab-test-runner" class="tab-pane hidden">
+                <h2 class="card-title" style="margin-bottom: 1.5rem;">Laboratório de Testes Operacionais</h2>
+                
+                <div class="card">
+                    <h3 style="margin-top: 0;">Fluxos Guiados</h3>
+                    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                        <div class="flow-card">
+                            <div>
+                                <strong>A) Fluxo Cliente Completo</strong>
+                                <div class="flow-steps">Criar cliente -> API Key -> Request -> Invoice -> Pagar -> Ativar</div>
+                            </div>
+                            <button class="btn-primary" onclick="runFlow('client-full')">Executar Fluxo</button>
+                        </div>
+                        <div class="flow-card">
+                            <div>
+                                <strong>B) Fluxo Inadimplência</strong>
+                                <div class="flow-steps">Criar -> Invoice -> Vencimento -> Billing Cycle -> Bloqueio -> Pagamento -> Reativar</div>
+                            </div>
+                            <button class="btn-danger" onclick="runFlow('past-due')">Simular Inadimplência</button>
+                        </div>
+                        <div class="flow-card">
+                            <div>
+                                <strong>E) Fluxo Cache</strong>
+                                <div class="flow-steps">Chamar prompt idêntico 2x -> Validar cache_hit</div>
+                            </div>
+                            <button class="btn-secondary" onclick="runFlow('cache')">Validar Cache</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top: 0;">Comandos de Sistema (Scripts)</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Só disponível se <code>TEST_TOOLS_ENABLED=true</code> e <code>PUBLIC_EXPOSURE=false</code>.
+                    </p>
+                    <div id="command-list" class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                        <!-- Commands populated here -->
+                    </div>
+                    <div id="terminal-output" class="terminal hidden">Aguardando execução...</div>
+                </div>
+            </div>
+
+            <!-- OTHER TABS (Placeholders for now, populated by JS) -->
+            <div id="tab-plans" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Planos de Billing</h2>
+                    <div class="actions-row">
+                        <button class="btn-secondary" onclick="loadPlans()">Atualizar</button>
+                        <button class="btn-primary" onclick="openModal('modal-plan-create')">+ Novo Plano</button>
+                    </div>
+                </div>
+                <div class="card" id="plans-content"></div>
+            </div>
+            <div id="tab-payments" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Pagamentos</h2>
+                    <div class="actions-row">
+                        <button class="btn-secondary" onclick="loadPayments()">Atualizar</button>
+                        <button class="btn-primary" onclick="openModal('modal-payment-create')">+ Novo Pagamento</button>
+                    </div>
+                </div>
+                <div class="card" id="payments-content"></div>
+            </div>
+            <div id="tab-usage" class="tab-pane hidden"><h2>Uso & Cotas</h2><div class="card" id="usage-content"></div></div>
+            <div id="tab-security" class="tab-pane hidden"><h2>Eventos de Segurança</h2><div class="card" id="security-content"></div></div>
+            <div id="tab-models" class="tab-pane hidden"><h2>Modelos</h2><div class="card" id="models-content"></div></div>
+            <div id="tab-backends" class="tab-pane hidden"><h2>Backends</h2><div class="card" id="backends-content"></div></div>
+            <div id="tab-cache" class="tab-pane hidden"><h2>Cache & Jobs</h2><div class="card" id="cache-content"></div></div>
+            <div id="tab-reports" class="tab-pane hidden"><h2>Exportar Relatórios</h2><div class="card" id="reports-content"></div></div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-client-create" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Novo Cliente</h3><button class="btn-secondary" onclick="closeModal('modal-client-create')">X</button></div>
+            <div class="form-group"><label>Nome</label><input type="text" id="c-name" placeholder="Empresa X"></div>
+            <div class="form-group"><label>Descrição</label><textarea id="c-desc"></textarea></div>
+            <div class="form-group"><label>Plano</label><select id="c-plan"></select></div>
+            <button class="btn-primary" style="width: 100%;" onclick="createClient()">Criar Cliente</button>
+        </div>
+    </div>
+
+    <div id="modal-key-create" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Nova API Key</h3><button class="btn-secondary" onclick="closeModal('modal-key-create')">X</button></div>
+            <div class="form-group"><label>Cliente</label><select id="k-client"></select></div>
+            <div class="form-group"><label>Nome da Chave</label><input type="text" id="k-name" placeholder="Produção"></div>
+            <button class="btn-primary" style="width: 100%;" onclick="createKey()">Gerar Chave</button>
+        </div>
+    </div>
+
+    <div id="modal-payment-create" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Registrar Pagamento</h3><button class="btn-secondary" onclick="closeModal('modal-payment-create')">X</button></div>
+            <div class="form-group"><label>ID da Fatura</label><input type="text" id="p-invoice" placeholder="UUID da Invoice"></div>
+            <div class="form-group"><label>Valor</label><input type="number" id="p-amount" step="0.01"></div>
+            <div class="form-group"><label>Método</label><select id="p-method"><option value="manual_pix">Manual PIX</option><option value="credit_card">Cartão</option></select></div>
+            <div class="form-group"><label>Referência</label><input type="text" id="p-ref"></div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+                <input type="checkbox" id="p-paid" checked> <label for="p-paid">Marcar como pago imediatamente</label>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createPayment()">Registrar</button>
+        </div>
+    </div>
+
+    <div id="modal-invoice-generate" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Gerar Invoice</h3><button class="btn-secondary" onclick="closeModal('modal-invoice-generate')">X</button></div>
+            <div class="form-group"><label>Cliente</label><select id="invoice-client"></select></div>
+            <div class="grid-two">
+                <div class="form-group"><label>Dias para vencimento</label><input type="number" id="invoice-due-days" value="7"></div>
+                <div class="form-group"><label>Método de pagamento</label><input type="text" id="invoice-payment-method" value="manual_pix"></div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+                <input type="checkbox" id="invoice-force" checked> <label for="invoice-force">Forçar geração</label>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="generateInvoice()">Gerar invoice</button>
+        </div>
+    </div>
+
+    <div id="modal-plan-create" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Novo Plano</h3><button class="btn-secondary" onclick="closeModal('modal-plan-create')">X</button></div>
+            <div class="form-group"><label>Código</label><input type="text" id="plan-code" placeholder="starter-local"></div>
+            <div class="form-group"><label>Nome</label><input type="text" id="plan-name" placeholder="Starter Local"></div>
+            <div class="form-group"><label>Descrição</label><textarea id="plan-description"></textarea></div>
+            <div class="grid-two">
+                <div class="form-group"><label>RPM</label><input type="number" id="plan-rpm" value="10"></div>
+                <div class="form-group"><label>Max output tokens</label><input type="number" id="plan-max-output" value="512"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Daily tokens</label><input type="number" id="plan-daily" value="50000"></div>
+                <div class="form-group"><label>Monthly tokens</label><input type="number" id="plan-monthly" value="500000"></div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+                <input type="checkbox" id="plan-streaming" checked> <label for="plan-streaming">Permitir streaming</label>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createPlan()">Criar plano</button>
+        </div>
+    </div>
+
+    <!-- TOASTS -->
+    <div id="toast-container"></div>
+
+    <script>
+        const state = {
+            token: '',
+            selectedTab: 'overview',
+            bootstrapDone: false,
+            health: null,
+            clients: [],
+            plans: [],
+            invoicesPayload: { invoices: [], payments: [], summary: {} },
+            payments: [],
+            usageSummary: null,
+            securityEvents: [],
+            modelsPayload: null,
+            backends: [],
+            backendHealth: null,
+            routing: null,
+            cacheStats: null,
+            jobs: null,
+            monthlyReport: null,
+            invoicePreview: null,
+            apiKeys: [],
+            commands: [],
+        };
+
+        const el = {
+            tokenInput: document.getElementById('admin-token'),
+            btnConnect: document.getElementById('btn-connect'),
+            btnClear: document.getElementById('btn-clear'),
+            overlay: document.getElementById('login-overlay'),
+            status: document.getElementById('connection-status'),
+            remember: document.getElementById('remember-me')
+        };
+
+        window.onload = () => {
+            bindEvents();
+            const saved = localStorage.getItem('admin_token');
+            if (saved) {
+                el.tokenInput.value = saved;
+                el.remember.checked = true;
+                connect();
+            }
+        };
+
+        function bindEvents() {
+            document.querySelectorAll('.nav-item').forEach((item) => {
+                item.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await switchTab(item.dataset.tab);
+                });
+            });
+
+            el.btnConnect.onclick = connect;
+            el.btnClear.onclick = () => {
+                localStorage.removeItem('admin_token');
+                window.location.reload();
+            };
+
+            document.getElementById('client-filter').addEventListener('input', renderClientsTable);
+            document.getElementById('key-client-filter').addEventListener('change', renderKeysTable);
+            document.getElementById('invoice-client-filter').addEventListener('change', renderInvoicesTable);
+            document.getElementById('invoice-status-filter').addEventListener('change', renderInvoicesTable);
+        }
+
+        async function switchTab(tab) {
+            state.selectedTab = tab;
+            document.querySelectorAll('.nav-item').forEach((i) => i.classList.toggle('active', i.dataset.tab === tab));
+            document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            if (state.bootstrapDone) {
+                await loadTab(tab);
+            }
+        }
+
+        async function connect() {
+            state.token = el.tokenInput.value.trim();
+            if (!state.token) {
+                toast('Insira o token administrativo.', 'error');
+                return;
+            }
+
+            try {
+                await preloadAdminLab();
+                state.bootstrapDone = true;
+                el.overlay.classList.add('hidden');
+                el.status.textContent = 'Conectado';
+                el.status.className = 'pill pill-success';
+                if (el.remember.checked) {
+                    localStorage.setItem('admin_token', state.token);
+                } else {
+                    localStorage.removeItem('admin_token');
+                }
+                await switchTab(state.selectedTab);
+                toast('Admin Lab carregado com dados reais.');
+            } catch (err) {
+                toast(err.message || 'Falha ao conectar no Admin Lab.', 'error');
+            }
+        }
+
+        async function preloadAdminLab() {
+            const [
+                health,
+                clients,
+                plans,
+                invoices,
+                backends,
+                backendHealth,
+                cacheStats,
+                securityEvents,
+                monthlyReport,
+                usageSummary,
+                modelsPayload,
+                routing,
+                jobs,
+                apiKeys,
+            ] = await Promise.all([
+                apiFetch('/admin/health/deep'),
+                apiFetch('/admin/clients'),
+                apiFetch('/admin/billing/plans'),
+                apiFetch('/admin/billing/invoices'),
+                apiFetch('/admin/backends'),
+                apiFetch('/admin/backends/health'),
+                apiFetch('/admin/cache/stats'),
+                apiFetch('/admin/security/events'),
+                apiFetch('/admin/reports/monthly'),
+                apiFetch('/admin/usage/summary'),
+                apiFetch('/admin/models'),
+                apiFetch('/admin/backends/routing'),
+                apiFetch('/admin/jobs'),
+                apiFetch('/admin/api-keys'),
+            ]);
+
+            state.health = health;
+            state.clients = clients;
+            state.plans = plans;
+            state.invoicesPayload = invoices;
+            state.payments = Array.isArray(invoices.payments) ? invoices.payments : await apiFetch('/admin/billing/payments');
+            state.backends = backends;
+            state.backendHealth = backendHealth;
+            state.cacheStats = cacheStats;
+            state.securityEvents = securityEvents;
+            state.monthlyReport = monthlyReport;
+            state.usageSummary = usageSummary;
+            state.modelsPayload = modelsPayload;
+            state.routing = routing;
+            state.jobs = jobs;
+            state.apiKeys = apiKeys;
+
+            populateSharedSelectors();
+            renderOverview();
+        }
+
+        async function loadTab(tab) {
+            if (tab === 'overview') {
+                await refreshOverview();
+                return;
+            }
+            if (tab === 'clients') {
+                state.clients = await apiFetch('/admin/clients');
+                populateSharedSelectors();
+                renderClientsTable();
+                return;
+            }
+            if (tab === 'api-keys') {
+                state.apiKeys = await apiFetch('/admin/api-keys');
+                renderKeysTable();
+                return;
+            }
+            if (tab === 'plans') {
+                state.plans = await apiFetch('/admin/billing/plans');
+                populateSharedSelectors();
+                renderPlans();
+                return;
+            }
+            if (tab === 'invoices') {
+                state.invoicesPayload = await apiFetch('/admin/billing/invoices');
+                state.payments = state.invoicesPayload.payments || state.payments;
+                renderInvoicesTable();
+                return;
+            }
+            if (tab === 'payments') {
+                state.payments = await apiFetch('/admin/billing/payments');
+                renderPayments();
+                return;
+            }
+            if (tab === 'usage') {
+                state.usageSummary = await apiFetch('/admin/usage/summary');
+                renderUsage();
+                return;
+            }
+            if (tab === 'security') {
+                state.securityEvents = await apiFetch('/admin/security/events');
+                renderSecurity();
+                return;
+            }
+            if (tab === 'models') {
+                state.modelsPayload = await apiFetch('/admin/models');
+                renderModels();
+                return;
+            }
+            if (tab === 'backends') {
+                const [backends, backendHealth, routing] = await Promise.all([
+                    apiFetch('/admin/backends'),
+                    apiFetch('/admin/backends/health'),
+                    apiFetch('/admin/backends/routing'),
+                ]);
+                state.backends = backends;
+                state.backendHealth = backendHealth;
+                state.routing = routing;
+                renderBackends();
+                return;
+            }
+            if (tab === 'cache') {
+                const [cacheStats, jobs] = await Promise.all([
+                    apiFetch('/admin/cache/stats'),
+                    apiFetch('/admin/jobs'),
+                ]);
+                state.cacheStats = cacheStats;
+                state.jobs = jobs;
+                renderCache();
+                return;
+            }
+            if (tab === 'reports') {
+                await loadReports();
+                return;
+            }
+            if (tab === 'test-runner') {
+                await loadTestRunner();
+            }
+        }
+
+        async function refreshOverview() {
+            const [health, clients, invoices, backendHealth, cacheStats, monthlyReport, usageSummary] = await Promise.all([
+                apiFetch('/admin/health/deep'),
+                apiFetch('/admin/clients'),
+                apiFetch('/admin/billing/invoices'),
+                apiFetch('/admin/backends/health'),
+                apiFetch('/admin/cache/stats'),
+                apiFetch('/admin/reports/monthly'),
+                apiFetch('/admin/usage/summary'),
+            ]);
+            state.health = health;
+            state.clients = clients;
+            state.invoicesPayload = invoices;
+            state.backendHealth = backendHealth;
+            state.cacheStats = cacheStats;
+            state.monthlyReport = monthlyReport;
+            state.usageSummary = usageSummary;
+            populateSharedSelectors();
+            renderOverview();
+        }
+
+        async function loadClients() { await loadTab('clients'); }
+        async function loadKeys() { await loadTab('api-keys'); }
+        async function loadInvoices() { await loadTab('invoices'); }
+        async function loadPlans() { await loadTab('plans'); }
+        async function loadPayments() { await loadTab('payments'); }
+        async function loadUsage() { await loadTab('usage'); }
+        async function loadSecurity() { await loadTab('security'); }
+        async function loadModels() { await loadTab('models'); }
+        async function loadBackends() { await loadTab('backends'); }
+        async function loadCache() { await loadTab('cache'); }
+
+        async function apiFetch(path, method = 'GET', body = null, extraHeaders = {}) {
+            const headers = { 'X-Admin-Token': state.token, ...extraHeaders };
+            if (!(body instanceof FormData)) {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            }
+            const res = await fetch(path, {
+                method,
+                headers,
+                body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : null,
+            });
+            if (res.status === 204) return null;
+            const text = await res.text();
+            let data = text;
+            try {
+                data = text ? JSON.parse(text) : null;
+            } catch (_) {}
+            if (!res.ok) {
+                const detail = typeof data === 'object' && data ? (data.detail || data.message || JSON.stringify(data)) : text || `HTTP ${res.status}`;
+                throw new Error(detail);
+            }
+            return data;
+        }
+
+        function toast(message, type = 'info') {
+            const item = document.createElement('div');
+            item.className = 'toast';
+            item.textContent = message;
+            if (type === 'error') item.style.background = 'var(--danger)';
+            if (type === 'success') item.style.background = 'var(--success)';
+            document.getElementById('toast-container').appendChild(item);
+            setTimeout(() => item.remove(), 3500);
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function planNameById(planId) {
+            const plan = state.plans.find((item) => item.id === planId);
+            return plan ? plan.name : 'Sem plano';
+        }
+
+        function currency(value) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
+        }
+
+        function fmtDate(value) {
+            return value ? new Date(value).toLocaleString() : '-';
+        }
+
+        function parseJsonList(raw) {
+            if (!raw) return [];
+            try {
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function populateSharedSelectors() {
+            const clientOptions = state.clients.map((client) => `<option value="${client.id}">${client.name}</option>`).join('');
+            const keySelect = document.getElementById('k-client');
+            const invoiceSelect = document.getElementById('invoice-client');
+            const invoiceFilter = document.getElementById('invoice-client-filter');
+            const keyFilter = document.getElementById('key-client-filter');
+            keySelect.innerHTML = clientOptions;
+            invoiceSelect.innerHTML = clientOptions;
+            invoiceFilter.innerHTML = `<option value="">Todos os clientes</option>${clientOptions}`;
+            keyFilter.innerHTML = `<option value="">Todos os clientes</option>${clientOptions}`;
+
+            const planOptions = `<option value="">Sem plano</option>${state.plans.map((plan) => `<option value="${plan.id}">${plan.name}</option>`).join('')}`;
+            document.getElementById('c-plan').innerHTML = planOptions;
+        }
+
+        function renderOverview() {
+            const clients = state.clients;
+            const invoices = state.invoicesPayload.invoices || [];
+            const backends = (state.backendHealth && state.backendHealth.backends) || [];
+            const activeClients = clients.filter((client) => !client.is_blocked && client.billing_status === 'active').length;
+            const blockedClients = clients.filter((client) => client.is_blocked || client.billing_status === 'suspended').length;
+            const paidInvoices = invoices.filter((invoice) => invoice.status === 'paid');
+            const pendingInvoices = invoices.filter((invoice) => invoice.status === 'pending');
+            const overdueInvoices = invoices.filter((invoice) => invoice.status === 'overdue');
+            const healthyBackends = backends.filter((backend) => backend.ok).length;
+            const unhealthyBackends = backends.filter((backend) => !backend.ok).length;
+            const cacheEntries = state.cacheStats?.entries_total ?? 0;
+            const cacheExpired = state.cacheStats?.expired_entries ?? 0;
+            const hitRate = cacheEntries > 0 ? `${Math.max(0, Math.round(((cacheEntries - cacheExpired) / cacheEntries) * 100))}%` : '0%';
+            const totalRevenue = invoices.reduce((acc, item) => acc + Number(item.total_amount || 0), 0);
+
+            document.getElementById('health-details').innerHTML = [
+                `Postgres: ${state.health.dependencies.postgres.ok ? 'OK' : 'FAIL'} (${state.health.dependencies.postgres.latency_ms || '-'}ms)`,
+                `Redis: ${state.health.dependencies.redis.ok ? 'OK' : 'FAIL'} (${state.health.dependencies.redis.latency_ms || '-'}ms)`,
+                `Data plane: ${state.health.dependencies.data_plane.ok ? 'OK' : 'FAIL'} (${state.health.dependencies.data_plane.latency_ms || '-'}ms)`,
+            ].join(' | ');
+            document.getElementById('health-badge').textContent = state.health.status.toUpperCase();
+            document.getElementById('health-badge').className = `pill ${state.health.status === 'ok' ? 'pill-success' : 'pill-danger'}`;
+            document.getElementById('health-deep-status').style.borderLeftColor = state.health.status === 'ok' ? 'var(--success)' : 'var(--danger)';
+
+            const stats = document.getElementById('overview-stats');
+            stats.innerHTML = `
+                <div class="stat-card"><span class="stat-label">Health</span><span class="stat-value">${state.health.status.toUpperCase()}</span></div>
+                <div class="stat-card"><span class="stat-label">Clientes</span><span class="stat-value">${clients.length}</span></div>
+                <div class="stat-card"><span class="stat-label">Clientes ativos</span><span class="stat-value">${activeClients}</span></div>
+                <div class="stat-card"><span class="stat-label">Bloqueados/Suspensos</span><span class="stat-value">${blockedClients}</span></div>
+                <div class="stat-card"><span class="stat-label">Invoices pending</span><span class="stat-value">${pendingInvoices.length}</span></div>
+                <div class="stat-card"><span class="stat-label">Invoices paid</span><span class="stat-value">${paidInvoices.length}</span></div>
+                <div class="stat-card"><span class="stat-label">Invoices overdue</span><span class="stat-value">${overdueInvoices.length}</span></div>
+                <div class="stat-card"><span class="stat-label">Receita estimada</span><span class="stat-value">${currency(totalRevenue)}</span></div>
+                <div class="stat-card"><span class="stat-label">Receita paga</span><span class="stat-value">${currency(state.monthlyReport?.paid_revenue_usd || 0)}</span></div>
+                <div class="stat-card"><span class="stat-label">Cache hit rate</span><span class="stat-value">${hitRate}</span></div>
+                <div class="stat-card"><span class="stat-label">Backends healthy</span><span class="stat-value">${healthyBackends}</span></div>
+                <div class="stat-card"><span class="stat-label">Backends unhealthy</span><span class="stat-value">${unhealthyBackends}</span></div>
+            `;
+        }
+
+        function renderClientsTable() {
+            const filter = document.getElementById('client-filter').value.trim().toLowerCase();
+            const rows = state.clients
+                .filter((client) => !filter || client.name.toLowerCase().includes(filter))
+                .map((client) => `
+                    <tr>
+                        <td>
+                            <strong>${client.name}</strong>
+                            <div class="muted">${client.description || ''}</div>
+                        </td>
+                        <td>${planNameById(client.billing_plan_id)}</td>
+                        <td><span class="pill pill-${client.billing_status === 'active' ? 'success' : client.billing_status === 'past_due' ? 'warning' : 'danger'}">${client.billing_status}</span></td>
+                        <td><span class="pill pill-${client.is_blocked ? 'danger' : 'success'}">${client.is_blocked ? 'blocked' : 'active'}</span></td>
+                        <td>${fmtDate(client.created_at)}</td>
+                        <td>
+                            <div class="actions-row">
+                                <button class="btn-secondary" onclick="editClient('${client.id}')">Editar</button>
+                                <button class="btn-secondary" onclick="blockClient('${client.id}', ${!client.is_blocked})">${client.is_blocked ? 'Desbloquear' : 'Bloquear'}</button>
+                                <button class="btn-secondary" onclick="${client.billing_status === 'suspended' ? `unsuspendClient('${client.id}')` : `suspendClient('${client.id}')`}">${client.billing_status === 'suspended' ? 'Reativar' : 'Suspender'}</button>
+                                <button class="btn-secondary" onclick="prepareKeyForClient('${client.id}')">Criar API key</button>
+                                <button class="btn-secondary" onclick="showClientUsage('${client.id}')">Ver uso</button>
+                                <button class="btn-secondary" onclick="showClientInvoices('${client.id}')">Ver invoices</button>
+                                <button class="btn-secondary" onclick="resetUsage('${client.id}')">Reset usage</button>
+                                <button class="btn-danger" onclick="deleteClient('${client.id}')">Excluir</button>
+                            </div>
+                        </td>
+                    </tr>
+                `)
+                .join('');
+            document.querySelector('#table-clients tbody').innerHTML = rows || `<tr><td colspan="6">Nenhum cliente encontrado.</td></tr>`;
+        }
+
+        function renderKeysTable() {
+            const filter = document.getElementById('key-client-filter').value;
+            const rows = state.apiKeys
+                .filter((key) => !filter || key.client_id === filter)
+                .map((key) => `
+                    <tr>
+                        <td>${key.name}</td>
+                        <td>${key.client_name}</td>
+                        <td><code>${key.key_prefix}</code></td>
+                        <td>${fmtDate(key.last_used_at)}</td>
+                        <td><span class="pill pill-${key.revoked_at ? 'danger' : 'success'}">${key.revoked_at ? 'revoked' : 'active'}</span></td>
+                        <td>
+                            <div class="actions-row">
+                                ${!key.revoked_at ? `<button class="btn-secondary" onclick="rotateKey('${key.id}')">Rotacionar</button>` : ''}
+                                <button class="btn-danger" onclick="revokeKey('${key.id}')">Revogar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `)
+                .join('');
+            document.querySelector('#table-keys tbody').innerHTML = rows || `<tr><td colspan="6">Nenhuma chave encontrada.</td></tr>`;
+        }
+
+        function renderInvoicesTable() {
+            const clientFilter = document.getElementById('invoice-client-filter').value;
+            const statusFilter = document.getElementById('invoice-status-filter').value;
+            const rows = (state.invoicesPayload.invoices || [])
+                .filter((invoice) => !clientFilter || invoice.client_id === clientFilter)
+                .filter((invoice) => !statusFilter || invoice.status === statusFilter)
+                .map((invoice) => `
+                    <tr>
+                        <td><small>${invoice.id.slice(0, 8)}</small></td>
+                        <td>${invoice.client_name || invoice.client_id}</td>
+                        <td>${fmtDate(invoice.due_at)}</td>
+                        <td>${currency(invoice.total_amount)}</td>
+                        <td><span class="pill pill-${invoice.status === 'paid' ? 'success' : invoice.status === 'overdue' ? 'danger' : invoice.status === 'cancelled' ? 'muted' : 'warning'}">${invoice.status}</span></td>
+                        <td>
+                            <div class="actions-row">
+                                ${invoice.status !== 'paid' && invoice.status !== 'cancelled' ? `<button class="btn-primary" onclick="markPaid('${invoice.id}')">Marcar paga</button>` : ''}
+                                ${invoice.status === 'pending' ? `<button class="btn-secondary" onclick="markOverdue('${invoice.id}')">Mark overdue</button>` : ''}
+                                ${invoice.status !== 'paid' && invoice.status !== 'cancelled' ? `<button class="btn-danger" onclick="cancelInvoice('${invoice.id}')">Cancelar</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `)
+                .join('');
+            document.querySelector('#table-invoices tbody').innerHTML = rows || `<tr><td colspan="6">Nenhuma invoice encontrada.</td></tr>`;
+        }
+
+        function renderPlans() {
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Streaming</th>
+                            <th>RPM</th>
+                            <th>Daily</th>
+                            <th>Monthly</th>
+                            <th>Max Output</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${state.plans.map((plan) => `
+                            <tr>
+                                <td><code>${plan.code}</code></td>
+                                <td>${plan.name}<div class="muted">${plan.description || ''}</div></td>
+                                <td>${plan.allow_streaming ? 'yes' : 'no'}</td>
+                                <td>${plan.rate_limit_per_minute}</td>
+                                <td>${plan.daily_token_quota.toLocaleString()}</td>
+                                <td>${plan.monthly_token_quota.toLocaleString()}</td>
+                                <td>${plan.max_output_tokens}</td>
+                                <td><span class="pill pill-${plan.is_active ? 'success' : 'muted'}">${plan.is_active ? 'active' : 'inactive'}</span></td>
+                                <td>
+                                    <div class="actions-row">
+                                        <button class="btn-secondary" onclick="editPlan('${plan.id}')">Editar</button>
+                                        <button class="btn-secondary" onclick="togglePlan('${plan.id}', ${!plan.is_active})">${plan.is_active ? 'Desativar' : 'Ativar'}</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('plans-content').innerHTML = html;
+        }
+
+        function renderPayments() {
+            const html = `
+                <table>
+                    <thead><tr><th>ID</th><th>Invoice</th><th>Client</th><th>Amount</th><th>Method</th><th>Status</th><th>Paid At</th><th>Ações</th></tr></thead>
+                    <tbody>
+                        ${state.payments.map((payment) => `
+                            <tr>
+                                <td><small>${payment.id.slice(0, 8)}</small></td>
+                                <td><small>${payment.invoice_id.slice(0, 8)}</small></td>
+                                <td><small>${payment.client_id.slice(0, 8)}</small></td>
+                                <td>${currency(payment.amount)}</td>
+                                <td>${payment.payment_method}</td>
+                                <td><span class="pill pill-${payment.status === 'paid' ? 'success' : payment.status === 'cancelled' ? 'muted' : 'warning'}">${payment.status}</span></td>
+                                <td>${fmtDate(payment.paid_at)}</td>
+                                <td>${payment.status !== 'cancelled' ? `<button class="btn-danger" onclick="cancelPayment('${payment.id}')">Cancelar</button>` : ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('payments-content').innerHTML = html;
+        }
+
+        function renderUsage() {
+            const summary = state.usageSummary;
+            const clients = (summary.clients || []).map((client) => `
+                <tr>
+                    <td>${client.name}</td>
+                    <td>${client.billing_plan_code || '-'}</td>
+                    <td>${client.requests_total}</td>
+                    <td>${client.tokens_estimated_total.toLocaleString()}</td>
+                    <td>${client.errors_total}</td>
+                    <td>${Number(client.avg_latency_ms || 0).toFixed(2)}ms</td>
+                    <td>${currency(client.estimated_cost_usd)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('usage-content').innerHTML = `
+                <div class="detail-list" style="margin-bottom:1rem;">
+                    <div class="detail-item"><strong>Requests</strong>${summary.totals.requests_total}</div>
+                    <div class="detail-item"><strong>Tokens</strong>${summary.totals.tokens_estimated_total.toLocaleString()}</div>
+                    <div class="detail-item"><strong>Errors</strong>${summary.totals.errors_total}</div>
+                    <div class="detail-item"><strong>Avg latency</strong>${Number(summary.totals.avg_latency_ms || 0).toFixed(2)}ms</div>
+                    <div class="detail-item"><strong>Estimated cost</strong>${currency(summary.totals.estimated_cost_usd)}</div>
+                </div>
+                <h3 class="section-title">Uso por cliente</h3>
+                <table>
+                    <thead><tr><th>Cliente</th><th>Plano</th><th>Requests</th><th>Tokens</th><th>Errors</th><th>Latência</th><th>Custo</th></tr></thead>
+                    <tbody>${clients}</tbody>
+                </table>
+            `;
+        }
+
+        function renderSecurity() {
+            const clientActions = state.clients.slice(0, 12).map((client) => `
+                <tr>
+                    <td>${client.name}</td>
+                    <td>${client.billing_status}</td>
+                    <td>${client.is_blocked ? 'blocked' : 'ok'}</td>
+                    <td>
+                        <div class="actions-row">
+                            <button class="btn-secondary" onclick="suspendClient('${client.id}')">Suspender</button>
+                            <button class="btn-secondary" onclick="unsuspendClient('${client.id}')">Reativar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            const events = state.securityEvents.map((event) => `
+                <tr>
+                    <td>${fmtDate(event.created_at || event.timestamp)}</td>
+                    <td>${event.event_type}</td>
+                    <td><span class="pill pill-${event.severity === 'high' || event.severity === 'critical' ? 'danger' : 'info'}">${event.severity}</span></td>
+                    <td>${event.title || event.message || '-'}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('security-content').innerHTML = `
+                <div class="toolbar">
+                    <button class="btn-secondary" onclick="probeInvalidAdmin()">Testar admin token inválido</button>
+                    <button class="btn-secondary" onclick="probeInvalidApiKey()">Testar API key inválida</button>
+                </div>
+                <div class="grid-two">
+                    <div class="card" style="margin:0;">
+                        <h3 class="section-title">Ações por cliente</h3>
+                        <table><thead><tr><th>Cliente</th><th>Billing</th><th>Block</th><th>Ações</th></tr></thead><tbody>${clientActions}</tbody></table>
+                    </div>
+                    <div class="card" style="margin:0;">
+                        <h3 class="section-title">Eventos recentes</h3>
+                        <table><thead><tr><th>Quando</th><th>Tipo</th><th>Severidade</th><th>Resumo</th></tr></thead><tbody>${events}</tbody></table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModels() {
+            const models = state.modelsPayload.registry || [];
+            document.getElementById('models-content').innerHTML = `
+                <table>
+                    <thead><tr><th>Model</th><th>Alias</th><th>Backend</th><th>Status</th><th>Default</th><th>Routes</th><th>Ações</th></tr></thead>
+                    <tbody>
+                        ${models.map((model) => `
+                            <tr>
+                                <td>${model.model_id}</td>
+                                <td>${model.model_alias || '-'}</td>
+                                <td>${model.backend_name || '-'}</td>
+                                <td><span class="pill pill-${model.is_active ? 'success' : 'muted'}">${model.status}</span></td>
+                                <td>${model.is_default ? 'yes' : 'no'}</td>
+                                <td>${(model.routes || []).length}</td>
+                                <td>
+                                    <div class="actions-row">
+                                        ${model.is_active ? `<button class="btn-secondary" onclick="toggleModel('${model.id}', false)">Desabilitar</button>` : `<button class="btn-secondary" onclick="toggleModel('${model.id}', true)">Habilitar</button>`}
+                                        <button class="btn-primary" onclick="testModelPrompt('${model.model_id}')">Testar prompt</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderBackends() {
+            const healthMap = new Map(((state.backendHealth && state.backendHealth.backends) || []).map((backend) => [backend.backend_id, backend]));
+            const routingSummary = state.routing?.summary || {};
+            document.getElementById('backends-content').innerHTML = `
+                <div class="toolbar">
+                    <button class="btn-secondary" onclick="loadTab('backends')">Atualizar</button>
+                    <button class="btn-danger" onclick="resetCircuitBreaker()">Reset circuit breaker</button>
+                </div>
+                <div class="detail-list" style="margin-bottom:1rem;">
+                    <div class="detail-item"><strong>Healthy routes</strong>${routingSummary.healthy || 0}</div>
+                    <div class="detail-item"><strong>Degraded routes</strong>${routingSummary.degraded || 0}</div>
+                    <div class="detail-item"><strong>Unhealthy routes</strong>${routingSummary.unhealthy || 0}</div>
+                    <div class="detail-item"><strong>Disabled routes</strong>${routingSummary.disabled || 0}</div>
+                </div>
+                <table>
+                    <thead><tr><th>Name</th><th>Provider</th><th>URL</th><th>Default</th><th>Active</th><th>Health</th><th>Latency</th></tr></thead>
+                    <tbody>
+                        ${state.backends.map((backend) => {
+                            const health = healthMap.get(backend.id);
+                            return `
+                                <tr>
+                                    <td>${backend.name}</td>
+                                    <td>${backend.provider}</td>
+                                    <td><code>${backend.backend_url}</code></td>
+                                    <td>${backend.is_default ? 'yes' : 'no'}</td>
+                                    <td>${backend.is_active ? 'yes' : 'no'}</td>
+                                    <td><span class="pill pill-${health?.ok ? 'success' : 'danger'}">${health?.ok ? 'healthy' : 'error'}</span></td>
+                                    <td>${health?.latency_ms || '-'}ms</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <h3 class="section-title" style="margin-top:1.5rem;">Routing</h3>
+                <pre class="json-box">${escapeHtml(JSON.stringify(state.routing, null, 2))}</pre>
+            `;
+        }
+
+        function renderCache() {
+            const stats = state.cacheStats || {};
+            const jobs = state.jobs || { summary: {}, jobs: [] };
+            document.getElementById('cache-content').innerHTML = `
+                <div class="toolbar">
+                    <button class="btn-danger" onclick="clearCache()">Limpar cache</button>
+                    <button class="btn-secondary" onclick="runCacheValidation()">Teste de cache</button>
+                </div>
+                <div class="detail-list" style="margin-bottom:1rem;">
+                    <div class="detail-item"><strong>Entries</strong>${stats.entries_total || 0}</div>
+                    <div class="detail-item"><strong>Expired</strong>${stats.expired_entries || 0}</div>
+                    <div class="detail-item"><strong>TTL</strong>${stats.ttl_seconds || 0}s</div>
+                    <div class="detail-item"><strong>Cache reuses</strong>${stats.cache_reuses || 0}</div>
+                </div>
+                <h3 class="section-title">Jobs async</h3>
+                <div class="muted" style="margin-bottom:1rem;">Queue depth: ${jobs.summary.queue_depth_redis || jobs.summary.queue_size || 0} | Running: ${jobs.summary.running || jobs.summary.processing_total || 0}</div>
+                <pre class="json-box">${escapeHtml(JSON.stringify(jobs.jobs.slice(0, 5), null, 2))}</pre>
+            `;
+        }
+
+        async function loadReports() {
+            const [monthlyReport, invoicePreview] = await Promise.all([
+                apiFetch('/admin/reports/monthly'),
+                apiFetch('/admin/billing/invoices/preview'),
+            ]);
+            state.monthlyReport = monthlyReport;
+            state.invoicePreview = invoicePreview;
+            document.getElementById('reports-content').innerHTML = `
+                <div class="detail-list" style="margin-bottom:1rem;">
+                    <div class="detail-item"><strong>Mês</strong>${monthlyReport.month}</div>
+                    <div class="detail-item"><strong>Forecast</strong>${currency(monthlyReport.forecast_revenue_usd)}</div>
+                    <div class="detail-item"><strong>Paid</strong>${currency(monthlyReport.paid_revenue_usd)}</div>
+                    <div class="detail-item"><strong>Delinquency</strong>${currency(monthlyReport.delinquency_usd)}</div>
+                </div>
+                <div class="toolbar">
+                    <button class="btn-secondary" onclick="exportData('clients', 'json')">Clients JSON</button>
+                    <button class="btn-secondary" onclick="exportData('usage', 'csv')">Usage CSV</button>
+                    <button class="btn-secondary" onclick="exportData('invoices', 'json')">Invoices JSON</button>
+                    <button class="btn-secondary" onclick="exportData('payments', 'csv')">Payments CSV</button>
+                    <button class="btn-secondary" onclick="exportData('request-logs', 'csv')">Request logs CSV</button>
+                    <button class="btn-secondary" onclick="exportData('security-events', 'json')">Security JSON</button>
+                </div>
+                <h3 class="section-title">Invoice preview</h3>
+                <pre class="json-box">${escapeHtml(JSON.stringify(invoicePreview, null, 2))}</pre>
+            `;
+        }
+
+        async function loadTestRunner() {
+            const term = document.getElementById('terminal-output');
+            term.classList.add('hidden');
+            try {
+                state.commands = await apiFetch('/admin/test/commands');
+                document.getElementById('command-list').innerHTML = state.commands.map((cmd) => `
+                    <div class="flow-card">
+                        <div>
+                            <strong>${cmd.name}</strong>
+                            <div class="flow-steps">${cmd.description}</div>
+                            <div class="muted">${cmd.command}</div>
+                        </div>
+                        <button class="btn-secondary" onclick="runCommand('${cmd.id}')">Executar</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('command-list').innerHTML = `<p style="color: var(--danger)">Test runner indisponível: ${escapeHtml(err.message)}</p>`;
+            }
+        }
+
+        async function runCommand(id) {
+            const term = document.getElementById('terminal-output');
+            term.classList.remove('hidden');
+            term.textContent = `> Executando ${id}...\n`;
+            try {
+                const result = await apiFetch('/admin/test/run', 'POST', { command_id: id });
+                term.textContent += `${result.status} | exit=${result.exit_code} | ${result.duration_seconds}s\n\n`;
+                if (result.stdout) term.textContent += `STDOUT\n${result.stdout}\n`;
+                if (result.stderr) term.textContent += `STDERR\n${result.stderr}\n`;
+            } catch (err) {
+                term.textContent += `ERROR: ${err.message}`;
+            }
+        }
+
+        async function createClient() {
+            await apiFetch('/admin/clients', 'POST', {
+                name: document.getElementById('c-name').value,
+                description: document.getElementById('c-desc').value,
+                billing_plan_id: document.getElementById('c-plan').value || null,
+            });
+            closeModal('modal-client-create');
+            toast('Cliente criado.', 'success');
+            await loadTab('clients');
+        }
+
+        async function editClient(id) {
+            const client = state.clients.find((item) => item.id === id);
+            const description = prompt('Nova descrição do cliente:', client?.description || '');
+            if (description === null) return;
+            await apiFetch(`/admin/clients/${id}`, 'PATCH', { description });
+            toast('Cliente atualizado.', 'success');
+            await loadTab('clients');
+        }
+
+        async function blockClient(id, shouldBlock) {
+            await apiFetch(`/admin/clients/${id}/${shouldBlock ? 'block' : 'unblock'}`, 'POST');
+            toast(`Cliente ${shouldBlock ? 'bloqueado' : 'desbloqueado'}.`, 'success');
+            await loadTab('clients');
+        }
+
+        async function suspendClient(id) {
+            await apiFetch(`/admin/security/clients/${id}/suspend`, 'POST');
+            toast('Cliente suspenso.', 'success');
+            await Promise.all([loadTab('clients'), loadTab('security')]);
+        }
+
+        async function unsuspendClient(id) {
+            await apiFetch(`/admin/security/clients/${id}/unsuspend`, 'POST');
+            toast('Cliente reativado.', 'success');
+            await Promise.all([loadTab('clients'), loadTab('security')]);
+        }
+
+        async function deleteClient(id) {
+            if (!confirm('Fazer soft-delete deste cliente?')) return;
+            await apiFetch(`/admin/clients/${id}`, 'DELETE');
+            toast('Cliente removido.', 'success');
+            await loadTab('clients');
+        }
+
+        function prepareKeyForClient(id) {
+            document.getElementById('k-client').value = id;
+            openModal('modal-key-create');
+        }
+
+        async function createKey() {
+            const res = await apiFetch('/admin/api-keys', 'POST', {
+                client_id: document.getElementById('k-client').value,
+                name: document.getElementById('k-name').value,
+            });
+            closeModal('modal-key-create');
+            state.apiKeys = await apiFetch('/admin/api-keys');
+            renderKeysTable();
+            revealSecret('Nova API key', res.api_key);
+        }
+
+        async function rotateKey(id) {
+            const res = await apiFetch(`/admin/api-keys/${id}/rotate`, 'POST');
+            state.apiKeys = await apiFetch('/admin/api-keys');
+            renderKeysTable();
+            revealSecret('API key rotacionada', res.api_key.api_key);
+        }
+
+        async function revokeKey(id) {
+            if (!confirm('Revogar esta API key?')) return;
+            await apiFetch(`/admin/api-keys/${id}`, 'DELETE');
+            toast('API key revogada.', 'success');
+            await loadTab('api-keys');
+        }
+
+        function revealSecret(title, secret) {
+            const copyHint = '\n\nUse o botão OK e copie agora. Essa chave não será exibida novamente.';
+            alert(`${title}\n\n${secret}${copyHint}`);
+            navigator.clipboard?.writeText(secret).then(() => toast('Chave copiada para a área de transferência.')).catch(() => {});
+        }
+
+        async function createPlan() {
+            await apiFetch('/admin/billing/plans', 'POST', {
+                code: document.getElementById('plan-code').value,
+                name: document.getElementById('plan-name').value,
+                description: document.getElementById('plan-description').value,
+                rate_limit_per_minute: Number(document.getElementById('plan-rpm').value),
+                daily_token_quota: Number(document.getElementById('plan-daily').value),
+                monthly_token_quota: Number(document.getElementById('plan-monthly').value),
+                max_output_tokens: Number(document.getElementById('plan-max-output').value),
+                allow_streaming: document.getElementById('plan-streaming').checked,
+                is_active: true,
+            });
+            closeModal('modal-plan-create');
+            toast('Plano criado.', 'success');
+            await loadTab('plans');
+        }
+
+        async function editPlan(id) {
+            const plan = state.plans.find((item) => item.id === id);
+            if (!plan) return;
+            const name = prompt('Nome do plano:', plan.name);
+            if (name === null) return;
+            await apiFetch(`/admin/billing/plans/${id}`, 'PATCH', { name });
+            toast('Plano atualizado.', 'success');
+            await loadTab('plans');
+        }
+
+        async function togglePlan(id, isActive) {
+            await apiFetch(`/admin/billing/plans/${id}`, 'PATCH', { is_active: isActive });
+            toast(`Plano ${isActive ? 'ativado' : 'desativado'}.`, 'success');
+            await loadTab('plans');
+        }
+
+        async function generateInvoice() {
+            const payload = {
+                client_id: document.getElementById('invoice-client').value || null,
+                due_in_days: Number(document.getElementById('invoice-due-days').value),
+                payment_method: document.getElementById('invoice-payment-method').value,
+                force: document.getElementById('invoice-force').checked,
+            };
+            await apiFetch('/admin/billing/invoices/generate', 'POST', payload);
+            closeModal('modal-invoice-generate');
+            toast('Invoice gerada.', 'success');
+            await loadTab('invoices');
+        }
+
+        async function runBillingCycle() {
+            const res = await apiFetch('/admin/billing/run-cycle', 'POST');
+            toast(`Billing cycle executado: ${res.created_count} criadas.`, 'success');
+            await refreshOverview();
+            await loadTab('invoices');
+        }
+
+        async function markPaid(id) {
+            await apiFetch(`/admin/billing/invoices/${id}/mark-paid`, 'PATCH', { payment_method: 'manual_admin_lab' });
+            toast('Invoice marcada como paga.', 'success');
+            await Promise.all([loadTab('invoices'), loadTab('payments')]);
+        }
+
+        async function markOverdue(id) {
+            await apiFetch(`/admin/billing/invoices/${id}/mark-overdue`, 'PATCH');
+            toast('Invoice marcada como overdue.', 'success');
+            await loadTab('invoices');
+        }
+
+        async function cancelInvoice(id) {
+            if (!confirm('Cancelar esta invoice?')) return;
+            await apiFetch(`/admin/billing/invoices/${id}/cancel`, 'PATCH');
+            toast('Invoice cancelada.', 'success');
+            await loadTab('invoices');
+        }
+
+        async function createPayment() {
+            await apiFetch('/admin/billing/payments', 'POST', {
+                invoice_id: document.getElementById('p-invoice').value,
+                amount: Number(document.getElementById('p-amount').value),
+                payment_method: document.getElementById('p-method').value,
+                payment_reference: document.getElementById('p-ref').value || null,
+                paid_at: document.getElementById('p-paid').checked ? new Date().toISOString() : null,
+            });
+            closeModal('modal-payment-create');
+            toast('Pagamento registrado.', 'success');
+            await Promise.all([loadTab('payments'), loadTab('invoices')]);
+        }
+
+        async function cancelPayment(id) {
+            if (!confirm('Cancelar este pagamento?')) return;
+            await apiFetch(`/admin/billing/payments/${id}/cancel`, 'PATCH');
+            toast('Pagamento cancelado.', 'success');
+            await loadTab('payments');
+        }
+
+        async function resetUsage(id) {
+            if (!confirm('Resetar uso e cotas do cliente?')) return;
+            await apiFetch(`/admin/test/clients/${id}/reset-usage`, 'POST');
+            toast('Uso resetado.', 'success');
+        }
+
+        function showClientUsage(id) {
+            const client = (state.usageSummary?.clients || []).find((item) => item.client_id === id);
+            if (!client) {
+                toast('Uso ainda não disponível para este cliente.', 'error');
+                return;
+            }
+            alert(JSON.stringify(client, null, 2));
+        }
+
+        function showClientInvoices(id) {
+            document.getElementById('invoice-client-filter').value = id;
+            switchTab('invoices');
+            renderInvoicesTable();
+        }
+
+        async function toggleModel(id, enable) {
+            await apiFetch(`/admin/models/${id}/${enable ? 'enable' : 'disable'}`, 'POST');
+            toast(`Modelo ${enable ? 'habilitado' : 'desabilitado'}.`, 'success');
+            await loadTab('models');
+        }
+
+        async function resetCircuitBreaker() {
+            await apiFetch('/admin/backends/circuit-breaker/reset', 'POST');
+            toast('Circuit breaker resetado.', 'success');
+            await loadTab('backends');
+        }
+
+        async function clearCache() {
+            if (!confirm('Limpar todo o cache?')) return;
+            await apiFetch('/admin/cache/responses', 'DELETE');
+            toast('Cache limpo.', 'success');
+            await loadTab('cache');
+        }
+
+        async function exportData(type, format = 'json') {
+            window.open(`/admin/export/${type}?format=${format}`, '_blank');
+        }
+
+        async function probeInvalidAdmin() {
+            const res = await fetch('/admin/clients', { headers: { 'X-Admin-Token': 'invalid-token' } });
+            toast(`Admin token inválido => HTTP ${res.status}`);
+        }
+
+        async function probeInvalidApiKey() {
+            const res = await fetch('/v1/models', { headers: { Authorization: 'Bearer sk-invalid-demo' } });
+            toast(`API key inválida => HTTP ${res.status}`);
+        }
+
+        async function createTemporaryClientApiKey() {
+            const client = state.clients.find((item) => item.name === 'demo-client') || state.clients[0];
+            if (!client) throw new Error('Nenhum cliente disponível para teste.');
+            const result = await apiFetch('/admin/api-keys', 'POST', { client_id: client.id, name: `lab-temp-${Date.now()}` });
+            return result.api_key;
+        }
+
+        async function testModelPrompt(modelId) {
+            const apiKey = await createTemporaryClientApiKey();
+            const res = await fetch('/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: modelId,
+                    messages: [{ role: 'user', content: 'Responda com uma frase curta confirmando que este modelo está operacional.' }],
+                    max_tokens: 64,
+                    stream: false,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Falha no teste do modelo');
+            alert(`Resposta do modelo ${modelId}:\n\n${data.choices?.[0]?.message?.content || '(vazio)'}`);
+        }
+
+        async function runCacheValidation() {
+            const before = await apiFetch('/admin/cache/stats');
+            const apiKey = await createTemporaryClientApiKey();
+            const payload = {
+                model: 'unsloth/gemma-4-E4B-it-GGUF',
+                messages: [{ role: 'user', content: 'Repita exatamente esta frase curta para validar cache.' }],
+                max_tokens: 32,
+                stream: false,
+            };
+            for (let i = 0; i < 2; i += 1) {
+                await fetch('/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            }
+            const after = await apiFetch('/admin/cache/stats');
+            state.cacheStats = after;
+            renderCache();
+            toast(`Cache testado. entries ${before.entries_total || 0} -> ${after.entries_total || 0}`);
+        }
+
+        async function runFlow(type) {
+            const term = document.getElementById('terminal-output');
+            term.classList.remove('hidden');
+            term.textContent = `> fluxo ${type}\n`;
+            try {
+                if (type === 'client-full') {
+                    const client = await apiFetch('/admin/clients', 'POST', { name: `Lab-Flow-${Date.now()}`, description: 'admin lab flow', billing_plan_id: state.plans.find((plan) => plan.code === 'basic')?.id || null });
+                    term.textContent += `cliente=${client.id}\n`;
+                    const key = await apiFetch('/admin/api-keys', 'POST', { client_id: client.id, name: 'flow-key' });
+                    term.textContent += `key=${key.key_prefix}\n`;
+                    const invoiceRes = await apiFetch('/admin/billing/invoices/generate', 'POST', { client_id: client.id, force: true });
+                    const invoice = invoiceRes.created[0] || invoiceRes.updated[0];
+                    term.textContent += `invoice=${invoice.id}\n`;
+                    await apiFetch(`/admin/billing/invoices/${invoice.id}/mark-paid`, 'PATCH', { payment_method: 'flow_bot' });
+                    term.textContent += `invoice paid\n`;
+                } else if (type === 'past-due') {
+                    const client = await apiFetch('/admin/clients', 'POST', { name: `Lab-PastDue-${Date.now()}` });
+                    const invoiceRes = await apiFetch('/admin/billing/invoices/generate', 'POST', { client_id: client.id, force: true });
+                    const invoice = invoiceRes.created[0] || invoiceRes.updated[0];
+                    await apiFetch(`/admin/billing/invoices/${invoice.id}/mark-overdue`, 'PATCH');
+                    await apiFetch('/admin/billing/run-cycle', 'POST');
+                    term.textContent += `invoice overdue and cycle executed\n`;
+                } else if (type === 'cache') {
+                    await runCacheValidation();
+                    term.textContent += 'cache validation completed\n';
+                }
+                term.textContent += 'ok\n';
+            } catch (err) {
+                term.textContent += `error: ${err.message}\n`;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;');
+        }
+    </script>
+</body>
+</html>

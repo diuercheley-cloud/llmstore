@@ -200,6 +200,14 @@
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
       }
 
+      function shortId(value) {
+        return typeof value === 'string' ? value.substring(0, 8) : 'N/A';
+      }
+
+      function num(value, fallback = 0) {
+        return typeof value === 'number' ? value : fallback;
+      }
+
       async function adminFetch(path) {
         const token = elements.adminToken.value.trim();
         const response = await fetch(path, {
@@ -285,21 +293,24 @@
       }
 
       function renderRevenue(data) {
+        const revenue = num(data?.revenue_usd);
+        const pending = num(data?.pending_usd);
+        const overdue = num(data?.overdue_usd);
         document.getElementById('revenueStats').innerHTML = `
           <div class="stat-card">
             <div class="stat-label">Total Revenue</div>
-            <div class="stat-value" style="color: var(--success);">$${data.revenue_usd.toFixed(2)}</div>
-            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_paid} paid invoices</div>
+            <div class="stat-value" style="color: var(--success);">$${revenue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_paid)} paid invoices</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Pending Revenue</div>
-            <div class="stat-value">$${data.pending_usd.toFixed(2)}</div>
-            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_pending} pending invoices</div>
+            <div class="stat-value">$${pending.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_pending)} pending invoices</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Overdue Revenue</div>
-            <div class="stat-value" style="color: var(--danger);">$${data.overdue_usd.toFixed(2)}</div>
-            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${data.invoices_overdue} overdue invoices</div>
+            <div class="stat-value" style="color: var(--danger);">$${overdue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_overdue)} overdue invoices</div>
           </div>
         `;
       }
@@ -308,13 +319,18 @@
         const clients = data.clients || [];
         let html = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Usage (Daily)</th><th>Billing Est.</th></tr></thead><tbody>';
         clients.forEach(c => {
+          const clientId = c.client_id || c.id;
+          const dailyUsed = num(c.daily_usage?.used_tokens);
+          const dailyQuota = num(c.daily_usage?.quota ?? c.plan_limits?.daily_token_quota);
+          const currency = c.invoice_preview?.currency || 'USD';
+          const totalEstimated = num(c.invoice_preview?.total_estimated);
           html += `
             <tr>
-              <td><strong>${c.name}</strong><br/><small style="color:var(--muted)">${c.id.substring(0,8)}</small></td>
-              <td>${c.billing_plan_code}</td>
-              <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status}</span></td>
-              <td>${c.daily_usage.used_tokens.toLocaleString()} / ${c.daily_usage.quota.toLocaleString()}</td>
-              <td>${c.invoice_preview.currency} ${c.invoice_preview.total_estimated.toFixed(2)}</td>
+              <td><strong>${c.name || 'Unnamed client'}</strong><br/><small style="color:var(--muted)">${shortId(clientId)}</small></td>
+              <td>${c.billing_plan_code || '-'}</td>
+              <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status || 'unknown'}</span></td>
+              <td>${dailyUsed.toLocaleString()} / ${dailyQuota.toLocaleString()}</td>
+              <td>${currency} ${totalEstimated.toFixed(2)}</td>
             </tr>
           `;
         });
@@ -347,7 +363,7 @@
               <td><small>${e.created_at}</small></td>
               <td>${e.event_type}</td>
               <td><span class="pill ${e.severity === 'high' ? 'pill-danger' : 'pill-muted'}">${e.severity}</span></td>
-              <td><small>${e.client_id?.substring(0,8) || 'N/A'}</small></td>
+              <td><small>${shortId(e.client_id)}</small></td>
               <td>${e.title}</td>
             </tr>
           `;

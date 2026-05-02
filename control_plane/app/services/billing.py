@@ -1,6 +1,6 @@
 from calendar import monthrange
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy import select
@@ -374,10 +374,15 @@ async def refresh_billing_statuses(
     for client in client_rows:
         overdue_invoices_for_client = [item for item in client.invoices if item.status == "overdue"]
         has_overdue = bool(overdue_invoices_for_client)
-        should_suspend = any(
-            item.due_at is not None and item.due_at + timedelta(days=suspend_after_days) < current_time
-            for item in overdue_invoices_for_client
-        )
+        should_suspend = False
+        for item in overdue_invoices_for_client:
+            if item.due_at is not None:
+                due_at = item.due_at
+                if due_at.tzinfo is None:
+                    due_at = due_at.replace(tzinfo=timezone.utc)
+                if due_at + timedelta(days=suspend_after_days) < current_time:
+                    should_suspend = True
+                    break
         next_status = derive_client_billing_status(
             has_overdue_invoice=has_overdue,
             should_suspend=should_suspend,
