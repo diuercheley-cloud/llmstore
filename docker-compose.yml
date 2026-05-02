@@ -131,7 +131,7 @@ services:
       dockerfile: docker/data-plane-mock/Dockerfile
     profiles: ["fallback-test"]
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health').read()"]
       interval: 5s
       timeout: 2s
       retries: 3
