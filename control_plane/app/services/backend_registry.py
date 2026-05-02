@@ -36,6 +36,17 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "max_parallel_requests": 1,
             "metadata_json": json.dumps({"service_name": "data-plane-ollama"}),
         },
+        {
+            "name": "fallback-local",
+            "provider": "llama.cpp",
+            "backend_url": "http://data-plane-mock:8081",
+            "healthcheck_path": "/health",
+            "is_active": True,
+            "is_default": False,
+            "status": "configured",
+            "max_parallel_requests": 8,
+            "metadata_json": json.dumps({"service_name": "data-plane-mock"}),
+        },
     ]
     created_or_updated: dict[str, InferenceBackend] = {}
     for payload in backends:

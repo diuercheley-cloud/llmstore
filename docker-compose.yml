@@ -84,6 +84,21 @@ services:
       - control_net
       - data_net
 
+  data-plane-mock:
+    build:
+      context: .
+      dockerfile: docker/data-plane-mock/Dockerfile
+    profiles: ["fallback-test"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - control_net
+      - data_net
+
   control-plane:
     build:
       context: .

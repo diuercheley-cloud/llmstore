@@ -27,8 +27,9 @@ for c in clients:
     meta = json.loads(c.get("metadata_json") or "{}")
     if meta.get("onboarding_finished"):
         finished += 1
+percentage = (finished / total * 100) if total > 0 else 0
 print(f"Total Clients: {total}")
-print(f"Finished Onboarding: {finished} ({finished/total*100:.1f}% if total > 0 else 0)")
+print(f"Finished Onboarding: {finished} ({percentage:.1f}%)")
 '
 
 printf '\n2. Usage Summary (Top 5)\n'
@@ -38,9 +39,12 @@ import json, sys
 data = json.load(sys.stdin)
 clients = data.get("clients", [])
 # Sort by monthly usage
-clients.sort(key=lambda x: x["monthly_usage"]["used_tokens"], reverse=True)
+clients.sort(key=lambda x: x.get("monthly_usage", {}).get("used_tokens", 0), reverse=True)
 for c in clients[:5]:
-    print(f"Client: {c['name']} | Monthly: {c['monthly_usage']['used_tokens']} tokens | Status: {c['billing_status']}")
+    name = c.get("name", "<unknown>")
+    monthly = c.get("monthly_usage", {}).get("used_tokens", 0)
+    status = c.get("billing_status", "<unknown>")
+    print(f"Client: {name} | Monthly: {monthly} tokens | Status: {status}")
 '
 
 printf '\n3. Recent Security Events\n'
@@ -49,7 +53,10 @@ printf '%s\n' "${events_json}" | python3 -c '
 import json, sys
 events = json.load(sys.stdin)
 for e in events[:5]:
-    print(f"[{e['created_at']}] {e['severity'].upper()}: {e['title']}")
+    created_at = e.get("created_at", "<unknown>")
+    severity = str(e.get("severity", "unknown")).upper()
+    title = e.get("title", "<unknown>")
+    print(f"[{created_at}] {severity}: {title}")
 '
 
 printf '\n=== REPORT END ===\n'

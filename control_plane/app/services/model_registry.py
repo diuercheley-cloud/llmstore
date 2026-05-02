@@ -44,6 +44,8 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
         for item in existing_defaults:
             item.is_default = False
         await _ensure_default_route(session, model, default_backend)
+        if "fallback-local" in backends:
+            await _ensure_fallback_route(session, model, backends["fallback-local"])
         return model
     model = ModelRegistry(
         model_id=settings.model_id,
@@ -59,7 +61,34 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
     session.add(model)
     await session.flush()
     await _ensure_default_route(session, model, default_backend)
+    if "fallback-local" in backends:
+        await _ensure_fallback_route(session, model, backends["fallback-local"])
     return model
+
+
+async def _ensure_fallback_route(session: AsyncSession, model: ModelRegistry, backend: InferenceBackend) -> None:
+    result = await session.execute(
+        select(ModelBackendRoute).where(
+            ModelBackendRoute.model_registry_id == model.id,
+            ModelBackendRoute.inference_backend_id == backend.id,
+        )
+    )
+    route = result.scalar_one_or_none()
+    if route is None:
+        route = ModelBackendRoute(
+            model_registry_id=model.id,
+            inference_backend_id=backend.id,
+            priority=2,
+            weight=100,
+            state="healthy",
+        )
+        session.add(route)
+        await session.flush()
+        return
+    route.priority = 2
+    route.weight = 100
+    if route.state == "disabled":
+        route.state = "healthy"
 
 
 async def _ensure_default_route(session: AsyncSession, model: ModelRegistry, backend: InferenceBackend) -> None:
