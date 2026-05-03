@@ -214,6 +214,41 @@ Header obrigatório:
 X-Admin-Token: seu ADMIN_TOKEN
 ```
 
+## Gerenciamento de modelos pelo Admin Lab
+
+O Admin Lab em `/admin-lab`, aba `Modelos`, agora expõe gestão operacional de modelos sem depender de shell Linux para o fluxo normal de registro:
+
+- listar modelos com alias, arquivo GGUF, arquitetura detectada, backend, status, default, rotas, contexto e template
+- listar arquivos disponíveis em `/models`
+- adicionar ou editar modelo pela UI
+- associar backend existente ou registrar novo backend HTTP
+- habilitar, desabilitar e trocar o modelo default
+- testar prompt por modelo
+- remover modelo com segurança sem apagar o arquivo GGUF
+- consultar health, status de backend e logs recentes
+
+Fluxo recomendado:
+
+1. copie o arquivo `.gguf` para `./models` no host; dentro do data plane ele aparece em `/models`
+2. abra `http://localhost:18080/admin-lab`
+3. entre em `Modelos` e use `Adicionar modelo`
+4. selecione o arquivo GGUF detectado, alias, backend e template
+5. salve e valide com `Testar prompt`
+
+Regras importantes:
+
+- `llama.cpp` aceita apenas arquivo `.gguf` dentro de `/models`
+- o Admin Lab bloqueia alias e `model_id` duplicados
+- a remoção pela UI nunca apaga o arquivo GGUF
+- remoção de modelo default é bloqueada
+- modelos com histórico podem ser arquivados por soft delete para preservar auditoria
+
+Limitações desta versão:
+
+- a UI não cria serviços Docker arbitrários
+- para novos containers, use um serviço já definido em `docker-compose.yml` ou cadastre um backend HTTP existente
+- ações `start/stop/restart/logs` de backend só funcionam quando `TEST_TOOLS_ENABLED=true` e `PUBLIC_EXPOSURE=false`
+
 Criar cliente:
 
 ```bash

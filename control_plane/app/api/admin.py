@@ -33,6 +33,7 @@ from app.schemas.admin import (
     ApiKeyCreate,
     ApiKeyCreated,
     ApiKeyRotateResponse,
+    BackendRouteInput,
     BackendRoutePatch,
     BillingPlanCreate,
     BillingPlanPatch,
@@ -47,7 +48,9 @@ from app.schemas.admin import (
     InvoiceGenerateRequest,
     InvoiceMarkPaidRequest,
     ModelRegistryCreate,
+    ModelDeleteRequest,
     ModelRegistryPatch,
+    ModelPromptTestRequest,
     ModelReloadResponse,
     PaymentCreate,
     PaymentRead,
@@ -78,6 +81,26 @@ from app.services.billing import (
     resolve_effective_plan,
     serialize_invoice,
 )
+from app.services.admin_model_management import (
+    archive_model_identity,
+    architecture_for_model,
+    backend_container_snapshot,
+    backend_runtime_capabilities,
+    backend_service_name,
+    detect_quantization,
+    display_name_for_model,
+    ensure_model_file_exists,
+    list_model_files,
+    merge_metadata,
+    parse_metadata,
+    prompt_template_for_payload,
+    reasoning_defaults_for_model,
+    remove_model_routes,
+    resolve_models_dir,
+    run_backend_docker_command,
+    sanitize_model_filename,
+    sync_allowed_plans,
+)
 from app.services.backend_registry import ensure_default_backends
 from app.services.auth import require_admin
 from app.services.export_reporting import (
@@ -92,10 +115,17 @@ from app.services.export_reporting import (
 )
 from app.services.generation_jobs import get_admin_job_snapshot
 from app.services.inference_proxy import InferenceProxy
-from app.services.model_policy import serialize_routing_table
+from app.services.model_policy import (
+    MODEL_REGISTRY_ROUTING_LOADS,
+    ensure_model_routing_loaded,
+    get_model_by_id,
+    plan_routing_order,
+    serialize_routing_table,
+)
 from app.services.model_registry import ensure_default_model
 from app.services.response_cache import clear_response_cache, get_response_cache_stats
 from app.services.security_monitor import (
+    log_security_event,
     list_security_events,
     observe_billing_status_metrics,
     suspend_client_for_security,
@@ -119,6 +149,62 @@ def _load_backend_metadata(raw: str | None) -> dict:
 def _is_test_backend(backend: InferenceBackend) -> bool:
     metadata = _load_backend_metadata(backend.metadata_json)
     return bool(metadata.get("test_backend")) or backend.name.startswith("fallback-")
+
+
+def _serialize_backend_admin(backend: InferenceBackend, health: dict | None = None) -> dict:
+    runtime = backend_container_snapshot(backend)
+    return {
+        "id": str(backend.id),
+        "name": backend.name,
+        "provider": backend.provider,
+        "backend_url": backend.backend_url,
+        "healthcheck_path": backend.healthcheck_path,
+        "is_active": backend.is_active,
+        "is_default": backend.is_default,
+        "status": backend.status,
+        "max_parallel_requests": backend.max_parallel_requests,
+        "current_running": backend.current_running,
+        "metadata_json": backend.metadata_json,
+        "service_name": backend_service_name(backend),
+        "docker": runtime,
+        "health": health,
+        "created_at": backend.created_at.isoformat(),
+        "updated_at": backend.updated_at.isoformat(),
+    }
+
+
+def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | None = None) -> dict:
+    ensure_model_routing_loaded(model)
+    metadata = parse_metadata(model.metadata_json)
+    architecture = architecture_for_model(model)
+    reasoning = reasoning_defaults_for_model(model)
+    backend_health = health_map.get(str(model.inference_backend_id)) if health_map and model.inference_backend_id else None
+    return {
+        "id": str(model.id),
+        "display_name": display_name_for_model(model),
+        "model_id": model.model_id,
+        "model_alias": model.model_alias,
+        "inference_backend_id": str(model.inference_backend_id) if model.inference_backend_id else None,
+        "backend_name": model.inference_backend.name if model.inference_backend else None,
+        "backend_url": model.inference_backend.backend_url if model.inference_backend else None,
+        "provider": model.provider,
+        "model_file": model.model_file,
+        "status": model.status,
+        "is_active": model.is_active,
+        "is_default": model.is_default,
+        "context_length": model.context_length,
+        "prompt_template": model.prompt_template,
+        "architecture": architecture,
+        "quantization": detect_quantization(model.model_file),
+        "allow_reasoning": reasoning["allow_reasoning"],
+        "include_reasoning_default": reasoning["include_reasoning_default"],
+        "metadata_json": model.metadata_json,
+        "metadata": metadata,
+        "routes": serialize_routing_table(model),
+        "backend_health": backend_health,
+        "created_at": model.created_at.isoformat(),
+        "updated_at": model.updated_at.isoformat(),
+    }
 
 
 def _serialize_api_key_created(api_key: ApiKey, plaintext: str) -> ApiKeyCreated:
@@ -1184,37 +1270,18 @@ async def get_models(
     await session.flush()
     result = await session.execute(
         select(ModelRegistry)
-        .options(
-            selectinload(ModelRegistry.inference_backend),
-            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
-        )
+        .options(*MODEL_REGISTRY_ROUTING_LOADS)
         .order_by(ModelRegistry.created_at.desc())
     )
     registry = result.scalars().all()
     backends = (
         await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))
     ).scalars().all()
+    backend_health = [await proxy.health_backend(item) for item in backends]
+    health_map = {item["backend_id"]: item for item in backend_health}
     plans = (await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))).scalars().all()
     return {
-        "registry": [
-            {
-                "id": str(item.id),
-                "model_id": item.model_id,
-                "model_alias": item.model_alias,
-                "inference_backend_id": str(item.inference_backend_id) if item.inference_backend_id else None,
-                "backend_name": item.inference_backend.name if item.inference_backend else None,
-                "backend_url": item.inference_backend.backend_url if item.inference_backend else None,
-                "provider": item.provider,
-                "model_file": item.model_file,
-                "status": item.status,
-                "is_active": item.is_active,
-                "is_default": item.is_default,
-                "context_length": item.context_length,
-                "metadata_json": item.metadata_json,
-                "routes": serialize_routing_table(item),
-            }
-            for item in registry
-        ],
+        "registry": [_serialize_model_admin(item, health_map) for item in registry if item.status != "soft-deleted"],
         "plan_access": [
             {
                 "billing_plan_id": str(plan.id),
@@ -1223,33 +1290,19 @@ async def get_models(
             }
             for plan in plans
         ],
-        "backends": [await proxy.health_backend(item) for item in backends],
+        "backends": [_serialize_backend_admin(item, health_map.get(str(item.id))) for item in backends],
     }
 
 
 @router.get("/backends")
-async def list_backends(session: AsyncSession = Depends(get_db_session)):
+async def list_backends(
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
     await ensure_default_backends(session)
     await session.commit()
     rows = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
-    return [
-        {
-            "id": str(item.id),
-            "name": item.name,
-            "provider": item.provider,
-            "backend_url": item.backend_url,
-            "healthcheck_path": item.healthcheck_path,
-            "is_active": item.is_active,
-            "is_default": item.is_default,
-            "status": item.status,
-            "max_parallel_requests": item.max_parallel_requests,
-            "current_running": item.current_running,
-            "metadata_json": item.metadata_json,
-            "created_at": item.created_at.isoformat(),
-            "updated_at": item.updated_at.isoformat(),
-        }
-        for item in rows
-    ]
+    return [_serialize_backend_admin(item, await proxy.health_backend(item)) for item in rows]
 
 
 @router.post("/backends", status_code=201)
@@ -1316,6 +1369,108 @@ async def patch_backend(
         "current_running": backend.current_running,
         "metadata_json": backend.metadata_json,
     }
+
+
+@router.get("/backends/{backend_id}/health")
+async def backend_health(
+    backend_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    backend = await session.get(InferenceBackend, backend_id)
+    if backend is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    return {
+        "backend": _serialize_backend_admin(backend, await proxy.health_backend(backend)),
+        "docker": backend_container_snapshot(backend),
+    }
+
+
+@router.get("/backends/{backend_id}/logs")
+async def backend_logs(
+    backend_id: uuid.UUID,
+    tail: int = Query(default=100, ge=1, le=500),
+    session: AsyncSession = Depends(get_db_session),
+):
+    backend = await session.get(InferenceBackend, backend_id)
+    if backend is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    service_name = backend_service_name(backend)
+    if not service_name:
+        raise HTTPException(status_code=409, detail="backend is not mapped to a compose service")
+    result = run_backend_docker_command(backend, "logs", "--tail", str(tail), service_name, timeout_seconds=30)
+    if not result.ok:
+        raise HTTPException(status_code=409, detail=result.detail or result.stderr or "backend logs unavailable")
+    return {
+        "backend_id": str(backend.id),
+        "backend_name": backend.name,
+        "service_name": service_name,
+        "tail": tail,
+        "logs": result.stdout[-20000:],
+    }
+
+
+async def _run_backend_action(
+    backend_id: uuid.UUID,
+    action: str,
+    session: AsyncSession,
+) -> dict:
+    backend = await session.get(InferenceBackend, backend_id)
+    if backend is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    capabilities = backend_runtime_capabilities(backend)
+    if not capabilities["docker_actions_allowed"]:
+        detail = "docker actions disabled"
+        if settings.public_exposure:
+            detail = "backend docker action blocked when PUBLIC_EXPOSURE=true"
+        elif not settings.test_tools_enabled:
+            detail = "backend docker action blocked when TEST_TOOLS_ENABLED=false"
+        raise HTTPException(status_code=403, detail=detail)
+    service_name = backend_service_name(backend)
+    if not service_name:
+        raise HTTPException(status_code=409, detail="backend is not mapped to a compose service")
+    command_map = {
+        "start": ("up", "-d", service_name),
+        "stop": ("stop", service_name),
+        "restart": ("restart", service_name),
+    }
+    result = run_backend_docker_command(backend, *command_map[action], timeout_seconds=120)
+    if not result.ok:
+        raise HTTPException(status_code=409, detail=result.detail or result.stderr or "docker action failed")
+    backend.status = "starting" if action == "start" else "stopped" if action == "stop" else "restarting"
+    backend.is_active = action != "stop"
+    backend.updated_at = utc_now()
+    await log_security_event(
+        session,
+        event_type=f"admin_backend_{action}",
+        severity="high",
+        title=f"Backend {action} triggered via Admin Lab",
+        details={"backend_name": backend.name, "service_name": service_name},
+    )
+    await session.commit()
+    return {
+        "status": action,
+        "backend_id": str(backend.id),
+        "backend_name": backend.name,
+        "service_name": service_name,
+        "docker_stdout": result.stdout[-4000:],
+        "docker_stderr": result.stderr[-2000:],
+    }
+
+
+@router.post("/backends/{backend_id}/start")
+async def start_backend(backend_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    return await _run_backend_action(backend_id, "start", session)
+
+
+@router.post("/backends/{backend_id}/stop")
+async def stop_backend(backend_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    return await _run_backend_action(backend_id, "stop", session)
+
+
+@router.post("/backends/{backend_id}/restart")
+async def restart_backend(backend_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    return await _run_backend_action(backend_id, "restart", session)
 
 
 @router.patch("/models/{model_id}/routes/{backend_id}")
@@ -1399,10 +1554,7 @@ async def backends_routing(
     models = (
         await session.execute(
             select(ModelRegistry)
-            .options(
-                selectinload(ModelRegistry.inference_backend),
-                selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
-            )
+            .options(*MODEL_REGISTRY_ROUTING_LOADS)
             .order_by(ModelRegistry.created_at.asc())
         )
     ).scalars().all()
@@ -1454,46 +1606,98 @@ async def backends_routing(
     }
 
 
+@router.get("/models/files")
+async def get_model_files(session: AsyncSession = Depends(get_db_session)):
+    return {"models_dir": str(resolve_models_dir()), "files": await list_model_files(session)}
+
+
 @router.post("/models", status_code=201)
 async def create_model(payload: ModelRegistryCreate, session: AsyncSession = Depends(get_db_session)):
-    if payload.inference_backend_id is not None and await session.get(InferenceBackend, payload.inference_backend_id) is None:
+    backend_id = payload.inference_backend_id
+    if backend_id is not None and payload.create_backend is not None:
+        raise HTTPException(status_code=409, detail="choose an existing backend or create a new one")
+    if payload.create_backend is not None:
+        existing_backend = await session.execute(
+            select(InferenceBackend).where(InferenceBackend.name == payload.create_backend.name)
+        )
+        if existing_backend.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=409, detail="backend name already exists")
+        backend_payload = payload.create_backend.model_dump()
+        backend = InferenceBackend(**backend_payload)
+        session.add(backend)
+        await session.flush()
+        backend_id = backend.id
+    if backend_id is not None and await session.get(InferenceBackend, backend_id) is None:
         raise HTTPException(status_code=404, detail="backend not found")
+    try:
+        model_file = sanitize_model_filename(payload.model_file, provider=payload.provider)
+        if payload.provider == "llama.cpp":
+            ensure_model_file_exists(model_file, provider=payload.provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     clauses = [ModelRegistry.model_id == payload.model_id]
     if payload.model_alias:
         clauses.append(ModelRegistry.model_alias == payload.model_alias)
     existing = await session.execute(select(ModelRegistry).where(or_(*clauses)))
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="model id or alias already exists")
+    metadata_json = merge_metadata(
+        payload.metadata_json,
+        {
+            "display_name": payload.display_name,
+            "allow_reasoning": payload.allow_reasoning,
+            "include_reasoning_default": payload.include_reasoning_default,
+        },
+    )
+    prompt_template = prompt_template_for_payload(
+        prompt_template=payload.prompt_template,
+        model_id=payload.model_id,
+        model_file=model_file,
+        model_alias=payload.model_alias,
+        metadata_json=metadata_json,
+    )
     if payload.is_default:
         defaults = (await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True)))).scalars().all()
         for item in defaults:
             item.is_default = False
-    model_payload = payload.model_dump(exclude={"backend_routes"})
-    model = ModelRegistry(**model_payload)
+    model = ModelRegistry(
+        model_id=payload.model_id,
+        model_alias=payload.model_alias,
+        inference_backend_id=backend_id,
+        provider=payload.provider,
+        model_file=model_file,
+        context_length=payload.context_length,
+        is_active=payload.is_active,
+        is_default=payload.is_default,
+        status=payload.status,
+        prompt_template=prompt_template,
+        metadata_json=metadata_json,
+    )
     session.add(model)
     await session.flush()
-    if payload.backend_routes:
-        await _sync_model_backend_routes(
-            session,
-            model,
-            [item.model_dump() for item in payload.backend_routes],
-        )
+    routes_payload = [item.model_dump() for item in payload.backend_routes]
+    if not routes_payload and backend_id is not None:
+        routes_payload = [{"inference_backend_id": backend_id, "priority": 1, "weight": 100, "state": "healthy"}]
+    if routes_payload:
+        await _sync_model_backend_routes(session, model, routes_payload)
+    try:
+        await sync_allowed_plans(session, model=model, allowed_plan_codes=payload.allowed_plan_codes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await log_security_event(
+        session,
+        event_type="admin_model_created",
+        severity="medium",
+        title="Model created via Admin Lab",
+        details={"model_id": model.model_id, "model_alias": model.model_alias, "provider": model.provider},
+    )
     await session.commit()
-    await session.refresh(model, attribute_names=["backend_routes", "inference_backend"])
-    return {
-        "id": str(model.id),
-        "model_id": model.model_id,
-        "model_alias": model.model_alias,
-        "inference_backend_id": str(model.inference_backend_id) if model.inference_backend_id else None,
-        "provider": model.provider,
-        "model_file": model.model_file,
-        "status": model.status,
-        "is_active": model.is_active,
-        "is_default": model.is_default,
-        "context_length": model.context_length,
-        "metadata_json": model.metadata_json,
-        "routes": serialize_routing_table(model),
-    }
+    loaded_model = await get_model_by_id(session, model.id)
+    if loaded_model is None:
+        raise HTTPException(status_code=404, detail="model not found after create")
+    return _serialize_model_admin(loaded_model)
 
 
 @router.patch("/models/{model_id}")
@@ -1502,11 +1706,21 @@ async def patch_model(
     payload: ModelRegistryPatch,
     session: AsyncSession = Depends(get_db_session),
 ):
-    model = await session.get(ModelRegistry, model_id)
+    model = (
+        await session.execute(
+            select(ModelRegistry)
+            .options(*MODEL_REGISTRY_ROUTING_LOADS)
+            .where(ModelRegistry.id == model_id)
+        )
+    ).scalar_one_or_none()
     if model is None:
         raise HTTPException(status_code=404, detail="model not found")
     patch_data = payload.model_dump(exclude_unset=True)
     routes_payload = patch_data.pop("backend_routes", None)
+    allowed_plan_codes = patch_data.pop("allowed_plan_codes", None)
+    display_name = patch_data.pop("display_name", None) if "display_name" in patch_data else None
+    allow_reasoning = patch_data.pop("allow_reasoning", None) if "allow_reasoning" in patch_data else None
+    include_reasoning_default = patch_data.pop("include_reasoning_default", None) if "include_reasoning_default" in patch_data else None
     if "inference_backend_id" in patch_data and patch_data["inference_backend_id"] is not None:
         if await session.get(InferenceBackend, patch_data["inference_backend_id"]) is None:
             raise HTTPException(status_code=404, detail="backend not found")
@@ -1517,38 +1731,170 @@ async def patch_model(
         if existing.scalar_one_or_none() is not None:
             raise HTTPException(status_code=409, detail="model alias already exists")
     if patch_data.get("is_default") is True:
-        defaults = (await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id))).scalars().all()
+        defaults = (
+            await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id))
+        ).scalars().all()
         for item in defaults:
             item.is_default = False
+    if patch_data.get("is_active") is False and model.is_default:
+        raise HTTPException(status_code=409, detail="default model cannot be disabled")
+    provider = patch_data.get("provider", model.provider)
+    if "model_file" in patch_data:
+        try:
+            patch_data["model_file"] = sanitize_model_filename(patch_data["model_file"], provider=provider)
+            if provider == "llama.cpp":
+                ensure_model_file_exists(patch_data["model_file"], provider=provider)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
     for key, value in patch_data.items():
         setattr(model, key, value)
+    metadata_updates = {}
+    if "display_name" in payload.model_fields_set:
+        metadata_updates["display_name"] = display_name
+    if "allow_reasoning" in payload.model_fields_set:
+        metadata_updates["allow_reasoning"] = allow_reasoning
+    if "include_reasoning_default" in payload.model_fields_set:
+        metadata_updates["include_reasoning_default"] = include_reasoning_default
+    if metadata_updates:
+        model.metadata_json = merge_metadata(model.metadata_json, metadata_updates)
+    if "prompt_template" in patch_data or "model_file" in patch_data or "provider" in patch_data or "model_alias" in patch_data:
+        model.prompt_template = prompt_template_for_payload(
+            prompt_template=model.prompt_template,
+            model_id=model.model_id,
+            model_file=model.model_file,
+            model_alias=model.model_alias,
+            metadata_json=model.metadata_json,
+        )
     if routes_payload is not None:
         await _sync_model_backend_routes(session, model, routes_payload)
+    elif patch_data.get("inference_backend_id") is not None:
+        existing_route = next(
+            (item for item in model.backend_routes if item.inference_backend_id == patch_data["inference_backend_id"]),
+            None,
+        )
+        if existing_route is None:
+            await _sync_model_backend_routes(
+                session,
+                model,
+                [
+                    *[{"inference_backend_id": route.inference_backend_id, "priority": route.priority, "weight": route.weight, "state": route.state} for route in model.backend_routes],
+                    {"inference_backend_id": patch_data["inference_backend_id"], "priority": 1, "weight": 100, "state": "healthy"},
+                ],
+            )
+    try:
+        await sync_allowed_plans(session, model=model, allowed_plan_codes=allowed_plan_codes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    model.updated_at = utc_now()
+    await log_security_event(
+        session,
+        event_type="admin_model_updated",
+        severity="medium",
+        title="Model updated via Admin Lab",
+        details={"model_id": model.model_id, "model_alias": model.model_alias},
+    )
+    await session.commit()
+    loaded_model = await get_model_by_id(session, model.id)
+    if loaded_model is None:
+        raise HTTPException(status_code=404, detail="model not found after update")
+    return _serialize_model_admin(loaded_model)
+
+
+@router.post("/models/{model_id}/set-default")
+async def set_default_model(model_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    model = await session.get(ModelRegistry, model_id)
+    if model is None:
+        raise HTTPException(status_code=404, detail="model not found")
+    defaults = (
+        await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id))
+    ).scalars().all()
+    for item in defaults:
+        item.is_default = False
+    model.is_default = True
+    model.is_active = True
     model.updated_at = utc_now()
     await session.commit()
-    await session.refresh(model, attribute_names=["backend_routes", "inference_backend"])
-    return {
-        "id": str(model.id),
-        "model_id": model.model_id,
-        "model_alias": model.model_alias,
-        "inference_backend_id": str(model.inference_backend_id) if model.inference_backend_id else None,
-        "provider": model.provider,
-        "model_file": model.model_file,
-        "status": model.status,
-        "is_active": model.is_active,
-        "is_default": model.is_default,
-        "context_length": model.context_length,
-        "metadata_json": model.metadata_json,
-        "routes": serialize_routing_table(model),
-    }
+    await session.refresh(model)
+    return {"status": "default-updated", "id": str(model.id)}
+
+
+@router.post("/models/{model_id}/routes")
+async def create_model_route(
+    model_id: uuid.UUID,
+    payload: BackendRouteInput,
+    session: AsyncSession = Depends(get_db_session),
+):
+    model = (
+        await session.execute(
+            select(ModelRegistry)
+            .options(*MODEL_REGISTRY_ROUTING_LOADS)
+            .where(ModelRegistry.id == model_id)
+        )
+    ).scalar_one_or_none()
+    if model is None:
+        raise HTTPException(status_code=404, detail="model not found")
+    if await session.get(InferenceBackend, payload.inference_backend_id) is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    if any(route.inference_backend_id == payload.inference_backend_id for route in model.backend_routes):
+        raise HTTPException(status_code=409, detail="route already exists for this backend")
+    routes_payload = [
+        {"inference_backend_id": route.inference_backend_id, "priority": route.priority, "weight": route.weight, "state": route.state}
+        for route in model.backend_routes
+    ]
+    routes_payload.append(payload.model_dump())
+    await _sync_model_backend_routes(session, model, routes_payload)
+    if model.inference_backend_id is None:
+        model.inference_backend_id = payload.inference_backend_id
+    model.updated_at = utc_now()
+    await session.commit()
+    loaded_model = await get_model_by_id(session, model.id)
+    if loaded_model is None:
+        raise HTTPException(status_code=404, detail="model not found after route create")
+    return _serialize_model_admin(loaded_model)
+
+
+@router.delete("/models/{model_id}/routes/{backend_id}")
+async def delete_model_route(
+    model_id: uuid.UUID,
+    backend_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+):
+    route = (
+        await session.execute(
+            select(ModelBackendRoute).where(
+                ModelBackendRoute.model_registry_id == model_id,
+                ModelBackendRoute.inference_backend_id == backend_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if route is None:
+        raise HTTPException(status_code=404, detail="model backend route not found")
+    await session.delete(route)
+    model = await session.get(ModelRegistry, model_id)
+    if model is not None and model.inference_backend_id == backend_id:
+        model.inference_backend_id = None
+        model.updated_at = utc_now()
+    await session.commit()
+    return {"status": "route-removed", "model_id": str(model_id), "backend_id": str(backend_id)}
 
 
 @router.post("/models/{model_id}/enable")
 async def enable_model(model_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
-    model = await session.get(ModelRegistry, model_id)
+    model = (
+        await session.execute(
+            select(ModelRegistry).options(selectinload(ModelRegistry.inference_backend)).where(ModelRegistry.id == model_id)
+        )
+    ).scalar_one_or_none()
     if model is None:
         raise HTTPException(status_code=404, detail="model not found")
+    if (model.model_alias in {"bonsai", "bonzai"} or "bonsai" in model.model_id.lower()) and (
+        model.inference_backend is None or not model.inference_backend.is_active
+    ) and not settings.bonsai_enabled:
+        raise HTTPException(status_code=409, detail="bonsai backend offline")
     model.is_active = True
+    model.status = "configured"
     model.updated_at = utc_now()
     await session.commit()
     await session.refresh(model)
@@ -1563,10 +1909,156 @@ async def disable_model(model_id: uuid.UUID, session: AsyncSession = Depends(get
     if model.is_default:
         raise HTTPException(status_code=409, detail="default model cannot be disabled")
     model.is_active = False
+    model.status = "disabled"
     model.updated_at = utc_now()
     await session.commit()
     await session.refresh(model)
     return {"status": "disabled", "id": str(model.id)}
+
+
+@router.delete("/models/{model_id}")
+async def delete_model(
+    model_id: uuid.UUID,
+    payload: ModelDeleteRequest,
+    session: AsyncSession = Depends(get_db_session),
+):
+    model = (
+        await session.execute(
+            select(ModelRegistry)
+            .options(selectinload(ModelRegistry.backend_routes))
+            .where(ModelRegistry.id == model_id)
+        )
+    ).scalar_one_or_none()
+    if model is None:
+        raise HTTPException(status_code=404, detail="model not found")
+    if model.is_default:
+        raise HTTPException(status_code=409, detail="default model cannot be removed")
+    route_count = len(model.backend_routes)
+    if route_count and not payload.confirm_route_removal:
+        raise HTTPException(status_code=409, detail="model still has active backend routes; confirm route removal")
+    request_count = (
+        await session.execute(
+            select(func.count(RequestLog.id)).where(
+                or_(
+                    RequestLog.model == model.model_id,
+                    RequestLog.model == (model.model_alias or ""),
+                )
+            )
+        )
+    ).scalar_one()
+    if payload.mode in {"hard", "register-only"} and request_count:
+        raise HTTPException(status_code=409, detail="model has request history; use soft delete or disable it")
+    removed_routes = await remove_model_routes(session, model)
+    result_status = "deleted"
+    if payload.mode == "soft" or (payload.mode == "auto" and request_count):
+        archive_model_identity(model)
+        result_status = "soft-deleted"
+    else:
+        await session.delete(model)
+    await log_security_event(
+        session,
+        event_type="admin_model_deleted",
+        severity="high",
+        title="Model removed via Admin Lab",
+        details={
+            "model_id": model.model_id,
+            "model_alias": model.model_alias,
+            "mode": payload.mode,
+            "request_count": int(request_count or 0),
+            "removed_routes": removed_routes,
+            "result": result_status,
+        },
+    )
+    await session.commit()
+    return {
+        "status": result_status,
+        "id": str(model_id),
+        "request_count": int(request_count or 0),
+        "removed_routes": removed_routes,
+    }
+
+
+@router.post("/models/{model_id}/test-prompt")
+async def test_model_prompt(
+    model_id: uuid.UUID,
+    payload: ModelPromptTestRequest,
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    model = (
+        await session.execute(
+            select(ModelRegistry)
+            .options(
+                selectinload(ModelRegistry.inference_backend),
+                selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
+            )
+            .where(ModelRegistry.id == model_id)
+        )
+    ).scalar_one_or_none()
+    if model is None:
+        raise HTTPException(status_code=404, detail="model not found")
+    include_reasoning = payload.include_reasoning
+    if include_reasoning is None:
+        include_reasoning = bool(reasoning_defaults_for_model(model)["include_reasoning_default"])
+    body = {
+        "model": model.model_id,
+        "messages": [{"role": "user", "content": payload.prompt}],
+        "max_tokens": payload.max_tokens,
+        "temperature": payload.temperature,
+    }
+    routes = plan_routing_order(model)
+    backend_errors: list[dict] = []
+    started = time.perf_counter()
+    for attempt, route in enumerate(routes, start=1):
+        backend = route.inference_backend
+        if backend is None:
+            continue
+        try:
+            result = await proxy.chat(
+                body,
+                False,
+                include_reasoning,
+                backend=backend.provider,
+                backend_url=backend.backend_url,
+                backend_name=backend.name,
+                backend_id=backend.id,
+                prompt_template=model.prompt_template,
+            )
+            response_payload = json.loads(result.response.body.decode("utf-8"))
+            usage = response_payload.get("usage") or {}
+            content = ""
+            if response_payload.get("choices"):
+                message = response_payload["choices"][0].get("message") or {}
+                content = message.get("content") or ""
+            return {
+                "response": content,
+                "raw_response": response_payload,
+                "model_used": model.model_id,
+                "backend_used": backend.name,
+                "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+                "tokens": usage,
+                "attempts": attempt,
+                "fallback_used": attempt > 1,
+                "include_reasoning": include_reasoning,
+                "prompt_template": model.prompt_template,
+                "backend_errors": backend_errors,
+            }
+        except HTTPException as exc:
+            backend_errors.append(
+                {
+                    "backend_name": backend.name if backend else None,
+                    "backend_id": str(route.inference_backend_id),
+                    "status_code": exc.status_code,
+                    "error": exc.detail,
+                }
+            )
+    raise HTTPException(
+        status_code=503,
+        detail={
+            "message": "all backend routes failed",
+            "backend_errors": backend_errors,
+        },
+    )
 
 
 @router.post("/models/reload", response_model=ModelReloadResponse)

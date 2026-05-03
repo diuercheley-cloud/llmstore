@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID
 
@@ -202,6 +204,7 @@ class BillingPlanModelsPatch(BaseModel):
 
 
 class ModelRegistryCreate(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=160)
     model_id: str = Field(min_length=1, max_length=255)
     model_alias: str | None = Field(default=None, min_length=1, max_length=128)
     inference_backend_id: UUID | None = None
@@ -212,19 +215,28 @@ class ModelRegistryCreate(BaseModel):
     is_default: bool = False
     status: str = Field(default="configured", min_length=2, max_length=32)
     prompt_template: str | None = Field(default=None, max_length=10000)
+    allow_reasoning: bool | None = None
+    include_reasoning_default: bool | None = None
+    allowed_plan_codes: list[str] | None = None
+    create_backend: InferenceBackendCreate | None = None
     metadata_json: str | None = None
     backend_routes: list["BackendRouteInput"] = Field(default_factory=list)
 
 
 class ModelRegistryPatch(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=160)
     model_alias: str | None = Field(default=None, min_length=1, max_length=128)
     inference_backend_id: UUID | None = None
     provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm)$")
     model_file: str | None = Field(default=None, min_length=1, max_length=255)
     context_length: int | None = Field(default=None, ge=512, le=131072)
     is_default: bool | None = None
+    is_active: bool | None = None
     status: str | None = Field(default=None, min_length=2, max_length=32)
     prompt_template: str | None = Field(default=None, max_length=10000)
+    allow_reasoning: bool | None = None
+    include_reasoning_default: bool | None = None
+    allowed_plan_codes: list[str] | None = None
     metadata_json: str | None = None
     backend_routes: list["BackendRouteInput"] | None = None
 
@@ -264,6 +276,19 @@ class BackendRoutePatch(BaseModel):
     priority: int | None = Field(default=None, ge=1, le=10000)
     weight: int | None = Field(default=None, ge=1, le=10000)
     state: str | None = Field(default=None, pattern=r"^(healthy|degraded|unhealthy|disabled)$")
+
+
+class ModelDeleteRequest(BaseModel):
+    confirm_route_removal: bool = False
+    mode: str = Field(default="auto", pattern=r"^(auto|soft|hard|register-only)$")
+
+
+class ModelPromptTestRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=12000)
+    max_tokens: int = Field(default=128, ge=1, le=4096)
+    temperature: float = Field(default=0.2, ge=0, le=2)
+    stream: bool = False
+    include_reasoning: bool | None = None
 
 
 class InvoiceGenerateRequest(BaseModel):

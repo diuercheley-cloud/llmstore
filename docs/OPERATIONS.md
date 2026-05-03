@@ -123,6 +123,29 @@ Criar cliente demo com portal:
 Nunca use `X-Admin-Token` no portal do cliente.
 Se `PUBLIC_EXPOSURE=true`, os endpoints `/admin-dashboard` e `/admin-lab` ficam desabilitados por segurança.
 
+## Gerenciamento de modelos pelo Admin Lab
+
+Use `/admin-lab`, aba `Modelos`, para operar o registro de LLMs sem shell:
+
+- copie o arquivo `.gguf` para `./models`
+- valide se ele apareceu em `GET /admin/models/files`
+- registre o modelo pela UI com alias, `model_id`, provider, backend e contexto
+- teste o prompt antes de expor o modelo a clientes
+- use enable/disable e set-default pela UI
+- remova o registro com segurança; o arquivo `.gguf` não é apagado
+
+Guardrails:
+
+- caminhos fora de `/models` são bloqueados
+- `llama.cpp` exige extensão `.gguf`
+- alias e `model_id` duplicados são rejeitados
+- modelo default não pode ser removido nem desabilitado
+- ações Docker de backend dependem de `TEST_TOOLS_ENABLED=true` e `PUBLIC_EXPOSURE=false`
+
+Limitação conhecida:
+
+- esta versão não gera `docker-compose.yml` arbitrário nem cria containers novos fora dos serviços já conhecidos do compose
+
 ## Exposição Externa Segura
 
 Para expor o `llm-inference-stack` para a internet com segurança:

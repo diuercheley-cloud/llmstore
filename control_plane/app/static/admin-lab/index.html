@@ -677,6 +677,81 @@
         </div>
     </div>
 
+    <div id="modal-model-edit" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3 id="model-modal-title">Adicionar Modelo</h3><button class="btn-secondary" onclick="closeModal('modal-model-edit')">X</button></div>
+            <div class="grid-two">
+                <div class="form-group"><label>Nome</label><input type="text" id="m-display-name" placeholder="Gemma 4 E4B Local"></div>
+                <div class="form-group"><label>Model ID público</label><input type="text" id="m-model-id" placeholder="org/model-name"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Alias</label><input type="text" id="m-alias" placeholder="gemma"></div>
+                <div class="form-group"><label>Provider</label><select id="m-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Arquivo em /models</label><select id="m-file"></select></div>
+                <div class="form-group"><label>Prompt template</label><select id="m-prompt-template"><option value="auto">auto</option><option value="gemma">gemma</option><option value="qwen">qwen</option><option value="llama">llama</option><option value="chatml">chatml</option></select></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Backend existente</label><select id="m-backend"></select></div>
+                <div class="form-group"><label>Contexto máximo</label><input type="number" id="m-context" value="32768"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Criar backend: nome</label><input type="text" id="m-new-backend-name" placeholder="backend-opcional"></div>
+                <div class="form-group"><label>Criar backend: URL</label><input type="text" id="m-new-backend-url" placeholder="http://host:porta"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Criar backend: provider</label><select id="m-new-backend-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+                <div class="form-group"><label>Planos permitidos</label><select id="m-plans" multiple size="4"></select></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label><input type="checkbox" id="m-default"> Tornar default</label></div>
+                <div class="form-group"><label><input type="checkbox" id="m-enabled" checked> Habilitado</label></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label><input type="checkbox" id="m-allow-reasoning"> allow_reasoning</label></div>
+                <div class="form-group"><label><input type="checkbox" id="m-include-reasoning-default"> include_reasoning default</label></div>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="saveModel()">Salvar modelo</button>
+        </div>
+    </div>
+
+    <div id="modal-model-test" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3>Testar Prompt</h3><button class="btn-secondary" onclick="closeModal('modal-model-test')">X</button></div>
+            <div class="form-group"><label>Prompt</label><textarea id="mt-prompt">Responda com uma frase curta confirmando que este backend está funcional.</textarea></div>
+            <div class="grid-two">
+                <div class="form-group"><label>Max tokens</label><input type="number" id="mt-max-tokens" value="96"></div>
+                <div class="form-group"><label>Temperature</label><input type="number" id="mt-temperature" value="0.2" step="0.1"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label><input type="checkbox" id="mt-stream"> stream</label></div>
+                <div class="form-group"><label><input type="checkbox" id="mt-include-reasoning"> include_reasoning</label></div>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="runModelPromptTest()">Executar teste</button>
+            <pre class="json-box" id="mt-result" style="margin-top:1rem;">Aguardando teste...</pre>
+        </div>
+    </div>
+
+    <div id="modal-backend-edit" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header"><h3 id="backend-modal-title">Adicionar Backend</h3><button class="btn-secondary" onclick="closeModal('modal-backend-edit')">X</button></div>
+            <div class="grid-two">
+                <div class="form-group"><label>Nome</label><input type="text" id="b-name"></div>
+                <div class="form-group"><label>Provider</label><select id="b-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Backend URL</label><input type="text" id="b-url"></div>
+                <div class="form-group"><label>Healthcheck path</label><input type="text" id="b-health" value="/health"></div>
+            </div>
+            <div class="grid-two">
+                <div class="form-group"><label>Max parallel requests</label><input type="number" id="b-parallel" value="1"></div>
+                <div class="form-group"><label><input type="checkbox" id="b-active" checked> Ativo</label></div>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="saveBackend()">Salvar backend</button>
+        </div>
+    </div>
+
     <!-- TOASTS -->
     <div id="toast-container"></div>
 
@@ -693,6 +768,7 @@
             usageSummary: null,
             securityEvents: [],
             modelsPayload: null,
+            modelFiles: { files: [] },
             backends: [],
             backendHealth: null,
             routing: null,
@@ -702,6 +778,8 @@
             invoicePreview: null,
             apiKeys: [],
             commands: [],
+            activeModelId: null,
+            activeBackendId: null,
         };
 
         const el = {
@@ -791,6 +869,7 @@
                 monthlyReport,
                 usageSummary,
                 modelsPayload,
+                modelFiles,
                 routing,
                 jobs,
                 apiKeys,
@@ -806,6 +885,7 @@
                 apiFetch('/admin/reports/monthly'),
                 apiFetch('/admin/usage/summary'),
                 apiFetch('/admin/models'),
+                apiFetch('/admin/models/files'),
                 apiFetch('/admin/backends/routing'),
                 apiFetch('/admin/jobs'),
                 apiFetch('/admin/api-keys'),
@@ -823,6 +903,7 @@
             state.monthlyReport = monthlyReport;
             state.usageSummary = usageSummary;
             state.modelsPayload = modelsPayload;
+            state.modelFiles = modelFiles;
             state.routing = routing;
             state.jobs = jobs;
             state.apiKeys = apiKeys;
@@ -875,7 +956,12 @@
                 return;
             }
             if (tab === 'models') {
-                state.modelsPayload = await apiFetch('/admin/models');
+                const [modelsPayload, modelFiles] = await Promise.all([
+                    apiFetch('/admin/models'),
+                    apiFetch('/admin/models/files'),
+                ]);
+                state.modelsPayload = modelsPayload;
+                state.modelFiles = modelFiles;
                 renderModels();
                 return;
             }
@@ -999,6 +1085,29 @@
             } catch (_) {
                 return [];
             }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function selectedValues(selectEl) {
+            return Array.from(selectEl.selectedOptions || []).map((item) => item.value).filter(Boolean);
+        }
+
+        function backendOptionsHtml(selectedId = '') {
+            const backends = state.modelsPayload?.backends || state.backends || [];
+            return `<option value="">Sem backend</option>${backends.map((backend) => `<option value="${backend.id}" ${backend.id === selectedId ? 'selected' : ''}>${backend.name}</option>`).join('')}`;
+        }
+
+        function fileOptionsHtml(selectedFile = '') {
+            const files = state.modelFiles?.files || [];
+            return files.map((file) => `<option value="${file.filename}" ${file.filename === selectedFile ? 'selected' : ''}>${file.filename}${file.already_registered ? ' (registrado)' : ''}</option>`).join('');
         }
 
         function populateSharedSelectors() {
@@ -1277,22 +1386,49 @@
 
         function renderModels() {
             const models = state.modelsPayload.registry || [];
+            const files = state.modelFiles?.files || [];
             document.getElementById('models-content').innerHTML = `
+                <div class="toolbar">
+                    <button class="btn-secondary" onclick="loadTab('models')">Atualizar</button>
+                    <button class="btn-primary" onclick="openCreateModelModal()">+ Adicionar modelo</button>
+                    <div class="muted">Arquivos GGUF encontrados: ${files.length}</div>
+                </div>
+                <div class="detail-list" style="margin-bottom:1rem;">
+                    <div class="detail-item"><strong>Modelos registrados</strong>${models.length}</div>
+                    <div class="detail-item"><strong>Defaults</strong>${models.filter((item) => item.is_default).length}</div>
+                    <div class="detail-item"><strong>Ativos</strong>${models.filter((item) => item.is_active).length}</div>
+                    <div class="detail-item"><strong>GGUFs disponíveis</strong>${files.length}</div>
+                </div>
                 <table>
-                    <thead><tr><th>Model</th><th>Alias</th><th>Backend</th><th>Status</th><th>Default</th><th>Routes</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome</th><th>Alias / ID</th><th>GGUF</th><th>Arquitetura</th><th>Backend</th><th>Provider</th><th>Status modelo</th><th>Status backend</th><th>Default</th><th>Routes</th><th>Contexto</th><th>Template</th><th>Reasoning</th><th>Atualizado</th><th>Ações</th></tr></thead>
                     <tbody>
                         ${models.map((model) => `
                             <tr>
-                                <td>${model.model_id}</td>
-                                <td>${model.model_alias || '-'}</td>
-                                <td>${model.backend_name || '-'}</td>
-                                <td><span class="pill pill-${model.is_active ? 'success' : 'muted'}">${model.status}</span></td>
+                                <td><strong>${escapeHtml(model.display_name || model.model_alias || model.model_id)}</strong><div class="muted">${fmtDate(model.created_at)}</div></td>
+                                <td><div><code>${escapeHtml(model.model_alias || '-')}</code></div><div class="muted"><code>${escapeHtml(model.model_id)}</code></div></td>
+                                <td>${escapeHtml(model.model_file || '-')}<div class="muted">${escapeHtml(model.quantization || '-')}</div></td>
+                                <td>${escapeHtml(model.architecture || '-')}</td>
+                                <td>${escapeHtml(model.backend_name || '-')}</td>
+                                <td>${escapeHtml(model.provider)}</td>
+                                <td><span class="pill pill-${model.is_active ? 'success' : 'muted'}">${escapeHtml(model.status)}</span></td>
+                                <td><span class="pill pill-${model.backend_health?.ok ? 'success' : 'warning'}">${model.backend_health?.ok ? 'online' : 'offline'}</span></td>
                                 <td>${model.is_default ? 'yes' : 'no'}</td>
                                 <td>${(model.routes || []).length}</td>
+                                <td>${Number(model.context_length || 0).toLocaleString()}</td>
+                                <td>${escapeHtml(model.prompt_template || 'auto')}</td>
+                                <td>${model.allow_reasoning === null ? '-' : String(model.allow_reasoning)} / ${model.include_reasoning_default === null ? '-' : String(model.include_reasoning_default)}</td>
+                                <td>${fmtDate(model.updated_at)}</td>
                                 <td>
                                     <div class="actions-row">
                                         ${model.is_active ? `<button class="btn-secondary" onclick="toggleModel('${model.id}', false)">Desabilitar</button>` : `<button class="btn-secondary" onclick="toggleModel('${model.id}', true)">Habilitar</button>`}
-                                        <button class="btn-primary" onclick="testModelPrompt('${model.model_id}')">Testar prompt</button>
+                                        ${!model.is_default ? `<button class="btn-secondary" onclick="makeDefaultModel('${model.id}')">Tornar default</button>` : ''}
+                                        <button class="btn-secondary" onclick="openEditModelModal('${model.id}')">Editar</button>
+                                        <button class="btn-secondary" onclick="duplicateModelConfig('${model.id}')">Duplicar</button>
+                                        <button class="btn-primary" onclick="openTestModelModal('${model.id}')">Testar prompt</button>
+                                        <button class="btn-secondary" onclick="showModelRoutes('${model.id}')">Ver rotas</button>
+                                        <button class="btn-secondary" onclick="showBackendHealthFromModel('${model.id}')">Health backend</button>
+                                        <button class="btn-secondary" onclick="showBackendLogsFromModel('${model.id}')">Ver logs</button>
+                                        <button class="btn-danger" onclick="removeModel('${model.id}')">Remover</button>
                                     </div>
                                 </td>
                             </tr>
@@ -1308,6 +1444,7 @@
             document.getElementById('backends-content').innerHTML = `
                 <div class="toolbar">
                     <button class="btn-secondary" onclick="loadTab('backends')">Atualizar</button>
+                    <button class="btn-primary" onclick="openCreateBackendModal()">+ Novo backend</button>
                     <button class="btn-danger" onclick="resetCircuitBreaker()">Reset circuit breaker</button>
                 </div>
                 <div class="detail-list" style="margin-bottom:1rem;">
@@ -1317,19 +1454,32 @@
                     <div class="detail-item"><strong>Disabled routes</strong>${routingSummary.disabled || 0}</div>
                 </div>
                 <table>
-                    <thead><tr><th>Name</th><th>Provider</th><th>URL</th><th>Default</th><th>Active</th><th>Health</th><th>Latency</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Provider</th><th>URL</th><th>Service</th><th>Default</th><th>Active</th><th>Health</th><th>Container</th><th>Latency</th><th>Ações</th></tr></thead>
                     <tbody>
                         ${state.backends.map((backend) => {
-                            const health = healthMap.get(backend.id);
+                            const health = backend.health || healthMap.get(backend.id);
                             return `
                                 <tr>
                                     <td>${backend.name}</td>
                                     <td>${backend.provider}</td>
                                     <td><code>${backend.backend_url}</code></td>
+                                    <td><code>${backend.service_name || '-'}</code></td>
                                     <td>${backend.is_default ? 'yes' : 'no'}</td>
                                     <td>${backend.is_active ? 'yes' : 'no'}</td>
                                     <td><span class="pill pill-${health?.ok ? 'success' : 'danger'}">${health?.ok ? 'healthy' : 'error'}</span></td>
+                                    <td><span class="pill pill-${backend.docker?.container_found ? 'info' : 'muted'}">${escapeHtml(backend.docker?.status || 'unavailable')}</span></td>
                                     <td>${health?.latency_ms || '-'}ms</td>
+                                    <td>
+                                        <div class="actions-row">
+                                            <button class="btn-secondary" onclick="openEditBackendModal('${backend.id}')">Editar</button>
+                                            <button class="btn-secondary" onclick="toggleBackendActive('${backend.id}', ${!backend.is_active})">${backend.is_active ? 'Desabilitar' : 'Habilitar'}</button>
+                                            <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'start')">Start</button>
+                                            <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'stop')">Stop</button>
+                                            <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'restart')">Restart</button>
+                                            <button class="btn-secondary" onclick="viewBackendHealth('${backend.id}')">Health</button>
+                                            <button class="btn-secondary" onclick="viewBackendLogs('${backend.id}')">Logs</button>
+                                        </div>
+                                    </td>
                                 </tr>
                             `;
                         }).join('')}
@@ -1615,6 +1765,254 @@
             renderInvoicesTable();
         }
 
+        function openCreateModelModal() {
+            state.activeModelId = null;
+            document.getElementById('model-modal-title').textContent = 'Adicionar Modelo';
+            document.getElementById('m-model-id').disabled = false;
+            document.getElementById('m-display-name').value = '';
+            document.getElementById('m-model-id').value = '';
+            document.getElementById('m-alias').value = '';
+            document.getElementById('m-provider').value = 'llama.cpp';
+            document.getElementById('m-file').innerHTML = fileOptionsHtml();
+            document.getElementById('m-prompt-template').value = 'auto';
+            document.getElementById('m-backend').innerHTML = backendOptionsHtml();
+            document.getElementById('m-context').value = '32768';
+            document.getElementById('m-new-backend-name').value = '';
+            document.getElementById('m-new-backend-url').value = '';
+            document.getElementById('m-new-backend-provider').value = 'llama.cpp';
+            document.getElementById('m-default').checked = false;
+            document.getElementById('m-enabled').checked = true;
+            document.getElementById('m-allow-reasoning').checked = false;
+            document.getElementById('m-include-reasoning-default').checked = false;
+            document.getElementById('m-plans').innerHTML = state.plans.map((plan) => `<option value="${plan.code}">${plan.code}</option>`).join('');
+            openModal('modal-model-edit');
+        }
+
+        function openEditModelModal(id) {
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model) return;
+            state.activeModelId = id;
+            document.getElementById('model-modal-title').textContent = 'Editar Modelo';
+            document.getElementById('m-display-name').value = model.display_name || '';
+            document.getElementById('m-model-id').value = model.model_id || '';
+            document.getElementById('m-model-id').disabled = true;
+            document.getElementById('m-alias').value = model.model_alias || '';
+            document.getElementById('m-provider').value = model.provider || 'llama.cpp';
+            document.getElementById('m-file').innerHTML = fileOptionsHtml(model.model_file || '');
+            document.getElementById('m-prompt-template').value = model.prompt_template || 'auto';
+            document.getElementById('m-backend').innerHTML = backendOptionsHtml(model.inference_backend_id || '');
+            document.getElementById('m-context').value = model.context_length || 32768;
+            document.getElementById('m-new-backend-name').value = '';
+            document.getElementById('m-new-backend-url').value = '';
+            document.getElementById('m-new-backend-provider').value = 'llama.cpp';
+            document.getElementById('m-default').checked = !!model.is_default;
+            document.getElementById('m-enabled').checked = !!model.is_active;
+            document.getElementById('m-allow-reasoning').checked = !!model.allow_reasoning;
+            document.getElementById('m-include-reasoning-default').checked = !!model.include_reasoning_default;
+            const plans = state.plans.map((plan) => {
+                const allowed = parseJsonList((state.modelsPayload?.plan_access || []).find((item) => item.billing_plan_code === plan.code)?.allowed_models_json || '');
+                const isSelected = allowed.includes(model.model_id) || (model.model_alias && allowed.includes(model.model_alias));
+                return `<option value="${plan.code}" ${isSelected ? 'selected' : ''}>${plan.code}</option>`;
+            }).join('');
+            document.getElementById('m-plans').innerHTML = plans;
+            openModal('modal-model-edit');
+        }
+
+        function duplicateModelConfig(id) {
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model) return;
+            openCreateModelModal();
+            document.getElementById('m-display-name').value = `${model.display_name || model.model_alias || model.model_id} Copy`;
+            document.getElementById('m-model-id').value = `${model.model_id}-copy`;
+            document.getElementById('m-alias').value = model.model_alias ? `${model.model_alias}-copy` : '';
+            document.getElementById('m-provider').value = model.provider || 'llama.cpp';
+            document.getElementById('m-file').innerHTML = fileOptionsHtml(model.model_file || '');
+            document.getElementById('m-prompt-template').value = model.prompt_template || 'auto';
+            document.getElementById('m-backend').innerHTML = backendOptionsHtml(model.inference_backend_id || '');
+            document.getElementById('m-context').value = model.context_length || 32768;
+            document.getElementById('m-allow-reasoning').checked = !!model.allow_reasoning;
+            document.getElementById('m-include-reasoning-default').checked = !!model.include_reasoning_default;
+        }
+
+        async function saveModel() {
+            const createBackendName = document.getElementById('m-new-backend-name').value.trim();
+            const createBackendUrl = document.getElementById('m-new-backend-url').value.trim();
+            const payload = {
+                display_name: document.getElementById('m-display-name').value.trim() || null,
+                model_id: document.getElementById('m-model-id').value.trim(),
+                model_alias: document.getElementById('m-alias').value.trim() || null,
+                provider: document.getElementById('m-provider').value,
+                model_file: document.getElementById('m-file').value,
+                inference_backend_id: document.getElementById('m-backend').value || null,
+                context_length: Number(document.getElementById('m-context').value || 32768),
+                prompt_template: document.getElementById('m-prompt-template').value,
+                is_default: document.getElementById('m-default').checked,
+                is_active: document.getElementById('m-enabled').checked,
+                allow_reasoning: document.getElementById('m-allow-reasoning').checked,
+                include_reasoning_default: document.getElementById('m-include-reasoning-default').checked,
+                allowed_plan_codes: selectedValues(document.getElementById('m-plans')),
+            };
+            if (createBackendName && createBackendUrl) {
+                payload.create_backend = {
+                    name: createBackendName,
+                    provider: document.getElementById('m-new-backend-provider').value,
+                    backend_url: createBackendUrl,
+                    healthcheck_path: '/health',
+                    is_active: true,
+                    is_default: false,
+                    status: 'configured',
+                    max_parallel_requests: 1,
+                };
+            }
+            if (state.activeModelId) {
+                payload.is_default = document.getElementById('m-default').checked;
+                payload.is_active = document.getElementById('m-enabled').checked;
+                await apiFetch(`/admin/models/${state.activeModelId}`, 'PATCH', payload);
+                document.getElementById('m-model-id').disabled = false;
+                toast('Modelo atualizado.', 'success');
+            } else {
+                await apiFetch('/admin/models', 'POST', payload);
+                toast('Modelo criado.', 'success');
+            }
+            closeModal('modal-model-edit');
+            document.getElementById('m-model-id').disabled = false;
+            await loadTab('models');
+        }
+
+        async function makeDefaultModel(id) {
+            await apiFetch(`/admin/models/${id}/set-default`, 'POST');
+            toast('Modelo default atualizado.', 'success');
+            await loadTab('models');
+        }
+
+        function showModelRoutes(id) {
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model) return;
+            alert(JSON.stringify(model.routes || [], null, 2));
+        }
+
+        async function removeModel(id) {
+            const confirmWord = prompt('Digite REMOVER para confirmar a remoção do modelo.');
+            if (confirmWord !== 'REMOVER') return;
+            const soft = confirm('Usar remoção segura (soft delete) se houver histórico?');
+            await apiFetch(`/admin/models/${id}`, 'DELETE', {
+                confirm_route_removal: true,
+                mode: soft ? 'auto' : 'register-only',
+            });
+            toast('Modelo removido.', 'success');
+            await loadTab('models');
+        }
+
+        function openTestModelModal(id) {
+            state.activeModelId = id;
+            document.getElementById('mt-result').textContent = 'Aguardando teste...';
+            openModal('modal-model-test');
+        }
+
+        async function runModelPromptTest() {
+            if (!state.activeModelId) return;
+            const payload = {
+                prompt: document.getElementById('mt-prompt').value,
+                max_tokens: Number(document.getElementById('mt-max-tokens').value || 96),
+                temperature: Number(document.getElementById('mt-temperature').value || 0.2),
+                stream: document.getElementById('mt-stream').checked,
+                include_reasoning: document.getElementById('mt-include-reasoning').checked,
+            };
+            const result = await apiFetch(`/admin/models/${state.activeModelId}/test-prompt`, 'POST', payload);
+            document.getElementById('mt-result').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function showBackendHealthFromModel(id) {
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model?.inference_backend_id) {
+                toast('Modelo sem backend associado.', 'error');
+                return;
+            }
+            await viewBackendHealth(model.inference_backend_id);
+        }
+
+        async function showBackendLogsFromModel(id) {
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model?.inference_backend_id) {
+                toast('Modelo sem backend associado.', 'error');
+                return;
+            }
+            await viewBackendLogs(model.inference_backend_id);
+        }
+
+        function openCreateBackendModal() {
+            state.activeBackendId = null;
+            document.getElementById('backend-modal-title').textContent = 'Adicionar Backend';
+            document.getElementById('b-name').value = '';
+            document.getElementById('b-provider').value = 'llama.cpp';
+            document.getElementById('b-url').value = '';
+            document.getElementById('b-health').value = '/health';
+            document.getElementById('b-parallel').value = '1';
+            document.getElementById('b-active').checked = true;
+            openModal('modal-backend-edit');
+        }
+
+        function openEditBackendModal(id) {
+            const backend = (state.backends || []).find((item) => item.id === id);
+            if (!backend) return;
+            state.activeBackendId = id;
+            document.getElementById('backend-modal-title').textContent = 'Editar Backend';
+            document.getElementById('b-name').value = backend.name;
+            document.getElementById('b-provider').value = backend.provider;
+            document.getElementById('b-url').value = backend.backend_url;
+            document.getElementById('b-health').value = backend.healthcheck_path || '/health';
+            document.getElementById('b-parallel').value = backend.max_parallel_requests || 1;
+            document.getElementById('b-active').checked = !!backend.is_active;
+            openModal('modal-backend-edit');
+        }
+
+        async function saveBackend() {
+            const payload = {
+                name: document.getElementById('b-name').value.trim(),
+                provider: document.getElementById('b-provider').value,
+                backend_url: document.getElementById('b-url').value.trim(),
+                healthcheck_path: document.getElementById('b-health').value.trim() || '/health',
+                is_active: document.getElementById('b-active').checked,
+                is_default: false,
+                status: 'configured',
+                max_parallel_requests: Number(document.getElementById('b-parallel').value || 1),
+            };
+            if (state.activeBackendId) {
+                await apiFetch(`/admin/backends/${state.activeBackendId}`, 'PATCH', payload);
+                toast('Backend atualizado.', 'success');
+            } else {
+                await apiFetch('/admin/backends', 'POST', payload);
+                toast('Backend criado.', 'success');
+            }
+            closeModal('modal-backend-edit');
+            await loadTab('backends');
+            await loadTab('models');
+        }
+
+        async function toggleBackendActive(id, isActive) {
+            await apiFetch(`/admin/backends/${id}`, 'PATCH', { is_active: isActive, status: isActive ? 'configured' : 'disabled' });
+            toast(`Backend ${isActive ? 'ativado' : 'desativado'}.`, 'success');
+            await loadTab('backends');
+            await loadTab('models');
+        }
+
+        async function runBackendAction(id, action) {
+            await apiFetch(`/admin/backends/${id}/${action}`, 'POST');
+            toast(`Backend ${action} executado.`, 'success');
+            await loadTab('backends');
+            await loadTab('models');
+        }
+
+        async function viewBackendHealth(id) {
+            const result = await apiFetch(`/admin/backends/${id}/health`);
+            alert(JSON.stringify(result, null, 2));
+        }
+
+        async function viewBackendLogs(id) {
+            const result = await apiFetch(`/admin/backends/${id}/logs?tail=100`);
+            alert(result.logs || '(sem logs)');
+        }
+
         async function toggleModel(id, enable) {
             await apiFetch(`/admin/models/${id}/${enable ? 'enable' : 'disable'}`, 'POST');
             toast(`Modelo ${enable ? 'habilitado' : 'desabilitado'}.`, 'success');
@@ -1653,26 +2051,6 @@
             if (!client) throw new Error('Nenhum cliente disponível para teste.');
             const result = await apiFetch('/admin/api-keys', 'POST', { client_id: client.id, name: `lab-temp-${Date.now()}` });
             return result.api_key;
-        }
-
-        async function testModelPrompt(modelId) {
-            const apiKey = await createTemporaryClientApiKey();
-            const res = await fetch('/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: modelId,
-                    messages: [{ role: 'user', content: 'Responda com uma frase curta confirmando que este modelo está operacional.' }],
-                    max_tokens: 64,
-                    stream: false,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || 'Falha no teste do modelo');
-            alert(`Resposta do modelo ${modelId}:\n\n${data.choices?.[0]?.message?.content || '(vazio)'}`);
         }
 
         async function runCacheValidation() {
@@ -1729,12 +2107,6 @@
             }
         }
 
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;');
-        }
     </script>
 </body>
 </html>

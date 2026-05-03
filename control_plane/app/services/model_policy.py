@@ -2,7 +2,7 @@ import json
 import random
 
 from fastapi import HTTPException
-from sqlalchemy import or_, select
+from sqlalchemy import inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,6 +13,10 @@ from app.models.model_registry import ModelRegistry
 
 SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm"}
 ROUTE_STATE_ORDER = {"healthy": 0, "degraded": 1, "unhealthy": 2, "disabled": 3}
+MODEL_REGISTRY_ROUTING_LOADS = (
+    selectinload(ModelRegistry.inference_backend),
+    selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
+)
 
 
 def _parse_allowed_models(raw: str | None) -> set[str]:
@@ -39,10 +43,7 @@ def get_effective_allowed_models(client: Client) -> set[str]:
 async def list_active_registry_models(session: AsyncSession) -> list[ModelRegistry]:
     result = await session.execute(
         select(ModelRegistry)
-        .options(
-            selectinload(ModelRegistry.inference_backend),
-            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
-        )
+        .options(*MODEL_REGISTRY_ROUTING_LOADS)
         .where(ModelRegistry.is_active.is_(True))
         .order_by(ModelRegistry.is_default.desc(), ModelRegistry.created_at.asc())
     )
@@ -86,6 +87,7 @@ async def resolve_requested_model(
 
 
 def get_routing_candidates(model: ModelRegistry) -> list[ModelBackendRoute]:
+    ensure_model_routing_loaded(model, require_primary_backend=False)
     routes = [
         item
         for item in model.backend_routes
@@ -138,6 +140,7 @@ def plan_routing_order(model: ModelRegistry, rng: random.Random | None = None) -
 
 
 def serialize_routing_table(model: ModelRegistry) -> list[dict]:
+    ensure_model_routing_loaded(model, require_primary_backend=False)
     return [
         {
             "route_id": str(route.id) if route.id else None,
@@ -175,17 +178,44 @@ def serialize_model_card(item: ModelRegistry) -> dict:
     }
 
 
+def ensure_model_routing_loaded(model: ModelRegistry, *, require_primary_backend: bool = True) -> None:
+    state = inspect(model)
+    unloaded = set(state.unloaded)
+    missing = []
+    if "backend_routes" in unloaded:
+        missing.append("ModelRegistry.backend_routes")
+    needs_primary_backend = require_primary_backend
+    if not needs_primary_backend and not missing:
+        needs_primary_backend = not model.backend_routes and model.inference_backend_id is not None
+    if needs_primary_backend and "inference_backend" in unloaded:
+        missing.append("ModelRegistry.inference_backend")
+    if missing:
+        raise RuntimeError(
+            "ModelRegistry routing relationships must be eagerly loaded before serialization: "
+            + ", ".join(missing)
+        )
+    for route in model.backend_routes:
+        route_state = inspect(route)
+        if "inference_backend" in route_state.unloaded:
+            raise RuntimeError(
+                "ModelBackendRoute.inference_backend must be eagerly loaded before routing serialization"
+            )
+
+
 async def get_model_by_id(session: AsyncSession, model_id) -> ModelRegistry | None:
-    return await session.get(ModelRegistry, model_id)
+    result = await session.execute(
+        select(ModelRegistry)
+        .options(*MODEL_REGISTRY_ROUTING_LOADS)
+        .execution_options(populate_existing=True)
+        .where(ModelRegistry.id == model_id)
+    )
+    return result.scalar_one_or_none()
 
 
 async def find_model_by_public_name(session: AsyncSession, public_name: str) -> ModelRegistry | None:
     result = await session.execute(
         select(ModelRegistry)
-        .options(
-            selectinload(ModelRegistry.inference_backend),
-            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
-        )
+        .options(*MODEL_REGISTRY_ROUTING_LOADS)
         .where(
             or_(ModelRegistry.model_id == public_name, ModelRegistry.model_alias == public_name)
         )
