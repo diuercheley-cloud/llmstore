@@ -689,7 +689,14 @@
                 <div class="form-group"><label>Provider</label><select id="m-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
             </div>
             <div class="grid-two">
-                <div class="form-group"><label>Arquivo em /models</label><select id="m-file"></select></div>
+                <div class="form-group">
+                    <label>Arquivo em /models</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <select id="m-file" style="flex:1;"></select>
+                        <button type="button" class="btn-secondary" onclick="refreshModelFiles(true)">Recarregar</button>
+                    </div>
+                    <div id="m-file-status" class="muted" style="margin-top:0.4rem;"></div>
+                </div>
                 <div class="form-group"><label>Prompt template</label><select id="m-prompt-template"><option value="auto">auto</option><option value="gemma">gemma</option><option value="qwen">qwen</option><option value="llama">llama</option><option value="chatml">chatml</option></select></div>
             </div>
             <div class="grid-two">
@@ -768,7 +775,7 @@
             usageSummary: null,
             securityEvents: [],
             modelsPayload: null,
-            modelFiles: { files: [] },
+            modelFiles: { files: [], warning: null, models_dir: '/models', error: null },
             backends: [],
             backendHealth: null,
             routing: null,
@@ -885,7 +892,7 @@
                 apiFetch('/admin/reports/monthly'),
                 apiFetch('/admin/usage/summary'),
                 apiFetch('/admin/models'),
-                apiFetch('/admin/models/files'),
+                loadModelFiles(),
                 apiFetch('/admin/backends/routing'),
                 apiFetch('/admin/jobs'),
                 apiFetch('/admin/api-keys'),
@@ -958,7 +965,7 @@
             if (tab === 'models') {
                 const [modelsPayload, modelFiles] = await Promise.all([
                     apiFetch('/admin/models'),
-                    apiFetch('/admin/models/files'),
+                    loadModelFiles(),
                 ]);
                 state.modelsPayload = modelsPayload;
                 state.modelFiles = modelFiles;
@@ -1107,7 +1114,73 @@
 
         function fileOptionsHtml(selectedFile = '') {
             const files = state.modelFiles?.files || [];
-            return files.map((file) => `<option value="${file.filename}" ${file.filename === selectedFile ? 'selected' : ''}>${file.filename}${file.already_registered ? ' (registrado)' : ''}</option>`).join('');
+            if (!files.length) {
+                if (selectedFile) {
+                    return `<option value="${escapeHtml(selectedFile)}" selected>${escapeHtml(selectedFile)} (indisponível em /models)</option>`;
+                }
+                const label = state.modelFiles?.warning || 'Nenhum arquivo .gguf encontrado em /models';
+                return `<option value="">${escapeHtml(label)}</option>`;
+            }
+            const hasSelected = selectedFile && files.some((file) => file.filename === selectedFile);
+            const options = files.map((file) => `<option value="${file.filename}" ${file.filename === selectedFile ? 'selected' : ''}>${file.filename}${file.already_registered ? ' (registrado)' : ''}</option>`);
+            if (selectedFile && !hasSelected) {
+                options.unshift(`<option value="${escapeHtml(selectedFile)}" selected>${escapeHtml(selectedFile)} (indisponível em /models)</option>`);
+            }
+            return options.join('');
+        }
+
+        function updateModelFileStatus() {
+            const statusEl = document.getElementById('m-file-status');
+            if (!statusEl) return;
+            const payload = state.modelFiles || {};
+            const files = payload.files || [];
+            if (payload.error) {
+                statusEl.style.color = 'var(--danger)';
+                statusEl.textContent = `Erro ao listar /models: ${payload.error}`;
+                return;
+            }
+            if (payload.warning) {
+                statusEl.style.color = files.length ? 'var(--warning)' : 'var(--muted)';
+                statusEl.textContent = payload.warning;
+                return;
+            }
+            statusEl.style.color = 'var(--muted)';
+            statusEl.textContent = `${files.length} arquivo(s) .gguf em ${payload.models_dir || '/models'}`;
+        }
+
+        async function loadModelFiles() {
+            try {
+                const payload = await apiFetch('/admin/models/files');
+                return { ...payload, error: null };
+            } catch (err) {
+                return {
+                    files: [],
+                    models_dir: '/models',
+                    models_dir_exists: false,
+                    models_dir_is_dir: false,
+                    warning: null,
+                    error: err.message || 'falha ao consultar /admin/models/files',
+                };
+            }
+        }
+
+        async function refreshModelFiles(showToast = false, selectedFile = '') {
+            state.modelFiles = await loadModelFiles();
+            const fileSelect = document.getElementById('m-file');
+            if (fileSelect) {
+                fileSelect.innerHTML = fileOptionsHtml(selectedFile);
+                if (selectedFile && Array.from(fileSelect.options).some((item) => item.value === selectedFile)) {
+                    fileSelect.value = selectedFile;
+                }
+            }
+            updateModelFileStatus();
+            if (showToast) {
+                if (state.modelFiles.error) {
+                    toast(`Falha ao recarregar arquivos: ${state.modelFiles.error}`, 'error');
+                } else {
+                    toast('Lista de arquivos /models atualizada.', 'success');
+                }
+            }
         }
 
         function populateSharedSelectors() {
@@ -1387,11 +1460,15 @@
         function renderModels() {
             const models = state.modelsPayload.registry || [];
             const files = state.modelFiles?.files || [];
+            const filesMessage = state.modelFiles?.error
+                ? `<div style="color: var(--danger);">Erro ao listar arquivos em /models: ${escapeHtml(state.modelFiles.error)}</div>`
+                : `<div class="muted">${escapeHtml(state.modelFiles?.warning || `Arquivos GGUF encontrados: ${files.length}`)}</div>`;
             document.getElementById('models-content').innerHTML = `
                 <div class="toolbar">
                     <button class="btn-secondary" onclick="loadTab('models')">Atualizar</button>
+                    <button class="btn-secondary" onclick="refreshModelFiles(true)">Recarregar arquivos /models</button>
                     <button class="btn-primary" onclick="openCreateModelModal()">+ Adicionar modelo</button>
-                    <div class="muted">Arquivos GGUF encontrados: ${files.length}</div>
+                    ${filesMessage}
                 </div>
                 <div class="detail-list" style="margin-bottom:1rem;">
                     <div class="detail-item"><strong>Modelos registrados</strong>${models.length}</div>
@@ -1774,6 +1851,8 @@
             document.getElementById('m-alias').value = '';
             document.getElementById('m-provider').value = 'llama.cpp';
             document.getElementById('m-file').innerHTML = fileOptionsHtml();
+            updateModelFileStatus();
+            refreshModelFiles(false);
             document.getElementById('m-prompt-template').value = 'auto';
             document.getElementById('m-backend').innerHTML = backendOptionsHtml();
             document.getElementById('m-context').value = '32768';
@@ -1799,6 +1878,8 @@
             document.getElementById('m-alias').value = model.model_alias || '';
             document.getElementById('m-provider').value = model.provider || 'llama.cpp';
             document.getElementById('m-file').innerHTML = fileOptionsHtml(model.model_file || '');
+            updateModelFileStatus();
+            refreshModelFiles(false, model.model_file || '');
             document.getElementById('m-prompt-template').value = model.prompt_template || 'auto';
             document.getElementById('m-backend').innerHTML = backendOptionsHtml(model.inference_backend_id || '');
             document.getElementById('m-context').value = model.context_length || 32768;
@@ -1827,6 +1908,8 @@
             document.getElementById('m-alias').value = model.model_alias ? `${model.model_alias}-copy` : '';
             document.getElementById('m-provider').value = model.provider || 'llama.cpp';
             document.getElementById('m-file').innerHTML = fileOptionsHtml(model.model_file || '');
+            updateModelFileStatus();
+            refreshModelFiles(false, model.model_file || '');
             document.getElementById('m-prompt-template').value = model.prompt_template || 'auto';
             document.getElementById('m-backend').innerHTML = backendOptionsHtml(model.inference_backend_id || '');
             document.getElementById('m-context').value = model.context_length || 32768;
@@ -1837,12 +1920,17 @@
         async function saveModel() {
             const createBackendName = document.getElementById('m-new-backend-name').value.trim();
             const createBackendUrl = document.getElementById('m-new-backend-url').value.trim();
+            const selectedModelFile = document.getElementById('m-file').value.trim();
+            if (!selectedModelFile) {
+                toast(state.modelFiles?.error || state.modelFiles?.warning || 'Selecione um arquivo .gguf em /models.', 'error');
+                return;
+            }
             const payload = {
                 display_name: document.getElementById('m-display-name').value.trim() || null,
                 model_id: document.getElementById('m-model-id').value.trim(),
                 model_alias: document.getElementById('m-alias').value.trim() || null,
                 provider: document.getElementById('m-provider').value,
-                model_file: document.getElementById('m-file').value,
+                model_file: selectedModelFile,
                 inference_backend_id: document.getElementById('m-backend').value || null,
                 context_length: Number(document.getElementById('m-context').value || 32768),
                 prompt_template: document.getElementById('m-prompt-template').value,

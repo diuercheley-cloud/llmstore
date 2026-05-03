@@ -1608,7 +1608,22 @@ async def backends_routing(
 
 @router.get("/models/files")
 async def get_model_files(session: AsyncSession = Depends(get_db_session)):
-    return {"models_dir": str(resolve_models_dir()), "files": await list_model_files(session)}
+    models_dir = resolve_models_dir()
+    files = await list_model_files(session)
+    warning = None
+    if not models_dir.exists():
+        warning = f"models directory not found: {models_dir}"
+    elif not models_dir.is_dir():
+        warning = f"models path is not a directory: {models_dir}"
+    elif not files:
+        warning = f"Nenhum arquivo .gguf encontrado em {models_dir}"
+    return {
+        "models_dir": str(models_dir),
+        "models_dir_exists": models_dir.exists(),
+        "models_dir_is_dir": models_dir.is_dir(),
+        "files": files,
+        "warning": warning,
+    }
 
 
 @router.post("/models", status_code=201)

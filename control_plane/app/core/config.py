@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     demo_monthly_token_quota: int = Field(default=300000, alias="DEMO_MONTHLY_TOKEN_QUOTA")
     model_id: str = Field(default="unsloth/gemma-4-E4B-it-GGUF", alias="MODEL_ID")
     model_file: str = Field(default="gemma-4-E4B-it-Q4_K_M.gguf", alias="MODEL_FILE")
+    models_dir: str = Field(default="/models", alias="MODELS_DIR")
     bonsai_model_id: str = Field(default="bonsai/bonsai-8B-GGUF", alias="BONSAI_MODEL_ID")
     bonsai_model_file: str = Field(default="bonsai-8B.gguf", alias="BONSAI_MODEL_FILE")
     bonsai_chat_template: str | None = Field(default=None, alias="BONSAI_CHAT_TEMPLATE")

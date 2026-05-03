@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.api.admin import router as admin_router
+import app.api.admin as admin_api
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
@@ -113,7 +114,45 @@ async def test_get_model_files_requires_admin_token(client_and_sessionmaker, mod
     authorized = await client.get("/admin/models/files", headers=admin_headers)
     assert authorized.status_code == 200
     payload = authorized.json()
+    assert payload["models_dir_exists"] is True
+    assert payload["models_dir_is_dir"] is True
     assert payload["files"][0]["filename"] == "sample.gguf"
+    assert payload["files"][0]["relative_path"] == "sample.gguf"
+    assert payload["files"][0]["size_bytes"] == 4
+    assert payload["files"][0]["modified_at"]
+
+
+@pytest.mark.asyncio
+async def test_get_model_files_lists_complex_gguf_names(client_and_sessionmaker, models_dir, admin_headers):
+    client, _ = client_and_sessionmaker
+    complex_name = "Qwen3.6-35B-A3B-Q4_K_M.gguf"
+    (models_dir / complex_name).write_bytes(b"gguf-qwen")
+    (models_dir / "ignore.txt").write_text("nope", encoding="utf-8")
+    (models_dir / "subdir").mkdir()
+
+    response = await client.get("/admin/models/files", headers=admin_headers)
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert [item["filename"] for item in payload["files"]] == [complex_name]
+    assert payload["files"][0]["relative_path"] == complex_name
+    assert payload["warning"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_model_files_returns_warning_when_models_dir_missing(client_and_sessionmaker, tmp_path, monkeypatch, admin_headers):
+    client, _ = client_and_sessionmaker
+    missing_dir = tmp_path / "missing-models"
+    monkeypatch.setattr(model_mgmt, "resolve_models_dir", lambda: missing_dir)
+    monkeypatch.setattr(admin_api, "resolve_models_dir", lambda: missing_dir)
+
+    response = await client.get("/admin/models/files", headers=admin_headers)
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["files"] == []
+    assert payload["models_dir_exists"] is False
+    assert "models directory not found" in payload["warning"]
 
 
 @pytest.mark.asyncio

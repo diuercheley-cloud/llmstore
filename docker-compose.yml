@@ -161,6 +161,8 @@ services:
         condition: service_started
     ports:
       - "${HOST_PORT:-8080}:8080"
+    volumes:
+      - ./models:/models:ro
     restart: unless-stopped
     networks:
       - control_net
@@ -185,6 +187,8 @@ services:
         condition: service_healthy
       data-plane-gemma:
         condition: service_started
+    volumes:
+      - ./models:/models:ro
     restart: unless-stopped
     networks:
       - control_net

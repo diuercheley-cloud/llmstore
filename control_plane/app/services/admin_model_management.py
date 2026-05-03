@@ -49,9 +49,26 @@ def compose_file_path() -> Path | None:
 
 
 def resolve_models_dir() -> Path:
-    for candidate in (Path("/models"), project_root() / "models"):
+    settings = get_settings()
+    configured = (settings.models_dir or "").strip()
+    candidates = []
+    if configured:
+        configured_path = Path(configured)
+        if not configured_path.is_absolute():
+            configured_path = project_root() / configured_path
+        candidates.append(configured_path)
+    candidates.extend([Path("/models"), project_root() / "models"])
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
         if candidate.exists() and candidate.is_dir():
             return candidate
+    if configured:
+        configured_path = Path(configured)
+        return configured_path if configured_path.is_absolute() else (project_root() / configured_path)
     return Path("/models")
 
 
@@ -157,7 +174,7 @@ def detect_quantization(filename: str) -> str | None:
 
 async def list_model_files(session: AsyncSession) -> list[dict[str, Any]]:
     models_dir = resolve_models_dir()
-    if not models_dir.exists():
+    if not models_dir.exists() or not models_dir.is_dir():
         return []
     rows = (
         await session.execute(select(ModelRegistry.model_file, ModelRegistry.status))
@@ -181,6 +198,7 @@ async def list_model_files(session: AsyncSession) -> list[dict[str, Any]]:
         files.append(
             {
                 "filename": entry.name,
+                "relative_path": entry.name,
                 "size_bytes": stat.st_size,
                 "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
                 "detected_architecture": architecture,
