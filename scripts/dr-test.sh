@@ -9,24 +9,63 @@ init_stack_env
 BACKUP_ROOT="${ROOT_DIR}/artifacts/backups"
 REPORT_ROOT="${ROOT_DIR}/artifacts/dr-tests"
 TIMESTAMP="$(date +%Y%m%dT%H%M%S)"
-BACKUP_DIR="${1:-$(find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d | sort | tail -n1)}"
+INCLUDE_BONSAI=false
+BACKUP_DIR=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --include-bonsai)
+      INCLUDE_BONSAI=true
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Uso: ./scripts/dr-test.sh [--include-bonsai] [backup_dir]
+
+Por padrao o teste de DR sobe apenas a stack minima e forca BONSAI_ENABLED=false
+no ambiente temporario. Use --include-bonsai para validar tambem o profile bonsai.
+EOF
+      exit 0
+      ;;
+    *)
+      if [[ -n "${BACKUP_DIR}" ]]; then
+        echo "[dr-test][error] argumento inesperado: $1" >&2
+        exit 1
+      fi
+      BACKUP_DIR="$1"
+      shift
+      ;;
+  esac
+done
+
+BACKUP_DIR="${BACKUP_DIR:-$(find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d | sort | tail -n1)}"
 [[ -n "${BACKUP_DIR}" && -d "${BACKUP_DIR}" ]] || { echo "[dr-test][error] backup directory not found" >&2; exit 1; }
 
 REPORT_DIR="${REPORT_ROOT}/${TIMESTAMP}"
 mkdir -p "${REPORT_DIR}"
 
-TEMP_ENV_FILE="/tmp/llm-inference-stack-dr-${TIMESTAMP}.env"
-TEMP_OVERRIDE_FILE="/tmp/llm-inference-stack-dr-${TIMESTAMP}.override.yml"
+TEMP_ENV_FILE="$(mktemp "/tmp/llm-inference-stack-dr-${TIMESTAMP}-XXXXXX.env")"
+TEMP_OVERRIDE_FILE="$(mktemp "/tmp/llm-inference-stack-dr-${TIMESTAMP}-XXXXXX.override.yml")"
 PROJECT_NAME="llmstackdr$(printf '%s' "${TIMESTAMP}" | tr '[:upper:]' '[:lower:]')"
 DR_HOST_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
 export DR_HOST_PORT
 BASE_URL="http://localhost:${DR_HOST_PORT}"
 BACKUP_ENV_FILE="$(find "${BACKUP_DIR}/env" -maxdepth 1 -type f | head -n1 || true)"
 [[ -n "${BACKUP_ENV_FILE}" ]] || { echo "[dr-test][error] backup env file not found in ${BACKUP_DIR}/env" >&2; exit 1; }
+COMPOSE_UP_LOG="${REPORT_DIR}/compose-up.log"
+export DR_INCLUDE_BONSAI="${INCLUDE_BONSAI}"
 
 cleanup() {
   local status=$?
-  docker compose -p "${PROJECT_NAME}" down -v >/dev/null 2>&1 || true
+  if declare -p DOCKER_COMPOSE_ARGS >/dev/null 2>&1; then
+    dc down -v >/dev/null 2>&1 || true
+  else
+    docker compose -p "${PROJECT_NAME}" \
+      --env-file "${TEMP_ENV_FILE}" \
+      -f "${ROOT_DIR}/docker-compose.yml" \
+      -f "${TEMP_OVERRIDE_FILE}" \
+      down -v >/dev/null 2>&1 || true
+  fi
   if [[ -f "${TEMP_ENV_FILE}" ]]; then
     rm -f "${TEMP_ENV_FILE}"
   fi
@@ -50,6 +89,7 @@ updates = {
     "REDIS_PORT": "16379",
     "PROMETHEUS_PORT": "19090",
     "GRAFANA_PORT": "13001",
+    "BONSAI_ENABLED": "true" if os.environ.get("DR_INCLUDE_BONSAI") == "true" else "false",
     "PUBLIC_EXPOSURE": "false",
 }
 result = []
@@ -87,9 +127,50 @@ export HOST_PORT="${DR_HOST_PORT}"
 export PROMETHEUS_PORT=19090
 export GRAFANA_PORT=13001
 export PUBLIC_EXPOSURE=false
+export BONSAI_ENABLED=false
+
+if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
+  export BONSAI_ENABLED=true
+  export COMPOSE_PROFILES="bonsai"
+  BONSAI_MODEL_PATH="${ROOT_DIR}/models/${BONSAI_MODEL_FILE:-bonsai-8B.gguf}"
+  [[ -f "${BONSAI_MODEL_PATH}" ]] || {
+    echo "[dr-test][error] bonsai requested but model file not found: ${BONSAI_MODEL_PATH}" >&2
+    exit 1
+  }
+else
+  unset COMPOSE_PROFILES || true
+fi
 
 log_step() {
   printf '[dr-test] %s\n' "$*"
+}
+
+print_service_logs() {
+  local ps_file="${REPORT_DIR}/compose-ps-after-failure.txt"
+  local services=()
+  if dc ps --services >"${ps_file}" 2>/dev/null; then
+    mapfile -t services < "${ps_file}"
+  fi
+  if [[ ${#services[@]} -eq 0 ]]; then
+    services=(postgres redis data-plane-gemma control-plane control-plane-worker)
+    if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
+      services+=(data-plane-bonsai)
+    fi
+  fi
+  printf '[dr-test][error] docker compose up failed; last 80 log lines per service follow\n' >&2
+  for service in "${services[@]}"; do
+    printf '[dr-test][logs] service=%s\n' "${service}" >&2
+    dc logs --tail 80 "${service}" >&2 || true
+  done
+}
+
+validate_bonsai_container() {
+  local model_file="${BONSAI_MODEL_FILE:-bonsai-8B.gguf}"
+  log_step "validating bonsai model mount"
+  dc exec -T data-plane-bonsai sh -lc "mount | grep -F ' /models '" \
+    || { echo "[dr-test][error] bonsai container missing /models mount" >&2; exit 1; }
+  dc exec -T data-plane-bonsai sh -lc "test -f /models/${model_file}" \
+    || { echo "[dr-test][error] bonsai container did not load /models/${model_file}" >&2; exit 1; }
 }
 
 wait_url() {
@@ -105,7 +186,15 @@ wait_url() {
 }
 
 log_step "starting temporary clean environment"
-dc up -d --build >"${REPORT_DIR}/compose-up.log" 2>&1
+if ! dc up -d --build >"${COMPOSE_UP_LOG}" 2>&1; then
+  print_service_logs
+  echo "[dr-test][error] docker compose up failed; see ${COMPOSE_UP_LOG}" >&2
+  exit 1
+fi
+
+if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
+  validate_bonsai_container
+fi
 
 log_step "restoring backup"
 RESTORE_CONFIRMATION=RESTORE RESTORE_ENV_CHOICE=no "${SCRIPT_DIR}/restore.sh" "${BACKUP_DIR}" >"${REPORT_DIR}/restore.log" 2>&1
@@ -139,6 +228,7 @@ backup_dir=${BACKUP_DIR}
 project_name=${PROJECT_NAME}
 env_file=${TEMP_ENV_FILE}
 base_url=${BASE_URL}
+include_bonsai=${INCLUDE_BONSAI}
 health_status=ok
 ready_status=ok
 chat_test=ok
