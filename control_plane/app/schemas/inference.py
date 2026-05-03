@@ -45,7 +45,7 @@ class CompletionRequest(BaseModel):
 class PortalTestChatRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=20000)
     model: str | None = Field(default=None, min_length=1, max_length=255)
-    max_tokens: int | None = Field(default=128, ge=1, le=1024)
+    max_tokens: int | None = Field(default=128, ge=1, le=32768)
 
 
 class ModelCard(BaseModel):

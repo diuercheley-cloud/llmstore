@@ -39,7 +39,7 @@ DEFAULT_BILLING_PLANS = [
         "rate_limit_per_minute": 3,
         "daily_token_quota": 5000,
         "monthly_token_quota": 50000,
-        "max_output_tokens": 256,
+        "max_output_tokens": 32768,
         "allow_streaming": False,
     },
     {
@@ -49,7 +49,7 @@ DEFAULT_BILLING_PLANS = [
         "rate_limit_per_minute": 15,
         "daily_token_quota": 75000,
         "monthly_token_quota": 750000,
-        "max_output_tokens": 768,
+        "max_output_tokens": 32768,
         "allow_streaming": True,
     },
     {
@@ -59,7 +59,7 @@ DEFAULT_BILLING_PLANS = [
         "rate_limit_per_minute": 45,
         "daily_token_quota": 300000,
         "monthly_token_quota": 4000000,
-        "max_output_tokens": 1536,
+        "max_output_tokens": 32768,
         "allow_streaming": True,
     },
     {
@@ -69,7 +69,7 @@ DEFAULT_BILLING_PLANS = [
         "rate_limit_per_minute": 120,
         "daily_token_quota": 1500000,
         "monthly_token_quota": 15000000,
-        "max_output_tokens": 2048,
+        "max_output_tokens": 32768,
         "allow_streaming": True,
     },
 ]

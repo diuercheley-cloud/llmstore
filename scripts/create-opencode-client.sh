@@ -22,7 +22,7 @@ Se o usuário disser apenas saudações como "oi" ou "olá", responda de forma b
 METADATA='{
   "temperature": 0.2,
   "top_p": 0.8,
-  "max_tokens": 1024
+  "max_tokens": 32768
 }'
 
 printf '[opencode] garantindo cliente %s...\n' "${CLIENT_NAME}"
@@ -37,8 +37,8 @@ payload="{
   \"rate_limit_per_minute\": 10,
   \"daily_token_quota\": 50000,
   \"monthly_token_quota\": 1000000,
-  \"max_context_tokens\": 4096,
-  \"max_output_tokens\": 2048
+  "max_context_tokens": 32768,
+  "max_output_tokens": 32768
 }"
 
 if [[ -n "${existing_client_id}" ]]; then

@@ -12,7 +12,7 @@ class ClientCreate(BaseModel):
     daily_token_quota: int = Field(default=20000, ge=1000, le=10_000_000)
     monthly_token_quota: int = Field(default=300000, ge=1000, le=100_000_000)
     max_context_tokens: int = Field(default=32768, ge=512, le=131072)
-    max_output_tokens: int = Field(default=2048, ge=128, le=4096)
+    max_output_tokens: int = Field(default=2048, ge=128, le=32768)
     allowed_models: list[str] | None = None
     ip_allowlist: list[str] | None = None
     ip_blocklist: list[str] | None = None
@@ -29,7 +29,7 @@ class ClientPatch(BaseModel):
     daily_token_quota: int | None = Field(default=None, ge=1000, le=10_000_000)
     monthly_token_quota: int | None = Field(default=None, ge=1000, le=100_000_000)
     max_context_tokens: int | None = Field(default=None, ge=512, le=131072)
-    max_output_tokens: int | None = Field(default=None, ge=128, le=4096)
+    max_output_tokens: int | None = Field(default=None, ge=128, le=32768)
     allowed_models: list[str] | None = None
     ip_allowlist: list[str] | None = None
     ip_blocklist: list[str] | None = None
@@ -145,7 +145,7 @@ class BillingPlanCreate(BaseModel):
     rate_limit_per_minute: int = Field(ge=1, le=10000)
     daily_token_quota: int = Field(ge=1000, le=1_000_000_000)
     monthly_token_quota: int = Field(ge=1000, le=10_000_000_000)
-    max_output_tokens: int = Field(ge=1, le=8192)
+    max_output_tokens: int = Field(ge=1, le=32768)
     allow_streaming: bool = True
     is_active: bool = True
     allowed_models: list[str] | None = None
@@ -157,7 +157,7 @@ class BillingPlanPatch(BaseModel):
     rate_limit_per_minute: int | None = Field(default=None, ge=1, le=10000)
     daily_token_quota: int | None = Field(default=None, ge=1000, le=1_000_000_000)
     monthly_token_quota: int | None = Field(default=None, ge=1000, le=10_000_000_000)
-    max_output_tokens: int | None = Field(default=None, ge=1, le=8192)
+    max_output_tokens: int | None = Field(default=None, ge=1, le=32768)
     allow_streaming: bool | None = None
     is_active: bool | None = None
     allowed_models: list[str] | None = None
