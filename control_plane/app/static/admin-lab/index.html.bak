@@ -759,41 +759,6 @@
         </div>
     </div>
 
-
-    <!-- MODAL: Ver Logs -->
-    <div id="modal-logs" class="modal-backdrop">
-        <div class="modal" style="max-width:800px;">
-            <div class="modal-header">
-                <h3 id="logs-modal-title">Logs do Backend</h3>
-                <button class="btn-secondary" onclick="closeModal('modal-logs')">X</button>
-            </div>
-            <div id="logs-modal-status" class="muted" style="margin-bottom:0.75rem;"></div>
-            <pre class="json-box" id="logs-modal-content" style="min-height:200px;max-height:60vh;overflow:auto;white-space:pre-wrap;">Carregando logs...</pre>
-        </div>
-    </div>
-
-    <!-- MODAL: Confirmar Remoção -->
-    <div id="modal-confirm-remove" class="modal-backdrop">
-        <div class="modal" style="max-width:480px;">
-            <div class="modal-header">
-                <h3>Remover Modelo</h3>
-                <button class="btn-secondary" onclick="closeModal('modal-confirm-remove')">X</button>
-            </div>
-            <p id="remove-modal-msg" style="margin-bottom:1rem;"></p>
-            <div class="form-group">
-                <label>Modo de remoção</label>
-                <select id="remove-mode">
-                    <option value="auto">Automático (soft se houver histórico)</option>
-                    <option value="soft">Soft delete (mantém histórico)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="remove-confirm-check" onchange="document.getElementById('remove-confirm-btn').disabled = !this.checked"> Confirmo que desejo remover este modelo</label>
-            </div>
-            <button id="remove-confirm-btn" class="btn-danger" style="width:100%;" onclick="executeRemoveModel()" disabled>Confirmar remoção</button>
-        </div>
-    </div>
-
     <!-- TOASTS -->
     <div id="toast-container"></div>
 
@@ -2015,54 +1980,15 @@
         }
 
         async function removeModel(id) {
-            try {
-                const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
-                if (!model) { toast('Modelo não encontrado.', 'error'); return; }
-                if (model.is_default) { toast('Modelo padrão não pode ser removido. Defina outro modelo como padrão primeiro.', 'error'); return; }
-                state._pendingRemoveId = id;
-                const routeCount = (model.routes || []).length;
-                let msg = `Deseja remover o modelo "${model.display_name || model.model_id}"?`;
-                if (routeCount) msg += ` Este modelo possui ${routeCount} rota(s) que serão removidas.`;
-                msg += ' Arquivos .gguf NÃO serão apagados do disco.';
-                document.getElementById('remove-modal-msg').textContent = msg;
-                document.getElementById('remove-mode').value = 'auto';
-                document.getElementById('remove-confirm-check').checked = false;
-                document.getElementById('remove-confirm-btn').disabled = true;
-                openModal('modal-confirm-remove');
-            } catch (err) {
-                console.error('Erro em removeModel:', err);
-                toast(`Erro interno: ${err.message}`, 'error');
-            }
-        }
-
-        async function executeRemoveModel() {
-            const id = state._pendingRemoveId;
-            if (!id) return;
-            const mode = document.getElementById('remove-mode').value;
-            const btn = document.getElementById('remove-confirm-btn');
-            btn.disabled = true;
-            btn.textContent = 'Removendo...';
-            try {
-                const result = await apiFetch(`/admin/models/${id}`, 'DELETE', {
-                    confirm_route_removal: true,
-                    mode: mode,
-                });
-                closeModal('modal-confirm-remove');
-                const statusMsg = result.status === 'soft-deleted'
-                    ? `Modelo desativado (soft delete). Histórico preservado (${result.request_count || 0} requisições).`
-                    : 'Modelo removido com sucesso.';
-                toast(statusMsg, 'success');
-                if (result.removed_routes) {
-                    toast(`${result.removed_routes} rota(s) removida(s).`, 'info');
-                }
-                await loadTab('models');
-            } catch (err) {
-                toast(`Falha ao remover modelo: ${err.message}`, 'error');
-            } finally {
-                btn.textContent = 'Confirmar remoção';
-                btn.disabled = false;
-                state._pendingRemoveId = null;
-            }
+            const confirmWord = prompt('Digite REMOVER para confirmar a remoção do modelo.');
+            if (confirmWord !== 'REMOVER') return;
+            const soft = confirm('Usar remoção segura (soft delete) se houver histórico?');
+            await apiFetch(`/admin/models/${id}`, 'DELETE', {
+                confirm_route_removal: true,
+                mode: soft ? 'auto' : 'register-only',
+            });
+            toast('Modelo removido.', 'success');
+            await loadTab('models');
         }
 
         function openTestModelModal(id) {
@@ -2086,53 +2012,20 @@
 
         async function showBackendHealthFromModel(id) {
             const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
-            let backendId = model?.inference_backend_id;
-            if (!backendId && model?.routes?.length > 0) {
-                backendId = model.routes[0].backend_id;
-            }
-            if (!backendId) {
+            if (!model?.inference_backend_id) {
                 toast('Modelo sem backend associado.', 'error');
                 return;
             }
-            try {
-                await viewBackendHealth(backendId);
-            } catch (err) {
-                toast(`Falha ao verificar health: ${err.message}`, 'error');
-            }
+            await viewBackendHealth(model.inference_backend_id);
         }
 
         async function showBackendLogsFromModel(id) {
-            try {
-                const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
-                if (!model) { toast('Modelo não encontrado.', 'error'); return; }
-                let backendId = model.inference_backend_id;
-                if (!backendId && model.backend_health?.backend_id) {
-                    backendId = model.backend_health.backend_id;
-                }
-                if (!backendId && model.routes && model.routes.length > 0) {
-                    backendId = model.routes[0].backend_id;
-                }
-                if (!backendId) {
-                    toast('Modelo sem backend associado. Não é possível obter logs.', 'error');
-                    return;
-                }
-                const backendName = model.backend_name || model.backend_health?.name || model.routes?.[0]?.backend_name || 'desconhecido';
-                document.getElementById('logs-modal-title').textContent = `Logs — ${model.display_name || model.model_id}`;
-                document.getElementById('logs-modal-status').textContent = `Backend: ${backendName} (${backendId})`;
-                document.getElementById('logs-modal-content').textContent = 'Carregando logs...';
-                openModal('modal-logs');
-                try {
-                    const result = await apiFetch(`/admin/backends/${backendId}/logs?tail=100`);
-                    document.getElementById('logs-modal-content').textContent = result.logs || 'Nenhum log disponível para este modelo/backend.';
-                } catch (err) {
-                    console.error('Erro na chamada apiFetch para logs:', err);
-                    document.getElementById('logs-modal-content').textContent = `Erro ao obter logs: ${err.message}`;
-                    toast(`Falha ao carregar logs: ${err.message}`, 'error');
-                }
-            } catch (err) {
-                console.error('Erro em showBackendLogsFromModel:', err);
-                toast(`Erro interno: ${err.message}`, 'error');
+            const model = (state.modelsPayload?.registry || []).find((item) => item.id === id);
+            if (!model?.inference_backend_id) {
+                toast('Modelo sem backend associado.', 'error');
+                return;
             }
+            await viewBackendLogs(model.inference_backend_id);
         }
 
         function openCreateBackendModal() {
@@ -2204,17 +2097,8 @@
         }
 
         async function viewBackendLogs(id) {
-            document.getElementById('logs-modal-title').textContent = 'Logs do Backend';
-            document.getElementById('logs-modal-status').textContent = `Backend ID: ${id}`;
-            document.getElementById('logs-modal-content').textContent = 'Carregando logs...';
-            openModal('modal-logs');
-            try {
-                const result = await apiFetch(`/admin/backends/${id}/logs?tail=100`);
-                document.getElementById('logs-modal-content').textContent = result.logs || 'Nenhum log disponível para este backend.';
-            } catch (err) {
-                document.getElementById('logs-modal-content').textContent = `Erro ao obter logs: ${err.message}`;
-                toast(`Falha ao carregar logs: ${err.message}`, 'error');
-            }
+            const result = await apiFetch(`/admin/backends/${id}/logs?tail=100`);
+            alert(result.logs || '(sem logs)');
         }
 
         async function toggleModel(id, enable) {

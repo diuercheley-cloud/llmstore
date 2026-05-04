@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
+from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
 from app.api.portal import router as portal_router
 from app.api.public import router as public_router
@@ -70,9 +71,10 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Admin-Token", "X-Correlation-ID"],
     expose_headers=["X-Correlation-ID"],
 )
-app.include_router(system_router)
 app.include_router(public_router)
+app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(admin_tests_router)
 app.include_router(client_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account

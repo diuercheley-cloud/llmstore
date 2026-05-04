@@ -251,6 +251,9 @@ curl_base_url "${BASE_URL}/portal/test-chat" -fsS \
 
 dc ps >"${ARTIFACTS_DIR}/compose-ps.txt" 2>&1 || true
 
+log "running router presence test"
+.venv/bin/pytest tests/test_router_presence.py -v >"${ARTIFACTS_DIR}/test-router-presence.log" 2>&1 || fail "router presence test failed" "" "cat ${ARTIFACTS_DIR}/test-router-presence.log"
+
 printf '\n[validate][summary] success\n'
 printf '[validate][summary] artifacts=%s\n' "${ARTIFACTS_DIR}"
 printf '[validate][summary] endpoint=%s/v1/chat/completions\n' "${BASE_URL}"

@@ -35,7 +35,7 @@ class InferenceProxy:
         settings = get_settings()
         self.settings = settings
         self.timeout = httpx.Timeout(settings.data_plane_timeout_seconds)
-        self.attempt_timeout = httpx.Timeout(min(settings.data_plane_timeout_seconds, 20.0))
+        self.attempt_timeout = httpx.Timeout(settings.data_plane_timeout_seconds)
         self.clients: dict[str, httpx.AsyncClient] = {}
         self.queue_manager = queue_manager
         self.circuit_breaker = circuit_breaker
@@ -93,7 +93,7 @@ class InferenceProxy:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
-        if backend not in {"llama.cpp", "ollama", "vllm"}:
+        if backend not in {"llama.cpp", "ollama", "vllm", "openai_compatible"}:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="unsupported model backend")
         return self._get_client(backend_url)
 
@@ -213,6 +213,7 @@ class InferenceProxy:
         prompt_template: str | None = None,
         manage_slot: bool = True,
     ):
+        print(f"DEBUG PROXY: Entering _forward for {endpoint}, backend_name={backend_name}, backend_id={backend_id}")
         try:
             await self.circuit_breaker.before_call()
             if manage_slot:
@@ -293,26 +294,38 @@ class InferenceProxy:
                 {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
                 for m in logged_payload["messages"]
             ]
-        logger.debug(
+        logger.info(
             "forwarding request to data plane",
             extra={
                 "extra_data": {
                     "endpoint": target_endpoint,
                     "payload": logged_payload,
                     "backend_url": backend_url,
+                    "effective_params": {
+                        "max_tokens": request_payload.get("max_tokens"),
+                        "n_predict": request_payload.get("n_predict"),
+                        "temperature": request_payload.get("temperature"),
+                        "stop": request_payload.get("stop"),
+                        "stream": request_payload.get("stream"),
+                    }
                 }
             },
         )
 
         for attempt in range(1, self.settings.retry_attempts + 2):
             try:
-                response = await client.post(target_endpoint, json=request_payload, timeout=self.attempt_timeout)
+                headers = {}
+                if backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
+                    headers["Authorization"] = f"Bearer {self.settings.lmstudio_api_key}"
+                print(f"DEBUG PROXY: Forwarding to {target_endpoint} on {client.base_url} with backend {backend_name}")
+                response = await client.post(target_endpoint, json=request_payload, headers=headers, timeout=self.attempt_timeout)
                 response.raise_for_status()
                 await self.circuit_breaker.record_success()
                 REQUEST_COUNTER.labels(endpoint=endpoint, status="success").inc()
                 REQUEST_LATENCY.labels(endpoint=endpoint).observe(perf_counter() - started)
                 BACKEND_LATENCY.labels(backend_name=backend_name or backend, endpoint=endpoint).observe(perf_counter() - started)
                 response_payload = response.json()
+                print(f"DEBUG PROXY: Raw backend response: {response_payload}")
                 if backend == "ollama":
                     response_payload = self._translate_ollama_response(response_payload, endpoint, payload.get("model", ""))
                 if endpoint == "/v1/chat/completions":
@@ -387,13 +400,20 @@ class InferenceProxy:
                 {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
                 for m in logged_payload["messages"]
             ]
-        logger.debug(
+        logger.info(
             "forwarding stream request to data plane",
             extra={
                 "extra_data": {
                     "endpoint": target_endpoint,
                     "payload": logged_payload,
                     "backend_url": backend_url,
+                    "effective_params": {
+                        "max_tokens": request_payload.get("max_tokens"),
+                        "n_predict": request_payload.get("n_predict"),
+                        "temperature": request_payload.get("temperature"),
+                        "stop": request_payload.get("stop"),
+                        "stream": request_payload.get("stream"),
+                    }
                 }
             },
         )

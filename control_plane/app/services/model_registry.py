@@ -32,6 +32,30 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
     )
     if "fallback-local" in backends:
         await _ensure_fallback_route(session, gemma_model, backends["fallback-local"])
+    
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Seeding models. LMStudio enabled: {settings.lmstudio_enabled}, backends: {list(backends.keys())}")
+
+    if settings.lmstudio_enabled and "lmstudio-local" in backends:
+        logger.info(f"Seeding LMStudio model: {settings.lmstudio_default_model}")
+        lmstudio_model = await _ensure_model_entry(
+            session,
+            model_id=settings.lmstudio_default_model,
+            model_alias="lmstudio",
+            model_file="",
+            backend=backends["lmstudio-local"],
+            is_default=True,
+            is_active=True,
+            provider="openai_compatible",
+            metadata=_build_metadata(
+                recommended_quantization="",
+                gpu_profile="",
+                backend_name="lmstudio-local",
+                architecture="nemotron",
+            ),
+        )
+        gemma_model.is_default = False
     await _ensure_model_entry(
         session,
         model_id=settings.bonsai_model_id,
@@ -99,6 +123,7 @@ async def _ensure_model_entry(
     is_default: bool,
     is_active: bool,
     metadata: str,
+    provider: str = "llama.cpp",
 ) -> ModelRegistry:
     settings = get_settings()
     result = await session.execute(
@@ -127,7 +152,7 @@ async def _ensure_model_entry(
             model_id=model_id,
             model_alias=model_alias,
             inference_backend_id=backend.id,
-            provider="llama.cpp",
+            provider=provider,
             model_file=model_file,
             context_length=settings.max_context_tokens,
             is_active=is_active,
@@ -141,7 +166,7 @@ async def _ensure_model_entry(
     else:
         model.model_alias = model_alias
         model.inference_backend_id = backend.id
-        model.provider = "llama.cpp"
+        model.provider = provider
         model.model_file = model_file
         model.context_length = settings.max_context_tokens
         model.is_default = is_default

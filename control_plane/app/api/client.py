@@ -206,6 +206,7 @@ async def chat_completions(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
+    print(f"DEBUG API: Received chat completion request for model {payload.model}")
     """
     Executa uma inferência de chat compatível com OpenAI.
     Suporta streaming SSE se `stream: true` for enviado.
@@ -215,6 +216,7 @@ async def chat_completions(
         client=client,
         requested_model=payload.model,
     )
+    print(f"DEBUG API: Model resolved to {selected_model.model_id}")
     
     logger.debug(
         "chat completions request resolved",
@@ -362,6 +364,7 @@ async def chat_completions(
                 await session.commit()
                 return JSONResponse(status_code=200, content=cached.payload)
 
+        print(f"DEBUG API: Calling _chat_with_fallback for {selected_model.model_id}")
         result = await _chat_with_fallback(
             proxy,
             selected_model,
@@ -369,6 +372,7 @@ async def chat_completions(
             payload.stream,
             payload.include_reasoning,
         )
+        print(f"DEBUG API: _chat_with_fallback returned result from {result.backend_name}")
         latency_ms = int((perf_counter() - started) * 1000)
         if payload.stream:
             estimated_stream_tokens = max_tokens

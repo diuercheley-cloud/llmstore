@@ -1,4 +1,6 @@
 from datetime import datetime
+from enum import Enum
+from functools import total_ordering
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, APIKeyHeader
@@ -20,10 +22,58 @@ bearer_scheme = HTTPBearer(auto_error=False)
 admin_key_scheme = APIKeyHeader(name="X-Admin-Token", auto_error=False)
 
 
-async def require_admin(x_admin_token: str = Depends(admin_key_scheme)) -> None:
+@total_ordering
+class AdminRole(Enum):
+    READ = "admin_read"
+    WRITE = "admin_write"
+    SUPER = "super_admin"
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            order = {AdminRole.READ: 1, AdminRole.WRITE: 2, AdminRole.SUPER: 3}
+            return order[self] < order[other]
+        return NotImplemented
+
+def get_admin_role(token: str) -> AdminRole | None:
     settings = get_settings()
-    if not x_admin_token or x_admin_token != settings.admin_token:
+    if not token:
+        return None
+    
+    # Priority 1: Specific RBAC tokens
+    if settings.admin_super_token and token == settings.admin_super_token:
+        return AdminRole.SUPER
+    if settings.admin_write_token and token == settings.admin_write_token:
+        return AdminRole.WRITE
+    if settings.admin_read_token and token == settings.admin_read_token:
+        return AdminRole.READ
+    
+    # Priority 2: Fallback to old admin token if super token is not defined
+    if not settings.admin_super_token and token == settings.admin_token:
+        return AdminRole.SUPER
+        
+    return None
+
+async def require_admin(x_admin_token: str = Depends(admin_key_scheme)) -> None:
+    role = get_admin_role(x_admin_token)
+    if not role or role < AdminRole.SUPER:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+
+def require_admin_role(required_role: AdminRole):
+    async def role_checker(x_admin_token: str = Depends(admin_key_scheme)) -> AdminRole:
+        role = get_admin_role(x_admin_token)
+        if not role:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+        if role < required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail={
+                    "error": "forbidden",
+                    "requiredRole": required_role.value,
+                    "currentRole": role.value
+                }
+            )
+        return role
+    return role_checker
 
 
 async def require_client(

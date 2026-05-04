@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record  # noqa: F401
+from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override  # noqa: F401
 
 config = context.config
 settings = get_settings()

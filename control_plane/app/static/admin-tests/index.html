@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Tests - LLM Inference Stack</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #0f766e;
+            --accent-light: #14b8a6;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .auth-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], select, textarea {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-light); }
+        .btn-secondary { background: white; border-color: var(--border); color: var(--text); }
+        .btn-secondary:hover:not(:disabled) { background: var(--bg); }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .full-width { grid-column: 1 / -1; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+        
+        .status-ok { color: var(--success); font-weight: bold; }
+        .status-warn { color: var(--warning); font-weight: bold; }
+        .status-err { color: var(--danger); font-weight: bold; }
+        
+        .history-list { list-style: none; }
+        
+        .history-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .history-item:last-child { border-bottom: none; }
+        
+        .flex-row { display: flex; gap: 0.5rem; }
+        
+        .role-badge {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th, td { padding: 0.5rem; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: var(--bg); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/admin-dashboard" class="logo">LLM Inference Stack - Admin Tests</a>
+        <div class="auth-bar">
+            <div>
+                <label style="font-size: 0.75rem; display:block;">Admin Token</label>
+                <div class="flex-row">
+                    <input type="password" id="adminToken" placeholder="X-Admin-Token">
+                    <button class="btn-secondary" onclick="checkRole()">Verificar</button>
+                </div>
+            </div>
+            <div>
+                <label style="font-size: 0.75rem; display:block;">Client API Key</label>
+                <div class="flex-row">
+                    <input type="password" id="clientToken" placeholder="sk-local-...">
+                    <button class="btn-secondary" onclick="toggleClientToken()">👁️</button>
+                </div>
+            </div>
+            <div>
+                <span id="roleBadge" class="role-badge">Role: Unknown</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- 1. Saúde Geral -->
+        <div class="card">
+            <h2>1. Saúde Geral do Sistema</h2>
+            <div class="flex-row">
+                <button class="btn-primary" onclick="runHealthCheck()">Checar Saúde</button>
+            </div>
+            <div id="healthResult" class="result-box"></div>
+        </div>
+
+        <!-- 6. Recursos do Servidor -->
+        <div class="card">
+            <h2>2. Recursos do Servidor</h2>
+            <div class="flex-row">
+                <button class="btn-primary" onclick="runResourcesCheck()">Atualizar Recursos</button>
+            </div>
+            <div id="resourcesResult" class="result-box"></div>
+        </div>
+
+        <!-- 2. Teste de API -->
+        <div class="card full-width">
+            <h2>3. Teste de API (/v1/chat/completions)</h2>
+            <div class="form-group">
+                <label>Base URL</label>
+                <input type="text" id="apiBaseUrl" value="http://localhost:18080" style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label>API Key (Bearer Token)</label>
+                <div class="flex-row">
+                    <input type="password" id="apiToken" placeholder="sk-local-..." style="flex: 1;">
+                    <button class="btn-secondary" onclick="toggleApiToken()">👁️ Mostrar</button>
+                </div>
+                <small style="color: var(--text-muted);">Use uma chave 'sk-local-...' válida ou deixe vazio para usar a 'Client API Key' do topo.</small>
+            </div>
+            <div class="flex-row">
+                <div class="form-group" style="flex:1;">
+                    <label>Model</label>
+                    <input type="text" id="apiModel" value="gemma">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Max Tokens</label>
+                    <input type="number" id="apiMaxTokens" value="10">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Temperature</label>
+                    <input type="number" id="apiTemp" value="0.7" step="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Prompt</label>
+                <textarea id="apiPrompt" rows="2">Diga "Teste operacional OK" em uma frase.</textarea>
+            </div>
+            <button class="btn-primary" onclick="runApiTest()">Executar Teste</button>
+            <div id="apiResult" class="result-box"></div>
+        </div>
+
+        <!-- 3 & 4. Validação & Ações de Usuário -->
+        <div class="card">
+            <h2>4. Gestão de Usuário</h2>
+            <div class="form-group">
+                <label>User ID (Client UUID)</label>
+                <input type="text" id="userId" placeholder="Ex: 5eb129b9-...">
+            </div>
+            <div class="flex-row" style="flex-wrap: wrap;">
+                <button class="btn-primary" onclick="checkUser()">Verificar Usuário</button>
+                <button class="btn-danger require-super" onclick="blockUser()">Bloquear</button>
+                <button class="btn-secondary require-super" onclick="unblockUser()">Desbloquear</button>
+            </div>
+            <div id="userResult" class="result-box"></div>
+        </div>
+
+        <!-- 5. Quotas -->
+        <div class="card">
+            <h2>5. Gestão de Quotas</h2>
+            <div class="flex-row" style="flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <button class="btn-primary require-write" onclick="resetQuota()">Zerar Quota</button>
+                <button class="btn-secondary require-write" onclick="renewQuota()">Renovar Quota</button>
+                <button class="btn-danger require-write" onclick="deleteOverride()">Remover Override</button>
+            </div>
+            <div class="flex-row" style="margin-bottom: 0.5rem;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label>Daily Quota</label>
+                    <input type="number" id="dailyQuotaSet" placeholder="Ex: 100000">
+                </div>
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label>Monthly Quota</label>
+                    <input type="number" id="monthlyQuotaSet" placeholder="Ex: 1000000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Reason (Override)</label>
+                <input type="text" id="quotaReason" placeholder="Motivo do override">
+            </div>
+            <button class="btn-secondary require-write" onclick="setQuota()">Aplicar Quota Override</button>
+            <div id="quotaResult" class="result-box"></div>
+        </div>
+
+        <!-- Auditoria -->
+        <div class="card full-width">
+            <h2>Auditoria <button class="btn-secondary require-write" style="font-size:0.75rem; padding:0.25rem 0.5rem;" onclick="loadAudit()">Atualizar</button></h2>
+            <div style="overflow-x: auto; max-height: 300px;">
+                <table id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Role</th>
+                            <th>Ação</th>
+                            <th>User ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditBody">
+                        <tr><td colspan="5" style="text-align:center;">Clique em atualizar para carregar.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 7. Suite Rápida -->
+        <div class="card">
+            <h2>6. Suite Rápida</h2>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Executa todos os testes sequencialmente. Exige Admin Token e Client Token configurados, além do User ID preenchido.
+            </p>
+            <button class="btn-primary" onclick="runTestSuite()">Rodar Todos os Testes</button>
+            <div id="suiteResult" class="result-box"></div>
+        </div>
+
+        <!-- 8. Histórico -->
+        <div class="card">
+            <h2>7. Histórico da Sessão</h2>
+            <button class="btn-secondary" onclick="clearHistory()" style="margin-bottom: 1rem;">Limpar Histórico</button>
+            <ul id="historyList" class="history-list"></ul>
+        </div>
+
+    </div>
+
+    <script>
+        let currentRole = null;
+
+        const getAdminHeaders = () => {
+            const token = document.getElementById('adminToken').value;
+            return { 'X-Admin-Token': token, 'Content-Type': 'application/json' };
+        };
+
+        const getClientHeaders = () => {
+            const token = document.getElementById('apiToken').value || document.getElementById('clientToken').value;
+            return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+        };
+
+        const toggleApiToken = () => {
+            const el = document.getElementById('apiToken');
+            el.type = el.type === 'password' ? 'text' : 'password';
+        };
+
+        const toggleClientToken = () => {
+            const el = document.getElementById('clientToken');
+            el.type = el.type === 'password' ? 'text' : 'password';
+        };
+        
+        const updateUIForRole = (role) => {
+            currentRole = role;
+            document.getElementById('roleBadge').innerText = `Role: ${role || 'None'}`;
+            
+            const writeBtns = document.querySelectorAll('.require-write');
+            const superBtns = document.querySelectorAll('.require-super');
+            
+            writeBtns.forEach(btn => btn.disabled = (role !== 'admin_write' && role !== 'super_admin'));
+            superBtns.forEach(btn => btn.disabled = (role !== 'super_admin'));
+        };
+
+        const checkRole = async () => {
+            try {
+                const res = await fetch('/admin/tests/auth/whoami', { headers: getAdminHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    updateUIForRole(data.role);
+                } else {
+                    updateUIForRole(null);
+                    alert("Token inválido ou sem permissão.");
+                }
+            } catch (e) {
+                updateUIForRole(null);
+            }
+        };
+
+        const addToHistory = (testName, status, duration, summary) => {
+            const history = JSON.parse(localStorage.getItem('adminTestsHistory') || '[]');
+            const entry = {
+                time: new Date().toLocaleTimeString(),
+                testName, status, duration, summary
+            };
+            history.unshift(entry);
+            if (history.length > 50) history.pop();
+            localStorage.setItem('adminTestsHistory', JSON.stringify(history));
+            renderHistory();
+        };
+
+        const renderHistory = () => {
+            const history = JSON.parse(localStorage.getItem('adminTestsHistory') || '[]');
+            const ul = document.getElementById('historyList');
+            ul.innerHTML = '';
+            history.forEach(h => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                const color = h.status === 'PASS' ? 'var(--success)' : (h.status === 'WARN' ? 'var(--warning)' : 'var(--danger)');
+                li.innerHTML = `
+                    <div>
+                        <strong style="color: ${color}">${h.status}</strong> - ${h.testName}
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${h.summary}</div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${h.time} (${h.duration}ms)</div>
+                `;
+                ul.appendChild(li);
+            });
+        };
+
+        const clearHistory = () => {
+            localStorage.removeItem('adminTestsHistory');
+            renderHistory();
+        };
+
+        const runHealthCheck = async () => {
+            const box = document.getElementById('healthResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Health Check', res.ok ? 'PASS' : 'FAIL', duration, `Status: ${data.status}`);
+                return { ok: res.ok, data };
+            } catch (e) {
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                addToHistory('Health Check', 'FAIL', duration, e.message);
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const runResourcesCheck = async () => {
+            const box = document.getElementById('resourcesResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch('/admin/tests/system/resources', { headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                if (!res.ok) throw new Error(data.detail?.error || JSON.stringify(data));
+                box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('System Resources', 'PASS', duration, `CPU: ${data.cpu_percent}%`);
+                return { ok: true, data };
+            } catch (e) {
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                addToHistory('System Resources', 'FAIL', duration, e.message);
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const runApiTest = async () => {
+            const box = document.getElementById('apiResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            
+            const baseUrl = document.getElementById('apiBaseUrl').value;
+            const payload = {
+                model: document.getElementById('apiModel').value,
+                max_tokens: parseInt(document.getElementById('apiMaxTokens').value),
+                temperature: parseFloat(document.getElementById('apiTemp').value),
+                messages: [{ role: 'user', content: document.getElementById('apiPrompt').value }],
+                stream: false
+            };
+
+            try {
+                const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: getClientHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                
+                if (res.ok && data.choices && data.choices.length > 0) {
+                    const text = data.choices[0].message.content;
+                    box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span> - ${duration}ms\n\n<b>Resposta do modelo:</b>\n${text}\n\n<b>JSON:</b>\n${JSON.stringify(data, null, 2)}`;
+                    addToHistory('API Test', 'PASS', duration, `Tokens: ${data.usage?.total_tokens}`);
+                    return { ok: true, data };
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    addToHistory('API Test', 'FAIL', duration, `HTTP ${res.status}`);
+                    return { ok: false, data };
+                }
+            } catch (e) {
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                addToHistory('API Test', 'FAIL', duration, e.message);
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const checkUser = async () => {
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('userResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}`, { headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Check User', res.ok ? 'PASS' : 'FAIL', duration, res.ok ? `User: ${data.name}` : `HTTP ${res.status}`);
+                return { ok: res.ok, data };
+            } catch (e) {
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                addToHistory('Check User', 'FAIL', duration, e.message);
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const blockUser = async () => {
+            if (!confirm('Deseja bloquear este usuário?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('userResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/block`, { method: 'POST', headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Block User', res.ok ? 'PASS' : 'FAIL', duration, `User blocked`);
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const unblockUser = async () => {
+            if (!confirm('Deseja desbloquear este usuário?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('userResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/unblock`, { method: 'POST', headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Unblock User', res.ok ? 'PASS' : 'FAIL', duration, `User unblocked`);
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const resetQuota = async () => {
+            if (!confirm('Deseja zerar o uso da cota deste usuário?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('quotaResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/quota/reset`, { method: 'POST', headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Reset Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota reset`);
+                return { ok: res.ok, data };
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const renewQuota = async () => {
+            if (!confirm('Deseja renovar a cota deste usuário?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('quotaResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/quota/renew`, { method: 'POST', headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Renew Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota renewed`);
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const setQuota = async () => {
+            if (!confirm('Deseja aplicar um OVERRIDE manual a este usuário?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const daily = document.getElementById('dailyQuotaSet').value;
+            const monthly = document.getElementById('monthlyQuotaSet').value;
+            const reason = document.getElementById('quotaReason').value;
+            
+            const payload = {};
+            if (daily) payload.daily_quota = parseInt(daily);
+            if (monthly) payload.monthly_quota = parseInt(monthly);
+            if (reason) payload.reason = reason;
+            
+            const box = document.getElementById('quotaResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/quota/set`, { 
+                    method: 'POST', 
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Set Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota updated`);
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+        
+        const deleteOverride = async () => {
+            if (!confirm('Deseja remover o override de quota deste usuário (voltará ao limite do plano)?')) return;
+            const userId = document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('quotaResult');
+            box.innerHTML = 'Carregando...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/quota/override`, { method: 'DELETE', headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                addToHistory('Delete Override', res.ok ? 'PASS' : 'FAIL', duration, `Override removed`);
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+        
+        const loadAudit = async () => {
+            const body = document.getElementById('auditBody');
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>';
+            try {
+                const res = await fetch(`/admin/tests/audit?limit=50`, { headers: getAdminHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    body.innerHTML = '';
+                    if (data.length === 0) {
+                        body.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum registro encontrado.</td></tr>';
+                    }
+                    data.forEach(log => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${new Date(log.created_at).toLocaleString()}</td>
+                            <td>${log.admin_role}</td>
+                            <td>${log.action}</td>
+                            <td>${log.target_user_id || '-'}</td>
+                            <td><span class="${log.status === 'success' ? 'status-ok' : 'status-err'}">${log.status}</span></td>
+                        `;
+                        body.appendChild(tr);
+                    });
+                } else {
+                    body.innerHTML = `<tr><td colspan="5" style="text-align:center;" class="status-err">Erro: ${res.status}</td></tr>`;
+                }
+            } catch (e) {
+                body.innerHTML = `<tr><td colspan="5" style="text-align:center;" class="status-err">Erro: ${e.message}</td></tr>`;
+            }
+        }
+
+        const runTestSuite = async () => {
+            const box = document.getElementById('suiteResult');
+            box.innerHTML = 'Executando suite...\n';
+            
+            const runStep = async (name, fn) => {
+                box.innerHTML += `\n[ ] ${name}...`;
+                const res = await fn();
+                if (res.ok) {
+                    box.innerHTML += ` <span class="status-ok">PASS</span>`;
+                } else {
+                    box.innerHTML += ` <span class="status-err">FAIL</span>`;
+                }
+                return res.ok;
+            };
+            
+            await runStep('Role Check', checkRole);
+            await runStep('Health Check', runHealthCheck);
+            await runStep('System Resources', runResourcesCheck);
+            await runStep('API Test', runApiTest);
+            
+            const userId = document.getElementById('userId').value;
+            if (userId) {
+                await runStep('User Check', checkUser);
+                await runStep('Quota Reset', resetQuota);
+            } else {
+                box.innerHTML += `\n[!] Testes de usuário pulados (User ID vazio)`;
+            }
+            
+            box.innerHTML += `\n\n<b>Suite finalizada!</b> Consulte o histórico para mais detalhes.`;
+        };
+
+        renderHistory();
+        updateUIForRole(null); // Init as empty
+    </script>
+</body>
+</html>

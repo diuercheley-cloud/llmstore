@@ -125,8 +125,8 @@ async def test_get_model_files_requires_admin_token(client_and_sessionmaker, mod
 @pytest.mark.asyncio
 async def test_get_model_files_lists_complex_gguf_names(client_and_sessionmaker, models_dir, admin_headers):
     client, _ = client_and_sessionmaker
-    complex_name = "Qwen3.6-35B-A3B-Q4_K_M.gguf"
-    (models_dir / complex_name).write_bytes(b"gguf-qwen")
+    complex_name = "Complex-Model-v1.2-Q4_K_M.gguf"
+    (models_dir / complex_name).write_bytes(b"gguf-data")
     (models_dir / "ignore.txt").write_text("nope", encoding="utf-8")
     (models_dir / "subdir").mkdir()
 

@@ -89,6 +89,17 @@ async def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
+@router.get("/admin-tests", include_in_schema=False)
+async def admin_tests():
+    if settings.public_exposure:
+        return Response(
+            content='{"detail":"admin tests disabled in public exposure mode"}',
+            media_type="application/json",
+            status_code=404,
+        )
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-tests" / "index.html"
+    return FileResponse(static_file)
+
 @router.get("/admin-dashboard", include_in_schema=False)
 async def admin_dashboard():
     if settings.public_exposure:

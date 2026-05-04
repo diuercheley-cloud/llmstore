@@ -2176,3 +2176,62 @@ async def run_test_command(payload: TestRunRequest):
             duration_seconds=round(duration, 2),
             created_at=utc_now()
         )
+
+@router.get("/usage/{client_id}/summary")
+async def get_usage_summary(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    from app.models.client import Client
+    from app.models.usage_record import UsageRecord
+    from sqlalchemy.orm import selectinload
+    import datetime
+    
+    result = await session.execute(
+        select(Client).options(selectinload(Client.billing_plan)).where(Client.id == client_id)
+    )
+    client = result.scalar_one_or_none()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+        
+    now = datetime.datetime.now(datetime.timezone.utc).date()
+    today_start = now
+    month_start = now.replace(day=1)
+    
+    usage_result = await session.execute(
+        select(UsageRecord).where(
+            UsageRecord.client_id == client_id,
+            UsageRecord.period_start.in_([today_start, month_start])
+        )
+    )
+    records = usage_result.scalars().all()
+    
+    today_record = next((r for r in records if r.period_type == "daily" and r.period_start == today_start), None)
+    month_record = next((r for r in records if r.period_type == "monthly" and r.period_start == month_start), None)
+    
+    today_tokens = today_record.prompt_tokens + today_record.completion_tokens if today_record else 0
+    today_requests = today_record.request_count if today_record else 0
+    
+    month_tokens = month_record.prompt_tokens + month_record.completion_tokens if month_record else 0
+    month_requests = month_record.request_count if month_record else 0
+    
+    daily_quota = client.daily_token_quota
+    monthly_quota = client.monthly_token_quota
+    
+    plan_cost = float(client.billing_plan.price_brl) if client.billing_plan else 0.0
+    
+    return {
+        "client_id": str(client.id),
+        "client_name": client.name,
+        "plan_name": client.billing_plan.name if client.billing_plan else "None",
+        "plan_cost_brl": plan_cost,
+        "today": {
+            "tokens_used": today_tokens,
+            "requests": today_requests,
+            "limit": daily_quota,
+            "percent_used": round((today_tokens / daily_quota * 100) if daily_quota > 0 else 0, 2)
+        },
+        "month": {
+            "tokens_used": month_tokens,
+            "requests": month_requests,
+            "limit": monthly_quota,
+            "percent_used": round((month_tokens / monthly_quota * 100) if monthly_quota > 0 else 0, 2)
+        }
+    }

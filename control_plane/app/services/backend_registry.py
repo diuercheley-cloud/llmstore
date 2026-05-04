@@ -48,6 +48,17 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "metadata_json": json.dumps({"service_name": "data-plane-ollama"}),
         },
         {
+            "name": "lmstudio-local",
+            "provider": "openai_compatible",
+            "backend_url": settings.lmstudio_base_url,
+            "healthcheck_path": "/models",
+            "is_active": settings.lmstudio_enabled,
+            "is_default": settings.lmstudio_enabled,
+            "status": "configured" if settings.lmstudio_enabled else "optional-disabled",
+            "max_parallel_requests": 8,
+            "metadata_json": json.dumps({"service_name": "data-plane-lmstudio", "api_key": settings.lmstudio_api_key}),
+        },
+        {
             "name": "fallback-local",
             "provider": "llama.cpp",
             "backend_url": "http://data-plane-mock:8081",
