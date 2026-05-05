@@ -8,7 +8,8 @@ import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from sqlalchemy import select, update, desc
+import sqlalchemy as sa
+from sqlalchemy import select, update, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
@@ -20,12 +21,159 @@ from app.models.quota_counter import QuotaCounter
 from app.models.billing_plan import BillingPlan
 from app.models.admin_action_log import AdminActionLog
 from app.models.user_quota_override import UserQuotaOverride
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
+from app.services.embeddings import get_embedding_service
 from app.core.time import utc_now
 from app.core.config import get_settings
 from app.core.security import verify_secret
 from pydantic import BaseModel
 
+from app.services.rag_usage import get_rag_usage_and_limits
+
 router = APIRouter(prefix="/admin/tests", tags=["admin_tests"])
+
+@router.get("/rag/status")
+async def get_rag_status(
+    session: AsyncSession = Depends(get_db_session),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.READ))
+):
+    settings = get_settings()
+    
+    # Check storage
+    storage_ok = os.path.exists(settings.rag_storage_dir)
+    storage_count = 0
+    if storage_ok:
+        storage_count = len(os.listdir(settings.rag_storage_dir))
+        
+    # Check database
+    doc_count = await session.execute(select(func.count(RAGDocument.id)))
+    chunk_count = await session.execute(select(func.count(RAGDocumentChunk.id)))
+    
+    # Check embedding provider
+    embedding_ok = False
+    embedding_error = None
+    try:
+        service = get_embedding_service()
+        # Test with a small sentence
+        await service.embed_text("test")
+        embedding_ok = True
+    except Exception as e:
+        embedding_error = str(e)
+        
+    # Check pgvector
+    conn = await session.connection()
+    res = await conn.execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+    has_pgvector = res.scalar() is not None
+    
+    # Get last jobs
+    last_docs = (await session.execute(
+        select(RAGDocument).order_by(desc(RAGDocument.created_at)).limit(5)
+    )).scalars().all()
+    
+    return {
+        "enabled": settings.rag_enabled,
+        "limits_enabled": True,
+        "usage_tracking_enabled": True,
+        "storage": {
+            "path": settings.rag_storage_dir,
+            "exists": storage_ok,
+            "file_count": storage_count
+        },
+        "database": {
+            "document_count": doc_count.scalar(),
+            "chunk_count": chunk_count.scalar(),
+            "has_pgvector": has_pgvector
+        },
+        "embeddings": {
+            "provider": settings.rag_embedding_provider,
+            "model": settings.rag_embedding_model,
+            "working": embedding_ok,
+            "error": embedding_error
+        },
+        "last_documents": [
+            {
+                "id": str(d.id),
+                "filename": d.original_filename,
+                "status": d.status,
+                "created_at": d.created_at.isoformat()
+            }
+            for d in last_docs
+        ]
+    }
+
+@router.get("/rag/clients/{client_id}/usage")
+async def get_client_rag_usage(
+    client_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.READ))
+):
+    client = await session.get(Client, client_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    return await get_rag_usage_and_limits(session, client)
+
+class BlockRagRequest(BaseModel):
+    reason: str = "Excessive usage"
+
+@router.post("/rag/clients/{client_id}/block")
+async def block_client_rag(
+    client_id: uuid.UUID,
+    payload: BlockRagRequest,
+    request: Request,
+    admin_token: str = Depends(admin_key_scheme),
+    session: AsyncSession = Depends(get_db_session),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.SUPER))
+):
+    from app.models.client_feature_block import ClientFeatureBlock
+    
+    block = (await session.execute(
+        select(ClientFeatureBlock).where(
+            ClientFeatureBlock.client_id == client_id,
+            ClientFeatureBlock.feature == "rag"
+        )
+    )).scalar_one_or_none()
+    
+    if not block:
+        block = ClientFeatureBlock(client_id=client_id, feature="rag")
+        session.add(block)
+    
+    block.blocked = True
+    block.reason = payload.reason
+    block.updated_by_role = admin_role.value
+    
+    await audit_action(session, "rag_block", request, admin_token, str(client_id), payload.model_dump(), {"blocked": True}, "success")
+    await session.commit()
+    
+    return {"client_id": str(client_id), "feature": "rag", "blocked": True, "reason": payload.reason}
+
+@router.post("/rag/clients/{client_id}/unblock")
+async def unblock_client_rag(
+    client_id: uuid.UUID,
+    request: Request,
+    admin_token: str = Depends(admin_key_scheme),
+    session: AsyncSession = Depends(get_db_session),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.SUPER))
+):
+    from app.models.client_feature_block import ClientFeatureBlock
+    
+    block = (await session.execute(
+        select(ClientFeatureBlock).where(
+            ClientFeatureBlock.client_id == client_id,
+            ClientFeatureBlock.feature == "rag"
+        )
+    )).scalar_one_or_none()
+    
+    if block:
+        block.blocked = False
+        block.updated_by_role = admin_role.value
+        
+    await audit_action(session, "rag_unblock", request, admin_token, str(client_id), None, {"blocked": False}, "success")
+    await session.commit()
+    
+    return {"client_id": str(client_id), "feature": "rag", "blocked": False}
+
 
 async def admin_rate_limit(request: Request, redis: Redis = Depends(get_redis), admin_token: str = Depends(admin_key_scheme)):
     settings = get_settings()

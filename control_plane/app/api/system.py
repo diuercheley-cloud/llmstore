@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from time import perf_counter
 
@@ -78,7 +79,24 @@ async def ready(
         backend_ok = await proxy.health()
     if not backend_ok:
         return Response(content='{"status":"not_ready","dependency":"data_plane"}', media_type="application/json", status_code=503)
-    return {"status": "ready"}
+    
+    # RAG Status Check
+    rag_status = {
+        "enabled": settings.rag_enabled,
+        "storage_ok": os.path.exists(settings.rag_storage_dir),
+        "embedding_provider": settings.rag_embedding_provider,
+        "vector_mode": "fallback",
+        "usage_tracking_enabled": True,
+        "limits_enabled": True
+    }
+    
+    if settings.rag_enabled:
+        conn = await session.connection()
+        res = await conn.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+        if res.scalar():
+            rag_status["vector_mode"] = "pgvector"
+            
+    return {"status": "ready", "rag": rag_status}
 
 
 @router.get("/metrics", tags=["system"])

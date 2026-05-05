@@ -10,6 +10,7 @@ from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
 from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
+from app.api.rag import router as rag_router
 from app.api.portal import router as portal_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
@@ -76,6 +77,7 @@ app.include_router(system_router)
 app.include_router(admin_router)
 app.include_router(admin_tests_router)
 app.include_router(client_router)
+app.include_router(rag_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account
 

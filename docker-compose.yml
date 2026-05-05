@@ -122,6 +122,7 @@ services:
       - "${HOST_PORT:-8080}:8080"
     volumes:
       - ./models:/models:ro
+      - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
@@ -147,7 +148,29 @@ services:
         condition: service_started
     volumes:
       - ./models:/models:ro
+      - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - control_net
+
+  rag-worker:
+    build:
+      context: .
+      dockerfile: docker/control-plane/Dockerfile
+    env_file:
+      - ${STACK_ENV_FILE:-.env.local}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+    command: ["bash", "-lc", "python -m app.workers.rag_worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data:/data
     restart: unless-stopped
     networks:
       - control_net

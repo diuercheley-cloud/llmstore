@@ -30,6 +30,10 @@ class EffectivePlan:
     monthly_price: Decimal = Decimal("0")
     overage_price_per_1k_tokens: Decimal = Decimal("0")
     currency: str = "USD"
+    rag_max_documents: int | None = None
+    rag_max_storage_mb: int | None = None
+    rag_max_pages_per_month: int | None = None
+    rag_max_queries_per_month: int | None = None
 
 
 DEFAULT_BILLING_PLANS = [
@@ -43,6 +47,10 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 50000,
         "max_output_tokens": 32768,
         "allow_streaming": False,
+        "rag_max_documents": 5,
+        "rag_max_storage_mb": 50,
+        "rag_max_pages_per_month": 100,
+        "rag_max_queries_per_month": 50,
     },
     {
         "code": "basic",
@@ -54,6 +62,10 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 750000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_max_documents": 10,
+        "rag_max_storage_mb": 100,
+        "rag_max_pages_per_month": 500,
+        "rag_max_queries_per_month": 100,
     },
     {
         "code": "pro",
@@ -65,6 +77,10 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 4000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_max_documents": 100,
+        "rag_max_storage_mb": 2048,
+        "rag_max_pages_per_month": 5000,
+        "rag_max_queries_per_month": 2000,
     },
     {
         "code": "enterprise",
@@ -76,6 +92,10 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 15000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_max_documents": None,
+        "rag_max_storage_mb": None,
+        "rag_max_pages_per_month": None,
+        "rag_max_queries_per_month": None,
     },
 ]
 
@@ -202,6 +222,10 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             monthly_price=pricing_rule.monthly_price if pricing_rule else Decimal("0"),
             overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens if pricing_rule else Decimal("0"),
             currency=pricing_rule.currency if pricing_rule else "USD",
+            rag_max_documents=plan.rag_max_documents,
+            rag_max_storage_mb=plan.rag_max_storage_mb,
+            rag_max_pages_per_month=plan.rag_max_pages_per_month,
+            rag_max_queries_per_month=plan.rag_max_queries_per_month,
         )
     return EffectivePlan(
         code="legacy",
@@ -212,6 +236,10 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         monthly_token_quota=client.monthly_token_quota,
         max_output_tokens=client.max_output_tokens,
         allow_streaming=True,
+        rag_max_documents=5,
+        rag_max_storage_mb=50,
+        rag_max_pages_per_month=100,
+        rag_max_queries_per_month=50,
         monthly_price=Decimal("0"),
         overage_price_per_1k_tokens=Decimal("0"),
         currency="USD",

@@ -204,6 +204,15 @@
             <div id="healthResult" class="result-box"></div>
         </div>
 
+        <!-- RAG Diagnostics -->
+        <div class="card">
+            <h2>1.1 RAG Diagnostics</h2>
+            <div class="flex-row">
+                <button class="btn-primary" onclick="runRagStatus()">Status Global RAG</button>
+            </div>
+            <div id="ragStatusResult" class="result-box"></div>
+        </div>
+
         <!-- 6. Recursos do Servidor -->
         <div class="card">
             <h2>2. Recursos do Servidor</h2>
@@ -285,6 +294,24 @@
                 <button class="btn-primary require-write" onclick="resetQuota()">Zerar Uso (Quota)</button>
             </div>
             <div id="userResult" class="result-box"></div>
+        </div>
+
+        <!-- RAG Por Cliente -->
+        <div class="card">
+            <h2>4.1 RAG Por Cliente</h2>
+            <div class="form-group">
+                <label>User ID (Client UUID)</label>
+                <div class="flex-row">
+                    <input type="text" id="ragUserId" placeholder="Ex: 5eb129b9-...">
+                    <button class="btn-primary" onclick="checkRagUsage()">Consultar Uso</button>
+                </div>
+                <small style="color: var(--text-muted);">Deixe vazio para usar o User ID do card acima.</small>
+            </div>
+            <div class="flex-row" style="flex-wrap: wrap;">
+                <button class="btn-danger require-super" onclick="blockRag()">Bloquear RAG</button>
+                <button class="btn-secondary require-super" onclick="unblockRag()">Desbloquear RAG</button>
+            </div>
+            <div id="ragUsageResult" class="result-box"></div>
         </div>
 
         <!-- 5. Quotas -->
@@ -769,6 +796,79 @@
                 body.innerHTML = `<tr><td colspan="5" style="text-align:center;" class="status-err">Erro: ${e.message}</td></tr>`;
             }
         }
+
+        const runRagStatus = async () => {
+            const box = document.getElementById('ragStatusResult');
+            box.innerHTML = 'Carregando...';
+            try {
+                const res = await fetch('/admin/tests/rag/status', { headers: getAdminHeaders() });
+                const data = await res.json();
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                return { ok: res.ok, data };
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const checkRagUsage = async () => {
+            const userId = document.getElementById('ragUserId').value || document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            
+            const box = document.getElementById('ragUsageResult');
+            box.innerHTML = 'Carregando...';
+            try {
+                const res = await fetch(`/admin/tests/rag/clients/${userId}/usage`, { headers: getAdminHeaders() });
+                const data = await res.json();
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                return { ok: res.ok, data };
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+                return { ok: false, error: e.message };
+            }
+        };
+
+        const blockRag = async () => {
+            const userId = document.getElementById('ragUserId').value || document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            if (!confirm('Deseja bloquear o RAG para este usuário?')) return;
+            
+            const reason = prompt("Razão do bloqueio:", "Excessive usage");
+            if (reason === null) return;
+
+            const box = document.getElementById('ragUsageResult');
+            box.innerHTML = 'Bloqueando...';
+            try {
+                const res = await fetch(`/admin/tests/rag/clients/${userId}/block`, {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json();
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const unblockRag = async () => {
+            const userId = document.getElementById('ragUserId').value || document.getElementById('userId').value;
+            if (!userId) return alert('Preencha o User ID');
+            if (!confirm('Deseja desbloquear o RAG para este usuário?')) return;
+
+            const box = document.getElementById('ragUsageResult');
+            box.innerHTML = 'Desbloqueando...';
+            try {
+                const res = await fetch(`/admin/tests/rag/clients/${userId}/unblock`, {
+                    method: 'POST',
+                    headers: getAdminHeaders()
+                });
+                const data = await res.json();
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
 
         const runTestSuite = async () => {
             const box = document.getElementById('suiteResult');

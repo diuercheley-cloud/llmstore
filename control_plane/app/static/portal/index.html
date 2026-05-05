@@ -232,6 +232,65 @@
         <div id="usageContent"></div>
       </section>
 
+      <section id="ragSection" class="wide">
+        <h2>Base de Conhecimento / RAG</h2>
+        
+        <div id="ragUsage" class="usage-grid" style="margin-bottom: 2rem; display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="usage-box">
+            <h3>Documentos</h3>
+            <div id="ragDocsUsage" class="usage-num">- / -</div>
+            <div class="progress-bg"><div id="ragDocsProgress" class="progress-fill" style="width: 0%"></div></div>
+          </div>
+          <div class="usage-box">
+            <h3>Armazenamento</h3>
+            <div id="ragStorageUsage" class="usage-num">- / -</div>
+            <div class="progress-bg"><div id="ragStorageProgress" class="progress-fill" style="width: 0%"></div></div>
+          </div>
+          <div class="usage-box">
+            <h3>Páginas (Mês)</h3>
+            <div id="ragPagesUsage" class="usage-num">- / -</div>
+            <div class="progress-bg"><div id="ragPagesProgress" class="progress-fill" style="width: 0%"></div></div>
+          </div>
+          <div class="usage-box">
+            <h3>Consultas (Mês)</h3>
+            <div id="ragQueriesUsage" class="usage-num">- / -</div>
+            <div class="progress-bg"><div id="ragQueriesProgress" class="progress-fill" style="width: 0%"></div></div>
+          </div>
+        </div>
+
+        <div id="ragBlockedWarning" style="display: none; background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1rem; border-radius: 0.5rem; color: #991b1b;">
+          <strong>Acesso ao RAG Bloqueado:</strong> <span id="ragBlockedReason"></span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <h3>Documentos</h3>
+            <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+              <input type="file" id="ragFileUpload" accept=".pdf" style="display: none;" />
+              <button id="triggerRagUpload">Enviar PDF</button>
+              <button id="refreshRagFiles" class="secondary">Atualizar</button>
+            </div>
+            <div id="ragFilesContent" class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+              Carregando documentos...
+            </div>
+          </div>
+          <div>
+            <h3>Consultar Documentos</h3>
+            <div class="chat-box">
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <select id="ragFileSelect" style="flex: 1; min-width: 200px;">
+                  <option value="">Todos os documentos</option>
+                </select>
+                <button id="runRagQuery">Perguntar</button>
+              </div>
+              <textarea id="ragQuestion" placeholder="O que você deseja saber sobre seus documentos?"></textarea>
+              <div id="ragResponse" class="chat-response">A resposta aparecerá aqui...</div>
+              <div id="ragSources" style="margin-top: 1rem; font-size: 0.875rem;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="billingSection" class="wide">
         <h2>Invoices</h2>
         <div id="invoicesContent" class="table-wrapper"></div>
@@ -267,7 +326,7 @@
       <p>Please enter your API Key above to access the portal.</p>
     </div>
 
-    <div id="planModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
+    <div id="planModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
       <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 800px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
           <h2 style="margin: 0; color: var(--accent);">Choose a New Plan</h2>
@@ -286,7 +345,7 @@
 
     <div id="toast" class="toast">Copied to clipboard!</div>
 
-    <div id="onboardingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
+    <div id="onboardingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
       <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
         <h2 style="margin-top: 0; color: var(--accent);">🚀 Welcome to the Portal!</h2>
         <p style="color: var(--muted); line-height: 1.6;">You're successfully connected. Here's how to start:</p>
@@ -330,7 +389,27 @@
         planListGrid: document.getElementById('planListGrid'),
         paymentSimulation: document.getElementById('paymentSimulation'),
         simulationDetails: document.getElementById('simulationDetails'),
-        confirmUpgrade: document.getElementById('confirmUpgrade')
+        confirmUpgrade: document.getElementById('confirmUpgrade'),
+        ragFileUpload: document.getElementById('ragFileUpload'),
+        triggerRagUpload: document.getElementById('triggerRagUpload'),
+        refreshRagFiles: document.getElementById('refreshRagFiles'),
+        ragFilesContent: document.getElementById('ragFilesContent'),
+        ragFileSelect: document.getElementById('ragFileSelect'),
+        runRagQuery: document.getElementById('runRagQuery'),
+        ragQuestion: document.getElementById('ragQuestion'),
+        ragResponse: document.getElementById('ragResponse'),
+        ragSources: document.getElementById('ragSources'),
+        ragUsage: document.getElementById('ragUsage'),
+        ragDocsUsage: document.getElementById('ragDocsUsage'),
+        ragDocsProgress: document.getElementById('ragDocsProgress'),
+        ragStorageUsage: document.getElementById('ragStorageUsage'),
+        ragStorageProgress: document.getElementById('ragStorageProgress'),
+        ragPagesUsage: document.getElementById('ragPagesUsage'),
+        ragPagesProgress: document.getElementById('ragPagesProgress'),
+        ragQueriesUsage: document.getElementById('ragQueriesUsage'),
+        ragQueriesProgress: document.getElementById('ragQueriesProgress'),
+        ragBlockedWarning: document.getElementById('ragBlockedWarning'),
+        ragBlockedReason: document.getElementById('ragBlockedReason')
       };
 
       let currentSelectedPlanCode = null;
@@ -484,9 +563,14 @@
         const key = elements.apiKey.value.trim();
         const headers = {
           'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json',
           ...options.headers
         };
+        
+        // Handle JSON by default if not FormData or other
+        if (headers['Content-Type'] === undefined && !(options.body instanceof FormData)) {
+          headers['Content-Type'] = 'application/json';
+        }
+        
         const response = await fetch(path, { ...options, headers });
         if (!response.ok) {
           const err = await response.text();
@@ -514,6 +598,7 @@
           renderInvoices(invoices);
           renderPayments(invoices.payments);
           renderModels(models);
+          loadRagFiles(); // Added for RAG
 
           const metadata = JSON.parse(me.metadata_json || '{}');
           if (!metadata.onboarding_finished) {
@@ -681,6 +766,212 @@
           elements.runChat.disabled = false;
         }
       });
+
+      // RAG Logic
+      elements.triggerRagUpload.addEventListener('click', () => elements.ragFileUpload.click());
+      
+      elements.ragFileUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        elements.triggerRagUpload.disabled = true;
+        elements.triggerRagUpload.textContent = 'Enviando...';
+        
+        try {
+          await apiFetch('/v1/rag/files', {
+            method: 'POST',
+            body: formData,
+            headers: { 'Content-Type': undefined } // Let the browser set the boundary
+          });
+          showToast('Arquivo enviado com sucesso!');
+          loadRagFiles();
+        } catch (err) {
+          alert('Erro no upload: ' + err.message);
+        } finally {
+          elements.triggerRagUpload.disabled = false;
+          elements.triggerRagUpload.textContent = 'Enviar PDF';
+          elements.ragFileUpload.value = '';
+        }
+      });
+
+      elements.refreshRagFiles.addEventListener('click', () => loadRagFiles());
+
+      async function loadRagFiles() {
+        elements.ragFilesContent.innerHTML = 'Carregando...';
+        try {
+          // Fetch usage and limits
+          const usageResult = await apiFetch('/v1/rag/usage');
+          updateRagUsageUI(usageResult);
+
+          const result = await apiFetch('/v1/rag/files');
+          const files = result.data;
+          
+          if (files.length === 0) {
+            elements.ragFilesContent.innerHTML = '<p style="color: var(--muted); padding: 1rem;">Nenhum documento enviado.</p>';
+            elements.ragFileSelect.innerHTML = '<option value="">Nenhum documento disponível</option>';
+            return;
+          }
+          
+          let html = '<table><thead><tr><th>Arquivo</th><th>Status</th><th>Páginas</th><th>Ações</th></tr></thead><tbody>';
+          elements.ragFileSelect.innerHTML = '<option value="">Todos os documentos</option>';
+          
+          files.forEach(f => {
+            const statusClass = f.status === 'ready' ? 'badge-active' : (f.status === 'failed' ? 'badge-blocked' : 'badge-warning');
+            html += `
+              <tr>
+                <td>
+                  <div style="font-weight: 600;">${esc(f.original_filename)}</div>
+                  <div style="font-size: 0.7rem; color: var(--muted);">${(f.file_size_bytes/1024).toFixed(1)} KB | ${new Date(f.created_at).toLocaleDateString()}</div>
+                </td>
+                <td><span class="badge ${statusClass}">${f.status}</span></td>
+                <td>${f.page_count || '-'}</td>
+                <td>
+                  <div style="display: flex; gap: 0.25rem;">
+                    <button class="secondary copy-btn" style="padding: 2px 5px;" onclick="deleteRagFile('${f.id}')">Excluir</button>
+                    ${f.status === 'failed' || f.status === 'rejected_limit' ? `<button class="secondary copy-btn" style="padding: 2px 5px;" onclick="reprocessRagFile('${f.id}')">Reprocessar</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+            
+            if (f.status === 'ready') {
+              const opt = document.createElement('option');
+              opt.value = f.id;
+              opt.textContent = f.original_filename;
+              elements.ragFileSelect.appendChild(opt);
+            }
+          });
+          html += '</tbody></table>';
+          elements.ragFilesContent.innerHTML = html;
+        } catch (err) {
+          elements.ragFilesContent.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
+        }
+      }
+
+      function updateRagUsageUI(data) {
+        elements.ragUsage.style.display = 'grid';
+        
+        const updateCard = (usageEl, progressEl, current, max, unit = '') => {
+          if (max === null) {
+            usageEl.textContent = `${current}${unit} / ∞`;
+            progressEl.style.width = '0%';
+          } else {
+            usageEl.textContent = `${current}${unit} / ${max}${unit}`;
+            const pct = Math.min(100, (current / max) * 100);
+            progressEl.style.width = `${pct}%`;
+            progressEl.style.backgroundColor = pct > 90 ? 'var(--danger)' : (pct > 75 ? 'var(--warning)' : 'var(--accent)');
+          }
+        };
+
+        updateCard(elements.ragDocsUsage, elements.ragDocsProgress, data.usage.documents_count, data.limits.max_documents);
+        updateCard(elements.ragStorageUsage, elements.ragStorageProgress, data.usage.storage_mb, data.limits.max_storage_mb, ' MB');
+        updateCard(elements.ragPagesUsage, elements.ragPagesProgress, data.usage.pages_processed_month, data.limits.max_pages_per_month);
+        updateCard(elements.ragQueriesUsage, elements.ragQueriesProgress, data.usage.queries_month, data.limits.max_queries_per_month);
+
+        if (data.rag_blocked) {
+          elements.ragBlockedWarning.style.display = 'block';
+          elements.ragBlockedReason.textContent = data.blocked_reason || 'Nenhuma razão informada.';
+          elements.triggerRagUpload.disabled = true;
+          elements.runRagQuery.disabled = true;
+        } else {
+          elements.ragBlockedWarning.style.display = 'none';
+          elements.triggerRagUpload.disabled = false;
+          elements.runRagQuery.disabled = false;
+        }
+      }
+
+      window.deleteRagFile = async (id) => {
+        if (!confirm('Deseja excluir este documento?')) return;
+        try {
+          await apiFetch(\`/v1/rag/files/\${id}\`, { method: 'DELETE' });
+          showToast('Documento excluído.');
+          loadRagFiles();
+        } catch (err) { alert('Erro: ' + err.message); }
+      };
+
+      window.reprocessRagFile = async (id) => {
+        try {
+          await apiFetch(\`/v1/rag/files/\${id}/reprocess\`, { method: 'POST' });
+          showToast('Processamento reiniciado.');
+          loadRagFiles();
+        } catch (err) { alert('Erro: ' + err.message); }
+      };
+
+      elements.runRagQuery.addEventListener('click', async () => {
+        const question = elements.ragQuestion.value.trim();
+        if (!question) return;
+        
+        elements.runRagQuery.disabled = true;
+        elements.ragResponse.textContent = 'Consultando base de conhecimento...';
+        elements.ragSources.innerHTML = '';
+        
+        try {
+          const payload = {
+            question,
+            top_k: 5,
+            model: elements.modelId.value.trim() || 'default'
+          };
+          const fileId = elements.ragFileSelect.value;
+          if (fileId) payload.file_ids = [fileId];
+          
+          const result = await apiFetch('/v1/rag/query', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+          
+          elements.ragResponse.innerHTML = `<div style="font-size: 1.1rem; font-weight: 500;">${esc(result.answer)}</div>`;
+          
+          if (result.sources && result.sources.length > 0) {
+            let sourcesHtml = '<h4 style="margin: 1rem 0 0.5rem; font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Fontes:</h4>';
+            result.sources.forEach(s => {
+              sourcesHtml += `
+                <div style="background: #f1f5f9; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; border-left: 3px solid var(--accent);">
+                  <div style="font-weight: 600; font-size: 0.75rem;">${esc(s.filename)} - Página ${s.page} (Score: ${s.score.toFixed(2)})</div>
+                  <div style="font-size: 0.7rem; color: var(--ink); margin-top: 0.25rem;">"${esc(s.text.substring(0, 200))}..."</div>
+                </div>
+              `;
+            });
+            elements.ragSources.innerHTML = sourcesHtml;
+          }
+        } catch (err) {
+          elements.ragResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${esc(err.message)}</span>`;
+        } finally {
+          elements.runRagQuery.disabled = false;
+        }
+      });
+
+      // Override apiFetch to handle FormData correctly
+      const originalApiFetch = apiFetch;
+      apiFetch = async (path, options = {}) => {
+        const key = elements.apiKey.value.trim();
+        const headers = {
+          'Authorization': \`Bearer \${key}\`,
+          ...options.headers
+        };
+        
+        if (headers['Content-Type'] === 'application/json') {
+          // Keep it
+        } else if (headers['Content-Type'] === undefined) {
+          delete headers['Content-Type'];
+        }
+        
+        const response = await fetch(path, { ...options, headers });
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(err || response.statusText);
+        }
+        return response.json();
+      };
+
+      // Update initPortal to include RAG data
+      const originalInitPortal = initPortal;
+      initPortal = async () => {
+        await originalInitPortal();
+        loadRagFiles();
+      };
     </script>
   </body>
 </html>

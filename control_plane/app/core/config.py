@@ -76,6 +76,16 @@ class Settings(BaseSettings):
     inference_max_completion_tokens: int = Field(default=512, alias="INFERENCE_MAX_COMPLETION_TOKENS")
     inference_max_system_chars: int = Field(default=2500, alias="INFERENCE_MAX_SYSTEM_CHARS")
     inference_max_history_messages: int = Field(default=8, alias="INFERENCE_MAX_HISTORY_MESSAGES")
+    
+    # RAG Settings
+    rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
+    rag_storage_dir: str = Field(default="./data/rag_uploads", alias="RAG_STORAGE_DIR")
+    rag_max_file_mb: int = Field(default=25, alias="RAG_MAX_FILE_MB")
+    rag_chunk_size: int = Field(default=1000, alias="RAG_CHUNK_SIZE")
+    rag_chunk_overlap: int = Field(default=150, alias="RAG_CHUNK_OVERLAP")
+    rag_top_k_default: int = Field(default=5, alias="RAG_TOP_K_DEFAULT")
+    rag_embedding_provider: str = Field(default="local", alias="RAG_EMBEDDING_PROVIDER")
+    rag_embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL")
 
     @property
     def cors_origins(self) -> list[str]:
