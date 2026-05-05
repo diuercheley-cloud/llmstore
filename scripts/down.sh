@@ -7,4 +7,4 @@ source "${SCRIPT_DIR}/common.sh"
 init_stack_env
 
 cd "${ROOT_DIR}"
-dc down
+dc down --remove-orphans

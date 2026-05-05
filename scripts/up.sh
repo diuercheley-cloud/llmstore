@@ -13,4 +13,4 @@ if [[ ! -f "${ROOT_DIR}/${STACK_ENV_FILE}" ]]; then
   echo "${STACK_ENV_FILE} created from .env.example; review tokens, passwords and ports before use."
 fi
 
-dc up -d --build
+dc up -d --build --remove-orphans

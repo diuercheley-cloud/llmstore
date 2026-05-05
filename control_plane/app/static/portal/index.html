@@ -607,7 +607,7 @@
           }
         } catch (err) {
           console.error(err);
-          elements.chatResponse.innerHTML = `<span style="color: var(--danger);">Connection failed: ${esc(err.message)}</span>`;
+          alert("Connection failed: " + err.message);
           elements.portalContent.classList.add('hidden');
           elements.loginPrompt.classList.remove('hidden');
         } finally {
@@ -886,7 +886,7 @@
       window.deleteRagFile = async (id) => {
         if (!confirm('Deseja excluir este documento?')) return;
         try {
-          await apiFetch(\`/v1/rag/files/\${id}\`, { method: 'DELETE' });
+          await apiFetch(`/v1/rag/files/${id}`, { method: 'DELETE' });
           showToast('Documento excluído.');
           loadRagFiles();
         } catch (err) { alert('Erro: ' + err.message); }
@@ -894,7 +894,7 @@
 
       window.reprocessRagFile = async (id) => {
         try {
-          await apiFetch(\`/v1/rag/files/\${id}/reprocess\`, { method: 'POST' });
+          await apiFetch(`/v1/rag/files/${id}/reprocess`, { method: 'POST' });
           showToast('Processamento reiniciado.');
           loadRagFiles();
         } catch (err) { alert('Erro: ' + err.message); }
@@ -943,35 +943,6 @@
         }
       });
 
-      // Override apiFetch to handle FormData correctly
-      const originalApiFetch = apiFetch;
-      apiFetch = async (path, options = {}) => {
-        const key = elements.apiKey.value.trim();
-        const headers = {
-          'Authorization': \`Bearer \${key}\`,
-          ...options.headers
-        };
-        
-        if (headers['Content-Type'] === 'application/json') {
-          // Keep it
-        } else if (headers['Content-Type'] === undefined) {
-          delete headers['Content-Type'];
-        }
-        
-        const response = await fetch(path, { ...options, headers });
-        if (!response.ok) {
-          const err = await response.text();
-          throw new Error(err || response.statusText);
-        }
-        return response.json();
-      };
-
-      // Update initPortal to include RAG data
-      const originalInitPortal = initPortal;
-      initPortal = async () => {
-        await originalInitPortal();
-        loadRagFiles();
-      };
     </script>
   </body>
 </html>
