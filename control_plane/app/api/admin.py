@@ -68,7 +68,6 @@ WHITELISTED_COMMANDS = {
     "backup": {"name": "Backup", "description": "Trigger system backup", "command": "./scripts/backup.sh"},
     "dr-test": {"name": "DR test", "description": "Run Disaster Recovery test", "command": "./scripts/dr-test.sh"},
     "benchmark": {"name": "Benchmark quick", "description": "Run quick benchmark", "command": "./scripts/benchmark.sh --quick"},
-    "test-bonsai": {"name": "Bonsai test", "description": "Test Bonsai backend", "command": "./scripts/test-bonsai.sh"},
     "test-fallback": {"name": "Real fallback test", "description": "Test real-world fallback routing", "command": "./scripts/test-real-fallback.sh"},
 }
 from app.services.billing import (
@@ -523,8 +522,14 @@ async def rotate_api_key(api_key_id: uuid.UUID, session: AsyncSession = Depends(
 @router.get("/api-keys")
 async def list_api_keys(session: AsyncSession = Depends(get_db_session)):
     result = await session.execute(
-        select(ApiKey, Client.name.label("client_name"))
+        select(
+            ApiKey, 
+            Client.name.label("client_name"),
+            Client.created_at.label("client_created_at"),
+            BillingPlan.name.label("plan_name")
+        )
         .join(Client, Client.id == ApiKey.client_id)
+        .outerjoin(BillingPlan, BillingPlan.id == Client.billing_plan_id)
         .order_by(desc(ApiKey.created_at))
         .limit(200)
     )
@@ -534,13 +539,15 @@ async def list_api_keys(session: AsyncSession = Depends(get_db_session)):
             "id": str(api_key.id),
             "client_id": str(api_key.client_id),
             "client_name": client_name,
+            "client_created_at": client_created_at.isoformat(),
+            "plan_name": plan_name or "N/A",
             "name": api_key.name,
             "key_prefix": api_key.key_prefix,
             "created_at": api_key.created_at.isoformat(),
             "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
             "revoked_at": api_key.revoked_at.isoformat() if api_key.revoked_at else None,
         }
-        for api_key, client_name in rows
+        for api_key, client_name, client_created_at, plan_name in rows
     ]
 
 
@@ -1904,10 +1911,6 @@ async def enable_model(model_id: uuid.UUID, session: AsyncSession = Depends(get_
     ).scalar_one_or_none()
     if model is None:
         raise HTTPException(status_code=404, detail="model not found")
-    if (model.model_alias in {"bonsai", "bonzai"} or "bonsai" in model.model_id.lower()) and (
-        model.inference_backend is None or not model.inference_backend.is_active
-    ) and not settings.bonsai_enabled:
-        raise HTTPException(status_code=409, detail="bonsai backend offline")
     model.is_active = True
     model.status = "configured"
     model.updated_at = utc_now()

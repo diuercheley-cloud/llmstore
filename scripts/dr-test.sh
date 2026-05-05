@@ -9,21 +9,16 @@ init_stack_env
 BACKUP_ROOT="${ROOT_DIR}/artifacts/backups"
 REPORT_ROOT="${ROOT_DIR}/artifacts/dr-tests"
 TIMESTAMP="$(date +%Y%m%dT%H%M%S)"
-INCLUDE_BONSAI=false
 BACKUP_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --include-bonsai)
-      INCLUDE_BONSAI=true
-      shift
-      ;;
+
     -h|--help)
       cat <<'EOF'
-Uso: ./scripts/dr-test.sh [--include-bonsai] [backup_dir]
+Uso: ./scripts/dr-test.sh [backup_dir]
 
-Por padrao o teste de DR sobe apenas a stack minima e forca BONSAI_ENABLED=false
-no ambiente temporario. Use --include-bonsai para validar tambem o profile bonsai.
+Por padrao o teste de DR sobe apenas a stack minima.
 EOF
       exit 0
       ;;
@@ -53,7 +48,6 @@ BASE_URL="http://localhost:${DR_HOST_PORT}"
 BACKUP_ENV_FILE="$(find "${BACKUP_DIR}/env" -maxdepth 1 -type f | head -n1 || true)"
 [[ -n "${BACKUP_ENV_FILE}" ]] || { echo "[dr-test][error] backup env file not found in ${BACKUP_DIR}/env" >&2; exit 1; }
 COMPOSE_UP_LOG="${REPORT_DIR}/compose-up.log"
-export DR_INCLUDE_BONSAI="${INCLUDE_BONSAI}"
 
 cleanup() {
   local status=$?
@@ -88,9 +82,7 @@ updates = {
     "POSTGRES_PORT": "15432",
     "REDIS_PORT": "16379",
     "PROMETHEUS_PORT": "19090",
-    "GRAFANA_PORT": "13001",
-    "BONSAI_ENABLED": "true" if os.environ.get("DR_INCLUDE_BONSAI") == "true" else "false",
-    "PUBLIC_EXPOSURE": "false",
+    "GRAFANA_PORT": "13001",    "PUBLIC_EXPOSURE": "false",
 }
 result = []
 seen = set()
@@ -127,19 +119,7 @@ export HOST_PORT="${DR_HOST_PORT}"
 export PROMETHEUS_PORT=19090
 export GRAFANA_PORT=13001
 export PUBLIC_EXPOSURE=false
-export BONSAI_ENABLED=false
-
-if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
-  export BONSAI_ENABLED=true
-  export COMPOSE_PROFILES="bonsai"
-  BONSAI_MODEL_PATH="${ROOT_DIR}/models/${BONSAI_MODEL_FILE:-bonsai-8B.gguf}"
-  [[ -f "${BONSAI_MODEL_PATH}" ]] || {
-    echo "[dr-test][error] bonsai requested but model file not found: ${BONSAI_MODEL_PATH}" >&2
-    exit 1
-  }
-else
-  unset COMPOSE_PROFILES || true
-fi
+unset COMPOSE_PROFILES || true
 
 log_step() {
   printf '[dr-test] %s\n' "$*"
@@ -153,24 +133,12 @@ print_service_logs() {
   fi
   if [[ ${#services[@]} -eq 0 ]]; then
     services=(postgres redis data-plane-gemma control-plane control-plane-worker)
-    if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
-      services+=(data-plane-bonsai)
-    fi
   fi
   printf '[dr-test][error] docker compose up failed; last 80 log lines per service follow\n' >&2
   for service in "${services[@]}"; do
     printf '[dr-test][logs] service=%s\n' "${service}" >&2
     dc logs --tail 80 "${service}" >&2 || true
   done
-}
-
-validate_bonsai_container() {
-  local model_file="${BONSAI_MODEL_FILE:-bonsai-8B.gguf}"
-  log_step "validating bonsai model mount"
-  dc exec -T data-plane-bonsai sh -lc "mount | grep -F ' /models '" \
-    || { echo "[dr-test][error] bonsai container missing /models mount" >&2; exit 1; }
-  dc exec -T data-plane-bonsai sh -lc "test -f /models/${model_file}" \
-    || { echo "[dr-test][error] bonsai container did not load /models/${model_file}" >&2; exit 1; }
 }
 
 wait_url() {
@@ -186,15 +154,13 @@ wait_url() {
 }
 
 log_step "starting temporary clean environment"
+dc config > "${REPORT_DIR}/compose-config.yml"
 if ! dc up -d --build >"${COMPOSE_UP_LOG}" 2>&1; then
   print_service_logs
   echo "[dr-test][error] docker compose up failed; see ${COMPOSE_UP_LOG}" >&2
   exit 1
 fi
 
-if [[ "${INCLUDE_BONSAI}" == "true" ]]; then
-  validate_bonsai_container
-fi
 
 log_step "restoring backup"
 RESTORE_CONFIRMATION=RESTORE RESTORE_ENV_CHOICE=no "${SCRIPT_DIR}/restore.sh" "${BACKUP_DIR}" >"${REPORT_DIR}/restore.log" 2>&1
@@ -228,7 +194,6 @@ backup_dir=${BACKUP_DIR}
 project_name=${PROJECT_NAME}
 env_file=${TEMP_ENV_FILE}
 base_url=${BASE_URL}
-include_bonsai=${INCLUDE_BONSAI}
 health_status=ok
 ready_status=ok
 chat_test=ok

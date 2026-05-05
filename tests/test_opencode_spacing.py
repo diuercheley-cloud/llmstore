@@ -23,35 +23,6 @@ def test_spacing_heuristic():
     assert is_spacing_broken("I am an AI assistant designed to help with software engineering tasks.") is False
 
 
-@pytest.mark.asyncio
-async def test_bonsai_response_spacing_simulation():
-    bad_response = "IamanAIassistantdesignedtohelpwithsoftwareengineeringtasks.Iamheretoassistyouwithyourcodingneeds.HowcanIhelpyoutoday?"
-    assert is_spacing_broken(bad_response) is True
-
-    good_response = "I am an AI assistant designed to help with software engineering tasks. I am here to assist you with your coding needs. How can I help you today?"
-    assert is_spacing_broken(good_response) is False
-
-
-def test_bonsai_chatml_template_has_double_newline_after_im_end():
-    payload = {
-        "model": "bonsai",
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello"},
-        ],
-    }
-    updated = apply_prompt_template_settings(
-        payload,
-        prompt_template="qwen",
-        include_reasoning=False,
-        backend="llama.cpp",
-        bonsai_template_fallback="chatml",
-    )
-    template = updated["chat_template"]
-    assert "<|im_end|>" in template
-    after_im_end = template.split("<|im_end|>")[1]
-    assert after_im_end.startswith("' + '\\n' + '\\n'")
-
 
 def test_gemma_repeat_penalty_applied():
     payload = {

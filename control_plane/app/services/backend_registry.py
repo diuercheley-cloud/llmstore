@@ -26,17 +26,6 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "metadata_json": json.dumps({"service_name": "data-plane-gemma"}),
         },
         {
-            "name": "bonsai-local",
-            "provider": "llama.cpp",
-            "backend_url": settings.bonsai_base_url,
-            "healthcheck_path": "/health",
-            "is_active": settings.bonsai_enabled,
-            "is_default": False,
-            "status": "configured" if settings.bonsai_enabled else "optional-disabled",
-            "max_parallel_requests": 1,
-            "metadata_json": json.dumps({"service_name": "data-plane-bonsai", "test_backend": False}),
-        },
-        {
             "name": "ollama-local",
             "provider": "ollama",
             "backend_url": settings.ollama_base_url,

@@ -56,37 +56,6 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
             ),
         )
         gemma_model.is_default = False
-    await _ensure_model_entry(
-        session,
-        model_id=settings.bonsai_model_id,
-        model_alias="bonsai",
-        model_file=settings.bonsai_model_file,
-        backend=backends["bonsai-local"],
-        is_default=False,
-        is_active=backends["bonsai-local"].is_active,
-        metadata=_build_metadata(
-            recommended_quantization="Q4_K_M",
-            gpu_profile="RTX 4050 6GB",
-            backend_name="bonsai-local",
-            architecture="qwen3",
-        ),
-    )
-    # Also register 'bonzai' alias for common misspelling
-    await _ensure_model_entry(
-        session,
-        model_id=settings.bonsai_model_id + "/alias-bonzai",
-        model_alias="bonzai",
-        model_file=settings.bonsai_model_file,
-        backend=backends["bonsai-local"],
-        is_default=False,
-        is_active=backends["bonsai-local"].is_active,
-        metadata=_build_metadata(
-            recommended_quantization="Q4_K_M",
-            gpu_profile="RTX 4050 6GB",
-            backend_name="bonsai-local",
-            architecture="qwen3",
-        ),
-    )
     existing_defaults = (
         await session.execute(select(ModelRegistry).where(ModelRegistry.id != gemma_model.id, ModelRegistry.is_default.is_(True)))
     ).scalars().all()

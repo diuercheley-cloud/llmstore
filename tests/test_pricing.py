@@ -20,6 +20,7 @@ def test_build_invoice_preview_computes_totals():
             name="Basic",
             rate_limit_per_minute=10,
             daily_token_quota=10000,
+            weekly_token_quota=50000,
             monthly_token_quota=1000,
             max_output_tokens=512,
             allow_streaming=True,

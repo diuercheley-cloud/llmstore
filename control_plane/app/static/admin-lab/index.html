@@ -486,6 +486,8 @@
                             <tr>
                                 <th>Nome</th>
                                 <th>Cliente</th>
+                                <th>Plano</th>
+                                <th>Inscrição</th>
                                 <th>Prefixo</th>
                                 <th>Último Uso</th>
                                 <th>Status</th>
@@ -523,7 +525,9 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Cliente</th>
+                                <th>Criada em</th>
                                 <th>Vencimento</th>
+                                <th>Paga em</th>
                                 <th>Valor</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -667,10 +671,10 @@
                 <div class="form-group"><label>Max output tokens</label><input type="number" id="plan-max-output" value="512"></div>
             </div>
             <div class="grid-two">
-                <div class="form-group"><label>Daily tokens</label><input type="number" id="plan-daily" value="50000"></div>
-                <div class="form-group"><label>Monthly tokens</label><input type="number" id="plan-monthly" value="500000"></div>
+               <div class="form-group"><label>Daily tokens</label><input type="number" id="plan-daily" value="50000"></div>
+               <div class="form-group"><label>Weekly tokens</label><input type="number" id="plan-weekly" value="250000"></div>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+            <div class="form-group"><label>Monthly tokens</label><input type="number" id="plan-monthly" value="500000"></div>            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
                 <input type="checkbox" id="plan-streaming" checked> <label for="plan-streaming">Permitir streaming</label>
             </div>
             <button class="btn-primary" style="width: 100%;" onclick="createPlan()">Criar plano</button>
@@ -1315,6 +1319,8 @@
                     <tr>
                         <td>${key.name}</td>
                         <td>${key.client_name}</td>
+                        <td><span class="pill pill-secondary">${key.plan_name}</span></td>
+                        <td>${fmtDate(key.client_created_at)}</td>
                         <td><code>${key.key_prefix}</code></td>
                         <td>${fmtDate(key.last_used_at)}</td>
                         <td><span class="pill pill-${key.revoked_at ? 'danger' : 'success'}">${key.revoked_at ? 'revoked' : 'active'}</span></td>
@@ -1327,7 +1333,7 @@
                     </tr>
                 `)
                 .join('');
-            document.querySelector('#table-keys tbody').innerHTML = rows || `<tr><td colspan="6">Nenhuma chave encontrada.</td></tr>`;
+            document.querySelector('#table-keys tbody').innerHTML = rows || `<tr><td colspan="8">Nenhuma chave encontrada.</td></tr>`;
         }
 
         function renderInvoicesTable() {
@@ -1340,7 +1346,9 @@
                     <tr>
                         <td><small>${invoice.id.slice(0, 8)}</small></td>
                         <td>${invoice.client_name || invoice.client_id}</td>
+                        <td>${fmtDate(invoice.created_at)}</td>
                         <td>${fmtDate(invoice.due_at)}</td>
+                        <td>${fmtDate(invoice.paid_at)}</td>
                         <td>${currency(invoice.total_amount)}</td>
                         <td><span class="pill pill-${invoice.status === 'paid' ? 'success' : invoice.status === 'overdue' ? 'danger' : invoice.status === 'cancelled' ? 'muted' : 'warning'}">${invoice.status}</span></td>
                         <td>
@@ -1729,14 +1737,14 @@
         }
 
         function prepareKeyForClient(id) {
-            document.getElementById('k-client').value = id;
+            document.getElementById('k-client').value = id; document.getElementById('k-name').value = "Key-" + new Date().getTime().toString().slice(-4);
             openModal('modal-key-create');
         }
 
         async function createKey() {
             const res = await apiFetch('/admin/api-keys', 'POST', {
                 client_id: document.getElementById('k-client').value,
-                name: document.getElementById('k-name').value,
+                name: document.getElementById('k-name').value || "Produção",
             });
             closeModal('modal-key-create');
             state.apiKeys = await apiFetch('/admin/api-keys');
@@ -1771,6 +1779,7 @@
                 description: document.getElementById('plan-description').value,
                 rate_limit_per_minute: Number(document.getElementById('plan-rpm').value),
                 daily_token_quota: Number(document.getElementById('plan-daily').value),
+                weekly_token_quota: Number(document.getElementById('plan-weekly').value),
                 monthly_token_quota: Number(document.getElementById('plan-monthly').value),
                 max_output_tokens: Number(document.getElementById('plan-max-output').value),
                 allow_streaming: document.getElementById('plan-streaming').checked,

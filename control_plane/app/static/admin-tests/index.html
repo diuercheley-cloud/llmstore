@@ -252,15 +252,37 @@
 
         <!-- 3 & 4. Validação & Ações de Usuário -->
         <div class="card">
-            <h2>4. Gestão de Usuário</h2>
+            <h2>4. Gestão de Usuário & Tokens</h2>
+            <div class="form-group">
+                <label>Pesquisar por Token de API</label>
+                <div class="flex-row">
+                    <input type="password" id="searchToken" placeholder="sk-local-...">
+                    <button class="btn-primary" onclick="lookupToken()">🔍 Buscar</button>
+                </div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0;">
             <div class="form-group">
                 <label>User ID (Client UUID)</label>
-                <input type="text" id="userId" placeholder="Ex: 5eb129b9-...">
+                <div class="flex-row">
+                    <input type="text" id="userId" placeholder="Ex: 5eb129b9-...">
+                    <button class="btn-primary" onclick="checkUser()">Verificar</button>
+                </div>
             </div>
-            <div class="flex-row" style="flex-wrap: wrap;">
-                <button class="btn-primary" onclick="checkUser()">Verificar Usuário</button>
-                <button class="btn-danger require-super" onclick="blockUser()">Bloquear</button>
+            
+            <div class="form-group require-write">
+                <label>Alterar Plano de Faturamento</label>
+                <div class="flex-row">
+                    <select id="planSelect" style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border);">
+                        <option value="">Carregando planos...</option>
+                    </select>
+                    <button class="btn-secondary" onclick="updateUserPlan()">Atualizar Plano</button>
+                </div>
+            </div>
+
+            <div class="flex-row" style="flex-wrap: wrap; margin-top: 1rem;">
+                <button class="btn-danger require-super" onclick="blockUser()">Bloquear Usuário</button>
                 <button class="btn-secondary require-super" onclick="unblockUser()">Desbloquear</button>
+                <button class="btn-primary require-write" onclick="resetQuota()">Zerar Uso (Quota)</button>
             </div>
             <div id="userResult" class="result-box"></div>
         </div>
@@ -288,7 +310,6 @@
                 <input type="text" id="quotaReason" placeholder="Motivo do override">
             </div>
             <button class="btn-secondary require-write" onclick="setQuota()">Aplicar Quota Override</button>
-            <div id="quotaResult" class="result-box"></div>
         </div>
 
         <!-- Auditoria -->
@@ -354,6 +375,77 @@
             el.type = el.type === 'password' ? 'text' : 'password';
         };
         
+        const loadPlans = async () => {
+            try {
+                const res = await fetch('/admin/tests/plans', { headers: getAdminHeaders() });
+                const plans = await res.json();
+                const select = document.getElementById('planSelect');
+                if (res.ok) {
+                    select.innerHTML = '<option value="">Selecione um plano...</option>';
+                    plans.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.innerText = `${p.name} (${p.code})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load plans:', e);
+            }
+        };
+
+        const lookupToken = async () => {
+            const token = document.getElementById('searchToken').value;
+            if (!token) return alert('Informe o token para pesquisar');
+            
+            const box = document.getElementById('userResult');
+            box.innerHTML = 'Pesquisando token...';
+            const start = performance.now();
+            try {
+                const res = await fetch(`/admin/tests/tokens/lookup?token=${encodeURIComponent(token)}`, { headers: getAdminHeaders() });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+                
+                if (res.ok) {
+                    document.getElementById('userId').value = data.id;
+                    box.innerHTML = `<span class="status-ok">Token Encontrado!</span>\n\n<b>Proprietário:</b> ${data.name}\n<b>Status:</b> ${data.status}\n<b>Quota Diária:</b> ${data.quota.effectiveDailyLimit}\n\n<b>JSON completo:</b>\n${JSON.stringify(data, null, 2)}`;
+                    addToHistory('Token Lookup', 'PASS', duration, `User: ${data.name}`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    addToHistory('Token Lookup', 'FAIL', duration, `HTTP ${res.status}`);
+                }
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
+        const updateUserPlan = async () => {
+            const userId = document.getElementById('userId').value;
+            const planId = document.getElementById('planSelect').value;
+            if (!userId || !planId) return alert('Selecione um usuário e um plano');
+            
+            if (!confirm('Deseja realmente alterar o plano deste usuário?')) return;
+            
+            const box = document.getElementById('userResult');
+            box.innerHTML = 'Atualizando plano...';
+            try {
+                const res = await fetch(`/admin/tests/users/${userId}/plan`, {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ plan_id: planId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    box.innerHTML = `<span class="status-ok">Plano Atualizado!</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    addToHistory('Update Plan', 'PASS', 0, `User: ${data.name}`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (e) {
+                box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
+            }
+        };
+
         const updateUIForRole = (role) => {
             currentRole = role;
             document.getElementById('roleBadge').innerText = `Role: ${role || 'None'}`;
@@ -363,6 +455,8 @@
             
             writeBtns.forEach(btn => btn.disabled = (role !== 'admin_write' && role !== 'super_admin'));
             superBtns.forEach(btn => btn.disabled = (role !== 'super_admin'));
+
+            if (role) loadPlans();
         };
 
         const checkRole = async () => {
@@ -561,7 +655,7 @@
             const userId = document.getElementById('userId').value;
             if (!userId) return alert('Preencha o User ID');
             
-            const box = document.getElementById('quotaResult');
+            const box = document.getElementById('userResult');
             box.innerHTML = 'Carregando...';
             const start = performance.now();
             try {
@@ -581,7 +675,7 @@
             const userId = document.getElementById('userId').value;
             if (!userId) return alert('Preencha o User ID');
             
-            const box = document.getElementById('quotaResult');
+            const box = document.getElementById('userResult');
             box.innerHTML = 'Carregando...';
             const start = performance.now();
             try {
@@ -609,7 +703,7 @@
             if (monthly) payload.monthly_quota = parseInt(monthly);
             if (reason) payload.reason = reason;
             
-            const box = document.getElementById('quotaResult');
+            const box = document.getElementById('userResult');
             box.innerHTML = 'Carregando...';
             const start = performance.now();
             try {
@@ -632,7 +726,7 @@
             const userId = document.getElementById('userId').value;
             if (!userId) return alert('Preencha o User ID');
             
-            const box = document.getElementById('quotaResult');
+            const box = document.getElementById('userResult');
             box.innerHTML = 'Carregando...';
             const start = performance.now();
             try {

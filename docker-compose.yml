@@ -68,45 +68,6 @@ services:
               count: 1
               capabilities: [gpu]
 
-  data-plane-bonsai:
-    build:
-      context: .
-      dockerfile: docker/data-plane/Dockerfile
-    profiles: ["bonsai"]
-    environment:
-      MODEL_FILE: ${BONSAI_MODEL_FILE:-bonsai-8B.gguf}
-      LLAMA_SERVER_PORT: 8082
-      LLAMA_CTX_SIZE: ${LLAMA_CTX_SIZE}
-      LLAMA_N_GPU_LAYERS: ${LLAMA_N_GPU_LAYERS}
-      LLAMA_THREADS: ${LLAMA_THREADS}
-      LLAMA_BATCH_SIZE: ${LLAMA_BATCH_SIZE}
-      LLAMA_UBATCH_SIZE: ${LLAMA_UBATCH_SIZE}
-      LLAMA_PARALLEL: ${LLAMA_PARALLEL}
-      LLAMA_CONT_BATCHING: ${LLAMA_CONT_BATCHING}
-      LLAMA_FLASH_ATTN: ${LLAMA_FLASH_ATTN}
-      LLAMA_CHAT_TEMPLATE: ${BONSAI_DATA_PLANE_TEMPLATE:-}
-    volumes:
-      - ./models:/models
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8082/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-    ports:
-      - "8082:8082"
-    restart: unless-stopped
-    gpus: all
-    networks:
-      - control_net
-      - data_net
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
   data-plane-ollama:
     image: ollama/ollama:0.9.5
     profiles: ["ollama"]
@@ -150,8 +111,6 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
-      BONSAI_ENABLED: ${BONSAI_ENABLED:-false}
-      BONSAI_BASE_URL: ${BONSAI_BASE_URL:-http://data-plane-bonsai:8082}
     depends_on:
       postgres:
         condition: service_healthy
@@ -177,8 +136,6 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
-      BONSAI_ENABLED: ${BONSAI_ENABLED:-false}
-      BONSAI_BASE_URL: ${BONSAI_BASE_URL:-http://data-plane-bonsai:8082}
     command: ["bash", "-lc", "alembic upgrade head && python -m app.workers.generation_worker"]
     depends_on:
       postgres:

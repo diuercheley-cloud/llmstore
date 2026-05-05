@@ -150,9 +150,6 @@ wait_compose_services() {
   if [[ "${STACK_MODE:-local}" == "prod" ]]; then
     expected_services+=(caddy)
   fi
-  if [[ "${BONSAI_ENABLED:-false}" == "true" ]]; then
-    expected_services+=(data-plane-bonsai)
-  fi
   local snapshot_file
   snapshot_file="${ARTIFACTS_DIR}/compose-ps-wait.jsonl"
 

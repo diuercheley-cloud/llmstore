@@ -219,6 +219,14 @@
         <div id="meContent"></div>
       </section>
 
+      <section id="planManagementSection">
+        <h2>Manage Plan</h2>
+        <div id="planManagementContent">
+          <p style="font-size: 0.875rem; color: var(--muted);">Select a plan to upgrade or downgrade your account limits.</p>
+          <button id="openPlanSelector" class="secondary" style="width: 100%;">View Available Plans</button>
+        </div>
+      </section>
+
       <section id="usageSection">
         <h2>Current Usage</h2>
         <div id="usageContent"></div>
@@ -227,6 +235,11 @@
       <section id="billingSection" class="wide">
         <h2>Invoices</h2>
         <div id="invoicesContent" class="table-wrapper"></div>
+      </section>
+
+      <section id="paymentsSection" class="wide">
+        <h2>Payment History</h2>
+        <div id="paymentsContent" class="table-wrapper"></div>
       </section>
 
       <section id="testChatSection" class="wide">
@@ -252,6 +265,23 @@
 
     <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted); padding: 0 1rem;">
       <p>Please enter your API Key above to access the portal.</p>
+    </div>
+
+    <div id="planModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
+      <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 800px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="margin: 0; color: var(--accent);">Choose a New Plan</h2>
+          <button id="closePlanModal" class="secondary" style="padding: 0.25rem 0.75rem;">X</button>
+        </div>
+        <div id="planListGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+          <!-- Plans will be rendered here -->
+        </div>
+        <div id="paymentSimulation" class="hidden" style="margin-top: 2rem; border-top: 2px dashed var(--border); padding-top: 1.5rem; text-align: center;">
+          <h3>💳 Payment Simulation</h3>
+          <p id="simulationDetails" style="color: var(--muted);"></p>
+          <button id="confirmUpgrade" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Pay & Upgrade Now</button>
+        </div>
+      </div>
     </div>
 
     <div id="toast" class="toast">Copied to clipboard!</div>
@@ -283,6 +313,7 @@
         meContent: document.getElementById('meContent'),
         usageContent: document.getElementById('usageContent'),
         invoicesContent: document.getElementById('invoicesContent'),
+        paymentsContent: document.getElementById('paymentsContent'),
         promptText: document.getElementById('promptText'),
         modelId: document.getElementById('modelId'),
         runChat: document.getElementById('runChat'),
@@ -292,8 +323,84 @@
         copyCurl: document.getElementById('copyCurl'),
         toast: document.getElementById('toast'),
         onboardingModal: document.getElementById('onboardingModal'),
-        closeOnboarding: document.getElementById('closeOnboarding')
+        closeOnboarding: document.getElementById('closeOnboarding'),
+        planModal: document.getElementById('planModal'),
+        openPlanSelector: document.getElementById('openPlanSelector'),
+        closePlanModal: document.getElementById('closePlanModal'),
+        planListGrid: document.getElementById('planListGrid'),
+        paymentSimulation: document.getElementById('paymentSimulation'),
+        simulationDetails: document.getElementById('simulationDetails'),
+        confirmUpgrade: document.getElementById('confirmUpgrade')
       };
+
+      let currentSelectedPlanCode = null;
+
+      elements.openPlanSelector.addEventListener('click', async () => {
+        elements.planModal.classList.remove('hidden');
+        elements.planModal.style.display = 'flex';
+        renderPlanList();
+      });
+
+      elements.closePlanModal.addEventListener('click', () => {
+        elements.planModal.classList.add('hidden');
+        elements.planModal.style.display = 'none';
+        elements.paymentSimulation.classList.add('hidden');
+      });
+
+      async function renderPlanList() {
+        elements.planListGrid.innerHTML = 'Loading plans...';
+        try {
+          const plans = await apiFetch('/portal/plans');
+          elements.planListGrid.innerHTML = plans.map(plan => `
+            <div class="plan-card" style="cursor: pointer; transition: transform 0.2s;" onclick="selectPlanForUpgrade('${plan.code}', '${plan.name}', ${plan.monthly_price})">
+              <div class="plan-name">${esc(plan.name)}</div>
+              <div style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0;">$${plan.monthly_price}/mo</div>
+              <div style="font-size: 0.8rem; color: var(--muted);">${plan.rate_limit_per_minute} RPM</div>
+              <div style="font-size: 0.8rem; color: var(--muted);">${(plan.monthly_token_quota/1000).toFixed(0)}k Monthly Tokens</div>
+            </div>
+          `).join('');
+        } catch (err) {
+          elements.planListGrid.innerHTML = `<span style="color: var(--danger);">Failed to load plans: ${err.message}</span>`;
+        }
+      }
+
+      window.selectPlanForUpgrade = (code, name, price) => {
+        currentSelectedPlanCode = code;
+        elements.simulationDetails.innerHTML = `You are choosing the <strong>${esc(name)}</strong> plan.<br>A simulated payment of <strong>$${price.toFixed(2)}</strong> will be processed.`;
+        elements.paymentSimulation.classList.remove('hidden');
+      };
+
+      elements.confirmUpgrade.addEventListener('click', async () => {
+        if (!currentSelectedPlanCode) return;
+        elements.confirmUpgrade.disabled = true;
+        elements.confirmUpgrade.textContent = 'Processing Payment...';
+        try {
+          await apiFetch('/portal/upgrade', {
+            method: 'POST',
+            body: JSON.stringify({ plan_code: currentSelectedPlanCode })
+          });
+          showToast('Success! Plan upgraded and payment simulated.');
+          elements.planModal.classList.add('hidden');
+          elements.planModal.style.display = 'none';
+          initPortal(); // Refresh everything
+        } catch (err) {
+          alert('Failed to upgrade: ' + err.message);
+        } finally {
+          elements.confirmUpgrade.disabled = false;
+          elements.confirmUpgrade.textContent = 'Pay & Upgrade Now';
+        }
+      });
+
+      async function simulatePayment(invoiceId) {
+        if (!confirm('Simulate payment for this invoice?')) return;
+        try {
+          await apiFetch(`/portal/simulate-payment/${invoiceId}`, { method: 'POST' });
+          showToast('Invoice paid successfully!');
+          initPortal();
+        } catch (err) {
+          alert('Payment failed: ' + err.message);
+        }
+      }
 
       elements.closeOnboarding.addEventListener('click', () => {
         elements.onboardingModal.classList.add('hidden');
@@ -405,6 +512,7 @@
           renderMe(me);
           renderUsage(usage);
           renderInvoices(invoices);
+          renderPayments(invoices.payments);
           renderModels(models);
 
           const metadata = JSON.parse(me.metadata_json || '{}');
@@ -445,18 +553,26 @@
 
       function renderUsage(usage) {
         const daily = usage.daily_usage || { used_tokens: 0, quota: 1 };
+        const weekly = usage.weekly_usage || { used_tokens: 0, quota: 1 };
         const monthly = usage.monthly_usage || { used_tokens: 0, quota: 1 };
-        const dailyPct = Math.min((daily.used_tokens / daily.quota) * 100, 100);
-        const monthlyPct = Math.min((monthly.used_tokens / monthly.quota) * 100, 100);
+        const dailyPct = daily.quota > 0 ? Math.min((daily.used_tokens / daily.quota) * 100, 100) : 0;
+        const weeklyPct = weekly.quota > 0 ? Math.min((weekly.used_tokens / weekly.quota) * 100, 100) : 0;
+        const monthlyPct = monthly.quota > 0 ? Math.min((monthly.used_tokens / monthly.quota) * 100, 100) : 0;
         const inv = usage.invoice_preview || {};
 
         elements.usageContent.innerHTML = `
-          <div class="usage-grid">
+          <div class="usage-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
             <div class="usage-box">
               <h3>Daily Tokens</h3>
               <div class="usage-num">${daily.used_tokens.toLocaleString()}</div>
               <div class="usage-total">of ${daily.quota.toLocaleString()}</div>
               <div class="progress-bg"><div class="progress-fill" style="width: ${dailyPct}%"></div></div>
+            </div>
+            <div class="usage-box">
+              <h3>Weekly Tokens</h3>
+              <div class="usage-num">${weekly.used_tokens.toLocaleString()}</div>
+              <div class="usage-total">of ${weekly.quota.toLocaleString()}</div>
+              <div class="progress-bg"><div class="progress-fill" style="width: ${weeklyPct}%"></div></div>
             </div>
             <div class="usage-box">
               <h3>Monthly Tokens</h3>
@@ -483,7 +599,7 @@
           elements.invoicesContent.innerHTML = '<p style="color: var(--muted);">No invoices yet.</p>';
           return;
         }
-        let html = '<table><thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Actions</th></tr></thead><tbody>';
         data.invoices.forEach(inv => {
           html += `
             <tr>
@@ -491,11 +607,36 @@
               <td>${inv.currency} ${inv.total_amount.toFixed(2)}</td>
               <td><span class="badge ${inv.status === 'paid' ? 'badge-active' : 'badge-warning'}">${inv.status}</span></td>
               <td>${inv.due_at}</td>
+              <td>
+                ${inv.status !== 'paid' ? `<button class="secondary copy-btn" onclick="simulatePayment('${inv.id}')">Pay (Simulate)</button>` : ''}
+              </td>
             </tr>
           `;
         });
         html += '</tbody></table>';
         elements.invoicesContent.innerHTML = html;
+      }
+
+      function renderPayments(payments) {
+        if (!payments || payments.length === 0) {
+          elements.paymentsContent.innerHTML = '<p style="color: var(--muted);">No payments recorded yet.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Method</th><th>Reference</th></tr></thead><tbody>';
+        payments.forEach(p => {
+          const statusClass = p.status === 'paid' ? 'badge-active' : 'badge-warning';
+          html += `
+            <tr>
+              <td>${new Date(p.created_at).toLocaleString()}</td>
+              <td>${p.currency} ${p.amount.toFixed(2)}</td>
+              <td><span class="badge ${statusClass}">${p.status}</span></td>
+              <td>${esc(p.payment_method)}</td>
+              <td><code>${esc(p.payment_reference || '-')}</code></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        elements.paymentsContent.innerHTML = html;
       }
 
       function renderModels(data) {

@@ -29,8 +29,6 @@ def detect_architecture(
         return "gemma"
     if "qwen3" in joined:
         return "qwen3"
-    if "bonsai" in joined or "bonzai" in joined:
-        return "qwen3"
     if "qwen" in joined:
         return "qwen"
     return None
@@ -62,13 +60,12 @@ def apply_prompt_template_settings(
     prompt_template: str | None,
     include_reasoning: bool,
     backend: str,
-    bonsai_template_fallback: str | None = None,
 ) -> dict[str, Any]:
     updated = dict(request_payload)
     if backend != "llama.cpp":
         return updated
     if prompt_template == "qwen":
-        template = bonsai_template_fallback or "chatml"
+        template = "chatml"
         if template == "chatml":
             template = (
                 "{% for message in messages %}"

@@ -61,9 +61,6 @@ init_stack_env() {
   if [[ "${STACK_MODE:-local}" == "prod" ]]; then
     DOCKER_COMPOSE_ARGS+=(-f "${ROOT_DIR}/docker-compose.prod.yml")
   fi
-  if [[ "${BONSAI_ENABLED:-false}" == "true" ]]; then
-    DOCKER_COMPOSE_ARGS+=(--profile bonsai)
-  fi
   if [[ -n "${EXTRA_COMPOSE_FILES:-}" ]]; then
     for compose_file in ${EXTRA_COMPOSE_FILES}; do
       if [[ "${compose_file}" = /* ]]; then

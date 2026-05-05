@@ -15,12 +15,14 @@ from redis.asyncio import Redis
 from app.db.session import get_db_session, get_redis
 from app.services.auth import require_admin_role, AdminRole, admin_key_scheme, get_admin_role
 from app.models.client import Client
+from app.models.api_key import ApiKey
 from app.models.quota_counter import QuotaCounter
 from app.models.billing_plan import BillingPlan
 from app.models.admin_action_log import AdminActionLog
 from app.models.user_quota_override import UserQuotaOverride
 from app.core.time import utc_now
 from app.core.config import get_settings
+from app.core.security import verify_secret
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin/tests", tags=["admin_tests"])
@@ -259,6 +261,51 @@ async def delete_user_quota_override(user_id: uuid.UUID, request: Request, admin
         await session.delete(override)
         await audit_action(session, "quota_override_delete", request, admin_token, str(user_id), None, {"status": "success"}, "success")
         await session.commit()
+    return await get_user_status(user_id, session)
+
+@router.get("/tokens/lookup", dependencies=[Depends(require_admin_role(AdminRole.READ)), Depends(admin_rate_limit)])
+async def lookup_token(token: str, session: AsyncSession = Depends(get_db_session)):
+    """Busca o proprietário de um token de API."""
+    prefix = token[:12]
+    result = await session.execute(
+        select(ApiKey).where(ApiKey.key_prefix == prefix, ApiKey.revoked_at.is_(None))
+    )
+    api_keys = result.scalars().all()
+    api_key = next((item for item in api_keys if verify_secret(token, item.key_hash)), None)
+    
+    if not api_key:
+        raise HTTPException(status_code=404, detail="Token não encontrado ou revogado")
+        
+    return await get_user_status(api_key.client_id, session)
+
+@router.get("/plans", dependencies=[Depends(require_admin_role(AdminRole.READ)), Depends(admin_rate_limit)])
+async def list_billing_plans(session: AsyncSession = Depends(get_db_session)):
+    """Lista todos os planos de faturamento disponíveis."""
+    result = await session.execute(select(BillingPlan).order_by(BillingPlan.name))
+    plans = result.scalars().all()
+    return [{"id": str(p.id), "name": p.name, "code": p.code} for p in plans]
+
+class PlanUpdateRequest(BaseModel):
+    plan_id: uuid.UUID
+
+@router.post("/users/{user_id}/plan", dependencies=[Depends(require_admin_role(AdminRole.WRITE)), Depends(admin_rate_limit)])
+async def update_user_plan(user_id: uuid.UUID, payload: PlanUpdateRequest, request: Request, admin_token: str = Depends(admin_key_scheme), session: AsyncSession = Depends(get_db_session)):
+    """Altera o plano de faturamento de um cliente."""
+    client = await session.get(Client, user_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+    plan = await session.get(BillingPlan, payload.plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plano não encontrado")
+        
+    before_plan = str(client.billing_plan_id)
+    client.billing_plan_id = plan.id
+    client.updated_at = utc_now()
+    
+    await audit_action(session, "user_plan_update", request, admin_token, str(user_id), {"before_plan_id": before_plan, "after_plan_id": str(plan.id)}, {"status": "success"}, "success")
+    await session.commit()
+    
     return await get_user_status(user_id, session)
 
 @router.get("/system/resources", dependencies=[Depends(require_admin_role(AdminRole.READ)), Depends(admin_rate_limit)])

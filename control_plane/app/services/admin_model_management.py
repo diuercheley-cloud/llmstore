@@ -22,7 +22,6 @@ from app.utils.model_prompting import detect_architecture, detect_prompt_templat
 
 _ALLOWED_DOCKER_SERVICES = {
     "data-plane-gemma",
-    "data-plane-bonsai",
     "data-plane-mock",
     "data-plane-ollama",
 }

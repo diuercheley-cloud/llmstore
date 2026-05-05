@@ -1,5 +1,6 @@
 import json
 from time import perf_counter
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, select
@@ -8,6 +9,8 @@ from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse
 
 from app.api.client import _chat_with_fallback, _error_message_for_log, _backend_errors_for_log
+from app.core.security import short_prefix
+from app.core.time import utc_now
 from app.utils.validation import validate_params
 from app.api.deps import get_inference_proxy
 from app.db.session import get_db_session, get_redis
@@ -33,7 +36,112 @@ from app.services.response_cache import build_chat_cache_key, lookup_exact_cache
 from app.utils.request_summary import summarize_chat_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 
+from app.models.billing_plan import BillingPlan
+from app.models.pricing_rule import PricingRule
+from app.schemas.public import PortalUpgradeRequest
+from app.services.public_onboarding import list_public_plans
+
 router = APIRouter(tags=["portal"])
+
+
+@router.get("/plans")
+async def portal_list_plans(
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    # Returns all active plans for upgrade simulation
+    return await list_public_plans(session)
+
+
+@router.post("/upgrade")
+async def portal_upgrade_plan(
+    payload: PortalUpgradeRequest,
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    plan = (
+        await session.execute(
+            select(BillingPlan)
+            .where(BillingPlan.code == payload.plan_code, BillingPlan.is_active.is_(True))
+        )
+    ).scalar_one_or_none()
+    
+    if not plan:
+        raise HTTPException(status_code=404, detail="billing plan not found")
+        
+    # Update client plan and quotas
+    client.billing_plan_id = plan.id
+    client.rate_limit_per_minute = plan.rate_limit_per_minute
+    client.daily_token_quota = plan.daily_token_quota
+    client.weekly_token_quota = plan.weekly_token_quota
+    client.monthly_token_quota = plan.monthly_token_quota
+    client.max_output_tokens = plan.max_output_tokens
+    
+    # Reset billing status to active if they were past_due/suspended (simulation)
+    client.billing_status = "active"
+    
+    await session.commit()
+    return {"status": "success", "new_plan": plan.name}
+
+
+@router.post("/simulate-payment/{invoice_id}")
+async def portal_simulate_payment(
+    invoice_id: UUID,
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    invoice = (
+        await session.execute(
+            select(BillingInvoice)
+            .options(selectinload(BillingInvoice.payments))
+            .where(BillingInvoice.id == invoice_id, BillingInvoice.client_id == client.id)
+        )
+    ).scalar_one_or_none()
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="invoice not found")
+        
+    if invoice.status == "paid":
+        return {"status": "already_paid"}
+        
+    current_time = utc_now()
+    invoice.status = "paid"
+    invoice.paid_at = current_time
+    invoice.cancelled_at = None
+    invoice.updated_at = current_time
+    
+    # Record payment
+    # Check if there is already a pending/overdue payment to fulfill
+    payment = next((item for item in invoice.payments if item.status in {"pending", "overdue"}), None)
+    if payment is None:
+        payment = CustomerPayment(
+            invoice_id=invoice.id,
+            client_id=client.id,
+            amount=invoice.total_amount,
+            currency=invoice.currency,
+            payment_method="simulation_portal",
+            payment_reference=f"sim_{short_prefix(str(invoice.id))}",
+            status="paid",
+            paid_at=current_time,
+        )
+        session.add(payment)
+    else:
+        payment.status = "paid"
+        payment.paid_at = current_time
+        payment.payment_method = "simulation_portal"
+        payment.payment_reference = f"sim_{short_prefix(str(invoice.id))}"
+        payment.updated_at = current_time
+    
+    # Force client status to active
+    client.billing_status = "active"
+    client.updated_at = current_time
+    
+    await session.commit()
+    # Refresh other statuses if needed
+    await refresh_billing_statuses(session)
+    await session.commit()
+    
+    return {"status": "success", "message": "Payment simulated and account refreshed"}
 
 
 @router.get("/me")
@@ -53,6 +161,7 @@ async def portal_me(
             "name": effective_plan.name,
             "rate_limit_per_minute": effective_plan.rate_limit_per_minute,
             "daily_token_quota": effective_plan.daily_token_quota,
+            "weekly_token_quota": effective_plan.weekly_token_quota,
             "monthly_token_quota": effective_plan.monthly_token_quota,
             "max_output_tokens": effective_plan.max_output_tokens,
             "allow_streaming": effective_plan.allow_streaming,
@@ -70,6 +179,7 @@ async def portal_account(
     effective_plan = resolve_effective_plan(client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
+    weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
     
     return {
@@ -81,11 +191,13 @@ async def portal_account(
             "name": effective_plan.name,
             "rate_limit_per_minute": effective_plan.rate_limit_per_minute,
             "daily_token_quota": effective_plan.daily_token_quota,
+            "weekly_token_quota": effective_plan.weekly_token_quota,
             "monthly_token_quota": effective_plan.monthly_token_quota,
             "max_output_tokens": effective_plan.max_output_tokens,
         },
         "usage": {
             "daily_used_tokens": daily_used,
+            "weekly_used_tokens": weekly_used,
             "monthly_used_tokens": monthly_used,
         }
     }
@@ -99,6 +211,7 @@ async def portal_usage(
     effective_plan = resolve_effective_plan(client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
+    weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
     invoice_preview = build_invoice_preview(effective_plan=effective_plan, monthly_used_tokens=monthly_used)
     return {
@@ -108,6 +221,11 @@ async def portal_usage(
             "used_tokens": daily_used,
             "remaining_tokens": max(effective_plan.daily_token_quota - daily_used, 0),
             "quota": effective_plan.daily_token_quota,
+        },
+        "weekly_usage": {
+            "used_tokens": weekly_used,
+            "remaining_tokens": max(effective_plan.weekly_token_quota - weekly_used, 0),
+            "quota": effective_plan.weekly_token_quota,
         },
         "monthly_usage": {
             "used_tokens": monthly_used,

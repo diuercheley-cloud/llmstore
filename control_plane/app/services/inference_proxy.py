@@ -130,7 +130,6 @@ class InferenceProxy:
             prompt_template=prompt_template,
             include_reasoning=include_reasoning,
             backend=backend,
-            bonsai_template_fallback=self.settings.bonsai_chat_template,
         )
 
     async def chat(

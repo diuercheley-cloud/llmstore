@@ -268,7 +268,7 @@ async def chat_completions(
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:
@@ -299,6 +299,7 @@ async def chat_completions(
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
+    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
     monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
     estimated_request_cost = float(
         estimate_request_cost(
@@ -311,22 +312,24 @@ async def chat_completions(
     request_summary = summarize_chat_request(
         messages,
         include_reasoning=payload.include_reasoning,
-    )
+    ) if "messages" in locals() else summarize_completion_request(payload.prompt)
     await maybe_record_repeated_large_prompt(
         session,
         redis,
         client=client,
         prompt_tokens=prompt_tokens,
-        prompt_key=prompt_fingerprint(json.dumps(messages, sort_keys=True, ensure_ascii=True)),
-        endpoint="/v1/chat/completions",
+        prompt_key=prompt_fingerprint(json.dumps(messages, sort_keys=True, ensure_ascii=True)) if "messages" in locals() else prompt_fingerprint(payload.prompt),
+        endpoint="/v1/chat/completions" if "messages" in locals() else "/v1/completions",
     )
     await maybe_record_plan_usage_anomaly(
         session,
         client=client,
         daily_limit=effective_plan.daily_token_quota,
+        weekly_limit=effective_plan.weekly_token_quota,
         monthly_limit=effective_plan.monthly_token_quota,
         incoming_tokens=incoming_tokens,
         daily_used_before=daily_used_before,
+        weekly_used_before=weekly_used_before,
         monthly_used_before=monthly_used_before,
     )
     started = perf_counter()
@@ -564,7 +567,7 @@ async def completions(
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:
@@ -594,6 +597,7 @@ async def completions(
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
+    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
     monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
     estimated_request_cost = float(
         estimate_request_cost(
@@ -616,9 +620,11 @@ async def completions(
         session,
         client=client,
         daily_limit=effective_plan.daily_token_quota,
+        weekly_limit=effective_plan.weekly_token_quota,
         monthly_limit=effective_plan.monthly_token_quota,
         incoming_tokens=incoming_tokens,
         daily_used_before=daily_used_before,
+        weekly_used_before=weekly_used_before,
         monthly_used_before=monthly_used_before,
     )
     started = perf_counter()

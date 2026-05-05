@@ -186,14 +186,17 @@ async def maybe_record_plan_usage_anomaly(
     *,
     client: Client,
     daily_limit: int,
+    weekly_limit: int,
     monthly_limit: int,
     incoming_tokens: int,
     daily_used_before: int,
+    weekly_used_before: int,
     monthly_used_before: int,
 ) -> None:
     daily_ratio = (daily_used_before + incoming_tokens) / daily_limit if daily_limit else 0
+    weekly_ratio = (weekly_used_before + incoming_tokens) / weekly_limit if weekly_limit else 0
     monthly_ratio = (monthly_used_before + incoming_tokens) / monthly_limit if monthly_limit else 0
-    if max(daily_ratio, monthly_ratio) < PLAN_USAGE_THRESHOLD:
+    if max(daily_ratio, weekly_ratio, monthly_ratio) < PLAN_USAGE_THRESHOLD:
         return
     await log_security_event(
         session,
@@ -204,6 +207,7 @@ async def maybe_record_plan_usage_anomaly(
         details={
             "incoming_tokens": incoming_tokens,
             "daily_ratio": round(daily_ratio, 4),
+            "weekly_ratio": round(weekly_ratio, 4),
             "monthly_ratio": round(monthly_ratio, 4),
         },
     )

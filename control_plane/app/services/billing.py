@@ -23,6 +23,7 @@ class EffectivePlan:
     name: str
     rate_limit_per_minute: int
     daily_token_quota: int
+    weekly_token_quota: int
     monthly_token_quota: int
     max_output_tokens: int
     allow_streaming: bool
@@ -38,6 +39,7 @@ DEFAULT_BILLING_PLANS = [
         "description": "Starter plan for sandbox usage with strict limits and no card required.",
         "rate_limit_per_minute": 3,
         "daily_token_quota": 5000,
+        "weekly_token_quota": 25000,
         "monthly_token_quota": 50000,
         "max_output_tokens": 32768,
         "allow_streaming": False,
@@ -48,6 +50,7 @@ DEFAULT_BILLING_PLANS = [
         "description": "Production starter with streaming and predictable shared capacity.",
         "rate_limit_per_minute": 15,
         "daily_token_quota": 75000,
+        "weekly_token_quota": 350000,
         "monthly_token_quota": 750000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
@@ -58,6 +61,7 @@ DEFAULT_BILLING_PLANS = [
         "description": "Growth plan with higher throughput for customer-facing workloads.",
         "rate_limit_per_minute": 45,
         "daily_token_quota": 300000,
+        "weekly_token_quota": 1500000,
         "monthly_token_quota": 4000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
@@ -68,6 +72,7 @@ DEFAULT_BILLING_PLANS = [
         "description": "High-volume plan for dedicated routing, premium support and custom rollout.",
         "rate_limit_per_minute": 120,
         "daily_token_quota": 1500000,
+        "weekly_token_quota": 7000000,
         "monthly_token_quota": 15000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
@@ -190,6 +195,7 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             name=plan.name,
             rate_limit_per_minute=plan.rate_limit_per_minute,
             daily_token_quota=plan.daily_token_quota,
+            weekly_token_quota=plan.weekly_token_quota,
             monthly_token_quota=plan.monthly_token_quota,
             max_output_tokens=plan.max_output_tokens,
             allow_streaming=plan.allow_streaming,
@@ -202,6 +208,7 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         name="Legacy",
         rate_limit_per_minute=client.rate_limit_per_minute,
         daily_token_quota=client.daily_token_quota,
+        weekly_token_quota=client.weekly_token_quota,
         monthly_token_quota=client.monthly_token_quota,
         max_output_tokens=client.max_output_tokens,
         allow_streaming=True,
@@ -226,6 +233,7 @@ async def list_client_billing_snapshots(
         effective_plan = resolve_effective_plan(client)
         counters = await get_usage_snapshot_for_date(session, client.id, usage_date)
         daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
+        weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
         monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
         pricing_rule = None
         if client.billing_plan is not None:
@@ -236,6 +244,7 @@ async def list_client_billing_snapshots(
                 "effective_plan": effective_plan,
                 "pricing_rule": pricing_rule,
                 "daily_used_tokens": daily_used,
+                "weekly_used_tokens": weekly_used,
                 "monthly_used_tokens": monthly_used,
                 "invoice_preview": build_invoice_preview(
                     effective_plan=effective_plan,
@@ -247,11 +256,13 @@ async def list_client_billing_snapshots(
 
 
 async def get_usage_snapshot_for_date(session: AsyncSession, client_id, reference_date: date) -> dict[str, QuotaCounter | None]:
+    from app.services.quota import week_start
     period_pairs = {
         "daily": reference_date,
+        "weekly": week_start(reference_date),
         "monthly": month_start(reference_date),
     }
-    snapshot: dict[str, QuotaCounter | None] = {"daily": None, "monthly": None}
+    snapshot: dict[str, QuotaCounter | None] = {"daily": None, "weekly": None, "monthly": None}
     for period_type, period_start in period_pairs.items():
         result = await session.execute(
             select(QuotaCounter).where(

@@ -63,7 +63,7 @@ def test_prepare_chat_payload_uses_qwen_template_and_disables_reasoning():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
 
     prepared = proxy._prepare_chat_payload(
-        {"model": "bonsai", "messages": [{"role": "user", "content": "oi"}]},
+        {"model": "gemma", "messages": [{"role": "user", "content": "oi"}]},
         include_reasoning=False,
         backend="llama.cpp",
         prompt_template="qwen",

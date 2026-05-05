@@ -22,6 +22,10 @@ class PublicSignupResponse(BaseModel):
     next_steps: list[str]
 
 
+class PortalUpgradeRequest(BaseModel):
+    plan_code: str = Field(min_length=2, max_length=32, pattern=r"^[a-z0-9_-]+$")
+
+
 class WebhookPayload(BaseModel):
     invoice_id: str = Field(min_length=36, max_length=36)
     status: str = Field(pattern=r"^(paid|failed)$")

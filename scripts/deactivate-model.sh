@@ -33,7 +33,6 @@ BACKEND_ID=$(echo "${BACKEND_INFO}" | cut -d'|' -f2)
 # Mapeamento de Backend -> Serviço Docker
 case "${BACKEND_NAME}" in
     "gemma-local")  DOCKER_SERVICE="data-plane-gemma" ;;
-    "bonsai-local") DOCKER_SERVICE="data-plane-bonsai" ;;
     "ollama-local") DOCKER_SERVICE="data-plane-ollama" ;;
     *)              DOCKER_SERVICE="" ;;
 esac

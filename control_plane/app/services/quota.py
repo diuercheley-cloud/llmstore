@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,12 +15,20 @@ def month_start(today: date) -> date:
     return date(today.year, today.month, 1)
 
 
-async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, monthly_limit: int, incoming_tokens: int) -> None:
+def week_start(today: date) -> date:
+    # Returns the Monday of the current week
+    return today - timedelta(days=today.weekday())
+
+
+async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekly_limit: int, monthly_limit: int, incoming_tokens: int) -> None:
     today = date.today()
     daily = await _get_or_create_counter(session, client_id, today, "daily")
+    weekly = await _get_or_create_counter(session, client_id, week_start(today), "weekly")
     monthly = await _get_or_create_counter(session, client_id, month_start(today), "monthly")
     if daily.used_tokens + incoming_tokens > daily_limit:
         raise QuotaExceeded("daily token quota exceeded")
+    if weekly.used_tokens + incoming_tokens > weekly_limit:
+        raise QuotaExceeded("weekly token quota exceeded")
     if monthly.used_tokens + incoming_tokens > monthly_limit:
         raise QuotaExceeded("monthly token quota exceeded")
 
@@ -28,7 +36,7 @@ async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, month
 async def record_usage(session: AsyncSession, client_id, prompt_tokens: int, completion_tokens: int) -> None:
     total = prompt_tokens + completion_tokens
     today = date.today()
-    for period_start, period_type in ((today, "daily"), (month_start(today), "monthly")):
+    for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
         counter = await _get_or_create_counter(session, client_id, period_start, period_type)
         counter.used_tokens += total
         counter.used_requests += 1

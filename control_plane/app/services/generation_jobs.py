@@ -117,6 +117,7 @@ async def prepare_async_chat_job(
             session,
             client.id,
             effective_plan.daily_token_quota,
+            effective_plan.weekly_token_quota,
             effective_plan.monthly_token_quota,
             incoming_tokens,
         )
@@ -133,6 +134,7 @@ async def prepare_async_chat_job(
     body["top_p"] = top_p
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
+    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
     monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
     estimated_request_cost = float(
         estimate_request_cost(
@@ -158,9 +160,11 @@ async def prepare_async_chat_job(
         session,
         client=client,
         daily_limit=effective_plan.daily_token_quota,
+        weekly_limit=effective_plan.weekly_token_quota,
         monthly_limit=effective_plan.monthly_token_quota,
         incoming_tokens=incoming_tokens,
         daily_used_before=daily_used_before,
+        weekly_used_before=weekly_used_before,
         monthly_used_before=monthly_used_before,
     )
     return PreparedAsyncChatJob(

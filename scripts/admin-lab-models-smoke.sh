@@ -48,24 +48,6 @@ auth "${BASE_URL}/admin/models/${GEMMA_ID}/test-prompt" \
   > "${TMP_DIR}/gemma-test.json"
 echo "OK: Gemma prompt test completed."
 
-BONSAI_ID="$(
-python3 - "${TMP_DIR}/models.json" <<'PY'
-import json, sys
-data = json.load(open(sys.argv[1], 'r', encoding='utf-8'))
-for item in data.get("registry", []):
-    if item.get("model_alias") in {"bonsai", "bonzai"}:
-        print(item["id"])
-        raise SystemExit
-PY
-)"
-if [[ -n "${BONSAI_ID}" ]]; then
-  echo "Testing prompt on Bonsai..."
-  auth "${BASE_URL}/admin/models/${BONSAI_ID}/test-prompt" \
-    -H "Content-Type: application/json" \
-    -d '{"prompt":"Responda com uma frase curta em portugues.","max_tokens":64,"temperature":0.2,"stream":false,"include_reasoning":false}' \
-    > "${TMP_DIR}/bonsai-test.json" || true
-fi
-
 BACKEND_ID="$(
 python3 - "${TMP_DIR}/models.json" <<'PY'
 import json, sys

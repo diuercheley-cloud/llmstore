@@ -51,7 +51,6 @@ def test_normalize_chat_completion_strips_qwen_think_blocks_by_default():
         "id": "chatcmpl-1",
         "object": "chat.completion",
         "created": 1,
-        "model": "bonsai",
         "choices": [
             {
                 "index": 0,

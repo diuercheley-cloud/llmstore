@@ -12,6 +12,7 @@ class ClientCreate(BaseModel):
     billing_plan_id: UUID | None = None
     rate_limit_per_minute: int = Field(default=5, ge=1, le=120)
     daily_token_quota: int = Field(default=20000, ge=1000, le=10_000_000)
+    weekly_token_quota: int = Field(default=100000, ge=1000, le=50_000_000)
     monthly_token_quota: int = Field(default=300000, ge=1000, le=100_000_000)
     max_context_tokens: int = Field(default=32768, ge=512, le=131072)
     max_output_tokens: int = Field(default=2048, ge=128, le=32768)
@@ -29,6 +30,7 @@ class ClientPatch(BaseModel):
     billing_plan_id: UUID | None = None
     rate_limit_per_minute: int | None = Field(default=None, ge=1, le=120)
     daily_token_quota: int | None = Field(default=None, ge=1000, le=10_000_000)
+    weekly_token_quota: int | None = Field(default=None, ge=1000, le=50_000_000)
     monthly_token_quota: int | None = Field(default=None, ge=1000, le=100_000_000)
     max_context_tokens: int | None = Field(default=None, ge=512, le=131072)
     max_output_tokens: int | None = Field(default=None, ge=128, le=32768)
@@ -48,6 +50,7 @@ class ClientRead(BaseModel):
     billing_plan_id: UUID | None
     rate_limit_per_minute: int
     daily_token_quota: int
+    weekly_token_quota: int
     monthly_token_quota: int
     max_context_tokens: int
     max_output_tokens: int
@@ -146,6 +149,7 @@ class BillingPlanCreate(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     rate_limit_per_minute: int = Field(ge=1, le=10000)
     daily_token_quota: int = Field(ge=1000, le=1_000_000_000)
+    weekly_token_quota: int = Field(ge=1000, le=5_000_000_000)
     monthly_token_quota: int = Field(ge=1000, le=10_000_000_000)
     max_output_tokens: int = Field(ge=1, le=32768)
     allow_streaming: bool = True
@@ -158,6 +162,7 @@ class BillingPlanPatch(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     rate_limit_per_minute: int | None = Field(default=None, ge=1, le=10000)
     daily_token_quota: int | None = Field(default=None, ge=1000, le=1_000_000_000)
+    weekly_token_quota: int | None = Field(default=None, ge=1000, le=5_000_000_000)
     monthly_token_quota: int | None = Field(default=None, ge=1000, le=10_000_000_000)
     max_output_tokens: int | None = Field(default=None, ge=1, le=32768)
     allow_streaming: bool | None = None
@@ -172,6 +177,7 @@ class BillingPlanRead(BaseModel):
     description: str | None
     rate_limit_per_minute: int
     daily_token_quota: int
+    weekly_token_quota: int
     monthly_token_quota: int
     max_output_tokens: int
     allow_streaming: bool
