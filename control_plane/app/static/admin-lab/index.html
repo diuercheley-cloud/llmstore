@@ -607,7 +607,34 @@
             <div id="tab-models" class="tab-pane hidden"><h2>Modelos</h2><div class="card" id="models-content"></div></div>
             <div id="tab-backends" class="tab-pane hidden"><h2>Backends</h2><div class="card" id="backends-content"></div></div>
             <div id="tab-cache" class="tab-pane hidden"><h2>Cache & Jobs</h2><div class="card" id="cache-content"></div></div>
-            <div id="tab-reports" class="tab-pane hidden"><h2>Exportar Relatórios</h2><div class="card" id="reports-content"></div></div>
+            <div id="tab-reports" class="tab-pane hidden">
+                <div class="card-header">
+                    <h2 class="card-title">Relatórios & Exportação</h2>
+                    <button class="btn-secondary" onclick="loadReports()">Atualizar</button>
+                </div>
+                
+                <div class="card">
+                    <h3 class="section-title" style="margin-top:0;">Exportar Dados</h3>
+                    <div class="toolbar">
+                        <button class="btn-secondary" onclick="exportData('clients', 'json')">Clientes (JSON)</button>
+                        <button class="btn-secondary" onclick="exportData('usage', 'csv')">Uso (CSV)</button>
+                        <button class="btn-secondary" onclick="exportData('invoices', 'json')">Faturas (JSON)</button>
+                        <button class="btn-secondary" onclick="exportData('payments', 'csv')">Pagamentos (CSV)</button>
+                        <button class="btn-secondary" onclick="exportData('request-logs', 'csv')">Logs de Request (CSV)</button>
+                        <button class="btn-secondary" onclick="exportData('security-events', 'json')">Segurança (JSON)</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="section-title" style="margin-top:0;">Resumo Mensal</h3>
+                    <div id="reports-monthly-content"><p class="muted">Carregando resumo...</p></div>
+                </div>
+
+                <div class="card">
+                    <h3 class="section-title" style="margin-top:0;">Invoice Preview</h3>
+                    <div id="reports-preview-content"><p class="muted">Carregando preview...</p></div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -773,6 +800,17 @@
             </div>
             <div id="logs-modal-status" class="muted" style="margin-bottom:0.75rem;"></div>
             <pre class="json-box" id="logs-modal-content" style="min-height:200px;max-height:60vh;overflow:auto;white-space:pre-wrap;">Carregando logs...</pre>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalhes do Job -->
+    <div id="modal-job-detail" class="modal-backdrop">
+        <div class="modal" style="max-width:800px;">
+            <div class="modal-header">
+                <h3>Detalhes do Job</h3>
+                <button class="btn-secondary" onclick="closeModal('modal-job-detail')">X</button>
+            </div>
+            <pre class="json-box" id="job-detail-content" style="max-height:70vh;overflow:auto;white-space:pre-wrap;"></pre>
         </div>
     </div>
 
@@ -1073,6 +1111,7 @@
         async function loadModels() { await loadTab('models'); }
         async function loadBackends() { await loadTab('backends'); }
         async function loadCache() { await loadTab('cache'); }
+        async function loadReportsShortcut() { await loadReports(); }
 
         async function apiFetch(path, method = 'GET', body = null, extraHeaders = {}) {
             const headers = { 'X-Admin-Token': state.token, ...extraHeaders };
@@ -1134,12 +1173,19 @@
         }
 
         function escapeHtml(value) {
-            return String(value ?? '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#39;');
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function viewJobDetail(id) {
+            const job = (state.jobs?.jobs || []).find((j) => j.id === id);
+            if (!job) return;
+            document.getElementById("job-detail-content").textContent = JSON.stringify(job, null, 2);
+            openModal("modal-job-detail");
         }
 
         function selectedValues(selectEl) {
@@ -1374,6 +1420,7 @@
                             <th>Streaming</th>
                             <th>RPM</th>
                             <th>Daily</th>
+                            <th>Weekly</th>
                             <th>Monthly</th>
                             <th>Max Output</th>
                             <th>Status</th>
@@ -1388,6 +1435,7 @@
                                 <td>${plan.allow_streaming ? 'yes' : 'no'}</td>
                                 <td>${plan.rate_limit_per_minute}</td>
                                 <td>${plan.daily_token_quota.toLocaleString()}</td>
+                                <td>${plan.weekly_token_quota.toLocaleString()}</td>
                                 <td>${plan.monthly_token_quota.toLocaleString()}</td>
                                 <td>${plan.max_output_tokens}</td>
                                 <td><span class="pill pill-${plan.is_active ? 'success' : 'muted'}">${plan.is_active ? 'active' : 'inactive'}</span></td>
@@ -1613,7 +1661,52 @@
         function renderCache() {
             const stats = state.cacheStats || {};
             const jobs = state.jobs || { summary: {}, jobs: [] };
-            document.getElementById('cache-content').innerHTML = `
+            const jobsList = jobs.jobs || [];
+
+            let jobsHtml = "";
+            if (jobsList.length === 0) {
+                jobsHtml = "<p class=\"muted\">Nenhum job recente encontrado.</p>";
+            } else {
+                jobsHtml = `
+                <table style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Backend</th>
+                            <th>Status</th>
+                            <th>Model</th>
+                            <th>Tokens (P/C)</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${jobsList.map((job) => {
+                            const statusColor = job.status === "completed" ? "success" : (job.status === "failed" ? "danger" : "info");
+                            const response = job.response || {};
+                            const usage = response.usage || {};
+                            const tokens = `${usage.prompt_tokens || "-"}/${usage.completion_tokens || "-"}`;
+
+                            return `
+                                <tr>
+                                    <td><code title="${job.id}">${job.id.substring(0, 8)}</code></td>
+                                    <td><span class="pill pill-info">${job.backend_name || "N/A"}</span></td>
+                                    <td><span class="pill pill-${statusColor}">${job.status}</span></td>
+                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${job.requested_model}">${job.requested_model}</td>
+                                    <td>${tokens}</td>
+                                    <td>${new Date(job.created_at).toLocaleString()}</td>
+                                    <td>
+                                        <button class="btn-secondary" onclick="viewJobDetail('${job.id}')">Ver JSON</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join("")}
+                    </tbody>
+                </table>
+                `;
+            }
+
+            document.getElementById("cache-content").innerHTML = `
                 <div class="toolbar">
                     <button class="btn-danger" onclick="clearCache()">Limpar cache</button>
                     <button class="btn-secondary" onclick="runCacheValidation()">Teste de cache</button>
@@ -1626,35 +1719,43 @@
                 </div>
                 <h3 class="section-title">Jobs async</h3>
                 <div class="muted" style="margin-bottom:1rem;">Queue depth: ${jobs.summary.queue_depth_redis || jobs.summary.queue_size || 0} | Running: ${jobs.summary.running || jobs.summary.processing_total || 0}</div>
-                <pre class="json-box">${escapeHtml(JSON.stringify(jobs.jobs.slice(0, 5), null, 2))}</pre>
+                ${jobsHtml}
             `;
         }
 
         async function loadReports() {
-            const [monthlyReport, invoicePreview] = await Promise.all([
-                apiFetch('/admin/reports/monthly'),
-                apiFetch('/admin/billing/invoices/preview'),
-            ]);
-            state.monthlyReport = monthlyReport;
-            state.invoicePreview = invoicePreview;
-            document.getElementById('reports-content').innerHTML = `
-                <div class="detail-list" style="margin-bottom:1rem;">
-                    <div class="detail-item"><strong>Mês</strong>${monthlyReport.month}</div>
-                    <div class="detail-item"><strong>Forecast</strong>${currency(monthlyReport.forecast_revenue_usd)}</div>
-                    <div class="detail-item"><strong>Paid</strong>${currency(monthlyReport.paid_revenue_usd)}</div>
-                    <div class="detail-item"><strong>Delinquency</strong>${currency(monthlyReport.delinquency_usd)}</div>
-                </div>
-                <div class="toolbar">
-                    <button class="btn-secondary" onclick="exportData('clients', 'json')">Clients JSON</button>
-                    <button class="btn-secondary" onclick="exportData('usage', 'csv')">Usage CSV</button>
-                    <button class="btn-secondary" onclick="exportData('invoices', 'json')">Invoices JSON</button>
-                    <button class="btn-secondary" onclick="exportData('payments', 'csv')">Payments CSV</button>
-                    <button class="btn-secondary" onclick="exportData('request-logs', 'csv')">Request logs CSV</button>
-                    <button class="btn-secondary" onclick="exportData('security-events', 'json')">Security JSON</button>
-                </div>
-                <h3 class="section-title">Invoice preview</h3>
-                <pre class="json-box">${escapeHtml(JSON.stringify(invoicePreview, null, 2))}</pre>
-            `;
+            const monthlyContainer = document.getElementById('reports-monthly-content');
+            const previewContainer = document.getElementById('reports-preview-content');
+            
+            monthlyContainer.innerHTML = '<p class="muted">Carregando resumo...</p>';
+            previewContainer.innerHTML = '<p class="muted">Carregando preview...</p>';
+
+            try {
+                const [monthlyReport, invoicePreview] = await Promise.all([
+                    apiFetch('/admin/reports/monthly'),
+                    apiFetch('/admin/billing/invoices/preview'),
+                ]);
+                state.monthlyReport = monthlyReport;
+                state.invoicePreview = invoicePreview;
+                
+                monthlyContainer.innerHTML = `
+                    <div class="detail-list">
+                        <div class="detail-item"><strong>Mês</strong>${monthlyReport.month}</div>
+                        <div class="detail-item"><strong>Forecast</strong>${currency(monthlyReport.forecast_revenue_usd)}</div>
+                        <div class="detail-item"><strong>Paid</strong>${currency(monthlyReport.paid_revenue_usd)}</div>
+                        <div class="detail-item"><strong>Delinquency</strong>${currency(monthlyReport.delinquency_usd)}</div>
+                    </div>
+                `;
+
+                previewContainer.innerHTML = `
+                    <pre class="json-box">${escapeHtml(JSON.stringify(invoicePreview, null, 2))}</pre>
+                `;
+            } catch (err) {
+                const errorHtml = `<p style="color: var(--danger)">Erro: ${escapeHtml(err.message)}</p>`;
+                monthlyContainer.innerHTML = errorHtml;
+                previewContainer.innerHTML = errorHtml;
+                toast(`Falha ao carregar relatórios: ${err.message}`, 'error');
+            }
         }
 
         async function loadTestRunner() {
@@ -2246,7 +2347,33 @@
         }
 
         async function exportData(type, format = 'json') {
-            window.open(`/admin/export/${type}?format=${format}`, '_blank');
+            try {
+                const res = await fetch(`/admin/export/${type}?format=${format}`, {
+                    headers: { 'X-Admin-Token': state.token }
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    let detail = `Erro HTTP ${res.status}`;
+                    try {
+                        const data = JSON.parse(text);
+                        detail = data.detail || data.message || detail;
+                    } catch (_) {}
+                    throw new Error(detail);
+                }
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}-${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                }, 100);
+            } catch (err) {
+                toast(`Erro ao exportar: ${err.message}`, 'error');
+            }
         }
 
         async function probeInvalidAdmin() {

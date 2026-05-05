@@ -2143,7 +2143,7 @@ async def run_test_command(payload: TestRunRequest):
             capture_output=True,
             text=True,
             timeout=60,
-            cwd=str(Path(__file__).resolve().parents[3]) # project root
+            cwd=str(Path(__file__).resolve().parents[2]) # project root (/app)
         )
         duration = time.time() - start_time
         return TestRunResponse(
@@ -2181,7 +2181,7 @@ async def run_test_command(payload: TestRunRequest):
         )
 
 @router.get("/usage/{client_id}/summary")
-async def get_usage_summary(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     from app.models.client import Client
     from app.models.usage_record import UsageRecord
     from sqlalchemy.orm import selectinload

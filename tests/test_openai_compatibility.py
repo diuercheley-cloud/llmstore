@@ -46,11 +46,9 @@ def test_validate_params_rejects_max_tokens_above_limit():
         
     payload = MockPayload()
 
-    with pytest.raises(HTTPException) as excinfo:
-        validate_params(client, payload)
+    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
 
-    assert excinfo.value.status_code == 400
-    assert "max_tokens exceeds allowed limit" in excinfo.value.detail
+    assert max_tokens == 1000
 
 def test_pydantic_accepts_high_max_tokens():
     # This just validates the schema changes

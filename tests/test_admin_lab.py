@@ -167,6 +167,12 @@ async def test_patch_billing_plan(client: AsyncClient, admin_headers: dict):
 
 @pytest.mark.asyncio
 async def test_test_runner_protection(client: AsyncClient, admin_headers: dict):
-    # By default, TEST_TOOLS_ENABLED is False in Settings
-    res = await client.get("/admin/test/commands", headers=admin_headers)
-    assert res.status_code == 403
+    from app.core.config import get_settings
+    settings = get_settings()
+    previous = settings.test_tools_enabled
+    settings.test_tools_enabled = False
+    try:
+        res = await client.get("/admin/test/commands", headers=admin_headers)
+        assert res.status_code == 403
+    finally:
+        settings.test_tools_enabled = previous

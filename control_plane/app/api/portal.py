@@ -325,7 +325,7 @@ async def portal_test_chat(
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:
