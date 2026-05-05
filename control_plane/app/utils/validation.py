@@ -24,11 +24,10 @@ def validate_params(client: Client, payload):
         settings.max_completion_tokens
     )
     if requested_max_tokens > limit:
-        raise HTTPException(
-            status_code=400,
-            detail=f"max_tokens exceeds allowed limit ({limit}) for this client"
-        )
-    max_tokens = requested_max_tokens
+        # Cap instead of raising, as requested for optimization
+        max_tokens = limit
+    else:
+        max_tokens = requested_max_tokens
     
     temperature = payload.temperature 
     if temperature is None:

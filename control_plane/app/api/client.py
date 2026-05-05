@@ -25,6 +25,7 @@ from app.services.audit import log_request
 from app.services.auth import require_client
 from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
 from app.services.generation_jobs import cancel_job, create_chat_generation_job, enqueue_generation_job, get_job_for_client, serialize_job
+from app.services.context_manager import ContextManager, get_context_manager
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import (
     get_effective_allowed_models,
@@ -205,6 +206,7 @@ async def chat_completions(
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
+    context_manager: ContextManager = Depends(get_context_manager),
 ):
     print(f"DEBUG API: Received chat completion request for model {payload.model}")
     """
@@ -233,11 +235,6 @@ async def chat_completions(
     # Normalize messages (handling content parts)
     messages = normalize_messages([item.model_dump() for item in payload.messages])
     
-    prompt_tokens = estimate_prompt_tokens(messages=messages)
-    if prompt_tokens > client.max_context_tokens:
-        raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
-    
     # Apply Client System Prompt if available
     if client.system_prompt:
         # Check if there is already a system message
@@ -249,6 +246,35 @@ async def chat_completions(
         else:
             messages.insert(0, {"role": "system", "content": client.system_prompt})
 
+    # Manage Context (limiting system, history, tokens)
+    messages, max_tokens_capped, context_metrics = context_manager.manage(
+        messages=messages,
+        requested_max_tokens=payload.max_tokens,
+        model_id=selected_model.model_id,
+    )
+
+    prompt_tokens = context_metrics["final_tokens_estimate"]
+    if prompt_tokens > client.max_context_tokens:
+        raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
+    
+    # Still call validate_params for plan and basic params, but use capped max_tokens if needed
+    _, temperature, top_p, effective_plan = validate_params(client, payload)
+    max_tokens = max_tokens_capped
+
+    # Improve behavior for local small models
+    if payload.temperature is None and selected_model.provider in {"llama.cpp", "ollama"}:
+        # Use cooler temperature for code/instruction tasks on local models
+        temperature = 0.4
+    if payload.top_p is None and selected_model.provider in {"llama.cpp", "ollama"}:
+        top_p = 0.9
+
+    logger.info(
+        "Inference context optimized",
+        extra={
+            "extra_data": context_metrics
+        }
+    )
+
     # Apply Model Prompt Template if available
     if selected_model.prompt_template:
         # Simple template replacement: assume the template has a {{messages}} placeholder or similar.
@@ -259,10 +285,6 @@ async def chat_completions(
         # Let's assume for now we might add a wrapper or instruction to the system prompt.
         pass
 
-    prompt_tokens = estimate_prompt_tokens(messages=messages)
-    if prompt_tokens > client.max_context_tokens:
-        raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    
     incoming_tokens = prompt_tokens + max_tokens
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")

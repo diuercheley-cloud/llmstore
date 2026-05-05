@@ -23,6 +23,7 @@ from app.schemas.inference import ChatCompletionRequest
 from app.services.audit import log_request
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.context_manager import get_context_manager
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import plan_routing_order, resolve_requested_model
 from app.services.quota import QuotaExceeded, ensure_quota, record_usage
@@ -106,10 +107,35 @@ async def prepare_async_chat_job(
     # Normalize messages (handling content parts)
     messages = normalize_messages([item.model_dump() for item in payload.messages])
     
-    prompt_tokens = estimate_prompt_tokens(messages=messages)
+    # Apply Client System Prompt if available
+    if client.system_prompt:
+        system_msg_idx = next((i for i, m in enumerate(messages) if m["role"] == "system"), None)
+        if system_msg_idx is not None:
+            messages[system_msg_idx]["content"] = f"{client.system_prompt}\n\n{messages[system_msg_idx]['content']}"
+        else:
+            messages.insert(0, {"role": "system", "content": client.system_prompt})
+
+    # Manage Context
+    cm = get_context_manager()
+    messages, max_tokens_capped, context_metrics = cm.manage(
+        messages=messages,
+        requested_max_tokens=payload.max_tokens,
+        model_id=selected_model.model_id,
+    )
+
+    prompt_tokens = context_metrics["final_tokens_estimate"]
     if prompt_tokens > client.max_context_tokens:
-        raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
+        raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
+
+    import logging
+    logging.getLogger(__name__).info(
+        "Async inference context optimized",
+        extra={"extra_data": context_metrics}
+    )
+
     max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
+    max_tokens = max_tokens_capped
+    
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)

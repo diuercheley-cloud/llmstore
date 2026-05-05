@@ -72,6 +72,10 @@ class Settings(BaseSettings):
     test_tools_enabled: bool = Field(default=False, alias="TEST_TOOLS_ENABLED")
     jwt_secret: str = Field(default="change-me-at-all-costs", alias="JWT_SECRET")
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
+    inference_max_context_tokens: int = Field(default=4096, alias="INFERENCE_MAX_CONTEXT_TOKENS")
+    inference_max_completion_tokens: int = Field(default=512, alias="INFERENCE_MAX_COMPLETION_TOKENS")
+    inference_max_system_chars: int = Field(default=2500, alias="INFERENCE_MAX_SYSTEM_CHARS")
+    inference_max_history_messages: int = Field(default=8, alias="INFERENCE_MAX_HISTORY_MESSAGES")
 
     @property
     def cors_origins(self) -> list[str]:

@@ -179,6 +179,33 @@ curl -fsS -X POST http://localhost:18080/admin/api-keys/UUID_DA_KEY/rotate \
 
 A resposta traz a nova chave em plaintext uma única vez e revoga a anterior.
 
+## Otimização de Inferência e Diagnóstico
+
+### Gestão de Contexto
+O control-plane agora gerencia ativamente o contexto enviado ao data-plane para garantir estabilidade e foco, especialmente para modelos locais pequenos.
+
+As variáveis de controle são:
+- `INFERENCE_MAX_CONTEXT_TOKENS` (default 4096)
+- `INFERENCE_MAX_COMPLETION_TOKENS` (default 512)
+- `INFERENCE_MAX_SYSTEM_CHARS` (default 2500)
+- `INFERENCE_MAX_HISTORY_MESSAGES` (default 8)
+
+### Diagnóstico de Logs
+Sempre que uma request de chat é processada, um log estruturado é gerado com a tag `Inference context optimized`. Você pode consultar métricas de truncamento:
+
+```bash
+docker compose logs control-plane | grep "Inference context optimized"
+```
+
+O log contém:
+- `original_message_count` vs `final_message_count`
+- `estimated_context_tokens_before` vs `after`
+- `max_tokens_before` vs `after` (capping)
+- `truncated`: boolean indicando se houve corte de histórico ou system prompt.
+
+### Defaults para Modelos Locais
+Para backends `llama.cpp` e `ollama`, o sistema aplica automaticamente `temperature: 0.4` e `top_p: 0.9` se o cliente não enviar valores específicos. Isso evita instabilidade em tarefas de instrução.
+
 Rotacionar `ADMIN_TOKEN`:
 
 1. editar `.env.local`

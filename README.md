@@ -615,6 +615,26 @@ docker compose config
 - Se `deploy.resources` não for honrado pelo seu Compose, use Docker Desktop recente com suporte a GPU ou ajuste para runtime NVIDIA conforme sua instalação.
 - Se usar `STACK_MODE=prod`, confirme que apenas o reverse proxy está exposto externamente.
 
+## Gestão de Contexto e Otimização
+
+O sistema inclui uma camada de gestão de contexto para garantir a qualidade das respostas e evitar que o modelo perca o foco, especialmente em modelos locais menores.
+
+### Configurações de Otimização
+
+As seguintes variáveis de ambiente (em `.env`) controlam os limites automáticos:
+
+- `INFERENCE_MAX_CONTEXT_TOKENS`: Limite máximo de tokens de contexto (default: 4096).
+- `INFERENCE_MAX_COMPLETION_TOKENS`: Limite para tokens de resposta e teto (cap) para requests (default: 512).
+- `INFERENCE_MAX_SYSTEM_CHARS`: Tamanho máximo do system prompt (default: 2500).
+- `INFERENCE_MAX_HISTORY_MESSAGES`: Número máximo de mensagens do histórico preservadas (default: 8).
+
+### Comportamento Automático
+
+- **Consolidação de System Prompt:** Múltiplas mensagens de sistema são unificadas e truncadas se necessário.
+- **Truncamento Inteligente:** Preserva sempre a mensagem de sistema e a última pergunta do usuário, descartando histórico intermediário antigo.
+- **Capping de max_tokens:** Requests com `max_tokens` excessivo são capadas automaticamente para o limite de segurança.
+- **Defaults Estáveis:** Aplica `temperature: 0.4` e `top_p: 0.9` para modelos locais (`llama.cpp`, `ollama`) se não especificados na request.
+
 ## Limitações conhecidas
 
 - `POST /admin/models/reload` atualiza o registry e revalida o data plane, mas troca física de modelo ainda exige reiniciar o container do data plane.
