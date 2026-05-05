@@ -1373,7 +1373,7 @@
                         <td>
                             <div class="actions-row">
                                 ${!key.revoked_at ? `<button class="btn-secondary" onclick="rotateKey('${key.id}')">Rotacionar</button>` : ''}
-                                <button class="btn-danger" onclick="revokeKey('${key.id}')">Revogar</button>
+                                <button class="btn-danger" onclick="deleteKey('${key.id}', ${!!key.revoked_at})">Deletar</button>
                             </div>
                         </td>
                     </tr>
@@ -1747,8 +1747,39 @@
                     </div>
                 `;
 
+                const clientRows = invoicePreview.clients.map((c) => {
+                    const p = c.invoice_preview;
+                    return `
+                        <tr>
+                            <td>${c.name}<div class="muted">${c.billing_plan_code}</div></td>
+                            <td>${currency(p.monthly_price)}</td>
+                            <td>${p.used_tokens.toLocaleString()} / ${p.included_tokens.toLocaleString()}</td>
+                            <td>${p.overage_tokens.toLocaleString()} (${currency(p.overage_cost)})</td>
+                            <td><strong>${currency(p.total_estimated)}</strong></td>
+                        </tr>
+                    `;
+                }).join('');
+
                 previewContainer.innerHTML = `
-                    <pre class="json-box">${escapeHtml(JSON.stringify(invoicePreview, null, 2))}</pre>
+                    <div class="detail-list" style="margin-bottom:1rem;">
+                        <div class="detail-item"><strong>Gerado em</strong>${fmtDate(invoicePreview.generated_at)}</div>
+                        <div class="detail-item"><strong>Total Clientes</strong>${invoicePreview.totals.clients_total}</div>
+                        <div class="detail-item"><strong>Receita Estimada</strong>${currency(invoicePreview.totals.estimated_cost_usd)}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente / Plano</th>
+                                <th>Preço Base</th>
+                                <th>Tokens (Uso/Franquia)</th>
+                                <th>Excedente (Custo)</th>
+                                <th>Total Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${clientRows || '<tr><td colspan="5">Nenhum dado de preview disponível.</td></tr>'}
+                        </tbody>
+                    </table>
                 `;
             } catch (err) {
                 const errorHtml = `<p style="color: var(--danger)">Erro: ${escapeHtml(err.message)}</p>`;
@@ -1860,10 +1891,11 @@
             revealSecret('API key rotacionada', res.api_key.api_key);
         }
 
-        async function revokeKey(id) {
-            if (!confirm('Revogar esta API key?')) return;
+        async function deleteKey(id, alreadyRevoked) {
+            const msg = alreadyRevoked ? 'Excluir definitivamente esta API key revogada?' : 'Revogar e excluir esta API key?';
+            if (!confirm(msg)) return;
             await apiFetch(`/admin/api-keys/${id}`, 'DELETE');
-            toast('API key revogada.', 'success');
+            toast('API key removida.', 'success');
             await loadTab('api-keys');
         }
 

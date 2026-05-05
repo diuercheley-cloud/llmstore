@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 init_stack_env
 
-BASE_URL="$(default_base_url)"
+BASE_URL="${BASE_URL:-$(default_base_url)}"
 API_KEY="${API_KEY:-${1:-}}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-}"
 

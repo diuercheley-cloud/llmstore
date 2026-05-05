@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 init_stack_env
 
-BASE_URL="$(default_base_url)"
+BASE_URL="${BASE_URL:-$(default_base_url)}"
 
 check_ui_pattern() {
   local path="$1"

@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/common.sh"
 init_stack_env
 
 printf '=== USER BEHAVIOR REPORT ===\n'
-BASE_URL="$(default_base_url)"
+BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-}"
 
 if [[ -z "${ADMIN_TOKEN}" ]]; then

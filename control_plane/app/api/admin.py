@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import time
 from datetime import date, datetime
@@ -2137,13 +2138,17 @@ async def run_test_command(payload: TestRunRequest):
     try:
         # Run command with 60s timeout
         # Using shell=True because we trust WHITELISTED_COMMANDS and it's local test only
+        env = os.environ.copy()
+        env["BASE_URL"] = "http://localhost:8080"
+
         result = subprocess.run(
             cmd_info["command"],
             shell=True,
             capture_output=True,
             text=True,
             timeout=60,
-            cwd=str(Path(__file__).resolve().parents[2]) # project root (/app)
+            cwd=str(Path(__file__).resolve().parents[2]), # project root (/app)
+            env=env
         )
         duration = time.time() - start_time
         return TestRunResponse(
