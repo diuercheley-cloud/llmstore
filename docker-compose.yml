@@ -125,6 +125,13 @@ services:
       - ./models:/models:ro
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, utility]
     restart: unless-stopped
     networks:
       - control_net

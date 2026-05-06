@@ -32,3 +32,6 @@ tmp_key.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# RAG
+data/rag_uploads/*.pdf

@@ -142,6 +142,18 @@ async def admin_lab():
     return FileResponse(static_file)
 
 
+@router.get("/monitoring", include_in_schema=False)
+async def monitoring_dashboard():
+    if settings.public_exposure:
+        return Response(
+            content='{"detail":"monitoring disabled in public exposure mode"}',
+            media_type="application/json",
+            status_code=404,
+        )
+    static_file = Path(__file__).resolve().parents[1] / "static" / "monitoring" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/client-portal", include_in_schema=False)
 async def client_portal():
     static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"

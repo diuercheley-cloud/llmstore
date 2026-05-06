@@ -5,6 +5,7 @@ import shutil
 import os
 import time
 import json
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -469,37 +470,68 @@ async def get_system_resources():
     process = psutil.Process(os.getpid())
     
     gpu_info = {"available": False, "reason": "nvidia-smi check pending"}
+    
+    def parse_smi_output(output):
+        lines = output.strip().split('\n')
+        if lines and lines[0]:
+            parts = [p.strip() for p in lines[0].split(',')]
+            if len(parts) >= 7:
+                def parse_int(idx):
+                    val = parts[idx]
+                    if val in ['[Not Supported]', '[Function Not Found]'] or not val.strip().replace('-','').isdigit():
+                        return 0
+                    return int(val)
+                return {
+                    "available": True,
+                    "name": parts[0],
+                    "vram_total_mb": parse_int(1),
+                    "vram_used_mb": parse_int(2),
+                    "vram_free_mb": parse_int(3),
+                    "utilization_percent": parse_int(4),
+                    "temperature_c": parse_int(5),
+                    "power_draw_w": parts[6]
+                }
+        return None
+
+    # Tenta local primeiro (com timeout curto)
+    local_success = False
     try:
-        result = subprocess.run(
+        res = subprocess.run(
             ["nvidia-smi", "--query-gpu=name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=1.0
+            capture_output=True, text=True, timeout=0.5
         )
-        if result.returncode == 0:
-            lines = result.stdout.strip().split('\n')
-            if lines and lines[0]:
-                parts = [p.strip() for p in lines[0].split(',')]
-                if len(parts) >= 7:
-                    gpu_info = {
-                        "available": True,
-                        "name": parts[0],
-                        "vram_total_mb": int(parts[1]) if parts[1] != '[Not Supported]' else 0,
-                        "vram_used_mb": int(parts[2]) if parts[2] != '[Not Supported]' else 0,
-                        "vram_free_mb": int(parts[3]) if parts[3] != '[Not Supported]' else 0,
-                        "utilization_percent": int(parts[4]) if parts[4] != '[Not Supported]' else 0,
-                        "temperature_c": int(parts[5]) if parts[5] != '[Not Supported]' else 0,
-                        "power_draw_w": parts[6]
-                    }
-        else:
-            gpu_info["reason"] = "nvidia-smi returned non-zero code"
-    except FileNotFoundError:
-        gpu_info["reason"] = "nvidia-smi not found"
-    except subprocess.TimeoutExpired:
-        gpu_info["reason"] = "nvidia-smi timeout"
-    except Exception as e:
-        gpu_info["reason"] = f"Unexpected error: {str(e)}"
+        if res.returncode == 0:
+            parsed = parse_smi_output(res.stdout)
+            if parsed:
+                gpu_info = parsed
+                local_success = True
+    except:
+        pass
+
+    # Se local falhou ou não disponível, tenta via Docker exec no container do data-plane
+    if not local_success:
+        try:
+            import docker
+            client = docker.from_env()
+            # Procura o container do data-plane (gemma é o padrão)
+            containers = client.containers.list(filters={"name": "data-plane-gemma"})
+            if containers:
+                target = containers[0]
+                exec_res = target.exec_run("nvidia-smi --query-gpu=name,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu,power.draw --format=csv,noheader,nounits")
+                if exec_res.exit_code == 0:
+                    parsed = parse_smi_output(exec_res.output.decode('utf-8'))
+                    if parsed: gpu_info = parsed
+                else:
+                    gpu_info["reason"] = f"Remote nvidia-smi failed (code {exec_res.exit_code})"
+            else:
+                gpu_info["reason"] = "data-plane-gemma container not found"
+        except ImportError:
+            gpu_info["reason"] = "docker-py not installed"
+        except Exception as e:
+            gpu_info["reason"] = f"Docker fallback error: {str(e)}"
 
     return {
-        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "cpu_percent": psutil.cpu_percent(interval=1.0),
         "memory": {
             "total_mb": mem.total // (1024*1024),
             "used_mb": mem.used // (1024*1024),
