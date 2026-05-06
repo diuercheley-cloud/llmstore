@@ -56,6 +56,8 @@ from app.schemas.admin import (
     PaymentCreate,
     PaymentRead,
     PricingRuleRead,
+    RoutingExplainRequest,
+    RoutingExplainResponse,
     TestCommand,
     TestRunRequest,
     TestRunResponse,
@@ -117,9 +119,12 @@ from app.services.generation_jobs import get_admin_job_snapshot
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import (
     MODEL_REGISTRY_ROUTING_LOADS,
+    apply_routing_policy,
     ensure_model_routing_loaded,
     get_model_by_id,
+    get_routing_candidates,
     plan_routing_order,
+    resolve_requested_model,
     serialize_routing_table,
 )
 from app.services.model_registry import ensure_default_model
@@ -215,6 +220,8 @@ def _serialize_api_key_created(api_key: ApiKey, plaintext: str) -> ApiKeyCreated
         key_prefix=api_key.key_prefix,
         api_key=plaintext,
         scopes=json.loads(api_key.scopes_json) if api_key.scopes_json else None,
+        expires_at=api_key.expires_at,
+        allowed_ips=json.loads(api_key.allowed_ips_json) if api_key.allowed_ips_json else None,
         created_at=api_key.created_at,
     )
 
@@ -223,6 +230,8 @@ def _serialize_billing_plan_payload(payload: BillingPlanCreate) -> dict:
     plan_data = payload.model_dump()
     allowed_models = plan_data.pop("allowed_models", None)
     plan_data["allowed_models_json"] = json.dumps(allowed_models) if allowed_models is not None else None
+    routing_policy = plan_data.pop("routing_policy", None)
+    plan_data["routing_policy_json"] = json.dumps(routing_policy) if routing_policy is not None else None
     return plan_data
 
 
@@ -368,6 +377,9 @@ async def patch_billing_plan(
     if "allowed_models" in patch_data:
         allowed_models = patch_data.pop("allowed_models")
         patch_data["allowed_models_json"] = json.dumps(allowed_models) if allowed_models is not None else None
+    if "routing_policy" in patch_data:
+        routing_policy = patch_data.pop("routing_policy")
+        patch_data["routing_policy_json"] = json.dumps(routing_policy) if routing_policy is not None else None
     for key, value in patch_data.items():
         setattr(plan, key, value)
     plan.updated_at = utc_now()
@@ -488,6 +500,8 @@ async def create_api_key(payload: ApiKeyCreate, session: AsyncSession = Depends(
         key_prefix=short_prefix(plaintext),
         key_hash=hash_secret(plaintext),
         scopes_json=json.dumps(payload.scopes) if payload.scopes else None,
+        expires_at=payload.expires_at,
+        allowed_ips_json=json.dumps(payload.allowed_ips) if payload.allowed_ips else None,
     )
     session.add(api_key)
     await session.commit()
@@ -508,8 +522,12 @@ async def rotate_api_key(api_key_id: uuid.UUID, session: AsyncSession = Depends(
         name=f"{current_key.name}-rotated",
         key_prefix=short_prefix(plaintext),
         key_hash=hash_secret(plaintext),
+        expires_at=current_key.expires_at,
+        allowed_ips_json=current_key.allowed_ips_json,
+        scopes_json=current_key.scopes_json,
     )
     current_key.revoked_at = utc_now()
+    current_key.is_active = False
     session.add(rotated_key)
     await session.commit()
     await session.refresh(rotated_key)
@@ -544,9 +562,13 @@ async def list_api_keys(session: AsyncSession = Depends(get_db_session)):
             "plan_name": plan_name or "N/A",
             "name": api_key.name,
             "key_prefix": api_key.key_prefix,
+            "is_active": api_key.is_active,
             "created_at": api_key.created_at.isoformat(),
             "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
             "revoked_at": api_key.revoked_at.isoformat() if api_key.revoked_at else None,
+            "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+            "allowed_ips": json.loads(api_key.allowed_ips_json) if api_key.allowed_ips_json else None,
+            "scopes": json.loads(api_key.scopes_json) if api_key.scopes_json else None,
         }
         for api_key, client_name, client_created_at, plan_name in rows
     ]
@@ -558,6 +580,7 @@ async def revoke_api_key(api_key_id: uuid.UUID, session: AsyncSession = Depends(
     if api_key is None:
         raise HTTPException(status_code=404, detail="api key not found")
     api_key.revoked_at = utc_now()
+    api_key.is_active = False
     await session.commit()
 
 
@@ -789,6 +812,63 @@ async def get_revenue_summary(session: AsyncSession = Depends(get_db_session)):
     }
 
 
+@router.get("/rag/usage")
+async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
+    from app.models.rag_document import RAGDocument
+    from app.models.rag_usage_event import RagUsageEvent
+    from app.services.quota import month_start
+    from datetime import date
+    
+    # Usage by client
+    stmt = (
+        select(
+            Client.id,
+            Client.name,
+            func.count(RAGDocument.id).label("doc_count"),
+            func.coalesce(func.sum(RAGDocument.file_size_bytes), 0).label("storage_bytes")
+        )
+        .outerjoin(RAGDocument, RAGDocument.client_id == Client.id)
+        .group_by(Client.id, Client.name)
+    )
+    results = (await session.execute(stmt)).all()
+    
+    from datetime import timezone, datetime
+    start_of_month = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
+    
+    usage_stmt = (
+        select(
+            RagUsageEvent.client_id,
+            RagUsageEvent.event_type,
+            func.sum(RagUsageEvent.quantity).label("total_quantity")
+        )
+        .where(RagUsageEvent.created_at >= start_of_month)
+        .group_by(RagUsageEvent.client_id, RagUsageEvent.event_type)
+    )
+    usage_results = (await session.execute(usage_stmt)).all()
+    
+    client_usage = {}
+    for row in usage_results:
+        cid = str(row.client_id)
+        if cid not in client_usage:
+            client_usage[cid] = {"queries": 0, "pages": 0}
+        if row.event_type == "rag_query":
+            client_usage[cid]["queries"] = row.total_quantity
+        elif row.event_type == "pages_processed":
+            client_usage[cid]["pages"] = row.total_quantity
+            
+    return [
+        {
+            "client_id": str(r.id),
+            "client_name": r.name,
+            "documents_count": r.doc_count,
+            "storage_mb": round(r.storage_bytes / (1024 * 1024), 2),
+            "queries_month": client_usage.get(str(r.id), {}).get("queries", 0),
+            "pages_month": client_usage.get(str(r.id), {}).get("pages", 0)
+        }
+        for r in results
+    ]
+
+
 @router.get("/billing/invoices/preview")
 async def preview_invoices(session: AsyncSession = Depends(get_db_session)):
     await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
@@ -951,13 +1031,20 @@ async def list_invoices(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.patch("/billing/invoices/{invoice_id}/mark-overdue")
-async def mark_invoice_overdue(invoice_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def mark_invoice_overdue(
+    invoice_id: uuid.UUID,
+    simulate_suspension: bool = Query(default=False),
+    session: AsyncSession = Depends(get_db_session)
+):
+    from datetime import timedelta
     invoice = await session.get(BillingInvoice, invoice_id)
     if invoice is None:
         raise HTTPException(status_code=404, detail="invoice not found")
     if invoice.status == "paid":
         raise HTTPException(status_code=409, detail="paid invoice cannot be marked overdue")
     invoice.status = "overdue"
+    if simulate_suspension:
+        invoice.due_at = utc_now() - timedelta(days=settings.billing_suspend_after_days + 1)
     invoice.updated_at = utc_now()
     await session.commit()
     await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
@@ -1339,6 +1426,53 @@ async def create_backend(payload: InferenceBackendCreate, session: AsyncSession 
         "current_running": backend.current_running,
         "metadata_json": backend.metadata_json,
     }
+
+
+@router.post("/backends/test-connection")
+async def test_backend_connection(
+    payload: InferenceBackendCreate,
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    """
+    Testa a conexão com um backend antes de cadastrá-lo.
+    """
+    base_url = payload.backend_url
+    api_key = None
+    if payload.metadata_json:
+        try:
+            metadata = json.loads(payload.metadata_json)
+            api_key = metadata.get("api_key")
+        except json.JSONDecodeError:
+            pass
+            
+    ok = await proxy.health_url(base_url, payload.healthcheck_path)
+    if not ok and payload.provider == "openai_compatible":
+         # Try common fallbacks
+         ok = await proxy.health_url(base_url, "/v1/models")
+         if not ok:
+             ok = await proxy.health_url(base_url, "/models")
+             
+    return {"ok": ok}
+
+
+@router.post("/backends/list-models")
+async def list_backend_models(
+    payload: InferenceBackendCreate,
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    """
+    Lista os modelos disponíveis em um backend antes de cadastrá-lo.
+    """
+    base_url = payload.backend_url
+    api_key = None
+    if payload.metadata_json:
+        try:
+            metadata = json.loads(payload.metadata_json)
+            api_key = metadata.get("api_key")
+        except json.JSONDecodeError:
+            pass
+            
+    return await proxy.list_models(base_url=base_url, api_key=api_key)
 
 
 @router.patch("/backends/{backend_id}")
@@ -2042,6 +2176,7 @@ async def test_model_prompt(
                 backend_name=backend.name,
                 backend_id=backend.id,
                 prompt_template=model.prompt_template,
+                is_admin=True,
             )
             response_payload = json.loads(result.response.body.decode("utf-8"))
             usage = response_payload.get("usage") or {}
@@ -2077,6 +2212,66 @@ async def test_model_prompt(
             "message": "all backend routes failed",
             "backend_errors": backend_errors,
         },
+    )
+
+
+@router.post("/routing/explain", response_model=RoutingExplainResponse)
+async def explain_routing(
+    payload: RoutingExplainRequest,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Explains the routing decision for a given model and client.
+    """
+    # Fetch Client with BillingPlan
+    client = await session.get(Client, payload.client_id, options=[selectinload(Client.billing_plan)])
+    if not client:
+        raise HTTPException(status_code=404, detail="client not found")
+        
+    # Resolve Model
+    selected_model, requested_model = await resolve_requested_model(
+        session,
+        client=client,
+        requested_model=payload.model or "default",
+    )
+    
+    # Get all potential candidates
+    all_candidates = get_routing_candidates(selected_model)
+    
+    # Analyze policy application
+    routing_policy = None
+    if client.billing_plan and client.billing_plan.routing_policy_json:
+        try:
+            routing_policy = json.loads(client.billing_plan.routing_policy_json)
+        except json.JSONDecodeError:
+            pass
+            
+    # Apply policy
+    final_candidates = apply_routing_policy(selected_model, client, list(all_candidates))
+    
+    # Identify rejected candidates
+    final_ids = {c.id for c in final_candidates}
+    rejected = [c for c in all_candidates if c.id not in final_ids]
+    
+    def serialize_route(r):
+        return {
+            "backend_name": r.inference_backend.name,
+            "backend_type": r.inference_backend.provider,
+            "priority": r.priority,
+            "weight": r.weight,
+            "state": r.state,
+        }
+
+    return RoutingExplainResponse(
+        requested_model=payload.model,
+        resolved_model_id=str(selected_model.model_id),
+        resolved_model_alias=selected_model.model_alias,
+        client_name=client.name,
+        plan_code=client.billing_plan.code if client.billing_plan else "free",
+        routing_policy=routing_policy,
+        chosen_backend=final_candidates[0].inference_backend.name if final_candidates else None,
+        candidates_order=[serialize_route(c) for c in final_candidates],
+        rejected_candidates=[serialize_route(c) for c in rejected],
     )
 
 

@@ -16,6 +16,7 @@
         --success: #10b981;
         --warning: #f59e0b;
         --danger: #ef4444;
+        --sidebar-width: 260px;
       }
       * { box-sizing: border-box; }
       body {
@@ -24,40 +25,109 @@
         color: var(--ink);
         background-color: var(--bg);
         line-height: 1.5;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
       }
+
+      /* Sidebar Styles */
+      aside {
+        width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+      }
+      .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+      .sidebar-header p { margin: 0; color: var(--muted); font-size: 0.75rem; }
+
+      nav {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        color: var(--muted);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .nav-item:hover { background: var(--bg); color: var(--ink); }
+      .nav-item.active { background: #eff6ff; color: var(--accent); }
+      .nav-item svg { width: 1.25rem; height: 1.25rem; }
+
+      .sidebar-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.75rem;
+      }
+
+      /* Main Content Styles */
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
       header {
         background: white;
         border-bottom: 1px solid var(--border);
-        padding: 1.5rem 2rem;
+        padding: 1rem 2rem;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
-        flex-wrap: wrap;
         gap: 1rem;
+        min-height: 64px;
       }
-      .brand h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-      .brand p { margin: 0; color: var(--muted); font-size: 0.875rem; }
-      
-      .auth-box {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        flex-wrap: wrap;
+
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2rem;
       }
-      input, textarea, button {
-        font: inherit;
-        border-radius: 0.5rem;
+
+      .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+      .tab-content.active { display: block; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+      /* Components */
+      section {
+        background: var(--panel);
         border: 1px solid var(--border);
-        padding: 0.5rem 0.75rem;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
       }
-      input[type="password"], input[type="text"] {
-        background: white;
-        min-width: 280px;
-      }
+      h2 { margin-top: 0; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+      h3 { margin-top: 0; font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+
+      .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+      
+      .field { margin-bottom: 1rem; }
+      .field-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.25rem; }
+      .field-value { font-size: 1rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+
       button {
         background: var(--accent);
         color: white;
         border: none;
+        border-radius: 0.5rem;
+        padding: 0.625rem 1rem;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.2s;
@@ -65,40 +135,15 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        font-size: 0.875rem;
       }
-      button:hover { background: var(--accent-hover); transform: translateY(-1px); }
-      button:active { transform: translateY(0); }
-      button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-      button.secondary {
-        background: white;
-        color: var(--muted);
-        border: 1px solid var(--border);
-      }
+      button:hover { background: var(--accent-hover); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      button.secondary { background: white; color: var(--muted); border: 1px solid var(--border); }
       button.secondary:hover { background: var(--bg); color: var(--ink); }
+      button.danger { background: #fee2e2; color: #b91c1c; }
+      button.danger:hover { background: #fecaca; }
 
-      main {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 1.5rem;
-      }
-      section {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-      }
-      .wide { grid-column: 1 / -1; }
-      h2 { margin-top: 0; font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-      
-      .field { margin-bottom: 1rem; }
-      .field-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.25rem; }
-      .field-value { font-size: 1rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
-      
       .badge {
         display: inline-block;
         padding: 0.125rem 0.625rem;
@@ -111,51 +156,65 @@
       .badge-blocked { background: #fee2e2; color: #991b1b; }
       .badge-warning { background: #fef3c7; color: #92400e; }
 
-      .plan-card {
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 0.75rem;
-        padding: 1rem;
-        margin-top: 1rem;
-      }
-      .plan-name { font-size: 1.125rem; font-weight: 700; color: #1e40af; }
-      .plan-meta { font-size: 0.875rem; color: #60a5fa; margin-top: 0.25rem; }
+      .usage-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; }
+      .usage-num { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin-bottom: 0.25rem; }
+      .usage-limit { font-size: 0.875rem; color: var(--muted); }
+      .progress-bar { height: 0.5rem; background: #e2e8f0; border-radius: 999px; margin-top: 1rem; overflow: hidden; }
+      .progress-fill { height: 100%; background: var(--accent); transition: width 0.5s ease; }
 
-      .usage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-      .usage-box { background: #f1f5f9; border-radius: 0.75rem; padding: 1rem; }
-      .usage-box h3 { margin: 0 0 0.5rem; font-size: 0.875rem; color: var(--muted); font-weight: 500; }
-      .usage-num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-      .usage-total { font-size: 0.875rem; color: var(--muted); }
-      .progress-bg { height: 0.5rem; background: #e2e8f0; border-radius: 999px; margin-top: 0.75rem; overflow: hidden; }
-      .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
-
-      .table-wrapper { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; font-size: 0.875rem; white-space: nowrap; }
-      th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+      .table-wrapper { overflow-x: auto; margin-top: 1rem; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+      th, td { text-align: left; padding: 1rem; border-bottom: 1px solid var(--border); }
       th { color: var(--muted); font-weight: 600; background: #f8fafc; }
 
-      .chat-box { display: flex; flex-direction: column; gap: 1rem; }
-      textarea { width: 100%; min-height: 100px; resize: vertical; }
+      .chat-interface { display: flex; flex-direction: column; gap: 1rem; }
+      textarea, input[type="text"], input[type="password"], select {
+        width: 100%;
+        font: inherit;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        padding: 0.75rem;
+        background: white;
+      }
+      textarea { min-height: 120px; resize: vertical; }
       .chat-response {
         background: #f8fafc;
         border: 1px solid var(--border);
         border-radius: 0.75rem;
-        padding: 1rem;
-        min-height: 50px;
+        padding: 1.5rem;
+        min-height: 100px;
         white-space: pre-wrap;
+        font-size: 1rem;
+        line-height: 1.6;
       }
-      .debug-json {
-        margin-top: 1rem;
-        font-size: 0.75rem;
-        background: #1e293b;
-        color: #f8fafc;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
-        display: none;
+
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.875rem; background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; }
+      pre { background: #1e293b; color: #f8fafc; padding: 1.5rem; border-radius: 0.75rem; overflow-x: auto; position: relative; }
+      .copy-code { position: absolute; right: 1rem; top: 1rem; }
+
+      /* Auth Overlay */
+      #loginOverlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 2rem;
       }
-      
-      .copy-btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+      .login-box {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+      }
+      .login-box h1 { margin-bottom: 0.5rem; color: var(--accent); }
+      .login-box p { color: var(--muted); margin-bottom: 2rem; }
+
       .toast {
         position: fixed;
         bottom: 2rem;
@@ -164,420 +223,444 @@
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         display: none;
-        z-index: 1000;
+        z-index: 2000;
         animation: slideUp 0.3s ease;
       }
       @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-      .loading { opacity: 0.5; pointer-events: none; }
-      .hidden { display: none; }
-      
-      @media (max-width: 640px) {
-        header { flex-direction: column; align-items: flex-start; padding: 1rem; }
-        .auth-box { width: 100%; flex-direction: column; align-items: stretch; }
-        input[type="password"] { min-width: 0; }
-        .usage-grid { grid-template-columns: 1fr; }
-        main { margin: 1rem auto; gap: 1rem; }
-        section { padding: 1rem; }
+      .chart-container { height: 200px; width: 100%; margin-top: 1rem; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+      .chart-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 1px; position: relative; cursor: pointer; }
+      .chart-bar:hover { background: var(--accent-hover); }
+      .chart-bar::after { content: attr(data-label); position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: var(--muted); white-space: nowrap; }
+      .chart-tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; display: none; z-index: 10; white-space: nowrap; }
+      .chart-bar:hover .chart-tooltip { display: block; }
+
+      @media (max-width: 768px) {
+        body { flex-direction: column; }
+        aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+        .sidebar-header { display: none; }
+        nav { display: flex; padding: 0.5rem; overflow-x: auto; gap: 0.5rem; }
+        .nav-item { margin-bottom: 0; padding: 0.5rem 0.75rem; white-space: nowrap; }
+        header { display: none; }
+        .content-area { padding: 1rem; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="brand">
+    <div id="loginOverlay">
+      <div class="login-box">
         <h1>Client Portal</h1>
-        <p>Manage your LLM access, usage and billing</p>
-      </div>
-      <div class="auth-box">
-        <div style="position: relative;">
-          <input id="apiKey" type="password" placeholder="sk-..." />
-          <button id="toggleVisible" class="secondary" style="position: absolute; right: 2px; top: 2px; bottom: 2px; padding: 0 10px; border: none; background: transparent; font-size: 12px;">Show</button>
-        </div>
-        <button id="connect">Connect</button>
-        <button id="clearKey" class="secondary">Clear</button>
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 4px;">
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <input type="checkbox" id="rememberMe" />
-            <label for="rememberMe">Remember me</label>
+        <p>Acesse seu painel com sua chave de API</p>
+        <div style="text-align: left; margin-bottom: 1.5rem;">
+          <div class="field-label">API Key</div>
+          <input id="loginKey" type="password" placeholder="sk-..." />
+          <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="rememberMe" checked />
+            <label for="rememberMe" style="font-size: 0.875rem; color: var(--muted);">Lembrar neste navegador</label>
           </div>
-          <a href="/docs" style="color: var(--accent); text-decoration: none; font-weight: 600;">API Docs</a>
         </div>
-      </div>
-    </header>
-
-    <div id="connectionWarning" class="wide" style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">
-      <div style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">
-        <strong>Security Tip:</strong> Never share your API key. In production, always use HTTPS.
+        <button id="doLogin" style="width: 100%; padding: 0.875rem;">Conectar</button>
+        <div style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--muted);">
+          Dúvidas? <a href="/docs" style="color: var(--accent); text-decoration: none;">Ver documentação</a>
+        </div>
       </div>
     </div>
 
-    <main id="portalContent" class="hidden">
-      <section id="accountSection">
-        <h2>My Account</h2>
-        <div id="meContent"></div>
-      </section>
-
-      <section id="planManagementSection">
-        <h2>Manage Plan</h2>
-        <div id="planManagementContent">
-          <p style="font-size: 0.875rem; color: var(--muted);">Select a plan to upgrade or downgrade your account limits.</p>
-          <button id="openPlanSelector" class="secondary" style="width: 100%;">View Available Plans</button>
+    <aside>
+      <div class="sidebar-header">
+        <h1>Client Portal</h1>
+        <p>LLM Inference Stack</p>
+      </div>
+      <nav id="sidebarNav">
+        <div class="nav-item active" data-tab="overview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Visão Geral
         </div>
-      </section>
+        <div class="nav-item" data-tab="api-keys">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Minha API
+        </div>
+        <div class="nav-item" data-tab="usage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Uso
+        </div>
+        <div class="nav-item" data-tab="plan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Plano
+        </div>
+        <div class="nav-item" data-tab="playground">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Playground
+        </div>
+        <div class="nav-item" data-tab="rag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Base de Conhecimento
+        </div>
+        <div class="nav-item" data-tab="examples">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Exemplos
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span id="sidebarClientName">-</span>
+          <button id="logout" class="secondary" style="padding: 2px 8px; font-size: 0.7rem;">Sair</button>
+        </div>
+        <div style="color: var(--muted); font-size: 0.7rem;">v2.1.0-local</div>
+      </div>
+    </aside>
 
-      <section id="usageSection">
-        <h2>Current Usage</h2>
-        <div id="usageContent"></div>
-      </section>
+    <main>
+      <header>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+          <span class="badge badge-active" id="headerStatusBadge">Ativo</span>
+          <span id="headerPlanName" style="font-weight: 600;">-</span>
+        </div>
+      </header>
 
-      <section id="ragSection" class="wide">
-        <h2>Base de Conhecimento / RAG</h2>
-        
-        <div id="ragUsage" class="usage-grid" style="margin-bottom: 2rem; display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-          <div class="usage-box">
-            <h3>Documentos</h3>
-            <div id="ragDocsUsage" class="usage-num">- / -</div>
-            <div class="progress-bg"><div id="ragDocsProgress" class="progress-fill" style="width: 0%"></div></div>
+      <div class="content-area">
+        <!-- Overview Tab -->
+        <div id="overviewTab" class="tab-content active">
+          <h2>Bem-vindo, <span id="welcomeName">-</span></h2>
+          <div class="card-grid">
+            <section>
+              <h3>Resumo da Conta</h3>
+              <div id="overviewAccountDetails"></div>
+            </section>
+            <section>
+              <h3>Status de Faturamento</h3>
+              <div id="overviewBillingDetails"></div>
+              <button id="viewInvoicesBtn" class="secondary" style="width: 100%; margin-top: 1rem;">Ver Faturas</button>
+            </section>
           </div>
-          <div class="usage-box">
-            <h3>Armazenamento</h3>
-            <div id="ragStorageUsage" class="usage-num">- / -</div>
-            <div class="progress-bg"><div id="ragStorageProgress" class="progress-fill" style="width: 0%"></div></div>
-          </div>
-          <div class="usage-box">
-            <h3>Páginas (Mês)</h3>
-            <div id="ragPagesUsage" class="usage-num">- / -</div>
-            <div class="progress-bg"><div id="ragPagesProgress" class="progress-fill" style="width: 0%"></div></div>
-          </div>
-          <div class="usage-box">
-            <h3>Consultas (Mês)</h3>
-            <div id="ragQueriesUsage" class="usage-num">- / -</div>
-            <div class="progress-bg"><div id="ragQueriesProgress" class="progress-fill" style="width: 0%"></div></div>
-          </div>
+          <section>
+            <h3>Uso no Mês Atual</h3>
+            <div id="overviewUsageSnapshot"></div>
+          </section>
         </div>
 
-        <div id="ragBlockedWarning" style="display: none; background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; margin-bottom: 1rem; border-radius: 0.5rem; color: #991b1b;">
-          <strong>Acesso ao RAG Bloqueado:</strong> <span id="ragBlockedReason"></span>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-          <div>
-            <h3>Documentos</h3>
-            <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
-              <input type="file" id="ragFileUpload" accept=".pdf" style="display: none;" />
-              <button id="triggerRagUpload">Enviar PDF</button>
-              <button id="refreshRagFiles" class="secondary">Atualizar</button>
+        <!-- API Keys Tab -->
+        <div id="api-keysTab" class="tab-content">
+          <h2>
+            Minhas Chaves de API
+            <button id="createNewKey">Criar Nova Chave</button>
+          </h2>
+          <p style="color: var(--muted); margin-bottom: 2rem;">Use estas chaves para autenticar suas requisições à API. Nunca compartilhe sua chave privada.</p>
+          <section>
+            <div class="table-wrapper">
+              <table id="apiKeysTable">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Prefixo</th>
+                    <th>Criada em</th>
+                    <th>Último uso</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="apiKeysList"></tbody>
+              </table>
             </div>
-            <div id="ragFilesContent" class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
-              Carregando documentos...
+          </section>
+        </div>
+
+        <!-- Usage Tab -->
+        <div id="usageTab" class="tab-content">
+          <h2>Uso Detalhado</h2>
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <div class="usage-box">
+              <h3>Tokens no Mês</h3>
+              <div id="usageMonthlyTokens" class="usage-num">-</div>
+              <div id="usageMonthlyLimit" class="usage-limit">limite: -</div>
+              <div class="progress-bar"><div id="usageMonthlyProgress" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="usage-box">
+              <h3>Total de Requisições</h3>
+              <div id="usageMonthlyRequests" class="usage-num">-</div>
+              <div class="usage-limit">no período atual</div>
             </div>
           </div>
-          <div>
-            <h3>Consultar Documentos</h3>
-            <div class="chat-box">
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <select id="ragFileSelect" style="flex: 1; min-width: 200px;">
-                  <option value="">Todos os documentos</option>
-                </select>
-                <button id="runRagQuery">Perguntar</button>
+          <section>
+            <h3>Uso Diário (Tokens) - Últimos 30 dias</h3>
+            <div id="dailyUsageChart" class="chart-container"></div>
+          </section>
+          <section>
+            <h3>Uso por Modelo</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Modelo</th>
+                    <th>Requisições</th>
+                    <th>Tokens Consumidos</th>
+                  </tr>
+                </thead>
+                <tbody id="modelUsageList"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Plan Tab -->
+        <div id="planTab" class="tab-content">
+          <h2>Detalhes do Plano</h2>
+          <div class="card-grid">
+            <section>
+              <h3>Limites de Inference</h3>
+              <div id="planInferenceLimits"></div>
+            </section>
+            <section>
+              <h3>Recursos de RAG</h3>
+              <div id="planRagLimits"></div>
+            </section>
+          </div>
+          <section>
+            <h3>Modelos Permitidos</h3>
+            <div id="planModelsList" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+          </section>
+          <div style="text-align: center;">
+            <button id="upgradePlanBtn" style="padding: 1rem 2rem;">Alterar Plano / Upgrade</button>
+          </div>
+        </div>
+
+        <!-- Playground Tab -->
+        <div id="playgroundTab" class="tab-content">
+          <h2>Playground</h2>
+          <section>
+            <div class="chat-interface">
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                <div>
+                  <div class="field-label">Modelo</div>
+                  <select id="pgModelSelect"></select>
+                </div>
+                <div>
+                  <div class="field-label">Max Tokens</div>
+                  <input id="pgMaxTokens" type="number" value="512" step="64" />
+                </div>
               </div>
-              <textarea id="ragQuestion" placeholder="O que você deseja saber sobre seus documentos?"></textarea>
-              <div id="ragResponse" class="chat-response">A resposta aparecerá aqui...</div>
-              <div id="ragSources" style="margin-top: 1rem; font-size: 0.875rem;"></div>
+              <div>
+                <div class="field-label">Prompt</div>
+                <textarea id="pgPrompt" placeholder="Digite sua mensagem aqui..."></textarea>
+              </div>
+              <div style="display: flex; justify-content: flex-end;">
+                <button id="pgRun" style="width: 150px;">Enviar</button>
+              </div>
+              <div class="field-label">Resposta</div>
+              <div id="pgResponse" class="chat-response">Aguardando prompt...</div>
+              <div id="pgStats" style="font-size: 0.75rem; color: var(--muted); text-align: right;"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- RAG Tab -->
+        <div id="ragTab" class="tab-content">
+          <h2>Base de Conhecimento (RAG)</h2>
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <div class="usage-box">
+              <h3>Documentos</h3>
+              <div id="ragStatsDocs" class="usage-num">-</div>
+              <div id="ragProgressDocs" class="progress-bar"><div id="ragProgressDocsFill" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="usage-box">
+              <h3>Armazenamento (MB)</h3>
+              <div id="ragStatsStorage" class="usage-num">-</div>
+              <div id="ragProgressStorage" class="progress-bar"><div id="ragProgressStorageFill" class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="usage-box">
+              <h3>Consultas (Mês)</h3>
+              <div id="ragStatsQueries" class="usage-num">-</div>
+              <div id="ragProgressQueries" class="progress-bar"><div id="ragProgressQueriesFill" class="progress-fill" style="width: 0%"></div></div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section id="billingSection" class="wide">
-        <h2>Invoices</h2>
-        <div id="invoicesContent" class="table-wrapper"></div>
-      </section>
+          <div class="card-grid" style="grid-template-columns: 2fr 1fr; gap: 2rem;">
+            <section>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Seus Documentos</h3>
+                <div>
+                  <input type="file" id="ragFileUpload" accept=".pdf,.txt,.md" style="display: none;" />
+                  <button id="btnRagUpload">Enviar Documento</button>
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table id="ragTable">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Status</th>
+                      <th>Páginas</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ragFilesList"></tbody>
+                </table>
+              </div>
+            </section>
 
-      <section id="paymentsSection" class="wide">
-        <h2>Payment History</h2>
-        <div id="paymentsContent" class="table-wrapper"></div>
-      </section>
-
-      <section id="testChatSection" class="wide">
-        <h2>
-          Quick Test Chat
-          <button id="copyCurl" class="secondary copy-btn">Copy cURL Example</button>
-        </h2>
-        <div class="chat-box">
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px; position: relative;">
-              <input id="modelId" type="text" placeholder="Search or type model ID..." style="width: 100%;" list="modelList" />
-              <datalist id="modelList"></datalist>
-            </div>
-            <button id="runChat">Send Prompt</button>
+            <section>
+              <h3>Consultar Base</h3>
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                  <div class="field-label">Pergunta</div>
+                  <textarea id="ragQueryInput" style="height: 80px;" placeholder="O que deseja saber da sua base?"></textarea>
+                </div>
+                <button id="btnRagQuery">Consultar RAG</button>
+                <div id="ragQueryResponse" style="font-size: 0.875rem; background: var(--bg); padding: 1rem; border-radius: 0.5rem; min-height: 100px; white-space: pre-wrap;">Aguardando consulta...</div>
+                <div id="ragQuerySources" style="font-size: 0.75rem; color: var(--muted);"></div>
+              </div>
+            </section>
           </div>
-          <textarea id="promptText" placeholder="Ask something to the LLM..."></textarea>
-          <div id="chatResponse" class="chat-response">Response will appear here...</div>
-          <button id="toggleDebug" class="secondary" style="width: fit-content;">View Technical Response (JSON)</button>
-          <pre id="debugOutput" class="debug-json"></pre>
         </div>
-      </section>
+
+        <!-- Examples Tab -->
+        <div id="examplesTab" class="tab-content">
+          <h2>Exemplos de Implementação</h2>
+          <section>
+            <h3>Python (requests)</h3>
+            <pre><code id="codePython"></code><button class="secondary copy-code" onclick="copyToClipboard('codePython')">Copy</button></pre>
+          </section>
+          <section>
+            <h3>Node.js (Fetch)</h3>
+            <pre><code id="codeNode"></code><button class="secondary copy-code" onclick="copyToClipboard('codeNode')">Copy</button></pre>
+          </section>
+          <section>
+            <h3>cURL</h3>
+            <pre><code id="codeCurl"></code><button class="secondary copy-code" onclick="copyToClipboard('codeCurl')">Copy</button></pre>
+          </section>
+          <section>
+            <h3>OpenAI SDK (Python)</h3>
+            <pre><code id="codeOpenAI"></code><button class="secondary copy-code" onclick="copyToClipboard('codeOpenAI')">Copy</button></pre>
+          </section>
+        </div>
+      </div>
     </main>
 
-    <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted); padding: 0 1rem;">
-      <p>Please enter your API Key above to access the portal.</p>
-    </div>
+    <div id="toast" class="toast">Copiado com sucesso!</div>
 
-    <div id="planModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
-      <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 800px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-          <h2 style="margin: 0; color: var(--accent);">Choose a New Plan</h2>
-          <button id="closePlanModal" class="secondary" style="padding: 0.25rem 0.75rem;">X</button>
+    <!-- Modals -->
+    <div id="newKeyModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
+      <div class="login-box" style="text-align: left; max-width: 500px;">
+        <h2 style="margin-bottom: 1rem;">Criar Nova Chave</h2>
+        <div class="field">
+          <div class="field-label">Nome da Chave (ex: Produção)</div>
+          <input id="newKeyName" type="text" placeholder="Nome identificador" />
         </div>
-        <div id="planListGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
-          <!-- Plans will be rendered here -->
+        <div id="keyDisplayArea" class="hidden" style="background: #fffbeb; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.8rem; color: #92400e; margin-bottom: 0.5rem; font-weight: 600;">⚠️ Copie sua chave agora! Ela não será mostrada novamente.</div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <code id="newKeySecret" style="flex: 1; word-break: break-all; font-size: 0.9rem;"></code>
+            <button class="secondary" style="padding: 4px 8px;" onclick="copyToClipboard('newKeySecret')">Copiar</button>
+          </div>
         </div>
-        <div id="paymentSimulation" class="hidden" style="margin-top: 2rem; border-top: 2px dashed var(--border); padding-top: 1.5rem; text-align: center;">
-          <h3>💳 Payment Simulation</h3>
-          <p id="simulationDetails" style="color: var(--muted);"></p>
-          <button id="confirmUpgrade" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Pay & Upgrade Now</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="toast" class="toast">Copied to clipboard!</div>
-
-    <div id="onboardingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem;">
-      <div style="background: white; padding: 2rem; border-radius: 1.5rem; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
-        <h2 style="margin-top: 0; color: var(--accent);">🚀 Welcome to the Portal!</h2>
-        <p style="color: var(--muted); line-height: 1.6;">You're successfully connected. Here's how to start:</p>
-        <ul style="color: var(--muted); line-height: 1.6; padding-left: 1.25rem;">
-          <li><strong>Track Usage:</strong> Monitor your token quota in real-time.</li>
-          <li><strong>Test Models:</strong> Use the "Quick Test Chat" below to run your first prompt.</li>
-          <li><strong>Invoices:</strong> Check your billing history in the wide card below.</li>
-        </ul>
-        <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
-          <button id="closeOnboarding">Got it, let's go!</button>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button id="cancelNewKey" class="secondary">Fechar</button>
+          <button id="confirmNewKey">Gerar Chave</button>
         </div>
       </div>
     </div>
 
     <script>
-      const elements = {
-        apiKey: document.getElementById('apiKey'),
-        toggleVisible: document.getElementById('toggleVisible'),
-        connect: document.getElementById('connect'),
-        clearKey: document.getElementById('clearKey'),
+      const state = {
+        apiKey: '',
+        client: null,
+        activeTab: 'overview',
+        models: []
+      };
+
+      const els = {
+        loginOverlay: document.getElementById('loginOverlay'),
+        loginKey: document.getElementById('loginKey'),
+        doLogin: document.getElementById('doLogin'),
         rememberMe: document.getElementById('rememberMe'),
-        portalContent: document.getElementById('portalContent'),
-        loginPrompt: document.getElementById('loginPrompt'),
-        meContent: document.getElementById('meContent'),
-        usageContent: document.getElementById('usageContent'),
-        invoicesContent: document.getElementById('invoicesContent'),
-        paymentsContent: document.getElementById('paymentsContent'),
-        promptText: document.getElementById('promptText'),
-        modelId: document.getElementById('modelId'),
-        runChat: document.getElementById('runChat'),
-        chatResponse: document.getElementById('chatResponse'),
-        toggleDebug: document.getElementById('toggleDebug'),
-        debugOutput: document.getElementById('debugOutput'),
-        copyCurl: document.getElementById('copyCurl'),
-        toast: document.getElementById('toast'),
-        onboardingModal: document.getElementById('onboardingModal'),
-        closeOnboarding: document.getElementById('closeOnboarding'),
-        planModal: document.getElementById('planModal'),
-        openPlanSelector: document.getElementById('openPlanSelector'),
-        closePlanModal: document.getElementById('closePlanModal'),
-        planListGrid: document.getElementById('planListGrid'),
-        paymentSimulation: document.getElementById('paymentSimulation'),
-        simulationDetails: document.getElementById('simulationDetails'),
-        confirmUpgrade: document.getElementById('confirmUpgrade'),
+        logout: document.getElementById('logout'),
+        
+        sidebarNav: document.getElementById('sidebarNav'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        
+        sidebarClientName: document.getElementById('sidebarClientName'),
+        welcomeName: document.getElementById('welcomeName'),
+        headerStatusBadge: document.getElementById('headerStatusBadge'),
+        headerPlanName: document.getElementById('headerPlanName'),
+        
+        overviewAccountDetails: document.getElementById('overviewAccountDetails'),
+        overviewBillingDetails: document.getElementById('overviewBillingDetails'),
+        overviewUsageSnapshot: document.getElementById('overviewUsageSnapshot'),
+        
+        apiKeysList: document.getElementById('apiKeysList'),
+        createNewKey: document.getElementById('createNewKey'),
+        newKeyModal: document.getElementById('newKeyModal'),
+        newKeyName: document.getElementById('newKeyName'),
+        confirmNewKey: document.getElementById('confirmNewKey'),
+        cancelNewKey: document.getElementById('cancelNewKey'),
+        keyDisplayArea: document.getElementById('keyDisplayArea'),
+        newKeySecret: document.getElementById('newKeySecret'),
+        
+        usageMonthlyTokens: document.getElementById('usageMonthlyTokens'),
+        usageMonthlyLimit: document.getElementById('usageMonthlyLimit'),
+        usageMonthlyProgress: document.getElementById('usageMonthlyProgress'),
+        usageMonthlyRequests: document.getElementById('usageMonthlyRequests'),
+        dailyUsageChart: document.getElementById('dailyUsageChart'),
+        modelUsageList: document.getElementById('modelUsageList'),
+        
+        planInferenceLimits: document.getElementById('planInferenceLimits'),
+        planRagLimits: document.getElementById('planRagLimits'),
+        planModelsList: document.getElementById('planModelsList'),
+        
+        pgModelSelect: document.getElementById('pgModelSelect'),
+        pgMaxTokens: document.getElementById('pgMaxTokens'),
+        pgPrompt: document.getElementById('pgPrompt'),
+        pgRun: document.getElementById('pgRun'),
+        pgResponse: document.getElementById('pgResponse'),
+        pgStats: document.getElementById('pgStats'),
+        
+        btnRagUpload: document.getElementById('btnRagUpload'),
         ragFileUpload: document.getElementById('ragFileUpload'),
-        triggerRagUpload: document.getElementById('triggerRagUpload'),
-        refreshRagFiles: document.getElementById('refreshRagFiles'),
-        ragFilesContent: document.getElementById('ragFilesContent'),
-        ragFileSelect: document.getElementById('ragFileSelect'),
-        runRagQuery: document.getElementById('runRagQuery'),
-        ragQuestion: document.getElementById('ragQuestion'),
-        ragResponse: document.getElementById('ragResponse'),
-        ragSources: document.getElementById('ragSources'),
-        ragUsage: document.getElementById('ragUsage'),
-        ragDocsUsage: document.getElementById('ragDocsUsage'),
-        ragDocsProgress: document.getElementById('ragDocsProgress'),
-        ragStorageUsage: document.getElementById('ragStorageUsage'),
-        ragStorageProgress: document.getElementById('ragStorageProgress'),
-        ragPagesUsage: document.getElementById('ragPagesUsage'),
-        ragPagesProgress: document.getElementById('ragPagesProgress'),
-        ragQueriesUsage: document.getElementById('ragQueriesUsage'),
-        ragQueriesProgress: document.getElementById('ragQueriesProgress'),
-        ragBlockedWarning: document.getElementById('ragBlockedWarning'),
-        ragBlockedReason: document.getElementById('ragBlockedReason')
+        ragFilesList: document.getElementById('ragFilesList'),
+        ragStatsDocs: document.getElementById('ragStatsDocs'),
+        ragProgressDocsFill: document.getElementById('ragProgressDocsFill'),
+        ragStatsStorage: document.getElementById('ragStatsStorage'),
+        ragProgressStorageFill: document.getElementById('ragProgressStorageFill'),
+        ragStatsQueries: document.getElementById('ragStatsQueries'),
+        ragProgressQueriesFill: document.getElementById('ragProgressQueriesFill'),
+        
+        ragQueryInput: document.getElementById('ragQueryInput'),
+        btnRagQuery: document.getElementById('btnRagQuery'),
+        ragQueryResponse: document.getElementById('ragQueryResponse'),
+        ragQuerySources: document.getElementById('ragQuerySources'),
+        
+        toast: document.getElementById('toast')
       };
 
-      let currentSelectedPlanCode = null;
-
-      elements.openPlanSelector.addEventListener('click', async () => {
-        elements.planModal.classList.remove('hidden');
-        elements.planModal.style.display = 'flex';
-        renderPlanList();
+      // Navigation Logic
+      els.sidebarNav.addEventListener('click', (e) => {
+        const item = e.target.closest('.nav-item');
+        if (!item) return;
+        switchTab(item.dataset.tab);
       });
 
-      elements.closePlanModal.addEventListener('click', () => {
-        elements.planModal.classList.add('hidden');
-        elements.planModal.style.display = 'none';
-        elements.paymentSimulation.classList.add('hidden');
-      });
-
-      async function renderPlanList() {
-        elements.planListGrid.innerHTML = 'Loading plans...';
-        try {
-          const plans = await apiFetch('/portal/plans');
-          elements.planListGrid.innerHTML = plans.map(plan => `
-            <div class="plan-card" style="cursor: pointer; transition: transform 0.2s;" onclick="selectPlanForUpgrade('${plan.code}', '${plan.name}', ${plan.monthly_price})">
-              <div class="plan-name">${esc(plan.name)}</div>
-              <div style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0;">$${plan.monthly_price}/mo</div>
-              <div style="font-size: 0.8rem; color: var(--muted);">${plan.rate_limit_per_minute} RPM</div>
-              <div style="font-size: 0.8rem; color: var(--muted);">${(plan.monthly_token_quota/1000).toFixed(0)}k Monthly Tokens</div>
-            </div>
-          `).join('');
-        } catch (err) {
-          elements.planListGrid.innerHTML = `<span style="color: var(--danger);">Failed to load plans: ${err.message}</span>`;
-        }
+      function switchTab(tabId) {
+        state.activeTab = tabId;
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tabId));
+        els.tabContents.forEach(c => c.classList.toggle('active', c.id === `${tabId}Tab`));
+        
+        if (tabId === 'api-keys') loadApiKeys();
+        if (tabId === 'usage') loadUsageStats();
+        if (tabId === 'plan') loadPlanDetails();
+        if (tabId === 'rag') loadRagFiles();
+        if (tabId === 'examples') updateExamples();
       }
 
-      window.selectPlanForUpgrade = (code, name, price) => {
-        currentSelectedPlanCode = code;
-        elements.simulationDetails.innerHTML = `You are choosing the <strong>${esc(name)}</strong> plan.<br>A simulated payment of <strong>$${price.toFixed(2)}</strong> will be processed.`;
-        elements.paymentSimulation.classList.remove('hidden');
-      };
-
-      elements.confirmUpgrade.addEventListener('click', async () => {
-        if (!currentSelectedPlanCode) return;
-        elements.confirmUpgrade.disabled = true;
-        elements.confirmUpgrade.textContent = 'Processing Payment...';
-        try {
-          await apiFetch('/portal/upgrade', {
-            method: 'POST',
-            body: JSON.stringify({ plan_code: currentSelectedPlanCode })
-          });
-          showToast('Success! Plan upgraded and payment simulated.');
-          elements.planModal.classList.add('hidden');
-          elements.planModal.style.display = 'none';
-          initPortal(); // Refresh everything
-        } catch (err) {
-          alert('Failed to upgrade: ' + err.message);
-        } finally {
-          elements.confirmUpgrade.disabled = false;
-          elements.confirmUpgrade.textContent = 'Pay & Upgrade Now';
-        }
-      });
-
-      async function simulatePayment(invoiceId) {
-        if (!confirm('Simulate payment for this invoice?')) return;
-        try {
-          await apiFetch(`/portal/simulate-payment/${invoiceId}`, { method: 'POST' });
-          showToast('Invoice paid successfully!');
-          initPortal();
-        } catch (err) {
-          alert('Payment failed: ' + err.message);
-        }
-      }
-
-      elements.closeOnboarding.addEventListener('click', () => {
-        elements.onboardingModal.classList.add('hidden');
-        elements.onboardingModal.style.display = 'none';
-        recordOnboardingEvent('portal_tutorial_closed');
-      });
-
-      async function recordOnboardingEvent(event) {
-        try {
-          await apiFetch('/portal/onboarding/event', {
-            method: 'POST',
-            body: JSON.stringify({ event })
-          });
-        } catch (err) { console.warn('Failed to record event:', err); }
-      }
-
-      // Load saved state
-      const savedKey = localStorage.getItem('portalApiKey');
-      if (savedKey) {
-        elements.apiKey.value = savedKey;
-        elements.rememberMe.checked = true;
-        initPortal();
-      }
-
-      function esc(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-      }
-
-      function showToast(msg) {
-        elements.toast.textContent = msg || 'Copied to clipboard!';
-        elements.toast.style.display = 'block';
-        setTimeout(() => { elements.toast.style.display = 'none'; }, 2000);
-      }
-
-      elements.toggleVisible.addEventListener('click', () => {
-        const type = elements.apiKey.type === 'password' ? 'text' : 'password';
-        elements.apiKey.type = type;
-        elements.toggleVisible.textContent = type === 'password' ? 'Show' : 'Hide';
-      });
-
-      elements.clearKey.addEventListener('click', () => {
-        elements.apiKey.value = '';
-        localStorage.removeItem('portalApiKey');
-        elements.portalContent.classList.add('hidden');
-        elements.loginPrompt.classList.remove('hidden');
-      });
-
-      elements.connect.addEventListener('click', () => {
-        if (elements.rememberMe.checked) {
-          localStorage.setItem('portalApiKey', elements.apiKey.value.trim());
-        } else {
-          localStorage.removeItem('portalApiKey');
-        }
-        initPortal();
-      });
-
-      elements.toggleDebug.addEventListener('click', () => {
-        const isVisible = elements.debugOutput.style.display === 'block';
-        elements.debugOutput.style.display = isVisible ? 'none' : 'block';
-        elements.toggleDebug.textContent = isVisible ? 'View Technical Response (JSON)' : 'Hide Technical Response';
-      });
-
-      elements.copyCurl.addEventListener('click', () => {
-        const key = elements.apiKey.value.trim();
-        const model = elements.modelId.value.trim() || 'default';
-        const prompt = elements.promptText.value.trim() || 'Hello';
-        const baseUrl = window.location.origin;
-        const curl = `curl ${baseUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${key}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "${model}",
-    "messages": [{"role": "user", "content": "${prompt}"}]
-  }'`;
-        navigator.clipboard.writeText(curl).then(() => showToast('cURL example copied!'));
-      });
-
+      // API Interaction
       async function apiFetch(path, options = {}) {
-        const key = elements.apiKey.value.trim();
         const headers = { ...options.headers };
-        
-        if (key) {
-          headers['Authorization'] = `Bearer ${key}`;
-        }
-        
-        // Handle JSON by default if not FormData or other
+        if (state.apiKey) headers['Authorization'] = `Bearer ${state.apiKey}`;
         if (headers['Content-Type'] === undefined && !(options.body instanceof FormData)) {
           headers['Content-Type'] = 'application/json';
         }
-        
-        // If it is FormData, we MUST NOT set Content-Type manually, 
-        // the browser will set it with the correct boundary.
-        if (options.body instanceof FormData) {
-          delete headers['Content-Type'];
-        }
-        
+        if (options.body instanceof FormData) delete headers['Content-Type'];
+
         const response = await fetch(path, { ...options, headers });
         if (!response.ok) {
           const err = await response.text();
@@ -586,369 +669,363 @@
         return response.json();
       }
 
-      async function initPortal() {
-        if (!elements.apiKey.value.trim()) return;
-        elements.portalContent.classList.add('loading');
-        elements.loginPrompt.classList.add('hidden');
-        elements.portalContent.classList.remove('hidden');
-
+      // Login / Auth
+      els.doLogin.addEventListener('click', async () => {
+        const key = els.loginKey.value.trim();
+        if (!key) return;
+        state.apiKey = key;
         try {
-          const [me, usage, invoices, models] = await Promise.all([
-            apiFetch('/portal/me'),
-            apiFetch('/portal/usage'),
-            apiFetch('/portal/invoices'),
-            apiFetch('/v1/models')
-          ]);
-
-          renderMe(me);
-          renderUsage(usage);
-          renderInvoices(invoices);
-          renderPayments(invoices.payments);
-          renderModels(models);
-          loadRagFiles(); // Added for RAG
-
-          const metadata = JSON.parse(me.metadata_json || '{}');
-          if (!metadata.onboarding_finished) {
-            elements.onboardingModal.classList.remove('hidden');
-            elements.onboardingModal.style.display = 'flex';
-          }
+          await initPortal();
+          if (els.rememberMe.checked) localStorage.setItem('portalApiKey', key);
+          els.loginOverlay.style.display = 'none';
         } catch (err) {
-          console.error(err);
-          alert("Connection failed: " + err.message);
-          elements.portalContent.classList.add('hidden');
-          elements.loginPrompt.classList.remove('hidden');
-        } finally {
-          elements.portalContent.classList.remove('loading');
+          alert('Chave inválida ou erro de conexão: ' + err.message);
         }
+      });
+
+      els.logout.addEventListener('click', () => {
+        localStorage.removeItem('portalApiKey');
+        window.location.reload();
+      });
+
+      // Initialization
+      async function initPortal() {
+        const [me, usage, models] = await Promise.all([
+          apiFetch('/portal/me'),
+          apiFetch('/portal/usage'),
+          apiFetch('/portal/models')
+        ]);
+        
+        state.client = me;
+        state.models = models;
+        
+        els.sidebarClientName.textContent = me.name;
+        els.welcomeName.textContent = me.name;
+        els.headerPlanName.textContent = me.plan.name;
+        els.headerStatusBadge.textContent = me.billing_status;
+        els.headerStatusBadge.className = `badge ${me.is_blocked ? 'badge-blocked' : (me.billing_status === 'active' ? 'badge-active' : 'badge-warning')}`;
+        
+        renderOverview(me, usage);
+        renderModelSelects();
+        updateExamples();
       }
 
-      function renderMe(me) {
-        const statusClass = me.is_blocked ? 'badge-blocked' : (me.billing_status === 'active' ? 'badge-active' : 'badge-warning');
-        const plan = me.plan || {};
-        elements.meContent.innerHTML = `
-          <div class="field"><div class="field-label">Account Name</div><div class="field-value">${esc(me.name)}</div></div>
-          <div class="field"><div class="field-label">Status</div><div class="field-value"><span class="badge ${statusClass}">${esc(me.billing_status)} ${me.is_blocked ? '(BLOCKED)' : ''}</span></div></div>
-          <div class="field">
-            <div class="field-label">API Key</div>
-            <div class="field-value">
-              <span style="font-family: monospace; font-size: 0.8rem;">${elements.apiKey.value.substring(0, 12)}...</span>
-              <button class="secondary copy-btn" onclick="navigator.clipboard.writeText(elements.apiKey.value).then(() => showToast('API Key copied!'))">Copy</button>
-            </div>
+      function renderOverview(me, usage) {
+        els.overviewAccountDetails.innerHTML = `
+          <div class="field"><div class="field-label">ID do Cliente</div><div class="field-value"><code>${me.id}</code></div></div>
+          <div class="field"><div class="field-label">Plano Atual</div><div class="field-value"><strong>${me.plan.name}</strong></div></div>
+          <div class="field"><div class="field-label">Status da Conta</div><div class="field-value">${me.billing_status.toUpperCase()}</div></div>
+        `;
+        
+        els.overviewBillingDetails.innerHTML = `
+          <div class="field"><div class="field-label">Preço Mensal</div><div class="field-value">${me.plan.currency} ${me.plan.monthly_price.toFixed(2)}</div></div>
+          <div class="field"><div class="field-label">Próxima Fatura (Est.)</div><div class="field-value">${usage.invoice_preview.currency} ${usage.invoice_preview.total_estimated.toFixed(2)}</div></div>
+        `;
+        
+        const m = usage.monthly_usage;
+        const pct = Math.min(100, (m.used_tokens / m.quota) * 100);
+        els.overviewUsageSnapshot.innerHTML = `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>${m.used_tokens.toLocaleString()} / ${m.quota.toLocaleString()} tokens</span>
+            <span>${pct.toFixed(1)}%</span>
           </div>
-          <div class="plan-card">
-            <div class="plan-name">${esc(plan.name)}</div>
-            <div class="plan-meta">${plan.rate_limit_per_minute} RPM • ${plan.max_output_tokens} max tokens</div>
-            <div style="margin-top: 0.5rem; font-size: 0.875rem;">${plan.monthly_price > 0 ? `$${plan.monthly_price}/mo` : 'Free Plan'}</div>
-          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
         `;
       }
 
-      function renderUsage(usage) {
-        const daily = usage.daily_usage || { used_tokens: 0, quota: 1 };
-        const weekly = usage.weekly_usage || { used_tokens: 0, quota: 1 };
-        const monthly = usage.monthly_usage || { used_tokens: 0, quota: 1 };
-        const dailyPct = daily.quota > 0 ? Math.min((daily.used_tokens / daily.quota) * 100, 100) : 0;
-        const weeklyPct = weekly.quota > 0 ? Math.min((weekly.used_tokens / weekly.quota) * 100, 100) : 0;
-        const monthlyPct = monthly.quota > 0 ? Math.min((monthly.used_tokens / monthly.quota) * 100, 100) : 0;
-        const inv = usage.invoice_preview || {};
+      function renderModelSelects() {
+        els.pgModelSelect.innerHTML = state.models.map(m => `<option value="${m.id}">${m.display_name} (${m.id})</option>`).join('');
+      }
 
-        elements.usageContent.innerHTML = `
-          <div class="usage-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-            <div class="usage-box">
-              <h3>Daily Tokens</h3>
-              <div class="usage-num">${daily.used_tokens.toLocaleString()}</div>
-              <div class="usage-total">of ${daily.quota.toLocaleString()}</div>
-              <div class="progress-bg"><div class="progress-fill" style="width: ${dailyPct}%"></div></div>
+      // API Keys
+      els.createNewKey.addEventListener('click', () => {
+        els.newKeyModal.style.display = 'flex';
+        els.newKeyName.value = '';
+        els.keyDisplayArea.classList.add('hidden');
+        els.confirmNewKey.classList.remove('hidden');
+      });
+
+      els.cancelNewKey.addEventListener('click', () => {
+        els.newKeyModal.style.display = 'none';
+        if (state.activeTab === 'api-keys') loadApiKeys();
+      });
+
+      els.confirmNewKey.addEventListener('click', async () => {
+        const name = els.newKeyName.value.trim() || 'Nova Chave';
+        try {
+          const result = await apiFetch('/portal/api-keys', {
+            method: 'POST',
+            body: JSON.stringify({ client_id: state.client.id, name })
+          });
+          els.newKeySecret.textContent = result.api_key;
+          els.keyDisplayArea.classList.remove('hidden');
+          els.confirmNewKey.classList.add('hidden');
+          showToast('Chave gerada com sucesso!');
+        } catch (err) {
+          alert('Erro ao criar chave: ' + err.message);
+        }
+      });
+
+      async function loadApiKeys() {
+        const keys = await apiFetch('/portal/api-keys');
+        els.apiKeysList.innerHTML = keys.map(k => `
+          <tr class="${k.revoked_at ? 'loading' : ''}">
+            <td><strong>${esc(k.name)}</strong></td>
+            <td><code>${k.key_prefix}...</code></td>
+            <td>${new Date(k.created_at).toLocaleDateString()}</td>
+            <td>${k.last_used_at ? new Date(k.last_used_at).toLocaleString() : 'Nunca'}</td>
+            <td>
+              ${k.revoked_at ? '<span class="badge badge-blocked">Revogada</span>' : `<button class="danger copy-btn" onclick="revokeKey('${k.id}')">Revogar</button>`}
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      window.revokeKey = async (id) => {
+        if (!confirm('Tem certeza que deseja revogar esta chave? Esta ação é irreversível.')) return;
+        try {
+          await apiFetch(`/portal/api-keys/${id}`, { method: 'DELETE' });
+          showToast('Chave revogada.');
+          loadApiKeys();
+        } catch (err) { alert(err.message); }
+      };
+
+      // Usage Stats
+      async function loadUsageStats() {
+        const [usage, stats] = await Promise.all([
+          apiFetch('/portal/usage'),
+          apiFetch('/portal/usage-stats')
+        ]);
+        
+        const m = usage.monthly_usage;
+        els.usageMonthlyTokens.textContent = m.used_tokens.toLocaleString();
+        els.usageMonthlyLimit.textContent = `limite: ${m.quota.toLocaleString()}`;
+        els.usageMonthlyProgress.style.width = `${Math.min(100, (m.used_tokens / m.quota) * 100)}%`;
+        els.usageMonthlyRequests.textContent = stats.total_requests_this_month.toLocaleString();
+        
+        renderChart(stats.daily_usage);
+        els.modelUsageList.innerHTML = stats.model_usage.map(r => `
+          <tr>
+            <td><code>${esc(r.model)}</code></td>
+            <td>${r.requests.toLocaleString()}</td>
+            <td>${r.tokens.toLocaleString()}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderChart(data) {
+        const maxTokens = Math.max(...data.map(d => d.tokens), 1);
+        els.dailyUsageChart.innerHTML = data.map(d => {
+          const height = (d.tokens / maxTokens) * 100;
+          return `
+            <div class="chart-bar" style="height: ${height}%" data-label="${d.day.substring(5)}">
+              <div class="chart-tooltip">${d.day}: ${d.tokens.toLocaleString()} tokens</div>
             </div>
-            <div class="usage-box">
-              <h3>Weekly Tokens</h3>
-              <div class="usage-num">${weekly.used_tokens.toLocaleString()}</div>
-              <div class="usage-total">of ${weekly.quota.toLocaleString()}</div>
-              <div class="progress-bg"><div class="progress-fill" style="width: ${weeklyPct}%"></div></div>
-            </div>
-            <div class="usage-box">
-              <h3>Monthly Tokens</h3>
-              <div class="usage-num">${monthly.used_tokens.toLocaleString()}</div>
-              <div class="usage-total">of ${monthly.quota.toLocaleString()}</div>
-              <div class="progress-bg"><div class="progress-fill" style="width: ${monthlyPct}%"></div></div>
-            </div>
-          </div>
-          <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-            <div class="field-label">Estimated Bill (Current Cycle)</div>
-            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 1.25rem;">
-              <span>${inv.currency} ${inv.total_estimated.toFixed(2)}</span>
-            </div>
-            <div style="font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem;">
-              Includes ${inv.included_tokens.toLocaleString()} tokens. 
-              Overage: ${inv.overage_tokens.toLocaleString()} tokens ($${inv.overage_cost.toFixed(2)})
-            </div>
-          </div>
+          `;
+        }).join('');
+      }
+
+      // Plan Details
+      async function loadPlanDetails() {
+        const me = state.client;
+        const p = me.plan;
+        
+        els.planInferenceLimits.innerHTML = `
+          <div class="field"><div class="field-label">Rate Limit</div><div class="field-value">${p.rate_limit_per_minute} requisições por minuto</div></div>
+          <div class="field"><div class="field-label">Token Quota (Dia)</div><div class="field-value">${p.daily_token_quota.toLocaleString()}</div></div>
+          <div class="field"><div class="field-label">Token Quota (Mês)</div><div class="field-value">${p.monthly_token_quota.toLocaleString()}</div></div>
+          <div class="field"><div class="field-label">Max Output Tokens</div><div class="field-value">${p.max_output_tokens}</div></div>
+          <div class="field"><div class="field-label">Streaming</div><div class="field-value">${p.allow_streaming ? 'Permitido' : 'Não permitido'}</div></div>
         `;
+        
+        els.planRagLimits.innerHTML = `
+          <div class="field"><div class="field-label">Max Documentos</div><div class="field-value">${p.rag_max_documents || 'Ilimitado'}</div></div>
+          <div class="field"><div class="field-label">Armazenamento</div><div class="field-value">${p.rag_max_storage_mb || 'Ilimitado'} MB</div></div>
+          <div class="field"><div class="field-label">Consultas p/ Mês</div><div class="field-value">${p.rag_max_queries_per_month || 'Ilimitado'}</div></div>
+        `;
+        
+        els.planModelsList.innerHTML = state.models.map(m => `<span class="badge badge-active">${m.display_name}</span>`).join('');
       }
 
-      function renderInvoices(data) {
-        if (!data.invoices || data.invoices.length === 0) {
-          elements.invoicesContent.innerHTML = '<p style="color: var(--muted);">No invoices yet.</p>';
-          return;
-        }
-        let html = '<table><thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Actions</th></tr></thead><tbody>';
-        data.invoices.forEach(inv => {
-          html += `
-            <tr>
-              <td>${inv.period_start} to ${inv.period_end}</td>
-              <td>${inv.currency} ${inv.total_amount.toFixed(2)}</td>
-              <td><span class="badge ${inv.status === 'paid' ? 'badge-active' : 'badge-warning'}">${inv.status}</span></td>
-              <td>${inv.due_at}</td>
-              <td>
-                ${inv.status !== 'paid' ? `<button class="secondary copy-btn" onclick="simulatePayment('${inv.id}')">Pay (Simulate)</button>` : ''}
-              </td>
-            </tr>
-          `;
-        });
-        html += '</tbody></table>';
-        elements.invoicesContent.innerHTML = html;
-      }
-
-      function renderPayments(payments) {
-        if (!payments || payments.length === 0) {
-          elements.paymentsContent.innerHTML = '<p style="color: var(--muted);">No payments recorded yet.</p>';
-          return;
-        }
-        let html = '<table><thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Method</th><th>Reference</th></tr></thead><tbody>';
-        payments.forEach(p => {
-          const statusClass = p.status === 'paid' ? 'badge-active' : 'badge-warning';
-          html += `
-            <tr>
-              <td>${new Date(p.created_at).toLocaleString()}</td>
-              <td>${p.currency} ${p.amount.toFixed(2)}</td>
-              <td><span class="badge ${statusClass}">${p.status}</span></td>
-              <td>${esc(p.payment_method)}</td>
-              <td><code>${esc(p.payment_reference || '-')}</code></td>
-            </tr>
-          `;
-        });
-        html += '</tbody></table>';
-        elements.paymentsContent.innerHTML = html;
-      }
-
-      function renderModels(data) {
-        const datalist = document.getElementById('modelList');
-        if (!datalist || !data.data) return;
-        datalist.innerHTML = '';
-        data.data.forEach(model => {
-          const option = document.createElement('option');
-          option.value = model.id;
-          if (model.id !== model.id) { // This is just for safety, usually they match
-             option.textContent = model.id;
-          }
-          datalist.appendChild(option);
-        });
-      }
-
-      elements.runChat.addEventListener('click', async () => {
-        const prompt = elements.promptText.value.trim();
+      // Playground
+      els.pgRun.addEventListener('click', async () => {
+        const prompt = els.pgPrompt.value.trim();
         if (!prompt) return;
-
-        elements.runChat.disabled = true;
-        elements.chatResponse.textContent = 'Thinking...';
-        elements.debugOutput.textContent = '';
+        
+        els.pgRun.disabled = true;
+        els.pgResponse.textContent = 'Processando...';
+        const start = performance.now();
         
         try {
-          const payload = { prompt };
-          if (elements.modelId.value.trim()) payload.model = elements.modelId.value.trim();
-          
           const result = await apiFetch('/portal/test-chat', {
             method: 'POST',
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+              prompt,
+              model: els.pgModelSelect.value,
+              max_tokens: parseInt(els.pgMaxTokens.value) || 512
+            })
           });
-
-          elements.chatResponse.innerHTML = `<div style="font-size: 1.1rem; font-weight: 500;">${esc(result.text)}</div>
-            <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 0.5rem;">
-              Model: ${esc(result.model)} | Tokens: ${result.usage?.total_tokens || '?'} | Cached: ${result.cached ? 'Yes' : 'No'}
-            </div>`;
-          elements.debugOutput.textContent = JSON.stringify(result, null, 2);
+          const latency = (performance.now() - start).toFixed(0);
+          els.pgResponse.textContent = result.text;
+          els.pgStats.textContent = `Latência: ${latency}ms | Modelo: ${result.model} | Cache: ${result.cached ? 'Sim' : 'Não'}`;
         } catch (err) {
-          elements.chatResponse.innerHTML = `<span style="color: var(--danger);">Error: ${esc(err.message)}</span>`;
+          els.pgResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
         } finally {
-          elements.runChat.disabled = false;
+          els.pgRun.disabled = false;
         }
       });
 
-      // RAG Logic
-      elements.triggerRagUpload.addEventListener('click', () => elements.ragFileUpload.click());
-      
-      elements.ragFileUpload.addEventListener('change', async (e) => {
+      // RAG
+      els.btnRagUpload.addEventListener('click', () => els.ragFileUpload.click());
+      els.ragFileUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        elements.triggerRagUpload.disabled = true;
-        elements.triggerRagUpload.textContent = 'Enviando...';
-        
+        const fd = new FormData();
+        fd.append('file', file);
+        els.btnRagUpload.disabled = true;
         try {
-          await apiFetch('/v1/rag/files', {
-            method: 'POST',
-            body: formData
-          });
-          showToast('Arquivo enviado com sucesso!');
+          await apiFetch('/client/rag/documents', { method: 'POST', body: fd });
+          showToast('Upload concluído!');
           loadRagFiles();
-        } catch (err) {
-          alert('Erro no upload: ' + err.message);
-        } finally {
-          elements.triggerRagUpload.disabled = false;
-          elements.triggerRagUpload.textContent = 'Enviar PDF';
-          elements.ragFileUpload.value = '';
-        }
+        } catch (err) { alert(err.message); }
+        finally { els.btnRagUpload.disabled = false; els.ragFileUpload.value = ''; }
       });
 
-      elements.refreshRagFiles.addEventListener('click', () => loadRagFiles());
+      els.btnRagQuery.addEventListener('click', async () => {
+        const question = els.ragQueryInput.value.trim();
+        if (!question) return;
+        els.btnRagQuery.disabled = true;
+        els.ragQueryResponse.textContent = 'Consultando...';
+        els.ragQuerySources.textContent = '';
+        try {
+          const result = await apiFetch('/client/rag/query', {
+            method: 'POST',
+            body: JSON.stringify({ question, top_k: 3 })
+          });
+          els.ragQueryResponse.textContent = result.answer;
+          if (result.sources && result.sources.length > 0) {
+            els.ragQuerySources.innerHTML = '<strong>Fontes:</strong><br>' + 
+              result.sources.map(s => `${s.filename} (pág ${s.page}) - Score: ${s.score.toFixed(2)}`).join('<br>');
+          }
+        } catch (err) {
+          els.ragQueryResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
+        } finally {
+          els.btnRagQuery.disabled = false;
+        }
+      });
 
       async function loadRagFiles() {
-        elements.ragFilesContent.innerHTML = 'Carregando...';
-        try {
-          // Fetch usage and limits
-          const usageResult = await apiFetch('/v1/rag/usage');
-          updateRagUsageUI(usageResult);
-
-          const result = await apiFetch('/v1/rag/files');
-          const files = result.data;
-          
-          if (files.length === 0) {
-            elements.ragFilesContent.innerHTML = '<p style="color: var(--muted); padding: 1rem;">Nenhum documento enviado.</p>';
-            elements.ragFileSelect.innerHTML = '<option value="">Nenhum documento disponível</option>';
-            return;
-          }
-          
-          let html = '<table><thead><tr><th>Arquivo</th><th>Status</th><th>Páginas</th><th>Ações</th></tr></thead><tbody>';
-          elements.ragFileSelect.innerHTML = '<option value="">Todos os documentos</option>';
-          
-          files.forEach(f => {
-            const statusClass = f.status === 'ready' ? 'badge-active' : (f.status === 'failed' ? 'badge-blocked' : 'badge-warning');
-            html += `
-              <tr>
-                <td>
-                  <div style="font-weight: 600;">${esc(f.original_filename)}</div>
-                  <div style="font-size: 0.7rem; color: var(--muted);">${(f.file_size_bytes/1024).toFixed(1)} KB | ${new Date(f.created_at).toLocaleDateString()}</div>
-                </td>
-                <td><span class="badge ${statusClass}">${f.status}</span></td>
-                <td>${f.page_count || '-'}</td>
-                <td>
-                  <div style="display: flex; gap: 0.25rem;">
-                    <button class="secondary copy-btn" style="padding: 2px 5px;" onclick="deleteRagFile('${f.id}')">Excluir</button>
-                    ${f.status === 'failed' || f.status === 'rejected_limit' ? `<button class="secondary copy-btn" style="padding: 2px 5px;" onclick="reprocessRagFile('${f.id}')">Reprocessar</button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `;
-            
-            if (f.status === 'ready') {
-              const opt = document.createElement('option');
-              opt.value = f.id;
-              opt.textContent = f.original_filename;
-              elements.ragFileSelect.appendChild(opt);
-            }
-          });
-          html += '</tbody></table>';
-          elements.ragFilesContent.innerHTML = html;
-        } catch (err) {
-          elements.ragFilesContent.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
-        }
+        const [files, usage] = await Promise.all([
+          apiFetch('/client/rag/documents'),
+          apiFetch('/client/rag/usage')
+        ]);
+        
+        els.ragFilesList.innerHTML = files.data.map(f => `
+          <tr>
+            <td><strong>${esc(f.original_filename)}</strong><br><small>${(f.file_size_bytes/1024).toFixed(1)}KB</small></td>
+            <td><span class="badge ${f.status === 'indexed' ? 'badge-active' : (f.status === 'failed' ? 'badge-blocked' : 'badge-warning')}">${f.status}</span></td>
+            <td>${f.page_count || '-'}</td>
+            <td><button class="danger copy-btn" onclick="deleteFile('${f.id}')">Excluir</button></td>
+          </tr>
+        `).join('');
+        
+        const u = usage.usage;
+        const l = usage.limits;
+        els.ragStatsDocs.textContent = `${u.documents_count} / ${l.max_documents || '∞'}`;
+        els.ragProgressDocsFill.style.width = l.max_documents ? `${Math.min(100, (u.documents_count/l.max_documents)*100)}%` : '0%';
+        
+        els.ragStatsStorage.textContent = `${u.storage_mb.toFixed(1)} / ${l.max_storage_mb || '∞'}`;
+        els.ragProgressStorageFill.style.width = l.max_storage_mb ? `${Math.min(100, (u.storage_mb/l.max_storage_mb)*100)}%` : '0%';
+        
+        els.ragStatsQueries.textContent = `${u.queries_month} / ${l.max_queries_per_month || '∞'}`;
+        els.ragProgressQueriesFill.style.width = l.max_queries_per_month ? `${Math.min(100, (u.queries_month/l.max_queries_per_month)*100)}%` : '0%';
       }
 
-      function updateRagUsageUI(data) {
-        elements.ragUsage.style.display = 'grid';
+      window.deleteFile = async (id) => {
+        if (!confirm('Excluir documento?')) return;
+        await apiFetch(`/client/rag/documents/${id}`, { method: 'DELETE' });
+        loadRagFiles();
+      };
+
+      // Examples
+      function updateExamples() {
+        const key = state.apiKey || 'YOUR_API_KEY';
+        const baseUrl = window.location.origin;
+        const model = els.pgModelSelect.value || 'default';
         
-        const updateCard = (usageEl, progressEl, current, max, unit = '') => {
-          if (max === null) {
-            usageEl.textContent = `${current}${unit} / ∞`;
-            progressEl.style.width = '0%';
-          } else {
-            usageEl.textContent = `${current}${unit} / ${max}${unit}`;
-            const pct = Math.min(100, (current / max) * 100);
-            progressEl.style.width = `${pct}%`;
-            progressEl.style.backgroundColor = pct > 90 ? 'var(--danger)' : (pct > 75 ? 'var(--warning)' : 'var(--accent)');
-          }
-        };
+        els.codeCurl.textContent = `curl ${baseUrl}/v1/chat/completions \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "${model}",
+    "messages": [{"role": "user", "content": "Olá, tudo bem?"}]
+  }'`;
 
-        updateCard(elements.ragDocsUsage, elements.ragDocsProgress, data.usage.documents_count, data.limits.max_documents);
-        updateCard(elements.ragStorageUsage, elements.ragStorageProgress, data.usage.storage_mb, data.limits.max_storage_mb, ' MB');
-        updateCard(elements.ragPagesUsage, elements.ragPagesProgress, data.usage.pages_processed_month, data.limits.max_pages_per_month);
-        updateCard(elements.ragQueriesUsage, elements.ragQueriesProgress, data.usage.queries_month, data.limits.max_queries_per_month);
+        els.codePython.textContent = `import requests
 
-        if (data.rag_blocked) {
-          elements.ragBlockedWarning.style.display = 'block';
-          elements.ragBlockedReason.textContent = data.blocked_reason || 'Nenhuma razão informada.';
-          elements.triggerRagUpload.disabled = true;
-          elements.runRagQuery.disabled = true;
-        } else {
-          elements.ragBlockedWarning.style.display = 'none';
-          elements.triggerRagUpload.disabled = false;
-          elements.runRagQuery.disabled = false;
-        }
+url = "${baseUrl}/v1/chat/completions"
+headers = {
+    "Authorization": "Bearer ${key}",
+    "Content-Type": "application/json"
+}
+data = {
+    "model": "${model}",
+    "messages": [{"role": "user", "content": "Olá!"}]
+}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json()["choices"][0]["message"]["content"])`;
+
+        els.codeNode.textContent = `fetch("${baseUrl}/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer ${key}",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    model: "${model}",
+    messages: [{ role: "user", content: "Olá!" }]
+  })
+})
+.then(res => res.json())
+.then(data => console.log(data.choices[0].message.content));`;
+
+        els.codeOpenAI.textContent = `from openai import OpenAI
+
+client = OpenAI(
+    api_key="${key}",
+    base_url="${baseUrl}/v1"
+)
+
+response = client.chat.completions.create(
+    model="${model}",
+    messages=[{"role": "user", "content": "Olá!"}]
+)
+print(response.choices[0].message.content)`;
       }
 
-      window.deleteRagFile = async (id) => {
-        if (!confirm('Deseja excluir este documento?')) return;
-        try {
-          await apiFetch(`/v1/rag/files/${id}`, { method: 'DELETE' });
-          showToast('Documento excluído.');
-          loadRagFiles();
-        } catch (err) { alert('Erro: ' + err.message); }
+      // Utils
+      function esc(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+      function showToast(msg) {
+        els.toast.textContent = msg;
+        els.toast.style.display = 'block';
+        setTimeout(() => els.toast.style.display = 'none', 2000);
+      }
+      window.copyToClipboard = (id) => {
+        const el = document.getElementById(id);
+        navigator.clipboard.writeText(el.textContent).then(() => showToast('Copiado!'));
       };
 
-      window.reprocessRagFile = async (id) => {
-        try {
-          await apiFetch(`/v1/rag/files/${id}/reprocess`, { method: 'POST' });
-          showToast('Processamento reiniciado.');
-          loadRagFiles();
-        } catch (err) { alert('Erro: ' + err.message); }
-      };
-
-      elements.runRagQuery.addEventListener('click', async () => {
-        const question = elements.ragQuestion.value.trim();
-        if (!question) return;
-        
-        elements.runRagQuery.disabled = true;
-        elements.ragResponse.textContent = 'Consultando base de conhecimento...';
-        elements.ragSources.innerHTML = '';
-        
-        try {
-          const payload = {
-            question,
-            top_k: 5,
-            model: elements.modelId.value.trim() || 'default'
-          };
-          const fileId = elements.ragFileSelect.value;
-          if (fileId) payload.file_ids = [fileId];
-          
-          const result = await apiFetch('/v1/rag/query', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-          });
-          
-          elements.ragResponse.innerHTML = `<div style="font-size: 1.1rem; font-weight: 500;">${esc(result.answer)}</div>`;
-          
-          if (result.sources && result.sources.length > 0) {
-            let sourcesHtml = '<h4 style="margin: 1rem 0 0.5rem; font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Fontes:</h4>';
-            result.sources.forEach(s => {
-              sourcesHtml += `
-                <div style="background: #f1f5f9; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; border-left: 3px solid var(--accent);">
-                  <div style="font-weight: 600; font-size: 0.75rem;">${esc(s.filename)} - Página ${s.page} (Score: ${s.score.toFixed(2)})</div>
-                  <div style="font-size: 0.7rem; color: var(--ink); margin-top: 0.25rem;">"${esc(s.text.substring(0, 200))}..."</div>
-                </div>
-              `;
-            });
-            elements.ragSources.innerHTML = sourcesHtml;
-          }
-        } catch (err) {
-          elements.ragResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${esc(err.message)}</span>`;
-        } finally {
-          elements.runRagQuery.disabled = false;
-        }
-      });
-
+      // Auto-login
+      const savedKey = localStorage.getItem('portalApiKey');
+      if (savedKey) {
+        els.loginKey.value = savedKey;
+        els.doLogin.click();
+      }
     </script>
   </body>
 </html>

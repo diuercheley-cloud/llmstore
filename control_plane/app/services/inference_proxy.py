@@ -64,33 +64,59 @@ class InferenceProxy:
 
     async def health_backend(self, backend: InferenceBackend) -> dict:
         started = perf_counter()
-        ok = await self.health_url(backend.backend_url, backend.healthcheck_path)
-        BACKEND_LATENCY.labels(backend_name=backend.name, endpoint="/health").observe(perf_counter() - started)
+        health_path = backend.healthcheck_path
+        
+        # Auto-detect health path if default /health fails for openai_compatible
+        ok = await self.health_url(backend.backend_url, health_path)
+        if not ok and backend.provider == "openai_compatible" and health_path == "/health":
+            # Try /v1/models as a fallback health check for OpenAI-compatible backends
+            ok = await self.health_url(backend.backend_url, "/v1/models")
+            if ok:
+                health_path = "/v1/models"
+            else:
+                # Try /models
+                ok = await self.health_url(backend.backend_url, "/models")
+                if ok:
+                    health_path = "/models"
+
+        BACKEND_LATENCY.labels(backend_name=backend.name, endpoint=health_path).observe(perf_counter() - started)
         return {
             "backend_id": str(backend.id),
             "name": backend.name,
             "provider": backend.provider,
             "backend_url": backend.backend_url,
+            "healthcheck_path": health_path,
             "max_parallel_requests": backend.max_parallel_requests,
             "current_running": backend.current_running,
             "ok": ok,
             "latency_ms": round((perf_counter() - started) * 1000, 2),
         }
 
-    async def list_models(self, base_url: str | None = None) -> dict:
+    async def list_models(self, base_url: str | None = None, api_key: str | None = None) -> dict:
+        target_url = base_url or self.settings.data_plane_base_url
+        client = self._get_client(target_url)
+        headers = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+            
         try:
             await self.circuit_breaker.before_call()
-            response = await self._get_client(base_url or self.settings.data_plane_base_url).get("/v1/models")
+            # Try /v1/models first
+            response = await client.get("/v1/models", headers=headers)
+            if response.status_code == 404:
+                # Fallback to /models
+                response = await client.get("/models", headers=headers)
+            
             response.raise_for_status()
             await self.circuit_breaker.record_success()
             return response.json()
         except (CircuitBreakerOpen, httpx.HTTPStatusError, httpx.TransportError) as exc:
             if self._should_trip_circuit_breaker(exc):
                 await self.circuit_breaker.record_failure()
-                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="backend unavailable") from exc
             if isinstance(exc, httpx.HTTPStatusError):
                 raise HTTPException(status_code=exc.response.status_code, detail=self._backend_error_detail(exc)) from exc
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="data plane unavailable") from exc
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="backend unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
         if backend not in {"llama.cpp", "ollama", "vllm", "openai_compatible"}:
@@ -143,6 +169,9 @@ class InferenceProxy:
         backend_id=None,
         prompt_template: str | None = None,
         manage_slot: bool = True,
+        api_key: str | None = None,
+        plan_code: str = "free",
+        is_admin: bool = False,
     ):
         logger.debug(
             "inference proxy chat started",
@@ -152,6 +181,8 @@ class InferenceProxy:
                     "backend_selected": backend_name or backend,
                     "stream": stream,
                     "prompt_template": prompt_template,
+                    "plan_code": plan_code,
+                    "is_admin": is_admin,
                 }
             },
         )
@@ -166,6 +197,9 @@ class InferenceProxy:
             backend_id=backend_id,
             prompt_template=prompt_template,
             manage_slot=manage_slot,
+            api_key=api_key,
+            plan_code=plan_code,
+            is_admin=is_admin,
         )
 
     async def complete(
@@ -177,6 +211,9 @@ class InferenceProxy:
         backend_name: str,
         backend_id=None,
         manage_slot: bool = True,
+        api_key: str | None = None,
+        plan_code: str = "free",
+        is_admin: bool = False,
     ):
         logger.debug(
             "inference proxy completion started",
@@ -185,6 +222,8 @@ class InferenceProxy:
                     "model_requested": payload.get("model"),
                     "backend_selected": backend_name or backend,
                     "stream": stream,
+                    "plan_code": plan_code,
+                    "is_admin": is_admin,
                 }
             },
         )
@@ -197,6 +236,9 @@ class InferenceProxy:
             backend_name=backend_name,
             backend_id=backend_id,
             manage_slot=manage_slot,
+            api_key=api_key,
+            plan_code=plan_code,
+            is_admin=is_admin,
         )
 
     async def _forward(
@@ -211,12 +253,15 @@ class InferenceProxy:
         backend_id=None,
         prompt_template: str | None = None,
         manage_slot: bool = True,
+        api_key: str | None = None,
+        plan_code: str = "free",
+        is_admin: bool = False,
     ):
-        print(f"DEBUG PROXY: Entering _forward for {endpoint}, backend_name={backend_name}, backend_id={backend_id}")
+        print(f"DEBUG PROXY: Entering _forward for {endpoint}, backend_name={backend_name}, backend_id={backend_id}, plan={plan_code}, admin={is_admin}")
         try:
             await self.circuit_breaker.before_call()
             if manage_slot:
-                async with self.queue_manager.slot(backend_id=backend_id):
+                async with self.queue_manager.slot(plan_code=plan_code, is_admin=is_admin, backend_id=backend_id):
                     if stream:
                         return await self._streaming_forward(
                             endpoint,
@@ -226,6 +271,7 @@ class InferenceProxy:
                             backend_url=backend_url or self.settings.data_plane_base_url,
                             backend_name=backend_name,
                             prompt_template=prompt_template,
+                            api_key=api_key,
                         )
                     return await self._json_forward(
                         endpoint,
@@ -235,6 +281,7 @@ class InferenceProxy:
                         backend_url=backend_url or self.settings.data_plane_base_url,
                         backend_name=backend_name,
                         prompt_template=prompt_template,
+                        api_key=api_key,
                     )
             if stream:
                 return await self._streaming_forward(
@@ -245,6 +292,7 @@ class InferenceProxy:
                     backend_url=backend_url or self.settings.data_plane_base_url,
                     backend_name=backend_name,
                     prompt_template=prompt_template,
+                    api_key=api_key,
                 )
             return await self._json_forward(
                 endpoint,
@@ -254,13 +302,30 @@ class InferenceProxy:
                 backend_url=backend_url or self.settings.data_plane_base_url,
                 backend_name=backend_name,
                 prompt_template=prompt_template,
+                api_key=api_key,
             )
         except CircuitBreakerOpen as exc:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
         except QueueOverloaded as exc:
-            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)) from exc
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": str(exc),
+                    "queue": getattr(exc, "queue_name", "unknown"),
+                    "retry_after": 5,
+                    "request_id": str(uuid.uuid4()),
+                }
+            ) from exc
         except QueueTimeout as exc:
-            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=str(exc)) from exc
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail={
+                    "error": str(exc),
+                    "queue": getattr(exc, "queue_name", "unknown"),
+                    "retry_after": 2,
+                    "request_id": str(uuid.uuid4()),
+                }
+            ) from exc
 
     async def _json_forward(
         self,
@@ -271,6 +336,7 @@ class InferenceProxy:
         backend_url: str = "",
         backend_name: str = "",
         prompt_template: str | None = None,
+        api_key: str | None = None,
     ) -> JSONResponse:
         started = perf_counter()
         last_error: Exception | None = None
@@ -314,8 +380,11 @@ class InferenceProxy:
         for attempt in range(1, self.settings.retry_attempts + 2):
             try:
                 headers = {}
-                if backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
+                if api_key:
+                    headers["Authorization"] = f"Bearer {api_key}"
+                elif backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
                     headers["Authorization"] = f"Bearer {self.settings.lmstudio_api_key}"
+                
                 print(f"DEBUG PROXY: Forwarding to {target_endpoint} on {client.base_url} with backend {backend_name}")
                 response = await client.post(target_endpoint, json=request_payload, headers=headers, timeout=self.attempt_timeout)
                 response.raise_for_status()
@@ -379,6 +448,7 @@ class InferenceProxy:
         backend_url: str = "",
         backend_name: str = "",
         prompt_template: str | None = None,
+        api_key: str | None = None,
     ) -> StreamingResponse:
         started = perf_counter()
         client = self._client_for_backend(backend, backend_url)
@@ -417,8 +487,14 @@ class InferenceProxy:
             },
         )
         
+        headers = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        elif backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
+            headers["Authorization"] = f"Bearer {self.settings.lmstudio_api_key}"
+
         stream_client = httpx.AsyncClient(base_url=backend_url, timeout=self.attempt_timeout)
-        request = stream_client.build_request("POST", target_endpoint, json=request_payload)
+        request = stream_client.build_request("POST", target_endpoint, json=request_payload, headers=headers)
 
         try:
             response = await stream_client.send(request, stream=True)

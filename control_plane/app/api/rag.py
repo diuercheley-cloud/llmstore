@@ -38,11 +38,170 @@ from app.services.rag_usage import get_rag_usage_and_limits, check_rag_feature_b
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/rag", tags=["rag"])
+client_rag_router = APIRouter(prefix="/client/rag", tags=["client_rag"])
 settings = get_settings()
 
 RAG_QUEUE_NAME = "rag_jobs:queue"
 
 def cosine_similarity(a, b):
+    a = np.array(a)
+    b = np.array(b)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return float(np.dot(a, b) / (norm_a * norm_b))
+
+# --- Client RAG Endpoints ---
+
+@client_rag_router.get("/usage")
+async def get_client_rag_usage(
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    if not settings.rag_enabled:
+        raise HTTPException(status_code=403, detail="RAG is disabled")
+    
+    is_blocked, block_reason = await check_rag_feature_blocked(session, client.id)
+    if is_blocked:
+        raise HTTPException(status_code=403, detail=f"RAG feature blocked: {block_reason}")
+    
+    return await get_rag_usage_and_limits(session, client)
+
+@client_rag_router.post("/documents", response_model=RAGFileResponse)
+async def upload_client_rag_document(
+    file: UploadFile = File(...),
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    if not settings.rag_enabled:
+        raise HTTPException(status_code=403, detail="RAG is disabled")
+
+    is_blocked, block_reason = await check_rag_feature_blocked(session, client.id)
+    if is_blocked:
+        raise HTTPException(status_code=403, detail=f"RAG feature blocked: {block_reason}")
+
+    allowed_exts = [".pdf", ".txt", ".md"]
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_exts:
+        raise HTTPException(status_code=400, detail=f"Only {', '.join(allowed_exts)} files are allowed")
+    
+    usage_info = await get_rag_usage_and_limits(session, client)
+    limits = usage_info["limits"]
+    usage = usage_info["usage"]
+    
+    if limits["max_documents"] is not None and usage["documents_count"] >= limits["max_documents"]:
+        return JSONResponse(status_code=429, content={
+            "error": "rag_limit_exceeded",
+            "limit": "rag_max_documents",
+            "current": usage["documents_count"],
+            "max": limits["max_documents"],
+            "plan": usage_info["plan"]
+        })
+
+    # Check file size and total storage
+    content = await file.read()
+    file_size = len(content)
+    file_size_mb = file_size / (1024 * 1024)
+    
+    if file_size_mb > settings.rag_max_file_mb:
+        raise HTTPException(status_code=413, detail=f"File too large. Max {settings.rag_max_file_mb}MB")
+        
+    if limits["max_storage_mb"] is not None and (float(usage["storage_mb"]) + file_size_mb) > limits["max_storage_mb"]:
+        return JSONResponse(status_code=429, content={
+            "error": "rag_limit_exceeded",
+            "limit": "rag_max_storage_mb",
+            "current": usage["storage_mb"],
+            "max": limits["max_storage_mb"],
+            "plan": usage_info["plan"]
+        })
+
+    # Create storage dir if not exists (organized by client_id)
+    client_storage_dir = os.path.join(settings.rag_storage_dir, str(client.id))
+    os.makedirs(client_storage_dir, exist_ok=True)
+    
+    file_id = uuid.uuid4()
+    internal_filename = f"{file_id}{file_ext}"
+    storage_path = os.path.join(client_storage_dir, internal_filename)
+    
+    with open(storage_path, "wb") as f:
+        f.write(content)
+        
+    doc = RAGDocument(
+        id=file_id,
+        client_id=client.id,
+        filename=internal_filename,
+        original_filename=file.filename,
+        content_type=file.content_type or "application/octet-stream",
+        file_size_bytes=file_size,
+        storage_path=storage_path,
+        status="uploaded"
+    )
+    session.add(doc)
+    
+    await record_rag_event(session, client.id, "document_uploaded", document_id=file_id, storage_bytes=file_size)
+    
+    await session.commit()
+    await session.refresh(doc)
+    
+    # Enqueue processing
+    await redis_client.rpush(RAG_QUEUE_NAME, str(doc.id))
+    
+    return doc
+
+@client_rag_router.get("/documents", response_model=RAGFileListResponse)
+async def list_client_rag_documents(
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    result = await session.execute(
+        select(RAGDocument).where(RAGDocument.client_id == client.id).order_by(RAGDocument.created_at.desc())
+    )
+    return {"data": result.scalars().all()}
+
+@client_rag_router.get("/documents/{doc_id}", response_model=RAGFileResponse)
+async def get_client_rag_document(
+    doc_id: uuid.UUID,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    doc = (await session.execute(
+        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
+    )).scalar_one_or_none()
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
+@client_rag_router.delete("/documents/{doc_id}")
+async def delete_client_rag_document(
+    doc_id: uuid.UUID,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    doc = (await session.execute(
+        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
+    )).scalar_one_or_none()
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    file_size = doc.file_size_bytes
+    await delete_rag_document(session, doc)
+    await record_rag_event(session, client.id, "document_deleted", document_id=doc_id, storage_bytes=-file_size)
+    await session.commit()
+    
+    return {"status": "deleted"}
+
+@client_rag_router.post("/query", response_model=RAGQueryResponse)
+async def query_client_rag(
+    payload: RAGQueryRequest,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+    proxy = Depends(get_inference_proxy),
+):
+    # Reuse existing query_rag logic or redirect
+    return await query_rag(payload, client, session, proxy)
     a = np.array(a)
     b = np.array(b)
     norm_a = np.linalg.norm(a)
@@ -102,7 +261,7 @@ async def upload_rag_file(
     if file_size_mb > settings.rag_max_file_mb:
         raise HTTPException(status_code=413, detail=f"File too large. Max {settings.rag_max_file_mb}MB")
         
-    if limits["max_storage_mb"] is not None and (usage["storage_mb"] + file_size_mb) > limits["max_storage_mb"]:
+    if limits["max_storage_mb"] is not None and (float(usage["storage_mb"]) + file_size_mb) > limits["max_storage_mb"]:
         return JSONResponse(status_code=429, content={
             "error": "rag_limit_exceeded",
             "limit": "rag_max_storage_mb",
@@ -313,7 +472,7 @@ Resposta:"""
         "temperature": payload.temperature,
     }
     
-    result = await _chat_with_fallback(proxy, selected_model, chat_payload, False, False)
+    result = await _chat_with_fallback(proxy, selected_model, chat_payload, False, False, client=client)
     response_payload = json.loads(result.response.body.decode("utf-8"))
     answer = (response_payload.get("choices") or [{}])[0].get("message", {}).get("content", "")
     

@@ -10,10 +10,11 @@ from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
 from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
-from app.api.rag import router as rag_router
+from app.api.rag import router as rag_router, client_rag_router
 from app.api.portal import router as portal_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
+from app.api.developer_docs import router as developer_docs_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
@@ -67,7 +68,7 @@ app.middleware("http")(request_context_middleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=bool(settings.cors_origins),
+    allow_credentials=bool(settings.cors_origins) and "*" not in settings.cors_origins,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Admin-Token", "X-Correlation-ID"],
     expose_headers=["X-Correlation-ID"],
@@ -78,8 +79,10 @@ app.include_router(admin_router)
 app.include_router(admin_tests_router)
 app.include_router(client_router)
 app.include_router(rag_router)
+app.include_router(client_rag_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account
+app.include_router(developer_docs_router)
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")

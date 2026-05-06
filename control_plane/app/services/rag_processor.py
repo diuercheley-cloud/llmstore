@@ -49,22 +49,39 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
 
         # 1. Extract text
         text_by_page = []
-        with fitz.open(doc.storage_path) as pdf:
-            doc.page_count = len(pdf)
-            
-            if limits["max_pages_per_month"] is not None and (usage["pages_processed_month"] + doc.page_count) > limits["max_pages_per_month"]:
+        file_ext = doc.original_filename.lower().split(".")[-1]
+        
+        if file_ext == "pdf":
+            with fitz.open(doc.storage_path) as pdf:
+                doc.page_count = len(pdf)
+                
+                if limits["max_pages_per_month"] is not None and (usage["pages_processed_month"] + doc.page_count) > limits["max_pages_per_month"]:
+                    doc.status = "rejected_limit"
+                    doc.error_message = f"Monthly page limit exceeded. Plan allows {limits['max_pages_per_month']} pages."
+                    await session.commit()
+                    return
+
+                for page_num, page in enumerate(pdf, start=1):
+                    text = page.get_text().strip()
+                    if text:
+                        text_by_page.append((page_num, text))
+        elif file_ext in ["txt", "md"]:
+            doc.page_count = 1
+            if limits["max_pages_per_month"] is not None and (usage["pages_processed_month"] + 1) > limits["max_pages_per_month"]:
                 doc.status = "rejected_limit"
                 doc.error_message = f"Monthly page limit exceeded. Plan allows {limits['max_pages_per_month']} pages."
                 await session.commit()
                 return
-
-            for page_num, page in enumerate(pdf, start=1):
-                text = page.get_text().strip()
+                
+            with open(doc.storage_path, "r", encoding="utf-8") as f:
+                text = f.read().strip()
                 if text:
-                    text_by_page.append((page_num, text))
+                    text_by_page.append((1, text))
+        else:
+            raise ValueError(f"Unsupported file format: {file_ext}")
 
         if not text_by_page:
-            raise ValueError("No text found in PDF")
+            raise ValueError("No text found in file")
 
         # 2. Chunk text
         text_splitter = RecursiveCharacterTextSplitter(
@@ -104,7 +121,7 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
             session.add(chunk)
 
         doc.chunk_count = len(chunks_to_process)
-        doc.status = "ready"
+        doc.status = "indexed"
         doc.processed_at = utc_now()
         doc.error_message = None
         

@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -51,11 +51,27 @@ class Settings(BaseSettings):
     max_top_p: float = Field(default=1.0, alias="MAX_TOP_P")
     retry_attempts: int = Field(default=2, alias="RETRY_ATTEMPTS")
     retry_backoff_seconds: float = Field(default=1.0, alias="RETRY_BACKOFF_SECONDS")
+
+    # Queue Settings
+    queue_admin_max_waiting: int = Field(default=20, alias="QUEUE_ADMIN_MAX_WAITING")
+    queue_admin_max_active: int = Field(default=10, alias="QUEUE_ADMIN_MAX_ACTIVE")
+    queue_admin_timeout: int = Field(default=60, alias="QUEUE_ADMIN_TIMEOUT")
+    queue_premium_max_waiting: int = Field(default=15, alias="QUEUE_PREMIUM_MAX_WAITING")
+    queue_premium_max_active: int = Field(default=5, alias="QUEUE_PREMIUM_MAX_ACTIVE")
+    queue_premium_timeout: int = Field(default=30, alias="QUEUE_PREMIUM_TIMEOUT")
+    queue_basic_max_waiting: int = Field(default=10, alias="QUEUE_BASIC_MAX_WAITING")
+    queue_basic_max_active: int = Field(default=2, alias="QUEUE_BASIC_MAX_ACTIVE")
+    queue_basic_timeout: int = Field(default=20, alias="QUEUE_BASIC_TIMEOUT")
+    queue_free_max_waiting: int = Field(default=5, alias="QUEUE_FREE_MAX_WAITING")
+    queue_free_max_active: int = Field(default=1, alias="QUEUE_FREE_MAX_ACTIVE")
+    queue_free_timeout: int = Field(default=15, alias="QUEUE_FREE_TIMEOUT")
+
     circuit_breaker_failure_threshold: int = Field(default=3, alias="CIRCUIT_BREAKER_FAILURE_THRESHOLD")
     circuit_breaker_recovery_seconds: int = Field(default=20, alias="CIRCUIT_BREAKER_RECOVERY_SECONDS")
     response_cache_enabled: bool = Field(default=True, alias="RESPONSE_CACHE_ENABLED")
     response_cache_ttl_seconds: int = Field(default=3600, alias="RESPONSE_CACHE_TTL_SECONDS")
     semantic_cache_enabled: bool = Field(default=False, alias="SEMANTIC_CACHE_ENABLED")
+    local_billing_mode: str = Field(default="manual", alias="LOCAL_BILLING_MODE")
     billing_invoice_day: int = Field(default=1, alias="BILLING_INVOICE_DAY")
     billing_due_days: int = Field(default=7, alias="BILLING_DUE_DAYS")
     billing_suspend_after_days: int = Field(default=15, alias="BILLING_SUSPEND_AFTER_DAYS")
@@ -68,7 +84,13 @@ class Settings(BaseSettings):
     models_dir: str = Field(default="/models", alias="MODELS_DIR")
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
     app_env: str = Field(default="local", alias="APP_ENV")
+    localhost_mode: bool = Field(default=False, alias="LOCALHOST_MODE")
     app_public_url: str = Field(default="http://localhost:18080", alias="APP_PUBLIC_URL")
+    public_base_url: str = Field(default="", alias="PUBLIC_BASE_URL")
+    admin_base_url: str = Field(default="", alias="ADMIN_BASE_URL")
+    client_portal_base_url: str = Field(default="", alias="CLIENT_PORTAL_BASE_URL")
+    docs_base_url: str = Field(default="", alias="DOCS_BASE_URL")
+    api_base_url: str = Field(default="", alias="API_BASE_URL")
     test_tools_enabled: bool = Field(default=False, alias="TEST_TOOLS_ENABLED")
     jwt_secret: str = Field(default="change-me-at-all-costs", alias="JWT_SECRET")
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
@@ -87,9 +109,45 @@ class Settings(BaseSettings):
     rag_embedding_provider: str = Field(default="local", alias="RAG_EMBEDDING_PROVIDER")
     rag_embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL")
 
+    @model_validator(mode="after")
+    def validate_localhost_mode(self) -> "Settings":
+        if self.localhost_mode:
+            # Default to localhost if not set
+            if not self.public_base_url:
+                self.public_base_url = self.app_public_url.rstrip("/")
+            if not self.admin_base_url:
+                self.admin_base_url = f"{self.public_base_url}/admin"
+            if not self.client_portal_base_url:
+                self.client_portal_base_url = f"{self.public_base_url}/client-portal"
+            if not self.docs_base_url:
+                self.docs_base_url = f"{self.public_base_url}/docs"
+            if not self.api_base_url:
+                self.api_base_url = f"{self.public_base_url}/v1"
+            
+            # Ensure app_public_url matches public_base_url for consistency
+            self.app_public_url = self.public_base_url
+            
+        return self
+
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        if "*" in origins:
+            return ["*"]
+        if self.localhost_mode:
+            # Add common localhost origins if not already present
+            localhost_origins = [
+                "http://localhost",
+                "http://localhost:18080",
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1",
+                "http://127.0.0.1:18080",
+            ]
+            for origin in localhost_origins:
+                if origin not in origins:
+                    origins.append(origin)
+        return origins
 
 
 @lru_cache

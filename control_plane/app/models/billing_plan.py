@@ -32,6 +32,7 @@ class BillingPlan(Base):
     price_brl: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allowed_models_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    routing_policy_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 

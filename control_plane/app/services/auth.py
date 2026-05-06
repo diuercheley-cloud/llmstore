@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from enum import Enum
 from functools import total_ordering
@@ -96,7 +97,7 @@ async def require_client(
     plaintext = auth_creds.credentials.strip()
     prefix = plaintext[:12]
     result = await session.execute(
-        select(ApiKey).where(ApiKey.key_prefix == prefix, ApiKey.revoked_at.is_(None)).order_by(ApiKey.created_at.desc())
+        select(ApiKey).where(ApiKey.key_prefix == prefix, ApiKey.is_active == True, ApiKey.revoked_at.is_(None)).order_by(ApiKey.created_at.desc())
     )
     api_keys = result.scalars().all()
     api_key = next((item for item in api_keys if verify_secret(plaintext, item.key_hash)), None)
@@ -109,6 +110,27 @@ async def require_client(
             reason="invalid api key",
         )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid api key")
+    
+    # Check expiration
+    if api_key.expires_at:
+        expires_at = api_key.expires_at
+        if expires_at.tzinfo is None:
+            from datetime import timezone
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        
+        if expires_at < utc_now():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="api key expired")
+
+    # Check allowed IPs for this specific key
+    if api_key.allowed_ips_json:
+        source_ip = getattr(request.state, "source_ip", "unknown") if request is not None else "unknown"
+        try:
+            allowed_ips = json.loads(api_key.allowed_ips_json)
+            if allowed_ips and source_ip not in allowed_ips:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"IP {source_ip} not allowed for this API key")
+        except json.JSONDecodeError:
+            pass
+
     client_result = await session.execute(
         select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == api_key.client_id)
     )
@@ -116,8 +138,11 @@ async def require_client(
     if client is None or client.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="client blocked or not found")
     if client.billing_status == "suspended":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="client suspended for billing")
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"error": "billing_suspended", "message": "Access suspended due to overdue payment. Please settle your invoices to restore access."}
+        )
     await enforce_client_ip_policy(session, client, getattr(request.state, "source_ip", "unknown") if request is not None else "unknown")
     api_key.last_used_at = utc_now()
-    await session.flush()
+    await session.commit()
     return client

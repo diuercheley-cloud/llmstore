@@ -167,8 +167,25 @@
         <div style="overflow-x: auto;"><div id="requestTable"></div></div>
         <pre id="requestDebug" class="debug"></pre>
       </section>
+    <section class="wide">
+      <h2>Uso de RAG por Cliente</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>ID</th>
+              <th>Docs</th>
+              <th>Storage (MB)</th>
+              <th>Consultas (Mês)</th>
+              <th>Páginas (Mês)</th>
+            </tr>
+          </thead>
+          <tbody id="ragUsageList"></tbody>
+        </table>
+      </div>
+    </section>
     </main>
-
     <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted);">
       <p>Please enter your Admin Token to access the dashboard.</p>
     </div>
@@ -223,13 +240,14 @@
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [health, usage, models, security, requests, revenue] = await Promise.all([
+          const [health, usage, models, security, requests, revenue, rag] = await Promise.all([
             adminFetch('/admin/health/deep'),
             adminFetch('/admin/usage/summary'),
             adminFetch('/admin/models'),
             adminFetch('/admin/security/events'),
             adminFetch('/admin/requests'),
-            adminFetch('/admin/revenue/summary')
+            adminFetch('/admin/revenue/summary'),
+            adminFetch('/admin/rag/usage')
           ]);
 
           renderHealth(health);
@@ -239,6 +257,7 @@
           renderSecurity(security);
           renderRequests(requests);
           renderRevenue(revenue);
+          renderRagUsage(rag);
 
           // Fill debugs
           document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
@@ -387,6 +406,20 @@
         });
         html += '</tbody></table>';
         document.getElementById('requestTable').innerHTML = html;
+      }
+
+      function renderRagUsage(data) {
+        const list = document.getElementById('ragUsageList');
+        list.innerHTML = data.map(r => `
+          <tr>
+            <td><strong>${r.client_name}</strong></td>
+            <td><code>${shortId(r.client_id)}</code></td>
+            <td>${r.documents_count}</td>
+            <td>${r.storage_mb.toFixed(2)}</td>
+            <td>${r.queries_month}</td>
+            <td>${r.pages_month}</td>
+          </tr>
+        `).join('');
       }
     </script>
   </body>

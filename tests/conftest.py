@@ -31,6 +31,7 @@ os.environ.setdefault("ADMIN_TOKEN", "test-admin-token")
 os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_FILE}")
 os.environ.setdefault("REDIS_URL", "redis://test.invalid:6379/0")
 os.environ.setdefault("DATA_PLANE_BASE_URL", "http://localhost:8081")
+os.environ["RAG_STORAGE_DIR"] = str(TEST_TMP / "rag_uploads")
 
 # Ensure control_plane is on path
 CONTROL_PLANE = ROOT / "control_plane"
@@ -153,16 +154,43 @@ async def async_client(fastapi_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]
         yield client
 
 
+@pytest.fixture
+def admin_token_headers() -> dict[str, str]:
+    return {"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")}
+
+
+@pytest.fixture
+def models_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from app.services import admin_model_management as model_mgmt
+    directory = tmp_path / "models"
+    directory.mkdir()
+    monkeypatch.setattr(model_mgmt, "resolve_models_dir", lambda: directory)
+    return directory
+
+
 @pytest_asyncio.fixture
-async def app_client_factory() -> AsyncIterator[Callable[[FastAPI], Awaitable[httpx.AsyncClient]]]:
-    clients: list[httpx.AsyncClient] = []
+async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator[httpx.AsyncClient]:
+    from app.main import app
+    from app.db.session import get_db_session, get_redis
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from app.db.base import Base
 
-    async def _factory(app: FastAPI) -> httpx.AsyncClient:
-        client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver")
-        clients.append(client)
-        return client
+    engine = create_async_engine(isolated_db_url)
+    testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-    yield _factory
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    for client in clients:
-        await client.aclose()
+    async def override_get_db_session():
+        async with testing_session_local() as session:
+            yield session
+
+    app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_redis] = lambda: fake_redis
+
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+        yield client
+
+    app.dependency_overrides.clear()
+    await engine.dispose()
+

@@ -437,8 +437,12 @@
                     <div class="stat-card"><span class="stat-label">Cache Hit Rate</span><span class="stat-value" id="stat-cache">-</span></div>
                     <div class="stat-card"><span class="stat-label">Backends Healthy</span><span class="stat-value" id="stat-backends">-</span></div>
                 </div>
-            </div>
 
+                <div class="card" style="margin-top: 1rem;">
+                   <div class="card-header"><h3 class="card-title">Filas de Inferência (Sync)</h3></div>
+                   <div id="inference-queues-list" class="stats-grid"></div>
+                </div>
+                </div>
             <!-- TAB: CLIENTS -->
             <div id="tab-clients" class="tab-pane hidden">
                 <div class="card-header">
@@ -717,7 +721,7 @@
             </div>
             <div class="grid-two">
                 <div class="form-group"><label>Alias</label><input type="text" id="m-alias" placeholder="gemma"></div>
-                <div class="form-group"><label>Provider</label><select id="m-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+                <div class="form-group"><label>Provider</label><select id="m-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option><option value="openai_compatible">openai_compatible</option></select></div>
             </div>
             <div class="grid-two">
                 <div class="form-group">
@@ -739,7 +743,7 @@
                 <div class="form-group"><label>Criar backend: URL</label><input type="text" id="m-new-backend-url" placeholder="http://host:porta"></div>
             </div>
             <div class="grid-two">
-                <div class="form-group"><label>Criar backend: provider</label><select id="m-new-backend-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+                <div class="form-group"><label>Criar backend: provider</label><select id="m-new-backend-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option><option value="openai_compatible">openai_compatible</option></select></div>
                 <div class="form-group"><label>Planos permitidos</label><select id="m-plans" multiple size="4"></select></div>
             </div>
             <div class="grid-two">
@@ -776,15 +780,20 @@
             <div class="modal-header"><h3 id="backend-modal-title">Adicionar Backend</h3><button class="btn-secondary" onclick="closeModal('modal-backend-edit')">X</button></div>
             <div class="grid-two">
                 <div class="form-group"><label>Nome</label><input type="text" id="b-name"></div>
-                <div class="form-group"><label>Provider</label><select id="b-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option></select></div>
+                <div class="form-group"><label>Provider</label><select id="b-provider"><option value="llama.cpp">llama.cpp</option><option value="ollama">ollama</option><option value="vllm">vllm</option><option value="openai_compatible">openai_compatible</option></select></div>
             </div>
             <div class="grid-two">
                 <div class="form-group"><label>Backend URL</label><input type="text" id="b-url"></div>
                 <div class="form-group"><label>Healthcheck path</label><input type="text" id="b-health" value="/health"></div>
             </div>
             <div class="grid-two">
+                <div class="form-group"><label>API Key (opcional)</label><input type="password" id="b-api-key" placeholder="Para OpenAI-compatible"></div>
                 <div class="form-group"><label>Max parallel requests</label><input type="number" id="b-parallel" value="1"></div>
-                <div class="form-group"><label><input type="checkbox" id="b-active" checked> Ativo</label></div>
+            </div>
+            <div class="form-group"><label><input type="checkbox" id="b-active" checked> Ativo</label></div>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                <button class="btn-secondary" style="flex: 1;" onclick="testBackendConnection()">Testar conexão</button>
+                <button class="btn-secondary" style="flex: 1;" onclick="listBackendModels()">Listar modelos</button>
             </div>
             <button class="btn-primary" style="width: 100%;" onclick="saveBackend()">Salvar backend</button>
         </div>
@@ -1322,9 +1331,24 @@
                 <div class="stat-card"><span class="stat-label">Cache hit rate</span><span class="stat-value">${hitRate}</span></div>
                 <div class="stat-card"><span class="stat-label">Backends healthy</span><span class="stat-value">${healthyBackends}</span></div>
                 <div class="stat-card"><span class="stat-label">Backends unhealthy</span><span class="stat-value">${unhealthyBackends}</span></div>
-            `;
-        }
+                `;
 
+                const iQueues = state.health.inference_queues?.queues || {};
+                let queuesHtml = "";
+                // Sort by priority (admin first)
+                const sortedQueues = Object.entries(iQueues).sort((a, b) => a[1].priority - b[1].priority);
+                for (const [name, data] of sortedQueues) {
+                const statusClass = data.waiting > 0 ? "text-warning" : (data.active > 0 ? "text-success" : "");
+                queuesHtml += `
+                    <div class="stat-card">
+                        <span class="stat-label">${name.replace('inference_', '').toUpperCase()}</span>
+                        <span class="stat-value ${statusClass}">${data.active} / ${data.max_active}</span>
+                        <div class="muted">Waiting: ${data.waiting} / ${data.max_waiting}</div>
+                    </div>
+                `;
+                }
+                document.getElementById('inference-queues-list').innerHTML = queuesHtml || '<p class="muted">Nenhuma fila configurada.</p>';
+                }
         function renderClientsTable() {
             const filter = document.getElementById('client-filter').value.trim().toLowerCase();
             const rows = state.clients
@@ -1548,6 +1572,32 @@
             `;
         }
 
+        function getModelStatusPill(model) {
+            if (model.status === 'soft-deleted') return { label: 'DELETED', type: 'danger' };
+            if (!model.is_active) return { label: 'DISABLED', type: 'muted' };
+
+            const bh = model.backend_health;
+            const fileExists = state.modelFiles?.files?.some(f => f.filename === model.model_file);
+            
+            if (model.provider === 'llama.cpp' && model.model_file && state.modelFiles?.files?.length > 0 && !fileExists) {
+                return { label: 'MISSING_FILE', type: 'danger' };
+            }
+
+            if (!model.inference_backend_id && (!model.routes || model.routes.length === 0)) {
+                return { label: 'NO_BACKEND', type: 'warning' };
+            }
+
+            if (bh) {
+                if (!bh.ok) {
+                    return { label: 'OFFLINE', type: 'danger' };
+                }
+                if (bh.status === 'degraded') return { label: 'DEGRADED', type: 'warning' };
+                if (bh.status === 'loading') return { label: 'LOADING', type: 'info' };
+            }
+
+            return { label: 'ONLINE', type: 'success' };
+        }
+
         function renderModels() {
             const models = state.modelsPayload.registry || [];
             const files = state.modelFiles?.files || [];
@@ -1568,39 +1618,35 @@
                     <div class="detail-item"><strong>GGUFs disponíveis</strong>${files.length}</div>
                 </div>
                 <table>
-                    <thead><tr><th>Nome</th><th>Alias / ID</th><th>GGUF</th><th>Arquitetura</th><th>Backend</th><th>Provider</th><th>Status modelo</th><th>Status backend</th><th>Default</th><th>Routes</th><th>Contexto</th><th>Template</th><th>Reasoning</th><th>Atualizado</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome</th><th>Alias / ID</th><th>GGUF</th><th>Backend</th><th>Status</th><th>Default</th><th>Contexto</th><th>Ações</th></tr></thead>
                     <tbody>
-                        ${models.map((model) => `
-                            <tr>
-                                <td><strong>${escapeHtml(model.display_name || model.model_alias || model.model_id)}</strong><div class="muted">${fmtDate(model.created_at)}</div></td>
-                                <td><div><code>${escapeHtml(model.model_alias || '-')}</code></div><div class="muted"><code>${escapeHtml(model.model_id)}</code></div></td>
-                                <td>${escapeHtml(model.model_file || '-')}<div class="muted">${escapeHtml(model.quantization || '-')}</div></td>
-                                <td>${escapeHtml(model.architecture || '-')}</td>
-                                <td>${escapeHtml(model.backend_name || '-')}</td>
-                                <td>${escapeHtml(model.provider)}</td>
-                                <td><span class="pill pill-${model.is_active ? 'success' : 'muted'}">${escapeHtml(model.status)}</span></td>
-                                <td><span class="pill pill-${model.backend_health?.ok ? 'success' : 'warning'}">${model.backend_health?.ok ? 'online' : 'offline'}</span></td>
-                                <td>${model.is_default ? 'yes' : 'no'}</td>
-                                <td>${(model.routes || []).length}</td>
-                                <td>${Number(model.context_length || 0).toLocaleString()}</td>
-                                <td>${escapeHtml(model.prompt_template || 'auto')}</td>
-                                <td>${model.allow_reasoning === null ? '-' : String(model.allow_reasoning)} / ${model.include_reasoning_default === null ? '-' : String(model.include_reasoning_default)}</td>
-                                <td>${fmtDate(model.updated_at)}</td>
-                                <td>
-                                    <div class="actions-row">
-                                        ${model.is_active ? `<button class="btn-secondary" onclick="toggleModel('${model.id}', false)">Desabilitar</button>` : `<button class="btn-secondary" onclick="toggleModel('${model.id}', true)">Habilitar</button>`}
-                                        ${!model.is_default ? `<button class="btn-secondary" onclick="makeDefaultModel('${model.id}')">Tornar default</button>` : ''}
-                                        <button class="btn-secondary" onclick="openEditModelModal('${model.id}')">Editar</button>
-                                        <button class="btn-secondary" onclick="duplicateModelConfig('${model.id}')">Duplicar</button>
-                                        <button class="btn-primary" onclick="openTestModelModal('${model.id}')">Testar prompt</button>
-                                        <button class="btn-secondary" onclick="showModelRoutes('${model.id}')">Ver rotas</button>
-                                        <button class="btn-secondary" onclick="showBackendHealthFromModel('${model.id}')">Health backend</button>
-                                        <button class="btn-secondary" onclick="showBackendLogsFromModel('${model.id}')">Ver logs</button>
-                                        <button class="btn-danger" onclick="removeModel('${model.id}')">Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${models.map((model) => {
+                            const status = getModelStatusPill(model);
+                            const bh = model.backend_health;
+                            return `
+                                <tr>
+                                    <td><strong>${escapeHtml(model.display_name || model.model_alias || model.model_id)}</strong><div class="muted">${model.provider}</div></td>
+                                    <td><div><code>${escapeHtml(model.model_alias || '-')}</code></div><div class="muted"><code>${escapeHtml(model.model_id)}</code></div></td>
+                                    <td>${escapeHtml(model.model_file || '-')}</td>
+                                    <td>${escapeHtml(model.backend_name || '-')}</td>
+                                    <td>
+                                        <span class="pill pill-${status.type}">${status.label}</span>
+                                        ${bh && !bh.ok ? `<div class="muted" style="font-size:0.7rem;">${escapeHtml(bh.detail || bh.error || 'unreachable')}</div>` : ''}
+                                    </td>
+                                    <td>${model.is_default ? 'YES' : 'no'}</td>
+                                    <td>${Number(model.context_length || 0).toLocaleString()}</td>
+                                    <td>
+                                        <div class="actions-row">
+                                            ${model.is_active ? `<button class="btn-secondary" onclick="toggleModel('${model.id}', false)">Desabilitar</button>` : `<button class="btn-secondary" onclick="toggleModel('${model.id}', true)">Habilitar</button>`}
+                                            <button class="btn-secondary" onclick="openEditModelModal('${model.id}')">Editar</button>
+                                            <button class="btn-primary" onclick="openTestModelModal('${model.id}')">Testar</button>
+                                            <button class="btn-secondary" onclick="showBackendLogsFromModel('${model.id}')">Logs</button>
+                                            <button class="btn-danger" onclick="removeModel('${model.id}')">Remover</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -1622,30 +1668,27 @@
                     <div class="detail-item"><strong>Disabled routes</strong>${routingSummary.disabled || 0}</div>
                 </div>
                 <table>
-                    <thead><tr><th>Name</th><th>Provider</th><th>URL</th><th>Service</th><th>Default</th><th>Active</th><th>Health</th><th>Container</th><th>Latency</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Provider</th><th>URL</th><th>Status</th><th>Docker</th><th>Latency</th><th>Ações</th></tr></thead>
                     <tbody>
                         ${state.backends.map((backend) => {
                             const health = backend.health || healthMap.get(backend.id);
                             return `
                                 <tr>
-                                    <td>${backend.name}</td>
+                                    <td><strong>${backend.name}</strong>${backend.is_default ? ' <span class="pill pill-info">DEFAULT</span>' : ''}</td>
                                     <td>${backend.provider}</td>
                                     <td><code>${backend.backend_url}</code></td>
-                                    <td><code>${backend.service_name || '-'}</code></td>
-                                    <td>${backend.is_default ? 'yes' : 'no'}</td>
-                                    <td>${backend.is_active ? 'yes' : 'no'}</td>
-                                    <td><span class="pill pill-${health?.ok ? 'success' : 'danger'}">${health?.ok ? 'healthy' : 'error'}</span></td>
-                                    <td><span class="pill pill-${backend.docker?.container_found ? 'info' : 'muted'}">${escapeHtml(backend.docker?.status || 'unavailable')}</span></td>
+                                    <td><span class="pill pill-${health?.ok ? 'success' : 'danger'}">${health?.ok ? 'HEALTHY' : 'OFFLINE'}</span></td>
+                                    <td>
+                                        <span class="pill pill-${backend.docker?.container_found ? 'info' : 'muted'}">${escapeHtml(backend.docker?.status || 'N/A')}</span>
+                                        ${backend.docker?.detail ? `<div class="muted" style="font-size:0.7rem;">${escapeHtml(backend.docker.detail)}</div>` : ''}
+                                    </td>
                                     <td>${health?.latency_ms || '-'}ms</td>
                                     <td>
                                         <div class="actions-row">
                                             <button class="btn-secondary" onclick="openEditBackendModal('${backend.id}')">Editar</button>
-                                            <button class="btn-secondary" onclick="toggleBackendActive('${backend.id}', ${!backend.is_active})">${backend.is_active ? 'Desabilitar' : 'Habilitar'}</button>
-                                            <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'start')">Start</button>
-                                            <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'stop')">Stop</button>
                                             <button class="btn-secondary" onclick="runBackendAction('${backend.id}', 'restart')">Restart</button>
-                                            <button class="btn-secondary" onclick="viewBackendHealth('${backend.id}')">Health</button>
                                             <button class="btn-secondary" onclick="viewBackendLogs('${backend.id}')">Logs</button>
+                                            <button class="btn-secondary" onclick="viewBackendHealth('${backend.id}')">Health</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1653,8 +1696,6 @@
                         }).join('')}
                     </tbody>
                 </table>
-                <h3 class="section-title" style="margin-top:1.5rem;">Routing</h3>
-                <pre class="json-box">${escapeHtml(JSON.stringify(state.routing, null, 2))}</pre>
             `;
         }
 
@@ -2286,6 +2327,7 @@
             document.getElementById('b-health').value = '/health';
             document.getElementById('b-parallel').value = '1';
             document.getElementById('b-active').checked = true;
+            document.getElementById('b-api-key').value = '';
             openModal('modal-backend-edit');
         }
 
@@ -2300,10 +2342,23 @@
             document.getElementById('b-health').value = backend.healthcheck_path || '/health';
             document.getElementById('b-parallel').value = backend.max_parallel_requests || 1;
             document.getElementById('b-active').checked = !!backend.is_active;
+            
+            let apiKey = '';
+            if (backend.metadata_json) {
+                try {
+                    const meta = JSON.parse(backend.metadata_json);
+                    apiKey = meta.api_key || '';
+                } catch(e) {}
+            }
+            document.getElementById('b-api-key').value = apiKey;
+            
             openModal('modal-backend-edit');
         }
 
         async function saveBackend() {
+            const apiKey = document.getElementById('b-api-key').value.trim();
+            const metadata = apiKey ? JSON.stringify({ api_key: apiKey }) : null;
+
             const payload = {
                 name: document.getElementById('b-name').value.trim(),
                 provider: document.getElementById('b-provider').value,
@@ -2313,6 +2368,7 @@
                 is_default: false,
                 status: 'configured',
                 max_parallel_requests: Number(document.getElementById('b-parallel').value || 1),
+                metadata_json: metadata
             };
             if (state.activeBackendId) {
                 await apiFetch(`/admin/backends/${state.activeBackendId}`, 'PATCH', payload);
@@ -2324,6 +2380,50 @@
             closeModal('modal-backend-edit');
             await loadTab('backends');
             await loadTab('models');
+        }
+
+        async function testBackendConnection() {
+            const apiKey = document.getElementById('b-api-key').value.trim();
+            const metadata = apiKey ? JSON.stringify({ api_key: apiKey }) : null;
+
+            const payload = {
+                name: document.getElementById('b-name').value.trim() || 'test',
+                provider: document.getElementById('b-provider').value,
+                backend_url: document.getElementById('b-url').value.trim(),
+                healthcheck_path: document.getElementById('b-health').value.trim() || '/health',
+                metadata_json: metadata
+            };
+
+            try {
+                const result = await apiFetch('/admin/backends/test-connection', 'POST', payload);
+                if (result.ok) {
+                    toast('Conexão bem-sucedida!', 'success');
+                } else {
+                    toast('Falha na conexão.', 'error');
+                }
+            } catch (err) {
+                toast(`Erro ao testar: ${err.message}`, 'error');
+            }
+        }
+
+        async function listBackendModels() {
+            const apiKey = document.getElementById('b-api-key').value.trim();
+            const metadata = apiKey ? JSON.stringify({ api_key: apiKey }) : null;
+
+            const payload = {
+                name: document.getElementById('b-name').value.trim() || 'test',
+                provider: document.getElementById('b-provider').value,
+                backend_url: document.getElementById('b-url').value.trim(),
+                healthcheck_path: document.getElementById('b-health').value.trim() || '/health',
+                metadata_json: metadata
+            };
+
+            try {
+                const result = await apiFetch('/admin/backends/list-models', 'POST', payload);
+                alert('Modelos encontrados:\n' + JSON.stringify(result, null, 2));
+            } catch (err) {
+                toast(`Erro ao listar modelos: ${err.message}`, 'error');
+            }
         }
 
         async function toggleBackendActive(id, isActive) {

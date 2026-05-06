@@ -21,5 +21,8 @@ class ApiKey(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     scopes_json: Mapped[str | None] = mapped_column(String(512), nullable=True) # JSON list of scopes
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    allowed_ips_json: Mapped[str | None] = mapped_column(String(512), nullable=True) # JSON list of IPs
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     client = relationship("Client", back_populates="api_keys")

@@ -120,6 +120,8 @@ class ApiKeyCreate(BaseModel):
     client_id: UUID
     name: str = Field(min_length=2, max_length=120)
     scopes: list[str] | None = Field(default=None)
+    expires_at: datetime | None = None
+    allowed_ips: list[str] | None = None
 
 
 class ApiKeyCreated(BaseModel):
@@ -129,7 +131,25 @@ class ApiKeyCreated(BaseModel):
     key_prefix: str
     api_key: str
     scopes: list[str] | None = None
+    expires_at: datetime | None = None
+    allowed_ips: list[str] | None = None
     created_at: datetime
+
+
+class ApiKeyRead(BaseModel):
+    id: UUID
+    client_id: UUID
+    name: str
+    key_prefix: str
+    is_active: bool
+    scopes: list[str] | None = None
+    allowed_ips: list[str] | None = None
+    created_at: datetime
+    last_used_at: datetime | None = None
+    revoked_at: datetime | None = None
+    expires_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ApiKeyRotateResponse(BaseModel):
@@ -155,6 +175,7 @@ class BillingPlanCreate(BaseModel):
     allow_streaming: bool = True
     is_active: bool = True
     allowed_models: list[str] | None = None
+    routing_policy: dict | None = None
 
 
 class BillingPlanPatch(BaseModel):
@@ -168,6 +189,7 @@ class BillingPlanPatch(BaseModel):
     allow_streaming: bool | None = None
     is_active: bool | None = None
     allowed_models: list[str] | None = None
+    routing_policy: dict | None = None
 
 
 class BillingPlanRead(BaseModel):
@@ -183,6 +205,7 @@ class BillingPlanRead(BaseModel):
     allow_streaming: bool
     is_active: bool
     allowed_models_json: str | None
+    routing_policy_json: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -214,7 +237,7 @@ class ModelRegistryCreate(BaseModel):
     model_id: str = Field(min_length=1, max_length=255)
     model_alias: str | None = Field(default=None, min_length=1, max_length=128)
     inference_backend_id: UUID | None = None
-    provider: str = Field(default="llama.cpp", pattern=r"^(llama\.cpp|ollama|vllm)$")
+    provider: str = Field(default="llama.cpp", pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible)$")
     model_file: str = Field(min_length=1, max_length=255)
     context_length: int = Field(default=4096, ge=512, le=131072)
     is_active: bool = True
@@ -233,7 +256,7 @@ class ModelRegistryPatch(BaseModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=160)
     model_alias: str | None = Field(default=None, min_length=1, max_length=128)
     inference_backend_id: UUID | None = None
-    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm)$")
+    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible)$")
     model_file: str | None = Field(default=None, min_length=1, max_length=255)
     context_length: int | None = Field(default=None, ge=512, le=131072)
     is_default: bool | None = None
@@ -249,7 +272,7 @@ class ModelRegistryPatch(BaseModel):
 
 class InferenceBackendCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
-    provider: str = Field(pattern=r"^(llama\.cpp|ollama|vllm)$")
+    provider: str = Field(pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible)$")
     backend_url: str = Field(min_length=8, max_length=255)
     healthcheck_path: str = Field(default="/health", min_length=1, max_length=64)
     is_active: bool = True
@@ -261,7 +284,7 @@ class InferenceBackendCreate(BaseModel):
 
 class InferenceBackendPatch(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=120)
-    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm)$")
+    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible)$")
     backend_url: str | None = Field(default=None, min_length=8, max_length=255)
     healthcheck_path: str | None = Field(default=None, min_length=1, max_length=64)
     is_active: bool | None = None
@@ -269,6 +292,7 @@ class InferenceBackendPatch(BaseModel):
     status: str | None = Field(default=None, min_length=2, max_length=32)
     max_parallel_requests: int | None = Field(default=None, ge=1, le=64)
     metadata_json: str | None = None
+
 
 
 class BackendRouteInput(BaseModel):
@@ -311,3 +335,20 @@ class InvoiceMarkPaidRequest(BaseModel):
     payment_reference: str | None = Field(default=None, max_length=120)
     note: str | None = Field(default=None, max_length=1000)
     paid_at: datetime | None = None
+
+
+class RoutingExplainRequest(BaseModel):
+    model: str | None = None
+    client_id: UUID
+
+
+class RoutingExplainResponse(BaseModel):
+    requested_model: str | None
+    resolved_model_id: str
+    resolved_model_alias: str | None
+    client_name: str
+    plan_code: str
+    routing_policy: dict | None
+    chosen_backend: str | None
+    candidates_order: list[dict]
+    rejected_candidates: list[dict]

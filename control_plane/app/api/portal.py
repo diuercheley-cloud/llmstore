@@ -1,4 +1,5 @@
 import json
+from datetime import date, datetime, timezone
 from time import perf_counter
 from uuid import UUID
 
@@ -29,8 +30,8 @@ from app.services.billing import (
     serialize_invoice,
 )
 from app.services.inference_proxy import InferenceProxy
-from app.services.model_policy import resolve_requested_model
-from app.services.quota import QuotaExceeded, ensure_quota, record_usage
+from app.services.model_policy import resolve_requested_model, get_effective_allowed_models
+from app.services.quota import month_start, ensure_quota, record_usage, QuotaExceeded
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
 from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
 from app.utils.request_summary import summarize_chat_request
@@ -38,8 +39,13 @@ from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_fr
 
 from app.models.billing_plan import BillingPlan
 from app.models.pricing_rule import PricingRule
+from app.models.api_key import ApiKey
+from app.models.request_log import RequestLog
+from app.models.model_registry import ModelRegistry
 from app.schemas.public import PortalUpgradeRequest
+from app.schemas.admin import ApiKeyCreate, ApiKeyCreated
 from app.services.public_onboarding import list_public_plans
+from app.core.security import generate_api_key, hash_secret, short_prefix
 
 router = APIRouter(tags=["portal"])
 
@@ -167,8 +173,176 @@ async def portal_me(
             "allow_streaming": effective_plan.allow_streaming,
             "monthly_price": float(effective_plan.monthly_price),
             "currency": effective_plan.currency,
+            "rag_max_documents": effective_plan.rag_max_documents,
+            "rag_max_storage_mb": effective_plan.rag_max_storage_mb,
+            "rag_max_pages_per_month": effective_plan.rag_max_pages_per_month,
+            "rag_max_queries_per_month": effective_plan.rag_max_queries_per_month,
         },
     }
+
+
+@router.get("/api-keys")
+async def portal_list_api_keys(
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    result = await session.execute(
+        select(ApiKey).where(ApiKey.client_id == client.id).order_by(ApiKey.created_at.desc())
+    )
+    keys = result.scalars().all()
+    return [
+        {
+            "id": str(k.id),
+            "name": k.name,
+            "key_prefix": k.key_prefix,
+            "is_active": k.is_active,
+            "created_at": k.created_at.isoformat(),
+            "revoked_at": k.revoked_at.isoformat() if k.revoked_at else None,
+            "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+            "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+            "allowed_ips": json.loads(k.allowed_ips_json) if k.allowed_ips_json else None,
+            "scopes": json.loads(k.scopes_json) if k.scopes_json else None,
+        }
+        for k in keys
+    ]
+
+
+@router.post("/api-keys", response_model=ApiKeyCreated, status_code=201)
+async def portal_create_api_key(
+    payload: ApiKeyCreate,
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    if payload.client_id != client.id:
+        raise HTTPException(status_code=403, detail="forbidden")
+    
+    plaintext = generate_api_key()
+    api_key = ApiKey(
+        client_id=client.id,
+        name=payload.name,
+        key_prefix=short_prefix(plaintext),
+        key_hash=hash_secret(plaintext),
+        scopes_json=json.dumps(payload.scopes) if payload.scopes else None,
+        expires_at=payload.expires_at,
+        allowed_ips_json=json.dumps(payload.allowed_ips) if payload.allowed_ips else None,
+    )
+    session.add(api_key)
+    await session.commit()
+    await session.refresh(api_key)
+    
+    return ApiKeyCreated(
+        id=api_key.id,
+        client_id=api_key.client_id,
+        name=api_key.name,
+        key_prefix=api_key.key_prefix,
+        api_key=plaintext,
+        scopes=payload.scopes,
+        expires_at=api_key.expires_at,
+        allowed_ips=payload.allowed_ips,
+        created_at=api_key.created_at,
+    )
+
+
+@router.delete("/api-keys/{api_key_id}")
+async def portal_revoke_api_key(
+    api_key_id: UUID,
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    api_key = await session.get(ApiKey, api_key_id)
+    if not api_key or api_key.client_id != client.id:
+        raise HTTPException(status_code=404, detail="api key not found")
+    
+    if api_key.revoked_at is not None:
+        return {"status": "already_revoked"}
+    
+    api_key.revoked_at = utc_now()
+    api_key.is_active = False
+    await session.commit()
+    return {"status": "revoked"}
+
+
+@router.get("/usage-stats")
+async def portal_usage_stats(
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    from sqlalchemy import func
+    from datetime import timedelta
+    
+    # Last 30 days daily usage
+    thirty_days_ago = utc_now() - timedelta(days=30)
+    
+    daily_query = (
+        select(
+            func.date(RequestLog.created_at).label("day"),
+            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated).label("tokens"),
+            func.count(RequestLog.id).label("requests")
+        )
+        .where(RequestLog.client_id == client.id, RequestLog.created_at >= thirty_days_ago)
+        .group_by(func.date(RequestLog.created_at))
+        .order_by(func.date(RequestLog.created_at))
+    )
+    daily_results = (await session.execute(daily_query)).all()
+    
+    # Model breakdown (this month)
+    this_month_start = month_start(date.today())
+    model_query = (
+        select(
+            RequestLog.model,
+            func.count(RequestLog.id).label("requests"),
+            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated).label("tokens")
+        )
+        .where(RequestLog.client_id == client.id, RequestLog.created_at >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=timezone.utc))
+        .group_by(RequestLog.model)
+        .order_by(desc("requests"))
+    )
+    model_results = (await session.execute(model_query)).all()
+    
+    # Current month total requests
+    total_requests_query = select(func.count(RequestLog.id)).where(
+        RequestLog.client_id == client.id, 
+        RequestLog.created_at >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=timezone.utc)
+    )
+    total_requests = (await session.execute(total_requests_query)).scalar() or 0
+    
+    return {
+        "daily_usage": [
+            {"day": str(r.day), "tokens": int(r.tokens or 0), "requests": int(r.requests or 0)}
+            for r in daily_results
+        ],
+        "model_usage": [
+            {"model": r.model, "requests": int(r.requests or 0), "tokens": int(r.tokens or 0)}
+            for r in model_results
+        ],
+        "total_requests_this_month": total_requests
+    }
+
+
+@router.get("/models")
+async def portal_list_models(
+    session: AsyncSession = Depends(get_db_session),
+    client: Client = Depends(require_client),
+):
+    # This should return models allowed for the client
+    query = select(ModelRegistry).where(ModelRegistry.is_active.is_(True))
+    all_models = (await session.execute(query)).scalars().all()
+    
+    allowed = get_effective_allowed_models(client)
+    
+    allowed_models = []
+    for m in all_models:
+        if allowed and m.model_id not in allowed and (m.model_alias or "") not in allowed:
+            continue
+                
+        allowed_models.append({
+            "id": m.model_id,
+            "alias": m.model_alias,
+            "display_name": m.model_alias or m.model_id,
+            "context_length": m.context_length,
+        })
+        
+    return allowed_models
 
 
 @router.get("/account")
@@ -241,6 +415,8 @@ async def portal_invoices(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
+    from app.core.config import get_settings
+    settings = get_settings()
     await refresh_billing_statuses(session)
     await session.commit()
     invoices = (
@@ -263,6 +439,8 @@ async def portal_invoices(
     return {
         "client_id": str(client.id),
         "billing_status": client.billing_status,
+        "local_billing_mode": settings.local_billing_mode,
+        "local_billing_message": "pagamento manual/local" if settings.local_billing_mode == "manual" else None,
         "invoices": [serialize_invoice(invoice) for invoice in invoices],
         "payments": [
             {
@@ -394,7 +572,7 @@ async def portal_test_chat(
                 "text": (((payload_json.get("choices") or [{}])[0].get("message") or {}).get("content")) or "",
             }
 
-        result = await _chat_with_fallback(proxy, selected_model, body, False, False)
+        result = await _chat_with_fallback(proxy, selected_model, body, False, False, client=client)
         latency_ms = int((perf_counter() - started) * 1000)
         response_payload = json.loads(result.response.body.decode("utf-8"))
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))

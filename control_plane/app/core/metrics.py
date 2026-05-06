@@ -38,6 +38,26 @@ QUEUE_DEPTH = Gauge(
     "control_plane_queue_depth",
     "Current in-memory queue depth",
 )
+QUEUE_WAITING = Gauge(
+    "control_plane_queue_waiting",
+    "Requests waiting in logical queues",
+    ["queue_name"],
+)
+QUEUE_ACTIVE = Gauge(
+    "control_plane_queue_active",
+    "Requests active in logical queues",
+    ["queue_name"],
+)
+QUEUE_FAILED = Counter(
+    "control_plane_queue_failed_total",
+    "Requests that failed due to queue limits or timeouts",
+    ["queue_name", "reason"],
+)
+QUEUE_WAIT_TIME = Histogram(
+    "control_plane_queue_wait_time_seconds",
+    "Time spent in logical queues",
+    ["queue_name"],
+)
 ASYNC_QUEUE_DEPTH = Gauge(
     "control_plane_async_queue_depth",
     "Current async queue depth in Redis",

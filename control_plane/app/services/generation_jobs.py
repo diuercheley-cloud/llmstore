@@ -409,6 +409,15 @@ async def process_generation_job(
     job.backend_name = chosen_route.inference_backend.name if chosen_route.inference_backend else None
     await session.commit()
 
+    effective_plan = resolve_effective_plan(job.client)
+    is_admin = False
+    if job.client.metadata_json:
+        try:
+            metadata = json.loads(job.client.metadata_json)
+            is_admin = metadata.get("is_admin", False)
+        except json.JSONDecodeError:
+            pass
+
     try:
         result = await proxy.chat(
             request_body,
@@ -420,6 +429,8 @@ async def process_generation_job(
             backend_id=chosen_route.inference_backend.id,
             prompt_template=selected_model.prompt_template,
             manage_slot=False,
+            plan_code=effective_plan.code,
+            is_admin=is_admin,
         )
         response_payload = json.loads(result.response.body.decode("utf-8"))
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))

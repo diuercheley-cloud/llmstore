@@ -83,15 +83,37 @@ async def _chat_with_fallback(
     body: dict,
     stream: bool,
     include_reasoning: bool,
+    client: Client | None = None,
 ):
-    routes = plan_routing_order(selected_model)
+    routes = plan_routing_order(selected_model, client=client)
     backend_errors: list[dict] = []
     last_exc: HTTPException | None = None
+
+    plan_code = "free"
+    is_admin = False
+    if client:
+        effective_plan = resolve_effective_plan(client)
+        plan_code = effective_plan.code
+        if client.metadata_json:
+            try:
+                metadata = json.loads(client.metadata_json)
+                is_admin = metadata.get("is_admin", False)
+            except json.JSONDecodeError:
+                pass
 
     for attempt, route in enumerate(routes, start=1):
         backend = route.inference_backend
         if backend is None:
             continue
+            
+        api_key = None
+        if backend.metadata_json:
+            try:
+                metadata = json.loads(backend.metadata_json)
+                api_key = metadata.get("api_key")
+            except json.JSONDecodeError:
+                pass
+                
         try:
             result = await proxy.chat(
                 body,
@@ -102,6 +124,9 @@ async def _chat_with_fallback(
                 backend_name=backend.name,
                 backend_id=backend.id,
                 prompt_template=selected_model.prompt_template,
+                api_key=api_key,
+                plan_code=plan_code,
+                is_admin=is_admin,
             )
             result.attempts = attempt
             result.fallback_used = attempt > 1
@@ -127,15 +152,37 @@ async def _completion_with_fallback(
     selected_model,
     body: dict,
     stream: bool,
+    client: Client | None = None,
 ):
-    routes = plan_routing_order(selected_model)
+    routes = plan_routing_order(selected_model, client=client)
     backend_errors: list[dict] = []
     last_exc: HTTPException | None = None
+
+    plan_code = "free"
+    is_admin = False
+    if client:
+        effective_plan = resolve_effective_plan(client)
+        plan_code = effective_plan.code
+        if client.metadata_json:
+            try:
+                metadata = json.loads(client.metadata_json)
+                is_admin = metadata.get("is_admin", False)
+            except json.JSONDecodeError:
+                pass
 
     for attempt, route in enumerate(routes, start=1):
         backend = route.inference_backend
         if backend is None:
             continue
+            
+        api_key = None
+        if backend.metadata_json:
+            try:
+                metadata = json.loads(backend.metadata_json)
+                api_key = metadata.get("api_key")
+            except json.JSONDecodeError:
+                pass
+
         try:
             result = await proxy.complete(
                 body,
@@ -144,6 +191,9 @@ async def _completion_with_fallback(
                 backend_url=backend.backend_url,
                 backend_name=backend.name,
                 backend_id=backend.id,
+                api_key=api_key,
+                plan_code=plan_code,
+                is_admin=is_admin,
             )
             result.attempts = attempt
             result.fallback_used = attempt > 1
@@ -396,6 +446,7 @@ async def chat_completions(
             body,
             payload.stream,
             payload.include_reasoning,
+            client=client,
         )
         print(f"DEBUG API: _chat_with_fallback returned result from {result.backend_name}")
         latency_ms = int((perf_counter() - started) * 1000)
@@ -689,6 +740,7 @@ async def completions(
             selected_model,
             body,
             payload.stream,
+            client=client,
         )
         latency_ms = int((perf_counter() - started) * 1000)
         if payload.stream:

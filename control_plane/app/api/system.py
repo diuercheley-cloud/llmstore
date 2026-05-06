@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 
@@ -28,136 +29,179 @@ settings = get_settings()
 
 
 @router.get("/health", tags=["system"])
-async def health(
-    session: AsyncSession = Depends(get_db_session),
-    redis: Redis = Depends(get_redis),
-    proxy: InferenceProxy = Depends(get_inference_proxy),
-):
-    """
-    Verifica a saúde básica dos componentes (DB, Redis, Data Plane).
-    """
-    status = {"postgres": False, "redis": False, "data_plane": False}
-    try:
-        await session.execute(text("SELECT 1"))
-        status["postgres"] = True
-    except Exception:
-        pass
-    try:
-        status["redis"] = bool(await redis.ping())
-    except Exception:
-        pass
-    backend_rows = (
-        await session.execute(select(InferenceBackend).where(InferenceBackend.is_active.is_(True)))
-    ).scalars().all()
-    if backend_rows:
-        results = [await proxy.health_backend(item) for item in backend_rows]
-        status["data_plane"] = all(item["ok"] for item in results)
-    else:
-        status["data_plane"] = await proxy.health()
-    overall = "ok" if all(status.values()) else "degraded"
-    return {"status": overall, "dependencies": status}
+async def health():
+    return {"status": "ok", "process": "alive"}
 
 
 @router.get("/ready", tags=["system"])
 async def ready(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
+):
+    status = "ready"
+    dependencies = {"postgres": "ok", "redis": "ok", "migrations": "ok"}
+    
+    try:
+        await session.execute(text("SELECT 1"))
+    except Exception:
+        dependencies["postgres"] = "error"
+        status = "not_ready"
+
+    try:
+        await redis.ping()
+    except Exception:
+        dependencies["redis"] = "error"
+        status = "not_ready"
+        
+    try:
+        res = await session.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
+        if not res.scalar():
+            dependencies["migrations"] = "missing"
+            status = "not_ready"
+    except Exception:
+        dependencies["migrations"] = "error"
+        status = "not_ready"
+
+    if status != "ready":
+        return Response(
+            content=f'{{"status":"{status}","dependencies":{str(dependencies).replace("\'", "\"")}}}',
+            media_type="application/json",
+            status_code=503
+        )
+        
+    return {"status": "ready", "dependencies": dependencies}
+
+
+@router.get("/status", tags=["system"])
+async def system_status(
+    session: AsyncSession = Depends(get_db_session),
+    redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
-    """
-    Verifica se o sistema está pronto para receber tráfego de inferência.
-    """
-    await session.execute(text("SELECT 1"))
-    await redis.ping()
-    backend_rows = (
-        await session.execute(select(InferenceBackend).where(InferenceBackend.is_active.is_(True), InferenceBackend.is_default.is_(True)))
-    ).scalars().all()
-    if backend_rows:
-        backend_results = [await proxy.health_backend(item) for item in backend_rows]
-        backend_ok = all(item["ok"] for item in backend_results)
-    else:
-        backend_ok = await proxy.health()
-    if not backend_ok:
-        return Response(content='{"status":"not_ready","dependency":"data_plane"}', media_type="application/json", status_code=503)
+    db_ok = True
+    try:
+        await session.execute(text("SELECT 1"))
+    except Exception:
+        db_ok = False
+        
+    redis_ok = True
+    try:
+        await redis.ping()
+    except Exception:
+        redis_ok = False
+        
+    model_count = 0
+    if db_ok:
+        try:
+            model_count = (await session.execute(select(func.count(ModelRegistry.id)).where(ModelRegistry.is_active.is_(True)))).scalar() or 0
+        except Exception:
+            pass
+            
+    dp_health = await proxy.health()
     
-    # RAG Status Check
+    return {
+        "status": "ok" if db_ok and redis_ok and dp_health else "degraded",
+        "components": {
+            "api": "online",
+            "database": "online" if db_ok else "offline",
+            "redis": "online" if redis_ok else "offline",
+            "inference_plane": "online" if dp_health else "offline",
+            "models_active": model_count
+        }
+    }
+
+
+@router.get("/admin/status", tags=["system"])
+async def admin_system_status(
+    session: AsyncSession = Depends(get_db_session),
+    redis: Redis = Depends(get_redis),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+    _=Depends(require_admin),
+):
+    db_detail = {"ok": False, "latency_ms": 0}
+    start = perf_counter()
+    try:
+        await session.execute(text("SELECT 1"))
+        db_detail["ok"] = True
+        db_detail["latency_ms"] = round((perf_counter() - start) * 1000, 2)
+    except Exception as e:
+        db_detail["error"] = str(e)
+        
+    redis_detail = {"ok": False, "latency_ms": 0}
+    start = perf_counter()
+    try:
+        await redis.ping()
+        redis_detail["ok"] = True
+        redis_detail["latency_ms"] = round((perf_counter() - start) * 1000, 2)
+    except Exception as e:
+        redis_detail["error"] = str(e)
+        
+    job_snapshot = {"error": "database offline"}
+    if db_detail["ok"]:
+        try:
+            job_snapshot = await get_admin_job_snapshot(session, redis)
+        except Exception as e:
+            job_snapshot = {"error": str(e)}
+    
+    inference_queues = proxy.queue_manager.get_snapshot()
+
+    backends = []
+    models = []
+    if db_detail["ok"]:
+        try:
+            backend_rows = (await session.execute(select(InferenceBackend))).scalars().all()
+            for b in backend_rows:
+                backends.append(await proxy.health_backend(b))
+                
+            model_rows = (await session.execute(select(ModelRegistry).where(ModelRegistry.is_active.is_(True)))).scalars().all()
+            for m in model_rows:
+                models.append({
+                    "model_id": m.model_id,
+                    "provider": m.provider,
+                    "status": m.status,
+                    "is_default": m.is_default
+                })
+        except Exception as e:
+            backends = [{"error": str(e)}]
+            models = [{"error": str(e)}]
+
     rag_status = {
         "enabled": settings.rag_enabled,
+        "storage_dir": settings.rag_storage_dir if settings.localhost_mode else "masked",
         "storage_ok": os.path.exists(settings.rag_storage_dir),
         "embedding_provider": settings.rag_embedding_provider,
-        "vector_mode": "fallback",
-        "usage_tracking_enabled": True,
-        "limits_enabled": True
+        "vector_mode": "unknown"
     }
-    
-    if settings.rag_enabled:
-        conn = await session.connection()
-        res = await conn.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
-        if res.scalar():
-            rag_status["vector_mode"] = "pgvector"
-            
-    return {"status": "ready", "rag": rag_status}
+    if settings.rag_enabled and db_detail["ok"]:
+        try:
+            conn = await session.connection()
+            res = await conn.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+            rag_status["vector_mode"] = "pgvector" if res.scalar() else "fallback"
+        except Exception:
+            rag_status["vector_mode"] = "error"
 
+    cache_info = {
+        "response_cache_enabled": settings.response_cache_enabled,
+        "semantic_cache_enabled": settings.semantic_cache_enabled,
+        "ttl": settings.response_cache_ttl_seconds
+    }
 
-@router.get("/metrics", tags=["system"])
-async def metrics():
-    """
-    Expõe métricas no formato Prometheus.
-    """
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-
-
-@router.get("/admin-tests", include_in_schema=False)
-async def admin_tests():
-    if settings.public_exposure:
-        return Response(
-            content='{"detail":"admin tests disabled in public exposure mode"}',
-            media_type="application/json",
-            status_code=404,
-        )
-    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-tests" / "index.html"
-    return FileResponse(static_file)
-
-@router.get("/admin-dashboard", include_in_schema=False)
-async def admin_dashboard():
-    if settings.public_exposure:
-        return Response(
-            content='{"detail":"admin dashboard disabled in public exposure mode"}',
-            media_type="application/json",
-            status_code=404,
-        )
-    static_file = Path(__file__).resolve().parents[1] / "static" / "admin" / "index.html"
-    return FileResponse(static_file)
-
-
-@router.get("/admin-lab", include_in_schema=False)
-async def admin_lab():
-    if settings.public_exposure:
-        return Response(
-            content='{"detail":"admin lab disabled in public exposure mode"}',
-            media_type="application/json",
-            status_code=404,
-        )
-    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-lab" / "index.html"
-    return FileResponse(static_file)
-
-
-@router.get("/monitoring", include_in_schema=False)
-async def monitoring_dashboard():
-    if settings.public_exposure:
-        return Response(
-            content='{"detail":"monitoring disabled in public exposure mode"}',
-            media_type="application/json",
-            status_code=404,
-        )
-    static_file = Path(__file__).resolve().parents[1] / "static" / "monitoring" / "index.html"
-    return FileResponse(static_file)
-
-
-@router.get("/client-portal", include_in_schema=False)
-async def client_portal():
-    static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
-    return FileResponse(static_file)
+    return {
+        "status": "ok" if db_detail["ok"] and redis_detail["ok"] else "degraded",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "dependencies": {
+            "postgres": db_detail,
+            "redis": redis_detail
+        },
+        "queues": job_snapshot,
+        "inference_queues": inference_queues,
+        "inference": {
+            "backends": backends,
+            "active_models": models
+        },
+        "rag": rag_status,
+        "cache": cache_info
+    }
 
 
 @router.get("/admin/health/deep", tags=["system"])
@@ -165,58 +209,13 @@ async def health_deep(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
-    _=Depends(require_admin),
+    admin=Depends(require_admin),
 ):
-    """
-    Realiza uma verificação profunda de saúde, incluindo latências e status detalhado de backends.
-    Requer token de administrador.
-    """
     await observe_billing_status_metrics(session)
-    postgres_detail = {"ok": False}
-    redis_detail = {"ok": False}
-    data_plane_detail = {"ok": False, "backends": []}
-
-    started = perf_counter()
-    try:
-        await session.execute(text("SELECT 1"))
-        postgres_detail = {"ok": True, "latency_ms": round((perf_counter() - started) * 1000, 2)}
-    except Exception as exc:
-        postgres_detail = {"ok": False, "error": str(exc)}
-
-    started = perf_counter()
-    try:
-        pong = await redis.ping()
-        redis_detail = {"ok": bool(pong), "latency_ms": round((perf_counter() - started) * 1000, 2)}
-    except Exception as exc:
-        redis_detail = {"ok": False, "error": str(exc)}
-
-    started = perf_counter()
-    try:
-        backend_rows = (
-            await session.execute(select(InferenceBackend).where(InferenceBackend.is_active.is_(True)).order_by(InferenceBackend.created_at.asc()))
-        ).scalars().all()
-        if backend_rows:
-            results = [await proxy.health_backend(item) for item in backend_rows]
-            data_plane_ok = all(item["ok"] for item in results)
-            data_plane_detail = {
-                "ok": data_plane_ok,
-                "latency_ms": round((perf_counter() - started) * 1000, 2),
-                "backends": results,
-            }
-        else:
-            data_plane_ok = await proxy.health()
-            data_plane_detail = {"ok": data_plane_ok, "latency_ms": round((perf_counter() - started) * 1000, 2), "backends": []}
-    except Exception as exc:
-        data_plane_detail = {"ok": False, "error": str(exc)}
-
-    active_model = (
-        await session.execute(
-            select(ModelRegistry.model_id, ModelRegistry.model_file, ModelRegistry.status, ModelRegistry.is_active)
-            .where(ModelRegistry.is_active.is_(True))
-            .order_by(ModelRegistry.updated_at.desc())
-            .limit(1)
-        )
-    ).mappings().first()
+    # We reuse the status logic but can add more if needed
+    status = await admin_system_status(session, redis, proxy, admin)
+    
+    # Add request stats which are specifically in deep health
     request_stats = (
         await session.execute(
             select(
@@ -226,48 +225,53 @@ async def health_deep(
             )
         )
     ).mappings().first()
-    routing_models = (
-        await session.execute(
-            select(ModelRegistry)
-            .options(
-                selectinload(ModelRegistry.inference_backend),
-                selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
-            )
-            .where(ModelRegistry.is_active.is_(True))
-            .order_by(ModelRegistry.is_default.desc(), ModelRegistry.created_at.asc())
-        )
-    ).scalars().all()
-    routing_summary = {"healthy": 0, "degraded": 0, "unhealthy": 0, "disabled": 0}
-    routing_rows = []
-    for model in routing_models:
-        routes = serialize_routing_table(model)
-        for route in routes:
-            routing_summary[route["state"]] = routing_summary.get(route["state"], 0) + 1
-        routing_rows.append(
-            {
-                "model_id": model.model_id,
-                "model_alias": model.model_alias,
-                "is_default": model.is_default,
-                "routes": routes,
-            }
-        )
-
-    return {
-        "status": "ok" if postgres_detail["ok"] and redis_detail["ok"] and data_plane_detail["ok"] else "degraded",
-        "dependencies": {
-            "postgres": postgres_detail,
-            "redis": redis_detail,
-            "data_plane": data_plane_detail,
-        },
-        "routing": {
-            "summary": routing_summary,
-            "models": routing_rows,
-        },
-        "model": dict(active_model) if active_model else None,
-        "requests": {
-            "requests_total": int(request_stats["requests_total"] or 0),
-            "errors_total": int(request_stats["errors_total"] or 0),
-            "avg_latency_ms": round(float(request_stats["avg_latency_ms"] or 0), 2),
-        },
-        "jobs": await get_admin_job_snapshot(session, redis),
+    
+    status["requests"] = {
+        "requests_total": int(request_stats["requests_total"] or 0),
+        "errors_total": int(request_stats["errors_total"] or 0),
+        "avg_latency_ms": round(float(request_stats["avg_latency_ms"] or 0), 2),
     }
+    
+    return status
+
+
+@router.get("/metrics", tags=["system"])
+async def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@router.get("/admin-tests", include_in_schema=False)
+async def admin_tests():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-tests" / "index.html"
+    return FileResponse(static_file)
+
+@router.get("/admin-dashboard", include_in_schema=False)
+async def admin_dashboard():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin" / "index.html"
+    return FileResponse(static_file)
+
+
+@router.get("/admin-lab", include_in_schema=False)
+async def admin_lab():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-lab" / "index.html"
+    return FileResponse(static_file)
+
+
+@router.get("/monitoring", include_in_schema=False)
+async def monitoring_dashboard():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "monitoring" / "index.html"
+    return FileResponse(static_file)
+
+
+@router.get("/client-portal", include_in_schema=False)
+async def client_portal():
+    static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
+    return FileResponse(static_file)

@@ -82,7 +82,13 @@ async def resolve_requested_model(
 
     allowed = get_effective_allowed_models(client)
     if allowed and selected.model_id not in allowed and (selected.model_alias or "") not in allowed:
-        raise HTTPException(status_code=403, detail="requested model is not allowed for this client")
+        # Rewrite to default model instead of 403
+        selected = next((item for item in active_models if item.is_default), None) or active_models[0]
+        # Re-verify that the default model has routes
+        routes = get_routing_candidates(selected)
+        if not routes:
+            raise HTTPException(status_code=503, detail="default model backend is not active")
+            
     return selected, requested_model
 
 
@@ -114,8 +120,68 @@ def get_routing_candidates(model: ModelRegistry) -> list[ModelBackendRoute]:
     )
 
 
-def plan_routing_order(model: ModelRegistry, rng: random.Random | None = None) -> list[ModelBackendRoute]:
+def apply_routing_policy(
+    model: ModelRegistry, 
+    client: Client | None, 
+    candidates: list[ModelBackendRoute]
+) -> list[ModelBackendRoute]:
+    """
+    Applies global routing policies from the client's billing plan to the candidates.
+    """
+    if not client or not client.billing_plan or not client.billing_plan.routing_policy_json:
+        return candidates
+        
+    try:
+        policy = json.loads(client.billing_plan.routing_policy_json)
+    except json.JSONDecodeError:
+        return candidates
+        
+    rules = policy.get("rules", [])
+    if not rules:
+        return candidates
+        
+    for rule in rules:
+        action = rule.get("action")
+        value = rule.get("value")
+        
+        if action == "exclude_backend_type":
+            candidates = [c for c in candidates if c.inference_backend.provider != value]
+        elif action == "exclude_backend":
+            candidates = [c for c in candidates if c.inference_backend.name != value]
+        elif action == "prioritize_backend_type":
+            boost = rule.get("priority_boost", 10)
+            for c in candidates:
+                if c.inference_backend.provider == value:
+                    c.priority -= boost
+        elif action == "prioritize_backend":
+            boost = rule.get("priority_boost", 10)
+            for c in candidates:
+                if c.inference_backend.name == value:
+                    c.priority -= boost
+                    
+    # Re-sort candidates after applying priority boosts or exclusions
+    return sorted(
+        candidates,
+        key=lambda item: (
+            ROUTE_STATE_ORDER.get(item.state, 99),
+            item.priority,
+            -item.weight,
+            item.created_at,
+        ),
+    )
+
+
+def plan_routing_order(
+    model: ModelRegistry, 
+    rng: random.Random | None = None,
+    client: Client | None = None,
+) -> list[ModelBackendRoute]:
     routes = get_routing_candidates(model)
+    
+    # Apply global policies from client plan
+    if client:
+        routes = apply_routing_policy(model, client, routes)
+        
     if len(routes) <= 1:
         return routes
 
