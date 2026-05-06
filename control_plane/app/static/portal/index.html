@@ -561,14 +561,21 @@
 
       async function apiFetch(path, options = {}) {
         const key = elements.apiKey.value.trim();
-        const headers = {
-          'Authorization': `Bearer ${key}`,
-          ...options.headers
-        };
+        const headers = { ...options.headers };
+        
+        if (key) {
+          headers['Authorization'] = `Bearer ${key}`;
+        }
         
         // Handle JSON by default if not FormData or other
         if (headers['Content-Type'] === undefined && !(options.body instanceof FormData)) {
           headers['Content-Type'] = 'application/json';
+        }
+        
+        // If it is FormData, we MUST NOT set Content-Type manually, 
+        // the browser will set it with the correct boundary.
+        if (options.body instanceof FormData) {
+          delete headers['Content-Type'];
         }
         
         const response = await fetch(path, { ...options, headers });
@@ -783,8 +790,7 @@
         try {
           await apiFetch('/v1/rag/files', {
             method: 'POST',
-            body: formData,
-            headers: { 'Content-Type': undefined } // Let the browser set the boundary
+            body: formData
           });
           showToast('Arquivo enviado com sucesso!');
           loadRagFiles();

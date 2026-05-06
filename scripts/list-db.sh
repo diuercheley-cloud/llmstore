@@ -22,6 +22,10 @@ POSTGRES_TABLES=(
   generation_jobs
   response_cache
   security_events
+  rag_documents
+  rag_document_chunks
+  rag_usage_events
+  client_feature_blocks
 )
 
 sep="────────────────────────────────────────────────────────────────────────────────"

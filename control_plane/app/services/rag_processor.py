@@ -9,6 +9,7 @@ import fitz  # PyMuPDF
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -18,6 +19,7 @@ from app.services.embeddings import get_embedding_service
 from app.utils.token_estimator import estimate_tokens_from_text
 from app.services.rag_usage import get_rag_usage_and_limits, record_rag_event
 from app.models.client import Client
+from app.models.billing_plan import BillingPlan
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -32,7 +34,12 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         doc.status = "processing"
         await session.commit()
 
-        client = (await session.execute(select(Client).where(Client.id == doc.client_id))).scalar_one()
+        client_stmt = (
+            select(Client)
+            .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+            .where(Client.id == doc.client_id)
+        )
+        client = (await session.execute(client_stmt)).scalar_one()
         usage_info = await get_rag_usage_and_limits(session, client)
         limits = usage_info["limits"]
         usage = usage_info["usage"]
