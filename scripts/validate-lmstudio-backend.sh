@@ -11,38 +11,64 @@ echo "--- Validating LM Studio Backend Support ---"
 echo "Target LM Studio: $LM_STUDIO_BASE_URL"
 echo "Control Plane: $CONTROL_PLANE_URL"
 
+# Strip /v1 if present for backend registration to avoid double /v1/v1
+LM_STUDIO_ROOT_URL="${LM_STUDIO_BASE_URL%/v1}"
+
 # 1. Test direct connection to LM Studio
 echo "1. Testing direct connection to LM Studio..."
-if curl -s -f "$LM_STUDIO_BASE_URL/models" > /dev/null; then
-    echo "[OK] Direct connection successful."
+# Ensure we test the correct models endpoint
+LM_MODELS_URL="$LM_STUDIO_BASE_URL"
+if [[ "$LM_MODELS_URL" != */models ]]; then
+    if [[ "$LM_MODELS_URL" == */v1 ]]; then
+        LM_MODELS_URL="$LM_MODELS_URL/models"
+    else
+        LM_MODELS_URL="$LM_MODELS_URL/v1/models"
+    fi
+fi
+
+if curl -s -f "$LM_MODELS_URL" > /dev/null; then
+    echo "[OK] Direct connection successful to $LM_MODELS_URL"
     LM_STUDIO_ONLINE=true
 else
-    echo "[SKIP] LM Studio offline at $LM_STUDIO_BASE_URL. Skipping integration tests, focusing on system behavior."
+    echo "[SKIP] LM Studio offline at $LM_MODELS_URL. Skipping integration tests, focusing on system behavior."
     LM_STUDIO_ONLINE=false
 fi
 
 # 2. Test backend registration via Control Plane
 echo "2. Testing backend registration (openai_compatible type)..."
-REG_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/backends" \
-  -H "X-Admin-Token: $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"name\": \"lmstudio-validate-test\",
-    \"provider\": \"openai_compatible\",
-    \"backend_url\": \"$LM_STUDIO_BASE_URL\",
-    \"healthcheck_path\": \"/v1/models\",
-    \"is_active\": true,
-    \"max_parallel_requests\": 4
-  }")
+# Check if backend already exists to maintain idempotency
+EXISTING_BACKEND_ID=$(curl -s -H "X-Admin-Token: $ADMIN_TOKEN" "$CONTROL_PLANE_URL/admin/backends" | grep -o "\"id\":\"[^\"]*\",\"name\":\"lmstudio-validate-test\"" | cut -d'"' -f4 || echo "")
 
-BACKEND_ID=$(echo $REG_RESPONSE | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-
-if [ -n "$BACKEND_ID" ]; then
-    echo "[OK] Backend registered with ID: $BACKEND_ID"
+if [ -n "$EXISTING_BACKEND_ID" ]; then
+    echo "[OK] Backend already exists with ID: $EXISTING_BACKEND_ID. Reusing for test."
+    BACKEND_ID=$EXISTING_BACKEND_ID
+    # Ensure it's active for the test
+    curl -s -X PATCH "$CONTROL_PLANE_URL/admin/backends/$BACKEND_ID" \
+      -H "X-Admin-Token: $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{\"is_active\": true, \"backend_url\": \"$LM_STUDIO_ROOT_URL\"}" > /dev/null
 else
-    echo "[ERROR] Failed to register backend."
-    echo "Response: $REG_RESPONSE"
-    exit 1
+    REG_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/backends" \
+      -H "X-Admin-Token: $ADMIN_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"name\": \"lmstudio-validate-test\",
+        \"provider\": \"openai_compatible\",
+        \"backend_url\": \"$LM_STUDIO_ROOT_URL\",
+        \"healthcheck_path\": \"/v1/models\",
+        \"is_active\": true,
+        \"max_parallel_requests\": 4
+      }")
+
+    BACKEND_ID=$(echo $REG_RESPONSE | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+
+    if [ -n "$BACKEND_ID" ]; then
+        echo "[OK] Backend registered with ID: $BACKEND_ID"
+    else
+        echo "[ERROR] Failed to register backend."
+        echo "Response: $REG_RESPONSE"
+        exit 1
+    fi
 fi
 
 # 3. Test list-models utility
@@ -53,7 +79,7 @@ LIST_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/backends/list-models" 
   -d "{
     \"name\": \"test\",
     \"provider\": \"openai_compatible\",
-    \"backend_url\": \"$LM_STUDIO_BASE_URL\",
+    \"backend_url\": \"$LM_STUDIO_ROOT_URL\",
     \"healthcheck_path\": \"/v1/models\"
   }")
 

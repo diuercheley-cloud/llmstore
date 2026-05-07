@@ -3,6 +3,10 @@ set -e
 
 # Configuration
 ADMIN_TOKEN="${ADMIN_TOKEN:-admin-token-123}"
+# Ensure BASE_URL ends with /admin if it's provided as a root URL
+if [[ -n "${BASE_URL:-}" && "${BASE_URL}" != */admin ]]; then
+    BASE_URL="${BASE_URL}/admin"
+fi
 BASE_URL="${BASE_URL:-http://localhost:18080/admin}"
 CURL_OPTS="-s --fail"
 

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: install up down validate backup logs
+.PHONY: install up down validate validate-local-production backup logs
 
 install:
 	./install.sh
@@ -13,6 +13,9 @@ down:
 
 validate:
 	./scripts/validate-e2e.sh
+
+validate-local-production:
+	./scripts/validate-local-production-full.sh
 
 backup:
 	./scripts/backup.sh
