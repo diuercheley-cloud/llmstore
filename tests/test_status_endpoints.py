@@ -8,6 +8,8 @@ from app.core.config import get_settings
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.services.auth import require_admin
+
 settings = get_settings()
 
 @pytest_asyncio.fixture
@@ -39,6 +41,7 @@ async def async_client(fake_redis):
 
     app.dependency_overrides[get_db_session] = override_get_db
     app.dependency_overrides[get_redis] = override_get_redis
+    app.dependency_overrides[require_admin] = lambda: None
 
     async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
@@ -76,3 +79,22 @@ async def test_status_endpoint(async_client: AsyncClient):
     content = response.text.lower()
     for secret_word in ["key", "token", "password", "secret"]:
         assert secret_word not in content or f'"{secret_word}"' not in content
+
+@pytest.mark.asyncio
+async def test_deep_health_admin(async_client: AsyncClient):
+    response = await async_client.get("/admin/health/deep")
+    assert response.status_code == 200
+    data = response.json()
+    assert "dependencies" in data
+    assert "data_plane" in data["dependencies"]
+    assert "ok" in data["dependencies"]["data_plane"]
+    assert "latency_ms" in data["dependencies"]["data_plane"]
+
+
+@pytest.mark.asyncio
+async def test_client_portal_page_supports_api_key_bootstrap(async_client: AsyncClient):
+    response = await async_client.get("/client-portal")
+    assert response.status_code == 200
+    assert "readApiKeyFromUrl" in response.text
+    assert "searchParams.get('api_key')" in response.text
+    assert "window.history.replaceState" in response.text

@@ -629,6 +629,10 @@
         btnRagQuery: document.getElementById('btnRagQuery'),
         ragQueryResponse: document.getElementById('ragQueryResponse'),
         ragQuerySources: document.getElementById('ragQuerySources'),
+        codePython: document.getElementById('codePython'),
+        codeNode: document.getElementById('codeNode'),
+        codeCurl: document.getElementById('codeCurl'),
+        codeOpenAI: document.getElementById('codeOpenAI'),
         
         toast: document.getElementById('toast')
       };
@@ -670,16 +674,68 @@
       }
 
       // Login / Auth
+      function readApiKeyFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        return (
+          searchParams.get('api_key') ||
+          searchParams.get('apiKey') ||
+          hashParams.get('api_key') ||
+          hashParams.get('apiKey') ||
+          ''
+        ).trim();
+      }
+
+      function clearApiKeyFromUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('api_key');
+        url.searchParams.delete('apiKey');
+        if (url.hash) {
+          const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
+          const hashParams = new URLSearchParams(hash);
+          hashParams.delete('api_key');
+          hashParams.delete('apiKey');
+          const nextHash = hashParams.toString();
+          url.hash = nextHash ? `#${nextHash}` : '';
+        }
+        window.history.replaceState({}, document.title, url.toString());
+      }
+
+      async function attemptLogin(key, { persist = false } = {}) {
+        if (!key) return;
+        state.apiKey = key.trim();
+        els.loginKey.value = state.apiKey;
+        try {
+          await initPortal();
+          if (persist) {
+            localStorage.setItem('portalApiKey', state.apiKey);
+          }
+          els.loginOverlay.style.display = 'none';
+          clearApiKeyFromUrl();
+        } catch (err) {
+          state.apiKey = '';
+          if (persist) {
+            localStorage.removeItem('portalApiKey');
+          }
+          throw err;
+        }
+      }
+
       els.doLogin.addEventListener('click', async () => {
         const key = els.loginKey.value.trim();
         if (!key) return;
-        state.apiKey = key;
         try {
-          await initPortal();
-          if (els.rememberMe.checked) localStorage.setItem('portalApiKey', key);
-          els.loginOverlay.style.display = 'none';
+          await attemptLogin(key, { persist: els.rememberMe.checked });
         } catch (err) {
           alert('Chave inválida ou erro de conexão: ' + err.message);
+        }
+      });
+
+      els.loginKey.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          els.doLogin.click();
         }
       });
 
@@ -1021,10 +1077,15 @@ print(response.choices[0].message.content)`;
       };
 
       // Auto-login
+      const urlKey = readApiKeyFromUrl();
       const savedKey = localStorage.getItem('portalApiKey');
-      if (savedKey) {
-        els.loginKey.value = savedKey;
-        els.doLogin.click();
+      const bootKey = urlKey || savedKey;
+      if (bootKey) {
+        attemptLogin(bootKey, { persist: Boolean(urlKey) || Boolean(savedKey) }).catch(() => {
+          if (urlKey) {
+            alert('A API key fornecida na URL e invalida ou nao conseguiu autenticar no portal.');
+          }
+        });
       }
     </script>
   </body>

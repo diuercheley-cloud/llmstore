@@ -144,6 +144,10 @@ async def admin_system_status(
             job_snapshot = {"error": str(e)}
     
     inference_queues = proxy.queue_manager.get_snapshot()
+    
+    start = perf_counter()
+    dp_ok = await proxy.health()
+    dp_latency = round((perf_counter() - start) * 1000, 2)
 
     backends = []
     models = []
@@ -152,7 +156,7 @@ async def admin_system_status(
             backend_rows = (await session.execute(select(InferenceBackend))).scalars().all()
             for b in backend_rows:
                 backends.append(await proxy.health_backend(b))
-                
+
             model_rows = (await session.execute(select(ModelRegistry).where(ModelRegistry.is_active.is_(True)))).scalars().all()
             for m in model_rows:
                 models.append({
@@ -187,13 +191,15 @@ async def admin_system_status(
     }
 
     return {
-        "status": "ok" if db_detail["ok"] and redis_detail["ok"] else "degraded",
+        "status": "ok" if db_detail["ok"] and redis_detail["ok"] and dp_ok else "degraded",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "dependencies": {
             "postgres": db_detail,
-            "redis": redis_detail
+            "redis": redis_detail,
+            "data_plane": {"ok": dp_ok, "latency_ms": dp_latency}
         },
         "queues": job_snapshot,
+
         "inference_queues": inference_queues,
         "inference": {
             "backends": backends,
