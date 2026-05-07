@@ -6,11 +6,11 @@
 
 - **Version:** 1.2.1-model-management
 - **Branch:** feature/local-production-hardening
-- **Commit:** cf02258f2649c9dd8cf15d5feb0211cc584ed767
+- **Commit:** 3e17e6e63c41de4c484e948407896df315b3e1a5
 - **Base URL:** http://localhost:18080
-- **Start Time:** 2026-05-07T17:34:11Z
-- **End Time:** 2026-05-07T17:34:57Z
-- **Total Duration:** 46s
+- **Start Time:** 2026-05-07T18:21:27Z
+- **End Time:** 2026-05-07T18:22:15Z
+- **Total Duration:** 48s
 
 ## Environment
 
@@ -26,16 +26,16 @@
 | :--- | :--- | :---: | :---: | :--- |
 | `validate-localhost-mode.sh` | OK | Yes | 0s | [view](logs/validate-localhost-mode.sh.log) |
 | `validate-status-local.sh` | OK | Yes | 3s | [view](logs/validate-status-local.sh.log) |
-| `validate-admin-lab-local.sh` | OK | Yes | 14s | [view](logs/validate-admin-lab-local.sh.log) |
-| `validate-lmstudio-backend.sh` | OK | No | 3s | [view](logs/validate-lmstudio-backend.sh.log) |
+| `validate-admin-lab-local.sh` | OK | Yes | 16s | [view](logs/validate-admin-lab-local.sh.log) |
+| `validate-lmstudio-backend.sh` | OK | No | 4s | [view](logs/validate-lmstudio-backend.sh.log) |
 | `validate-routing-local.sh` | OK | Yes | 3s | [view](logs/validate-routing-local.sh.log) |
-| `validate-plan-queues.sh` | OK | Yes | 8s | [view](logs/validate-plan-queues.sh.log) |
+| `validate-plan-queues.sh` | OK | Yes | 7s | [view](logs/validate-plan-queues.sh.log) |
 | `validate-client-portal-local.sh` | OK | Yes | 0s | [view](logs/validate-client-portal-local.sh.log) |
 | `validate-api-keys-local.sh` | OK | Yes | 0s | [view](logs/validate-api-keys-local.sh.log) |
 | `validate-rag-local-multiclient.sh` | OK | Yes | 3s | [view](logs/validate-rag-local-multiclient.sh.log) |
 | `validate-local-billing.sh` | OK | Yes | 0s | [view](logs/validate-local-billing.sh.log) |
 | `validate-local-docs.sh` | OK | Yes | 0s | [view](logs/validate-local-docs.sh.log) |
-| `validate-observability-local.sh` | OK | Yes | 4s | [view](logs/validate-observability-local.sh.log) |
+| `validate-observability-local.sh` | OK | Yes | 5s | [view](logs/validate-observability-local.sh.log) |
 
 ## How to reproduce
 
@@ -45,8 +45,8 @@
 
 ## Useful commands
 
-- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T143411/logs/`
-- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T143411/logs/*.log`
+- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T152127/logs/`
+- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T152127/logs/*.log`
 - Check services: `docker compose ps`
 
 ## Out of scope

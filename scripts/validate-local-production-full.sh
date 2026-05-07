@@ -6,10 +6,14 @@ ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
 init_stack_env
 
 TIMESTAMP="$(date +%Y%m%dT%H%M%S)"
+TIMESTAMP_START="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OUTPUT_DIR="${ROOT_DIR}/artifacts/local-production-validation/${TIMESTAMP}"
+LOGS_DIR="${OUTPUT_DIR}/logs"
 SUMMARY_JSON="${OUTPUT_DIR}/summary.json"
 SUMMARY_MD="${OUTPUT_DIR}/summary.md"
 RESULTS_FILE="$(mktemp)"
@@ -17,7 +21,7 @@ WARNINGS_FILE="$(mktemp)"
 FAILURES_FILE="$(mktemp)"
 START_EPOCH="$(date +%s)"
 
-mkdir -p "${OUTPUT_DIR}"
+mkdir -p "${LOGS_DIR}"
 printf '[]\n' >"${RESULTS_FILE}"
 printf '[]\n' >"${WARNINGS_FILE}"
 printf '[]\n' >"${FAILURES_FILE}"
@@ -29,54 +33,22 @@ trap cleanup EXIT
 
 VERSION="$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo "unknown")"
 GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "not-a-git-repo")"
+GIT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+GIT_TAG_BASE="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 2>/dev/null || echo "none")"
+
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_BASE_URL="${ADMIN_BASE_URL:-${BASE_URL}/admin}"
 LM_STUDIO_BASE_URL="${LM_STUDIO_BASE_URL:-http://192.168.101.1:1234/v1}"
 
-SERVICES_TESTED=(
-  "control-plane"
-  "postgres"
-  "redis"
-  "admin-lab"
-  "client-portal"
-  "billing"
-  "routing"
-  "api-keys"
-  "docs"
-  "observability"
-)
-
-ENDPOINTS_TESTED=(
-  "${BASE_URL}/"
-  "${BASE_URL}/health"
-  "${BASE_URL}/ready"
-  "${BASE_URL}/status"
-  "${BASE_URL}/v1/models"
-  "${BASE_URL}/v1/chat/completions"
-  "${BASE_URL}/pricing"
-  "${BASE_URL}/signup"
-  "${BASE_URL}/docs"
-  "${BASE_URL}/developer-docs"
-  "${BASE_URL}/admin/status"
-  "${BASE_URL}/admin/health/deep"
-  "${BASE_URL}/admin/clients"
-  "${BASE_URL}/admin/api-keys"
-  "${BASE_URL}/admin/backends"
-  "${BASE_URL}/admin/backends/list-models"
-  "${BASE_URL}/admin/billing/plans"
-  "${BASE_URL}/admin/billing/invoices"
-  "${BASE_URL}/admin/billing/run-cycle"
-  "${BASE_URL}/admin/routing/explain"
-  "${BASE_URL}/admin/usage/summary"
-  "${BASE_URL}/admin/usage/by-client"
-  "${BASE_URL}/admin/usage/by-model"
-  "${BASE_URL}/admin-dashboard"
-  "${BASE_URL}/portal/me"
-  "${BASE_URL}/client/rag/documents"
-  "${BASE_URL}/client/rag/query"
-  "${BASE_URL}/admin/rag/usage"
-  "${LM_STUDIO_BASE_URL}/models"
-)
+# Environment flags
+LOCALHOST_MODE="${LOCALHOST_MODE:-false}"
+LOCAL_BILLING_MODE="${LOCAL_BILLING_MODE:-false}"
+RAG_ENABLED_FLAG="${RAG_ENABLED:-true}"
+LM_STUDIO_CONFIGURED="false"
+if [[ "${LM_STUDIO_BASE_URL}" != "http://192.168.101.1:1234/v1" ]]; then
+  LM_STUDIO_CONFIGURED="true"
+fi
+LM_STUDIO_ONLINE="unknown"
 
 append_json_object() {
   local file="$1"
@@ -93,14 +65,6 @@ data.append(payload)
 with open(path, "w", encoding="utf-8") as handle:
     json.dump(data, handle, indent=2)
     handle.write("\n")
-PY
-}
-
-json_string_array() {
-  python3 - "$@" <<'PY'
-import json
-import sys
-print(json.dumps(sys.argv[1:]))
 PY
 }
 
@@ -132,21 +96,28 @@ record_result() {
   local duration="$4"
   local critical="$5"
   local log_file="$6"
-  local note="${7:-}"
+  local started_at="$7"
+  local finished_at="$8"
+  local note="${9:-}"
+  local error_summary="${10:-}"
 
   append_json_object "${RESULTS_FILE}" "$(python3 - \
-    "${script_name}" "${status}" "${exit_code}" "${duration}" "${critical}" "${log_file}" "${note}" <<'PY'
+    "${script_name}" "${status}" "${exit_code}" "${duration}" "${critical}" "${log_file}" "${started_at}" "${finished_at}" "${note}" "${error_summary}" <<'PY'
 import json
 import sys
 
 print(json.dumps({
-    "script": sys.argv[1],
+    "name": sys.argv[1],
+    "path": f"scripts/{sys.argv[1]}",
     "status": sys.argv[2],
     "exit_code": int(sys.argv[3]),
     "duration_seconds": int(sys.argv[4]),
     "critical": sys.argv[5] == "true",
-    "log": sys.argv[6],
-    "note": sys.argv[7],
+    "log_file": sys.argv[6],
+    "started_at": sys.argv[7],
+    "finished_at": sys.argv[8],
+    "note": sys.argv[9],
+    "error_summary": sys.argv[10],
 }))
 PY
 )"
@@ -157,19 +128,23 @@ run_validation() {
   local critical="${2:-true}"
   local note="${3:-}"
   local script_path="${SCRIPT_DIR}/${script_name}"
-  local log_file="${OUTPUT_DIR}/${script_name}.log"
-  local start
-  local end
-  local duration
+  local log_file="logs/${script_name}.log"
+  local full_log_path="${OUTPUT_DIR}/${log_file}"
+  local start_time
+  local started_at
+  local finished_at
   local exit_code=0
-  local status="success"
+  local status="ok"
+  local error_summary=""
 
-  printf '\n[%s] Running %s\n' "$(date +%H:%M:%S)" "${script_name}"
-  start="$(date +%s)"
+  log_step "Running ${script_name}"
+  started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  start_time=$(start_timer)
 
   if [[ ! -x "${script_path}" && ! -f "${script_path}" ]]; then
-    printf 'Script not found: %s\n' "${script_path}" >"${log_file}"
+    log_error "Script not found: ${script_path}" >"${full_log_path}"
     exit_code=127
+    error_summary="Script not found"
   else
     (
       cd "${ROOT_DIR}" || exit 1
@@ -178,64 +153,67 @@ run_validation() {
       CONTROL_PLANE_URL="${BASE_URL}" \
       LM_STUDIO_BASE_URL="${LM_STUDIO_BASE_URL}" \
       bash "${script_path}"
-    ) >"${log_file}" 2>&1
+    ) >"${full_log_path}" 2>&1
     exit_code=$?
   fi
 
-  end="$(date +%s)"
-  duration=$((end - start))
+  local duration
+  duration=$(end_timer "${start_time}")
+  finished_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   if [[ "${exit_code}" -ne 0 ]]; then
     if [[ "${critical}" == "true" ]]; then
-      status="failed"
+      status="error"
+      error_summary="exit code ${exit_code}"
       add_failure "${script_name}" "exit code ${exit_code}; see ${log_file}"
-      printf '[FAILED] %s (%ss)\n' "${script_name}" "${duration}"
+      log_error "${script_name} FAILED (${duration})"
     else
-      status="warning"
+      status="warn"
+      error_summary="exit code ${exit_code}"
       add_warning "${script_name} exited with ${exit_code}; see ${log_file}"
-      printf '[WARNING] %s (%ss)\n' "${script_name}" "${duration}"
+      log_warn "${script_name} WARNING (${duration})"
     fi
   else
-    printf '[OK] %s (%ss)\n' "${script_name}" "${duration}"
+    log_ok "${script_name} OK (${duration})"
   fi
 
-  record_result "${script_name}" "${status}" "${exit_code}" "${duration}" "${critical}" "${log_file}" "${note}"
+  local duration_sec
+  duration_sec=$(echo "${duration}" | sed 's/s//' | awk '{print int($1)}')
+  record_result "${script_name}" "${status}" "${exit_code}" "${duration_sec}" "${critical}" "${log_file}" "${started_at}" "${finished_at}" "${note}" "${error_summary}"
 }
 
 skip_validation() {
   local script_name="$1"
   local critical="$2"
   local note="$3"
-  local log_file="${OUTPUT_DIR}/${script_name}.log"
+  local log_file="logs/${script_name}.log"
+  local full_log_path="${OUTPUT_DIR}/${log_file}"
+  local timestamp
+  timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-  printf '%s\n' "${note}" >"${log_file}"
-  record_result "${script_name}" "skipped" "0" "0" "${critical}" "${log_file}" "${note}"
-  printf '[SKIPPED] %s: %s\n' "${script_name}" "${note}"
+  printf '%s\n' "${note}" >"${full_log_path}"
+  record_result "${script_name}" "skip" "0" "0" "${critical}" "${log_file}" "${timestamp}" "${timestamp}" "${note}" ""
+  log_info "[SKIPPED] ${script_name}: ${note}"
 }
 
-psp_configured="false"
-if [[ -n "${PSP_PROVIDER:-}" || -n "${PAYMENT_PROVIDER:-}" || -n "${STRIPE_SECRET_KEY:-}" || -n "${MERCADOPAGO_ACCESS_TOKEN:-}" ]]; then
-  psp_configured="true"
-else
-  add_warning "PSP is not configured. This is expected for local validation; real PSP integration is out of scope."
-fi
-
-printf '%s\n' "--- LOCAL PRODUCTION FULL VALIDATION ---"
-printf 'Version: %s\n' "${VERSION}"
-printf 'Commit: %s\n' "${GIT_COMMIT}"
-printf 'Base URL: %s\n' "${BASE_URL}"
-printf 'Timestamp: %s\n' "${TIMESTAMP}"
-printf 'Output: %s\n' "${OUTPUT_DIR}"
-printf '%s\n' "----------------------------------------"
+log_section "Local Production Full Validation"
+log_info "Version: ${VERSION}"
+log_info "Commit: ${GIT_COMMIT}"
+log_info "Branch: ${GIT_BRANCH}"
+log_info "Base URL: ${BASE_URL}"
+log_info "Timestamp: ${TIMESTAMP}"
+log_info "Output: ${OUTPUT_DIR}"
 
 run_validation "validate-localhost-mode.sh" "true"
 run_validation "validate-status-local.sh" "true"
 run_validation "validate-admin-lab-local.sh" "true"
 
 if curl -fsS --connect-timeout 2 --max-time 5 "${LM_STUDIO_BASE_URL}/models" >/dev/null 2>&1; then
+  LM_STUDIO_ONLINE="true"
   run_validation "validate-lmstudio-backend.sh" "false" "LM Studio is online; integration validation executed."
 else
-  skip_validation "validate-lmstudio-backend.sh" "false" "LM Studio offline at ${LM_STUDIO_BASE_URL}; offline LM Studio is a warning, not a critical failure."
+  LM_STUDIO_ONLINE="false"
+  skip_validation "validate-lmstudio-backend.sh" "false" "LM Studio offline at ${LM_STUDIO_BASE_URL}"
 fi
 
 run_validation "validate-routing-local.sh" "true"
@@ -243,19 +221,18 @@ run_validation "validate-plan-queues.sh" "true"
 run_validation "validate-client-portal-local.sh" "true"
 run_validation "validate-api-keys-local.sh" "true"
 
-if [[ "${RAG_ENABLED:-true}" == "true" ]]; then
+if [[ "${RAG_ENABLED_FLAG}" == "true" ]]; then
   run_validation "validate-rag-local-multiclient.sh" "true"
 else
-  skip_validation "validate-rag-local-multiclient.sh" "false" "RAG_ENABLED=${RAG_ENABLED}; RAG validation is conditional."
+  skip_validation "validate-rag-local-multiclient.sh" "false" "RAG_ENABLED=${RAG_ENABLED_FLAG}"
 fi
 
-run_validation "validate-local-billing.sh" "true" "Manual billing validation only; real PSP is not part of local scope."
+run_validation "validate-local-billing.sh" "true" "Manual billing validation only"
 run_validation "validate-local-docs.sh" "true"
 run_validation "validate-observability-local.sh" "true"
 
+TIMESTAMP_END="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 TOTAL_DURATION=$(( $(date +%s) - START_EPOCH ))
-SERVICES_JSON="$(json_string_array "${SERVICES_TESTED[@]}")"
-ENDPOINTS_JSON="$(json_string_array "${ENDPOINTS_TESTED[@]}")"
 
 python3 - \
   "${SUMMARY_JSON}" \
@@ -265,67 +242,84 @@ python3 - \
   "${FAILURES_FILE}" \
   "${VERSION}" \
   "${GIT_COMMIT}" \
-  "${TIMESTAMP}" \
+  "${GIT_BRANCH}" \
+  "${GIT_TAG_BASE}" \
+  "${TIMESTAMP_START}" \
+  "${TIMESTAMP_END}" \
   "${TOTAL_DURATION}" \
   "${BASE_URL}" \
-  "${psp_configured}" \
-  "${SERVICES_JSON}" \
-  "${ENDPOINTS_JSON}" <<'PY'
+  "${LOCALHOST_MODE}" \
+  "${LOCAL_BILLING_MODE}" \
+  "${RAG_ENABLED_FLAG}" \
+  "${LM_STUDIO_CONFIGURED}" \
+  "${LM_STUDIO_ONLINE}" \
+  "${OUTPUT_DIR}" <<'PY'
 import json
 import sys
+import os
 
-summary_json, summary_md, results_file, warnings_file, failures_file = sys.argv[1:6]
-version, commit, timestamp = sys.argv[6:9]
-duration = int(sys.argv[9])
-base_url = sys.argv[10]
-psp_configured = sys.argv[11] == "true"
-services = json.loads(sys.argv[12])
-endpoints = json.loads(sys.argv[13])
+(
+    summary_json, summary_md, results_file, warnings_file, failures_file,
+    version, git_commit, git_branch, git_tag_base,
+    timestamp_start, timestamp_end, duration, base_url,
+    localhost_mode, local_billing_mode, rag_enabled,
+    lm_studio_configured, lm_studio_online, output_dir
+) = sys.argv[1:20]
+
+duration = int(duration)
+localhost_mode = localhost_mode == "true"
+local_billing_mode = local_billing_mode == "true"
+rag_enabled = rag_enabled == "true"
+lm_studio_configured = lm_studio_configured == "true"
 
 with open(results_file, "r", encoding="utf-8") as handle:
-    results = json.load(handle)
+    scripts = json.load(handle)
 with open(warnings_file, "r", encoding="utf-8") as handle:
     global_warnings = json.load(handle)
 with open(failures_file, "r", encoding="utf-8") as handle:
     failures = json.load(handle)
 
-warning_results = [
-    {
-        "script": item["script"],
-        "message": item["note"] or f"status={item['status']}",
-        "log": item["log"],
-    }
-    for item in results
-    if item["status"] in {"warning", "skipped"}
-]
-warnings = global_warnings + warning_results
-critical_failures = [item for item in results if item["critical"] and item["status"] == "failed"]
-status = "failed" if critical_failures else "success"
+ok_count = sum(1 for s in scripts if s["status"] == "ok")
+warn_count = sum(1 for s in scripts if s["status"] == "warn")
+skip_count = sum(1 for s in scripts if s["status"] == "skip")
+error_count = sum(1 for s in scripts if s["status"] == "error")
 
-next_steps = [
-    "Inspect failed script logs and rerun make validate-local-production.",
-    "Confirm local services with docker compose ps if health or readiness checks failed.",
-] if critical_failures else [
-    "Archive the generated artifact directory with the local release evidence.",
-    "Use this report as the baseline before staging or production validation.",
-]
-if not psp_configured:
-    next_steps.append("Keep PSP disabled for local validation unless a separate PSP integration task is opened.")
+critical_failures = [s for s in scripts if s["critical"] and s["status"] == "error"]
+success = len(critical_failures) == 0
 
 summary = {
     "version": version,
-    "commit": commit,
-    "timestamp": timestamp,
-    "base_url": base_url,
-    "status": status,
+    "git_commit": git_commit,
+    "git_branch": git_branch,
+    "git_tag_base": git_tag_base,
+    "timestamp_start": timestamp_start,
+    "timestamp_end": timestamp_end,
     "duration_seconds": duration,
-    "services_tested": services,
-    "endpoints_tested": endpoints,
-    "scripts_executed": results,
-    "failures": failures,
-    "warnings": warnings,
-    "psp_configured": psp_configured,
-    "next_steps": next_steps,
+    "base_url": base_url,
+    "environment": {
+        "LOCALHOST_MODE": localhost_mode,
+        "LOCAL_BILLING_MODE": local_billing_mode,
+        "RAG_ENABLED": rag_enabled,
+        "LM_STUDIO_CONFIGURED": lm_studio_configured,
+        "LM_STUDIO_ONLINE": lm_studio_online,
+    },
+    "scripts": scripts,
+    "totals": {
+        "ok": ok_count,
+        "warn": warn_count,
+        "skip": skip_count,
+        "error": error_count,
+    },
+    "artifacts": {
+        "summary_md": "summary.md",
+        "summary_json": "summary.json",
+        "logs_dir": "logs/",
+    },
+    "validation_result": {
+        "success": success,
+        "critical_failures": len(critical_failures),
+        "warnings": warn_count + len(global_warnings),
+    }
 }
 
 with open(summary_json, "w", encoding="utf-8") as handle:
@@ -334,66 +328,89 @@ with open(summary_json, "w", encoding="utf-8") as handle:
 
 with open(summary_md, "w", encoding="utf-8") as handle:
     handle.write("# Local Production Validation Summary\n\n")
-    handle.write(f"- Status: {status.upper()}\n")
-    handle.write(f"- Version: {version}\n")
-    handle.write(f"- Commit: {commit}\n")
-    handle.write(f"- Base URL: {base_url}\n")
-    handle.write(f"- Timestamp: {timestamp}\n")
-    handle.write(f"- Duration: {duration}s\n")
-    handle.write(f"- PSP configured: {'yes' if psp_configured else 'no'}\n\n")
+    
+    status_str = "SUCCESS" if success else "FAILED"
+    handle.write(f"**Result: {status_str}**\n\n")
 
-    handle.write("## Services Tested\n\n")
-    for service in services:
-        handle.write(f"- {service}\n")
+    handle.write("## Metadata\n\n")
+    handle.write(f"- **Version:** {version}\n")
+    handle.write(f"- **Branch:** {git_branch}\n")
+    handle.write(f"- **Commit:** {git_commit}\n")
+    handle.write(f"- **Base URL:** {base_url}\n")
+    handle.write(f"- **Start Time:** {timestamp_start}\n")
+    handle.write(f"- **End Time:** {timestamp_end}\n")
+    handle.write(f"- **Total Duration:** {duration}s\n\n")
 
-    handle.write("\n## Endpoints Tested\n\n")
-    for endpoint in endpoints:
-        handle.write(f"- `{endpoint}`\n")
+    handle.write("## Environment\n\n")
+    handle.write(f"- LOCALHOST_MODE: `{localhost_mode}`\n")
+    handle.write(f"- LOCAL_BILLING_MODE: `{local_billing_mode}`\n")
+    handle.write(f"- RAG_ENABLED: `{rag_enabled}`\n")
+    handle.write(f"- LM_STUDIO_CONFIGURED: `{lm_studio_configured}`\n")
+    handle.write(f"- LM_STUDIO_ONLINE: `{lm_studio_online}`\n\n")
 
-    handle.write("\n## Scripts Executed\n\n")
+    handle.write("## Execution Summary\n\n")
     handle.write("| Script | Status | Critical | Duration | Log |\n")
-    handle.write("| --- | --- | --- | ---: | --- |\n")
-    for item in results:
+    handle.write("| :--- | :--- | :---: | :---: | :--- |\n")
+    for s in scripts:
         handle.write(
-            f"| `{item['script']}` | {item['status']} | "
-            f"{'yes' if item['critical'] else 'no'} | "
-            f"{item['duration_seconds']}s | `{item['log']}` |\n"
+            f"| `{s['name']}` | {s['status'].upper()} | "
+            f"{'Yes' if s['critical'] else 'No'} | "
+            f"{s['duration_seconds']}s | [view]({s['log_file']}) |\n"
         )
 
-    handle.write("\n## Failures\n\n")
-    if failures:
-        for item in failures:
-            handle.write(f"- `{item['script']}`: {item['message']}\n")
-    else:
-        handle.write("- None\n")
+    if warn_count > 0 or skip_count > 0 or global_warnings:
+        handle.write("\n## Warnings & Skips\n\n")
+        for s in scripts:
+            if s["status"] in ["warn", "skip"]:
+                handle.write(f"- **{s['name']}**: {s['note'] or s['error_summary']}\n")
+        for w in global_warnings:
+            handle.write(f"- {w['message']}\n")
 
-    handle.write("\n## Warnings\n\n")
-    if warnings:
-        for item in warnings:
-            prefix = f"`{item['script']}`: " if "script" in item else ""
-            handle.write(f"- {prefix}{item['message']}\n")
-    else:
-        handle.write("- None\n")
+    if error_count > 0:
+        handle.write("\n## Failures\n\n")
+        for s in scripts:
+            if s["status"] == "error":
+                handle.write(f"- **{s['name']}**: {s['error_summary']} (see `{s['log_file']}`)\n")
 
-    handle.write("\n## Next Steps\n\n")
-    for index, item in enumerate(next_steps, 1):
-        handle.write(f"{index}. {item}\n")
+    handle.write("\n## How to reproduce\n\n")
+    handle.write("```bash\n")
+    handle.write("./scripts/validate-local-production-full.sh\n")
+    handle.write("```\n\n")
+
+    handle.write("## Useful commands\n\n")
+    handle.write("- Check logs: `ls -R " + output_dir + "/logs/`\n")
+    handle.write("- Tail all logs: `tail -f " + output_dir + "/logs/*.log`\n")
+    handle.write("- Check services: `docker compose ps`\n\n")
+
+    handle.write("## Out of scope\n\n")
+    handle.write("- Real PSP (Stripe/MercadoPago) integration tests.\n")
+    handle.write("- External DNS/SSL validation (handled by cloud provider).\n")
+    handle.write("- GPU stress testing (requires dedicated environment).\n\n")
+
+    handle.write("## Conclusion\n\n")
+    if success:
+        handle.write("The local production environment is healthy and ready for staging deployment.\n")
+    else:
+        handle.write("Critical failures were detected. Please resolve them before proceeding to deployment.\n")
 PY
 
-printf '%s\n' "----------------------------------------"
-printf 'Summary JSON: %s\n' "${SUMMARY_JSON}"
-printf 'Summary MD: %s\n' "${SUMMARY_MD}"
+log_section "Validation Report"
+log_info "Summary JSON: ${SUMMARY_JSON}"
+log_info "Summary MD: ${SUMMARY_MD}"
 
-if python3 - "${SUMMARY_JSON}" <<'PY'
+if [[ "${critical_failures_count:-0}" -eq 0 ]]; then
+    # We need to re-read the success status from the generated JSON to be sure
+    if python3 - "${SUMMARY_JSON}" <<'PY'
 import json
 import sys
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    sys.exit(0 if json.load(handle)["status"] == "success" else 1)
+    sys.exit(0 if json.load(handle)["validation_result"]["success"] else 1)
 PY
-then
-  printf '%s\n' "VALIDATION SUCCESSFUL"
-  exit 0
+    then
+      log_ok "VALIDATION SUCCESSFUL"
+      exit 0
+    fi
 fi
 
-printf '%s\n' "VALIDATION FAILED"
+log_error "VALIDATION FAILED"
 exit 1

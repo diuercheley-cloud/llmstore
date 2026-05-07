@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT_DIR}/scripts/common.sh"
+# shellcheck source=/dev/null
+source "${ROOT_DIR}/scripts/lib/validation-logging.sh"
 
 init_stack_env
 
@@ -10,12 +12,14 @@ BASE_URL="${BASE_URL:-$(default_base_url)}"
 ARTIFACTS_DIR="${ROOT_DIR}/artifacts/validate-observability-local/$(date +%Y%m%dT%H%M%S)"
 mkdir -p "${ARTIFACTS_DIR}"
 
+log_section "Observability Validation"
+
 log() {
-  printf '[observability-val] %s\n' "$*"
+  log_info "$*"
 }
 
 fail() {
-  printf '[observability-val] FAIL: %s\n' "$*" >&2
+  log_error "$*"
   exit 1
 }
 

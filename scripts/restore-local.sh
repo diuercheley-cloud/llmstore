@@ -9,17 +9,31 @@ cd "${ROOT_DIR}"
 
 usage() {
   cat <<'EOF'
-Uso: ./scripts/restore-local.sh [--force-rag-overwrite] /path/to/artifacts/backups-local/<timestamp>
+Uso: ./scripts/restore-local.sh [OPÇÕES] /path/to/backup
+
+Opções:
+  --force-rag-overwrite  Sobrescreve arquivos RAG existentes se houver conflito
+  --dry-run              Apenas valida o backup e mostra o que seria feito, sem alterar nada
+  -y, --yes              Pula a confirmação interativa
+  -h, --help             Mostra esta mensagem
 EOF
 }
 
 force_rag_overwrite=false
+dry_run=false
+auto_confirm=false
 BACKUP_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --force-rag-overwrite)
       force_rag_overwrite=true
+      ;;
+    --dry-run)
+      dry_run=true
+      ;;
+    -y|--yes)
+      auto_confirm=true
       ;;
     -h|--help)
       usage
@@ -59,6 +73,7 @@ if [[ ! -f "${POSTGRES_DUMP_FILE}" ]]; then
   exit 1
 fi
 
+echo "[restore-local] validando checksums..."
 python3 - "${BACKUP_DIR}" "${CHECKSUM_FILE}" <<'PY'
 from __future__ import annotations
 
@@ -91,6 +106,7 @@ BACKUP_VERSION="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read()
 BACKUP_ALEMBIC_REVISION="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["alembic_revision"])' <<<"${MANIFEST_JSON}")"
 BACKUP_INCLUDE_MODELS="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["include_models"])' <<<"${MANIFEST_JSON}")"
 BACKUP_INCLUDE_RAG_FILES="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["include_rag_files"])' <<<"${MANIFEST_JSON}")"
+BACKUP_DATE="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["created_at"])' <<<"${MANIFEST_JSON}")"
 
 CURRENT_VERSION="$(tr -d '\n' < "${ROOT_DIR}/VERSION")"
 if [[ "${BACKUP_VERSION}" != "${CURRENT_VERSION}" ]]; then
@@ -101,6 +117,30 @@ fi
 if [[ -n "${BACKUP_ALEMBIC_REVISION}" ]] && ! compgen -G "${ROOT_DIR}/control_plane/alembic/versions/*${BACKUP_ALEMBIC_REVISION}*.py" >/dev/null; then
   echo "[restore-local][error] backup alembic revision is not available locally: ${BACKUP_ALEMBIC_REVISION}" >&2
   exit 1
+fi
+
+echo "--------------------------------------------------------"
+echo "Backup Manifest Summary:"
+echo "  Date: ${BACKUP_DATE}"
+echo "  App Version: ${BACKUP_VERSION}"
+echo "  DB Revision: ${BACKUP_ALEMBIC_REVISION}"
+echo "  Models Included: ${BACKUP_INCLUDE_MODELS}"
+echo "  RAG Files Included: ${BACKUP_INCLUDE_RAG_FILES}"
+echo "--------------------------------------------------------"
+
+if [[ "${dry_run}" == "true" ]]; then
+  echo "[restore-local] modo dry-run: validacao concluida com sucesso."
+  exit 0
+fi
+
+if [[ "${auto_confirm}" != "true" ]]; then
+  printf "ATENCAO: Este comando ira destruir os dados atuais do banco de dados.\n"
+  printf "Deseja continuar? (y/N) "
+  read -r response
+  if [[ ! "${response}" =~ ^[Yy]$ ]]; then
+    echo "[restore-local] abortado pelo usuario."
+    exit 0
+  fi
 fi
 
 dc up -d postgres redis >/dev/null

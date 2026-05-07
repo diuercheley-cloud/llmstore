@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 BACKUP_ROOT="${ROOT_DIR}/artifacts/backups-local"
-REPORT_ROOT="${ROOT_DIR}/artifacts/dr-tests-local"
+REPORT_ROOT="${ROOT_DIR}/artifacts/dr-tests"
 TIMESTAMP="$(date +%Y%m%dT%H%M%S)"
 DR_PROJECT_NAME="llmstackdr$(printf '%s' "${TIMESTAMP}" | tr '[:upper:]' '[:lower:]')"
 POSTGRES_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
@@ -493,9 +493,9 @@ if [[ -n "${RAG_STORAGE_DIR_CONTAINER}" ]]; then
 fi
 dc down -v >/dev/null
 
-RESTORE_COMMAND="${SCRIPT_DIR}/restore-local.sh --force-rag-overwrite ${BACKUP_DIR}"
+RESTORE_COMMAND="${SCRIPT_DIR}/restore-local.sh --yes --force-rag-overwrite ${BACKUP_DIR}"
 log "restaurando backup"
-"${SCRIPT_DIR}/restore-local.sh" --force-rag-overwrite "${BACKUP_DIR}" > "${REPORT_DIR}/restore.log"
+"${SCRIPT_DIR}/restore-local.sh" --yes --force-rag-overwrite "${BACKUP_DIR}" > "${REPORT_DIR}/restore.log"
 
 log "subindo control plane para validacao"
 dc up -d data-plane-gemma control-plane control-plane-worker rag-worker >/dev/null

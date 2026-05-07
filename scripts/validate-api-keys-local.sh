@@ -4,18 +4,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
 init_stack_env
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-}"
 
 if [[ -z "${ADMIN_TOKEN}" ]]; then
-  echo "Error: ADMIN_TOKEN must be set (e.g. export ADMIN_TOKEN=...)"
+  log_error "ADMIN_TOKEN must be set"
   exit 1
 fi
 
+log_section "API Keys Validation"
+
 log() {
-  printf '[validate-api-keys] %s\n' "$*"
+  log_info "$*"
 }
 
 # 1. Create client

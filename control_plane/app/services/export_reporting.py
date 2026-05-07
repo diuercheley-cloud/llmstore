@@ -54,9 +54,9 @@ def _date_range_clause(column, start_date: date | None, end_date: date | None):
 def _datetime_range_clause(column, start_date: date | None, end_date: date | None):
     clauses = []
     if start_date is not None:
-        clauses.append(column >= datetime.combine(start_date, datetime.min.time()))
+        clauses.append(column >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc))
     if end_date is not None:
-        clauses.append(column < datetime.combine(end_date + timedelta(days=1), datetime.min.time()))
+        clauses.append(column < datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc))
     return clauses
 
 
@@ -489,8 +489,8 @@ async def build_monthly_report(session: AsyncSession, *, month: str | None = Non
     payments = (
         await session.execute(
             select(CustomerPayment).where(
-                CustomerPayment.created_at >= datetime.combine(report_month, datetime.min.time()),
-                CustomerPayment.created_at < datetime.combine(next_month, datetime.min.time()),
+                CustomerPayment.created_at >= datetime.combine(report_month, datetime.min.time(), tzinfo=timezone.utc),
+                CustomerPayment.created_at < datetime.combine(next_month, datetime.min.time(), tzinfo=timezone.utc),
             )
         )
     ).scalars().all()

@@ -1,9 +1,15 @@
 SHELL := /bin/bash
 
-.PHONY: install up down validate validate-local-production backup logs
+.PHONY: install up down validate validate-local-production backup logs check-secrets install-git-hooks
 
 install:
 	./install.sh
+
+check-secrets:
+	./scripts/check-secrets.sh --all
+
+install-git-hooks:
+	./scripts/check-secrets.sh --install-hook
 
 up:
 	./scripts/up.sh
@@ -19,6 +25,12 @@ validate-local-production:
 
 backup:
 	./scripts/backup.sh
+
+clean-rag-local-dry-run:
+	./scripts/clean-rag-local-data.sh --dry-run
+
+clean-rag-local:
+	./scripts/clean-rag-local-data.sh
 
 logs:
 	@if [[ -n "$$SERVICE" ]]; then \

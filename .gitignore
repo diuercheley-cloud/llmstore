@@ -38,3 +38,4 @@ data/rag_uploads/*.pdf
 
 # Local RAG uploads / test data
 data/rag_uploads/
+data/rag_uploads-drtest-*/

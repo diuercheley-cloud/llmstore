@@ -614,7 +614,24 @@ async def get_usage_summary(
     summary = await build_usage_summary(session, queue_snapshot=queue_snapshot)
     clients = await build_usage_by_client(session)
     models = await build_usage_by_model(session)
+
+    # Enrich clients with invoice previews
+    snapshots = await list_client_billing_snapshots(session)
+    snapshots_by_client = {str(s["client"].id): s for s in snapshots}
+    
+    for client in clients:
+        snapshot = snapshots_by_client.get(client["client_id"])
+        if snapshot:
+            client["invoice_preview"] = snapshot["invoice_preview"]
+        else:
+            client["invoice_preview"] = {
+                "total_estimated": 0.0,
+                "currency": "USD",
+                "items": [],
+            }
+
     plan_buckets: dict[str, dict] = {}
+    total_estimated_cost = 0.0
     for client in clients:
         plan_code = client.get("billing_plan_code") or "unknown"
         bucket = plan_buckets.setdefault(
@@ -630,6 +647,7 @@ async def get_usage_summary(
                 "cache_hits_month": 0,
                 "cache_misses_month": 0,
                 "avg_latency_ms_month_weighted": 0.0,
+                "estimated_cost_usd": 0.0,
             },
         )
         bucket["clients_total"] += 1
@@ -640,6 +658,11 @@ async def get_usage_summary(
         bucket["errors_month"] += int(client["errors_month"])
         bucket["cache_hits_month"] += int(client["cache_hits_month"])
         bucket["cache_misses_month"] += int(client["cache_misses_month"])
+        
+        client_cost = float(client["invoice_preview"]["total_estimated"])
+        bucket["estimated_cost_usd"] += client_cost
+        total_estimated_cost += client_cost
+
         if int(client["requests_month"]) > 0:
             bucket["avg_latency_ms_month_weighted"] += float(client["avg_latency_ms_month"]) * int(client["requests_month"])
 
@@ -661,6 +684,7 @@ async def get_usage_summary(
                 if (bucket["cache_hits_month"] + bucket["cache_misses_month"])
                 else 0.0,
                 "avg_latency_ms_month": round(bucket["avg_latency_ms_month_weighted"] / requests_month, 2) if requests_month else 0.0,
+                "estimated_cost_usd": round(bucket["estimated_cost_usd"], 6),
             }
         )
     plans.sort(key=lambda item: item["requests_month"], reverse=True)
@@ -673,7 +697,7 @@ async def get_usage_summary(
             "tokens_estimated_total": summary["tokens_month"],
             "errors_total": sum(item["errors_month"] for item in clients),
             "avg_latency_ms": summary["avg_latency_ms_month"],
-            "estimated_cost_usd": 0.0,
+            "estimated_cost_usd": round(total_estimated_cost, 6),
         },
         "plans": plans,
         "clients": clients,
@@ -784,10 +808,13 @@ async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/billing/invoices/preview")
-async def preview_invoices(session: AsyncSession = Depends(get_db_session)):
+async def preview_invoices(
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
     await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
     await session.commit()
-    summary = await get_usage_summary(session)
+    summary = await get_usage_summary(session, proxy)
     return {
         "generated_at": summary["generated_at"],
         "totals": {
@@ -807,10 +834,14 @@ async def preview_invoices(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/billing/clients/{client_id}/invoice/preview")
-async def preview_client_invoice(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def preview_client_invoice(
+    client_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
     await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
     await session.commit()
-    summary = await get_usage_summary(session)
+    summary = await get_usage_summary(session, proxy)
     client_entry = next((item for item in summary["clients"] if item["client_id"] == str(client_id)), None)
     if client_entry is None:
         raise HTTPException(status_code=404, detail="client not found")

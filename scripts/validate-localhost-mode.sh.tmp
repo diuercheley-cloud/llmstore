@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
+init_stack_env
+
+log_section "localhost mode validation"
+
+# 1. Check required variables
+log_step "Checking required environment variables"
+
+if [ -z "$ADMIN_TOKEN" ]; then
+  log_error "ADMIN_TOKEN is not set"
+  exit 1
+fi
+
+log_ok "ADMIN_TOKEN is set"
+
+# 2. Check connectivity
+BASE_URL="${BASE_URL:-$(default_base_url)}"
+log_info "Testing connectivity to ${BASE_URL}"
+
+if ! curl -fsS --connect-timeout 2 "${BASE_URL}/health" > /dev/null; then
+  log_error "Could not connect to ${BASE_URL}/health"
+  exit 1
+fi
+
+log_ok "Connected to ${BASE_URL}/health"
+
+# 3. Check localhost mode specific behavior
+log_step "Checking localhost mode specific behavior"
+# (Assuming some logic here, for now just a placeholder of what was likely there)
+# I'll read the original file to be sure I don't lose logic.

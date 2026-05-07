@@ -8,26 +8,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
 
 init_stack_env
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-"admin-super-token"}"
 
-echo "--- Validating Client Portal ---"
-echo "Target URL: $BASE_URL"
+log_section "Client Portal Validation"
+log_info "Target URL: $BASE_URL"
 
 # 1. Check if portal index loads
-echo "Checking portal index..."
+log_step "Checking portal index"
 if ! curl_base_url "$BASE_URL/static/portal/index.html" -s -f > /dev/null; then
-  echo "✖ Failed to load portal index at $BASE_URL/static/portal/index.html"
+  log_error "Failed to load portal index at $BASE_URL/static/portal/index.html"
   exit 1
 fi
-echo "✓ Portal index loaded"
+log_ok "Portal index loaded"
 
 # 2. Create a test client if needed
 CLIENT_NAME="Portal Validator $(date +%s)"
-echo "Creating test client '$CLIENT_NAME'..."
+log_step "Creating test client '$CLIENT_NAME'"
 CLIENT_DATA=$(curl_base_url "$BASE_URL/admin/clients" -s -X POST \
   -H "X-Admin-Token: $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -35,13 +37,13 @@ CLIENT_DATA=$(curl_base_url "$BASE_URL/admin/clients" -s -X POST \
 
 CLIENT_ID=$(echo "$CLIENT_DATA" | grep -o '"id":"[^"]*' | cut -d'"' -f4 || true)
 if [[ -z "$CLIENT_ID" ]]; then
-  echo "✖ Failed to create test client. Response: $CLIENT_DATA"
+  log_error "Failed to create test client. Response: $CLIENT_DATA"
   exit 1
 fi
-echo "✓ Test client created: $CLIENT_ID"
+log_ok "Test client created: $CLIENT_ID"
 
 # 3. Create an API key for the client
-echo "Creating API key..."
+log_step "Creating API key"
 KEY_DATA=$(curl_base_url "$BASE_URL/admin/api-keys" -s -f -X POST \
   -H "X-Admin-Token: $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -49,30 +51,31 @@ KEY_DATA=$(curl_base_url "$BASE_URL/admin/api-keys" -s -f -X POST \
 
 API_KEY=$(echo "$KEY_DATA" | grep -o '"api_key":"[^"]*' | cut -d'"' -f4)
 if [[ -z "$API_KEY" ]]; then
-  echo "✖ Failed to create API key. Response: $KEY_DATA"
+  log_error "Failed to create API key. Response: $KEY_DATA"
   exit 1
 fi
-echo "✓ API Key created: ${API_KEY:0:12}..."
+log_ok "API Key created"
 
 # 4. Validate Portal API endpoints with the new key
-echo "Validating /portal/me..."
+log_step "Validating Portal API endpoints"
+log_info "Validating /portal/me..."
 curl_base_url "$BASE_URL/portal/me" -s -f -H "Authorization: Bearer $API_KEY" > /dev/null
-echo "✓ /portal/me responds"
+log_ok "/portal/me responds"
 
-echo "Validating /portal/usage-stats..."
+log_info "Validating /portal/usage-stats..."
 curl_base_url "$BASE_URL/portal/usage-stats" -s -f -H "Authorization: Bearer $API_KEY" > /dev/null
-echo "✓ /portal/usage-stats responds"
+log_ok "/portal/usage-stats responds"
 
-echo "Validating /portal/api-keys..."
+log_info "Validating /portal/api-keys..."
 curl_base_url "$BASE_URL/portal/api-keys" -s -f -H "Authorization: Bearer $API_KEY" > /dev/null
-echo "✓ /portal/api-keys responds"
+log_ok "/portal/api-keys responds"
 
-echo "Validating /portal/models..."
+log_info "Validating /portal/models..."
 curl_base_url "$BASE_URL/portal/models" -s -f -H "Authorization: Bearer $API_KEY" > /dev/null
-echo "✓ /portal/models responds"
+log_ok "/portal/models responds"
 
 # 5. Test Playground (test-chat)
-echo "Testing Playground (/portal/test-chat)..."
+log_step "Testing Playground (/portal/test-chat)"
 # Note: This might fail if no backends are configured, so we use || true for the script to continue
 # but we check if the endpoint itself exists and handles auth.
 CHAT_RESP=$(curl_base_url "$BASE_URL/portal/test-chat" -s -X POST \
@@ -81,14 +84,14 @@ CHAT_RESP=$(curl_base_url "$BASE_URL/portal/test-chat" -s -X POST \
   -d '{"prompt": "hi", "model": "default"}')
 
 if echo "$CHAT_RESP" | grep -q "detail"; then
-  echo "! Playground endpoint reached but returned an error (expected if no models are active): $(echo "$CHAT_RESP" | grep -o '"detail":"[^"]*' | cut -d'"' -f4)"
+  log_warn "Playground endpoint reached but returned an error: $(echo "$CHAT_RESP" | grep -o '"detail":"[^"]*' | cut -d'"' -f4)"
 else
-  echo "✓ Playground response received"
+  log_ok "Playground response received"
 fi
 
 # 6. Cleanup
-echo "Cleaning up..."
+log_step "Cleaning up"
 curl_base_url "$BASE_URL/admin/clients/$CLIENT_ID" -s -X DELETE -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null
-echo "✓ Test client deleted"
+log_ok "Test client deleted"
 
-echo "--- Portal Validation Complete ---"
+log_ok "Portal Validation Complete"

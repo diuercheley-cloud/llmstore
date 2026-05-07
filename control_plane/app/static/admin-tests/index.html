@@ -421,6 +421,67 @@
             }
         };
 
+        const formatUserResult = (data) => {
+            if (!data || !data.quota) return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+            const q = data.quota;
+            const blockedStatus = data.blocked ? `<span class="status-err">BLOQUEADO</span>` : `<span class="status-ok">ATIVO</span>`;
+            
+            let html = `
+                <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent);">${data.name}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">ID: ${data.id}</div>
+                    <div style="margin-top: 0.5rem;">
+                        <b>Status:</b> ${data.status.toUpperCase()} | ${blockedStatus}
+                    </div>
+                </div>
+                
+                <table style="margin-bottom: 1rem; background: white;">
+                    <thead>
+                        <tr>
+                            <th>Recurso</th>
+                            <th>Usado</th>
+                            <th>Limite</th>
+                            <th>Restante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Diário</b></td>
+                            <td>${(q.daily_used || 0).toLocaleString()}</td>
+                            <td>${(q.effectiveDailyLimit || 0).toLocaleString()}</td>
+                            <td>${(q.daily_remaining || 0).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Mensal</b></td>
+                            <td>${(q.monthly_used || 0).toLocaleString()}</td>
+                            <td>${(q.effectiveMonthlyLimit || 0).toLocaleString()}</td>
+                            <td>${(q.monthly_remaining || 0).toLocaleString()}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            if (q.override && q.override.enabled) {
+                html += `
+                    <div style="padding: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem; color: #92400e;">
+                        <b>⚠️ Override de Quota Ativo</b><br>
+                        Razão: ${q.override.reason || 'Não informada'}<br>
+                        Limites: D: ${q.override.daily_override?.toLocaleString() || '-'} / M: ${q.override.monthly_override?.toLocaleString() || '-'}
+                    </div>
+                `;
+            }
+
+            html += `
+                <details>
+                    <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; padding: 0.5rem 0;">Ver JSON completo</summary>
+                    <pre style="font-size: 0.75rem; margin-top: 0.5rem; background: #f1f5f9; padding: 0.5rem; border-radius: 4px;">${JSON.stringify(data, null, 2)}</pre>
+                </details>
+            `;
+
+            return html;
+        };
+
         const lookupToken = async () => {
             const token = document.getElementById('searchToken').value;
             if (!token) return alert('Informe o token para pesquisar');
@@ -435,10 +496,10 @@
                 
                 if (res.ok) {
                     document.getElementById('userId').value = data.id;
-                    box.innerHTML = `<span class="status-ok">Token Encontrado!</span>\n\n<b>Proprietário:</b> ${data.name}\n<b>Status:</b> ${data.status}\n<b>Quota Diária:</b> ${data.quota.effectiveDailyLimit}\n\n<b>JSON completo:</b>\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Token Encontrado!</div>${formatUserResult(data)}`;
                     addToHistory('Token Lookup', 'PASS', duration, `User: ${data.name}`);
                 } else {
-                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                     addToHistory('Token Lookup', 'FAIL', duration, `HTTP ${res.status}`);
                 }
             } catch (e) {
@@ -463,10 +524,10 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    box.innerHTML = `<span class="status-ok">Plano Atualizado!</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Plano Atualizado!</div>${formatUserResult(data)}`;
                     addToHistory('Update Plan', 'PASS', 0, `User: ${data.name}`);
                 } else {
-                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
@@ -545,7 +606,7 @@
                 const res = await fetch('/health');
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 addToHistory('Health Check', res.ok ? 'PASS' : 'FAIL', duration, `Status: ${data.status}`);
                 return { ok: res.ok, data };
             } catch (e) {
@@ -565,7 +626,7 @@
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
                 if (!res.ok) throw new Error(data.detail?.error || JSON.stringify(data));
-                box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 addToHistory('System Resources', 'PASS', duration, `CPU: ${data.cpu_percent}%`);
                 return { ok: true, data };
             } catch (e) {
@@ -601,11 +662,11 @@
                 
                 if (res.ok && data.choices && data.choices.length > 0) {
                     const text = data.choices[0].message.content;
-                    box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span> - ${duration}ms\n\n<b>Resposta do modelo:</b>\n${text}\n\n<b>JSON:</b>\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<span class="status-ok">HTTP ${res.status}</span> - ${duration}ms\n\n<b>Resposta do modelo:</b>\n${text}\n\n<details><summary style="cursor:pointer; color:var(--text-muted); font-size:0.75rem; margin-top:1rem;">Ver JSON</summary><pre style="font-size: 0.75rem; margin-top: 0.5rem;">${JSON.stringify(data, null, 2)}</pre></details>`;
                     addToHistory('API Test', 'PASS', duration, `Tokens: ${data.usage?.total_tokens}`);
                     return { ok: true, data };
                 } else {
-                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                     addToHistory('API Test', 'FAIL', duration, `HTTP ${res.status}`);
                     return { ok: false, data };
                 }
@@ -628,8 +689,14 @@
                 const res = await fetch(`/admin/tests/users/${userId}`, { headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Check User', res.ok ? 'PASS' : 'FAIL', duration, res.ok ? `User: ${data.name}` : `HTTP ${res.status}`);
+                
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Usuário Carregado!</div>${formatUserResult(data)}`;
+                    addToHistory('Check User', 'PASS', duration, `User: ${data.name}`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Check User', 'FAIL', duration, `HTTP ${res.status}`);
+                }
                 return { ok: res.ok, data };
             } catch (e) {
                 const duration = Math.round(performance.now() - start);
@@ -651,8 +718,13 @@
                 const res = await fetch(`/admin/tests/users/${userId}/block`, { method: 'POST', headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Block User', res.ok ? 'PASS' : 'FAIL', duration, `User blocked`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Usuário Bloqueado!</div>${formatUserResult(data)}`;
+                    addToHistory('Block User', 'PASS', duration, `User blocked`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Block User', 'FAIL', duration, `HTTP ${res.status}`);
+                }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -670,8 +742,13 @@
                 const res = await fetch(`/admin/tests/users/${userId}/unblock`, { method: 'POST', headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Unblock User', res.ok ? 'PASS' : 'FAIL', duration, `User unblocked`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Usuário Desbloqueado!</div>${formatUserResult(data)}`;
+                    addToHistory('Unblock User', 'PASS', duration, `User unblocked`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Unblock User', 'FAIL', duration, `HTTP ${res.status}`);
+                }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -689,8 +766,13 @@
                 const res = await fetch(`/admin/tests/users/${userId}/quota/reset`, { method: 'POST', headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Reset Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota reset`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Uso da Quota Zerado!</div>${formatUserResult(data)}`;
+                    addToHistory('Reset Quota', 'PASS', duration, `Quota reset`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Reset Quota', 'FAIL', duration, `HTTP ${res.status}`);
+                }
                 return { ok: res.ok, data };
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
@@ -709,8 +791,13 @@
                 const res = await fetch(`/admin/tests/users/${userId}/quota/renew`, { method: 'POST', headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Renew Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota renewed`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Quota Renovada!</div>${formatUserResult(data)}`;
+                    addToHistory('Renew Quota', 'PASS', duration, `Quota renewed`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Renew Quota', 'FAIL', duration, `HTTP ${res.status}`);
+                }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -741,8 +828,13 @@
                 });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Set Quota', res.ok ? 'PASS' : 'FAIL', duration, `Quota updated`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Override de Quota Aplicado!</div>${formatUserResult(data)}`;
+                    addToHistory('Set Quota', 'PASS', duration, `Quota updated`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Set Quota', 'FAIL', duration, `HTTP ${res.status}`);
+                }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -760,8 +852,13 @@
                 const res = await fetch(`/admin/tests/users/${userId}/quota/override`, { method: 'DELETE', headers: getAdminHeaders() });
                 const data = await res.json();
                 const duration = Math.round(performance.now() - start);
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
-                addToHistory('Delete Override', res.ok ? 'PASS' : 'FAIL', duration, `Override removed`);
+                if (res.ok) {
+                    box.innerHTML = `<div class="status-ok" style="margin-bottom: 0.5rem;">✓ Override Removido!</div>${formatUserResult(data)}`;
+                    addToHistory('Delete Override', 'PASS', duration, `Override removed`);
+                } else {
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    addToHistory('Delete Override', 'FAIL', duration, `HTTP ${res.status}`);
+                }
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -803,7 +900,7 @@
             try {
                 const res = await fetch('/admin/tests/rag/status', { headers: getAdminHeaders() });
                 const data = await res.json();
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 return { ok: res.ok, data };
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
@@ -820,7 +917,7 @@
             try {
                 const res = await fetch(`/admin/tests/rag/clients/${userId}/usage`, { headers: getAdminHeaders() });
                 const data = await res.json();
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
                 return { ok: res.ok, data };
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
@@ -845,7 +942,7 @@
                     body: JSON.stringify({ reason })
                 });
                 const data = await res.json();
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }
@@ -864,7 +961,7 @@
                     headers: getAdminHeaders()
                 });
                 const data = await res.json();
-                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                box.innerHTML = `<span class="status-${res.ok ? 'ok' : 'err'}">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (e) {
                 box.innerHTML = `<span class="status-err">ERRO</span>\n\n${e.message}`;
             }

@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
 
 init_stack_env
 
@@ -12,8 +14,10 @@ ARTIFACTS_DIR="${ROOT_DIR}/artifacts/validate-plan-queues/$(date +%Y%m%dT%H%M%S)
 mkdir -p "${ARTIFACTS_DIR}"
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 
+log_section "Plan Queues Validation"
+
 log() {
-  printf '[plan-queues-val] %s\n' "$*"
+  log_info "$*"
 }
 
 log "Step 1: Get plan IDs"

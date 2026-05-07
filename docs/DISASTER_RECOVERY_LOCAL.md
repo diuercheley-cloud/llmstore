@@ -20,8 +20,14 @@ Este fluxo cobre backup, restore e teste de desastre para o `llm-inference-stack
 ## Scripts
 
 - `./scripts/backup-local.sh`
-- `./scripts/restore-local.sh [--force-rag-overwrite] <backup_dir>`
+- `./scripts/restore-local.sh [OPÇÕES] <backup_dir>`
 - `./scripts/dr-test-local.sh [--strict-rag]`
+
+### Opções do Restore Local
+
+- `--force-rag-overwrite`: Sobrescreve arquivos RAG existentes se houver conflito.
+- `--dry-run`: Valida o backup e mostra o resumo do manifest, sem alterar nada no sistema.
+- `-y, --yes`: Pula a confirmação interativa de destruição de dados.
 
 ## Backup
 
@@ -60,10 +66,18 @@ O restore foi desenhado para funcionar em ambiente limpo:
 
 O script:
 
-1. Sobe `postgres` e `redis` se necessário.
-2. Valida checksum e compatibilidade de versão/schema.
-3. Restaura o dump do Postgres.
-4. Restaura uploads RAG e/ou modelos, se esses artefatos estiverem presentes no backup.
+1. Valida checksums de todos os arquivos do backup.
+2. Mostra um resumo do Manifest e pede confirmação (a menos que `-y` seja usado).
+3. Sobe `postgres` e `redis` se necessário.
+4. Valida compatibilidade de versão/schema.
+5. Restaura o dump do Postgres.
+6. Restaura uploads RAG e/ou modelos, se esses artefatos estiverem presentes no backup.
+
+Dica: Use `--dry-run` primeiro para validar a integridade do backup sem riscos:
+
+```bash
+./scripts/restore-local.sh --dry-run artifacts/backups-local/20260507T120000
+```
 
 Se o diretório RAG de destino já estiver populado, o restore agora exige:
 
@@ -88,6 +102,7 @@ O teste local executa o fluxo completo:
 9. Sobe um ambiente limpo.
 10. Restaura o backup.
 11. Valida cliente, API key, invoice e RAG após o restore.
+12. Gera um relatório detalhado em `artifacts/dr-tests/<timestamp>/summary.txt`.
 
 Executar:
 

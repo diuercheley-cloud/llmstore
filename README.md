@@ -161,6 +161,11 @@ Para uma experiência que simula o comportamento de produção (com interface am
 ./scripts/local-production-smoke.sh [API_KEY]
 ```
 
+Documentação Adicional:
+- [Guia Rápido (Quickstart)](docs/LOCAL_PRODUCTION_QUICKSTART.md)
+- [Runbook de Produção Local](docs/LOCAL_PRODUCTION_RUNBOOK.md)
+- [Guia de Validação](docs/LOCAL_PRODUCTION_VALIDATION.md)
+
 Acesse:
 - Landing Page: http://localhost:18080/
 - Portal do Cliente: http://localhost:18080/client-portal

@@ -9,9 +9,19 @@ cd "${ROOT_DIR}"
 
 usage() {
   cat <<'EOF'
-Uso: ./scripts/backup-local.sh [--include-models] [--include-rag-files] [backup_dir]
+Uso: ./scripts/backup-local.sh [OPÇÕES] [backup_dir]
 
-Por padrao o backup vai para artifacts/backups-local/<timestamp>.
+Opções:
+  --include-models       Inclui arquivos de modelos (.gguf) no backup (NÃO RECOMENDADO por tamanho)
+  --include-rag-files    Inclui arquivos físicos enviados via RAG em data/rag_uploads
+  -h, --help             Mostra esta mensagem
+
+Por padrão:
+  - O backup vai para artifacts/backups-local/<timestamp>
+  - Inclui dump do banco de dados (clientes, keys hasheadas, planos, invoices, metadados RAG)
+  - Inclui snapshot do .env (higienizado, remove secrets e tokens)
+  - NÃO inclui arquivos .gguf (a menos que --include-models seja passado)
+  - NÃO inclui data/rag_uploads (a menos que --include-rag-files seja passado)
 EOF
 }
 

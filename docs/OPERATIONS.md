@@ -94,6 +94,29 @@ Reset explícito do circuit breaker do data plane:
 
 O circuit breaker fica em memória dentro do processo `control-plane`. Reiniciar o container `control-plane` também limpa esse estado.
 
+## Segurança e Hardening Local
+
+### Checagem de Secrets
+Para evitar o vazamento acidental de tokens e chaves no repositório, utilize o script de checagem:
+
+```bash
+make check-secrets
+```
+
+O script procura por padrões de API keys, tokens administrativos e chaves privadas, ignorando arquivos de exemplo e diretórios de build/modelos.
+
+### Instalação de Git Hooks
+Recomendamos a instalação do pre-commit hook para checagem automática de secrets antes de cada commit:
+
+```bash
+make install-git-hooks
+```
+
+Isso configurará o Git para usar os hooks localizados em `.githooks/`. Você também pode configurar manualmente:
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Operação comercial
 
 Criar plano:

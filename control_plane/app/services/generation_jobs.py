@@ -9,13 +9,14 @@ from fastapi import HTTPException
 from redis.asyncio import Redis
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.core.config import get_settings
 from app.core.metrics import ASYNC_JOB_COUNTER, ASYNC_QUEUE_DEPTH
 from app.core.time import utc_now
 from app.db.session import redis_client
 from app.models.client import Client
+from app.models.billing_plan import BillingPlan
 from app.models.generation_job import GenerationJob
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
@@ -304,7 +305,7 @@ async def process_generation_job(
     result = await session.execute(
         select(GenerationJob)
         .options(
-            selectinload(GenerationJob.client),
+            selectinload(GenerationJob.client).selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules),
             selectinload(GenerationJob.model_registry)
             .selectinload(ModelRegistry.backend_routes)
             .selectinload(ModelBackendRoute.inference_backend),
@@ -314,11 +315,22 @@ async def process_generation_job(
     job = result.scalar_one_or_none()
     if job is None:
         return "missing"
+    
+    # Explicitly load client with all billing relationships to avoid MissingGreenlet
+    client_result = await session.execute(
+        select(Client)
+        .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+        .where(Client.id == job.client_id)
+    )
+    client = client_result.scalar_one_or_none()
+    if client is None:
+        return "missing"
+
     if job.status in {"completed", "failed", "cancelled"}:
         return "skipped"
     if job.status != "queued":
         return "skipped"
-    if job.client is None or job.client.is_blocked or job.client.billing_status == "suspended":
+    if client.is_blocked or client.billing_status == "suspended":
         now = utc_now()
         job.status = "failed"
         job.error_message = "client blocked, missing or suspended"
@@ -327,6 +339,8 @@ async def process_generation_job(
         await session.commit()
         ASYNC_JOB_COUNTER.labels(status="failed").inc()
         return "failed"
+
+    effective_plan = resolve_effective_plan(client)
 
     request_body = json.loads(job.request_json)
     include_reasoning = bool(request_body.pop("include_reasoning", False))
@@ -411,11 +425,10 @@ async def process_generation_job(
     job.backend_name = chosen_route.inference_backend.name if chosen_route.inference_backend else None
     await session.commit()
 
-    effective_plan = resolve_effective_plan(job.client)
     is_admin = False
-    if job.client.metadata_json:
+    if client.metadata_json:
         try:
-            metadata = json.loads(job.client.metadata_json)
+            metadata = json.loads(client.metadata_json)
             is_admin = metadata.get("is_admin", False)
         except json.JSONDecodeError:
             pass

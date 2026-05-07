@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
 
 init_stack_env
 
@@ -12,11 +14,9 @@ init_stack_env
 CONTROL_PLANE_URL="${CONTROL_PLANE_URL:-$(default_base_url)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-change-this-admin-token}"
 
-echo "=============================================="
-echo " Validating Local Billing Mode (Manual)"
-echo "=============================================="
+log_section "Local Billing Mode (Manual) Validation"
 
-echo "-> Creating test client..."
+log_step "Creating test client"
 CLIENT_NAME="Local Billing Test Client $RANDOM"
 CLIENT_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/clients" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -27,12 +27,12 @@ CLIENT_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/clients" \
 CLIENT_ID=$(echo "$CLIENT_RESPONSE" | grep -o '"id":"[^"]*' | cut -d'"' -f4 | head -n 1)
 
 if [ -z "$CLIENT_ID" ]; then
-    echo "Failed to create client! Response: $CLIENT_RESPONSE"
+    log_error "Failed to create client! Response: $CLIENT_RESPONSE"
     exit 1
 fi
-echo "Client ID: $CLIENT_ID"
+log_ok "Client created with ID: $CLIENT_ID"
 
-echo "-> Generating API key for client..."
+log_step "Generating API key for client"
 API_KEY_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/api-keys" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" \
@@ -41,11 +41,12 @@ API_KEY_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/api-keys" \
 
 API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"api_key":"[^"]*' | cut -d'"' -f4)
 if [ -z "$API_KEY" ]; then
-    echo "Failed to create API key! Response: $API_KEY_RESPONSE"
+    log_error "Failed to create API key! Response: $API_KEY_RESPONSE"
     exit 1
 fi
+log_ok "API Key created"
 
-echo "-> Associating paid plan..."
+log_step "Associating paid plan"
 # First, fetch plans
 PLANS_RESPONSE=$(curl -s -X GET "$CONTROL_PLANE_URL/admin/billing/plans" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -54,7 +55,7 @@ PLANS_RESPONSE=$(curl -s -X GET "$CONTROL_PLANE_URL/admin/billing/plans" \
 PLAN_ID=$(echo "$PLANS_RESPONSE" | grep -o '"id":"[^"]*' | cut -d'"' -f4 | head -n 2 | tail -n 1) # get second plan (likely a paid one)
 
 if [ -z "$PLAN_ID" ]; then
-    echo "Failed to fetch plans!"
+    log_error "Failed to fetch plans!"
     exit 1
 fi
 
@@ -63,18 +64,19 @@ curl -s -X PATCH "$CONTROL_PLANE_URL/admin/clients/$CLIENT_ID/billing-plan" \
     -H "X-Admin-Token: $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"billing_plan_id": "'"$PLAN_ID"'"}' > /dev/null
+log_ok "Plan associated"
 
-echo "-> Testing API access (should work)..."
+log_step "Testing API access (should work)"
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$CONTROL_PLANE_URL/portal/me" \
     -H "Authorization: Bearer $API_KEY")
 
 if [ "$HTTP_STATUS" != "200" ]; then
-    echo "Expected 200 OK, got $HTTP_STATUS"
+    log_error "Expected 200 OK, got $HTTP_STATUS"
     exit 1
 fi
-echo "API access OK."
+log_ok "API access OK."
 
-echo "-> Generating manual invoice..."
+log_step "Generating manual invoice"
 INVOICE_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/billing/invoices/generate" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" \
@@ -83,65 +85,63 @@ INVOICE_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/billing/invoices/ge
 
 INVOICE_ID=$(echo "$INVOICE_RESPONSE" | grep -o '"id":"[^"]*' | cut -d'"' -f4 | head -n 1)
 if [ -z "$INVOICE_ID" ]; then
-    echo "Failed to generate invoice! Response: $INVOICE_RESPONSE"
+    log_error "Failed to generate invoice! Response: $INVOICE_RESPONSE"
     exit 1
 fi
-echo "Generated Invoice ID: $INVOICE_ID"
+log_ok "Generated Invoice ID: $INVOICE_ID"
 
-echo "-> Verifying invoice is pending..."
+log_step "Verifying invoice is pending"
 STATUS=$(echo "$INVOICE_RESPONSE" | grep -o '"status":"[^"]*' | cut -d'"' -f4 | head -n 1)
 if [ "$STATUS" != "pending" ]; then
-    echo "Invoice is not pending: $STATUS"
+    log_error "Invoice is not pending: $STATUS"
     exit 1
 fi
-echo "Invoice is pending."
+log_ok "Invoice is pending."
 
-echo "-> Running billing cycle..."
+log_step "Running billing cycle"
 curl -s -X POST "$CONTROL_PLANE_URL/admin/billing/run-cycle" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null
+log_ok "Billing cycle executed"
 
-echo "-> Simulating invoice overdue with suspension..."
+log_step "Simulating invoice overdue with suspension"
 curl -s -X PATCH "$CONTROL_PLANE_URL/admin/billing/invoices/$INVOICE_ID/mark-overdue?simulate_suspension=true" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null
+log_ok "Overdue simulation executed"
 
-echo "-> Verifying client is suspended..."
-CLIENT_INFO=$(curl -s -X GET "$CONTROL_PLANE_URL/portal/me" \
-    -H "Authorization: Bearer $API_KEY")
-
-# It should return 402 actually, let's verify http code
+log_step "Verifying client is suspended"
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$CONTROL_PLANE_URL/portal/me" \
     -H "Authorization: Bearer $API_KEY")
 
 if [ "$HTTP_STATUS" != "402" ]; then
-    echo "Expected 402 Payment Required for suspended client, got $HTTP_STATUS"
+    log_error "Expected 402 Payment Required for suspended client, got $HTTP_STATUS"
     exit 1
 fi
-echo "Client correctly suspended (402 Payment Required)."
+log_ok "Client correctly suspended (402 Payment Required)."
 
-echo "-> Marking invoice as paid manually..."
+log_step "Marking invoice as paid manually"
 curl -s -X PATCH "$CONTROL_PLANE_URL/admin/billing/invoices/$INVOICE_ID/mark-paid" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"payment_method": "manual", "payment_reference": "manual-payment-test"}' > /dev/null
+log_ok "Invoice marked as paid"
 
-echo "-> Verifying API access restored..."
+log_step "Verifying API access restored"
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$CONTROL_PLANE_URL/portal/me" \
     -H "Authorization: Bearer $API_KEY")
 
 if [ "$HTTP_STATUS" != "200" ]; then
-    echo "Expected 200 OK after payment, got $HTTP_STATUS"
+    log_error "Expected 200 OK after payment, got $HTTP_STATUS"
     exit 1
 fi
-echo "API access successfully restored."
+log_ok "API access successfully restored."
 
-echo "-> Cleaning up..."
+log_step "Cleaning up"
 curl -s -X DELETE "$CONTROL_PLANE_URL/admin/clients/$CLIENT_ID" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null || true
+log_ok "Cleaned up"
 
-echo "=============================================="
-echo " Validation completed successfully!"
-echo "=============================================="
+log_ok "Validation completed successfully!"

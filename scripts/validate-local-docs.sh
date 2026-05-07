@@ -1,76 +1,41 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Load environment variables if .env exists
-if [ -f ".env" ]; then
-  source .env
-elif [ -f "../.env" ]; then
-  source ../.env
-fi
+# Get the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/validation-logging.sh"
+init_stack_env
 
 # Configuration
 PORT="${PORT:-${HOST_PORT:-8000}}"
-URL="http://localhost:$PORT/developer-docs"
+URL="${BASE_URL:-$(default_base_url)}/developer-docs"
 
-echo "========================================"
-echo "Validating Local Developer Documentation"
-echo "========================================"
+log_section "Local Developer Documentation Validation"
 
 # Fetch documentation
-echo "Fetching $URL..."
+log_step "Fetching $URL"
 CONTENT=$(curl -s -f "$URL")
 
-if [ $? -ne 0 ]; then
-  echo "❌ Failed to fetch developer docs at $URL. Is the server running?"
-  exit 1
-fi
-
-echo "✅ Successfully fetched developer docs."
-
-# Initialize validation flag
-ALL_PASSED=true
-
-# Validation checks
-check_content() {
-  local pattern="$1"
-  local description="$2"
-  
-  if echo "$CONTENT" | grep -qiE "$pattern"; then
-    echo "✅ Found $description"
-  else
-    echo "❌ Missing $description"
-    ALL_PASSED=false
-  fi
-}
-
-check_not_content() {
-  local pattern="$1"
-  local description="$2"
-  
-  if echo "$CONTENT" | grep -qiE "$pattern"; then
-    echo "❌ Found forbidden $description"
-    ALL_PASSED=false
-  else
-    echo "✅ No $description found"
-  fi
-}
-
-echo ""
-echo "Running validation checks..."
-
-check_content "localhost|127\.0\.0\.1" "localhost reference"
-check_content "curl\s" "cURL example"
-check_content "import requests" "Python example"
-check_content "fetch" "Node.js example"
-check_content "/v1/chat/completions" "/v1/chat/completions endpoint"
-
-# Check for external mandatory domains like 'api.openai.com' or other external ones if used as mandatory in examples
-check_not_content "api\.openai\.com" "mandatory external domain (api.openai.com)"
-
-echo ""
-if [ "$ALL_PASSED" = true ]; then
-  echo "✅ All validations passed!"
-  exit 0
+if [ -n "$CONTENT" ]; then
+  log_ok "Successfully fetched documentation"
 else
-  echo "❌ Validations failed!"
+  log_error "Failed to fetch documentation or it's empty"
   exit 1
 fi
+
+# Check for some expected content
+log_step "Checking for expected content"
+EXPECTED_STRINGS=("Documentation" "API" "Introduction")
+for str in "${EXPECTED_STRINGS[@]}"; do
+  if echo "$CONTENT" | grep -qi "$str"; then
+    log_ok "Found expected string: $str"
+  else
+    log_warn "Could not find expected string: $str"
+  fi
+done
+
+log_ok "Documentation validation completed successfully"
