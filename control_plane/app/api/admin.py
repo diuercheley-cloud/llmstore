@@ -1227,6 +1227,55 @@ async def get_security_events(session: AsyncSession = Depends(get_db_session)):
     return await list_security_events(session)
 
 
+@router.get("/demo/summary")
+async def get_demo_summary(
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    demo_enabled = settings.demo_mode
+    # Find demo client by name
+    demo_client = (await session.execute(select(Client).where(Client.name == settings.demo_client_name))).scalar_one_or_none()
+    demo_client_id = str(demo_client.id) if demo_client else None
+    
+    usage_summary = await get_usage_summary(session, proxy)
+    
+    demo_usage = {}
+    demo_billing = {}
+    if demo_client_id:
+        demo_usage_item = next((item for item in usage_summary.get("clients", []) if item["client_id"] == demo_client_id), None)
+        if demo_usage_item:
+            demo_usage = {
+                "requests_today": demo_usage_item.get("requests_today", 0),
+                "requests_month": demo_usage_item.get("requests_month", 0),
+                "tokens_today": demo_usage_item.get("tokens_today", 0),
+                "tokens_month": demo_usage_item.get("tokens_month", 0),
+                "cache_hits_month": demo_usage_item.get("cache_hits_month", 0),
+                "cache_misses_month": demo_usage_item.get("cache_misses_month", 0),
+            }
+            demo_billing = demo_usage_item.get("invoice_preview", {})
+            
+    rag_usage_all = await get_admin_rag_usage(session)
+    demo_rag = {}
+    if demo_client_id:
+        demo_rag_item = next((item for item in rag_usage_all if item["client_id"] == demo_client_id), None)
+        if demo_rag_item:
+            demo_rag = demo_rag_item
+            
+    warnings = []
+    if demo_enabled and not demo_client:
+        warnings.append("Demo mode is enabled but demo client not found.")
+        
+    return {
+        "demo_enabled": demo_enabled,
+        "demo_client": {"id": demo_client_id, "name": settings.demo_client_name} if demo_client else None,
+        "demo_usage": demo_usage,
+        "demo_billing": demo_billing,
+        "demo_rag": demo_rag,
+        "demo_models": usage_summary.get("models", []),
+        "warnings": warnings,
+    }
+
+
 @router.get("/export/clients")
 async def export_clients_endpoint(
     params: dict = Depends(_export_params),

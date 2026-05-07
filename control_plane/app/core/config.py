@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     response_cache_ttl_seconds: int = Field(default=3600, alias="RESPONSE_CACHE_TTL_SECONDS")
     semantic_cache_enabled: bool = Field(default=False, alias="SEMANTIC_CACHE_ENABLED")
     local_billing_mode: str = Field(default="manual", alias="LOCAL_BILLING_MODE")
+    demo_mode: bool = Field(default=False, alias="DEMO_MODE")
     billing_invoice_day: int = Field(default=1, alias="BILLING_INVOICE_DAY")
     billing_due_days: int = Field(default=7, alias="BILLING_DUE_DAYS")
     billing_suspend_after_days: int = Field(default=15, alias="BILLING_SUSPEND_AFTER_DAYS")

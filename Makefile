@@ -23,6 +23,15 @@ validate:
 validate-local-production:
 	./scripts/validate-local-production-full.sh
 
+demo-local:
+	./scripts/demo-full-local.sh --no-build
+
+demo-local-reset:
+	./scripts/demo-full-local.sh --reset-first
+
+validate-demo-local:
+	./scripts/validate-demo-local.sh
+
 backup:
 	./scripts/backup.sh
 

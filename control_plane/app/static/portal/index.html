@@ -299,9 +299,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           Base de Conhecimento
         </div>
-        <div class="nav-item" data-tab="examples">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-          Exemplos
+        <div class="nav-item" data-tab="demo" id="navDemoTab" style="display: none; background: #e0f2fe; color: #1e40af;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+          Demo Local
         </div>
       </nav>
       <div class="sidebar-footer">
@@ -322,6 +322,80 @@
       </header>
 
       <div class="content-area">
+
+        <!-- Demo Tab -->
+        <div id="demoTab" class="tab-content">
+          <div style="background: #e0f2fe; border: 1px solid #bae6fd; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+            <h2 style="color: #1e40af; margin-bottom: 0.5rem; font-size: 1.25rem;">Ambiente de Demonstração</h2>
+            <p style="margin: 0; font-size: 0.875rem; color: #0369a1;">Você está no modo Demo Local. Funcionalidades e atalhos simplificados foram habilitados para exibir as capacidades do sistema.</p>
+          </div>
+          
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <section style="border-color: #bae6fd;">
+              <h3>Status do Cliente Demo</h3>
+              <div id="demoClientStatus"></div>
+            </section>
+            
+            <section style="border-color: #bae6fd;">
+              <h3>Atalhos Rápidos</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button class="secondary" onclick="switchTab('usage')">Ver Consumo Detalhado</button>
+                <button class="secondary" onclick="switchTab('api-keys')">Minha API Key Completa</button>
+                <button class="secondary" id="demoViewInvoices">Ver Faturas Demo</button>
+              </div>
+            </section>
+          </div>
+          
+          <section>
+            <h3>Minha API Key (Demo)</h3>
+            <p style="font-size: 0.875rem; color: var(--muted); margin-bottom: 1rem;">A chave demo completa está em <code>.local/demo-client.env</code>. Para acesso seguro em produção, nunca exponha a chave completa na tela.</p>
+            <div id="demoApiKeyInfo" style="font-family: monospace; background: var(--bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"></div>
+          </section>
+
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <section>
+              <h3>Testar Chat</h3>
+              <div class="chat-interface">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                  <div style="flex: 1;">
+                    <div class="field-label">Modelo</div>
+                    <select id="demoModelSelect"></select>
+                  </div>
+                </div>
+                <div>
+                  <div class="field-label">Prompt Demo</div>
+                  <textarea id="demoPrompt" style="min-height: 80px;">Olá! Como você pode me ajudar hoje?</textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                  <button id="demoRunChat" style="width: 150px;">Enviar</button>
+                </div>
+                <div class="field-label">Resposta</div>
+                <div id="demoChatResponse" class="chat-response">Aguardando prompt...</div>
+                <div id="demoChatStats" style="font-size: 0.75rem; color: var(--muted); text-align: right;"></div>
+              </div>
+            </section>
+
+            <section>
+              <h3>Testar RAG</h3>
+              <div class="chat-interface">
+                <div style="margin-bottom: 1rem;">
+                  <div class="field-label">Documentos Disponíveis (Demo)</div>
+                  <div id="demoRagDocs" style="font-size: 0.875rem; background: var(--bg); padding: 0.5rem; border-radius: 0.25rem;">Carregando...</div>
+                </div>
+                <div>
+                  <div class="field-label">Pergunta Demo</div>
+                  <textarea id="demoRagQuery" style="min-height: 80px;">Quais produtos a empresa demo oferece?</textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                  <button id="demoRunRag" style="width: 150px;">Consultar Documento</button>
+                </div>
+                <div class="field-label">Resposta RAG</div>
+                <div id="demoRagResponse" class="chat-response">Aguardando consulta...</div>
+              </div>
+            </section>
+          </div>
+        </div>
+
         <!-- Overview Tab -->
         <div id="overviewTab" class="tab-content active">
           <h2>Bem-vindo, <span id="welcomeName">-</span></h2>
@@ -514,27 +588,6 @@
             </section>
           </div>
         </div>
-
-        <!-- Examples Tab -->
-        <div id="examplesTab" class="tab-content">
-          <h2>Exemplos de Implementação</h2>
-          <section>
-            <h3>Python (requests)</h3>
-            <pre><code id="codePython"></code><button class="secondary copy-code" onclick="copyToClipboard('codePython')">Copy</button></pre>
-          </section>
-          <section>
-            <h3>Node.js (Fetch)</h3>
-            <pre><code id="codeNode"></code><button class="secondary copy-code" onclick="copyToClipboard('codeNode')">Copy</button></pre>
-          </section>
-          <section>
-            <h3>cURL</h3>
-            <pre><code id="codeCurl"></code><button class="secondary copy-code" onclick="copyToClipboard('codeCurl')">Copy</button></pre>
-          </section>
-          <section>
-            <h3>OpenAI SDK (Python)</h3>
-            <pre><code id="codeOpenAI"></code><button class="secondary copy-code" onclick="copyToClipboard('codeOpenAI')">Copy</button></pre>
-          </section>
-        </div>
       </div>
     </main>
 
@@ -565,6 +618,8 @@
     <script>
       const state = {
         apiKey: '',
+        demoMode: false,
+
         client: null,
         activeTab: 'overview',
         models: []
@@ -578,6 +633,19 @@
         logout: document.getElementById('logout'),
         
         sidebarNav: document.getElementById('sidebarNav'),
+        navDemoTab: document.getElementById('navDemoTab'),
+        demoClientStatus: document.getElementById('demoClientStatus'),
+        demoApiKeyInfo: document.getElementById('demoApiKeyInfo'),
+        demoModelSelect: document.getElementById('demoModelSelect'),
+        demoPrompt: document.getElementById('demoPrompt'),
+        demoRunChat: document.getElementById('demoRunChat'),
+        demoChatResponse: document.getElementById('demoChatResponse'),
+        demoChatStats: document.getElementById('demoChatStats'),
+        demoRagDocs: document.getElementById('demoRagDocs'),
+        demoRagQuery: document.getElementById('demoRagQuery'),
+        demoRunRag: document.getElementById('demoRunRag'),
+        demoViewInvoices: document.getElementById('demoViewInvoices'),
+
         tabContents: document.querySelectorAll('.tab-content'),
         
         sidebarClientName: document.getElementById('sidebarClientName'),
@@ -630,10 +698,6 @@
         btnRagQuery: document.getElementById('btnRagQuery'),
         ragQueryResponse: document.getElementById('ragQueryResponse'),
         ragQuerySources: document.getElementById('ragQuerySources'),
-        codePython: document.getElementById('codePython'),
-        codeNode: document.getElementById('codeNode'),
-        codeCurl: document.getElementById('codeCurl'),
-        codeOpenAI: document.getElementById('codeOpenAI'),
         
         toast: document.getElementById('toast')
       };
@@ -654,7 +718,6 @@
         if (tabId === 'usage') loadUsageStats();
         if (tabId === 'plan') loadPlanDetails();
         if (tabId === 'rag') loadRagFiles();
-        if (tabId === 'examples') updateExamples();
       }
 
       // API Interaction
@@ -763,8 +826,17 @@
         els.headerStatusBadge.className = `badge ${me.is_blocked ? 'badge-blocked' : (me.billing_status === 'active' ? 'badge-active' : 'badge-warning')}`;
         
         renderOverview(me, usage);
+
+        state.demoMode = me.demo_mode === true;
+        if (state.demoMode) {
+          els.navDemoTab.style.display = 'flex';
+          switchTab('demo');
+        }
+        
+        renderDemoInfo(me, usage);
+
         renderModelSelects();
-        updateExamples();
+        renderDemoModelSelect();
       }
 
       function renderOverview(me, usage) {
@@ -998,68 +1070,120 @@
         els.ragProgressQueriesFill.style.width = l.max_queries_per_month ? `${Math.min(100, (u.queries_month/l.max_queries_per_month)*100)}%` : '0%';
       }
 
+      
+      function renderDemoModelSelect() {
+        if (!els.demoModelSelect) return;
+        els.demoModelSelect.innerHTML = state.models.map(m => `<option value="${m.id}">${m.display_name} (${m.id})</option>`).join('');
+      }
+
+      async function renderDemoInfo(me, usage) {
+        if (!state.demoMode) return;
+        
+        const m = usage.monthly_usage;
+        const pct = Math.min(100, (m.used_tokens / m.quota) * 100);
+        
+        els.demoClientStatus.innerHTML = `
+          <div class="field"><div class="field-label">Cliente</div><div class="field-value">${me.name}</div></div>
+          <div class="field"><div class="field-label">Plano Demo</div><div class="field-value">${me.plan.name} (${me.plan.currency} ${me.plan.monthly_price})</div></div>
+          <div class="field"><div class="field-label">Consumo Mês</div><div class="field-value">${m.used_tokens.toLocaleString()} / ${m.quota.toLocaleString()} tokens (${pct.toFixed(1)}%)</div></div>
+          <div class="field"><div class="field-label">Billing Local</div><div class="field-value"><span class="badge ${me.billing_status === 'active' ? 'badge-active' : 'badge-warning'}">${me.billing_status.toUpperCase()}</span></div></div>
+        `;
+        
+        try {
+          const keys = await apiFetch('/portal/api-keys');
+          if (keys && keys.length > 0) {
+             const k = keys[0];
+             els.demoApiKeyInfo.innerHTML = `Prefixo da Chave: <strong>${k.key_prefix}...</strong><br>Status: ${k.is_active ? 'Ativa' : 'Inativa'}`;
+          } else {
+             els.demoApiKeyInfo.innerHTML = 'Nenhuma chave encontrada. Por favor, crie uma na aba "Minha API Key".';
+          }
+        } catch(e) {}
+        
+        loadDemoRagDocs();
+      }
+      
+      async function loadDemoRagDocs() {
+        try {
+          const files = await apiFetch('/client/rag/documents');
+          if (files && files.data && files.data.length > 0) {
+            els.demoRagDocs.innerHTML = files.data.map(f => `• ${esc(f.original_filename)} (${f.status})`).join('<br>');
+          } else {
+            els.demoRagDocs.innerHTML = 'Nenhum documento RAG encontrado.';
+          }
+        } catch(e) {
+          els.demoRagDocs.innerHTML = 'Erro ao carregar documentos RAG.';
+        }
+      }
+
+      if (els.demoViewInvoices) {
+        els.demoViewInvoices.addEventListener('click', async () => {
+           switchTab('overview');
+           setTimeout(() => {
+             const btn = document.getElementById('viewInvoicesBtn');
+             if (btn) btn.click();
+           }, 100);
+        });
+      }
+
+      if (els.demoRunChat) {
+        els.demoRunChat.addEventListener('click', async () => {
+          const prompt = els.demoPrompt.value.trim();
+          if (!prompt) return;
+          
+          els.demoRunChat.disabled = true;
+          els.demoChatResponse.textContent = 'Processando chat demo...';
+          const start = performance.now();
+          
+          try {
+            const result = await apiFetch('/portal/test-chat', {
+              method: 'POST',
+              body: JSON.stringify({
+                prompt,
+                model: els.demoModelSelect.value,
+                max_tokens: 512
+              })
+            });
+            const latency = (performance.now() - start).toFixed(0);
+            els.demoChatResponse.textContent = result.text;
+            els.demoChatStats.textContent = `Latência: ${latency}ms | Modelo: ${result.model} | Cache: ${result.cached ? 'Sim' : 'Não'}`;
+          } catch (err) {
+            els.demoChatResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
+          } finally {
+            els.demoRunChat.disabled = false;
+          }
+        });
+      }
+
+      if (els.demoRunRag) {
+        els.demoRunRag.addEventListener('click', async () => {
+          const question = els.demoRagQuery.value.trim();
+          if (!question) return;
+          
+          els.demoRunRag.disabled = true;
+          els.demoRagResponse.textContent = 'Consultando RAG demo...';
+          try {
+            const result = await apiFetch('/client/rag/query', {
+              method: 'POST',
+              body: JSON.stringify({ question, top_k: 3 })
+            });
+            let ans = result.answer;
+            if (result.sources && result.sources.length > 0) {
+              ans += '\n\nFontes:\n' + result.sources.map(s => `- ${s.filename}`).join('\n');
+            }
+            els.demoRagResponse.textContent = ans;
+          } catch (err) {
+            els.demoRagResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
+          } finally {
+            els.demoRunRag.disabled = false;
+          }
+        });
+      }
+
       window.deleteFile = async (id) => {
         if (!confirm('Excluir documento?')) return;
         await apiFetch(`/client/rag/documents/${id}`, { method: 'DELETE' });
         loadRagFiles();
       };
-
-      // Examples
-      function updateExamples() {
-        const key = state.apiKey || 'YOUR_API_KEY';
-        const baseUrl = window.location.origin;
-        const model = els.pgModelSelect.value || 'default';
-        
-        els.codeCurl.textContent = `curl ${baseUrl}/v1/chat/completions \\
-  -H "Authorization: Bearer ${key}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "${model}",
-    "messages": [{"role": "user", "content": "Olá, tudo bem?"}]
-  }'`;
-
-        els.codePython.textContent = `import requests
-
-url = "${baseUrl}/v1/chat/completions"
-headers = {
-    "Authorization": "Bearer ${key}",
-    "Content-Type": "application/json"
-}
-data = {
-    "model": "${model}",
-    "messages": [{"role": "user", "content": "Olá!"}]
-}
-
-response = requests.post(url, headers=headers, json=data)
-print(response.json()["choices"][0]["message"]["content"])`;
-
-        els.codeNode.textContent = `fetch("${baseUrl}/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer ${key}",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    model: "${model}",
-    messages: [{ role: "user", content: "Olá!" }]
-  })
-})
-.then(res => res.json())
-.then(data => console.log(data.choices[0].message.content));`;
-
-        els.codeOpenAI.textContent = `from openai import OpenAI
-
-client = OpenAI(
-    api_key="${key}",
-    base_url="${baseUrl}/v1"
-)
-
-response = client.chat.completions.create(
-    model="${model}",
-    messages=[{"role": "user", "content": "Olá!"}]
-)
-print(response.choices[0].message.content)`;
-      }
 
       // Utils
       function esc(str) {

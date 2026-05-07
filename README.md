@@ -171,6 +171,14 @@ Acesse:
 - Portal do Cliente: http://localhost:18080/client-portal
 - Admin Dashboard: http://localhost:18080/admin-dashboard
 
+## Demonstração Local
+
+Para demonstrações do produto em ambiente local (offline, notebooks, reuniões com clientes):
+
+- [Guia de Configuração da Demo](docs/LOCAL_DEMO_GUIDE.md): Como preparar o ambiente e carregar dados.
+- [Roteiro de Apresentação](docs/LOCAL_DEMO_SCRIPT.md): Sequência sugerida para a demo comercial/técnica.
+- [FAQ da Demo Local](docs/LOCAL_DEMO_FAQ.md): Perguntas frequentes sobre o uso local e privacidade.
+
 ## Health, readiness e conectividade
 
 ```bash

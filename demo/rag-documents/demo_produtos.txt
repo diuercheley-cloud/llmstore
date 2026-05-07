@@ -1,0 +1,6 @@
+Produtos TechSolutions (Demo):
+1. Stack de Inferência Local: Engine de execução de LLMs.
+2. RAG Gateway: Interface para busca em documentos privados.
+3. Billing Dashboard: Controle de uso e faturamento.
+4. Admin Lab: Ambiente de experimentação e configuração.
+5. Client Portal: Acesso para usuários finais gerenciarem suas chaves.

@@ -154,6 +154,8 @@ async def portal_simulate_payment(
 async def portal_me(
     client: Client = Depends(require_client),
 ):
+    from app.core.config import get_settings
+    settings = get_settings()
     effective_plan = resolve_effective_plan(client)
     return {
         "id": str(client.id),
@@ -162,6 +164,7 @@ async def portal_me(
         "billing_status": client.billing_status,
         "is_blocked": client.is_blocked,
         "metadata_json": client.metadata_json,
+        "demo_mode": settings.demo_mode,
         "plan": {
             "code": effective_plan.code,
             "name": effective_plan.name,

@@ -111,6 +111,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
+      DEMO_MODE: ${DEMO_MODE:-false}
     depends_on:
       postgres:
         condition: service_healthy
@@ -146,6 +147,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
+      DEMO_MODE: ${DEMO_MODE:-false}
     command: ["bash", "-lc", "alembic upgrade head && python -m app.workers.generation_worker"]
     depends_on:
       postgres:

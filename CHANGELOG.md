@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.4.4-local-demo] - 2026-05-07
+
+### Added
+- Modo demo local completo com script `demo-full-local.sh`.
+- Cliente demo pré-configurado e API key demo segura em `.local/`.
+- Documentos RAG de demonstração para testes rápidos.
+- Portal do cliente demo e dashboard admin demo.
+- Exemplos de uso em curl, Python e Node.js.
+- Landing page local melhorada para facilitar o onboarding.
+- Documentação dedicada para o modo demo em `docs/LOCAL_DEMO_GUIDE.md` e outros.
+
+### Fixed
+- Robustez no script de demonstração ao lidar com portas de controle de plano.
+
 ## [v1.4.3-local-hardening] - 2026-05-07
 
 ### Added

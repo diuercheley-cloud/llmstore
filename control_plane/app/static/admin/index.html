@@ -121,6 +121,13 @@
     </header>
 
     <main id="adminContent" class="hidden">
+      <!-- Demo Summary -->
+      <section id="demoSection" class="wide hidden" style="border: 2px solid var(--accent); background-color: #f0fdfa;">
+        <h2>Demo Environment <span class="pill pill-success" style="margin-left: 1rem;">DEMO_MODE=true</span></h2>
+        <div id="demoStats" class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));"></div>
+        <div id="demoWarnings" style="color: var(--danger); font-weight: bold; margin-top: 1rem;"></div>
+      </section>
+
       <!-- Health & Status -->
       <section>
         <h2>System Health <button class="secondary" onclick="toggleDebug('healthDebug')">JSON</button></h2>
@@ -244,7 +251,7 @@
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag] = await Promise.all([
+          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, demoSummary] = await Promise.all([
             adminFetch('/admin/health/deep'),
             adminFetch('/admin/usage/summary'),
             adminFetch('/admin/usage/by-client'),
@@ -253,9 +260,11 @@
             adminFetch('/admin/security/events'),
             adminFetch('/admin/requests'),
             adminFetch('/admin/revenue/summary'),
-            adminFetch('/admin/rag/usage')
+            adminFetch('/admin/rag/usage'),
+            adminFetch('/admin/demo/summary').catch(() => null)
           ]);
 
+          renderDemo(demoSummary);
           renderHealth(health);
           renderModels(models);
           renderUsage(usageSummary, usageByClient, usageByModel);
@@ -277,6 +286,43 @@
         } catch (err) {
           alert('Failed to load admin data: ' + err.message);
         }
+      }
+
+      function renderDemo(demo) {
+        if (!demo || !demo.demo_enabled) return;
+        const section = document.getElementById('demoSection');
+        section.classList.remove('hidden');
+        
+        let warningsHtml = (demo.warnings || []).map(w => `<p>⚠️ ${w}</p>`).join('');
+        document.getElementById('demoWarnings').innerHTML = warningsHtml;
+
+        const u = demo.demo_usage || {};
+        const b = demo.demo_billing || {};
+        const r = demo.demo_rag || {};
+        
+        document.getElementById('demoStats').innerHTML = `
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Demo Client</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${demo.demo_client?.name || 'Not Found'}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${shortId(demo.demo_client?.id)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Requests (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.requests_today)} / ${num(u.requests_month)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Tokens (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.tokens_today)} / ${num(u.tokens_month)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Estimated Invoice</div>
+            <div class="stat-value" style="font-size: 1.1rem;">$${num(b.total_estimated).toFixed(2)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">RAG Storage / Queries</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(r.storage_mb).toFixed(2)}MB / ${num(r.queries_month)}</div>
+          </div>
+        `;
       }
 
       function renderHealth(data) {

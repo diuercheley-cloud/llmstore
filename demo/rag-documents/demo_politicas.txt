@@ -1,0 +1,6 @@
+Política de Uso Aceitável (Demo):
+1. Não utilizar para fins ilícitos.
+2. Respeitar limites de cota definidos no plano.
+3. Não compartilhar chaves de API.
+4. O uso local é para testes e demonstrações.
+5. Dados processados localmente não saem da infraestrutura do cliente.

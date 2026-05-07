@@ -1,0 +1,191 @@
+{
+  "version": "v1.4.3-local-hardening",
+  "git_commit": "2c72fb5d3b752f38b8c8028edfdfd36e9a992544",
+  "git_branch": "feature/local-production-hardening",
+  "git_tag_base": "v1.4.5-local-hardening",
+  "timestamp_start": "2026-05-07T23:36:06Z",
+  "timestamp_end": "2026-05-07T23:36:55Z",
+  "duration_seconds": 49,
+  "base_url": "http://localhost:18080",
+  "environment": {
+    "LOCALHOST_MODE": true,
+    "LOCAL_BILLING_MODE": false,
+    "RAG_ENABLED": true,
+    "LM_STUDIO_CONFIGURED": false,
+    "LM_STUDIO_ONLINE": "true"
+  },
+  "scripts": [
+    {
+      "name": "validate-localhost-mode.sh",
+      "path": "scripts/validate-localhost-mode.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "critical": true,
+      "log_file": "logs/validate-localhost-mode.sh.log",
+      "started_at": "2026-05-07T23:36:06Z",
+      "finished_at": "2026-05-07T23:36:06Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-status-local.sh",
+      "path": "scripts/validate-status-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 6,
+      "critical": true,
+      "log_file": "logs/validate-status-local.sh.log",
+      "started_at": "2026-05-07T23:36:06Z",
+      "finished_at": "2026-05-07T23:36:12Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-admin-lab-local.sh",
+      "path": "scripts/validate-admin-lab-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 14,
+      "critical": true,
+      "log_file": "logs/validate-admin-lab-local.sh.log",
+      "started_at": "2026-05-07T23:36:12Z",
+      "finished_at": "2026-05-07T23:36:27Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-lmstudio-backend.sh",
+      "path": "scripts/validate-lmstudio-backend.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 3,
+      "critical": false,
+      "log_file": "logs/validate-lmstudio-backend.sh.log",
+      "started_at": "2026-05-07T23:36:27Z",
+      "finished_at": "2026-05-07T23:36:30Z",
+      "note": "LM Studio is online; integration validation executed.",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-routing-local.sh",
+      "path": "scripts/validate-routing-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 3,
+      "critical": true,
+      "log_file": "logs/validate-routing-local.sh.log",
+      "started_at": "2026-05-07T23:36:30Z",
+      "finished_at": "2026-05-07T23:36:34Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-plan-queues.sh",
+      "path": "scripts/validate-plan-queues.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 9,
+      "critical": true,
+      "log_file": "logs/validate-plan-queues.sh.log",
+      "started_at": "2026-05-07T23:36:34Z",
+      "finished_at": "2026-05-07T23:36:44Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-client-portal-local.sh",
+      "path": "scripts/validate-client-portal-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "critical": true,
+      "log_file": "logs/validate-client-portal-local.sh.log",
+      "started_at": "2026-05-07T23:36:44Z",
+      "finished_at": "2026-05-07T23:36:44Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-api-keys-local.sh",
+      "path": "scripts/validate-api-keys-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "critical": true,
+      "log_file": "logs/validate-api-keys-local.sh.log",
+      "started_at": "2026-05-07T23:36:44Z",
+      "finished_at": "2026-05-07T23:36:45Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-rag-local-multiclient.sh",
+      "path": "scripts/validate-rag-local-multiclient.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 3,
+      "critical": true,
+      "log_file": "logs/validate-rag-local-multiclient.sh.log",
+      "started_at": "2026-05-07T23:36:45Z",
+      "finished_at": "2026-05-07T23:36:48Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-local-billing.sh",
+      "path": "scripts/validate-local-billing.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "critical": true,
+      "log_file": "logs/validate-local-billing.sh.log",
+      "started_at": "2026-05-07T23:36:48Z",
+      "finished_at": "2026-05-07T23:36:49Z",
+      "note": "Manual billing validation only",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-local-docs.sh",
+      "path": "scripts/validate-local-docs.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "critical": true,
+      "log_file": "logs/validate-local-docs.sh.log",
+      "started_at": "2026-05-07T23:36:49Z",
+      "finished_at": "2026-05-07T23:36:49Z",
+      "note": "",
+      "error_summary": ""
+    },
+    {
+      "name": "validate-observability-local.sh",
+      "path": "scripts/validate-observability-local.sh",
+      "status": "ok",
+      "exit_code": 0,
+      "duration_seconds": 6,
+      "critical": true,
+      "log_file": "logs/validate-observability-local.sh.log",
+      "started_at": "2026-05-07T23:36:49Z",
+      "finished_at": "2026-05-07T23:36:55Z",
+      "note": "",
+      "error_summary": ""
+    }
+  ],
+  "totals": {
+    "ok": 12,
+    "warn": 0,
+    "skip": 0,
+    "error": 0
+  },
+  "artifacts": {
+    "summary_md": "summary.md",
+    "summary_json": "summary.json",
+    "logs_dir": "logs/"
+  },
+  "validation_result": {
+    "success": true,
+    "critical_failures": 0,
+    "warnings": 0
+  }
+}

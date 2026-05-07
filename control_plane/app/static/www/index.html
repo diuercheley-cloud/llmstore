@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-br">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LLM Inference Stack Cloud</title>
+    <title>LLM Inference Stack - Edição Local</title>
     <style>
       :root {
         --bg: #f4efe6;
@@ -46,6 +46,7 @@
         border: 1px solid transparent;
         transition: all 0.2s ease;
         font-weight: 600;
+        cursor: pointer;
       }
       .cta.primary {
         background: var(--ink);
@@ -96,27 +97,16 @@
         gap: 16px;
         flex-wrap: wrap;
       }
-      .metrics {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-top: 40px;
-      }
-      .metric, .panel, .plan {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-      }
-      .metric { padding: 20px; }
-      .metric strong { display: block; font-size: 24px; margin-bottom: 4px; color: var(--accent); }
-      .metric span { font-size: 13px; color: var(--muted); font-weight: 500; }
       
       .panel {
         padding: 32px;
         position: relative;
         overflow: hidden;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
       }
       .panel h3 { margin: 0 0 16px; font-size: 18px; }
       .stack {
@@ -154,22 +144,6 @@
       .card strong { display: block; font-size: 18px; margin-bottom: 12px; }
       .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
 
-      .plans {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 24px;
-      }
-      .plan {
-        padding: 32px;
-        display: flex;
-        flex-direction: column;
-      }
-      .plan.highlight { border-color: var(--accent); border-width: 2px; }
-      .plan .price { font-size: 40px; font-weight: 800; margin: 16px 0; }
-      .plan ul { margin: 24px 0; padding: 0; list-style: none; flex-grow: 1; }
-      .plan li { margin-bottom: 12px; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-      .plan li::before { content: "✓"; color: var(--accent); font-weight: 800; }
-
       .footer {
         padding: 48px 0;
         border-top: 1px solid var(--line);
@@ -180,11 +154,22 @@
         color: var(--muted);
       }
 
+      .out-of-scope {
+        background: #fff0f0;
+        border: 1px solid #ffc0c0;
+        padding: 24px;
+        border-radius: 20px;
+        margin-top: 40px;
+      }
+      .out-of-scope h3 { margin-top: 0; color: #a00; }
+      .out-of-scope ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+      .out-of-scope li { color: #800; font-size: 14px; font-weight: 500; }
+      .out-of-scope li::before { content: "✕"; margin-right: 8px; }
+
       @media (max-width: 920px) {
         .hero { grid-template-columns: 1fr; padding: 40px 0; text-align: center; }
         .hero-actions { justify-content: center; }
         .lead { margin-left: auto; margin-right: auto; }
-        .metrics { grid-template-columns: 1fr; }
         .nav { flex-direction: column; gap: 16px; }
       }
     </style>
@@ -192,69 +177,122 @@
   <body>
     <div class="shell">
       <nav class="nav">
-        <div class="brand">LLM Stack</div>
+        <div class="brand">LLM Stack Local</div>
         <div class="links">
-          <a href="/pricing">Pricing</a>
-          <a href="/docs">API Docs</a>
-          <a href="/client-portal">Portal</a>
-          <a class="cta primary" href="/signup">Get Started</a>
+          <a href="/docs">Docs</a>
+          <a href="/portal/">Client Portal</a>
+          <a href="/admin/">Admin Lab</a>
+          <a class="cta primary" href="/signup">Instalar Agora</a>
         </div>
       </nav>
 
       <section class="hero">
         <div>
-          <span class="eyebrow">Local Production v1.1</span>
-          <h1>Deploy your own LLM API in minutes.</h1>
+          <span class="eyebrow">Local Product Demo</span>
+          <h1>LLM Local para Empresas</h1>
           <p class="lead">
-            A complete inference stack with a professional SaaS wrapper. 
-            Self-serve onboarding, multi-tenant quotas, and OpenAI-compatible endpoints—all in one containerized solution.
+            Infraestrutura de IA privada, segura e sob seu controle. 
+            Uma stack completa com API compatível com OpenAI, RAG com documentos internos e gestão de clientes.
           </p>
           <div class="hero-actions">
-            <a class="cta primary" href="/signup">Create Free Account</a>
-            <a class="cta secondary" href="/docs">Read API Docs</a>
-          </div>
-          <div class="metrics">
-            <div class="metric"><strong>Fast</strong><span>Ready in < 5 min</span></div>
-            <div class="metric"><strong>Compatible</strong><span>OpenAI /v1 Spec</span></div>
-            <div class="metric"><strong>Secure</strong><span>Private Inference</span></div>
+            <a class="cta primary" href="/admin/">Abrir Admin Dashboard</a>
+            <a class="cta secondary" href="/portal/">Abrir Client Portal</a>
+            <a class="cta secondary" href="/docs">Ver Documentação</a>
           </div>
         </div>
         <div class="panel">
-          <h3>SaaS Wrapper Included</h3>
+          <h3>Destaques da Stack</h3>
           <div class="stack">
-            <div><span>Automatic Signup</span><span>✓</span></div>
-            <div><span>API Key Management</span><span>✓</span></div>
-            <div><span>Usage & Billing</span><span>✓</span></div>
-            <div><span>Admin Dashboard</span><span>✓</span></div>
-            <div><span>Client Portal</span><span>✓</span></div>
+            <div><span>API Compatível OpenAI</span><span>✓</span></div>
+            <div><span>RAG com Documentos</span><span>✓</span></div>
+            <div><span>Controle de Clientes e Uso</span><span>✓</span></div>
+            <div><span>Admin Lab p/ Modelos Locais</span><span>✓</span></div>
+            <div><span>Operação em Localhost</span><span>✓</span></div>
           </div>
         </div>
       </section>
 
-      <section class="section">
-        <h2>Everything you need to ship.</h2>
-        <p class="section-lead">We built the boring parts so you can focus on your AI models and business logic.</p>
+      <section class="section" id="features">
+        <h2>Funcionalidades Principais</h2>
         <div class="grid-3">
           <div class="card">
-            <strong>Acquisition</strong>
-            <p>Ready-to-use landing and pricing pages to showcase your offering immediately.</p>
+            <strong>LLM Privado</strong>
+            <p>Execute modelos como Llama, Mistral ou Gemma em sua própria infraestrutura sem vazamento de dados.</p>
           </div>
           <div class="card">
-            <strong>Activation</strong>
-            <p>Automated onboarding flow that generates API keys and sets up quotas instantly.</p>
+            <strong>RAG Nativo</strong>
+            <p>Faça upload de documentos (PDF, TXT) e converse com seus dados internos via API ou Portal.</p>
           </div>
           <div class="card">
-            <strong>Retention</strong>
-            <p>Comprehensive client portal for usage tracking, invoice history, and quick testing.</p>
+            <strong>Gestão de Clientes</strong>
+            <p>Crie múltiplos clientes, defina planos de uso e monitore o consumo em tempo real.</p>
           </div>
+        </div>
+      </section>
+
+      <section class="section" id="use-cases">
+        <h2>Casos de Uso</h2>
+        <div class="grid-3">
+          <div class="card">
+            <strong>Escritórios e Consultoria</strong>
+            <p>Busca inteligente em bases de conhecimento e automação de documentos.</p>
+          </div>
+          <div class="card">
+            <strong>Imobiliárias e Contabilidade</strong>
+            <p>Análise de contratos e suporte técnico baseado em regulamentações internas.</p>
+          </div>
+          <div class="card">
+            <strong>Suporte Interno</strong>
+            <p>Chatbots privados para funcionários com acesso a manuais e políticas da empresa.</p>
+          </div>
+          <div class="card">
+            <strong>API Privada de IA</strong>
+            <p>Integre inteligência artificial em sistemas legados sem custos variáveis de nuvem.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="demo">
+        <h2>Demonstração Local</h2>
+        <div class="grid-3">
+          <div class="card">
+            <strong>Client Portal Demo</strong>
+            <p>Área do usuário para gerenciar chaves de API, testar chat e ver faturas simuladas.</p>
+            <a href="/portal/" style="display: block; margin-top: 16px; color: var(--accent); font-weight: 600;">Abrir Client Portal →</a>
+          </div>
+          <div class="card">
+            <strong>Admin Dashboard</strong>
+            <p>Controle total sobre clientes, planos, modelos ativos e monitoramento de sistema.</p>
+            <a href="/admin/" style="display: block; margin-top: 16px; color: var(--accent); font-weight: 600;">Abrir Admin Dashboard →</a>
+          </div>
+          <div class="card">
+            <strong>Developer Docs</strong>
+            <p>Documentação técnica e instruções para rodar a <strong>validação local</strong> via script.</p>
+            <div style="display: flex; gap: 16px; margin-top: 16px;">
+              <a href="/docs" style="color: var(--accent); font-weight: 600;">Ver Documentação →</a>
+              <a href="/getting-started" style="color: var(--accent); font-weight: 600;">Rodar validação local →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top: 0;">
+        <div class="out-of-scope">
+          <h3>Fora do escopo nesta versão</h3>
+          <ul>
+            <li>Pagamentos Reais (PSP/PIX)</li>
+            <li>SLA de Disponibilidade Pública</li>
+            <li>Domínio Público Obrigatório</li>
+            <li>Suporte a Multi-Region Cloud</li>
+          </ul>
         </div>
       </section>
 
       <div class="footer">
         <div>© 2026 LLM Inference Stack • Local Production Edition</div>
         <div style="display: flex; gap: 16px;">
-          <a href="/docs">Documentation</a>
-          <a href="/admin-dashboard">Admin Login</a>
+          <a href="/docs">Documentação</a>
+          <a href="/admin/">Admin Dashboard</a>
         </div>
       </div>
     </div>

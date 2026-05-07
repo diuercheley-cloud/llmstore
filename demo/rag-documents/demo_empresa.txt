@@ -1,0 +1,5 @@
+Empresa: TechSolutions Local
+Sede: Rua da Inovação, 123, Cidade Digital.
+Fundação: 2010.
+Missão: Prover infraestrutura de IA local segura e eficiente.
+Valores: Privacidade, Performance, Transparência.
