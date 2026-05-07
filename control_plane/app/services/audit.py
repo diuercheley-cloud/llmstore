@@ -3,7 +3,7 @@ import json
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.metrics import CLIENT_REQUEST_COUNTER
+from app.core.metrics import record_request_metrics
 from app.core.request_context import get_correlation_id, get_source_ip
 from app.core.time import utc_now
 from app.models.request_log import RequestLog
@@ -28,6 +28,7 @@ async def log_request(
     backend_errors: list[dict] | None,
     error_message: str | None,
     request_summary: str | None,
+    plan_code: str | None = None,
     safety_profile: str | None = "default",
     correlation_id: str | None = None,
     source_ip: str | None = None,
@@ -57,8 +58,13 @@ async def log_request(
         created_at=utc_now(),
     )
     session.add(request_log)
-    CLIENT_REQUEST_COUNTER.labels(
-        client_id=str(client_id),
+    record_request_metrics(
+        model=model,
+        backend=backend_name,
+        plan=plan_code,
         endpoint=endpoint,
-        status_class=f"{int(status_code) // 100}xx",
-    ).inc()
+        status_code=status_code,
+        latency_seconds=float(latency_ms) / 1000.0,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+    )

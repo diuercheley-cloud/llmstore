@@ -412,6 +412,7 @@ async def chat_completions(
                 endpoint="/v1/chat/completions",
                 model=selected_model.model_id,
                 request_hash=cache_key,
+                plan_code=effective_plan.code,
             )
             if cached.hit and cached.payload is not None:
                 latency_ms = int((perf_counter() - started) * 1000)
@@ -434,6 +435,7 @@ async def chat_completions(
                     backend_errors=[],
                     error_message=None,
                     request_summary=request_summary,
+                    plan_code=effective_plan.code,
                     safety_profile=payload.safety_profile,
                 )
                 await session.commit()
@@ -471,6 +473,7 @@ async def chat_completions(
                 backend_errors=result.backend_errors,
                 error_message=None,
                 request_summary=request_summary,
+                plan_code=effective_plan.code,
                 safety_profile=payload.safety_profile,
             )
             await session.commit()
@@ -506,6 +509,7 @@ async def chat_completions(
             backend_errors=result.backend_errors,
             error_message=None,
             request_summary=request_summary,
+            plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
         await session.commit()
@@ -531,6 +535,7 @@ async def chat_completions(
             backend_errors=backend_errors,
             error_message=_error_message_for_log(exc.detail),
             request_summary=request_summary,
+            plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
         await maybe_record_request_error_burst(
@@ -708,6 +713,7 @@ async def completions(
                 endpoint="/v1/completions",
                 model=selected_model.model_id,
                 request_hash=cache_key,
+                plan_code=effective_plan.code,
             )
             if cached.hit and cached.payload is not None:
                 latency_ms = int((perf_counter() - started) * 1000)
@@ -730,6 +736,7 @@ async def completions(
                     backend_errors=[],
                     error_message=None,
                     request_summary=request_summary,
+                    plan_code=effective_plan.code,
                     safety_profile=payload.safety_profile,
                 )
                 await session.commit()
@@ -764,6 +771,7 @@ async def completions(
                 backend_errors=result.backend_errors,
                 error_message=None,
                 request_summary=request_summary,
+                plan_code=effective_plan.code,
                 safety_profile=payload.safety_profile,
             )
             await session.commit()
@@ -799,6 +807,7 @@ async def completions(
             backend_errors=result.backend_errors,
             error_message=None,
             request_summary=request_summary,
+            plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
         await session.commit()
@@ -824,6 +833,7 @@ async def completions(
             backend_errors=backend_errors,
             error_message=_error_message_for_log(exc.detail),
             request_summary=request_summary,
+            plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
         await maybe_record_request_error_burst(

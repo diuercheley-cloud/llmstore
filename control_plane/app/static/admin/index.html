@@ -143,8 +143,12 @@
 
       <!-- Usage & Billing -->
       <section class="wide">
-        <h2>Client Usage <button class="secondary" onclick="toggleDebug('usageDebug')">JSON</button></h2>
-        <div style="overflow-x: auto;"><div id="clientUsageTable"></div></div>
+        <h2>Usage & Observability <button class="secondary" onclick="toggleDebug('usageDebug')">JSON</button></h2>
+        <div id="usageStats" class="stat-grid" style="margin-bottom: 1rem;"></div>
+        <div style="display: grid; gap: 1rem;">
+          <div style="overflow-x: auto;"><div id="clientUsageTable"></div></div>
+          <div style="overflow-x: auto;"><div id="modelUsageTable"></div></div>
+        </div>
         <pre id="usageDebug" class="debug"></pre>
       </section>
 
@@ -240,9 +244,11 @@
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [health, usage, models, security, requests, revenue, rag] = await Promise.all([
+          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag] = await Promise.all([
             adminFetch('/admin/health/deep'),
             adminFetch('/admin/usage/summary'),
+            adminFetch('/admin/usage/by-client'),
+            adminFetch('/admin/usage/by-model'),
             adminFetch('/admin/models'),
             adminFetch('/admin/security/events'),
             adminFetch('/admin/requests'),
@@ -252,7 +258,7 @@
 
           renderHealth(health);
           renderModels(models);
-          renderUsage(usage);
+          renderUsage(usageSummary, usageByClient, usageByModel);
           renderBackends(models.backends);
           renderSecurity(security);
           renderRequests(requests);
@@ -262,7 +268,7 @@
           // Fill debugs
           document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
           document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
-          document.getElementById('usageDebug').textContent = JSON.stringify(usage, null, 2);
+          document.getElementById('usageDebug').textContent = JSON.stringify({ summary: usageSummary, by_client: usageByClient, by_model: usageByModel }, null, 2);
           document.getElementById('backendDebug').textContent = JSON.stringify(models.backends, null, 2);
           document.getElementById('securityDebug').textContent = JSON.stringify(security, null, 2);
           document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
@@ -334,27 +340,90 @@
         `;
       }
 
-      function renderUsage(data) {
-        const clients = data.clients || [];
-        let html = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Usage (Daily)</th><th>Billing Est.</th></tr></thead><tbody>';
+      function renderUsage(summaryEnvelope, byClient, byModel) {
+        const summary = summaryEnvelope.summary || summaryEnvelope;
+        const stats = document.getElementById('usageStats');
+        stats.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Requests Hoje</div>
+            <div class="stat-value">${num(summary.requests_today).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Requests Mês</div>
+            <div class="stat-value">${num(summary.requests_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens Hoje</div>
+            <div class="stat-value">${num(summary.tokens_today).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens Mês</div>
+            <div class="stat-value">${num(summary.tokens_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Latência Média</div>
+            <div class="stat-value">${num(summary.avg_latency_ms_month).toFixed(2)}ms</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cache Hit Rate</div>
+            <div class="stat-value">${(num(summary.cache_hit_rate_month) * 100).toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clientes Suspensos</div>
+            <div class="stat-value ${num(summary.clients_suspended) > 0 ? 'pill-danger' : ''}">${num(summary.clients_suspended)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Invoices Vencidas</div>
+            <div class="stat-value ${num(summary.invoices_overdue) > 0 ? 'pill-danger' : ''}">${num(summary.invoices_overdue)}</div>
+          </div>
+        `;
+        const queueGroups = summary.queues_by_plan?.queues || summary.queues?.queues || {};
+        Object.entries(queueGroups).forEach(([queueName, queue]) => {
+          const title = queueName.replace('inference_', '').toUpperCase();
+          stats.insertAdjacentHTML('beforeend', `
+            <div class="stat-card">
+              <div class="stat-label">Queue ${title}</div>
+              <div class="stat-value">${num(queue.waiting).toLocaleString()} waiting</div>
+              <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">${num(queue.active).toLocaleString()} active / ${num(queue.max_active).toLocaleString()} max</div>
+            </div>
+          `);
+        });
+
+        const clients = Array.isArray(byClient) ? byClient : [];
+        let clientHtml = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
         clients.forEach(c => {
-          const clientId = c.client_id || c.id;
-          const dailyUsed = num(c.daily_usage?.used_tokens);
-          const dailyQuota = num(c.daily_usage?.quota ?? c.plan_limits?.daily_token_quota);
-          const currency = c.invoice_preview?.currency || 'USD';
-          const totalEstimated = num(c.invoice_preview?.total_estimated);
-          html += `
+          clientHtml += `
             <tr>
-              <td><strong>${c.name || 'Unnamed client'}</strong><br/><small style="color:var(--muted)">${shortId(clientId)}</small></td>
+              <td><strong>${c.client_name || 'Unnamed client'}</strong><br/><small style="color:var(--muted)">${shortId(c.client_id)}</small></td>
               <td>${c.billing_plan_code || '-'}</td>
               <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status || 'unknown'}</span></td>
-              <td>${dailyUsed.toLocaleString()} / ${dailyQuota.toLocaleString()}</td>
-              <td>${currency} ${totalEstimated.toFixed(2)}</td>
+              <td>${num(c.requests_today).toLocaleString()} / ${num(c.requests_month).toLocaleString()}</td>
+              <td>${num(c.tokens_today).toLocaleString()} / ${num(c.tokens_month).toLocaleString()}</td>
+              <td>${num(c.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${(num(c.cache_hit_rate_month) * 100).toFixed(1)}%</td>
             </tr>
           `;
         });
-        html += '</tbody></table>';
-        document.getElementById('clientUsageTable').innerHTML = html;
+        clientHtml += '</tbody></table>';
+        document.getElementById('clientUsageTable').innerHTML = clientHtml;
+
+        const models = Array.isArray(byModel) ? byModel : [];
+        let modelHtml = '<table><thead><tr><th>Model</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Backend Errors</th><th>Model Errors</th><th>Cache</th></tr></thead><tbody>';
+        models.forEach(m => {
+          modelHtml += `
+            <tr>
+              <td><strong>${m.model}</strong></td>
+              <td>${num(m.requests_today).toLocaleString()} / ${num(m.requests_month).toLocaleString()}</td>
+              <td>${num(m.tokens_today).toLocaleString()} / ${num(m.tokens_month).toLocaleString()}</td>
+              <td>${num(m.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${num(m.backend_errors_month)}</td>
+              <td>${num(m.model_errors_month)}</td>
+              <td>${(num(m.cache_hit_rate_month) * 100).toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+        modelHtml += '</tbody></table>';
+        document.getElementById('modelUsageTable').innerHTML = modelHtml;
       }
 
       function renderBackends(backends) {

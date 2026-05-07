@@ -9,7 +9,15 @@ from fastapi import HTTPException, status
 from starlette.responses import JSONResponse, StreamingResponse
 
 from app.core.config import get_settings
-from app.core.metrics import BACKEND_ERROR_COUNTER, BACKEND_LATENCY, REQUEST_COUNTER, REQUEST_LATENCY
+from app.core.metrics import (
+    BACKEND_ERROR_COUNTER,
+    BACKEND_LATENCY,
+    REQUEST_COUNTER,
+    REQUEST_LATENCY,
+    record_backend_error,
+    record_inference_latency,
+    record_model_error,
+)
 from app.models.inference_backend import InferenceBackend
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
@@ -272,6 +280,7 @@ class InferenceProxy:
                             backend_name=backend_name,
                             prompt_template=prompt_template,
                             api_key=api_key,
+                            plan_code=plan_code,
                         )
                     return await self._json_forward(
                         endpoint,
@@ -282,6 +291,7 @@ class InferenceProxy:
                         backend_name=backend_name,
                         prompt_template=prompt_template,
                         api_key=api_key,
+                        plan_code=plan_code,
                     )
             if stream:
                 return await self._streaming_forward(
@@ -293,6 +303,7 @@ class InferenceProxy:
                     backend_name=backend_name,
                     prompt_template=prompt_template,
                     api_key=api_key,
+                    plan_code=plan_code,
                 )
             return await self._json_forward(
                 endpoint,
@@ -303,6 +314,7 @@ class InferenceProxy:
                 backend_name=backend_name,
                 prompt_template=prompt_template,
                 api_key=api_key,
+                plan_code=plan_code,
             )
         except CircuitBreakerOpen as exc:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
@@ -337,6 +349,7 @@ class InferenceProxy:
         backend_name: str = "",
         prompt_template: str | None = None,
         api_key: str | None = None,
+        plan_code: str = "free",
     ) -> JSONResponse:
         started = perf_counter()
         last_error: Exception | None = None
@@ -390,8 +403,17 @@ class InferenceProxy:
                 response.raise_for_status()
                 await self.circuit_breaker.record_success()
                 REQUEST_COUNTER.labels(endpoint=endpoint, status="success").inc()
-                REQUEST_LATENCY.labels(endpoint=endpoint).observe(perf_counter() - started)
-                BACKEND_LATENCY.labels(backend_name=backend_name or backend, endpoint=endpoint).observe(perf_counter() - started)
+                elapsed = perf_counter() - started
+                REQUEST_LATENCY.labels(endpoint=endpoint).observe(elapsed)
+                BACKEND_LATENCY.labels(backend_name=backend_name or backend, endpoint=endpoint).observe(elapsed)
+                record_inference_latency(
+                    model=payload.get("model"),
+                    backend=backend_name or backend,
+                    plan=plan_code,
+                    endpoint=endpoint,
+                    status_code=response.status_code,
+                    latency_seconds=elapsed,
+                )
                 response_payload = response.json()
                 print(f"DEBUG PROXY: Raw backend response: {response_payload}")
                 if backend == "ollama":
@@ -429,11 +451,37 @@ class InferenceProxy:
         if last_error is not None and self._should_trip_circuit_breaker(last_error):
             await self.circuit_breaker.record_failure()
         REQUEST_COUNTER.labels(endpoint=endpoint, status="error").inc()
+        status_code = int(getattr(getattr(last_error, "response", None), "status_code", 503))
+        elapsed = perf_counter() - started
+        record_inference_latency(
+            model=payload.get("model"),
+            backend=backend_name or backend,
+            plan=plan_code,
+            endpoint=endpoint,
+            status_code=status_code,
+            latency_seconds=elapsed,
+        )
         BACKEND_ERROR_COUNTER.labels(
             backend_name=backend_name or backend,
             endpoint=endpoint,
-            status_code=str(getattr(getattr(last_error, "response", None), "status_code", 503)),
+            status_code=str(status_code),
         ).inc()
+        if status_code >= 500:
+            record_backend_error(
+                model=payload.get("model"),
+                backend=backend_name or backend,
+                plan=plan_code,
+                endpoint=endpoint,
+                status_code=status_code,
+            )
+        else:
+            record_model_error(
+                model=payload.get("model"),
+                backend=backend_name or backend,
+                plan=plan_code,
+                endpoint=endpoint,
+                status_code=status_code,
+            )
         logger.warning("data plane request failed", extra={"extra_data": {"endpoint": endpoint, "error": str(last_error)}})
         if isinstance(last_error, httpx.HTTPStatusError) and last_error.response.status_code < 500:
             raise HTTPException(status_code=last_error.response.status_code, detail=self._backend_error_detail(last_error))
@@ -449,6 +497,7 @@ class InferenceProxy:
         backend_name: str = "",
         prompt_template: str | None = None,
         api_key: str | None = None,
+        plan_code: str = "free",
     ) -> StreamingResponse:
         started = perf_counter()
         client = self._client_for_backend(backend, backend_url)
@@ -506,11 +555,37 @@ class InferenceProxy:
             if self._should_trip_circuit_breaker(exc):
                 await self.circuit_breaker.record_failure()
             REQUEST_COUNTER.labels(endpoint=endpoint, status="error").inc()
+            status_code = int(getattr(getattr(exc, "response", None), "status_code", 503))
+            elapsed = perf_counter() - started
+            record_inference_latency(
+                model=payload.get("model"),
+                backend=backend_name or backend,
+                plan=plan_code,
+                endpoint=endpoint,
+                status_code=status_code,
+                latency_seconds=elapsed,
+            )
             BACKEND_ERROR_COUNTER.labels(
                 backend_name=backend_name or backend,
                 endpoint=endpoint,
-                status_code=str(getattr(getattr(exc, "response", None), "status_code", 503)),
+                status_code=str(status_code),
             ).inc()
+            if status_code >= 500:
+                record_backend_error(
+                    model=payload.get("model"),
+                    backend=backend_name or backend,
+                    plan=plan_code,
+                    endpoint=endpoint,
+                    status_code=status_code,
+                )
+            else:
+                record_model_error(
+                    model=payload.get("model"),
+                    backend=backend_name or backend,
+                    plan=plan_code,
+                    endpoint=endpoint,
+                    status_code=status_code,
+                )
             logger.warning(
                 "data plane stream setup failed",
                 extra={"extra_data": {"endpoint": endpoint, "backend_name": backend_name, "error": str(exc)}},
@@ -584,7 +659,16 @@ class InferenceProxy:
                 await response.aclose()
                 await stream_client.aclose()
                 REQUEST_COUNTER.labels(endpoint=endpoint, status="success").inc()
-                REQUEST_LATENCY.labels(endpoint=endpoint).observe(perf_counter() - started)
+                elapsed = perf_counter() - started
+                REQUEST_LATENCY.labels(endpoint=endpoint).observe(elapsed)
+                record_inference_latency(
+                    model=payload.get("model"),
+                    backend=backend_name or backend,
+                    plan=plan_code,
+                    endpoint=endpoint,
+                    status_code=200,
+                    latency_seconds=elapsed,
+                )
                 logger.info(
                     "stream completed",
                     extra={"extra_data": {"endpoint": endpoint, "completion_tokens_estimated": estimate_tokens_from_text(''.join(completion_fragments))}},

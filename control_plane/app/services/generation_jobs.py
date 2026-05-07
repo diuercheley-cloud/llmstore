@@ -343,6 +343,7 @@ async def process_generation_job(
         endpoint="/v1/chat/completions",
         model=job.resolved_model,
         request_hash=cache_key,
+        plan_code=effective_plan.code,
     )
     if cached.hit and cached.payload is not None:
         now = utc_now()
@@ -365,6 +366,7 @@ async def process_generation_job(
             backend_errors=[],
             error_message=None,
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            plan_code=effective_plan.code,
         )
         job.status = "completed"
         job.backend_name = "cache:exact"
@@ -463,6 +465,7 @@ async def process_generation_job(
             backend_errors=result.backend_errors,
             error_message=None,
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            plan_code=effective_plan.code,
         )
         finished_at = utc_now()
         job.status = "completed"
@@ -497,6 +500,7 @@ async def process_generation_job(
             backend_errors=backend_errors,
             error_message=str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail),
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            plan_code=effective_plan.code,
         )
         job.status = "failed"
         job.error_message = str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail)

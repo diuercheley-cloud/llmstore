@@ -107,6 +107,9 @@ from app.services.backend_registry import ensure_default_backends
 from app.services.auth import require_admin
 from app.services.export_reporting import (
     build_monthly_report,
+    build_usage_by_client,
+    build_usage_by_model,
+    build_usage_summary,
     export_clients,
     export_invoices,
     export_payments,
@@ -602,196 +605,107 @@ async def get_usage(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/usage/summary")
-async def get_usage_summary(session: AsyncSession = Depends(get_db_session)):
+async def get_usage_summary(
+    session: AsyncSession = Depends(get_db_session),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
     await observe_billing_status_metrics(session)
-    request_stats_query = (
-        select(
-            Client.id.label("client_id"),
-            Client.name.label("client_name"),
-            Client.is_blocked.label("is_blocked"),
-            Client.billing_status.label("billing_status"),
-            Client.billing_plan_id.label("billing_plan_id"),
-            BillingPlan.code.label("billing_plan_code"),
-            BillingPlan.name.label("billing_plan_name"),
-            BillingPlan.rate_limit_per_minute.label("plan_rpm"),
-            BillingPlan.daily_token_quota.label("plan_daily_token_quota"),
-            BillingPlan.monthly_token_quota.label("plan_monthly_token_quota"),
-            BillingPlan.max_output_tokens.label("plan_max_output_tokens"),
-            BillingPlan.allow_streaming.label("plan_allow_streaming"),
-            func.coalesce(func.sum(RequestLog.estimated_cost_usd), 0).label("estimated_cost_usd"),
-            func.count(RequestLog.id).label("requests_total"),
-            func.coalesce(func.sum(RequestLog.prompt_tokens_estimated), 0).label("prompt_tokens_estimated"),
-            func.coalesce(func.sum(RequestLog.completion_tokens_estimated), 0).label("completion_tokens_estimated"),
-            func.coalesce(func.sum(case((RequestLog.http_status >= 400, 1), else_=0)), 0).label("errors_total"),
-            func.coalesce(func.avg(RequestLog.latency_ms), 0).label("avg_latency_ms"),
-            func.max(RequestLog.created_at).label("last_request_at"),
-        )
-        .select_from(Client)
-        .outerjoin(BillingPlan, BillingPlan.id == Client.billing_plan_id)
-        .outerjoin(RequestLog, RequestLog.client_id == Client.id)
-        .group_by(
-            Client.id,
-            Client.name,
-            Client.is_blocked,
-            Client.billing_status,
-            Client.billing_plan_id,
-            BillingPlan.code,
-            BillingPlan.name,
-            BillingPlan.rate_limit_per_minute,
-            BillingPlan.daily_token_quota,
-            BillingPlan.monthly_token_quota,
-            BillingPlan.max_output_tokens,
-            BillingPlan.allow_streaming,
-        )
-        .order_by(Client.created_at.desc())
-    )
-    request_stats = (await session.execute(request_stats_query)).mappings().all()
-
-    usage_query = (
-        select(
-            UsageRecord.client_id.label("client_id"),
-            func.coalesce(func.sum(UsageRecord.request_count), 0).label("usage_requests_total"),
-            func.coalesce(func.sum(UsageRecord.prompt_tokens), 0).label("usage_prompt_tokens_total"),
-            func.coalesce(func.sum(UsageRecord.completion_tokens), 0).label("usage_completion_tokens_total"),
-        )
-        .group_by(UsageRecord.client_id)
-    )
-    usage_rows = {
-        row["client_id"]: row for row in (await session.execute(usage_query)).mappings().all()
-    }
-    pricing_rules = {
-        row.billing_plan_id: row
-        for row in (await session.execute(select(PricingRule).where(PricingRule.is_active.is_(True)))).scalars().all()
-    }
-
-    clients: list[dict] = []
-    totals = {
-        "clients_total": len(request_stats),
-        "requests_total": 0,
-        "tokens_estimated_total": 0,
-        "errors_total": 0,
-        "avg_latency_ms": 0.0,
-        "estimated_cost_usd": 0.0,
-    }
-    by_plan: dict[str, dict] = {}
-    latency_sum = 0.0
-    latency_clients = 0
-    for row in request_stats:
-        usage_row = usage_rows.get(row["client_id"])
-        client_stub = Client(
-            id=row["client_id"],
-            name=row["client_name"],
-            is_blocked=row["is_blocked"],
-            billing_status=row["billing_status"],
-            description=None,
-            billing_plan_id=None,
-            rate_limit_per_minute=5,
-            daily_token_quota=20_000,
-            monthly_token_quota=300_000,
-            max_context_tokens=4096,
-            max_output_tokens=2048,
-            metadata_json=None,
-        )
-        if row["billing_plan_code"] is not None:
-            plan_stub = BillingPlan(
-                code=row["billing_plan_code"],
-                name=row["billing_plan_name"],
-                description=None,
-                rate_limit_per_minute=int(row["plan_rpm"]),
-                daily_token_quota=int(row["plan_daily_token_quota"]),
-                monthly_token_quota=int(row["plan_monthly_token_quota"]),
-                max_output_tokens=int(row["plan_max_output_tokens"]),
-                allow_streaming=bool(row["plan_allow_streaming"]),
-                is_active=True,
-            )
-            pricing_rule = pricing_rules.get(row["billing_plan_id"])
-            if pricing_rule is not None:
-                plan_stub.pricing_rules = [pricing_rule]
-            client_stub.billing_plan = plan_stub
-        effective_plan = resolve_effective_plan(client_stub)
-        counters = await get_current_usage_snapshot(session, row["client_id"])
-        daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
-        monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-        total_tokens_estimated = int(row["prompt_tokens_estimated"] + row["completion_tokens_estimated"])
-        invoice_preview = build_invoice_preview(
-            effective_plan=effective_plan,
-            monthly_used_tokens=monthly_used,
-        )
-        client_entry = {
-            "client_id": str(row["client_id"]),
-            "name": row["client_name"],
-            "is_blocked": row["is_blocked"],
-            "billing_status": row["billing_status"],
-            "billing_plan_code": effective_plan.code,
-            "billing_plan_name": effective_plan.name,
-            "plan_limits": {
-                "rate_limit_per_minute": effective_plan.rate_limit_per_minute,
-                "daily_token_quota": effective_plan.daily_token_quota,
-                "monthly_token_quota": effective_plan.monthly_token_quota,
-                "max_output_tokens": effective_plan.max_output_tokens,
-                "allow_streaming": effective_plan.allow_streaming,
-            },
-            "requests_total": int(row["requests_total"] or 0),
-            "tokens_estimated_total": total_tokens_estimated,
-            "estimated_cost_usd": round(float(row["estimated_cost_usd"] or 0), 6),
-            "prompt_tokens_estimated": int(row["prompt_tokens_estimated"] or 0),
-            "completion_tokens_estimated": int(row["completion_tokens_estimated"] or 0),
-            "errors_total": int(row["errors_total"] or 0),
-            "avg_latency_ms": round(float(row["avg_latency_ms"] or 0), 2),
-            "last_request_at": row["last_request_at"].isoformat() if row["last_request_at"] else None,
-            "usage_record_requests_total": int(usage_row["usage_requests_total"]) if usage_row else 0,
-            "usage_record_tokens_total": int((usage_row["usage_prompt_tokens_total"] + usage_row["usage_completion_tokens_total"])) if usage_row else 0,
-            "daily_usage": {
-                "used_tokens": daily_used,
-                "remaining_tokens": max(effective_plan.daily_token_quota - daily_used, 0),
-            },
-            "monthly_usage": {
-                "used_tokens": monthly_used,
-                "remaining_tokens": max(effective_plan.monthly_token_quota - monthly_used, 0),
-            },
-            "invoice_preview": invoice_preview,
-        }
-        clients.append(client_entry)
-        plan_bucket = by_plan.setdefault(
-            effective_plan.code,
+    queue_snapshot = proxy.queue_manager.get_snapshot()
+    summary = await build_usage_summary(session, queue_snapshot=queue_snapshot)
+    clients = await build_usage_by_client(session)
+    models = await build_usage_by_model(session)
+    plan_buckets: dict[str, dict] = {}
+    for client in clients:
+        plan_code = client.get("billing_plan_code") or "unknown"
+        bucket = plan_buckets.setdefault(
+            plan_code,
             {
-                "billing_plan_code": effective_plan.code,
-                "billing_plan_name": effective_plan.name,
+                "billing_plan_code": plan_code,
                 "clients_total": 0,
-                "requests_total": 0,
-                "tokens_estimated_total": 0,
-                "errors_total": 0,
-                "daily_used_tokens": 0,
-                "monthly_used_tokens": 0,
-                "estimated_cost_usd": 0.0,
+                "requests_today": 0,
+                "requests_month": 0,
+                "tokens_today": 0,
+                "tokens_month": 0,
+                "errors_month": 0,
+                "cache_hits_month": 0,
+                "cache_misses_month": 0,
+                "avg_latency_ms_month_weighted": 0.0,
             },
         )
-        plan_bucket["clients_total"] += 1
-        plan_bucket["requests_total"] += client_entry["requests_total"]
-        plan_bucket["tokens_estimated_total"] += client_entry["tokens_estimated_total"]
-        plan_bucket["errors_total"] += client_entry["errors_total"]
-        plan_bucket["daily_used_tokens"] += daily_used
-        plan_bucket["monthly_used_tokens"] += monthly_used
-        plan_bucket["estimated_cost_usd"] += invoice_preview["total_estimated"]
-        totals["requests_total"] += client_entry["requests_total"]
-        totals["tokens_estimated_total"] += client_entry["tokens_estimated_total"]
-        totals["errors_total"] += client_entry["errors_total"]
-        totals["estimated_cost_usd"] += invoice_preview["total_estimated"]
-        if client_entry["requests_total"] > 0:
-            latency_sum += client_entry["avg_latency_ms"]
-            latency_clients += 1
-    if latency_clients > 0:
-        totals["avg_latency_ms"] = round(latency_sum / latency_clients, 2)
-    totals["estimated_cost_usd"] = round(totals["estimated_cost_usd"], 6)
-    for item in by_plan.values():
-        item["estimated_cost_usd"] = round(item["estimated_cost_usd"], 6)
+        bucket["clients_total"] += 1
+        bucket["requests_today"] += int(client["requests_today"])
+        bucket["requests_month"] += int(client["requests_month"])
+        bucket["tokens_today"] += int(client["tokens_today"])
+        bucket["tokens_month"] += int(client["tokens_month"])
+        bucket["errors_month"] += int(client["errors_month"])
+        bucket["cache_hits_month"] += int(client["cache_hits_month"])
+        bucket["cache_misses_month"] += int(client["cache_misses_month"])
+        if int(client["requests_month"]) > 0:
+            bucket["avg_latency_ms_month_weighted"] += float(client["avg_latency_ms_month"]) * int(client["requests_month"])
 
+    plans = []
+    for bucket in plan_buckets.values():
+        requests_month = bucket["requests_month"]
+        plans.append(
+            {
+                "billing_plan_code": bucket["billing_plan_code"],
+                "clients_total": bucket["clients_total"],
+                "requests_today": bucket["requests_today"],
+                "requests_month": bucket["requests_month"],
+                "tokens_today": bucket["tokens_today"],
+                "tokens_month": bucket["tokens_month"],
+                "errors_month": bucket["errors_month"],
+                "cache_hits_month": bucket["cache_hits_month"],
+                "cache_misses_month": bucket["cache_misses_month"],
+                "cache_hit_rate_month": round(bucket["cache_hits_month"] / (bucket["cache_hits_month"] + bucket["cache_misses_month"]), 4)
+                if (bucket["cache_hits_month"] + bucket["cache_misses_month"])
+                else 0.0,
+                "avg_latency_ms_month": round(bucket["avg_latency_ms_month_weighted"] / requests_month, 2) if requests_month else 0.0,
+            }
+        )
+    plans.sort(key=lambda item: item["requests_month"], reverse=True)
     return {
-        "generated_at": utc_now().isoformat(),
-        "totals": totals,
-        "plans": list(by_plan.values()),
+        "generated_at": summary["generated_at"],
+        "summary": summary,
+        "totals": {
+            "clients_total": summary["clients_total"],
+            "requests_total": summary["requests_month"],
+            "tokens_estimated_total": summary["tokens_month"],
+            "errors_total": sum(item["errors_month"] for item in clients),
+            "avg_latency_ms": summary["avg_latency_ms_month"],
+            "estimated_cost_usd": 0.0,
+        },
+        "plans": plans,
         "clients": clients,
+        "models": models,
+        "queues": queue_snapshot,
+        "invoices": {
+            "pending": summary["invoices_pending"],
+            "paid": summary["invoices_paid"],
+            "overdue": summary["invoices_overdue"],
+            "total": summary["invoices_total"],
+        },
+        "client_status": {
+            "active": summary["clients_active"],
+            "suspended": summary["clients_suspended"],
+            "blocked": summary["clients_blocked"],
+        },
+        "cache": {
+            "hits_month": summary["cache_hits_month"],
+            "misses_month": summary["cache_misses_month"],
+            "hit_rate_month": summary["cache_hit_rate_month"],
+        },
     }
+
+
+@router.get("/usage/by-client")
+async def get_usage_by_client(session: AsyncSession = Depends(get_db_session)):
+    return await build_usage_by_client(session)
+
+
+@router.get("/usage/by-model")
+async def get_usage_by_model(session: AsyncSession = Depends(get_db_session)):
+    return await build_usage_by_model(session)
 
 
 @router.get("/revenue/summary")

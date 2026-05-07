@@ -10,7 +10,8 @@ from app.core.metrics import (
     QUEUE_WAITING,
     QUEUE_ACTIVE,
     QUEUE_FAILED,
-    QUEUE_WAIT_TIME
+    QUEUE_WAIT_TIME,
+    record_queue_wait,
 )
 
 
@@ -154,7 +155,9 @@ class QueueManager:
                 # self.pending stays same as it tracks both waiting + active for compatibility
                 QUEUE_WAITING.labels(queue_name=queue_name).set(self.waiting_counts[queue_name])
                 QUEUE_ACTIVE.labels(queue_name=queue_name).set(self.active_counts[queue_name])
-                QUEUE_WAIT_TIME.labels(queue_name=queue_name).observe(perf_counter() - wait_start)
+                wait_seconds = perf_counter() - wait_start
+                QUEUE_WAIT_TIME.labels(queue_name=queue_name).observe(wait_seconds)
+                record_queue_wait(plan=plan_code, wait_seconds=wait_seconds)
                 ACTIVE_GENERATIONS.inc()
 
             try:

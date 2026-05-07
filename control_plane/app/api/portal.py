@@ -540,6 +540,7 @@ async def portal_test_chat(
             endpoint="/portal/test-chat",
             model=selected_model.model_id,
             request_hash=cache_key,
+            plan_code=effective_plan.code,
         )
         if cached.hit and cached.payload is not None:
             latency_ms = int((perf_counter() - started) * 1000)
@@ -562,6 +563,7 @@ async def portal_test_chat(
                 backend_errors=[],
                 error_message=None,
                 request_summary=request_summary,
+                plan_code=effective_plan.code,
             )
             await session.commit()
             payload_json = cached.payload
@@ -605,6 +607,7 @@ async def portal_test_chat(
             backend_errors=result.backend_errors,
             error_message=None,
             request_summary=request_summary,
+            plan_code=effective_plan.code,
         )
         await session.commit()
         return {
@@ -634,6 +637,7 @@ async def portal_test_chat(
             backend_errors=backend_errors,
             error_message=_error_message_for_log(exc.detail),
             request_summary=request_summary,
+            plan_code=effective_plan.code,
         )
         await session.commit()
         raise
