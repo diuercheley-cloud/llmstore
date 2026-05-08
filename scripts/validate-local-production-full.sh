@@ -33,7 +33,25 @@ cleanup() {
 }
 trap cleanup EXIT
 
-VERSION="$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo "unknown")"
+resolve_validation_version() {
+  if [[ -n "${VALIDATION_VERSION:-}" ]]; then
+    printf '%s\n' "${VALIDATION_VERSION}"
+    return
+  fi
+
+  if [[ -f "${ROOT_DIR}/VERSION" ]]; then
+    local version_file
+    version_file="$(tr -d '\r\n' < "${ROOT_DIR}/VERSION")"
+    if [[ -n "${version_file}" ]]; then
+      printf '%s\n' "${version_file}"
+      return
+    fi
+  fi
+
+  git -C "${ROOT_DIR}" describe --tags --always 2>/dev/null || printf '%s\n' "unknown"
+}
+
+VERSION="$(resolve_validation_version)"
 GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "not-a-git-repo")"
 GIT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
 GIT_TAG_BASE="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 2>/dev/null || echo "none")"
@@ -207,42 +225,50 @@ log_info "Base URL: ${BASE_URL}"
 log_info "Timestamp: ${TIMESTAMP}"
 log_info "Output: ${OUTPUT_DIR}"
 
-run_validation "validate-localhost-mode.sh" "true"
-run_validation "validate-status-local.sh" "true"
-run_validation "validate-admin-lab-local.sh" "true"
+if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
+  run_validation "validate-localhost-mode.sh" "true"
+  run_validation "validate-status-local.sh" "true"
+  run_validation "validate-admin-lab-local.sh" "true"
 
-if curl -fsS --connect-timeout 2 --max-time 5 "${LM_STUDIO_BASE_URL}/models" >/dev/null 2>&1; then
-  LM_STUDIO_ONLINE="true"
-  run_validation "validate-lmstudio-backend.sh" "false" "LM Studio is online; integration validation executed."
+  if curl -fsS --connect-timeout 2 --max-time 5 "${LM_STUDIO_BASE_URL}/models" >/dev/null 2>&1; then
+    LM_STUDIO_ONLINE="true"
+    run_validation "validate-lmstudio-backend.sh" "false" "LM Studio is online; integration validation executed."
+  else
+    LM_STUDIO_ONLINE="false"
+    skip_validation "validate-lmstudio-backend.sh" "false" "LM Studio offline at ${LM_STUDIO_BASE_URL}"
+  fi
+
+  run_validation "validate-routing-local.sh" "true"
+  run_validation "validate-plan-queues.sh" "true"
+  run_validation "validate-client-portal-local.sh" "true"
+  run_validation "validate-api-keys-local.sh" "true"
+
+  if [[ "${RAG_ENABLED_FLAG}" == "true" ]]; then
+    run_validation "validate-rag-local-multiclient.sh" "true"
+  else
+    skip_validation "validate-rag-local-multiclient.sh" "false" "RAG_ENABLED=${RAG_ENABLED_FLAG}"
+  fi
+
+  run_validation "validate-local-billing.sh" "true" "Manual billing validation only"
+  run_validation "validate-local-docs.sh" "true"
+  run_validation "validate-observability-local.sh" "true"
 else
-  LM_STUDIO_ONLINE="false"
-  skip_validation "validate-lmstudio-backend.sh" "false" "LM Studio offline at ${LM_STUDIO_BASE_URL}"
+  log_info "VALIDATION_METADATA_ONLY=true; skipping service validations"
 fi
-
-run_validation "validate-routing-local.sh" "true"
-run_validation "validate-plan-queues.sh" "true"
-run_validation "validate-client-portal-local.sh" "true"
-run_validation "validate-api-keys-local.sh" "true"
-
-if [[ "${RAG_ENABLED_FLAG}" == "true" ]]; then
-  run_validation "validate-rag-local-multiclient.sh" "true"
-else
-  skip_validation "validate-rag-local-multiclient.sh" "false" "RAG_ENABLED=${RAG_ENABLED_FLAG}"
-fi
-
-run_validation "validate-local-billing.sh" "true" "Manual billing validation only"
-run_validation "validate-local-docs.sh" "true"
-run_validation "validate-observability-local.sh" "true"
 
 PYTEST_LOG_FILE="logs/pytest.log"
 PYTEST_FULL_LOG_PATH="${OUTPUT_DIR}/${PYTEST_LOG_FILE}"
 PYTEST_EXIT_CODE=0
-log_step "Running pytest inside control-plane"
-if dc exec -T control-plane python -m pytest -q >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
-  log_ok "pytest OK"
+if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
+  log_step "Running pytest inside control-plane"
+  if dc exec -T control-plane python -m pytest -q >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
+    log_ok "pytest OK"
+  else
+    PYTEST_EXIT_CODE=$?
+    log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+  fi
 else
-  PYTEST_EXIT_CODE=$?
-  log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+  printf 'metadata-only validation; pytest skipped\n' >"${PYTEST_FULL_LOG_PATH}"
 fi
 
 ORPHAN_ANALYSIS_JSON="$(python3 - "${ROOT_DIR}" "${STACK_ENV_FILE}" <<'PY'

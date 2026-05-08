@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
-VERSION=""
+VERSION_ARG=""
 ALLOW_DIRTY=false
 SKIP_VALIDATION=false
 INCLUDE_DOCS=false
@@ -19,7 +19,7 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --version) VERSION="$2"; shift 2 ;;
+        --version) VERSION_ARG="$2"; shift 2 ;;
         --allow-dirty) ALLOW_DIRTY=true; shift 1 ;;
         --skip-validation) SKIP_VALIDATION=true; shift 1 ;;
         --include-docs) INCLUDE_DOCS=true; shift 1 ;;
@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "${VERSION}" ]]; then
+if [[ -z "${VERSION_ARG}" ]]; then
     usage
 fi
 
@@ -43,7 +43,7 @@ GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
 GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo "unknown")"
 LAST_TAG="$(git describe --tags --abbrev=0 --match "*-local-production" 2>/dev/null || echo "none")"
 
-echo "Releasing version: ${VERSION}"
+echo "Releasing version: ${VERSION_ARG}"
 echo "Branch: ${GIT_BRANCH}"
 echo "Commit: ${GIT_COMMIT}"
 echo "Last local-production tag: ${LAST_TAG}"
@@ -52,7 +52,7 @@ VALIDATION_RESULT="skipped"
 if [[ "${SKIP_VALIDATION}" == "false" ]]; then
     echo "Running validation..."
     # We don't use 'set -e' for the validation script to allow manifest generation on failure
-    if "${SCRIPT_DIR}/validate-local-production-full.sh"; then
+    if VALIDATION_VERSION="${VERSION_ARG}" "${SCRIPT_DIR}/validate-local-production-full.sh"; then
         VALIDATION_RESULT="success"
     else
         VALIDATION_RESULT="failure"
@@ -67,7 +67,7 @@ if [[ -z "${LATEST_ARTIFACT_DIR}" && "${SKIP_VALIDATION}" == "false" ]]; then
     echo "Warning: No validation artifacts found."
 fi
 
-RELEASE_DIR="${ROOT_DIR}/releases/${VERSION}"
+RELEASE_DIR="${ROOT_DIR}/releases/${VERSION_ARG}"
 mkdir -p "${RELEASE_DIR}"
 
 if [[ -n "${LATEST_ARTIFACT_DIR}" && -d "${LATEST_ARTIFACT_DIR}" ]]; then
@@ -86,17 +86,23 @@ fi
 
 # Generate manifest
 "${SCRIPT_DIR}/generate-release-manifest.sh" \
-    --version "${VERSION}" \
+    --version "${VERSION_ARG}" \
     --artifact-dir "${LATEST_ARTIFACT_DIR:-none}" \
     --validation-result "${VALIDATION_RESULT}"
 
+if [[ "${VALIDATION_RESULT}" == "success" && -x "${SCRIPT_DIR}/validate-release-metadata.sh" ]]; then
+    "${SCRIPT_DIR}/validate-release-metadata.sh" \
+        --version "${VERSION_ARG}" \
+        --release-dir "${RELEASE_DIR}"
+fi
+
 echo "--------------------------------------------------"
-echo "Release ${VERSION} prepared in ${RELEASE_DIR}"
+echo "Release ${VERSION_ARG} prepared in ${RELEASE_DIR}"
 ls -l "${RELEASE_DIR}"
 echo "--------------------------------------------------"
 echo "Next suggested commands:"
-echo "  git add releases/${VERSION}"
-echo "  git commit -m \"chore: release ${VERSION}\""
-echo "  git tag ${VERSION}"
+echo "  git add releases/${VERSION_ARG}"
+echo "  git commit -m \"chore: release ${VERSION_ARG}\""
+echo "  git tag ${VERSION_ARG}"
 echo "  git push origin ${GIT_BRANCH}"
-echo "  git push origin ${VERSION}"
+echo "  git push origin ${VERSION_ARG}"

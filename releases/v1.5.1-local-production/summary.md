@@ -4,13 +4,13 @@
 
 ## Metadata
 
-- **Version:** v1.4.4-local-demo
+- **Version:** v1.5.1-local-production
 - **Branch:** feature/local-production-v1.5-hardening-plus
-- **Commit:** f7c6b6222046b2eb045d949845a182fe9aa9773e
+- **Commit:** a5f3596e68dae60228b442ad513d7a80d0429a2c
 - **Base URL:** http://localhost:18080
-- **Start Time:** 2026-05-08T18:47:45Z
-- **End Time:** 2026-05-08T18:50:37Z
-- **Total Duration:** 172s
+- **Start Time:** 2026-05-08T19:33:20Z
+- **End Time:** 2026-05-08T19:37:02Z
+- **Total Duration:** 222s
 
 ## Environment
 
@@ -31,13 +31,13 @@
 | `validate-admin-lab-local.sh` | OK | Yes | 41s | [view](logs/validate-admin-lab-local.sh.log) |
 | `validate-lmstudio-backend.sh` | OK | No | 7s | [view](logs/validate-lmstudio-backend.sh.log) |
 | `validate-routing-local.sh` | OK | Yes | 0s | [view](logs/validate-routing-local.sh.log) |
-| `validate-plan-queues.sh` | OK | Yes | 13s | [view](logs/validate-plan-queues.sh.log) |
+| `validate-plan-queues.sh` | OK | Yes | 25s | [view](logs/validate-plan-queues.sh.log) |
 | `validate-client-portal-local.sh` | OK | Yes | 0s | [view](logs/validate-client-portal-local.sh.log) |
 | `validate-api-keys-local.sh` | OK | Yes | 0s | [view](logs/validate-api-keys-local.sh.log) |
 | `validate-rag-local-multiclient.sh` | OK | Yes | 3s | [view](logs/validate-rag-local-multiclient.sh.log) |
 | `validate-local-billing.sh` | OK | Yes | 0s | [view](logs/validate-local-billing.sh.log) |
 | `validate-local-docs.sh` | OK | Yes | 0s | [view](logs/validate-local-docs.sh.log) |
-| `validate-observability-local.sh` | OK | Yes | 16s | [view](logs/validate-observability-local.sh.log) |
+| `validate-observability-local.sh` | OK | Yes | 56s | [view](logs/validate-observability-local.sh.log) |
 
 ## Test Suite
 
@@ -57,8 +57,8 @@
 
 ## Useful commands
 
-- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T154745/logs/`
-- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T154745/logs/*.log`
+- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T163320/logs/`
+- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T163320/logs/*.log`
 - Check services: `docker compose ps`
 
 ## Out of scope

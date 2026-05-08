@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.5.1-local-production] - 2026-05-08
+
+### Fixed
+- fixed release metadata version source
+- aligned release manifest, summary.json and summary.md
+- added validate-release-metadata.sh
+- added regression test for release metadata consistency
+
 ## [v1.4.4-local-demo] - 2026-05-08
 
 ### Added
