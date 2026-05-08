@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.5.2-local-ops] - 2026-05-08
+
+### Added
+- production readiness report
+- security report local
+- retention policy local
+- tenant export seguro
+- tenant delete seguro
+- model benchmark
+- release bundle seguro
+- first-run local
+
 ## [v1.5.1-local-production] - 2026-05-08
 
 ### Fixed

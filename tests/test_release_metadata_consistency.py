@@ -105,7 +105,10 @@ def test_validate_release_metadata_script_exists_and_validates_current_release()
     version = "v9.9.9-release-validator-test"
     release_dir = ROOT / "releases" / version
     release_dir.mkdir(parents=True, exist_ok=True)
-    commit = run_command(["git", "rev-parse", "HEAD"]).stdout.strip()
+    git_result = run_command(["git", "rev-parse", "HEAD"])
+    commit = git_result.stdout.strip() if git_result.returncode == 0 else "unknown"
+    if not commit:
+        commit = "unknown"
 
     try:
         (release_dir / "release-manifest.json").write_text(

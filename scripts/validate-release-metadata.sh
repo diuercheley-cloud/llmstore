@@ -63,15 +63,27 @@ def load_json(path):
 manifest = load_json(manifest_path)
 summary = load_json(summary_path)
 
+def normalize_commit(value):
+    if value is None:
+        return "unknown"
+    value = str(value).strip()
+    if not value or value in {"unknown", "not-a-git-repo"}:
+        return "unknown"
+    return value
+
 if manifest.get("version") != expected_version:
     fail(f"release-manifest.json version mismatch: {manifest.get('version')} != {expected_version}")
 if summary.get("version") != expected_version:
     fail(f"summary.json version mismatch: {summary.get('version')} != {expected_version}")
 
-if "validated_commit" not in manifest and manifest.get("git_commit") != current_commit:
-    fail(f"release-manifest.json git_commit mismatch: {manifest.get('git_commit')} != {current_commit}")
-if "validated_commit" not in summary and summary.get("git_commit") != current_commit:
-    fail(f"summary.json git_commit mismatch: {summary.get('git_commit')} != {current_commit}")
+current_commit = normalize_commit(current_commit)
+manifest_commit = normalize_commit(manifest.get("git_commit"))
+summary_commit = normalize_commit(summary.get("git_commit"))
+
+if "validated_commit" not in manifest and manifest_commit != current_commit:
+    fail(f"release-manifest.json git_commit mismatch: {manifest_commit} != {current_commit}")
+if "validated_commit" not in summary and summary_commit != current_commit:
+    fail(f"summary.json git_commit mismatch: {summary_commit} != {current_commit}")
 
 for field in ("psp_integration", "pix_real_billing", "models_included", "rag_uploads_included"):
     if manifest.get(field) is not False:

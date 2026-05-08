@@ -1,6 +1,6 @@
 # Local Production Runbook
 
-Este documento descreve como operar o sistema `llm-inference-stack` em ambiente local (`localhost`) com todas as funcionalidades da camada SaaS habilitadas.
+Este documento descreve como operar o sistema `llm-inference-stack` em ambiente local (`localhost`) com todas as funcionalidades da camada SaaS habilitadas. Para setup automatizado numa máquina nova, veja o [First Run Local](./FIRST_RUN_LOCAL.md).
 
 ## 1. Visão Geral
 
@@ -54,12 +54,38 @@ Para garantir que todos os serviços estão operando corretamente, execute a su�
 ### Via Makefile
 ```bash
 make validate-local-production
+make production-readiness
 ```
 
 ### Via Script
 ```bash
 ./scripts/validate-local-production-full.sh
+./scripts/production-readiness-local.sh
 ```
+
+### Benchmark de Modelos
+Para medir a performance de modelos configurados e determinar quais planos eles suportam, utilize a ferramenta de benchmark local:
+```bash
+make benchmark-model
+# ou
+./scripts/benchmark-model-local.sh --model "gemma-2b" --quick
+```
+Para mais detalhes, consulte o [Documento de Benchmark Local](./MODEL_BENCHMARK_LOCAL.md).
+
+O relatório de readiness gera artefatos em:
+
+```text
+artifacts/production-readiness/<timestamp>/
+  report.md
+  report.json
+  logs/
+```
+
+O score final do relatório é um destes valores:
+
+- `READY`
+- `READY_WITH_WARNINGS`
+- `NOT_READY`
 
 ## 5. URLs Principais
 
@@ -208,6 +234,9 @@ docker compose logs -f data-plane-gemma
 Após rodar `validate-local-production-full.sh`, os logs detalhados ficam em:
 `artifacts/local-production-validation/<timestamp>/`
 
+Após rodar `production-readiness-local.sh`, o relatório operacional fica em:
+`artifacts/production-readiness/<timestamp>/`
+
 ## 13. Backup e Restore
 
 ### Backup
@@ -230,7 +259,51 @@ Para gerar um manifesto da versão atual para deploy:
 ```
 Isso gerará os arquivos em `releases/v<VERSION>/`.
 
-## 15. Troubleshooting
+## 15. Como Criar Bundle de Release Distribuível
+
+Para gerar um arquivo `.tar.gz` seguro (sem secrets ou modelos) para instalar em outra máquina:
+
+```bash
+make release-bundle
+```
+
+Isso gerará:
+- `releases/v<VERSION>/llm-inference-stack-v<VERSION>.tar.gz`
+- `releases/v<VERSION>/bundle-manifest.json`
+- `releases/v<VERSION>/bundle-checksums.sha256`
+
+Para validar a integridade e segurança do bundle:
+```bash
+./scripts/validate-release-bundle.sh
+```
+
+Consulte [docs/RELEASE_BUNDLE_LOCAL.md](RELEASE_BUNDLE_LOCAL.md) para detalhes.
+
+## 16. Exportação, Deleção e Anonimização de Tenant
+
+Para suporte, auditoria ou offboarding de clientes:
+
+### Exportação Segura
+Gera um snapshot dos metadados, faturas e arquivos do cliente.
+```bash
+./scripts/export-client-local.sh --client-id UUID --include-rag-files --include-tts-files
+```
+
+### Deleção e Purge
+Remove dados do banco e limpa arquivos físicos com confirmação forte.
+```bash
+./scripts/delete-client-local.sh --client-id UUID --delete-rag-files --delete-tts-files
+```
+
+### Anonimização (GDPR/LGPD-like)
+Mantém registros financeiros mas remove PII.
+```bash
+./scripts/delete-client-local.sh --client-id UUID --anonymize-instead
+```
+
+Consulte [docs/TENANT_EXPORT_DELETE_LOCAL.md](TENANT_EXPORT_DELETE_LOCAL.md) para detalhes completos.
+
+## 16. Troubleshooting
 
 | Problema | Causa Provável | Solução |
 | :--- | :--- | :--- |
@@ -243,31 +316,27 @@ Isso gerará os arquivos em `releases/v<VERSION>/`.
 | RAG não indexa | Worker offline ou PDF corrompido | Verifique `docker compose logs control-plane-worker` |
 | Admin Lab vazio | Falha na comunicação com API | Verifique o console do navegador e o `ADMIN_TOKEN` |
 
-## 16. Limpeza segura de dados RAG locais
+## 16. Limpeza e Retenção de Dados Locais
 
-O diretório `data/rag_uploads/` pode acumular muitos documentos de teste. Use o script de limpeza segura para liberar espaço sem afetar modelos ou código.
+O sistema acumula logs, artefatos de validação, áudios TTS e uploads RAG. Para manter o ambiente limpo e otimizado, utilize a política de retenção local.
 
-### Exemplos de uso:
+### Política Geral (Recomendado)
+Use o script central de retenção para aplicar todas as regras de limpeza segura:
 
-- **Apenas mostrar o que seria apagado (Dry Run):**
-  ```bash
-  ./scripts/clean-rag-local-data.sh --dry-run
-  ```
+```bash
+# Simular limpeza (Dry Run)
+./scripts/retention-local.sh --dry-run --section all
 
-- **Limpar arquivos mais antigos que 7 dias:**
-  ```bash
-  ./scripts/clean-rag-local-data.sh --older-than-days 7 --yes
-  ```
+# Executar limpeza de logs e artefatos antigos
+./scripts/retention-local.sh --yes --section all
+```
 
-- **Limpar dados de um cliente específico:**
-  ```bash
-  ./scripts/clean-rag-local-data.sh --client-id UUID_DO_CLIENTE --yes
-  ```
+Consulte [docs/RETENTION_LOCAL.md](RETENTION_LOCAL.md) para detalhes sobre as regras e proteções.
 
-- **Limpar tudo (Arquivos, Artifacts e Metadados do Banco):**
-  ```bash
-  ./scripts/clean-rag-local-data.sh --include-artifacts --reset-db-metadata --yes
-  ```
+### Limpeza Específica de RAG
+Se precisar de controle granular sobre apenas os dados RAG:
+```bash
+./scripts/clean-rag-local-data.sh --older-than-days 7 --yes
+```
 
-**Importante:** O script protege automaticamente diretórios críticos como `models/`, `scripts/`, `docs/` e arquivos `.gguf`. Sem a flag `--yes`, ele pedirá confirmação manual digitando `DELETE LOCAL RAG DATA`.
-
+**Importante:** Ambos os scripts protegem automaticamente diretórios críticos como `models/`, `scripts/`, `docs/` e arquivos `.gguf`.

@@ -52,7 +52,7 @@ resolve_validation_version() {
 }
 
 VERSION="$(resolve_validation_version)"
-GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "not-a-git-repo")"
+GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "unknown")"
 GIT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
 GIT_TAG_BASE="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 2>/dev/null || echo "none")"
 

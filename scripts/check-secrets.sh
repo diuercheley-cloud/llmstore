@@ -104,9 +104,10 @@ EOF
 
 STAGED=false
 ALL=false
+CHECK_PATH=""
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [--staged | --all | --install-hook]"
+    echo "Usage: $0 [--staged | --all | --install-hook | --path <dir>]"
     exit 1
 fi
 
@@ -115,6 +116,7 @@ while [[ "$#" -gt 0 ]]; do
         --staged) STAGED=true ;;
         --all) ALL=true ;;
         --install-hook) install_hook; exit 0 ;;
+        --path) CHECK_PATH="$2"; shift ;;
         *) echo "Unknown parameter: $1"; exit 1 ;;
     esac
     shift
@@ -122,7 +124,18 @@ done
 
 EXIT_CODE=0
 
-if [ "$STAGED" = true ]; then
+if [[ -n "${CHECK_PATH}" ]]; then
+    echo "Checking directory ${CHECK_PATH} for secrets..."
+    if [[ ! -d "${CHECK_PATH}" ]]; then
+        echo "Directory ${CHECK_PATH} not found"
+        exit 1
+    fi
+    while IFS= read -r f; do
+        if [ -f "$f" ]; then
+            check_file "$f" || EXIT_CODE=1
+        fi
+    done < <(find "${CHECK_PATH}" -type f)
+elif [ "$STAGED" = true ]; then
     echo "Checking staged files for secrets..."
     # Get staged files, excluding deleted ones
     FILES=$(git diff --cached --name-only --diff-filter=ACM)

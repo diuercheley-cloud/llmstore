@@ -40,3 +40,5 @@ data/rag_uploads/*.pdf
 data/rag_uploads/
 data/rag_uploads-drtest-*/
 .local/
+exports/
+releases/**/*.tar.gz

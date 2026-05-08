@@ -1,0 +1,13 @@
+{
+  "rag_uploads_retention_days": null,
+  "tts_audio_retention_days": 7,
+  "validation_artifacts_keep_last": 10,
+  "demo_artifacts_keep_last": 5,
+  "security_reports_keep_last": 10,
+  "production_readiness_keep_last": 10,
+  "dr_artifacts_keep_last": 5,
+  "model_benchmarks_keep_last": 10,
+  "backups_keep_last": 5,
+  "logs_retention_days": 14,
+  "releases_keep_all": true
+}

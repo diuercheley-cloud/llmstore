@@ -1,12 +1,21 @@
 SHELL := /bin/bash
 
-.PHONY: install up down validate validate-local-production backup logs check-secrets install-git-hooks clean-compose-local
+.PHONY: install up down validate validate-local-production production-readiness backup logs check-secrets install-git-hooks clean-compose-local first-run-local first-run-demo
+
+first-run-local:
+	./scripts/first-run-local.sh
+
+first-run-demo:
+	./scripts/first-run-local.sh --with-demo
 
 install:
 	./scripts/install.sh
 
 check-secrets:
 	./scripts/check-secrets.sh --all
+
+security-report:
+	./scripts/security-report-local.sh
 
 install-git-hooks:
 	./scripts/check-secrets.sh --install-hook
@@ -22,6 +31,9 @@ validate:
 
 validate-local-production:
 	./scripts/validate-local-production-full.sh
+
+production-readiness:
+	./scripts/production-readiness-local.sh
 
 demo-local:
 	./scripts/demo-full-local.sh --no-build
@@ -43,6 +55,27 @@ clean-rag-local-dry-run:
 
 clean-rag-local:
 	./scripts/clean-rag-local-data.sh
+
+retention-dry-run:
+	./scripts/retention-local.sh --dry-run --section all
+
+validate-retention:
+	./scripts/validate-retention-local.sh
+
+validate-export-client:
+	./scripts/validate-export-client-local.sh
+
+validate-delete-client:
+	./scripts/validate-delete-client-local.sh
+
+release-bundle:
+	./scripts/create-release-bundle.sh --version $(shell cat VERSION) --include-docs --include-examples --include-demo
+
+validate-release-bundle:
+	./scripts/validate-release-bundle.sh
+
+benchmark-model:
+	./scripts/benchmark-model-local.sh --model "gemma" --quick
 
 logs:
 	@if [[ -n "$$SERVICE" ]]; then \

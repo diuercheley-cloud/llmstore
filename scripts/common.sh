@@ -26,6 +26,9 @@ load_env_file() {
     fi
     local key="${line%%=*}"
     local value="${line#*=}"
+    if [[ -v "${key}" ]]; then
+      continue
+    fi
     export "${key}=${value}"
   done < "${env_path}"
 }
@@ -87,8 +90,9 @@ init_stack_env() {
 
 dc() {
   local compose_args=()
-  if [[ -n "${COMPOSE_PROJECT_NAME:-}" ]]; then
-    compose_args+=(-p "${COMPOSE_PROJECT_NAME}")
+  local compose_project_name="${COMPOSE_PROJECT_NAME:-llm-inference-stack}"
+  if [[ -n "${compose_project_name}" ]]; then
+    compose_args+=(-p "${compose_project_name}")
   fi
   docker compose "${compose_args[@]}" "${DOCKER_COMPOSE_ARGS[@]}" "$@"
 }
@@ -124,6 +128,10 @@ curl_base_url() {
     local internal_url="${url}"
     internal_url="${internal_url/http:\/\/localhost:${HOST_PORT:-18080}/http://localhost:8080}"
     internal_url="${internal_url/http:\/\/127.0.0.1:${HOST_PORT:-18080}/http://localhost:8080}"
+    if curl "$@" "${internal_url}"; then
+      record_curl_mode "container_local" "${internal_url}"
+      return 0
+    fi
     if dc exec -T control-plane curl "$@" "${internal_url}"; then
       record_curl_mode "container" "${internal_url}"
       return 0

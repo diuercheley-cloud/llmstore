@@ -1,5 +1,7 @@
 # Local Production Quickstart
 
+> **Novo Instalador:** Para realizar a instalação completa a partir do zero em uma máquina nova, veja o [First Run Local](./FIRST_RUN_LOCAL.md).
+
 Versão curta para subir e testar o ambiente rapidamente.
 
 ## 1. Subir a Stack

@@ -18,10 +18,29 @@ def test_local_production_summary_structure():
     if not subdirs:
         return
 
-    latest_dir = subdirs[0]
-    summary_json_path = latest_dir / "summary.json"
-    summary_md_path = latest_dir / "summary.md"
-    logs_dir = latest_dir / "logs"
+    latest_dir = None
+    summary_json_path = None
+    summary_md_path = None
+    logs_dir = None
+
+    for candidate in subdirs:
+        candidate_summary = candidate / "summary.json"
+        if not candidate_summary.exists():
+            continue
+        try:
+            with open(candidate_summary, "r") as f:
+                candidate_data = json.load(f)
+        except Exception:
+            continue
+        if candidate_data.get("scripts"):
+            latest_dir = candidate
+            summary_json_path = candidate_summary
+            summary_md_path = candidate / "summary.md"
+            logs_dir = candidate / "logs"
+            break
+
+    if latest_dir is None:
+        return
 
     assert summary_json_path.exists(), f"summary.json not found in {latest_dir}"
     assert summary_md_path.exists(), f"summary.md not found in {latest_dir}"

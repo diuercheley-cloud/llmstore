@@ -34,9 +34,9 @@ MANIFEST_PATH="${RELEASE_DIR}/release-manifest.json"
 
 mkdir -p "${RELEASE_DIR}"
 
-GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
-GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo "unknown")"
-GIT_TAGS="$(git tag --points-at HEAD 2>/dev/null | tr '\n' ',' | sed 's/,$//' || echo "")"
+GIT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "unknown")"
+GIT_TAGS="$(git -C "${ROOT_DIR}" tag --points-at HEAD 2>/dev/null | tr '\n' ',' | sed 's/,$//' || echo "")"
 GENERATED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 # Detect files

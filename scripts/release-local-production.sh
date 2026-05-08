@@ -39,9 +39,9 @@ if [[ "${ALLOW_DIRTY}" == "false" ]]; then
     fi
 fi
 
-GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
-GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo "unknown")"
-LAST_TAG="$(git describe --tags --abbrev=0 --match "*-local-production" 2>/dev/null || echo "none")"
+GIT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+GIT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || echo "unknown")"
+LAST_TAG="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 --match "*-local-production" 2>/dev/null || echo "none")"
 
 echo "Releasing version: ${VERSION_ARG}"
 echo "Branch: ${GIT_BRANCH}"

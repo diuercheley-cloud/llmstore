@@ -1,0 +1,16 @@
+{
+  "version": "v1.5.2-local-ops",
+  "git_branch": "feature/v1.5.2-local-ops",
+  "git_commit": "07e2debed5fe1c1b431218b25fc4e7a08b5e7493",
+  "generated_at": "2026-05-08T22:37:20Z",
+  "included_paths": ["control_plane","data_plane_mock","docker","scripts","Makefile","README.md","CHANGELOG.md","VERSION","docker-compose.yml","docker-compose.prod.yml","test-compose.yml","test-override.yml",".env.example","docs","examples","demo"],
+  "excluded_paths": [".git",".venv","node_modules","__pycache__",".pytest_cache",".mypy_cache",".ruff_cache",".env",".env.local",".local","models","data/rag_uploads","backups","exports","artifacts","*.gguf","*.pem","*.key","*.tar.gz"],
+  "files_count": 299,
+  "archive_name": "llm-inference-stack-v1.5.2-local-ops.tar.gz",
+  "archive_sha256": "711cb297c306d378952d03e8fdafd9f54c6cff7aee53e4d45764acb495205a43",
+  "secrets_scan_passed": true,
+  "models_included": false,
+  "rag_uploads_included": false,
+  "env_included": false,
+  "local_data_included": false
+}
