@@ -14,6 +14,7 @@ from app.api.rag import router as rag_router, client_rag_router
 from app.api.portal import router as portal_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
+from app.api.pocket_tts import router as pocket_tts_router
 from app.api.developer_docs import router as developer_docs_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -83,6 +84,7 @@ app.include_router(client_rag_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account
 app.include_router(developer_docs_router)
+app.include_router(pocket_tts_router)
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")

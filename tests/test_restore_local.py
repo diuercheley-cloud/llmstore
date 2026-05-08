@@ -8,7 +8,7 @@ def test_restore_local_script_mentions_clean_restore_flow():
 
     assert "pg_restore -U" in script
     assert "--clean --if-exists --no-owner --no-privileges" in script
-    assert "docker compose up -d postgres redis" in script
+    assert "dc up -d postgres redis" in script
     assert "include_rag_files" in script
     assert "include_models" in script
 

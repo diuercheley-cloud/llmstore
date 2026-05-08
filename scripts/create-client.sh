@@ -17,7 +17,7 @@ MAX_CONTEXT_TOKENS="${MAX_CONTEXT_TOKENS:-32768}"
 MAX_OUTPUT_TOKENS="${MAX_OUTPUT_TOKENS:-32768}"
 
 client_json="$(
-  curl -fsS "${BASE_URL}/admin/clients" \
+  curl_base_url "${BASE_URL}/admin/clients" -fsS \
     -H "X-Admin-Token: ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
     -d "{
@@ -34,7 +34,7 @@ client_json="$(
 client_id="$(printf '%s' "${client_json}" | python3 -c 'import json, sys; print(json.load(sys.stdin)["id"])')"
 
 key_json="$(
-  curl -fsS "${BASE_URL}/admin/api-keys" \
+  curl_base_url "${BASE_URL}/admin/api-keys" -fsS \
     -H "X-Admin-Token: ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
     -d "{\"client_id\":\"${client_id}\",\"name\":\"${CLIENT_NAME}-default\"}"

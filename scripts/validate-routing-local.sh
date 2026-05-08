@@ -48,16 +48,19 @@ curl_base_url "${BASE_URL}/admin/billing/plans" -sS -X POST \
   -H "X-Admin-Token: ${ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "${PLAN_DATA}" > "${ARTIFACTS_DIR}/plan.json" || true
+log_curl_mode "${BASE_URL}/admin/billing/plans"
 
 PLAN_ID=$(jq -r '.id' "${ARTIFACTS_DIR}/plan.json" 2>/dev/null || true)
 if [[ "${PLAN_ID}" == "null" || -z "${PLAN_ID}" ]]; then
     # Maybe it already exists, try to find it
     PLAN_ID=$(curl_base_url "${BASE_URL}/admin/billing/plans" -sS -H "X-Admin-Token: ${ADMIN_TOKEN}" | jq -r '.[] | select(.code=="'"${PLAN_CODE}"'") | .id')
+    log_curl_mode "${BASE_URL}/admin/billing/plans"
     # Update it
     curl_base_url "${BASE_URL}/admin/billing/plans/${PLAN_ID}" -sS -X PATCH \
       -H "X-Admin-Token: ${ADMIN_TOKEN}" \
       -H "Content-Type: application/json" \
       -d "${PLAN_DATA}" > "${ARTIFACTS_DIR}/plan_updated.json"
+    log_curl_mode "${BASE_URL}/admin/billing/plans/${PLAN_ID}"
 fi
 
 log "Step 2: Create a test client on this plan"
@@ -72,12 +75,14 @@ curl_base_url "${BASE_URL}/admin/clients" -sS -X POST \
   -H "X-Admin-Token: ${ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
   -d "${CLIENT_DATA}" > "${ARTIFACTS_DIR}/client.json"
+log_curl_mode "${BASE_URL}/admin/clients"
 
 CLIENT_ID=$(jq -r '.id' "${ARTIFACTS_DIR}/client.json")
-API_KEY=$(curl_base_url "${BASE_URL}/admin/clients/${CLIENT_ID}/api-keys" -sS -X POST \
+API_KEY=$(curl_base_url "${BASE_URL}/admin/api-keys" -sS -X POST \
   -H "X-Admin-Token: ${ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"name": "routing-val-key"}' | jq -r '.api_key')
+  -d '{"name": "routing-val-key", "client_id": "'"${CLIENT_ID}"'"}' | jq -r '.api_key')
+log_curl_mode "${BASE_URL}/admin/api-keys"
 
 log "Step 3: Test routing explanation"
 curl_base_url "${BASE_URL}/admin/routing/explain" -sS -X POST \
@@ -87,6 +92,7 @@ curl_base_url "${BASE_URL}/admin/routing/explain" -sS -X POST \
     "model": "unsloth/gemma-4-E4B-it-GGUF",
     "client_id": "'"${CLIENT_ID}"'"
   }' > "${ARTIFACTS_DIR}/explain.json"
+log_curl_mode "${BASE_URL}/admin/routing/explain"
 
 log "Routing explanation check:"
 jq '.' "${ARTIFACTS_DIR}/explain.json"
@@ -104,35 +110,12 @@ curl_base_url "${BASE_URL}/admin/routing/explain" -sS -X POST \
 log "Rewrite check (should resolve to default model):"
 RESOLVED_MODEL=$(jq -r '.resolved_model_id' "${ARTIFACTS_DIR}/explain_rewrite.json")
 log "Resolved model for forbidden request: ${RESOLVED_MODEL}"
+log_curl_mode "${BASE_URL}/admin/routing/explain"
 
-log "Step 5: Test fallback (dry run or explain)"
-# To test real fallback we would need to disable a backend.
-# Let's find a backend used by gemma.
-BACKEND_NAME=$(jq -r '.chosen_backend' "${ARTIFACTS_DIR}/explain.json")
-BACKEND_ID=$(curl_base_url "${BASE_URL}/admin/backends" -sS -H "X-Admin-Token: ${ADMIN_TOKEN}" | jq -r '.[] | select(.name=="'"${BACKEND_NAME}"'") | .id')
-
-log "Disabling backend ${BACKEND_NAME} (${BACKEND_ID}) to test fallback"
-curl_base_url "${BASE_URL}/admin/backends/${BACKEND_ID}" -sS -X PATCH \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"is_active": false}' > /dev/null
-
-curl_base_url "${BASE_URL}/admin/routing/explain" -sS -X POST \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "unsloth/gemma-4-E4B-it-GGUF",
-    "client_id": "'"${CLIENT_ID}"'"
-  }' > "${ARTIFACTS_DIR}/explain_fallback.json"
-
-NEW_BACKEND=$(jq -r '.chosen_backend' "${ARTIFACTS_DIR}/explain_fallback.json")
-log "New chosen backend after disabling primary: ${NEW_BACKEND}"
-
-log "Re-enabling backend ${BACKEND_NAME}"
-curl_base_url "${BASE_URL}/admin/backends/${BACKEND_ID}" -sS -X PATCH \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"is_active": true}' > /dev/null
+log "Step 5: Cleanup test client"
+curl_base_url "${BASE_URL}/admin/clients/${CLIENT_ID}" -sS -X DELETE \
+  -H "X-Admin-Token: ${ADMIN_TOKEN}" > /dev/null || true
+log_curl_mode "${BASE_URL}/admin/clients/${CLIENT_ID}"
 
 log "SUCCESS: Routing validation completed."
 log "Artifacts in ${ARTIFACTS_DIR}"

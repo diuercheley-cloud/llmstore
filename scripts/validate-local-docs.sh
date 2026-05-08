@@ -18,9 +18,10 @@ log_section "Local Developer Documentation Validation"
 
 # Fetch documentation
 log_step "Fetching $URL"
-CONTENT=$(curl -s -f "$URL")
+CONTENT=$(curl_base_url "$URL" -s -f)
 
 if [ -n "$CONTENT" ]; then
+  log_curl_mode "$URL"
   log_ok "Successfully fetched documentation"
 else
   log_error "Failed to fetch documentation or it's empty"

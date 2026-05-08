@@ -4,12 +4,15 @@ set -e
 # Base URL for local validation
 export BASE_URL=${BASE_URL:-"http://localhost:18080"}
 
+source "$(dirname "$0")/common.sh"
+cd "$ROOT_DIR"
+
 echo "--- Validating API Examples ---"
 
 # 1. Load demo client env if exists
-if [ -f ".local/demo-client.env" ]; then
-    echo "Loading .local/demo-client.env..."
-    source .local/demo-client.env
+if [ -f "$ROOT_DIR/.local/demo-client.env" ]; then
+    echo "Loading $ROOT_DIR/.local/demo-client.env..."
+    source "$ROOT_DIR/.local/demo-client.env"
     export CLIENT_API_KEY=${DEMO_API_KEY}
 fi
 

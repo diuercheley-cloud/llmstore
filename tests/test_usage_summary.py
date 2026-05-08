@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
@@ -30,9 +31,63 @@ class FakeRedis:
         return True
 
 
+class FakeScalarResult:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def all(self):
+        return list(self._rows)
+
+
+class FakeExecuteResult:
+    def __init__(self, rows=None, scalar_value=None):
+        self._rows = rows or []
+        self._scalar_value = scalar_value
+
+    def scalars(self):
+        return FakeScalarResult(self._rows)
+
+    def scalar_one_or_none(self):
+        return self._scalar_value
+
+
 class FakeSession:
+    def __init__(self) -> None:
+        client_id = str(uuid4())
+        pricing_rule = SimpleNamespace(
+            is_active=True,
+            monthly_price=0,
+            overage_price_per_1k_tokens=0,
+            currency="USD",
+        )
+        billing_plan = SimpleNamespace(
+            code="basic",
+            name="Basic",
+            rate_limit_per_minute=10,
+            daily_token_quota=1000,
+            weekly_token_quota=5000,
+            monthly_token_quota=10000,
+            max_output_tokens=512,
+            allow_streaming=True,
+            rag_max_documents=5,
+            rag_max_storage_mb=50,
+            rag_max_pages_per_month=100,
+            rag_max_queries_per_month=50,
+            pricing_rules=[pricing_rule],
+        )
+        self.client = SimpleNamespace(
+            id=client_id,
+            created_at=0,
+            billing_plan=billing_plan,
+        )
+
     async def execute(self, *args, **kwargs):
-        return SimpleNamespace()
+        query_text = str(args[0]) if args else ""
+        if "FROM clients" in query_text:
+            return FakeExecuteResult(rows=[self.client])
+        if "FROM quota_counters" in query_text:
+            return FakeExecuteResult(scalar_value=None)
+        return FakeExecuteResult()
 
     async def commit(self) -> None:
         return None

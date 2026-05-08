@@ -2,6 +2,19 @@
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+CURL_BASE_URL_LAST_MODE="uninitialized"
+CURL_BASE_URL_LAST_URL=""
+
+record_curl_mode() {
+  local mode="$1"
+  local url="${2:-}"
+  CURL_BASE_URL_LAST_MODE="${mode}"
+  CURL_BASE_URL_LAST_URL="${url}"
+  if [[ -n "${VALIDATION_CURL_MODE_FILE:-}" ]]; then
+    printf '%s\n' "${mode}" >> "${VALIDATION_CURL_MODE_FILE}"
+  fi
+}
+
 load_env_file() {
   local env_path="$1"
   while IFS= read -r line || [[ -n "${line}" ]]; do
@@ -96,12 +109,14 @@ curl_base_url() {
   local url="$1"
   shift
   local curl_status=0
+  record_curl_mode "host_attempt" "${url}"
   if [[ "${url}" == https://localhost* ]] || [[ "${url}" == https://127.0.0.1* ]]; then
     curl -k "$@" "${url}" || curl_status=$?
   else
     curl "$@" "${url}" || curl_status=$?
   fi
   if [[ "${curl_status}" -eq 0 ]]; then
+    record_curl_mode "host" "${url}"
     return 0
   fi
 
@@ -109,11 +124,41 @@ curl_base_url() {
     local internal_url="${url}"
     internal_url="${internal_url/http:\/\/localhost:${HOST_PORT:-18080}/http://localhost:8080}"
     internal_url="${internal_url/http:\/\/127.0.0.1:${HOST_PORT:-18080}/http://localhost:8080}"
-    dc exec -T control-plane curl "$@" "${internal_url}"
+    if dc exec -T control-plane curl "$@" "${internal_url}"; then
+      record_curl_mode "container" "${internal_url}"
+      return 0
+    fi
+    record_curl_mode "container_error" "${internal_url}"
     return $?
   fi
 
+  record_curl_mode "host_error" "${url}"
   return "${curl_status}"
+}
+
+curl_mode_label() {
+  case "${CURL_BASE_URL_LAST_MODE:-unknown}" in
+    host)
+      printf 'host'
+      ;;
+    container)
+      printf 'container-fallback'
+      ;;
+    *)
+      printf '%s' "${CURL_BASE_URL_LAST_MODE:-unknown}"
+      ;;
+  esac
+}
+
+log_curl_mode() {
+  local url="$1"
+  local target="${2:-$url}"
+  local message="validated ${target} via $(curl_mode_label)"
+  if declare -F log_info >/dev/null 2>&1; then
+    log_info "${message}"
+  else
+    printf '[curl_base_url] %s\n' "${message}"
+  fi
 }
 
 lookup_demo_client_id() {

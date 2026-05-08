@@ -34,7 +34,7 @@ A API key e retornada apenas uma vez. O cliente deve armazenar esse valor no mom
 
 ## Deploy publico
 
-Em producao, use `STACK_MODE=prod` e `deploy-vps.sh`. O compose de producao sobe o Caddy na frente do control plane para obter HTTPS automatico com Let's Encrypt.
+Em producao, use `STACK_MODE=prod` e `scripts/deploy-vps.sh`. O compose de producao sobe o Caddy na frente do control plane para obter HTTPS automatico com Let's Encrypt.
 
 ## Operacao de venda
 

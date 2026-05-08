@@ -155,6 +155,21 @@ async def async_client(fastapi_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]
 
 
 @pytest.fixture
+def app_client_factory():
+    clients: list[httpx.AsyncClient] = []
+
+    async def factory(app: FastAPI) -> httpx.AsyncClient:
+        client = httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app),
+            base_url="http://testserver",
+        )
+        clients.append(client)
+        return client
+
+    return factory
+
+
+@pytest.fixture
 def admin_token_headers() -> dict[str, str]:
     return {"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")}
 
@@ -193,4 +208,3 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
 
     app.dependency_overrides.clear()
     await engine.dispose()
-

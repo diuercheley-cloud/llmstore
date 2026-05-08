@@ -88,7 +88,7 @@ Para GPUs com VRAM limitada (6GB):
 Se o ambiente estiver inconsistente:
 
 ```bash
-./reset-dev.sh
+./scripts/reset-dev.sh
 ```
 
 Use com cuidado. O script pode remover volumes e opcionalmente `.env` e modelos.

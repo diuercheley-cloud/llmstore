@@ -36,14 +36,16 @@ log_info "Using BASE_URL: ${BASE_URL}"
 
 # 3. Check Health & Ready endpoints
 log_step "Checking Health & Ready endpoints"
-if curl -fsS "${BASE_URL}/health" | grep -q "status"; then
+if curl_base_url "${BASE_URL}/health" -fsS | grep -q "status"; then
+  log_curl_mode "${BASE_URL}/health"
   log_ok "Health endpoint returned status"
 else
   log_error "Health endpoint failed or returned invalid data"
   exit 1
 fi
 
-if curl -fsS "${BASE_URL}/ready" | grep -q "ready"; then
+if curl_base_url "${BASE_URL}/ready" -fsS | grep -q "ready"; then
+  log_curl_mode "${BASE_URL}/ready"
   log_ok "Ready endpoint returned ready"
 else
   log_error "Ready endpoint failed or returned invalid data"
@@ -52,8 +54,9 @@ fi
 
 # 4. Check v1/models
 log_step "Checking /v1/models"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/v1/models")
+HTTP_CODE=$(curl_base_url "$BASE_URL/v1/models" -s -o /dev/null -w "%{http_code}")
 if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "401" ]; then
+  log_curl_mode "${BASE_URL}/v1/models"
   log_ok "/v1/models exists (HTTP $HTTP_CODE)"
 else
   log_error "/v1/models returned HTTP $HTTP_CODE"
@@ -64,7 +67,8 @@ fi
 log_step "Checking UI pages"
 PAGES=("/" "/pricing" "/signup" "/docs")
 for page in "${PAGES[@]}"; do
-  if curl -fsS "${BASE_URL}${page}" | grep -q "<html"; then
+  if curl_base_url "${BASE_URL}${page}" -fsS | grep -q "<html"; then
+    log_curl_mode "${BASE_URL}${page}"
     log_ok "Page ${page} is accessible and contains HTML"
   else
     log_error "Page ${page} is not accessible or does not contain HTML"
@@ -75,8 +79,9 @@ done
 # 6. Check CORS basic
 log_step "Checking CORS for localhost"
 CORS_ORIGIN="http://localhost:3000"
-CORS_RESPONSE=$(curl -s -I -X OPTIONS -H "Origin: $CORS_ORIGIN" -H "Access-Control-Request-Method: POST" "$BASE_URL/v1/chat/completions")
+CORS_RESPONSE=$(curl_base_url "$BASE_URL/v1/chat/completions" -s -I -X OPTIONS -H "Origin: $CORS_ORIGIN" -H "Access-Control-Request-Method: POST")
 if echo "$CORS_RESPONSE" | grep -qi "access-control-allow-origin: $CORS_ORIGIN"; then
+  log_curl_mode "${BASE_URL}/v1/chat/completions"
   log_ok "CORS validation passed for $CORS_ORIGIN"
 else
   log_error "CORS validation failed for $CORS_ORIGIN"
@@ -87,11 +92,12 @@ fi
 # 7. Check public links (should not point to external domain if in localhost mode)
 log_step "Checking public links in API response"
 RANDOM_NAME="test-client-$(date +%s)"
-SIGNUP_RESPONSE=$(curl -s -X POST "$BASE_URL/public/signup" \
+SIGNUP_RESPONSE=$(curl_base_url "$BASE_URL/public/signup" -s -X POST \
   -H "Content-Type: application/json" \
   -d "{\"full_name\": \"$RANDOM_NAME\", \"email\": \"$RANDOM_NAME@example.com\", \"plan_code\": \"free\"}")
 
 if echo "$SIGNUP_RESPONSE" | grep -q "http://localhost"; then
+  log_curl_mode "${BASE_URL}/public/signup"
   log_ok "Public links validation passed (contains http://localhost)"
 else
   log_error "Public links do not point to localhost"

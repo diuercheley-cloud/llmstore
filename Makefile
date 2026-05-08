@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
-.PHONY: install up down validate validate-local-production backup logs check-secrets install-git-hooks
+.PHONY: install up down validate validate-local-production backup logs check-secrets install-git-hooks clean-compose-local
 
 install:
-	./install.sh
+	./scripts/install.sh
 
 check-secrets:
 	./scripts/check-secrets.sh --all
@@ -34,6 +34,9 @@ validate-demo-local:
 
 backup:
 	./scripts/backup.sh
+
+clean-compose-local:
+	./scripts/clean-compose-local.sh
 
 clean-rag-local-dry-run:
 	./scripts/clean-rag-local-data.sh --dry-run

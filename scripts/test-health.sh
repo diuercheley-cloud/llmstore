@@ -9,3 +9,4 @@ BASE_URL="${BASE_URL:-$(default_base_url)}"
 curl -fsS "${BASE_URL}/health" | python3 -m json.tool
 curl -fsS "${BASE_URL}/ready" | python3 -m json.tool
 curl -fsS "${BASE_URL}/metrics" | head -n 20
+curl -fsS "${BASE_URL}/pocket-tts/health" | python3 -m json.tool

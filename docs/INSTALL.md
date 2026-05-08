@@ -10,8 +10,8 @@
 ## Instalação rápida
 
 ```bash
-chmod +x install.sh first-run.sh reset-dev.sh
-./install.sh
+chmod +x scripts/install.sh scripts/first-run.sh scripts/reset-dev.sh
+./scripts/install.sh
 ```
 
 O script:
@@ -24,10 +24,10 @@ O script:
 ## Primeira execução
 
 ```bash
-HF_TOKEN=seu_token ./first-run.sh
+HF_TOKEN=seu_token ./scripts/first-run.sh
 ```
 
-O `first-run.sh` faz:
+O `scripts/first-run.sh` faz:
 
 1. gera ou ajusta o arquivo `.env`
 2. cria `ADMIN_TOKEN` e `POSTGRES_PASSWORD` locais se ainda estiverem nos valores padrão
@@ -46,7 +46,7 @@ Por padrão:
 
 ## Resultado esperado
 
-Ao final do `first-run.sh`, você deve receber:
+Ao final do `scripts/first-run.sh`, você deve receber:
 
 - URL base da stack
 - URL do admin dashboard
@@ -61,7 +61,7 @@ Use um dominio publico apontando para a VPS e rode:
 ```bash
 export SERVER_NAME=api.seudominio.com
 export LETSENCRYPT_EMAIL=ops@seudominio.com
-sudo ./deploy-vps.sh
+sudo ./scripts/deploy-vps.sh
 ```
 
 O script:

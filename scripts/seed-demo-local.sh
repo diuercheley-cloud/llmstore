@@ -99,7 +99,7 @@ if [[ -d "${ROOT_DIR}/demo/rag-documents" ]]; then
     for f in "${ROOT_DIR}/demo/rag-documents"/*; do
         if [[ -f "$f" ]]; then
             echo "Fazendo upload de: $(basename "$f")"
-            curl -s -X POST "${BASE_URL}/v1/rag/files" \
+            curl -s -X POST "${BASE_URL}/client/rag/documents" \
               -H "Authorization: Bearer ${API_KEY}" \
               -F "file=@${f}" > /dev/null
         fi

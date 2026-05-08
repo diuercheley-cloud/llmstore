@@ -36,6 +36,11 @@ SAFE_PATTERNS=(
     "test-admin-token"
     "change-this-admin-token"
     "__redacted__"
+    "abcdefghijklmnopqrstuvwxyz123456"
+    "very-secret-token-123"
+    "another-secret-token-67890"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+    "1234567890abcdef123456"
 )
 
 mask_value() {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE_PATH="${ENV_FILE:-${ROOT_DIR}/.env.prod}"
 
 if [[ "${EUID}" -ne 0 ]]; then
@@ -96,7 +96,7 @@ PY
 chmod 600 "${ENV_FILE_PATH}"
 
 cd "${ROOT_DIR}"
-ENV_FILE="$(basename "${ENV_FILE_PATH}")" STACK_MODE=prod ./scripts/up.sh
+ENV_FILE="$(basename "${ENV_FILE_PATH}")" STACK_MODE=prod "${ROOT_DIR}/scripts/up.sh"
 docker compose --env-file "$(basename "${ENV_FILE_PATH}")" -f docker-compose.yml -f docker-compose.prod.yml ps
 
 echo "deployment started"

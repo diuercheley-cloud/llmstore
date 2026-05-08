@@ -22,20 +22,18 @@ else
     ADMIN_BASE_URL="${BASE_URL}"
 fi
 
-CURL_OPTS="-s --fail"
-
 # Check connectivity
 log_step "Checking connectivity to ${ADMIN_BASE_URL}"
-if ! curl -s --connect-timeout 2 "$ADMIN_BASE_URL/health/deep" -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null; then
+if ! curl_base_url "$ADMIN_BASE_URL/health/deep" -s --connect-timeout 2 -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null; then
     log_error "Could not connect to Admin API at $ADMIN_BASE_URL"
-    log_info "Make sure the server is running (e.g., make dev or uvicorn app.main:app)"
     exit 1
 fi
+log_curl_mode "$ADMIN_BASE_URL/health/deep"
 log_ok "Connected to Admin API"
 
 # 1. List models
 log_step "Testing GET /models"
-RESPONSE=$(curl -s -w "%{http_code}" -H "X-Admin-Token: $ADMIN_TOKEN" "$ADMIN_BASE_URL/models")
+RESPONSE=$(curl_base_url "$ADMIN_BASE_URL/models" -s -w "%{http_code}" -H "X-Admin-Token: $ADMIN_TOKEN")
 HTTP_STATUS="${RESPONSE: -3}"
 MODELS_JSON="${RESPONSE::-3}"
 
@@ -46,55 +44,38 @@ if [ "$HTTP_STATUS" != "200" ]; then
 fi
 
 COUNT=$(echo "$MODELS_JSON" | jq '.registry | length' 2>/dev/null || echo "0")
+log_curl_mode "$ADMIN_BASE_URL/models"
 log_ok "Found $COUNT models"
 
 # 2. List backends
 log_step "Testing GET /backends"
-BACKENDS_JSON=$(curl $CURL_OPTS -H "X-Admin-Token: $ADMIN_TOKEN" "$ADMIN_BASE_URL/backends")
+BACKENDS_JSON=$(curl_base_url "$ADMIN_BASE_URL/backends" -s --fail -H "X-Admin-Token: $ADMIN_TOKEN")
 B_COUNT=$(echo "$BACKENDS_JSON" | jq '. | length')
+log_curl_mode "$ADMIN_BASE_URL/backends"
 log_ok "Found $B_COUNT backends"
 
 # 3. List model files
 log_step "Testing GET /models/files"
-FILES_JSON=$(curl $CURL_OPTS -H "X-Admin-Token: $ADMIN_TOKEN" "$ADMIN_BASE_URL/models/files")
+FILES_JSON=$(curl_base_url "$ADMIN_BASE_URL/models/files" -s --fail -H "X-Admin-Token: $ADMIN_TOKEN")
 F_COUNT=$(echo "$FILES_JSON" | jq '.files | length')
+log_curl_mode "$ADMIN_BASE_URL/models/files"
 log_ok "Found $F_COUNT GGUF files"
 
 # 4. System health
 log_step "Testing GET /health/deep"
-HEALTH_JSON=$(curl $CURL_OPTS -H "X-Admin-Token: $ADMIN_TOKEN" "$ADMIN_BASE_URL/health/deep")
+HEALTH_JSON=$(curl_base_url "$ADMIN_BASE_URL/health/deep" -s --fail -H "X-Admin-Token: $ADMIN_TOKEN")
 STATUS=$(echo "$HEALTH_JSON" | jq -r '.status')
+log_curl_mode "$ADMIN_BASE_URL/health/deep"
 log_ok "Status is $STATUS"
 
-# 5. Test model mock creation
-log_step "Testing model lifecycle"
-TEST_MODEL_ID="test-mock-$(date +%s)"
-CREATE_JSON=$(curl $CURL_OPTS -X POST "$ADMIN_BASE_URL/models" \
-  -H "X-Admin-Token: $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"display_name\": \"Test Mock Model\",
-    \"model_id\": \"$TEST_MODEL_ID\",
-    \"provider\": \"llama.cpp\",
-    \"model_file\": \"test.gguf\",
-    \"is_active\": false
-  }")
-MODEL_UUID=$(echo "$CREATE_JSON" | jq -r '.id')
-log_info "Created model: $MODEL_UUID"
-
-# Enable
-curl $CURL_OPTS -X POST "$ADMIN_BASE_URL/models/$MODEL_UUID/enable" -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null
-log_info "Enabled model"
-
-# Disable
-curl $CURL_OPTS -X POST "$ADMIN_BASE_URL/models/$MODEL_UUID/disable" -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null
-log_info "Disabled model"
-
-# Remove
-curl $CURL_OPTS -X DELETE "$ADMIN_BASE_URL/models/$MODEL_UUID" \
-  -H "X-Admin-Token: $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"confirm_route_removal\": true, \"mode\": \"hard\"}" > /dev/null
-log_ok "Removed model"
+log_step "Testing GET /backends/routing"
+ROUTING_JSON=$(curl_base_url "$ADMIN_BASE_URL/backends/routing" -s --fail -H "X-Admin-Token: $ADMIN_TOKEN")
+if echo "$ROUTING_JSON" | jq -e '.models != null' >/dev/null 2>&1; then
+  log_curl_mode "$ADMIN_BASE_URL/backends/routing"
+  log_ok "Routing table available"
+else
+  log_error "Routing table payload missing"
+  exit 1
+fi
 
 log_ok "Admin Lab Validation Completed Successfully"

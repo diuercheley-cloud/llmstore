@@ -4,20 +4,20 @@ set -e
 export DEMO_MODE=true
 
 source "$(dirname "$0")/common.sh"
-source "$(dirname "$0")/../activate.sh"
+source "$(dirname "$0")/activate.sh"
 
 echo "Validating Demo Client Portal..."
 
-if [ ! -f ".local/demo-client.env" ]; then
-    echo "❌ Error: .local/demo-client.env not found. Please run scripts/seed-demo-local.sh first."
+if [ ! -f "$ROOT_DIR/.local/demo-client.env" ]; then
+    echo "❌ Error: $ROOT_DIR/.local/demo-client.env not found. Please run scripts/seed-demo-local.sh first."
     exit 1
 fi
 
-source .local/demo-client.env
+source "$ROOT_DIR/.local/demo-client.env"
 
 PORTAL_URL="http://localhost:18080/client-portal"
 API_URL="http://localhost:18080/portal"
-RAG_URL="http://localhost:18080/v1/client/rag"
+RAG_URL="http://localhost:18080/client/rag"
 
 echo "Waiting for Portal UI to be ready..."
 for i in {1..30}; do

@@ -239,7 +239,7 @@ Rotacionar `ADMIN_TOKEN`:
 ## Limpeza de ambiente local
 
 ```bash
-./reset-dev.sh
+./scripts/reset-dev.sh
 ```
 
 O script pede confirmação antes de remover volumes, artefatos e opcionalmente `.env` e modelos.

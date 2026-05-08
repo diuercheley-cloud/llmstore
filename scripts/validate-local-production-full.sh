@@ -19,15 +19,17 @@ SUMMARY_MD="${OUTPUT_DIR}/summary.md"
 RESULTS_FILE="$(mktemp)"
 WARNINGS_FILE="$(mktemp)"
 FAILURES_FILE="$(mktemp)"
+CURL_MODE_FILE="$(mktemp)"
 START_EPOCH="$(date +%s)"
 
 mkdir -p "${LOGS_DIR}"
 printf '[]\n' >"${RESULTS_FILE}"
 printf '[]\n' >"${WARNINGS_FILE}"
 printf '[]\n' >"${FAILURES_FILE}"
+: >"${CURL_MODE_FILE}"
 
 cleanup() {
-  rm -f "${RESULTS_FILE}" "${WARNINGS_FILE}" "${FAILURES_FILE}"
+  rm -f "${RESULTS_FILE}" "${WARNINGS_FILE}" "${FAILURES_FILE}" "${CURL_MODE_FILE}"
 }
 trap cleanup EXIT
 
@@ -39,6 +41,7 @@ GIT_TAG_BASE="$(git -C "${ROOT_DIR}" describe --tags --abbrev=0 2>/dev/null || e
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_BASE_URL="${ADMIN_BASE_URL:-${BASE_URL}/admin}"
 LM_STUDIO_BASE_URL="${LM_STUDIO_BASE_URL:-http://192.168.101.1:1234/v1}"
+export VALIDATION_CURL_MODE_FILE="${CURL_MODE_FILE}"
 
 # Environment flags
 LOCALHOST_MODE="${LOCALHOST_MODE:-false}"
@@ -231,6 +234,56 @@ run_validation "validate-local-billing.sh" "true" "Manual billing validation onl
 run_validation "validate-local-docs.sh" "true"
 run_validation "validate-observability-local.sh" "true"
 
+PYTEST_LOG_FILE="logs/pytest.log"
+PYTEST_FULL_LOG_PATH="${OUTPUT_DIR}/${PYTEST_LOG_FILE}"
+PYTEST_EXIT_CODE=0
+log_step "Running pytest inside control-plane"
+if dc exec -T control-plane python -m pytest -q >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
+  log_ok "pytest OK"
+else
+  PYTEST_EXIT_CODE=$?
+  log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+fi
+
+ORPHAN_ANALYSIS_JSON="$(python3 - "${ROOT_DIR}" "${STACK_ENV_FILE}" <<'PY'
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+env_file = Path(sys.argv[2])
+env_path = env_file if env_file.is_absolute() else root / env_file
+cmd = ["docker", "compose", "--env-file", str(env_path), "-f", str(root / "docker-compose.yml"), "ps", "--format", "json"]
+result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+services = []
+for line in result.stdout.splitlines():
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        payload = json.loads(line)
+    except json.JSONDecodeError:
+        continue
+    services.append(payload.get("Service"))
+
+orphans = []
+compose_profiles = {item.strip() for item in os.environ.get("COMPOSE_PROFILES", "").split(",") if item.strip()}
+if "data-plane-mock" in services and "fallback-test" not in compose_profiles:
+    orphans.append("data-plane-mock")
+
+print(json.dumps({
+    "detected": bool(orphans),
+    "services": orphans,
+    "active_services": [service for service in services if service],
+}))
+PY
+)"
+if [[ "$(python3 -c 'import json,sys; print("true" if json.loads(sys.stdin.read())["detected"] else "false")' <<<"${ORPHAN_ANALYSIS_JSON}")" == "true" ]]; then
+  add_warning "orphan-like services detected: $(python3 -c 'import json,sys; print(",".join(json.loads(sys.stdin.read())["services"]))' <<<"${ORPHAN_ANALYSIS_JSON}")"
+fi
+
 TIMESTAMP_END="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 TOTAL_DURATION=$(( $(date +%s) - START_EPOCH ))
 
@@ -253,24 +306,32 @@ python3 - \
   "${RAG_ENABLED_FLAG}" \
   "${LM_STUDIO_CONFIGURED}" \
   "${LM_STUDIO_ONLINE}" \
-  "${OUTPUT_DIR}" <<'PY'
+  "${OUTPUT_DIR}" \
+  "${PYTEST_FULL_LOG_PATH}" \
+  "${PYTEST_EXIT_CODE}" \
+  "${PYTEST_LOG_FILE}" \
+  "${CURL_MODE_FILE}" \
+  "${ORPHAN_ANALYSIS_JSON}" <<'PY'
 import json
+import re
 import sys
-import os
 
 (
     summary_json, summary_md, results_file, warnings_file, failures_file,
     version, git_commit, git_branch, git_tag_base,
     timestamp_start, timestamp_end, duration, base_url,
     localhost_mode, local_billing_mode, rag_enabled,
-    lm_studio_configured, lm_studio_online, output_dir
-) = sys.argv[1:20]
+    lm_studio_configured, lm_studio_online, output_dir,
+    pytest_log_path, pytest_exit_code, pytest_log_file, curl_mode_file,
+    orphan_analysis_json,
+) = sys.argv[1:25]
 
 duration = int(duration)
 localhost_mode = localhost_mode == "true"
 local_billing_mode = local_billing_mode == "true"
 rag_enabled = rag_enabled == "true"
 lm_studio_configured = lm_studio_configured == "true"
+pytest_exit_code = int(pytest_exit_code)
 
 with open(results_file, "r", encoding="utf-8") as handle:
     scripts = json.load(handle)
@@ -278,6 +339,24 @@ with open(warnings_file, "r", encoding="utf-8") as handle:
     global_warnings = json.load(handle)
 with open(failures_file, "r", encoding="utf-8") as handle:
     failures = json.load(handle)
+with open(curl_mode_file, "r", encoding="utf-8") as handle:
+    curl_modes = [line.strip() for line in handle if line.strip()]
+
+pytest_output = ""
+try:
+    with open(pytest_log_path, "r", encoding="utf-8") as handle:
+        pytest_output = handle.read()
+except FileNotFoundError:
+    pytest_output = ""
+
+pytest_counts = {"passed": 0, "failed": 0, "errors": 0, "skipped": 0, "total": 0}
+for key in ("passed", "failed", "errors", "skipped"):
+    match = re.search(rf"(\d+)\s+{key if key != 'errors' else 'error[s]?'}", pytest_output)
+    if match:
+        pytest_counts[key] = int(match.group(1))
+pytest_counts["total"] = sum(pytest_counts.values())
+
+orphan_analysis = json.loads(orphan_analysis_json)
 
 ok_count = sum(1 for s in scripts if s["status"] == "ok")
 warn_count = sum(1 for s in scripts if s["status"] == "warn")
@@ -285,7 +364,8 @@ skip_count = sum(1 for s in scripts if s["status"] == "skip")
 error_count = sum(1 for s in scripts if s["status"] == "error")
 
 critical_failures = [s for s in scripts if s["critical"] and s["status"] == "error"]
-success = len(critical_failures) == 0
+curl_mode = "container" if "container" in curl_modes else "host" if "host" in curl_modes else "unknown"
+success = len(critical_failures) == 0 and pytest_counts["failed"] == 0 and pytest_counts["errors"] == 0 and pytest_exit_code == 0
 
 summary = {
     "version": version,
@@ -303,6 +383,20 @@ summary = {
         "LM_STUDIO_CONFIGURED": lm_studio_configured,
         "LM_STUDIO_ONLINE": lm_studio_online,
     },
+    "curl_mode": curl_mode,
+    "orphan_containers_detected": orphan_analysis["detected"],
+    "orphan_services": orphan_analysis["services"],
+    "active_services": orphan_analysis["active_services"],
+    "pytest_total": pytest_counts["total"],
+    "pytest_passed": pytest_counts["passed"],
+    "pytest_failed": pytest_counts["failed"],
+    "pytest_errors": pytest_counts["errors"],
+    "pytest_skipped": pytest_counts["skipped"],
+    "pytest": {
+        "exit_code": pytest_exit_code,
+        "log_file": pytest_log_file,
+        **pytest_counts,
+    },
     "scripts": scripts,
     "totals": {
         "ok": ok_count,
@@ -319,6 +413,7 @@ summary = {
         "success": success,
         "critical_failures": len(critical_failures),
         "warnings": warn_count + len(global_warnings),
+        "pytest_exit_code": pytest_exit_code,
     }
 }
 
@@ -346,7 +441,9 @@ with open(summary_md, "w", encoding="utf-8") as handle:
     handle.write(f"- LOCAL_BILLING_MODE: `{local_billing_mode}`\n")
     handle.write(f"- RAG_ENABLED: `{rag_enabled}`\n")
     handle.write(f"- LM_STUDIO_CONFIGURED: `{lm_studio_configured}`\n")
-    handle.write(f"- LM_STUDIO_ONLINE: `{lm_studio_online}`\n\n")
+    handle.write(f"- LM_STUDIO_ONLINE: `{lm_studio_online}`\n")
+    handle.write(f"- curl_mode: `{curl_mode}`\n")
+    handle.write(f"- orphan_containers_detected: `{orphan_analysis['detected']}`\n\n")
 
     handle.write("## Execution Summary\n\n")
     handle.write("| Script | Status | Critical | Duration | Log |\n")
@@ -371,6 +468,20 @@ with open(summary_md, "w", encoding="utf-8") as handle:
         for s in scripts:
             if s["status"] == "error":
                 handle.write(f"- **{s['name']}**: {s['error_summary']} (see `{s['log_file']}`)\n")
+
+    handle.write("\n## Test Suite\n\n")
+    handle.write(f"- pytest exit code: `{pytest_exit_code}`\n")
+    handle.write(f"- total: `{pytest_counts['total']}`\n")
+    handle.write(f"- passed: `{pytest_counts['passed']}`\n")
+    handle.write(f"- failed: `{pytest_counts['failed']}`\n")
+    handle.write(f"- errors: `{pytest_counts['errors']}`\n")
+    handle.write(f"- skipped: `{pytest_counts['skipped']}`\n")
+    handle.write(f"- log: [view]({pytest_log_file})\n")
+
+    if orphan_analysis["services"]:
+        handle.write("\n## Container Warnings\n\n")
+        for service in orphan_analysis["services"]:
+            handle.write(f"- Unexpected active service: `{service}`\n")
 
     handle.write("\n## How to reproduce\n\n")
     handle.write("```bash\n")
@@ -397,19 +508,15 @@ PY
 log_section "Validation Report"
 log_info "Summary JSON: ${SUMMARY_JSON}"
 log_info "Summary MD: ${SUMMARY_MD}"
-
-if [[ "${critical_failures_count:-0}" -eq 0 ]]; then
-    # We need to re-read the success status from the generated JSON to be sure
-    if python3 - "${SUMMARY_JSON}" <<'PY'
+if python3 - "${SUMMARY_JSON}" <<'PY'
 import json
 import sys
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     sys.exit(0 if json.load(handle)["validation_result"]["success"] else 1)
 PY
-    then
-      log_ok "VALIDATION SUCCESSFUL"
-      exit 0
-    fi
+then
+  log_ok "VALIDATION SUCCESSFUL"
+  exit 0
 fi
 
 log_error "VALIDATION FAILED"

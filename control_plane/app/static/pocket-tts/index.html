@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket TTS Studio</title>
+    <style>
+        :root {
+            --bg: #f4efe5;
+            --bg-accent: #e7dbc8;
+            --panel: rgba(255, 252, 246, 0.82);
+            --panel-strong: #fffaf1;
+            --line: rgba(71, 53, 32, 0.16);
+            --text: #23180d;
+            --muted: #74644f;
+            --accent: #c65b2b;
+            --accent-strong: #8f3417;
+            --accent-soft: rgba(198, 91, 43, 0.14);
+            --success: #1f7a45;
+            --danger: #b33a1d;
+            --shadow: 0 28px 80px rgba(61, 41, 18, 0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 91, 43, 0.18), transparent 30%),
+                radial-gradient(circle at top right, rgba(31, 122, 69, 0.12), transparent 25%),
+                linear-gradient(135deg, var(--bg) 0%, #efe6d8 42%, #f8f3ec 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(35, 24, 13, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(35, 24, 13, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent 85%);
+        }
+
+        .page {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 48px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            align-items: stretch;
+            margin-bottom: 24px;
+        }
+
+        .hero-card,
+        .studio,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: var(--panel);
+            backdrop-filter: blur(14px);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card {
+            padding: 36px;
+            isolation: isolate;
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -72px;
+            top: -72px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(198, 91, 43, 0.28), transparent 70%);
+            z-index: -1;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.58);
+            border: 1px solid rgba(71, 53, 32, 0.12);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success), #7cd49c);
+            box-shadow: 0 0 0 5px rgba(31, 122, 69, 0.12);
+        }
+
+        h1 {
+            margin: 18px 0 14px;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2.6rem, 5vw, 5rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+
+        .lead {
+            max-width: 40rem;
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .hero-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .metric-card {
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.62);
+            border: 1px solid rgba(71, 53, 32, 0.1);
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .metric-value {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .hero-visual {
+            padding: 28px;
+            display: grid;
+            gap: 18px;
+            align-content: space-between;
+            background:
+                radial-gradient(circle at top right, rgba(198, 91, 43, 0.18), transparent 34%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(252, 246, 235, 0.92));
+        }
+
+        .wave-panel {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 7px;
+            align-items: end;
+            min-height: 200px;
+            padding: 18px;
+            border-radius: 22px;
+            background: #23180d;
+        }
+
+        .wave-panel span {
+            display: block;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #ffd9a8 0%, #c65b2b 100%);
+            opacity: 0.95;
+            transform-origin: bottom;
+            animation: pulse 1.6s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.08s);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scaleY(0.72); opacity: 0.65; }
+            50% { transform: scaleY(1.08); opacity: 1; }
+        }
+
+        .hero-notes {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .note {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(71, 53, 32, 0.1);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+        }
+
+        .studio {
+            padding: 28px;
+        }
+
+        .panel {
+            padding: 24px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .section-title h2,
+        .section-title h3 {
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        .section-title p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            border: 1px solid rgba(71, 53, 32, 0.16);
+            border-radius: 20px;
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.86);
+            color: var(--text);
+            font: inherit;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        }
+
+        textarea {
+            min-height: 220px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        textarea:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: rgba(198, 91, 43, 0.48);
+            box-shadow: 0 0 0 5px rgba(198, 91, 43, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .prompt-strip,
+        .voice-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            border: 1px solid rgba(71, 53, 32, 0.12);
+            background: rgba(255, 255, 255, 0.74);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 10px 14px;
+            font: inherit;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .pill:hover {
+            transform: translateY(-1px);
+            border-color: rgba(198, 91, 43, 0.38);
+            background: rgba(255, 245, 238, 0.96);
+        }
+
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .dropzone {
+            position: relative;
+            display: grid;
+            place-items: center;
+            gap: 10px;
+            min-height: 172px;
+            padding: 18px;
+            text-align: center;
+            border-radius: 24px;
+            border: 1.5px dashed rgba(71, 53, 32, 0.2);
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(242, 232, 214, 0.66));
+            transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        }
+
+        .dropzone.dragover {
+            border-color: rgba(198, 91, 43, 0.5);
+            background: linear-gradient(135deg, rgba(255, 247, 241, 0.92), rgba(255, 236, 220, 0.82));
+            transform: translateY(-1px);
+        }
+
+        .dropzone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .drop-title {
+            font-weight: 700;
+            font-size: 1.02rem;
+        }
+
+        .drop-copy {
+            color: var(--muted);
+            max-width: 16rem;
+            line-height: 1.5;
+        }
+
+        .drop-badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(35, 24, 13, 0.06);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .primary-btn,
+        .ghost-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 22px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        .primary-btn {
+            color: #fff8f1;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+            box-shadow: 0 18px 32px rgba(143, 52, 23, 0.28);
+        }
+
+        .ghost-btn {
+            color: var(--text);
+            background: rgba(35, 24, 13, 0.06);
+        }
+
+        .primary-btn:hover,
+        .ghost-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary-btn:disabled,
+        .ghost-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(71, 53, 32, 0.1);
+        }
+
+        .status-bar.hidden,
+        .result.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(198, 91, 43, 0.24);
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .status-copy strong {
+            font-size: 0.95rem;
+        }
+
+        .status-copy span {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .stack {
+            display: grid;
+            gap: 24px;
+        }
+
+        .health-row,
+        .runtime-stats {
+            display: grid;
+            gap: 12px;
+        }
+
+        .health-row {
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(245, 235, 218, 0.78));
+            border: 1px solid rgba(71, 53, 32, 0.1);
+        }
+
+        .health-badge {
+            justify-self: end;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            background: rgba(35, 24, 13, 0.06);
+        }
+
+        .health-badge::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #b8ab95;
+        }
+
+        .health-badge.ok {
+            color: var(--success);
+            background: rgba(31, 122, 69, 0.12);
+        }
+
+        .health-badge.ok::before {
+            background: var(--success);
+        }
+
+        .health-badge.error {
+            color: var(--danger);
+            background: rgba(179, 58, 29, 0.12);
+        }
+
+        .health-badge.error::before {
+            background: var(--danger);
+        }
+
+        .runtime-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .mini-stat {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(71, 53, 32, 0.1);
+        }
+
+        .mini-stat strong {
+            display: block;
+            font-size: 1.2rem;
+            margin-top: 8px;
+        }
+
+        .spec-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(71, 53, 32, 0.08);
+        }
+
+        .spec-item:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .spec-item span:first-child {
+            color: var(--muted);
+        }
+
+        .result {
+            margin-top: 24px;
+            padding-top: 22px;
+            border-top: 1px solid rgba(71, 53, 32, 0.1);
+        }
+
+        .result audio {
+            width: 100%;
+            margin: 14px 0 12px;
+        }
+
+        .result-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .result-meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .download-link {
+            color: var(--accent-strong);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .download-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .voice-grid,
+            .hero-notes,
+            .runtime-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(100% - 20px, 1180px);
+                padding-top: 20px;
+            }
+
+            .hero-card,
+            .hero-visual,
+            .studio,
+            .panel {
+                padding: 20px;
+                border-radius: 22px;
+            }
+
+            .hero-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .actions,
+            .result-actions {
+                align-items: stretch;
+            }
+
+            .primary-btn,
+            .ghost-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <article class="hero-card">
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    Voice Lab Local
+                </div>
+                <h1>Texto em voz, com interface de estúdio.</h1>
+                <p class="lead">
+                    Gere narração com streaming, teste vozes rapidamente e compare tempo de resposta em uma interface mais clara.
+                    A síntese continua local em `pocket-tts`, mas a experiência agora é menos crua.
+                </p>
+                <div class="hero-metrics">
+                    <div class="metric-card">
+                        <span class="metric-label">Saúde</span>
+                        <span class="metric-value" id="hero-health">Verificando</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Primeiro áudio</span>
+                        <span class="metric-value" id="hero-first-audio">Aguardando</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Última geração</span>
+                        <span class="metric-value" id="hero-total-time">Sem dados</span>
+                    </div>
+                </div>
+            </article>
+            <aside class="hero-visual">
+                <div class="wave-panel" aria-hidden="true">
+                    <span style="--i:0;height:28%"></span>
+                    <span style="--i:1;height:52%"></span>
+                    <span style="--i:2;height:36%"></span>
+                    <span style="--i:3;height:70%"></span>
+                    <span style="--i:4;height:46%"></span>
+                    <span style="--i:5;height:64%"></span>
+                    <span style="--i:6;height:82%"></span>
+                    <span style="--i:7;height:48%"></span>
+                    <span style="--i:8;height:76%"></span>
+                    <span style="--i:9;height:34%"></span>
+                    <span style="--i:10;height:58%"></span>
+                    <span style="--i:11;height:88%"></span>
+                    <span style="--i:12;height:42%"></span>
+                    <span style="--i:13;height:74%"></span>
+                    <span style="--i:14;height:56%"></span>
+                    <span style="--i:15;height:68%"></span>
+                    <span style="--i:16;height:30%"></span>
+                    <span style="--i:17;height:60%"></span>
+                    <span style="--i:18;height:86%"></span>
+                    <span style="--i:19;height:38%"></span>
+                    <span style="--i:20;height:72%"></span>
+                    <span style="--i:21;height:50%"></span>
+                    <span style="--i:22;height:64%"></span>
+                    <span style="--i:23;height:28%"></span>
+                </div>
+                <div class="hero-notes">
+                    <div class="note">Fluxo com streaming: o player começa a tocar antes do arquivo completo terminar.</div>
+                    <div class="note">Escolha uma voz pronta, informe uma URL `hf://` ou envie um sample para voice cloning.</div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="layout">
+            <article class="studio">
+                <div class="section-title">
+                    <div>
+                        <h2>Script</h2>
+                        <p>Monte o texto, escolha a referência vocal e gere o áudio.</p>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label-row">
+                        <label for="text-input">Texto</label>
+                        <span class="hint" id="char-count">0 caracteres</span>
+                    </div>
+                    <textarea id="text-input" placeholder="Escreva o texto que será narrado.">Olá. Este é um teste do Pocket TTS rodando localmente. A interface agora mostra saúde do serviço, métricas de geração e um fluxo mais agradável para experimentar vozes.</textarea>
+                </div>
+
+                <div class="field">
+                    <div class="label-row">
+                        <label>Prompts rápidos</label>
+                        <span class="hint">Use como ponto de partida</span>
+                    </div>
+                    <div class="prompt-strip">
+                        <button class="pill" type="button" data-prompt="Resumo diário: o cluster está estável, a fila está controlada e os testes de regressão terminaram sem falhas críticas.">Resumo diário</button>
+                        <button class="pill" type="button" data-prompt="Olá, Maria. Seu ambiente local está pronto para a demonstração. O painel administrativo já foi atualizado com as métricas mais recentes.">Mensagem de onboarding</button>
+                        <button class="pill" type="button" data-prompt="Atenção equipe: iniciando manutenção programada às vinte e duas horas. Salve seu trabalho e finalize sessões em andamento.">Alerta operacional</button>
+                    </div>
+                </div>
+
+                <div class="voice-grid">
+                    <div class="field">
+                        <div class="label-row">
+                            <label for="voice-url-input">Voz por URL ou alias</label>
+                            <span class="hint">Ex.: `rafael`, `alba`, `hf://...`</span>
+                        </div>
+                        <input id="voice-url-input" type="text" list="voice-presets" placeholder="rafael">
+                        <datalist id="voice-presets">
+                            <option value="rafael"></option>
+                            <option value="alba"></option>
+                            <option value="anna"></option>
+                            <option value="charles"></option>
+                            <option value="eve"></option>
+                            <option value="giovanni"></option>
+                            <option value="lola"></option>
+                            <option value="juergen"></option>
+                            <option value="estelle"></option>
+                        </datalist>
+                        <div class="voice-pills" style="margin-top:12px;">
+                            <button class="pill voice-pill" type="button" data-voice="rafael">Rafael PT</button>
+                            <button class="pill voice-pill" type="button" data-voice="alba">Alba EN</button>
+                            <button class="pill voice-pill" type="button" data-voice="giovanni">Giovanni IT</button>
+                            <button class="pill voice-pill" type="button" data-voice="estelle">Estelle FR</button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="label-row">
+                            <label for="voice-wav-input">Upload para cloning</label>
+                            <span class="hint">WAV, MP3, FLAC, OGG, M4A</span>
+                        </div>
+                        <label class="dropzone" id="dropzone">
+                            <input type="file" id="voice-wav-input" accept=".wav,.mp3,.flac,.ogg,.m4a,audio/*">
+                            <span class="drop-badge">Voice Reference</span>
+                            <span class="drop-title" id="file-title">Arraste um sample ou clique para selecionar</span>
+                            <span class="drop-copy">Se houver arquivo enviado, ele tem prioridade sobre o campo de URL.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="generate-btn" class="primary-btn" type="button">Gerar áudio</button>
+                    <button id="reset-btn" class="ghost-btn" type="button">Limpar seleção de voz</button>
+                </div>
+
+                <div id="status" class="status-bar hidden" aria-live="polite">
+                    <div id="status-spinner" class="spinner"></div>
+                    <div class="status-copy">
+                        <strong id="status-title">Processando</strong>
+                        <span id="status-text">Preparando geração</span>
+                    </div>
+                </div>
+
+                <section id="audio-section" class="result hidden">
+                    <div class="section-title">
+                        <div>
+                            <h3>Resultado</h3>
+                            <p>Escute, compare e faça download do WAV gerado.</p>
+                        </div>
+                    </div>
+                    <audio id="audio" controls></audio>
+                    <div class="result-actions">
+                        <span class="result-meta" id="result-meta">Sem geração recente.</span>
+                        <a id="download-link" class="download-link" href="#">Baixar WAV</a>
+                    </div>
+                </section>
+            </article>
+
+            <aside class="stack">
+                <section class="panel">
+                    <div class="section-title">
+                        <div>
+                            <h3>Status do serviço</h3>
+                            <p>Checagem em tempo real do backend exposto pelo proxy.</p>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div>
+                            <strong>Pocket TTS</strong>
+                            <div class="hint" id="health-detail">Consultando `GET /pocket-tts/health`</div>
+                        </div>
+                        <div id="health-badge" class="health-badge">Verificando</div>
+                    </div>
+                    <div class="runtime-stats">
+                        <div class="mini-stat">
+                            <span class="metric-label">Primeiro áudio</span>
+                            <strong id="stat-first-audio">N/A</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="metric-label">Tempo total</span>
+                            <strong id="stat-total-time">N/A</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="section-title">
+                        <div>
+                            <h3>Guia rápido</h3>
+                            <p>Atalhos úteis para testar vozes sem abrir documentação externa.</p>
+                        </div>
+                    </div>
+                    <div class="spec-list">
+                        <div class="spec-item">
+                            <span>Alias curto</span>
+                            <strong>`rafael`, `alba`, `anna`</strong>
+                        </div>
+                        <div class="spec-item">
+                            <span>Repositório HF</span>
+                            <strong>`hf://kyutai/tts-voices/...`</strong>
+                        </div>
+                        <div class="spec-item">
+                            <span>Prioridade</span>
+                            <strong>Arquivo enviado vence URL</strong>
+                        </div>
+                        <div class="spec-item">
+                            <span>Saída</span>
+                            <strong>WAV com streaming</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="section-title">
+                        <div>
+                            <h3>Boas práticas</h3>
+                            <p>Para cloning, a qualidade do sample afeta bastante o resultado.</p>
+                        </div>
+                    </div>
+                    <div class="spec-list">
+                        <div class="spec-item">
+                            <span>Sample limpo</span>
+                            <strong>Use voz isolada e pouco ruído</strong>
+                        </div>
+                        <div class="spec-item">
+                            <span>Duração</span>
+                            <strong>Entre 10s e 30s costuma funcionar bem</strong>
+                        </div>
+                        <div class="spec-item">
+                            <span>Texto</span>
+                            <strong>Frases com pontuação melhoram prosódia</strong>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        class StreamingWavPlayer {
+            constructor() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    latencyHint: "playback"
+                });
+                this.sampleRate = 0;
+                this.numChannels = 0;
+                this.headerParsed = false;
+                this.headerBuffer = new Uint8Array(44);
+                this.headerBytesReceived = 0;
+                this.nextStartTime = 0;
+                this.minBufferSize = 16384;
+                this.pcmData = new Uint8Array(0);
+                this.firstAudioPlayed = false;
+            }
+
+            parseWavHeader(header) {
+                const view = new DataView(header.buffer);
+                const riff = String.fromCharCode.apply(null, Array.from(header.slice(0, 4)));
+                const wave = String.fromCharCode.apply(null, Array.from(header.slice(8, 12)));
+
+                if (riff !== "RIFF" || wave !== "WAVE") {
+                    throw new Error("Invalid WAV file");
+                }
+
+                this.numChannels = view.getUint16(22, true);
+                this.sampleRate = view.getUint32(24, true);
+                this.headerParsed = true;
+            }
+
+            appendPcmData(newData) {
+                const newBuffer = new Uint8Array(this.pcmData.length + newData.length);
+                newBuffer.set(this.pcmData);
+                newBuffer.set(newData, this.pcmData.length);
+                this.pcmData = newBuffer;
+            }
+
+            async tryPlayBuffer() {
+                if (!this.headerParsed || this.pcmData.length < this.minBufferSize) {
+                    return;
+                }
+
+                const bytesPerSample = this.numChannels * 2;
+                const samplesToPlay = Math.floor(this.pcmData.length / bytesPerSample);
+                const bytesToPlay = samplesToPlay * bytesPerSample;
+
+                if (bytesToPlay === 0) {
+                    return;
+                }
+
+                const dataToPlay = this.pcmData.slice(0, bytesToPlay);
+                this.pcmData = this.pcmData.slice(bytesToPlay);
+
+                const audioBuffer = this.audioContext.createBuffer(
+                    this.numChannels,
+                    samplesToPlay,
+                    this.sampleRate
+                );
+
+                const int16Data = new Int16Array(
+                    dataToPlay.buffer,
+                    dataToPlay.byteOffset,
+                    samplesToPlay * this.numChannels
+                );
+
+                for (let channel = 0; channel < this.numChannels; channel += 1) {
+                    const channelData = audioBuffer.getChannelData(channel);
+                    for (let i = 0; i < samplesToPlay; i += 1) {
+                        channelData[i] = int16Data[(i * this.numChannels) + channel] / 32768;
+                    }
+                }
+
+                const source = this.audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(this.audioContext.destination);
+
+                const currentTime = this.audioContext.currentTime;
+                const startTime = Math.max(currentTime, this.nextStartTime);
+                source.start(startTime);
+
+                if (!this.firstAudioPlayed && window.firstAudioCallback) {
+                    this.firstAudioPlayed = true;
+                    window.firstAudioCallback();
+                }
+
+                this.nextStartTime = startTime + audioBuffer.duration;
+
+                if (this.pcmData.length >= this.minBufferSize) {
+                    setTimeout(() => this.tryPlayBuffer(), 10);
+                }
+            }
+
+            addChunk(chunk) {
+                if (!this.headerParsed) {
+                    const headerBytesNeeded = 44 - this.headerBytesReceived;
+                    const bytesToCopy = Math.min(headerBytesNeeded, chunk.length);
+
+                    this.headerBuffer.set(chunk.slice(0, bytesToCopy), this.headerBytesReceived);
+                    this.headerBytesReceived += bytesToCopy;
+
+                    if (this.headerBytesReceived >= 44) {
+                        this.parseWavHeader(this.headerBuffer);
+                        if (chunk.length > bytesToCopy) {
+                            this.appendPcmData(chunk.slice(bytesToCopy));
+                        }
+                    }
+                } else {
+                    this.appendPcmData(chunk);
+                }
+
+                this.tryPlayBuffer();
+            }
+
+            stop() {
+                this.audioContext.close();
+            }
+        }
+
+        const textInput = document.getElementById("text-input");
+        const charCount = document.getElementById("char-count");
+        const generateBtn = document.getElementById("generate-btn");
+        const resetBtn = document.getElementById("reset-btn");
+        const voiceUrlInput = document.getElementById("voice-url-input");
+        const voiceWavInput = document.getElementById("voice-wav-input");
+        const fileTitle = document.getElementById("file-title");
+        const dropzone = document.getElementById("dropzone");
+        const status = document.getElementById("status");
+        const statusTitle = document.getElementById("status-title");
+        const statusText = document.getElementById("status-text");
+        const statusSpinner = document.getElementById("status-spinner");
+        const audioSection = document.getElementById("audio-section");
+        const audio = document.getElementById("audio");
+        const downloadLink = document.getElementById("download-link");
+        const resultMeta = document.getElementById("result-meta");
+        const heroHealth = document.getElementById("hero-health");
+        const heroFirstAudio = document.getElementById("hero-first-audio");
+        const heroTotalTime = document.getElementById("hero-total-time");
+        const healthBadge = document.getElementById("health-badge");
+        const healthDetail = document.getElementById("health-detail");
+        const statFirstAudio = document.getElementById("stat-first-audio");
+        const statTotalTime = document.getElementById("stat-total-time");
+
+        let streamingPlayer = null;
+
+        function updateCharCount() {
+            const count = textInput.value.trim().length;
+            charCount.textContent = `${count} caracteres`;
+        }
+
+        function setFileLabel() {
+            const file = voiceWavInput.files[0];
+            fileTitle.textContent = file ? file.name : "Arraste um sample ou clique para selecionar";
+        }
+
+        function showStatus(title, message, isLoading = false) {
+            statusTitle.textContent = title;
+            statusText.textContent = message;
+            statusSpinner.style.display = isLoading ? "block" : "none";
+            status.classList.remove("hidden");
+        }
+
+        function updateRuntimeStats(firstAudio, totalTime) {
+            const firstLabel = firstAudio ? `${firstAudio}s` : "N/A";
+            const totalLabel = totalTime ? `${totalTime}s` : "N/A";
+            heroFirstAudio.textContent = firstLabel;
+            heroTotalTime.textContent = totalLabel;
+            statFirstAudio.textContent = firstLabel;
+            statTotalTime.textContent = totalLabel;
+        }
+
+        async function fetchHealth() {
+            try {
+                const response = await fetch(`${window.location.pathname.replace(/\/+$/, "")}/health`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const healthy = data.status === "healthy";
+                healthBadge.textContent = healthy ? "Saudável" : "Resposta inesperada";
+                healthBadge.className = `health-badge ${healthy ? "ok" : "error"}`;
+                healthDetail.textContent = healthy ? "Serviço respondendo normalmente." : JSON.stringify(data);
+                heroHealth.textContent = healthy ? "Online" : "Instável";
+            } catch (error) {
+                healthBadge.textContent = "Indisponível";
+                healthBadge.className = "health-badge error";
+                healthDetail.textContent = `Falha ao consultar saúde: ${error.message}`;
+                heroHealth.textContent = "Offline";
+            }
+        }
+
+        async function generateAudio() {
+            const text = textInput.value.trim();
+            if (!text) {
+                showStatus("Texto obrigatório", "Preencha o script antes de gerar o áudio.", false);
+                return;
+            }
+
+            if (streamingPlayer) {
+                streamingPlayer.stop();
+                streamingPlayer = null;
+            }
+
+            const startTime = performance.now();
+            let firstAudioTime = null;
+
+            window.firstAudioCallback = () => {
+                if (!firstAudioTime) {
+                    firstAudioTime = performance.now();
+                    const delta = ((firstAudioTime - startTime) / 1000).toFixed(2);
+                    showStatus("Streaming iniciado", `Primeiro áudio liberado em ${delta}s.`, true);
+                    updateRuntimeStats(delta, null);
+                }
+            };
+
+            generateBtn.disabled = true;
+            audioSection.classList.add("hidden");
+            showStatus("Gerando", "Enviando texto e aguardando chunks de áudio.", true);
+
+            try {
+                const formData = new FormData();
+                formData.append("text", text);
+
+                const voiceUrl = voiceUrlInput.value.trim();
+                const voiceWavFile = voiceWavInput.files[0];
+
+                if (voiceWavFile) {
+                    formData.append("voice_wav", voiceWavFile);
+                } else if (voiceUrl) {
+                    formData.append("voice_url", voiceUrl);
+                }
+
+                const ttsEndpoint = `${window.location.pathname.replace(/\/+$/, "")}/tts`;
+                const response = await fetch(ttsEndpoint, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const responseForPlayback = response.clone();
+                const responseForBlob = response.clone();
+
+                streamingPlayer = new StreamingWavPlayer();
+                const reader = responseForPlayback.body.getReader();
+
+                const processStream = async () => {
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) {
+                                break;
+                            }
+                            if (value) {
+                                streamingPlayer.addChunk(value);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error processing stream:", error);
+                    }
+                };
+
+                processStream();
+
+                const blob = await responseForBlob.blob();
+                const totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+                const audioUrl = URL.createObjectURL(blob);
+                audio.src = audioUrl;
+                downloadLink.href = audioUrl;
+                downloadLink.download = "tts-audio.wav";
+
+                audio.addEventListener("loadedmetadata", () => {
+                    const audioDuration = audio.duration;
+                    const firstAudio = firstAudioTime
+                        ? ((firstAudioTime - startTime) / 1000).toFixed(2)
+                        : null;
+                    const speedRatio = audioDuration && totalTime
+                        ? (audioDuration / parseFloat(totalTime)).toFixed(1)
+                        : "N/A";
+
+                    updateRuntimeStats(firstAudio, totalTime);
+                    resultMeta.textContent = `Primeiro áudio: ${firstAudio || "N/A"}s | Tempo total: ${totalTime}s | Velocidade relativa: ${speedRatio}x`;
+                    showStatus("Áudio pronto", `Geração concluída em ${totalTime}s.`, false);
+                }, { once: true });
+
+                audioSection.classList.remove("hidden");
+            } catch (error) {
+                showStatus("Falha na geração", error.message, false);
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        document.querySelectorAll("[data-prompt]").forEach((button) => {
+            button.addEventListener("click", () => {
+                textInput.value = button.dataset.prompt || "";
+                updateCharCount();
+                textInput.focus();
+            });
+        });
+
+        document.querySelectorAll(".voice-pill").forEach((button) => {
+            button.addEventListener("click", () => {
+                voiceUrlInput.value = button.dataset.voice || "";
+                voiceUrlInput.focus();
+            });
+        });
+
+        ["dragenter", "dragover"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.add("dragover");
+            });
+        });
+
+        ["dragleave", "drop"].forEach((eventName) => {
+            dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropzone.classList.remove("dragover");
+            });
+        });
+
+        dropzone.addEventListener("drop", (event) => {
+            const files = event.dataTransfer.files;
+            if (files && files.length > 0) {
+                voiceWavInput.files = files;
+                setFileLabel();
+            }
+        });
+
+        textInput.addEventListener("input", updateCharCount);
+        voiceWavInput.addEventListener("change", setFileLabel);
+        generateBtn.addEventListener("click", generateAudio);
+        resetBtn.addEventListener("click", () => {
+            voiceUrlInput.value = "";
+            voiceWavInput.value = "";
+            setFileLabel();
+        });
+
+        updateCharCount();
+        setFileLabel();
+        fetchHealth();
+        textInput.focus();
+    </script>
+</body>
+</html>

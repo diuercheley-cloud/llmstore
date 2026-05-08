@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 log() {
   printf '[install] %s\n' "$*"
@@ -44,4 +44,4 @@ else
 fi
 
 log "installation bootstrap complete"
-printf '[install] next_step=%s\n' "${ROOT_DIR}/first-run.sh"
+printf '[install] next_step=%s\n' "${ROOT_DIR}/scripts/first-run.sh"

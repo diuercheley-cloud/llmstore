@@ -49,7 +49,7 @@ Data Plane interno (llama.cpp server)
 - Signup público em `/signup`
 - Endpoint de onboarding em `POST /public/signup`
 - Portal do cliente em `/client-portal`
-- Deploy de produção em VPS via `deploy-vps.sh`
+- Deploy de produção em VPS via `scripts/deploy-vps.sh`
 
 ## Modelo e defaults para RTX 4050 6 GB
 
@@ -597,7 +597,7 @@ Deploy publico com Caddy:
 ```bash
 export SERVER_NAME=api.seudominio.com
 export LETSENCRYPT_EMAIL=ops@seudominio.com
-sudo ./deploy-vps.sh
+sudo ./scripts/deploy-vps.sh
 ```
 
 ## Validação recomendada
@@ -666,3 +666,15 @@ As seguintes variáveis de ambiente (em `.env`) controlam os limites automático
 - Adicionar tokenizer real para contabilidade de tokens.
 - Incluir tracing distribuído e retenção externa de métricas/logs.
 # llmstore
+
+## Pocket TTS (Text-to-Speech)
+
+O sistema inclui integração com o `pocket-tts` para geração de áudio local.
+
+- **Endpoint de Saúde:** `GET http://localhost:18080/pocket-tts/health`
+- **Endpoint de Geração:** `POST http://localhost:18080/pocket-tts/tts`
+
+Exemplo de uso:
+```bash
+./scripts/pocket-tts.sh generate "Olá, esta é uma mensagem de voz do sistema."
+```

@@ -38,9 +38,9 @@
 
 ## Installation And Operations
 
-- `install.sh` completes on a clean Linux/WSL2 host.
-- `first-run.sh` completes and prints usable URLs.
-- `reset-dev.sh` still requires explicit confirmation.
+- `scripts/install.sh` completes on a clean Linux/WSL2 host.
+- `scripts/first-run.sh` completes and prints usable URLs.
+- `scripts/reset-dev.sh` still requires explicit confirmation.
 - `make install`, `make up`, `make down`, `make validate`, `make backup`, and `make logs` are functional.
 - Backup includes PostgreSQL, env file, `VERSION`, docker configs, model manifest, and checksums.
 - Restore validates version/schema and does not overwrite `.env.local` without confirmation.
