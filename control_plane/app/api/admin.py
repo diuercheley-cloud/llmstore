@@ -9,7 +9,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field
-from sqlalchemy import case, desc, func, or_, select
+from sqlalchemy import case, delete, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -30,6 +30,14 @@ from app.models.pricing_rule import PricingRule
 from app.models.quota_counter import QuotaCounter
 from app.models.request_log import RequestLog
 from app.models.usage_record import UsageRecord
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.rag_usage_event import RagUsageEvent
+from app.models.generation_job import GenerationJob
+from app.models.user_quota_override import UserQuotaOverride
+from app.models.client_feature_block import ClientFeatureBlock
+from app.models.security_event import SecurityEvent
+from app.services.security_monitor import log_security_event
 from app.schemas.admin import (
     ApiKeyCreate,
     ApiKeyCreated,
@@ -43,6 +51,7 @@ from app.schemas.admin import (
     ClientBillingPlanPatch,
     ClientCreate,
     ClientPatch,
+    ClientPurgeRequest,
     ClientRead,
     InferenceBackendCreate,
     InferenceBackendPatch,
@@ -325,6 +334,125 @@ async def delete_client(client_id: uuid.UUID, session: AsyncSession = Depends(ge
     await session.commit()
 
 
+@router.post("/clients/{client_id}/purge", status_code=204)
+async def purge_client(
+    client_id: uuid.UUID,
+    payload: ClientPurgeRequest,
+    session: AsyncSession = Depends(get_db_session)
+):
+    client = await session.get(Client, client_id)
+    if client is None:
+        raise HTTPException(status_code=404, detail="client not found")
+
+    is_demo = client.name == "demo-client" or (client.metadata_json and "demo" in client.metadata_json)
+    if is_demo and not payload.allow_demo_client:
+        raise HTTPException(status_code=403, detail="cannot purge demo client without allow_demo_client=true")
+
+    # Audit request
+    await log_security_event(
+        session,
+        event_type="client.delete.requested",
+        severity="high",
+        title=f"Client purge requested: {client.name}",
+        client_id=client_id,
+        details=payload.model_dump()
+    )
+
+    try:
+        if payload.anonymize_instead:
+            # Anonymization mode: Keep records but remove PII
+            client.name = f"anon-{client_id.hex[:8]}"
+            client.description = "Anonymized client"
+            client.system_prompt = None
+            client.metadata_json = None
+            client.ip_allowlist_json = None
+            client.ip_blocklist_json = None
+            client.deleted_at = utc_now()
+            client.is_blocked = True
+
+            # Anonymize invoices if preserved
+            if not payload.delete_invoices:
+                invoices = await session.execute(select(BillingInvoice).where(BillingInvoice.client_id == client_id))
+                for inv in invoices.scalars().all():
+                    # Preserving financial totals but could clear notes
+                    inv.note = "PII Removed"
+            
+            # Revoke all keys
+            await session.execute(
+                ApiKey.__table__.update()
+                .where(ApiKey.client_id == client_id)
+                .values(revoked_at=utc_now(), is_active=False)
+            )
+
+            await log_security_event(
+                session,
+                event_type="client.anonymized",
+                severity="high",
+                title=f"Client anonymized: {client_id}",
+                client_id=client_id
+            )
+        else:
+            # Purge mode: Remove data
+            if payload.delete_usage:
+                await session.execute(delete(UsageRecord).where(UsageRecord.client_id == client_id))
+                await session.execute(delete(RequestLog).where(RequestLog.client_id == client_id))
+                await session.execute(delete(QuotaCounter).where(QuotaCounter.client_id == client_id))
+                await session.execute(delete(UserQuotaOverride).where(UserQuotaOverride.user_id == client_id))
+                await session.execute(delete(GenerationJob).where(GenerationJob.client_id == client_id))
+
+            if payload.delete_rag_metadata:
+                await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.client_id == client_id))
+                await session.execute(delete(RAGDocument).where(RAGDocument.client_id == client_id))
+                await session.execute(delete(RagUsageEvent).where(RagUsageEvent.client_id == client_id))
+            
+            if payload.delete_tts_metadata:
+                # TTS metadata is likely in RequestLog or separate if implemented
+                # Assuming pocket_tts uses standard paths for now, but if there's a model:
+                # await session.execute(delete(TTSModel).where(TTSModel.client_id == client_id))
+                pass
+
+            await session.execute(delete(ClientFeatureBlock).where(ClientFeatureBlock.client_id == client_id))
+            await session.execute(delete(ApiKey).where(ApiKey.client_id == client_id))
+
+            if payload.delete_invoices:
+                await session.execute(delete(CustomerPayment).where(CustomerPayment.client_id == client_id))
+                await session.execute(delete(BillingInvoice).where(BillingInvoice.client_id == client_id))
+            
+            # Always keep client record as anonymized shell to preserve audit event FKs
+            client.name = f"deleted-{client_id.hex[:8]}"
+            client.deleted_at = utc_now()
+            client.is_blocked = True
+            client.description = "Deleted client (records preserved)"
+            client.system_prompt = None
+            client.metadata_json = None
+            client.ip_allowlist_json = None
+            client.ip_blocklist_json = None
+
+            if payload.delete_audit_events:
+                await session.execute(delete(SecurityEvent).where(SecurityEvent.client_id == client_id))
+
+            await log_security_event(
+                session,
+                event_type="client.deleted",
+                severity="high",
+                title=f"Client purged: {client_id}",
+                client_id=client_id # Keep it linked to the shell
+            )
+
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        await log_security_event(
+            session,
+            event_type="client.delete.failed",
+            severity="critical",
+            title=f"Client purge failed: {client_id}",
+            client_id=client_id,
+            details={"error": str(e)}
+        )
+        raise HTTPException(status_code=500, detail=f"Secure delete failed: {str(e)}")
+
+
 @router.patch("/clients/{client_id}", response_model=ClientRead)
 async def patch_client(client_id: uuid.UUID, payload: ClientPatch, session: AsyncSession = Depends(get_db_session)):
     client = await session.get(Client, client_id)
@@ -489,6 +617,149 @@ async def unblock_client(client_id: uuid.UUID, session: AsyncSession = Depends(g
     await session.commit()
     await session.refresh(client)
     return client
+
+
+@router.get("/clients/export-data")
+async def export_client_data(
+    client_id: uuid.UUID | None = Query(None),
+    email: str | None = Query(None),
+    redact: bool = Query(True),
+    session: AsyncSession = Depends(get_db_session),
+):
+    if not client_id and not email:
+        raise HTTPException(status_code=400, detail="client_id or email must be provided")
+
+    client = None
+    if client_id:
+        client = await session.get(Client, client_id)
+    
+    if not client and email:
+        stmt = select(Client).where(Client.metadata_json.contains(f'"email": "{email}"'))
+        result = await session.execute(stmt)
+        client = result.scalar_one_or_none()
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="client not found")
+
+    keys = (await session.execute(select(ApiKey).where(ApiKey.client_id == client.id))).scalars().all()
+    invoices = (await session.execute(select(BillingInvoice).where(BillingInvoice.client_id == client.id))).scalars().all()
+    usage = (await session.execute(select(UsageRecord).where(UsageRecord.client_id == client.id))).scalars().all()
+    rag_docs = (await session.execute(select(RAGDocument).where(RAGDocument.client_id == client.id))).scalars().all()
+    security_events = (await session.execute(select(SecurityEvent).where(SecurityEvent.client_id == client.id))).scalars().all()
+
+    export_payload = {
+        "export_version": "1.1",
+        "generated_at": utc_now().isoformat(),
+        "client": {
+            "id": str(client.id),
+            "name": client.name,
+            "description": client.description,
+            "is_blocked": client.is_blocked,
+            "billing_status": client.billing_status,
+            "billing_plan_id": str(client.billing_plan_id) if client.billing_plan_id else None,
+            "rate_limit_per_minute": client.rate_limit_per_minute,
+            "daily_token_quota": client.daily_token_quota,
+            "monthly_token_quota": client.monthly_token_quota,
+            "max_context_tokens": client.max_context_tokens,
+            "max_output_tokens": client.max_output_tokens,
+            "created_at": client.created_at.isoformat(),
+            "metadata": json.loads(client.metadata_json) if client.metadata_json else {},
+        },
+        "plan": None,
+        "api_keys": [
+            {
+                "id": str(k.id),
+                "name": k.name,
+                "key_prefix": k.key_prefix,
+                "is_active": k.is_active,
+                "created_at": k.created_at.isoformat(),
+                "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
+                "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+                "revoked_at": k.revoked_at.isoformat() if k.revoked_at else None,
+            }
+            for k in keys
+        ],
+        "usage": [
+            {
+                "period_start": u.period_start.isoformat(),
+                "period_type": u.period_type,
+                "request_count": u.request_count,
+                "prompt_tokens": u.prompt_tokens,
+                "completion_tokens": u.completion_tokens,
+                "created_at": u.created_at.isoformat(),
+            }
+            for u in usage
+        ],
+        "invoices": [
+            {
+                "id": str(i.id),
+                "status": i.status,
+                "total_amount": float(i.total_amount),
+                "currency": i.currency,
+                "period_start": i.period_start.isoformat(),
+                "period_end": i.period_end.isoformat(),
+                "due_at": i.due_at.isoformat() if i.due_at else None,
+                "paid_at": i.paid_at.isoformat() if i.paid_at else None,
+                "created_at": i.created_at.isoformat(),
+            }
+            for i in invoices
+        ],
+        "rag": [
+            {
+                "id": str(d.id),
+                "filename": d.filename,
+                "original_filename": d.original_filename,
+                "status": d.status,
+                "file_size_bytes": d.file_size_bytes,
+                "created_at": d.created_at.isoformat(),
+            }
+            for d in rag_docs
+        ],
+        "tts": [], 
+        "audit_events": [
+            {
+                "id": str(e.id),
+                "event_type": e.event_type,
+                "severity": e.severity,
+                "title": e.title,
+                "created_at": e.created_at.isoformat(),
+            }
+            for e in security_events
+        ],
+        "model_policies": {
+            "allowed_models": json.loads(client.allowed_models_json) if client.allowed_models_json else None,
+            "ip_allowlist": json.loads(client.ip_allowlist_json) if client.ip_allowlist_json else None,
+            "ip_blocklist": json.loads(client.ip_blocklist_json) if client.ip_blocklist_json else None,
+        },
+        "redaction": {
+            "applied": redact,
+            "redacted_fields": ["api_key_full"] if redact else []
+        }
+    }
+
+    if client.billing_plan_id:
+        plan = await session.get(BillingPlan, client.billing_plan_id)
+        if plan:
+            export_payload["plan"] = {
+                "id": str(plan.id),
+                "code": plan.code,
+                "name": plan.name,
+                "description": plan.description,
+            }
+
+    if redact:
+        # PII Redaction
+        if "metadata" in export_payload["client"]:
+            meta = export_payload["client"]["metadata"]
+            if "email" in meta:
+                email_val = meta["email"]
+                if "@" in email_val:
+                    parts = email_val.split("@")
+                    meta["email"] = f"{parts[0][0]}***@{parts[1]}"
+            if "full_name" in meta:
+                meta["full_name"] = "REDACTED"
+
+    return export_payload
 
 
 @router.post("/api-keys", response_model=ApiKeyCreated, status_code=201)

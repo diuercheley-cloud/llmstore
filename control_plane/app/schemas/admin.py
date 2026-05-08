@@ -64,6 +64,16 @@ class ClientRead(BaseModel):
     updated_at: datetime
 
 
+class ClientPurgeRequest(BaseModel):
+    anonymize_instead: bool = False
+    delete_invoices: bool = False
+    delete_usage: bool = True
+    delete_rag_metadata: bool = True
+    delete_tts_metadata: bool = True
+    delete_audit_events: bool = False  # By default preserve/anonymize
+    allow_demo_client: bool = False
+
+
 class PaymentCreate(BaseModel):
     invoice_id: UUID
     amount: float = Field(ge=0)

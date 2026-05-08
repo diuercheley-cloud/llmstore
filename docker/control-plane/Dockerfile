@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     gnupg \
     jq \
+    rsync \
     lsb-release && \
     install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
@@ -34,6 +35,10 @@ COPY README.md /app/README.md
 COPY .env.example /app/.env.example
 COPY .gitignore /app/.gitignore
 COPY .githooks /app/.githooks
+COPY docker-compose.yml /app/docker-compose.yml
+COPY docker-compose.prod.yml /app/docker-compose.prod.yml
+COPY test-compose.yml /app/test-compose.yml
+COPY test-override.yml /app/test-override.yml
 COPY VERSION /app/VERSION
 COPY pytest.ini /app/pytest.ini
 
