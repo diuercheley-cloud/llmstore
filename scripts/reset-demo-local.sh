@@ -47,7 +47,7 @@ if [[ -n "${client_id}" ]]; then
     # 2. Deletar dados vinculados ao client_id do demo via DB
     echo "Limpando dados associados ao cliente no banco de dados..."
     # Tabelas que possuem client_id diretamente
-    TABLES=("usage_records" "quota_counters" "billing_invoices" "generation_jobs" "security_events" "request_logs" "rag_documents" "api_keys" "rag_document_chunks" "client_feature_blocks" "rag_usage_events")
+    TABLES=("usage_records" "quota_counters" "billing_invoices" "generation_jobs" "security_events" "request_logs" "rag_document_chunks" "rag_documents" "api_keys" "client_feature_blocks" "rag_usage_events")
     
     # customer_payments usa invoice_id, então deletamos primeiro
     dc exec -T postgres psql -U llm_gateway -d llm_gateway -c "DELETE FROM customer_payments WHERE invoice_id IN (SELECT id FROM billing_invoices WHERE client_id = '${client_id}');" > /dev/null

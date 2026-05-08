@@ -15,8 +15,8 @@ Sim. Basta colocar o arquivo `.gguf` na pasta `models/` e registrá-lo via Admin
 ### Os dados processados saem da minha empresa?
 Não. Como a stack roda localmente, todos os prompts, respostas e documentos indexados no RAG permanecem dentro da sua infraestrutura privada.
 
-### Tem cobrança via PIX real?
-Nesta versão de demonstração local, o faturamento é simulado para fins de demonstração do fluxo financeiro. Para produção, o sistema pode ser estendido com hooks para gateways reais como Asaas ou Stripe.
+### Tem cobrança via PIX ou integração PSP real?
+Nesta versão local, o billing é manual/local e não há integração PSP real (Stripe/Asaas/PIX). O sistema está preparado para futura integração PIX/PSP, mas atualmente requer confirmação manual do administrador.
 
 ### Como funciona o billing local/manual?
 O sistema contabiliza o uso de tokens por cliente e gera faturas mensalmente (ou sob demanda). O administrador pode marcar essas faturas como pagas manualmente após confirmar o recebimento financeiro fora da plataforma.

@@ -85,8 +85,8 @@ async def public_signup(
     )
 
 
-@router.post("/public/webhooks/pix", status_code=200)
-async def pix_webhook(
+@router.post("/public/webhooks/local-payment", status_code=200)
+async def local_payment_webhook(
     payload: WebhookPayload,
     session: AsyncSession = Depends(get_db_session),
 ):
@@ -118,7 +118,7 @@ async def pix_webhook(
         pending_payment = next((p for p in invoice.payments if p.status in {"pending", "overdue"}), None)
         if pending_payment:
             pending_payment.status = "paid"
-            pending_payment.payment_reference = payload.payment_reference or "pix_webhook"
+            pending_payment.payment_reference = payload.payment_reference or "local_payment_webhook"
             pending_payment.paid_at = current_time
             pending_payment.updated_at = current_time
         else:
@@ -130,7 +130,7 @@ async def pix_webhook(
                     amount=invoice.total_amount,
                     currency=invoice.currency,
                     payment_method=invoice.payment_method,
-                    payment_reference=payload.payment_reference or "pix_webhook",
+                    payment_reference=payload.payment_reference or "local_payment_webhook",
                     paid_at=current_time,
                 )
             )

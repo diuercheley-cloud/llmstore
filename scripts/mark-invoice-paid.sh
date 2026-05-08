@@ -10,9 +10,9 @@ BASE_URL="${BASE_URL:-$(default_base_url)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:?set ADMIN_TOKEN in environment or env file}"
 
 INVOICE_ID="${1:?usage: ./scripts/mark-invoice-paid.sh INVOICE_ID [PAYMENT_REFERENCE] [AMOUNT] [NOTE]}"
-PAYMENT_REFERENCE="${2:-pix-manual}"
+PAYMENT_REFERENCE="${2:-local-manual-ref}"
 AMOUNT="${3:-}"
-NOTE="${4:-Pagamento confirmado manualmente via PIX}"
+NOTE="${4:-Pagamento confirmado manualmente (Billing local/manual)}"
 
 payload="$(
 python3 -c '

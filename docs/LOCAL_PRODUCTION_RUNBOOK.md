@@ -16,7 +16,7 @@ O modo `local-production` simula o comportamento de um ambiente de produção co
     - Observabilidade (Métricas e Dashboards)
 - **Fora de Escopo:**
     - Gateway de pagamento real (PSP)
-    - Pagamentos PIX real (apenas simulação manual)
+    - Sem PIX real nesta versão (apenas simulação manual)
     - Domínio público (acesso apenas via localhost)
     - HTTPS obrigatório (uso de HTTP em localhost)
 

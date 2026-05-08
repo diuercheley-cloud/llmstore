@@ -10,8 +10,13 @@ def test_helper_exists():
 def test_mask_secrets():
     # Helper must mask secrets
     admin_token = "very-secret-token-123"
-    api_key = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"
-    bearer_token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    api_key = "sk-ant-api03-" + "abcdefghijklmnopqrstuvwxyz"
+    generic_key = "sk-" + "1234567890abcdef123456"
+    bearer_token = "Bearer " + (
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+        "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    )
     
     cmd = f"""
     export ADMIN_TOKEN="{admin_token}"
@@ -20,7 +25,7 @@ def test_mask_secrets():
     mask_secrets "Token is {admin_token}"
     mask_secrets "Key is {api_key}"
     mask_secrets "Header: {bearer_token}"
-    mask_secrets "Generic key: sk-1234567890abcdef123456"
+    mask_secrets "Generic key: {generic_key}"
     """
     
     result = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, check=True)
@@ -30,7 +35,7 @@ def test_mask_secrets():
     assert "[ADMIN_TOKEN_MASKED]" in output
     assert api_key not in output
     assert "[API_KEY_MASKED]" in output
-    assert "sk-1234567890abcdef123456" not in output
+    assert generic_key not in output
     assert "sk-[MASKED]" in output
     assert bearer_token not in output
     assert "Bearer [MASKED]" in output

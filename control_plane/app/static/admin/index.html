@@ -293,6 +293,13 @@
         const section = document.getElementById('demoSection');
         section.classList.remove('hidden');
         
+        const isSynthetic = demo.is_synthetic;
+        const badgeHtml = isSynthetic 
+          ? '<span class="pill" style="background: #fef3c7; color: #92400e; margin-left: 1rem;">SYNTHETIC DATA (DEMO)</span>'
+          : '<span class="pill pill-success" style="margin-left: 1rem;">REAL DATA</span>';
+        
+        section.querySelector('h2 span').outerHTML = badgeHtml;
+
         let warningsHtml = (demo.warnings || []).map(w => `<p>⚠️ ${w}</p>`).join('');
         document.getElementById('demoWarnings').innerHTML = warningsHtml;
 
@@ -312,7 +319,7 @@
           </div>
           <div class="stat-card" style="background: white;">
             <div class="stat-label">Tokens (Today / Mo)</div>
-            <div class="stat-value" style="font-size: 1.1rem;">${num(u.tokens_today)} / ${num(u.tokens_month)}</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.tokens_today).toLocaleString()} / ${num(u.tokens_month).toLocaleString()}</div>
           </div>
           <div class="stat-card" style="background: white;">
             <div class="stat-label">Estimated Invoice</div>
@@ -320,7 +327,7 @@
           </div>
           <div class="stat-card" style="background: white;">
             <div class="stat-label">RAG Storage / Queries</div>
-            <div class="stat-value" style="font-size: 1.1rem;">${num(r.storage_mb).toFixed(2)}MB / ${num(r.queries_month)}</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(r.storage_mb || r.storage_bytes / 1024 / 1024).toFixed(2)}MB / ${num(r.queries_month)}</div>
           </div>
         `;
       }
@@ -342,8 +349,8 @@
             <div class="stat-value ${h.data_plane?.ok ? '' : 'pill-danger'}">${h.data_plane?.ok ? 'OK' : 'ERR'}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Avg Latency</div>
-            <div class="stat-value">${req.avg_latency_ms || 0}ms</div>
+            <div class="stat-label">Latency (Last 100)</div>
+            <div class="stat-value">${num(req.avg_latency_ms).toFixed(2)}ms</div>
           </div>
         `;
       }
@@ -388,6 +395,8 @@
 
       function renderUsage(summaryEnvelope, byClient, byModel) {
         const summary = summaryEnvelope.summary || summaryEnvelope;
+        const totals = summaryEnvelope.totals || {};
+        const rag = summaryEnvelope.rag || {};
         const stats = document.getElementById('usageStats');
         stats.innerHTML = `
           <div class="stat-card">
@@ -395,28 +404,28 @@
             <div class="stat-value">${num(summary.requests_today).toLocaleString()}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Requests Mês</div>
-            <div class="stat-value">${num(summary.requests_month).toLocaleString()}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Tokens Hoje</div>
-            <div class="stat-value">${num(summary.tokens_today).toLocaleString()}</div>
-          </div>
-          <div class="stat-card">
             <div class="stat-label">Tokens Mês</div>
             <div class="stat-value">${num(summary.tokens_month).toLocaleString()}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Latência Média</div>
-            <div class="stat-value">${num(summary.avg_latency_ms_month).toFixed(2)}ms</div>
+            <div class="stat-label">Clientes Ativos</div>
+            <div class="stat-value">${num(summary.clients_active)} / ${num(totals.clients_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Modelos Online</div>
+            <div class="stat-value">${num(totals.models_online)} / ${num(totals.models_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Backends Online</div>
+            <div class="stat-value">${num(totals.backends_online)} / ${num(totals.backends_total)}</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Cache Hit Rate</div>
             <div class="stat-value">${(num(summary.cache_hit_rate_month) * 100).toFixed(1)}%</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Clientes Suspensos</div>
-            <div class="stat-value ${num(summary.clients_suspended) > 0 ? 'pill-danger' : ''}">${num(summary.clients_suspended)}</div>
+            <div class="stat-label">RAG Storage</div>
+            <div class="stat-value">${num(rag.total_storage_mb).toFixed(2)} MB</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Invoices Vencidas</div>

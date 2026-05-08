@@ -24,7 +24,7 @@ fi
 
 # Check connectivity
 log_step "Checking connectivity to ${ADMIN_BASE_URL}"
-if ! curl_base_url "$ADMIN_BASE_URL/health/deep" -s --connect-timeout 2 -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null; then
+if ! curl_base_url "$ADMIN_BASE_URL/health/deep" -s --connect-timeout 5 --max-time 30 -H "X-Admin-Token: $ADMIN_TOKEN" > /dev/null; then
     log_error "Could not connect to Admin API at $ADMIN_BASE_URL"
     exit 1
 fi

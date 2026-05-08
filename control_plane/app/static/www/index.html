@@ -204,11 +204,11 @@
         <div class="panel">
           <h3>Destaques da Stack</h3>
           <div class="stack">
-            <div><span>API Compatível OpenAI</span><span>✓</span></div>
-            <div><span>RAG com Documentos</span><span>✓</span></div>
-            <div><span>Controle de Clientes e Uso</span><span>✓</span></div>
-            <div><span>Admin Lab p/ Modelos Locais</span><span>✓</span></div>
-            <div><span>Operação em Localhost</span><span>✓</span></div>
+            <div><span>API compatível com OpenAI</span><span>✓</span></div>
+            <div><span>RAG com documentos internos</span><span>✓</span></div>
+            <div><span>Controle de clientes, planos e uso</span><span>✓</span></div>
+            <div><span>Admin Lab para modelos locais</span><span>✓</span></div>
+            <div><span>Operação em localhost ou servidor próprio</span><span>✓</span></div>
           </div>
         </div>
       </section>
@@ -247,6 +247,10 @@
             <p>Chatbots privados para funcionários com acesso a manuais e políticas da empresa.</p>
           </div>
           <div class="card">
+            <strong>Chatbot com Documentos</strong>
+            <p>Interface conversacional para interagir com PDFs, planilhas e documentos técnicos de forma segura.</p>
+          </div>
+          <div class="card">
             <strong>API Privada de IA</strong>
             <p>Integre inteligência artificial em sistemas legados sem custos variáveis de nuvem.</p>
           </div>
@@ -267,11 +271,12 @@
             <a href="/admin/" style="display: block; margin-top: 16px; color: var(--accent); font-weight: 600;">Abrir Admin Dashboard →</a>
           </div>
           <div class="card">
-            <strong>Developer Docs</strong>
-            <p>Documentação técnica e instruções para rodar a <strong>validação local</strong> via script.</p>
-            <div style="display: flex; gap: 16px; margin-top: 16px;">
-              <a href="/docs" style="color: var(--accent); font-weight: 600;">Ver Documentação →</a>
-              <a href="/getting-started" style="color: var(--accent); font-weight: 600;">Rodar validação local →</a>
+            <strong>Developer Docs & Exemplos</strong>
+            <p>Documentação técnica, exemplos de código em Python/Node e instruções de validação.</p>
+            <div style="display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap;">
+              <a href="/docs" style="color: var(--accent); font-weight: 600;">Documentação →</a>
+              <a href="/examples" style="color: var(--accent); font-weight: 600;">Exemplos →</a>
+              <a href="/getting-started" style="color: var(--accent); font-weight: 600;">Validação Local →</a>
             </div>
           </div>
         </div>
@@ -281,7 +286,8 @@
         <div class="out-of-scope">
           <h3>Fora do escopo nesta versão</h3>
           <ul>
-            <li>Pagamentos Reais (PSP/PIX)</li>
+            <li>Sem PIX/PSP real nesta versão</li>
+            <li>Pagamentos Reais (Stripe/Asaas)</li>
             <li>SLA de Disponibilidade Pública</li>
             <li>Domínio Público Obrigatório</li>
             <li>Suporte a Multi-Region Cloud</li>

@@ -352,6 +352,21 @@
             <div id="demoApiKeyInfo" style="font-family: monospace; background: var(--bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"></div>
           </section>
 
+          <section>
+            <h3>Exemplos de uso da API</h3>
+            <p style="font-size: 0.875rem; color: var(--muted); margin-bottom: 1rem;">Utilize o <code>curl</code> para testar a API localmente. A URL base é <code>http://localhost:8080/v1</code>.</p>
+            <div style="position: relative;">
+              <pre><code id="demoApiExample">curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SK_DEMO_KEY" \
+  -d '{
+    "model": "default",
+    "messages": [{"role": "user", "content": "Olá, API!"}]
+  }'</code></pre>
+              <button class="secondary copy-code" style="padding: 4px 8px;" onclick="copyToClipboard('demoApiExample')">Copiar</button>
+            </div>
+          </section>
+
           <div class="card-grid" style="margin-bottom: 1.5rem;">
             <section>
               <h3>Testar Chat</h3>
@@ -1082,11 +1097,18 @@
         const m = usage.monthly_usage;
         const pct = Math.min(100, (m.used_tokens / m.quota) * 100);
         
+        // Fetch invoices to get local billing mode if not in 'me'
+        let billingMode = 'manual';
+        try {
+          const inv = await apiFetch('/portal/invoices');
+          billingMode = inv.local_billing_mode || 'manual';
+        } catch(e) {}
+
         els.demoClientStatus.innerHTML = `
           <div class="field"><div class="field-label">Cliente</div><div class="field-value">${me.name}</div></div>
           <div class="field"><div class="field-label">Plano Demo</div><div class="field-value">${me.plan.name} (${me.plan.currency} ${me.plan.monthly_price})</div></div>
           <div class="field"><div class="field-label">Consumo Mês</div><div class="field-value">${m.used_tokens.toLocaleString()} / ${m.quota.toLocaleString()} tokens (${pct.toFixed(1)}%)</div></div>
-          <div class="field"><div class="field-label">Billing Local</div><div class="field-value"><span class="badge ${me.billing_status === 'active' ? 'badge-active' : 'badge-warning'}">${me.billing_status.toUpperCase()}</span></div></div>
+          <div class="field"><div class="field-label">Billing Local</div><div class="field-value"><span class="badge ${me.billing_status === 'active' ? 'badge-active' : 'badge-warning'}">${me.billing_status.toUpperCase()} (${billingMode})</span></div></div>
         `;
         
         try {
@@ -1094,6 +1116,11 @@
           if (keys && keys.length > 0) {
              const k = keys[0];
              els.demoApiKeyInfo.innerHTML = `Prefixo da Chave: <strong>${k.key_prefix}...</strong><br>Status: ${k.is_active ? 'Ativa' : 'Inativa'}`;
+             
+             const example = document.getElementById('demoApiExample');
+             if (example) {
+               example.textContent = example.textContent.replace('SK_DEMO_KEY', k.key_prefix + '...');
+             }
           } else {
              els.demoApiKeyInfo.innerHTML = 'Nenhuma chave encontrada. Por favor, crie uma na aba "Minha API Key".';
           }

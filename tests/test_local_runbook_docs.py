@@ -19,8 +19,8 @@ def test_runbook_content():
         assert "localhost:18080" in content
         assert "validate-local-production-full.sh" in content
         assert "Fora de Escopo" in content
-        assert "PSP real" in content
-        assert "PIX real" in content
+        assert "Gateway de pagamento real (PSP)" in content
+        assert "Sem PIX real nesta versão" in content
 
 def test_quickstart_content():
     with open("docs/LOCAL_PRODUCTION_QUICKSTART.md", "r") as f:

@@ -328,7 +328,7 @@ Criar cliente e chave com script:
 ./scripts/set-client-plan.sh UUID_DO_CLIENTE basic
 ./scripts/create-plan.sh premium-local "Premium Local" 20 100000 1000000 1024 true "plano custom"
 ./scripts/generate-invoices.sh
-./scripts/mark-invoice-paid.sh UUID_DA_FATURA pix-ref-001
+./scripts/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
 ```
 
 Cache de respostas:
@@ -348,12 +348,12 @@ curl -fsS -H "X-Admin-Token: ${ADMIN_TOKEN}" http://localhost:18080/admin/cache/
 curl -fsS -X DELETE -H "X-Admin-Token: ${ADMIN_TOKEN}" http://localhost:18080/admin/cache/responses | python3 -m json.tool
 ```
 
-Cobrança manual/PIX:
+Billing local/manual:
 
 - `GET /admin/billing/invoices/preview`: previsão agregada do mês corrente.
 - `POST /admin/billing/invoices/generate`: materializa invoices reais no banco.
 - `GET /admin/billing/invoices`: lista invoices e pagamentos registrados.
-- `PATCH /admin/billing/invoices/{id}/mark-paid`: confirma pagamento manual/PIX.
+- `PATCH /admin/billing/invoices/{id}/mark-paid`: confirma pagamento manual/local.
 - `PATCH /admin/billing/invoices/{id}/cancel`: cancela invoice aberta.
 - `billing_status` do cliente:
   - `active`: operação normal
@@ -367,7 +367,7 @@ Fluxo diário recomendado:
 ./scripts/generate-invoices.sh
 ./scripts/run-billing-cycle.sh
 curl -fsS http://localhost:18080/admin/billing/invoices -H "X-Admin-Token: ${ADMIN_TOKEN}" | python3 -m json.tool
-./scripts/mark-invoice-paid.sh UUID_DA_FATURA pix-ref-001
+./scripts/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
 ```
 
 Ciclo mensal automático:

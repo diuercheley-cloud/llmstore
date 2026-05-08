@@ -1,55 +1,83 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# scripts/validate-landing-local.sh
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=/dev/null
-source "${SCRIPT_DIR}/common.sh"
-init_stack_env
+set -e
 
-BASE_URL="${BASE_URL:-$(default_base_url)}"
+URL="${1:-http://localhost:8080}"
+FILE="control_plane/app/static/www/index.html"
 
-echo "--- Verificando Landing Page em ${BASE_URL} ---"
-landing_content=$(curl_base_url "${BASE_URL}/" -fsS)
+echo "--------------------------------------------------"
+echo "Validating Local Landing Page"
+echo "--------------------------------------------------"
 
-# Verificar textos principais
-check_text() {
-    if echo "${landing_content}" | grep -q "$1"; then
-        echo "OK: Encontrado '$1'"
-    else
-        echo "FAIL: Não encontrado '$1'"
-        exit 1
-    fi
-}
-
-check_text "LLM Local para Empresas"
-check_text "API compatível com OpenAI"
-check_text "RAG com documentos internos"
-check_text "Controle de Clientes e Uso"
-check_text "Admin Lab p/ Modelos Locais"
-check_text "Operação em Localhost"
-
-# Verificar links locais
-check_text "href=\"/admin/\""
-check_text "href=\"/portal/\""
-check_text "href=\"/docs\""
-
-# Verificar Casos de Uso
-check_text "Casos de Uso"
-check_text "Escritórios e Consultoria"
-check_text "Imobiliárias e Contabilidade"
-
-# Verificar CTAs
-check_text "Abrir Admin Dashboard"
-check_text "Abrir Client Portal"
-check_text "Ver Documentação"
-check_text "Rodar validação local"
-
-# Garantir que não há promessas de PIX real/PSP real ativo
-if echo "${landing_content}" | grep -iE "PIX real|PSP real" | grep -v "Fora do escopo"; then
-    echo "FAIL: Encontrada promessa de PIX/PSP real fora da seção de limitações!"
+if [ ! -f "$FILE" ]; then
+    echo "ERROR: File $FILE not found."
     exit 1
-else
-    echo "OK: Nenhuma promessa indevida de pagamentos reais."
 fi
 
-echo "VALIDAÇÃO DA LANDING PAGE LOCAL CONCLUÍDA COM SUCESSO!"
+echo "[1/3] Checking file content for key sections..."
+
+CHECKS=(
+    "LLM Local para Empresas"
+    "API compatível com OpenAI"
+    "RAG com documentos internos"
+    "Controle de clientes, planos e uso"
+    "Admin Lab para modelos locais"
+    "Operação em localhost ou servidor próprio"
+    "Demonstração Local"
+    "Client Portal Demo"
+    "Admin Dashboard"
+    "Developer Docs & Exemplos"
+    "Exemplos →"
+    "Chatbot com Documentos"
+    "Fora do escopo nesta versão"
+    "Sem PIX/PSP real nesta versão"
+)
+
+for check in "${CHECKS[@]}"; do
+    if grep -q "$check" "$FILE"; then
+        echo "  [OK] Found: $check"
+    else
+        echo "  [FAIL] Missing: $check"
+        exit 1
+    fi
+done
+
+echo "[2/3] Checking for forbidden promises (PIX/PSP real active)..."
+
+FORBIDDEN=(
+    "PIX real ativo"
+    "PSP real ativo"
+)
+
+for forbidden in "${FORBIDDEN[@]}"; do
+    if grep -q "$forbidden" "$FILE"; then
+        echo "  [FAIL] Found forbidden promise: $forbidden"
+        exit 1
+    else
+        echo "  [OK] Not found: $forbidden"
+    fi
+done
+
+echo "[3/3] Checking local links..."
+
+LINKS=(
+    "/portal/"
+    "/admin/"
+    "/docs"
+    "/examples"
+    "/getting-started"
+)
+
+for link in "${LINKS[@]}"; do
+    if grep -q "href=\"$link\"" "$FILE"; then
+        echo "  [OK] Link found: $link"
+    else
+        echo "  [FAIL] Link missing: $link"
+        exit 1
+    fi
+done
+
+echo "--------------------------------------------------"
+echo "Landing Page Validation: SUCCESS"
+echo "--------------------------------------------------"

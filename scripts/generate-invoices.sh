@@ -11,7 +11,7 @@ ADMIN_TOKEN="${ADMIN_TOKEN:?set ADMIN_TOKEN in environment or env file}"
 
 CLIENT_ID="${1:-}"
 DUE_IN_DAYS="${2:-7}"
-PAYMENT_INSTRUCTIONS="${3:-Pagamento manual/PIX local. Confirmar no admin antes de liberar produção.}"
+PAYMENT_INSTRUCTIONS="${3:-Pagamento manual/local. Sem PIX real nesta versão. Confirmar no admin.}"
 
 payload="$(
 python3 -c '

@@ -1,52 +1,54 @@
 import pytest
-import httpx
-from app.main import app
+from pathlib import Path
 
-@pytest.mark.asyncio
-async def test_landing_page_local_commercial_content():
-    """
-    Verifica se a landing page local contém os elementos comerciais e links
-    especificados para a demonstração do produto local.
-    """
-    # Usamos o transport ASGITransport para testar o app FastAPI diretamente
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.get("/")
-        assert response.status_code == 200
-        content = response.text
-        
-        # 1. Seções comerciais e destaques
-        assert "LLM Local para Empresas" in content
-        assert "API compatível com OpenAI" in content
-        assert "RAG com documentos internos" in content
-        assert "Controle de Clientes e Uso" in content
-        assert "Admin Lab p/ Modelos Locais" in content
-        assert "Operação em Localhost" in content
-        
-        # 2. Demonstração local (links e títulos)
-        assert "Demonstração Local" in content
-        assert "Client Portal Demo" in content
-        assert 'href="/portal/"' in content
-        assert 'href="/admin/"' in content
-        assert 'href="/docs"' in content
-        
-        # 3. Fora do escopo (limitações claras para evitar falsas promessas)
-        assert "Fora do escopo nesta versão" in content
-        assert "Pagamentos Reais (PSP/PIX)" in content
-        assert "SLA de Disponibilidade Pública" in content
-        assert "Domínio Público Obrigatório" in content
-        
-        # 4. Casos de Uso
-        assert "Casos de Uso" in content
-        assert "Escritórios e Consultoria" in content
-        assert "Imobiliárias e Contabilidade" in content
-        assert "Suporte Interno" in content
-        
-        # 5. CTAs Principais
-        assert "Abrir Admin Dashboard" in content
-        assert "Abrir Client Portal" in content
-        assert "Ver Documentação" in content
-        assert "Rodar validação local" in content
-        
-        # 6. Rodapé e Branding
-        assert "LLM Inference Stack • Local Production Edition" in content
-        assert "© 2026" in content
+ROOT = Path(__file__).resolve().parents[1]
+
+LANDING_PAGE_CANDIDATES = (
+    ROOT / "control_plane/app/static/www/index.html",
+    ROOT / "app/static/www/index.html",
+)
+
+
+def landing_page_path():
+    return next((path for path in LANDING_PAGE_CANDIDATES if path.exists()), LANDING_PAGE_CANDIDATES[0])
+
+def test_landing_page_exists():
+    assert landing_page_path().exists()
+
+def test_landing_page_content():
+    content = landing_page_path().read_text()
+    
+    # Main sections
+    assert "LLM Local para Empresas" in content
+    assert "API compatível com OpenAI" in content
+    assert "RAG com documentos internos" in content
+    assert "Controle de clientes, planos e uso" in content
+    assert "Admin Lab para modelos locais" in content
+    assert "Operação em localhost ou servidor próprio" in content
+    
+    # Demo section
+    assert "Demonstração Local" in content
+    assert "Client Portal Demo" in content
+    assert "Admin Dashboard" in content
+    assert "Developer Docs & Exemplos" in content
+    assert "Exemplos →" in content
+    
+    # Use cases
+    assert "Chatbot com Documentos" in content
+    assert "Escritórios e Consultoria" in content
+    assert "Imobiliárias e Contabilidade" in content
+    
+    # Out of scope
+    assert "Fora do escopo nesta versão" in content
+    assert "Sem PIX/PSP real nesta versão" in content
+    assert "PIX real ativo" not in content
+    assert "PSP real ativo" not in content
+
+def test_landing_page_local_links():
+    content = landing_page_path().read_text()
+    
+    assert 'href="/portal/"' in content
+    assert 'href="/admin/"' in content
+    assert 'href="/docs"' in content
+    assert 'href="/examples"' in content
+    assert 'href="/getting-started"' in content

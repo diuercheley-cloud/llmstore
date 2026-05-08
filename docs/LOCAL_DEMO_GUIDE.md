@@ -74,9 +74,9 @@ curl -s -X POST "http://localhost:18080/v1/rag/query" \
 Demonstre como o sistema lida com faturamento sem precisar de um PSP (Stripe/Asaas):
 1. No **Admin Lab**, vá em Faturamento.
 2. Veja a fatura `pending`.
-3. Simule o recebimento de um PIX:
+3. Simule o registro de pagamento manual:
    ```bash
-   ./scripts/mark-invoice-paid.sh <UUID_DA_FATURA> pix-internal-001
+   ./scripts/mark-invoice-paid.sh <UUID_DA_FATURA> local-manual-ref-001
    ```
 4. Observe o status mudar para `paid` no portal do cliente.
 
@@ -92,7 +92,7 @@ Para limpar todos os dados criados e voltar ao estado inicial:
 ```
 
 ## Limitações e Fora de Escopo
-- **PSP Real**: Não há integração com cartões ou PIX real nesta demo.
+- **PSP Real**: Não há integração com cartões ou PIX real nesta versão local.
 - **Domínio Público**: O acesso é apenas via `localhost`.
 - **HTTPS**: Embora o Caddy suporte, para demo local o HTTP é o padrão.
 - **Escalabilidade**: Esta demo foca em uma única instância.

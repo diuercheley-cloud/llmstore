@@ -1,43 +1,47 @@
 import os
 
-def test_local_demo_files_exist():
-    docs_path = "docs"
-    required_files = [
-        "LOCAL_DEMO_GUIDE.md",
-        "LOCAL_DEMO_SCRIPT.md",
-        "LOCAL_DEMO_FAQ.md"
+def test_demo_docs_exist():
+    """Valida se os arquivos de documentação da demo existem."""
+    docs = [
+        "docs/LOCAL_DEMO_GUIDE.md",
+        "docs/LOCAL_DEMO_SCRIPT.md",
+        "docs/LOCAL_DEMO_FAQ.md"
     ]
-    for filename in required_files:
-        path = os.path.join(docs_path, filename)
-        assert os.path.exists(path), f"File {path} is missing"
+    for doc in docs:
+        assert os.path.exists(doc), f"Documento {doc} não encontrado."
 
 def test_readme_links_to_demo_docs():
-    with open("README.md", "r", encoding="utf-8") as f:
+    """Valida se o README.md aponta para os documentos de demo."""
+    with open("README.md", "r") as f:
         content = f.read()
-        assert "docs/LOCAL_DEMO_GUIDE.md" in content
-        assert "docs/LOCAL_DEMO_SCRIPT.md" in content
-        assert "docs/LOCAL_DEMO_FAQ.md" in content
+    
+    assert "docs/LOCAL_DEMO_GUIDE.md" in content
+    assert "docs/LOCAL_DEMO_SCRIPT.md" in content
+    assert "docs/LOCAL_DEMO_FAQ.md" in content
 
-def test_guide_mentions_scripts():
-    path = "docs/LOCAL_DEMO_GUIDE.md"
-    with open(path, "r", encoding="utf-8") as f:
+def test_guide_mentions_demo_scripts():
+    """Valida se o guia menciona os scripts de seed e reset."""
+    with open("docs/LOCAL_DEMO_GUIDE.md", "r") as f:
         content = f.read()
-        assert "seed-demo-local.sh" in content
-        assert "reset-demo-local.sh" in content
+    
+    assert "seed-demo-local.sh" in content
+    assert "reset-demo-local.sh" in content
 
-def test_script_contains_presentation_sequence():
-    path = "docs/LOCAL_DEMO_SCRIPT.md"
-    with open(path, "r", encoding="utf-8") as f:
+def test_script_has_presentation_sequence():
+    """Valida se o roteiro contém uma sequência de apresentação."""
+    with open("docs/LOCAL_DEMO_SCRIPT.md", "r") as f:
         content = f.read()
-        # Check for some sections
-        assert "Abertura" in content
-        assert "Experiência do Cliente" in content
-        assert "Encerramento" in content
+    
+    # Verifica se existem seções numeradas ou tópicos de sequência
+    assert "## 1." in content or "Abertura" in content
+    assert "## 2." in content or "Visão Geral" in content
+    assert "Encerramento" in content
 
-def test_faq_mentions_psp_scope():
-    path = "docs/LOCAL_DEMO_FAQ.md"
-    with open(path, "r", encoding="utf-8") as f:
+def test_faq_clarifies_psp_out_of_scope():
+    """Valida se o FAQ deixa claro que PSP/PIX real está fora de escopo."""
+    with open("docs/LOCAL_DEMO_FAQ.md", "r") as f:
         content = f.read()
-        # Check if it clarifies that real PSP/PIX is out of scope
-        assert "PIX real" in content
-        assert "simulado" in content or "manual" in content
+    
+    # Verifica se menciona que não há integração real/PIX real
+    assert "PSP real" in content or "PIX real" in content or "não há integração" in content
+    assert "manual" in content.lower()

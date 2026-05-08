@@ -1,15 +1,19 @@
 # Changelog
 
-## [v1.4.4-local-demo] - 2026-05-07
+## [v1.4.4-local-demo] - 2026-05-08
 
 ### Added
-- Modo demo local completo com script `demo-full-local.sh`.
-- Cliente demo pré-configurado e API key demo segura em `.local/`.
-- Documentos RAG de demonstração para testes rápidos.
-- Portal do cliente demo e dashboard admin demo.
+- Modo demo local completo rodando em `http://localhost:18080`.
+- Cliente demo pré-configurado para fluxos locais de produto.
+- API key demo segura gerada em `.local/`, sem expor a chave completa no repositório.
+- Documentos RAG demo para testes rápidos de ingestão e consulta.
+- Portal demo para experiência do cliente local.
+- Dashboard demo para administração local.
 - Exemplos de uso em curl, Python e Node.js.
-- Landing page local melhorada para facilitar o onboarding.
-- Documentação dedicada para o modo demo em `docs/LOCAL_DEMO_GUIDE.md` e outros.
+- Script `demo-full-local.sh` para executar a jornada demo completa.
+- Landing page local melhorada para onboarding do demo.
+- Documentação de demo em `docs/LOCAL_DEMO_GUIDE.md`, `docs/LOCAL_DEMO_FAQ.md` e materiais relacionados.
+- Escopo local preservado sem PSP real ou PIX real.
 
 ### Fixed
 - Robustez no script de demonstração ao lidar com portas de controle de plano.

@@ -1,18 +1,17 @@
 {
   "release_name": "llm-inference-stack-local-production",
   "version": "v1.4.4-local-demo",
-  "git_branch": "feature/local-production-hardening",
-  "git_commit": "2c72fb5d3b752f38b8c8028edfdfd36e9a992544",
+  "git_branch": "feature/local-production-v1.5-hardening-plus",
+  "git_commit": "f7c6b6222046b2eb045d949845a182fe9aa9773e",
   "git_tags_pointing_to_commit": [
-    "v1.4.5-local-hardening",
-    "v1.4.6-local-hardening"
+    "v1.5.0-local-production"
   ],
-  "generated_at": "2026-05-07T23:36:55Z",
-  "validation_artifact_path": "/home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T203606",
+  "generated_at": "2026-05-08T18:50:37Z",
+  "validation_artifact_path": "/home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T154745",
   "summary_json_path": "summary.json",
   "summary_md_path": "summary.md",
   "docs_included_count": 15,
-  "scripts_included_count": 114,
+  "scripts_included_count": 123,
   "docker_compose_files": [
     "docker-compose.yml",
     "docker-compose.prod.yml"

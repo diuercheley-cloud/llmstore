@@ -4,13 +4,13 @@
 
 ## Metadata
 
-- **Version:** v1.4.3-local-hardening
-- **Branch:** feature/local-production-hardening
-- **Commit:** 2c72fb5d3b752f38b8c8028edfdfd36e9a992544
+- **Version:** v1.4.4-local-demo
+- **Branch:** feature/local-production-v1.5-hardening-plus
+- **Commit:** f7c6b6222046b2eb045d949845a182fe9aa9773e
 - **Base URL:** http://localhost:18080
-- **Start Time:** 2026-05-07T23:36:06Z
-- **End Time:** 2026-05-07T23:36:55Z
-- **Total Duration:** 49s
+- **Start Time:** 2026-05-08T18:47:45Z
+- **End Time:** 2026-05-08T18:50:37Z
+- **Total Duration:** 172s
 
 ## Environment
 
@@ -19,23 +19,35 @@
 - RAG_ENABLED: `True`
 - LM_STUDIO_CONFIGURED: `False`
 - LM_STUDIO_ONLINE: `true`
+- curl_mode: `host`
+- orphan_containers_detected: `False`
 
 ## Execution Summary
 
 | Script | Status | Critical | Duration | Log |
 | :--- | :--- | :---: | :---: | :--- |
 | `validate-localhost-mode.sh` | OK | Yes | 0s | [view](logs/validate-localhost-mode.sh.log) |
-| `validate-status-local.sh` | OK | Yes | 6s | [view](logs/validate-status-local.sh.log) |
-| `validate-admin-lab-local.sh` | OK | Yes | 14s | [view](logs/validate-admin-lab-local.sh.log) |
-| `validate-lmstudio-backend.sh` | OK | No | 3s | [view](logs/validate-lmstudio-backend.sh.log) |
-| `validate-routing-local.sh` | OK | Yes | 3s | [view](logs/validate-routing-local.sh.log) |
-| `validate-plan-queues.sh` | OK | Yes | 9s | [view](logs/validate-plan-queues.sh.log) |
+| `validate-status-local.sh` | OK | Yes | 7s | [view](logs/validate-status-local.sh.log) |
+| `validate-admin-lab-local.sh` | OK | Yes | 41s | [view](logs/validate-admin-lab-local.sh.log) |
+| `validate-lmstudio-backend.sh` | OK | No | 7s | [view](logs/validate-lmstudio-backend.sh.log) |
+| `validate-routing-local.sh` | OK | Yes | 0s | [view](logs/validate-routing-local.sh.log) |
+| `validate-plan-queues.sh` | OK | Yes | 13s | [view](logs/validate-plan-queues.sh.log) |
 | `validate-client-portal-local.sh` | OK | Yes | 0s | [view](logs/validate-client-portal-local.sh.log) |
 | `validate-api-keys-local.sh` | OK | Yes | 0s | [view](logs/validate-api-keys-local.sh.log) |
 | `validate-rag-local-multiclient.sh` | OK | Yes | 3s | [view](logs/validate-rag-local-multiclient.sh.log) |
 | `validate-local-billing.sh` | OK | Yes | 0s | [view](logs/validate-local-billing.sh.log) |
 | `validate-local-docs.sh` | OK | Yes | 0s | [view](logs/validate-local-docs.sh.log) |
-| `validate-observability-local.sh` | OK | Yes | 6s | [view](logs/validate-observability-local.sh.log) |
+| `validate-observability-local.sh` | OK | Yes | 16s | [view](logs/validate-observability-local.sh.log) |
+
+## Test Suite
+
+- pytest exit code: `0`
+- total: `249`
+- passed: `249`
+- failed: `0`
+- errors: `0`
+- skipped: `0`
+- log: [view](logs/pytest.log)
 
 ## How to reproduce
 
@@ -45,8 +57,8 @@
 
 ## Useful commands
 
-- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T203606/logs/`
-- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260507T203606/logs/*.log`
+- Check logs: `ls -R /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T154745/logs/`
+- Tail all logs: `tail -f /home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T154745/logs/*.log`
 - Check services: `docker compose ps`
 
 ## Out of scope
