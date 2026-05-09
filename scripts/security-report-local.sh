@@ -60,14 +60,17 @@ CLASSIFICATIONS = [
     "generated_artifact",
     "obsolete_release_file",
     "needs_review",
+    "redacted_safe",
 ]
 
-STATUS_BY_CLASSIFICATION = {
-    "real_secret_suspected": ("fail", "critical"),
-    "fixture_expected": ("skip", "low"),
-    "generated_artifact": ("warn", "high"),
-    "obsolete_release_file": ("warn", "high"),
-    "needs_review": ("warn", "medium"),
+# (status, severity, contributes_to_score)
+STATUS_MAPPING = {
+    "real_secret_suspected": ("fail", "critical", True),
+    "fixture_expected": ("skip", "low", False),
+    "generated_artifact": ("warn", "high", True),
+    "obsolete_release_file": ("warn", "high", True),
+    "needs_review": ("warn", "medium", True),
+    "redacted_safe": ("pass", "low", False),
 }
 
 timestamp = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -87,6 +90,15 @@ def run_cmd(cmd: str):
 
 
 def add_check(check_id, category, title, status, severity, details, remediation="", evidence="", meta=None):
+    # Default contributes_to_score based on status if not explicitly in meta
+    contributes = True
+    if status in {"pass", "skip"}:
+        contributes = False
+    
+    m = meta or {}
+    if "contributes_to_score" not in m:
+        m["contributes_to_score"] = contributes
+
     checks.append(
         {
             "id": check_id,
@@ -97,7 +109,7 @@ def add_check(check_id, category, title, status, severity, details, remediation=
             "details": details,
             "remediation": remediation,
             "evidence": evidence,
-            "meta": meta or {},
+            "meta": m,
         }
     )
 
@@ -120,24 +132,35 @@ def parse_classified_output(output: str):
     return grouped
 
 
+def get_file_git_info(file_path: str):
+    _, tracked, _ = run_cmd(f'git ls-files "{file_path}"')
+    _, ignored, _ = run_cmd(f'git check-ignore "{file_path}"')
+    _, staged, _ = run_cmd(f'git diff --cached --name-only "{file_path}"')
+    return {
+        "tracked": bool(tracked.strip()),
+        "ignored": bool(ignored.strip()),
+        "staged": bool(staged.strip()),
+    }
+
+
 def add_secret_scan_results(check_id_prefix: str, title_context: str, output: str, scope_hint: str):
     grouped = parse_classified_output(output)
     total_findings = sum(len(lines) for lines in grouped.values())
 
+    # Determine worst status for the summary check
     worst_status = "pass"
     worst_severity = "low"
-    if grouped["real_secret_suspected"]:
-        worst_status, worst_severity = "fail", "critical"
-    elif grouped["generated_artifact"] or grouped["obsolete_release_file"] or grouped["needs_review"]:
-        worst_status, worst_severity = "warn", "high"
-    elif grouped["fixture_expected"]:
-        worst_status, worst_severity = "skip", "low"
+    
+    # We'll re-evaluate summary status based on findings
+    summary_contributes = False
 
     summary_details = (
         "No secret findings."
         if total_findings == 0
         else f"Classified {total_findings} finding(s) for {title_context}."
     )
+    
+    # Initial summary check, will be updated if findings exist
     add_check(
         check_id_prefix,
         "Secrets",
@@ -155,61 +178,139 @@ def add_secret_scan_results(check_id_prefix: str, title_context: str, output: st
         if not lines:
             continue
 
-        status, severity = STATUS_BY_CLASSIFICATION[classification]
-        details = {
-            "real_secret_suspected": f"Found suspected real secrets in {title_context}.",
-            "fixture_expected": f"Found authorized fake fixtures in {title_context}.",
-            "generated_artifact": f"Found secrets in generated artifacts for {title_context}.",
-            "obsolete_release_file": f"Found secrets in release files for {title_context}.",
-            "needs_review": f"Found items needing manual review in {title_context}.",
-        }[classification]
-        remediation = {
-            "real_secret_suspected": "Remove the secret or replace it with runtime-generated test data.",
-            "fixture_expected": "No action required if the fixture policy still applies.",
-            "generated_artifact": "Purge or redact generated artifacts that contain secrets.",
-            "obsolete_release_file": "Clean up or regenerate release files without embedded secrets.",
-            "needs_review": "Review the finding manually and tighten the classifier if appropriate.",
-        }[classification]
-        add_check(
-            f"{check_id_prefix}-{classification}",
-            "Secrets",
-            f"{classification} ({title_context})",
-            status,
-            severity,
-            details,
-            remediation,
-            "\n".join(lines)[:1000],
-            meta={"scope": scope_hint, "classification": classification, "count": len(lines)},
-        )
+        status, severity, contributes = STATUS_MAPPING[classification]
+        
+        # Override severity based on scope and git info
+        for line in lines:
+            # Try to extract file path from line "[classification] Label Path -> Masked"
+            parts = line.split(" ")
+            file_path = ""
+            for p in parts:
+                if "/" in p or "." in p:
+                    file_path = p.split(":")[0]
+                    break
+            
+            git_info = {}
+            if file_path and os.path.exists(file_path):
+                git_info = get_file_git_info(file_path)
+            
+            # Policy overrides
+            current_status = status
+            current_severity = severity
+            current_contributes = contributes
+            
+            if git_info.get("tracked") or git_info.get("staged"):
+                if classification in ["generated_artifact", "obsolete_release_file"]:
+                    current_status = "warn"
+                    current_severity = "high"
+                    current_contributes = True
+            elif git_info.get("ignored"):
+                if classification in ["generated_artifact", "obsolete_release_file"]:
+                    # Ignored artifacts are just warnings or info if old
+                    current_status = "warn"
+                    current_severity = "medium"
+                    current_contributes = True
+            
+            # If redacted marker found, it's safe
+            # intentional_redacted = ["***REDACTED***", "***masked***", "sk-***masked***", "Bearer ***masked***", "ADMIN_TOKEN=***masked***"]
+            # We check for these specifically. Just checking for "***" is too broad as it matches "****" from masking.
+            is_intentional_redaction = any(m in line for m in ["***REDACTED***", "***masked***", "sk-***masked***", "Bearer ***masked***", "ADMIN_TOKEN=***masked***"])
+            
+            if is_intentional_redaction:
+                current_status = "pass"
+                current_severity = "low"
+                current_contributes = False
+
+            details = {
+                "real_secret_suspected": f"Found suspected real secrets in {title_context}.",
+                "fixture_expected": f"Found authorized fake fixtures in {title_context}.",
+                "generated_artifact": f"Found secrets in generated artifacts for {title_context}.",
+                "obsolete_release_file": f"Found secrets in release files for {title_context}.",
+                "needs_review": f"Found items needing manual review in {title_context}.",
+                "redacted_safe": f"Found redacted markers in {title_context}.",
+            }.get(classification, f"Findings for {classification}")
+
+            remediation = {
+                "real_secret_suspected": "Remove the secret or replace it with runtime-generated test data.",
+                "fixture_expected": "No action required if the fixture policy still applies.",
+                "generated_artifact": "Purge or redact generated artifacts that contain secrets.",
+                "obsolete_release_file": "Clean up or regenerate release files without embedded secrets.",
+                "needs_review": "Review the finding manually and tighten the classifier if appropriate.",
+                "redacted_safe": "No action required.",
+            }.get(classification, "")
+
+            finding_id = f"{check_id_prefix}-{classification}"
+            if len(lines) > 1:
+                finding_id = f"{finding_id}-{lines.index(line)}"
+
+            add_check(
+                finding_id,
+                "Secrets",
+                f"{classification} ({title_context})",
+                current_status,
+                current_severity,
+                f"{details} (File: {file_path})",
+                remediation,
+                line[:1000],
+                meta={
+                    "scope": scope_hint, 
+                    "classification": classification, 
+                    "git": git_info,
+                    "contributes_to_score": current_contributes
+                },
+            )
+            
+            # Update summary check if this finding is worse
+            # This is a bit simplified, but helps show worst result in summary
+            idx = next(i for i, c in enumerate(checks) if c["id"] == check_id_prefix)
+            if current_status == "fail":
+                checks[idx]["status"] = "fail"
+                checks[idx]["severity"] = "critical" if current_severity == "critical" else "high"
+            elif current_status == "warn" and checks[idx]["status"] != "fail":
+                checks[idx]["status"] = "warn"
+                checks[idx]["severity"] = "high"
 
 
+# Scans by category
+# 1. Versionable files (tracked) - also mapped to sec-secrets-all for compatibility
 code, out, err = run_cmd("./scripts/check-secrets.sh --all --verbose")
-add_secret_scan_results("sec-secrets-all", "all files", out, "repository")
+add_secret_scan_results("sec-secrets-versionable", "versionable files", out, "versionable_files")
+add_secret_scan_results("sec-secrets-all", "all files (legacy)", out, "repository")
 
+# 2. Staged files
 code, out, err = run_cmd("./scripts/check-secrets.sh --staged --verbose")
-add_secret_scan_results("sec-secrets-staged", "staged files", out, "git_staged")
+add_secret_scan_results("sec-secrets-staged", "staged files", out, "staged_files")
+
+# 3. Releases (versioned)
+_, out_rel_t, _ = run_cmd("git ls-files releases/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+add_secret_scan_results("sec-secrets-releases-versioned", "versioned releases", out_rel_t, "releases_versioned")
+
+# 4. Releases (untracked)
+_, out_rel_u, _ = run_cmd("git ls-files -o releases/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+add_secret_scan_results("sec-secrets-releases-untracked", "untracked releases", out_rel_u, "releases_untracked")
 
 if not SKIP_ARTIFACTS:
-    _, art_out, _ = run_cmd("./scripts/check-secrets.sh --path artifacts --verbose")
-    _, rel_out, _ = run_cmd("./scripts/check-secrets.sh --path releases --verbose")
-    add_secret_scan_results(
-        "sec-secrets-artifacts",
-        "artifacts/releases",
-        "\n".join([art_out, rel_out]).strip(),
-        "artifacts_and_releases",
-    )
+    # 5. Artifacts (ignored)
+    _, out_art_i, _ = run_cmd("git ls-files -o -i --exclude-standard artifacts/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+    add_secret_scan_results("sec-secrets-artifacts-ignored", "ignored artifacts", out_art_i, "artifacts_ignored")
+    
+    # 6. Artifacts (recent - last 24h)
+    _, out_art_r, _ = run_cmd("find artifacts/ -type f -mmin -1440 | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+    add_secret_scan_results("sec-secrets-artifacts-recent", "recent artifacts", out_art_r, "artifacts_recent")
+    
+    # Legacy artifacts scan for compatibility (includes all releases and artifacts)
+    add_secret_scan_results("sec-secrets-artifacts", "artifacts/releases (legacy)", "\n".join([out_art_i, out_art_r, out_rel_u, out_rel_t]), "artifacts_and_releases")
 else:
-    add_check(
-        "sec-secrets-artifacts",
-        "Secrets",
-        "Secrets scan (artifacts/releases)",
-        "skip",
-        "high",
-        "Artifacts/releases scan skipped by user.",
-        "",
-        "",
-        meta={"scope": "artifacts_and_releases", "skipped": True},
-    )
+    for cat in ["artifacts-ignored", "artifacts-recent"]:
+        add_check(
+            f"sec-secrets-{cat}",
+            "Secrets",
+            f"Secrets scan ({cat.replace('-', ' ')})",
+            "skip",
+            "low",
+            "Artifacts scan skipped by user.",
+            meta={"scope": cat.replace("-", "_"), "skipped": True, "contributes_to_score": False},
+        )
 
 git_checks = [
     (".env", "git-env", "critical"),
@@ -465,20 +566,18 @@ else:
         "No privileged containers.",
     )
 
-critical_fails = sum(1 for check in checks if check["status"] == "fail" and check["severity"] == "critical")
-high_fails = sum(1 for check in checks if check["status"] == "fail" and check["severity"] == "high")
-fails = sum(1 for check in checks if check["status"] == "fail")
-warns = sum(1 for check in checks if check["status"] == "warn")
+critical_fails = sum(1 for check in checks if check["status"] == "fail" and check["severity"] == "critical" and check["meta"].get("contributes_to_score", True))
+high_fails = sum(1 for check in checks if check["status"] == "fail" and check["severity"] == "high" and check["meta"].get("contributes_to_score", True))
+fails = sum(1 for check in checks if check["status"] == "fail" and check["meta"].get("contributes_to_score", True))
+warns = sum(1 for check in checks if check["status"] == "warn" and check["meta"].get("contributes_to_score", True))
 passes = sum(1 for check in checks if check["status"] == "pass")
 skips = sum(1 for check in checks if check["status"] == "skip")
 
 if critical_fails > 0:
     score = "FAIL"
-elif STRICT and high_fails > 0:
+elif STRICT and (high_fails > 0 or fails > 0):
     score = "FAIL"
-elif fails > 0:
-    score = "PASS_WITH_WARNINGS"
-elif warns > 0:
+elif fails > 0 or warns > 0:
     score = "PASS_WITH_WARNINGS"
 else:
     score = "PASS"
@@ -488,7 +587,7 @@ _, commit, _ = run_cmd("git rev-parse HEAD")
 
 report_data = {
     "generated_at": datetime.datetime.now().isoformat(),
-    "version": "1.0",
+    "version": "1.1",
     "git_branch": branch.strip(),
     "git_commit": commit.strip(),
     "score": score,
@@ -498,6 +597,7 @@ report_data = {
         "fail": fails,
         "skip": skips,
         "critical_failures": critical_fails,
+        "high_failures": high_fails,
     },
     "checks": checks,
     "artifacts": {
@@ -509,27 +609,44 @@ report_data = {
 with open(report_dir / "security-report.json", "w") as fh:
     json.dump(report_data, fh, indent=2)
 
+def get_table(checks_list):
+    if not checks_list:
+        return "_No findings in this category._\n"
+    table = "| ID | Category | Title | Status | Severity | Details |\n"
+    table += "|---|---|---|---|---|---|\n"
+    for check in checks_list:
+        table += f"| {check['id']} | {check['category']} | {check['title']} | {check['status']} | {check['severity']} | {check['details']} |\n"
+    return table
+
+blocking = [c for c in checks if c["status"] == "fail" and c["meta"].get("contributes_to_score", True)]
+warnings = [c for c in checks if c["status"] == "warn" and c["meta"].get("contributes_to_score", True)]
+informational = [c for c in checks if not c["meta"].get("contributes_to_score", True) and c["status"] != "pass"]
+passed_checks = [c for c in checks if c["status"] == "pass"]
+
 md_lines = [
     "# Security Report",
     f"**Date:** {report_data['generated_at']}",
     f"**Score:** {score}",
     f"**Branch:** {report_data['git_branch']} ({report_data['git_commit']})",
     "",
-    "## Totals",
-    f"- Pass: {passes}",
-    f"- Warn: {warns}",
-    f"- Fail: {fails}",
-    f"- Skip: {skips}",
-    f"- Critical Fails: {critical_fails}",
+    "## Summary",
+    f"- **Blocking Findings:** {len(blocking)}",
+    f"- **Warnings:** {len(warnings)}",
+    f"- **Informational/Redacted:** {len(informational)}",
+    f"- **Passed Checks:** {len(passed_checks)}",
     "",
-    "## Checks",
-    "| ID | Category | Title | Status | Severity | Details |",
-    "|---|---|---|---|---|---|",
+    "## Blocking Findings (Action Required)",
+    get_table(blocking),
+    "",
+    "## Warnings",
+    get_table(warnings),
+    "",
+    "## Informational & Redacted Artifacts",
+    get_table(informational),
+    "",
+    "## All Passed Checks",
+    get_table(passed_checks),
 ]
-for check in checks:
-    md_lines.append(
-        f"| {check['id']} | {check['category']} | {check['title']} | {check['status']} | {check['severity']} | {check['details']} |"
-    )
 
 with open(report_dir / "security-report.md", "w") as fh:
     fh.write("\n".join(md_lines))
@@ -546,3 +663,8 @@ print(f"MD Output: {report_dir / 'security-report.md'}")
 if score == "FAIL":
     sys.exit(1)
 EOF
+
+# Redact the report directory
+echo "Redacting security report artifacts..."
+./scripts/redact-local-sensitive-artifacts.sh --path "${OUTPUT_DIR}" --in-place
+

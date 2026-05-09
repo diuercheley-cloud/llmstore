@@ -532,34 +532,7 @@ with open(summary_md, "w", encoding="utf-8") as handle:
 PY
 
 log_step "Redacting sensitive tokens from artifacts"
-python3 - "${OUTPUT_DIR}" <<'PY'
-import os
-import re
-import sys
-from pathlib import Path
-
-output_dir = Path(sys.argv[1])
-patterns = [
-    (re.compile(r'sk-[a-zA-Z0-9]{20,}'), '__redacted__'),
-    (re.compile(r'Bearer [a-zA-Z0-9]{20,}'), 'Bearer __redacted__'),
-    (re.compile(r'ADMIN_TOKEN=[a-zA-Z0-9]{15,}'), 'ADMIN_TOKEN=__redacted__'),
-    (re.compile(r'token=[a-zA-Z0-9]{20,}'), 'token=__redacted__'),
-]
-
-for root, _, files in os.walk(output_dir):
-    for file in files:
-        file_path = Path(root) / file
-        if file_path.suffix in ['.json', '.md', '.log', '.txt']:
-            try:
-                content = file_path.read_text(encoding='utf-8')
-                original_content = content
-                for pattern, replacement in patterns:
-                    content = pattern.sub(replacement, content)
-                if content != original_content:
-                    file_path.write_text(content, encoding='utf-8')
-            except Exception as e:
-                print(f"Warning: Could not redact {file_path}: {e}")
-PY
+"${SCRIPT_DIR}/redact-local-sensitive-artifacts.sh" --path "${OUTPUT_DIR}" --in-place
 
 log_section "Validation Report"
 log_info "Summary JSON: ${SUMMARY_JSON}"

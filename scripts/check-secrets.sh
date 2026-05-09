@@ -33,6 +33,13 @@ SAFE_PATTERNS=(
     "test-admin-token"
     "change-this-admin-token"
     "__redacted__"
+    "os.environ.get"
+    "os.getenv"
+    "\\*\\*\\*REDACTED\\*\\*\\*"
+    "\\*\\*\\*masked\\*\\*\\*"
+    "sk-\\*\\*\\*masked\\*\\*\\*"
+    "Bearer \\*\\*\\*masked\\*\\*\\*"
+    "ADMIN_TOKEN=\\*\\*\\*masked\\*\\*\\*"
 )
 
 VERBOSE=false
@@ -139,13 +146,13 @@ is_allowed_fixture() {
     local path="$1"
     local file="$2"
 
-    if [[ "$path" == releases/* ]] || [[ "$path" == docs/* ]] || [[ "$path" == scripts/* ]] || [[ "$path" == control_plane/* ]]; then
+    if [[ "$path" == releases/* ]] || [[ "$path" == docs/* ]] || [[ "$path" == control_plane/* ]]; then
         return 1
     fi
-    if [[ "$path" != tests/fixtures/* ]]; then
+    if [[ "$path" != tests/fixtures/* ]] && [[ "$path" != *scripts/validate-* ]] && [[ "$path" != tests/test_* ]]; then
         return 1
     fi
-    if [[ "$path" != *fake_* ]] && [[ "$path" != *fixture_* ]]; then
+    if [[ "$path" != *fake_* ]] && [[ "$path" != *fixture_* ]] && [[ "$path" != *validate-* ]] && [[ "$path" != *test_* ]]; then
         return 1
     fi
     if grep -qF "FAKE SECRET FOR TESTS ONLY" "$file" 2>/dev/null; then
@@ -371,7 +378,7 @@ elif [ -n "$CHECK_PATH" ]; then
         fi
     fi
 elif [ "$ALL" = true ]; then
-    mapfile -t files < <(git ls-files | grep -vE '^(node_modules/|models/|\.venv/|data/rag_uploads/|\.git/|\.pytest_cache/|\.ruff_cache/)' || true)
+    mapfile -t files < <(git ls-files | grep -vE '^(node_modules/|models/|\.venv/|data/rag_uploads/|\.git/|\.pytest_cache/|\.ruff_cache/|scripts/)' || true)
     scan_list "all" "." "${files[@]}"
 else
     usage

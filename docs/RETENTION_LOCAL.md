@@ -53,6 +53,11 @@ Você pode limpar apenas seções específicas:
 ./scripts/retention-local.sh --section tts --older-than-days 1
 ```
 
+Para uma limpeza focada em segurança (redação de dados sensíveis ou limpeza de relatórios de segurança), utilize:
+```bash
+./scripts/clean-sensitive-artifacts-local.sh --help
+```
+
 ### Limpeza de Cliente Específico
 Útil para RAG e TTS:
 ```bash

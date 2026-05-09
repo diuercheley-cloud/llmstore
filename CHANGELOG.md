@@ -1,5 +1,15 @@
 # Changelog
 
+## [v1.5.5-security-artifacts-clean] - 2026-05-09
+
+### Added
+- artifact secret diagnosis
+- source redaction for generated artifacts
+- safe cleanup/redaction for ignored artifacts
+- stronger release artifacts validation
+- improved security-report scoring for redacted ignored artifacts
+- guarantee summaries/releases do not carry test tokens
+
 ## [v1.5.4-security-cleanup] - 2026-05-08
 
 ### Added

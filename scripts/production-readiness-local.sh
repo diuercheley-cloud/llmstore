@@ -1455,6 +1455,10 @@ REPORT_MD.write_text(render_markdown(score, checks), encoding="utf-8")
 cleanup_created_client()
 PY
 
+# Redact the report directory
+echo "Redacting production readiness artifacts..."
+./scripts/redact-local-sensitive-artifacts.sh --path "${RUN_DIR}" --in-place
+
 if [[ "${JSON_ONLY}" == "true" ]]; then
   cat "${REPORT_JSON}"
 fi

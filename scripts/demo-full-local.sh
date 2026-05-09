@@ -264,6 +264,9 @@ cat >"${ARTIFACT_DIR}/demo-summary.md" <<EOF
 Gerado automaticamente por \`scripts/demo-full-local.sh\`
 EOF
 
+echo "Redacting demo artifacts..."
+"${SCRIPT_DIR}/redact-local-sensitive-artifacts.sh" --path "${ARTIFACT_DIR}" --in-place
+
 echo
 echo "--- Relatório Gerado ---"
 cat "${ARTIFACT_DIR}/demo-summary.md"

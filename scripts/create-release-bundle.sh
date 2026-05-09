@@ -202,6 +202,12 @@ cat <<EOF > "$FINAL_DEST/bundle-manifest.json"
 }
 EOF
 
+echo "Validating release bundle artifacts security..."
+if ! "./scripts/validate-release-artifacts-security.sh" --release-dir "$FINAL_DEST"; then
+    echo -e "${RED}Error: Security validation failed for $FINAL_DEST!${NC}"
+    exit 1
+fi
+
 if [ "$DRY_RUN" = false ]; then
     echo -e "${GREEN}Release bundle created successfully at $FINAL_DEST/$ARCHIVE_NAME${NC}"
     echo "Size: $(du -sh "$FINAL_DEST/$ARCHIVE_NAME" | cut -f1)"

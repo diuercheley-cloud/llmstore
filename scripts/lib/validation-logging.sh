@@ -17,25 +17,24 @@ VALIDATION_SCRIPT_NAME=$(basename "$0")
 
 mask_secrets() {
   local input="$1"
-  
-  # Mask common secret patterns
-  # Bearer tokens
-  input=$(echo "$input" | sed -E 's/Bearer [a-zA-Z0-9\._-]+/Bearer [MASKED]/g')
-  # API keys (sk-...)
-  input=$(echo "$input" | sed -E 's/sk-[a-zA-Z0-9]{12,}/sk-[MASKED]/g')
-  # JWT tokens
-  input=$(echo "$input" | sed -E 's/eyJ[a-zA-Z0-9\._-]{20,}/eyJ[MASKED]/g')
-  
-  # Mask specific known secrets if they are exported in environment
-  if [[ -n "${ADMIN_TOKEN:-}" ]]; then
-    input="${input//"$ADMIN_TOKEN"/[ADMIN_TOKEN_MASKED]}"
-  fi
-  
-  if [[ -n "${API_KEY:-}" ]]; then
-    input="${input//"$API_KEY"/[API_KEY_MASKED]}"
-  fi
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-  echo "$input"
+  if [[ -f "${script_dir}/lib/redaction.sh" ]]; then
+    # Use centralized redaction logic
+    # We avoid sourcing it here to prevent potential side effects in all scripts
+    # but we can use a subshell to get the redacted output
+    echo "$input" | (source "${script_dir}/lib/redaction.sh" && redact_stream)
+  else
+    # Fallback to legacy masking
+    # Mask common secret patterns
+    input=$(echo "$input" | sed -E 's/Bearer [a-zA-Z0-9\._-]+/Bearer [MASKED]/g')
+    # API keys (sk-...)
+    input=$(echo "$input" | sed -E 's/sk-[a-zA-Z0-9]{12,}/sk-[MASKED]/g')
+    # JWT tokens
+    input=$(echo "$input" | sed -E 's/eyJ[a-zA-Z0-9\._-]{20,}/eyJ[MASKED]/g')
+    echo "$input"
+  fi
 }
 
 get_timestamp() {

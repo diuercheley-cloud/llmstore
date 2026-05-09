@@ -96,6 +96,15 @@ if [[ "${VALIDATION_RESULT}" == "success" && -x "${SCRIPT_DIR}/validate-release-
         --release-dir "${RELEASE_DIR}"
 fi
 
+echo "Redacting sensitive information from release artifacts..."
+"${SCRIPT_DIR}/redact-local-sensitive-artifacts.sh" --path "${RELEASE_DIR}" --in-place
+
+echo "Validating release artifacts security..."
+if ! "${SCRIPT_DIR}/validate-release-artifacts-security.sh" --release-dir "${RELEASE_DIR}"; then
+    echo "ERROR: Security validation failed for ${RELEASE_DIR}!"
+    exit 1
+fi
+
 echo "--------------------------------------------------"
 echo "Release ${VERSION_ARG} prepared in ${RELEASE_DIR}"
 ls -l "${RELEASE_DIR}"

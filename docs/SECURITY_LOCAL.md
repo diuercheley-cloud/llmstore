@@ -14,9 +14,15 @@ Or directly:
 
 ## Interpreting the Score
 The report returns a score based on its findings:
-- **PASS**: All checks passed or were skipped. The environment is considered clean.
-- **PASS_WITH_WARNINGS**: Issues were found that might be risky (like open permissions or missing admin tokens in offline mode) but aren't critical failures. Review the warnings and fix if applicable.
-- **FAIL**: Critical issues were detected (like checked-in secrets, unmasked API keys in logs, or globally exposed databases). You MUST fix these before proceeding. When running with `--strict`, high severity issues also result in FAIL.
+- **PASS**: All checks passed, were skipped, or findings were classified as safe (e.g., redacted artifacts). The environment is considered clean.
+- **PASS_WITH_WARNINGS**: Non-critical issues were found (like open permissions or secrets in ignored artifacts that are not yet redacted). Review and fix if applicable.
+- **FAIL**: Critical issues were detected (like checked-in secrets in versionable files, unmasked API keys in logs, or globally exposed databases). You MUST fix these before proceeding. When running with `--strict`, high severity warnings also result in FAIL.
+
+### Reporting Categories
+Findings are grouped to focus on actionability:
+- **Blocking Findings**: Real risks in tracked or staged files. These prevent a PASS score.
+- **Warnings**: Potential risks in untracked files or ignored artifacts that contain full secrets.
+- **Informational & Redacted**: Authorized fixtures or findings that have already been redacted (e.g., markers like `***REDACTED***`). These do not count against the score.
 
 ## Key and Certificate Policy
 To prevent accidental leakage of real private keys or certificates:
@@ -76,11 +82,21 @@ Everything else is treated as suspicious. This includes:
 - Secrets inside `releases/` or generated `artifacts/`
 
 Classifications emitted by the local scanners:
-- `real_secret_suspected`: blocking failure
-- `fixture_expected`: allowed fake fixture, reported as informational skip
+- `real_secret_suspected`: blocking failure if tracked/staged
+- `fixture_expected`: allowed fake fixture, reported as informational
 - `generated_artifact`: warning for generated files that contain secrets
 - `obsolete_release_file`: warning for release bundles or release-side leftovers
 - `needs_review`: suspicious item that still needs manual confirmation
+- `redacted_safe`: findings that contain intentional redaction markers (e.g., `***REDACTED***`), reported as informational
+
+### Authorized Redaction Markers
+The following markers are considered safe and will not generate warnings:
+- `***REDACTED***`
+- `***masked***`
+- `sk-***masked***`
+- `Bearer ***masked***`
+- `ADMIN_TOKEN=***masked***`
+- `__redacted__`
 
 ## Logs and Artifacts Policy
 - Logs must not contain full `POSTGRES_PASSWORD`, `REDIS_URL`, or `ADMIN_TOKEN`.
@@ -108,7 +124,7 @@ To comply with data protection standards even in local development:
 - Verify that `exports/` directory is never committed, as it contains sensitive data.
 
 ## Security Cleanup Workflow
-For major releases or hardening sprints (like v1.5.4), follow this diagnostic workflow:
+For major releases or hardening sprints (like v1.5.4 or v1.5.5), follow this diagnostic workflow:
 
 1. **Diagnostic Phase**:
    - Run baseline reports: `./scripts/check-secrets.sh --all` and `./scripts/security-report-local.sh`.
@@ -118,7 +134,14 @@ For major releases or hardening sprints (like v1.5.4), follow this diagnostic wo
 
 2. **Remediation Phase**:
    - Fix `permission_issue` and `real_risk` items first.
-   - Purge `generated_artifact` from local storage.
+   - Purge or redact `generated_artifact` from local storage using:
+     ```bash
+     ./scripts/clean-sensitive-artifacts-local.sh --yes --section all --keep-last 5
+     ```
+     Or to redact instead of delete:
+     ```bash
+     ./scripts/clean-sensitive-artifacts-local.sh --yes --redact-instead-of-delete --section all
+     ```
    - For `fixture_expected` or false positives, update the security scripts to exclude these specific patterns.
    - Never commit raw secrets during the cleanup process.
 
