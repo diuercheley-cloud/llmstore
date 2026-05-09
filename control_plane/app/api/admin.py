@@ -2,12 +2,13 @@ import json
 import os
 import subprocess
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from redis.asyncio import Redis
 from pydantic import Field
 from sqlalchemy import case, delete, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,10 +35,12 @@ from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.rag_usage_event import RagUsageEvent
 from app.models.generation_job import GenerationJob
+from app.models.tts_usage_event import TtsUsageEvent
 from app.models.user_quota_override import UserQuotaOverride
 from app.models.client_feature_block import ClientFeatureBlock
 from app.models.security_event import SecurityEvent
 from app.services.security_monitor import log_security_event
+from app.services.tts_usage import get_admin_tts_usage, get_tts_usage_and_limits
 from app.schemas.admin import (
     ApiKeyCreate,
     ApiKeyCreated,
@@ -875,6 +878,113 @@ async def get_usage(session: AsyncSession = Depends(get_db_session)):
     ]
 
 
+def _get_latest_artifact_report(base_dir: str, filename: str) -> dict | None:
+    try:
+        reports_dir = Path(base_dir)
+        if not reports_dir.exists():
+            return None
+        # Sort by directory name (timestamp)
+        reports = sorted([d for d in reports_dir.iterdir() if d.is_dir()], reverse=True)
+        if not reports:
+            return None
+        report_file = reports[0] / filename
+        if report_file.exists():
+            with open(report_file) as f:
+                data = json.load(f)
+                data["_report_internal_path"] = str(report_file.relative_to(Path.cwd()))
+                return data
+    except Exception:
+        pass
+    return None
+
+
+@router.get("/readiness/latest")
+async def get_latest_readiness_report():
+    report = _get_latest_artifact_report("artifacts/production-readiness", "report.json")
+    if not report:
+        return {"status": "not_generated"}
+    
+    # Sanitization: Only return requested fields
+    checks = report.get("checks", [])
+    top_warnings = [c for c in checks if c.get("status") == "warn"][:5]
+    top_failures = [c for c in checks if c.get("status") == "fail"][:5]
+
+    return {
+        "score": report.get("score", "UNKNOWN"),
+        "generated_at": report.get("generated_at"),
+        "totals": report.get("totals", {}),
+        "top_warnings": [
+            {"title": c.get("title"), "details": c.get("details")} for c in top_warnings
+        ],
+        "top_failures": [
+            {"title": c.get("title"), "details": c.get("details")} for c in top_failures
+        ],
+        "report_path": report.get("_report_internal_path")
+    }
+
+
+@router.get("/security/latest")
+async def get_latest_security_report_endpoint():
+    report = _get_latest_artifact_report("artifacts/security-reports", "security-report.json")
+    if not report:
+        return {"status": "not_generated"}
+    
+    # Sanitization
+    checks = report.get("checks", [])
+    critical_failures = [c for c in checks if c.get("severity") == "critical" and c.get("status") == "fail"]
+    warnings = [c for c in checks if c.get("status") == "warn"]
+
+    return {
+        "score": report.get("score", "UNKNOWN"),
+        "generated_at": report.get("generated_at"),
+        "totals": report.get("totals", {}),
+        "critical_failures": [
+            {"title": c.get("title"), "details": c.get("details")} for c in critical_failures
+        ],
+        "warnings": [
+            {"title": c.get("title"), "details": c.get("details")} for c in warnings
+        ],
+        "report_path": report.get("_report_internal_path")
+    }
+
+
+@router.get("/runtime/summary")
+async def get_runtime_summary(
+    session: AsyncSession = Depends(get_db_session),
+    redis: Redis = Depends(get_redis),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+):
+    from datetime import datetime, timezone
+    from app.api.system import health_deep
+    
+    # Use existing deep health as base
+    deep = await health_deep(session, redis, proxy)
+    
+    # Consolidate with usage summary
+    usage = await get_usage_summary(session, proxy)
+    
+    # Latest report scores
+    readiness = _get_latest_artifact_report("artifacts/production-readiness", "report.json")
+    security = _get_latest_artifact_report("artifacts/security-reports", "security-report.json")
+
+    return {
+        "health": deep.get("readiness_score", "UNKNOWN"),
+        "ready": deep.get("readiness_score") == "READY",
+        "deep_health": {
+            "postgres": deep.get("postgres", {}).get("status"),
+            "redis": deep.get("redis", {}).get("status"),
+            "data_plane": deep.get("inference_backends", [{}])[0].get("status") if deep.get("inference_backends") else "offline"
+        },
+        "backend_status": usage.get("totals", {}).get("backends_online", 0),
+        "queues": usage.get("queues", {}).get("summary", {}),
+        "rag": deep.get("rag", {}),
+        "tts": deep.get("tts", {}),
+        "latest_security_score": security.get("score") if security else "not_generated",
+        "latest_readiness_score": readiness.get("score") if readiness else "not_generated",
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
 @router.get("/usage/summary")
 async def get_usage_summary(
     session: AsyncSession = Depends(get_db_session),
@@ -927,6 +1037,9 @@ async def get_usage_summary(
         "total_storage_mb": sum(item.get("storage_mb", 0) for item in rag_usage_all),
         "total_queries_month": sum(item.get("queries_month", 0) for item in rag_usage_all),
     }
+
+    # TTS Usage Summary
+    tts_usage_all = await get_admin_tts_usage(session)
 
     plan_buckets: dict[str, dict] = {}
     total_estimated_cost = 0.0
@@ -1006,6 +1119,7 @@ async def get_usage_summary(
         "models": models,
         "queues": queue_snapshot,
         "rag": rag_summary,
+        "tts": tts_usage_all,
         "invoices": {
             "pending": summary["invoices_pending"],
             "paid": summary["invoices_paid"],
@@ -2730,7 +2844,7 @@ async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession =
     import datetime
     
     result = await session.execute(
-        select(Client).options(selectinload(Client.billing_plan)).where(Client.id == client_id)
+        select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == client_id)
     )
     client = result.scalar_one_or_none()
     if not client:
@@ -2762,6 +2876,9 @@ async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession =
     
     plan_cost = float(client.billing_plan.price_brl) if client.billing_plan else 0.0
     
+    # TTS usage
+    tts_usage = await get_tts_usage_and_limits(session, client)
+    
     return {
         "client_id": str(client.id),
         "client_name": client.name,
@@ -2771,12 +2888,83 @@ async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession =
             "tokens_used": today_tokens,
             "requests": today_requests,
             "limit": daily_quota,
-            "percent_used": round((today_tokens / daily_quota * 100) if daily_quota > 0 else 0, 2)
+            "percent_used": round((today_tokens / daily_quota * 100) if daily_quota > 0 else 0, 2),
+            "tts_chars_used": tts_usage["usage"]["daily_chars"],
+            "tts_limit": tts_usage["limits"]["max_chars_per_day"]
         },
         "month": {
             "tokens_used": month_tokens,
             "requests": month_requests,
             "limit": monthly_quota,
-            "percent_used": round((month_tokens / monthly_quota * 100) if monthly_quota > 0 else 0, 2)
-        }
+            "percent_used": round((month_tokens / monthly_quota * 100) if monthly_quota > 0 else 0, 2),
+            "tts_chars_used": tts_usage["usage"]["monthly_chars"],
+            "tts_limit": tts_usage["limits"]["max_chars_per_month"]
+        },
+        "tts": tts_usage
     }
+
+@router.get("/benchmarks")
+async def list_benchmarks():
+    """
+    List the latest benchmark for each model found in artifacts.
+    """
+    settings = get_settings()
+    benchmarks_dir = Path("artifacts/model-benchmarks")
+    if not benchmarks_dir.exists():
+        return []
+
+    results = []
+    try:
+        for model_dir in benchmarks_dir.iterdir():
+            if not model_dir.is_dir():
+                continue
+            
+            # Get the latest timestamp directory
+            runs = [d for d in model_dir.iterdir() if d.is_dir()]
+            if not runs:
+                continue
+            
+            latest_run = max(runs, key=lambda d: d.name)
+            bench_file = latest_run / "benchmark.json"
+            
+            if bench_file.exists():
+                try:
+                    with open(bench_file, "r") as f:
+                        data = json.load(f)
+                        results.append(data)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+                
+    return results
+
+@router.get("/benchmarks/{model}")
+async def get_model_benchmark(model: str):
+    """
+    Get the latest benchmark for a specific model.
+    """
+    settings = get_settings()
+    # Handle model names with slashes or colons by replacing them as done in the runner
+    safe_model = model.replace("/", "_").replace(":", "_")
+    bench_dir = Path("artifacts/model-benchmarks") / safe_model
+    
+    if not bench_dir.exists():
+        raise HTTPException(status_code=404, detail=f"No benchmarks found for model {model}")
+
+    runs = [d for d in bench_dir.iterdir() if d.is_dir()]
+    if not runs:
+        raise HTTPException(status_code=404, detail=f"No runs found for model {model}")
+    
+    latest_run = max(runs, key=lambda d: d.name)
+    bench_file = latest_run / "benchmark.json"
+    
+    if not bench_file.exists():
+        raise HTTPException(status_code=404, detail=f"Benchmark file not found for latest run of {model}")
+
+    try:
+        with open(bench_file, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading benchmark: {str(e)}")
+

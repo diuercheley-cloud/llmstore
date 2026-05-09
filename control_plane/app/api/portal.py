@@ -32,6 +32,7 @@ from app.services.billing import (
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import resolve_requested_model, get_effective_allowed_models
 from app.services.quota import month_start, ensure_quota, record_usage, QuotaExceeded
+from app.services.tts_usage import get_tts_usage_and_limits
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
 from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
 from app.utils.request_summary import summarize_chat_request
@@ -180,6 +181,9 @@ async def portal_me(
             "rag_max_storage_mb": effective_plan.rag_max_storage_mb,
             "rag_max_pages_per_month": effective_plan.rag_max_pages_per_month,
             "rag_max_queries_per_month": effective_plan.rag_max_queries_per_month,
+            "tts_enabled": effective_plan.tts_enabled,
+            "tts_chars_per_day": effective_plan.tts_chars_per_day,
+            "tts_chars_per_month": effective_plan.tts_chars_per_month,
         },
     }
 
@@ -309,6 +313,9 @@ async def portal_usage_stats(
     )
     total_requests = (await session.execute(total_requests_query)).scalar() or 0
     
+    # TTS usage
+    tts_usage = await get_tts_usage_and_limits(session, client)
+    
     return {
         "daily_usage": [
             {"day": str(r.day), "tokens": int(r.tokens or 0), "requests": int(r.requests or 0)}
@@ -318,7 +325,8 @@ async def portal_usage_stats(
             {"model": r.model, "requests": int(r.requests or 0), "tokens": int(r.tokens or 0)}
             for r in model_results
         ],
-        "total_requests_this_month": total_requests
+        "total_requests_this_month": total_requests,
+        "tts_usage": tts_usage
     }
 
 

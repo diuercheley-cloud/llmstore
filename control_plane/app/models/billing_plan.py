@@ -28,6 +28,20 @@ class BillingPlan(Base):
     rag_max_storage_mb: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rag_max_pages_per_month: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rag_max_queries_per_month: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # TTS Limits
+    tts_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tts_chars_per_request: Mapped[int] = mapped_column(Integer, default=500, nullable=False)
+    tts_chars_per_day: Mapped[int] = mapped_column(Integer, default=5000, nullable=False)
+    tts_chars_per_month: Mapped[int] = mapped_column(Integer, default=50000, nullable=False)
+    tts_audio_retention_days: Mapped[int] = mapped_column(Integer, default=7, nullable=False)
+    tts_max_files: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    
+    # Embeddings Limits
+    embeddings_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    embeddings_requests_per_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embeddings_tokens_per_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embeddings_max_inputs_per_request: Mapped[int] = mapped_column(Integer, default=16, nullable=False)
     
     price_brl: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

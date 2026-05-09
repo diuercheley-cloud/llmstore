@@ -1,0 +1,29 @@
+{
+  "release_name": "llm-inference-stack-local-production",
+  "version": "v1.5.6-runtime-hardening",
+  "git_branch": "feature/v1.5.6-runtime-hardening",
+  "git_commit": "d9588af9a0fd91fa459af7f7a5942bbc490231fa",
+  "git_tags_pointing_to_commit": [
+    "v1.5.5-security-artifacts-clean"
+  ],
+  "generated_at": "2026-05-09T16:53:35Z",
+  "validation_artifact_path": "/home/kleber/llm-inference-stack/artifacts/local-production-validation/20260509T134813",
+  "summary_json_path": "summary.json",
+  "summary_md_path": "summary.md",
+  "docs_included_count": 27,
+  "scripts_included_count": 161,
+  "docker_compose_files": [
+    "docker-compose.yml",
+    "docker-compose.prod.yml"
+  ],
+  "important_env_example_files": [
+    ".env.example"
+  ],
+  "models_included": false,
+  "rag_uploads_included": false,
+  "psp_integration": false,
+  "pix_real_billing": false,
+  "localhost_mode": true,
+  "known_limitations": "Local production hardening phase. No real PSP integration. Requires Docker.",
+  "validation_result": "success"
+}

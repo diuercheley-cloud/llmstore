@@ -34,6 +34,18 @@ class EffectivePlan:
     rag_max_storage_mb: int | None = None
     rag_max_pages_per_month: int | None = None
     rag_max_queries_per_month: int | None = None
+    # TTS Limits
+    tts_enabled: bool = False
+    tts_chars_per_request: int = 500
+    tts_chars_per_day: int = 5000
+    tts_chars_per_month: int = 50000
+    tts_audio_retention_days: int = 7
+    tts_max_files: int = 100
+    # Embeddings Limits
+    embeddings_enabled: bool = False
+    embeddings_requests_per_month: int = 0
+    embeddings_tokens_per_month: int = 0
+    embeddings_max_inputs_per_request: int = 16
 
 
 DEFAULT_BILLING_PLANS = [
@@ -41,7 +53,7 @@ DEFAULT_BILLING_PLANS = [
         "code": "free",
         "name": "Free",
         "description": "Starter plan for sandbox usage with strict limits and no card required.",
-        "rate_limit_per_minute": 3,
+        "rate_limit_per_minute": 60,
         "daily_token_quota": 5000,
         "weekly_token_quota": 25000,
         "monthly_token_quota": 50000,
@@ -51,6 +63,14 @@ DEFAULT_BILLING_PLANS = [
         "rag_max_storage_mb": 50,
         "rag_max_pages_per_month": 100,
         "rag_max_queries_per_month": 50,
+        "tts_enabled": False,
+        "tts_chars_per_request": 0,
+        "tts_chars_per_day": 0,
+        "tts_chars_per_month": 0,
+        "embeddings_enabled": True,
+        "embeddings_requests_per_month": 100,
+        "embeddings_tokens_per_month": 100000,
+        "embeddings_max_inputs_per_request": 8,
     },
     {
         "code": "basic",
@@ -66,6 +86,14 @@ DEFAULT_BILLING_PLANS = [
         "rag_max_storage_mb": 100,
         "rag_max_pages_per_month": 500,
         "rag_max_queries_per_month": 100,
+        "tts_enabled": True,
+        "tts_chars_per_request": 500,
+        "tts_chars_per_day": 2000,
+        "tts_chars_per_month": 10000,
+        "embeddings_enabled": True,
+        "embeddings_requests_per_month": 1000,
+        "embeddings_tokens_per_month": 1000000,
+        "embeddings_max_inputs_per_request": 16,
     },
     {
         "code": "pro",
@@ -81,6 +109,14 @@ DEFAULT_BILLING_PLANS = [
         "rag_max_storage_mb": 2048,
         "rag_max_pages_per_month": 5000,
         "rag_max_queries_per_month": 2000,
+        "tts_enabled": True,
+        "tts_chars_per_request": 2000,
+        "tts_chars_per_day": 10000,
+        "tts_chars_per_month": 100000,
+        "embeddings_enabled": True,
+        "embeddings_requests_per_month": 5000,
+        "embeddings_tokens_per_month": 10000000,
+        "embeddings_max_inputs_per_request": 32,
     },
     {
         "code": "enterprise",
@@ -96,6 +132,14 @@ DEFAULT_BILLING_PLANS = [
         "rag_max_storage_mb": None,
         "rag_max_pages_per_month": None,
         "rag_max_queries_per_month": None,
+        "tts_enabled": True,
+        "tts_chars_per_request": 10000,
+        "tts_chars_per_day": 100000,
+        "tts_chars_per_month": 1000000,
+        "embeddings_enabled": True,
+        "embeddings_requests_per_month": 50000,
+        "embeddings_tokens_per_month": 100000000,
+        "embeddings_max_inputs_per_request": 128,
     },
 ]
 
@@ -222,10 +266,22 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             monthly_price=pricing_rule.monthly_price if pricing_rule else Decimal("0"),
             overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens if pricing_rule else Decimal("0"),
             currency=pricing_rule.currency if pricing_rule else "USD",
-            rag_max_documents=plan.rag_max_documents,
-            rag_max_storage_mb=plan.rag_max_storage_mb,
-            rag_max_pages_per_month=plan.rag_max_pages_per_month,
-            rag_max_queries_per_month=plan.rag_max_queries_per_month,
+            rag_max_documents=getattr(plan, "rag_max_documents", 5),
+            rag_max_storage_mb=getattr(plan, "rag_max_storage_mb", 50),
+            rag_max_pages_per_month=getattr(plan, "rag_max_pages_per_month", 100),
+            rag_max_queries_per_month=getattr(plan, "rag_max_queries_per_month", 50),
+            # TTS
+            tts_enabled=getattr(plan, "tts_enabled", False),
+            tts_chars_per_request=getattr(plan, "tts_chars_per_request", 0),
+            tts_chars_per_day=getattr(plan, "tts_chars_per_day", 0),
+            tts_chars_per_month=getattr(plan, "tts_chars_per_month", 0),
+            tts_audio_retention_days=getattr(plan, "tts_audio_retention_days", 0),
+            tts_max_files=getattr(plan, "tts_max_files", 0),
+            # Embeddings
+            embeddings_enabled=getattr(plan, "embeddings_enabled", False),
+            embeddings_requests_per_month=getattr(plan, "embeddings_requests_per_month", 0),
+            embeddings_tokens_per_month=getattr(plan, "embeddings_tokens_per_month", 0),
+            embeddings_max_inputs_per_request=getattr(plan, "embeddings_max_inputs_per_request", 16),
         )
     return EffectivePlan(
         code="legacy",
@@ -240,6 +296,16 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         rag_max_storage_mb=50,
         rag_max_pages_per_month=100,
         rag_max_queries_per_month=50,
+        # TTS legacy defaults
+        tts_enabled=False,
+        tts_chars_per_request=0,
+        tts_chars_per_day=0,
+        tts_chars_per_month=0,
+        # Embeddings legacy defaults
+        embeddings_enabled=False,
+        embeddings_requests_per_month=0,
+        embeddings_tokens_per_month=0,
+        embeddings_max_inputs_per_request=16,
         monthly_price=Decimal("0"),
         overage_price_per_1k_tokens=Decimal("0"),
         currency="USD",
@@ -263,6 +329,15 @@ async def list_client_billing_snapshots(
         daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
         weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
         monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
+        
+        # TTS usage
+        daily_tts_used = int(counters["daily"].used_tts_chars) if counters["daily"] else 0
+        monthly_tts_used = int(counters["monthly"].used_tts_chars) if counters["monthly"] else 0
+
+        # Embeddings usage
+        monthly_embeddings_requests = int(counters["monthly"].used_embeddings_requests) if counters["monthly"] else 0
+        monthly_embeddings_tokens = int(counters["monthly"].used_embeddings_tokens) if counters["monthly"] else 0
+
         pricing_rule = None
         if client.billing_plan is not None:
             pricing_rule = next((item for item in client.billing_plan.pricing_rules if item.is_active), None)
@@ -274,9 +349,16 @@ async def list_client_billing_snapshots(
                 "daily_used_tokens": daily_used,
                 "weekly_used_tokens": weekly_used,
                 "monthly_used_tokens": monthly_used,
+                "daily_used_tts_chars": daily_tts_used,
+                "monthly_used_tts_chars": monthly_tts_used,
+                "monthly_used_embeddings_requests": monthly_embeddings_requests,
+                "monthly_used_embeddings_tokens": monthly_embeddings_tokens,
                 "invoice_preview": build_invoice_preview(
                     effective_plan=effective_plan,
                     monthly_used_tokens=monthly_used,
+                    monthly_used_tts_chars=monthly_tts_used,
+                    monthly_used_embeddings_requests=monthly_embeddings_requests,
+                    monthly_used_embeddings_tokens=monthly_embeddings_tokens,
                 ),
             }
         )
@@ -318,12 +400,23 @@ def estimate_request_cost(monthly_tokens_used_before: int, request_tokens: int, 
     )
 
 
-def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens: int) -> dict:
+def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens: int, monthly_used_tts_chars: int = 0, monthly_used_embeddings_requests: int = 0, monthly_used_embeddings_tokens: int = 0) -> dict:
     included_tokens = effective_plan.monthly_token_quota
     overage_tokens = max(monthly_used_tokens - included_tokens, 0)
     overage_cost = ((Decimal(overage_tokens) / Decimal(1000)) * effective_plan.overage_price_per_1k_tokens).quantize(
         Decimal("0.000001"), rounding=ROUND_HALF_UP
     )
+    
+    # Simulated TTS overage (just for show in preview for now)
+    tts_included = effective_plan.tts_chars_per_month
+    tts_overage = max(monthly_used_tts_chars - tts_included, 0)
+
+    # Embeddings usage in preview
+    emb_req_included = effective_plan.embeddings_requests_per_month
+    emb_tokens_included = effective_plan.embeddings_tokens_per_month
+    emb_req_overage = max(monthly_used_embeddings_requests - emb_req_included, 0)
+    emb_tokens_overage = max(monthly_used_embeddings_tokens - emb_tokens_included, 0)
+    
     total_estimated = (effective_plan.monthly_price + overage_cost).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
     return {
         "currency": effective_plan.currency,
@@ -333,6 +426,15 @@ def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens:
         "overage_tokens": overage_tokens,
         "overage_price_per_1k_tokens": float(effective_plan.overage_price_per_1k_tokens),
         "overage_cost": float(overage_cost),
+        "tts_chars_included": tts_included,
+        "tts_chars_used": monthly_used_tts_chars,
+        "tts_overage": tts_overage,
+        "embeddings_requests_included": emb_req_included,
+        "embeddings_requests_used": monthly_used_embeddings_requests,
+        "embeddings_requests_overage": emb_req_overage,
+        "embeddings_tokens_included": emb_tokens_included,
+        "embeddings_tokens_used": monthly_used_embeddings_tokens,
+        "embeddings_tokens_overage": emb_tokens_overage,
         "total_estimated": float(total_estimated),
     }
 
@@ -343,6 +445,9 @@ def build_invoice_record_data(
     effective_plan: EffectivePlan,
     pricing_rule: PricingRule | None,
     monthly_used_tokens: int,
+    monthly_used_tts_chars: int = 0,
+    monthly_used_embeddings_requests: int = 0,
+    monthly_used_embeddings_tokens: int = 0,
     period_reference: date,
     due_in_days: int,
     payment_method: str,
@@ -350,7 +455,13 @@ def build_invoice_record_data(
     now: datetime | None = None,
 ) -> dict:
     period_start, period_end = month_window(period_reference)
-    preview = build_invoice_preview(effective_plan=effective_plan, monthly_used_tokens=monthly_used_tokens)
+    preview = build_invoice_preview(
+        effective_plan=effective_plan, 
+        monthly_used_tokens=monthly_used_tokens,
+        monthly_used_tts_chars=monthly_used_tts_chars,
+        monthly_used_embeddings_requests=monthly_used_embeddings_requests,
+        monthly_used_embeddings_tokens=monthly_used_embeddings_tokens,
+    )
     created_at = now or utc_now()
     due_at = created_at + timedelta(days=due_in_days)
     return {
@@ -473,6 +584,7 @@ async def generate_monthly_invoices(
             effective_plan=snapshot["effective_plan"],
             pricing_rule=snapshot["pricing_rule"],
             monthly_used_tokens=snapshot["monthly_used_tokens"],
+            monthly_used_tts_chars=snapshot.get("monthly_used_tts_chars", 0),
             period_reference=billing_period_reference,
             due_in_days=due_in_days,
             payment_method=payment_method,

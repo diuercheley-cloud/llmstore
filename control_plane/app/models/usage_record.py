@@ -20,5 +20,7 @@ class UsageRecord(Base):
     request_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embeddings_requests: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embeddings_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)

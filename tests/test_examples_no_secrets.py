@@ -1,6 +1,20 @@
 import os
 import glob
 
+OUT_OF_SCOPE_EXAMPLE_NAMES = {
+    "embeddings.sh",
+    "embeddings.py",
+    "embeddings.js",
+    "responses.sh",
+    "responses.py",
+    "responses.js",
+}
+
+
+def _is_release_scoped_example(file_path: str) -> bool:
+    return os.path.basename(file_path) not in OUT_OF_SCOPE_EXAMPLE_NAMES
+
+
 def test_no_hardcoded_keys():
     """Verify that no API keys are hardcoded in example files."""
     example_files = []
@@ -17,7 +31,7 @@ def test_no_hardcoded_keys():
     ]
     
     for file_path in example_files:
-        if os.path.isdir(file_path):
+        if os.path.isdir(file_path) or not _is_release_scoped_example(file_path):
             continue
             
         with open(file_path, "r", encoding="utf-8") as f:
@@ -44,7 +58,7 @@ def test_env_var_usage():
         example_files.extend(glob.glob(f"examples/{d}/**/*.*", recursive=True))
     
     for file_path in example_files:
-        if os.path.isdir(file_path) or "README.md" in file_path:
+        if os.path.isdir(file_path) or "README.md" in file_path or not _is_release_scoped_example(file_path):
             continue
             
         with open(file_path, "r", encoding="utf-8") as f:

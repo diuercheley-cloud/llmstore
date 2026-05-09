@@ -28,6 +28,16 @@ A política é controlada pelo arquivo `config/retention-example.json`. Você po
 | :--- | :--- | :--- |
 | `rag_uploads_retention_days` | `null` | Dias para manter arquivos RAG (null = não apagar por tempo). |
 | `tts_audio_retention_days` | `7` | Dias para manter arquivos de áudio TTS. |
+
+## Limites e Cotas por Plano
+
+O TTS agora é governado por planos de cobrança:
+
+- **Enabled:** Se o TTS está habilitado para o plano.
+- **Chars per Request:** Limite de caracteres por chamada única.
+- **Daily/Monthly Quota:** Limite acumulado de caracteres por período.
+- **Audio Retention:** Dias antes do áudio ser removido automaticamente (simulado localmente).
+- **Max Files:** Limite de arquivos mantidos simultaneamente por cliente.
 | `logs_retention_days` | `14` | Dias para manter arquivos de log. |
 | `validation_artifacts_keep_last` | `10` | Quantas validações recentes manter em `artifacts/`. |
 | `backups_keep_last` | `5` | Quantos backups recentes manter. |

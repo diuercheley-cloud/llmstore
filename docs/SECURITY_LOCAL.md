@@ -12,6 +12,9 @@ Or directly:
 ./scripts/security-report-local.sh --strict
 ```
 
+O status do último relatório de segurança é exibido no **Admin Dashboard** (card "Security Report") e disponível via API:
+- `GET /admin/security/latest`
+
 ## Interpreting the Score
 The report returns a score based on its findings:
 - **PASS**: All checks passed, were skipped, or findings were classified as safe (e.g., redacted artifacts). The environment is considered clean.
@@ -42,6 +45,15 @@ To prevent accidental leakage of real private keys or certificates:
 The project includes automated tools to manage and validate file permissions:
 - `make fix-permissions`: Applies the standard security permissions (e.g., +x for scripts, 600 for .env.local).
 - `make validate-permissions`: Checks if the project adheres to these standards.
+
+## Runtime Health Monitoring
+The system provides endpoints to monitor the real-time health and security status of the stack:
+- `/health`: Liveness check (public).
+- `/ready`: Readiness check for Postgres, Redis, and migrations (public).
+- `/status`: Public status summary, strictly sanitized.
+- `/admin/health/deep`: Deep diagnostic endpoint protected by `X-Admin-Token`. It provides detailed status on all components, including sanitization checks and readiness scores.
+
+Use `make validate-runtime-health` to verify that these endpoints are operating correctly and not leaking any sensitive information.
 
 ## What NEVER to Commit
 Do not commit the following to the repository:
@@ -112,6 +124,9 @@ The following markers are considered safe and will not generate warnings:
 
 ## RAG and TTS Local Data
 - Local uploads for RAG and generated TTS audio files must be kept out of version control.
+- TTS generation is now authenticated via API Key and tracked per Client ID.
+- Usage isolation: Each client has its own character quota and usage events.
+- Audit: Every TTS generation event is logged with character count, audio size, and client metadata.
 - Ensure you have safe cleanup procedures for this data when resetting environments.
 - Use `./scripts/retention-local.sh` to apply the project's retention policy and safely remove temporary data.
 

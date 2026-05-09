@@ -54,22 +54,28 @@ Para garantir que todos os serviços estão operando corretamente, execute a su�
 ### Via Makefile
 ```bash
 make validate-local-production
+make validate-runtime-health
 make production-readiness
 ```
 
 ### Via Script
 ```bash
 ./scripts/validate-local-production-full.sh
+./scripts/validate-runtime-health-local.sh
 ./scripts/production-readiness-local.sh
+./scripts/post-upgrade-smoke-local.sh
 ```
 
-### Benchmark de Modelos
-Para medir a performance de modelos configurados e determinar quais planos eles suportam, utilize a ferramenta de benchmark local:
+### Benchmark de Modelos Real
+Para medir a performance real de modelos e obter recomendações de planos (Free/Basic/Premium), utilize a ferramenta de benchmark aprimorada:
 ```bash
-make benchmark-model
-# ou
-./scripts/benchmark-model-local.sh --model "gemma-2b" --quick
+make benchmark-quick
+# ou modo padrão
+./scripts/benchmark-model-local.sh --model "gemma-2b" --standard
+# ou modo stress (requer confirmação)
+./scripts/benchmark-model-local.sh --model "gemma-2b" --stress
 ```
+Os resultados incluem TTFT P95, Latência P95, métricas de sistema (GPU/CPU/RAM) e são expostos via Admin API (`/admin/benchmarks`).
 Para mais detalhes, consulte o [Documento de Benchmark Local](./MODEL_BENCHMARK_LOCAL.md).
 
 O relatório de readiness gera artefatos em:
@@ -93,17 +99,47 @@ O score final do relatório é um destes valores:
 - **Health Check:** `http://localhost:18080/health`
 - **Ready Check:** `http://localhost:18080/ready`
 - **Status Geral:** `http://localhost:18080/status`
+- **Runtime Summary:** `http://localhost:18080/admin/runtime/summary` (Requer token admin)
+- **Latest Readiness:** `http://localhost:18080/admin/readiness/latest` (Requer token admin)
+- **Latest Security:** `http://localhost:18080/admin/security/latest` (Requer token admin)
+- **Deep Health Check:** `http://localhost:18080/admin/health/deep` (Requer token admin)
 - **Métricas (Prometheus):** `http://localhost:18080/metrics`
 
 ### Interfaces (UIs)
 - **Landing Page:** `http://localhost:18080/`
 - **Portal do Cliente:** `http://localhost:18080/client-portal`
-- **Admin Dashboard:** `http://localhost:18080/admin-dashboard`
+- **Admin Dashboard:** `http://localhost:18080/admin-dashboard` (Inclui cards de Runtime/Readiness/Security)
 - **Admin Lab (Gestão Operacional):** `http://localhost:18080/admin-lab`
 
-### Endpoints OpenAI
+### Chat Completions
 - **Listar Modelos:** `GET http://localhost:18080/v1/models`
 - **Chat Completions:** `POST http://localhost:18080/v1/chat/completions`
+- **Responses (Simplificado):** `POST http://localhost:18080/v1/responses`
+
+Exemplo básico de `responses`:
+```bash
+curl -X POST http://localhost:18080/v1/responses \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "default",
+    "instructions": "Seja direto.",
+    "input": "Responda apenas OK."
+  }'
+```
+
+### Embeddings (Novo v1.6.0)
+- **Gerar Embeddings:** `POST http://localhost:18080/v1/embeddings`
+- **Exemplo de uso:**
+```bash
+curl -X POST http://localhost:18080/v1/embeddings \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "text-embedding-3-small",
+    "input": "test string"
+  }'
+```
 
 ## 6. Como Criar Cliente Local
 
@@ -166,6 +202,16 @@ curl -N http://localhost:18080/v1/chat/completions \
     "stream": true
   }'
 ```
+
+### Teste de Responses
+```bash
+./scripts/validate-responses-api-local.sh
+```
+
+Notas do endpoint `/v1/responses` nesta versão:
+- Suporta `input` string e array textual simples.
+- `instructions` vira mensagem `system`.
+- `tools`, `tool_choice` e `stream: true` retornam `501` estruturado nesta fase.
 
 ## 9. Como usar LM Studio
 
@@ -303,7 +349,36 @@ Mantém registros financeiros mas remove PII.
 
 Consulte [docs/TENANT_EXPORT_DELETE_LOCAL.md](TENANT_EXPORT_DELETE_LOCAL.md) para detalhes completos.
 
-## 16. Troubleshooting
+## 15. Governança e Cotas de TTS Local
+
+O serviço de TTS (Text-to-Speech) é monitorado e limitado por plano:
+
+- **Monitoramento:** Use o Admin Dashboard para visualizar `total_tts_chars_month` e `usage_by_client`.
+- **Cotas:** Clientes que excederem o limite de caracteres receberão `429 Too Many Requests`.
+- **Isolamento:** Cada áudio gerado é vinculado ao `client_id` e auditado no banco de dados.
+- **Retenção:** Os arquivos `.wav` são removidos conforme a política de `tts_audio_retention_days`.
+
+## 17. Upgrade e Rollback Local
+
+Para manter a stack atualizada ou reverter para uma versão estável em caso de falha:
+
+### Upgrade
+```bash
+# Simular primeiro
+./scripts/upgrade-local.sh --to-version v1.5.6 --dry-run
+# Executar de verdade (faz backup automático)
+./scripts/upgrade-local.sh --to-version v1.5.6
+```
+
+### Rollback
+Exige o ID do backup gerado durante o upgrade (ou manualmente).
+```bash
+./scripts/rollback-local.sh --to-version v1.5.5 --backup-id artifacts/backups-local/20260509T120000
+```
+
+Consulte [docs/UPGRADE_ROLLBACK_LOCAL.md](UPGRADE_ROLLBACK_LOCAL.md) para detalhes completos e garantias de segurança.
+
+## 18. Troubleshooting
 
 | Problema | Causa Provável | Solução |
 | :--- | :--- | :--- |

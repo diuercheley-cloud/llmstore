@@ -1,13 +1,25 @@
+import os
 from functools import lru_cache
+from pathlib import Path
+from time import time
 
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _get_version() -> str:
+    version_file = Path(__file__).resolve().parents[3] / "VERSION"
+    if version_file.exists():
+        return version_file.read_text().strip()
+    return "unknown"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     project_name: str = Field(default="local-llm-inference-stack", alias="PROJECT_NAME")
+    project_version: str = Field(default_factory=_get_version)
+    start_time: float = Field(default_factory=time)
     debug: bool = Field(default=False, alias="DEBUG")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     control_plane_host: str = Field(default="0.0.0.0", alias="CONTROL_PLANE_HOST")
@@ -99,6 +111,15 @@ class Settings(BaseSettings):
     inference_max_completion_tokens: int = Field(default=512, alias="INFERENCE_MAX_COMPLETION_TOKENS")
     inference_max_system_chars: int = Field(default=2500, alias="INFERENCE_MAX_SYSTEM_CHARS")
     inference_max_history_messages: int = Field(default=8, alias="INFERENCE_MAX_HISTORY_MESSAGES")
+    
+    # TTS Settings
+    tts_enabled: bool = Field(default=True, alias="TTS_ENABLED")
+    
+    # Embeddings Settings
+    embeddings_enabled: bool = Field(default=True, alias="EMBEDDINGS_ENABLED")
+    embeddings_backend: str = Field(default="mock", alias="EMBEDDINGS_BACKEND")
+    default_embedding_model: str = Field(default="text-embedding-3-small", alias="DEFAULT_EMBEDDING_MODEL")
+    embedding_dimensions: int = Field(default=384, alias="EMBEDDING_DIMENSIONS")
     
     # RAG Settings
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")

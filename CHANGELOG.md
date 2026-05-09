@@ -1,5 +1,37 @@
 # Changelog
 
+## [v1.5.6-runtime-hardening] - 2026-05-09
+
+### Added
+- Runtime health e admin deep health com sanitização de informações sensíveis.
+- Governança de TTS com quotas, billing local, client portal e dashboard administrativo.
+- Benchmark real por modelo com exposição segura via Admin API e documentação operacional.
+- Fluxo local de upgrade/rollback com smoke test pós-upgrade e validações de segurança.
+- Dashboard e APIs de readiness/security com cobertura de testes e validações locais.
+
+### Notes
+- `/v1/embeddings` e `/v1/responses` permanecem fora desta release enquanto não estiverem prontos.
+
+## [v1.6.0-beta.1] - 2026-05-09
+
+### Added
+- OpenAI-compatible `/v1/responses` endpoint as a simplified compatibility layer.
+- Refactored chat completions pipeline to support multiple entry points.
+- Support for `instructions` and `input` (string or array) in `/v1/responses`.
+- Simplified `/v1/responses` output contract with `created_at`, `status`, `output`, `output_text`, `usage`, and metadata passthrough.
+- Compatibility headers for model routing and fallback: `X-Requested-Model`, `X-Resolved-Model`, `X-Backend-Name`, `X-Fallback-Used`.
+- Explicit `501` responses for unsupported `tools`, `tool_choice`, and `stream` in `/v1/responses`.
+- Automated tests and examples for the new endpoint.
+- Validation script `scripts/validate-responses-api-local.sh`.
+- OpenAI-compatible `/v1/embeddings` endpoint.
+- Deterministic mock embeddings backend for local testing and integration.
+- Embeddings quota management and usage tracking (requests and tokens).
+- New embedding fields in `BillingPlan`, `QuotaCounter`, and `UsageRecord`.
+- Example scripts for embeddings in CURL, Python, and Node.js.
+- Validation script `scripts/validate-embeddings-local.sh`.
+- Comprehensive test suite for embeddings.
+- New documentation: `docs/OPENAI_COMPATIBILITY.md`.
+
 ## [v1.5.5-security-artifacts-clean] - 2026-05-09
 
 ### Added

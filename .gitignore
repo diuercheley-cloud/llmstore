@@ -26,6 +26,10 @@ artifacts/
 exports/
 backups/
 *.log
+*.wav
+tts_audio/
+control_plane/*.db
+control_plane/*.sqlite
 tmp_client.txt
 tmp_key.txt
 

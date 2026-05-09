@@ -20,6 +20,16 @@ mask_secrets() {
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+  if [[ -n "${ADMIN_TOKEN:-}" ]]; then
+    input="${input//${ADMIN_TOKEN}/[ADMIN_TOKEN_MASKED]}"
+  fi
+  if [[ -n "${API_KEY:-}" ]]; then
+    input="${input//${API_KEY}/[API_KEY_MASKED]}"
+  fi
+  input=$(echo "$input" | sed -E 's/Bearer [a-zA-Z0-9\._-]+/Bearer [MASKED]/g')
+  input=$(echo "$input" | sed -E 's/sk-[a-zA-Z0-9]{12,}/sk-[MASKED]/g')
+  input=$(echo "$input" | sed -E 's/eyJ[a-zA-Z0-9\._-]{20,}/eyJ[MASKED]/g')
+
   if [[ -f "${script_dir}/lib/redaction.sh" ]]; then
     # Use centralized redaction logic
     # We avoid sourcing it here to prevent potential side effects in all scripts
@@ -27,12 +37,6 @@ mask_secrets() {
     echo "$input" | (source "${script_dir}/lib/redaction.sh" && redact_stream)
   else
     # Fallback to legacy masking
-    # Mask common secret patterns
-    input=$(echo "$input" | sed -E 's/Bearer [a-zA-Z0-9\._-]+/Bearer [MASKED]/g')
-    # API keys (sk-...)
-    input=$(echo "$input" | sed -E 's/sk-[a-zA-Z0-9]{12,}/sk-[MASKED]/g')
-    # JWT tokens
-    input=$(echo "$input" | sed -E 's/eyJ[a-zA-Z0-9\._-]{20,}/eyJ[MASKED]/g')
     echo "$input"
   fi
 }

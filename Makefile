@@ -35,8 +35,14 @@ down:
 validate:
 	./scripts/validate-e2e.sh
 
+validate-admin-readiness-security:
+	./scripts/validate-admin-readiness-security-dashboard.sh
+
 validate-local-production:
 	./scripts/validate-local-production-full.sh
+
+validate-runtime-health:
+	./scripts/validate-runtime-health-local.sh
 
 production-readiness:
 	./scripts/production-readiness-local.sh
@@ -48,11 +54,13 @@ demo-local-reset:
 	./scripts/demo-full-local.sh --reset-first
 
 validate-demo-local:
-	./scripts/validate-demo-local.sh
+        ./scripts/validate-demo-local.sh
+
+validate-tts-local:
+        ./scripts/validate-tts-quota-billing-portal.sh
 
 backup:
-	./scripts/backup.sh
-
+        ./scripts/backup.sh
 clean-compose-local:
 	./scripts/clean-compose-local.sh
 
@@ -79,6 +87,30 @@ release-bundle:
 
 validate-release-bundle:
 	./scripts/validate-release-bundle.sh
+
+upgrade-local:
+	./scripts/upgrade-local.sh
+
+rollback-local:
+	./scripts/rollback-local.sh
+
+validate-upgrade-rollback:
+	./scripts/validate-upgrade-rollback-local.sh
+
+post-upgrade-smoke:
+	./scripts/post-upgrade-smoke-local.sh
+
+validate-post-upgrade-smoke:
+	./scripts/validate-post-upgrade-smoke-local.sh
+
+benchmark-quick:
+	./scripts/benchmark-model-local.sh --model "test-model-mock" --quick
+
+validate-benchmark-real:
+	./scripts/validate-model-benchmark-real.sh
+
+test-benchmarks:
+	pytest tests/test_model_benchmark_real.py tests/test_model_benchmark_admin_api.py tests/test_model_benchmark_security.py -v
 
 benchmark-model:
 	./scripts/benchmark-model-local.sh --model "gemma" --quick

@@ -14,36 +14,39 @@ Com base nesses resultados, o sistema recomenda em quais planos (free, basic, pr
 
 ## Como Executar
 
-Utilize o script principal ou os comandos do `Makefile`:
+### Modos Disponíveis
 
-```bash
-# Via Makefile (roda um teste rapido usando configuracoes padrao)
-make benchmark-model
-
-# Via Script diretamente
-./scripts/benchmark-model-local.sh --model "gemma-2b" --runs 5 --concurrency 2
-```
+- `--quick`: Roda 1 única requisição curta (20 tokens). Ideal para sanidade.
+- `--standard`: Roda 3 requisições (100 tokens cada). Modo padrão recomendado.
+- `--stress`: Modo de carga pesada. Exige confirmação manual. Roda 10 requisições com concorrência 5 e 256 tokens cada.
 
 ### Argumentos Principais
 
 - `--model`: Nome do modelo (obrigatório).
-- `--tokens`: Número de tokens a gerar (padrão 50).
-- `--runs`: Número de vezes que o teste rodará (padrão 3).
-- `--concurrency`: Requisições concorrentes (padrão 1).
 - `--streaming`: `true` ou `false` (padrão `false`).
-- `--quick`: Roda um teste extremamente rápido para validar configurações.
+- `--output-dir`: Onde salvar os resultados (padrão `artifacts/model-benchmarks`).
+- `--prompt-file`: Caminho para um arquivo com o prompt a ser usado.
 
-## Relatórios
+## Métricas Coletadas
 
-Os resultados são salvos em `artifacts/model-benchmarks/<model>/<timestamp>/` e incluem:
-- `benchmark.json`: Métricas estruturadas.
-- `benchmark.md`: Resumo legível com recomendações.
-- `raw-results.jsonl`: Respostas e timings brutos.
+Além das métricas básicas, o novo runner coleta:
+- **TTFT P95**: Time to First Token no percentil 95.
+- **Latência P95**: Latência total no percentil 95.
+- **Taxa de Erro**: Percentual de falhas e timeouts.
+- **Métricas de Sistema**: Carga de CPU, memória RAM usada e uso de VRAM (via nvidia-smi).
+- **Dados do Backend**: ID do backend, tipo (llama-cpp, vllm, etc) e se houve fallback.
 
-## Validação
+## Recomendações de Plano
 
-Para validar se o pipeline de benchmark está funcionando, rode:
+O script analisa os resultados e sugere uma categoria:
+- `safe_for_free`: Alta vazão (>30 tps) e baixa latência.
+- `safe_for_basic`: Vazão moderada (>15 tps).
+- `safe_for_premium`: Baixa vazão ou alta latência, recomendado para uso dedicado.
+- `not_recommended`: Alta taxa de erro ou performance abaixo do aceitável.
+
+## Validação Real
+
+Para validar o pipeline completo de benchmark real:
 ```bash
-./scripts/validate-benchmark-local.sh
+make validate-benchmark-real
 ```
-Isso validará o formato dos JSONs e testará cenários de erro.

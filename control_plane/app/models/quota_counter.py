@@ -19,5 +19,8 @@ class QuotaCounter(Base):
     period_type: Mapped[str] = mapped_column(String(16), nullable=False)
     used_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     used_requests: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    used_tts_chars: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    used_embeddings_requests: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    used_embeddings_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)

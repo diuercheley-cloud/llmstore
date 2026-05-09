@@ -59,6 +59,16 @@ curl -N http://localhost:18080/v1/chat/completions \
   }'
 ```
 
+## Testando TTS (Text-to-Speech)
+
+O sistema agora possui suporte a voz totalmente governado por cotas:
+
+1. Acesse o Client Portal.
+2. Navegue até a seção de TTS.
+3. Teste a geração de áudio.
+4. Verifique no Dashboard como o uso de caracteres é descontado do seu limite diário/mensal.
+5. Veja o item de TTS aparecer no Invoice Preview.
+
 ## Testando RAG (Recuperação Aumentada por Geração)
 Se você executou o `seed-demo-local.sh`, documentos de exemplo foram indexados.
 Teste a busca semântica:

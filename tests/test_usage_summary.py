@@ -73,6 +73,18 @@ class FakeSession:
             rag_max_storage_mb=50,
             rag_max_pages_per_month=100,
             rag_max_queries_per_month=50,
+            # TTS
+            tts_enabled=True,
+            tts_chars_per_request=1000,
+            tts_chars_per_day=5000,
+            tts_chars_per_month=50000,
+            tts_audio_retention_days=7,
+            tts_max_files=100,
+            # Embeddings
+            embeddings_enabled=True,
+            embeddings_requests_per_month=1000,
+            embeddings_tokens_per_month=100000,
+            embeddings_max_inputs_per_request=16,
             pricing_rules=[pricing_rule],
         )
         self.client = SimpleNamespace(

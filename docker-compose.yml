@@ -123,6 +123,8 @@ services:
       - "${HOST_PORT:-8080}:8080"
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/alembic:/app/alembic
+      - ./control_plane/alembic.ini:/app/alembic.ini
       - ./models:/models:ro
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -158,6 +160,8 @@ services:
         condition: service_started
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/alembic:/app/alembic
+      - ./control_plane/alembic.ini:/app/alembic.ini
       - ./models:/models:ro
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock

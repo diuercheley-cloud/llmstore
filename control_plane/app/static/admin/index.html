@@ -85,8 +85,29 @@
         font-weight: 600;
       }
       .pill-success { background: #d1fae5; color: #065f46; }
+      .pill-warning { background: #fef3c7; color: #92400e; }
       .pill-danger { background: #fee2e2; color: #991b1b; }
       .pill-muted { background: #f1f5f9; color: #475569; }
+      .pill-unknown { background: #e2e8f0; color: #64748b; }
+
+      .status-card {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .status-ready { border-left: 4px solid var(--success); }
+      .status-degraded { border-left: 4px solid #f59e0b; }
+      .status-not-ready { border-left: 4px solid var(--danger); }
+      .status-unknown { border-left: 4px solid var(--muted); }
+
+      .action-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
 
       pre.debug {
         background: #1e293b;
@@ -121,6 +142,32 @@
     </header>
 
     <main id="adminContent" class="hidden">
+      <!-- Runtime & Readiness -->
+      <section class="wide">
+        <h2>Runtime & Hardening Status</h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          <div id="runtimeCard" class="status-card status-unknown">
+            <div class="stat-label">Runtime Health</div>
+            <div id="runtimeValue" class="stat-value">LOADING...</div>
+            <div id="runtimeDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking system components...</div>
+          </div>
+          <div id="readinessCard" class="status-card status-unknown">
+            <div class="stat-label">Production Readiness</div>
+            <div id="readinessValue" class="stat-value">LOADING...</div>
+            <div id="readinessDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking latest report...</div>
+          </div>
+          <div id="securityReportCard" class="status-card status-unknown">
+            <div class="stat-label">Security Report</div>
+            <div id="securityValue" class="stat-value">LOADING...</div>
+            <div id="securityDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking latest report...</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="secondary" onclick="runCommand('readiness')">Generate Readiness Report</button>
+          <button class="secondary" onclick="runCommand('security')">Generate Security Report</button>
+        </div>
+      </section>
+
       <!-- Demo Summary -->
       <section id="demoSection" class="wide hidden" style="border: 2px solid var(--accent); background-color: #f0fdfa;">
         <h2>Demo Environment <span class="pill pill-success" style="margin-left: 1rem;">DEMO_MODE=true</span></h2>
@@ -251,7 +298,7 @@
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, demoSummary] = await Promise.all([
+          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, runtimeSummary, readinessReport, securityReport, demoSummary] = await Promise.all([
             adminFetch('/admin/health/deep'),
             adminFetch('/admin/usage/summary'),
             adminFetch('/admin/usage/by-client'),
@@ -261,9 +308,15 @@
             adminFetch('/admin/requests'),
             adminFetch('/admin/revenue/summary'),
             adminFetch('/admin/rag/usage'),
+            adminFetch('/admin/runtime/summary'),
+            adminFetch('/admin/readiness/latest'),
+            adminFetch('/admin/security/latest'),
             adminFetch('/admin/demo/summary').catch(() => null)
           ]);
 
+          renderRuntimeSummary(runtimeSummary);
+          renderReadinessReport(readinessReport);
+          renderSecurityReport(securityReport);
           renderDemo(demoSummary);
           renderHealth(health);
           renderModels(models);
@@ -286,6 +339,102 @@
         } catch (err) {
           alert('Failed to load admin data: ' + err.message);
         }
+      }
+
+      function runCommand(type) {
+        const cmd = type === 'readiness' ? './scripts/production-readiness-local.sh' : './scripts/security-report-local.sh';
+        alert('Para gerar o relatório, execute no terminal:\n\n' + cmd);
+      }
+
+      function renderRuntimeSummary(data) {
+        const el = document.getElementById('runtimeCard');
+        const val = document.getElementById('runtimeValue');
+        const det = document.getElementById('runtimeDetails');
+        
+        val.textContent = data.health;
+        el.className = 'status-card';
+        if (data.ready) {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.health === 'DEGRADED') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const h = data.deep_health || {};
+        det.innerHTML = `
+          DB: ${h.postgres || 'OFF'} | 
+          Redis: ${h.redis || 'OFF'} | 
+          DP: ${h.data_plane || 'OFF'} | 
+          Backends: ${data.backend_status || 0}
+        `;
+      }
+
+      function renderReadinessReport(data) {
+        const el = document.getElementById('readinessCard');
+        const val = document.getElementById('readinessValue');
+        const det = document.getElementById('readinessDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run production-readiness-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'READY') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'READY_WITH_WARNINGS') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
+      }
+
+      function renderSecurityReport(data) {
+        const el = document.getElementById('securityReportCard');
+        const val = document.getElementById('securityValue');
+        const det = document.getElementById('securityDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run security-report-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'PASS') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'WARN') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
       }
 
       function renderDemo(demo) {

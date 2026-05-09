@@ -249,6 +249,42 @@ class InferenceProxy:
             is_admin=is_admin,
         )
 
+    async def embeddings(
+        self,
+        payload: dict,
+        backend: str,
+        backend_url: str,
+        backend_name: str,
+        backend_id=None,
+        api_key: str | None = None,
+        plan_code: str = "free",
+        is_admin: bool = False,
+    ):
+        logger.debug(
+            "inference proxy embeddings started",
+            extra={
+                "extra_data": {
+                    "model_requested": payload.get("model"),
+                    "backend_selected": backend_name or backend,
+                    "plan_code": plan_code,
+                    "is_admin": is_admin,
+                }
+            },
+        )
+        return await self._forward(
+            "/v1/embeddings",
+            payload,
+            stream=False,
+            backend=backend,
+            backend_url=backend_url,
+            backend_name=backend_name,
+            backend_id=backend_id,
+            manage_slot=True,
+            api_key=api_key,
+            plan_code=plan_code,
+            is_admin=is_admin,
+        )
+
     async def _forward(
         self,
         endpoint: str,
@@ -265,7 +301,6 @@ class InferenceProxy:
         plan_code: str = "free",
         is_admin: bool = False,
     ):
-        print(f"DEBUG PROXY: Entering _forward for {endpoint}, backend_name={backend_name}, backend_id={backend_id}, plan={plan_code}, admin={is_admin}")
         try:
             await self.circuit_breaker.before_call()
             if manage_slot:
@@ -398,7 +433,6 @@ class InferenceProxy:
                 elif backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
                     headers["Authorization"] = f"Bearer {self.settings.lmstudio_api_key}"
                 
-                print(f"DEBUG PROXY: Forwarding to {target_endpoint} on {client.base_url} with backend {backend_name}")
                 response = await client.post(target_endpoint, json=request_payload, headers=headers, timeout=self.attempt_timeout)
                 response.raise_for_status()
                 await self.circuit_breaker.record_success()
@@ -415,7 +449,6 @@ class InferenceProxy:
                     latency_seconds=elapsed,
                 )
                 response_payload = response.json()
-                print(f"DEBUG PROXY: Raw backend response: {response_payload}")
                 if backend == "ollama":
                     response_payload = self._translate_ollama_response(response_payload, endpoint, payload.get("model", ""))
                 if endpoint == "/v1/chat/completions":

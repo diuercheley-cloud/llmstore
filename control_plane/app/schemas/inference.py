@@ -109,7 +109,7 @@ class ChatCompletionChoice(BaseModel):
 
 class UsageInfo(BaseModel):
     prompt_tokens: int
-    completion_tokens: int
+    completion_tokens: int | None = 0
     total_tokens: int
 
 
@@ -120,3 +120,72 @@ class ChatCompletionResponse(BaseModel):
     model: str
     choices: list[ChatCompletionChoice]
     usage: UsageInfo
+
+
+class EmbeddingsRequest(BaseModel):
+    model: str = Field(min_length=1, max_length=255)
+    input: Union[str, list[str]] = Field(min_length=1)
+    encoding_format: Literal["float", "base64"] = "float"
+
+
+class EmbeddingData(BaseModel):
+    object: str = "embedding"
+    index: int
+    embedding: list[float]
+
+
+class EmbeddingsResponse(BaseModel):
+    object: str = "list"
+    data: list[EmbeddingData]
+    model: str
+    usage: UsageInfo
+
+
+class ResponseInputTextPart(BaseModel):
+    type: Literal["text", "input_text", "output_text"] = "text"
+    text: str
+
+
+class ResponseInputMessage(BaseModel):
+    role: Literal["system", "user", "assistant", "tool"] = "user"
+    content: Union[str, list[ResponseInputTextPart]]
+
+
+class ResponseOutputText(BaseModel):
+    type: Literal["output_text"] = "output_text"
+    text: str
+
+
+class ResponseOutputMessage(BaseModel):
+    role: Literal["assistant"] = "assistant"
+    content: list[ResponseOutputText]
+
+
+class ResponseOutput(BaseModel):
+    type: Literal["message"] = "message"
+    message: ResponseOutputMessage
+
+
+class ResponsesResponse(BaseModel):
+    id: str
+    object: str = "response"
+    created_at: int
+    status: str = "completed"
+    model: str
+    output: list[ResponseOutput]
+    output_text: str
+    usage: UsageInfo
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ResponsesRequest(BaseModel):
+    model: str = Field(min_length=1, max_length=255)
+    input: Union[str, list[Union[str, ResponseInputMessage]]]
+    instructions: str | None = None
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+    top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    max_output_tokens: int | None = Field(default=None, ge=1, le=1000000)
+    stream: bool = False
+    tools: list[Any] | None = None
+    tool_choice: Union[str, dict[str, Any]] | None = None
+    metadata: dict[str, Any] | None = None

@@ -41,6 +41,9 @@ artifacts/production-readiness/<timestamp>/
   logs/
 ```
 
+O último relatório gerado pode ser visualizado diretamente no **Admin Dashboard** através do card "Production Readiness" ou via API:
+- `GET /admin/readiness/latest`
+
 Campos principais do `report.json`:
 
 - `generated_at`
@@ -59,7 +62,7 @@ Campos principais do `report.json`:
 - Git/release
 - Ambiente
 - Serviços
-- APIs
+- APIs (incluindo `/admin/health/deep`)
 - SaaS
 - RAG
 - TTS
