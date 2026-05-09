@@ -1314,8 +1314,14 @@
                 `Data plane: ${state.health.dependencies.data_plane.ok ? 'OK' : 'FAIL'} (${state.health.dependencies.data_plane.latency_ms || '-'}ms)`,
             ].join(' | ');
             document.getElementById('health-badge').textContent = state.health.status.toUpperCase();
-            document.getElementById('health-badge').className = `pill ${state.health.status === 'ok' ? 'pill-success' : 'pill-danger'}`;
-            document.getElementById('health-deep-status').style.borderLeftColor = state.health.status === 'ok' ? 'var(--success)' : 'var(--danger)';
+            let pillClass = 'pill-danger';
+            if (state.health.status === 'ok' || state.health.status === 'ready') {
+                pillClass = 'pill-success';
+            } else if (state.health.status === 'degraded') {
+                pillClass = 'pill-warning';
+            }
+            document.getElementById('health-badge').className = `pill ${pillClass}`;
+            document.getElementById('health-deep-status').style.borderLeftColor = state.health.status === 'ok' ? 'var(--success)' : (state.health.status === 'degraded' ? 'var(--warning)' : 'var(--danger)');
 
             const stats = document.getElementById('overview-stats');
             stats.innerHTML = `

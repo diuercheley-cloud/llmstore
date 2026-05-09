@@ -251,11 +251,12 @@ async def health_deep(
     git_commit = get_git_commit()
 
     # Database
-    db_detail = {"status": "offline", "latency_ms": 0, "migrations_status": "unknown"}
+    db_detail = {"status": "offline", "latency_ms": 0, "migrations_status": "unknown", "ok": False}
     start_db = perf_counter()
     try:
         await session.execute(text("SELECT 1"))
         db_detail["status"] = "online"
+        db_detail["ok"] = True
         db_detail["latency_ms"] = round((perf_counter() - start_db) * 1000, 2)
         try:
             res = await session.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
@@ -266,11 +267,12 @@ async def health_deep(
         db_detail["error"] = str(e)
 
     # Redis
-    redis_detail = {"status": "offline", "latency_ms": 0}
+    redis_detail = {"status": "offline", "latency_ms": 0, "ok": False}
     start_redis = perf_counter()
     try:
         await redis.ping()
         redis_detail["status"] = "online"
+        redis_detail["ok"] = True
         redis_detail["latency_ms"] = round((perf_counter() - start_redis) * 1000, 2)
     except Exception as e:
         redis_detail["error"] = str(e)
@@ -296,7 +298,7 @@ async def health_deep(
     backends = []
     if db_detail["status"] == "online":
         try:
-            backend_rows = (await session.execute(select(InferenceBackend))).scalars().all()
+            backend_rows = (await session.execute(select(InferenceBackend).where(InferenceBackend.is_active == True))).scalars().all()
             for b in backend_rows:
                 h = await proxy.health_backend(b)
                 m_count = (await session.execute(
@@ -306,12 +308,13 @@ async def health_deep(
                     "backend_id": str(b.id),
                     "type": b.provider,
                     "status": "online" if h.get("ok") else "offline",
+                    "ok": h.get("ok", False),
                     "latency_ms": h.get("latency_ms", 0),
                     "last_error_sanitized": h.get("error") if h.get("error") else None,
                     "model_count": m_count
                 })
         except Exception as e:
-            backends.append({"error": str(e)})
+            backends.append({"error": str(e), "ok": False})
 
     # Models
     models = []
@@ -423,9 +426,13 @@ async def health_deep(
         unreachable = [b["backend_id"] for b in backends if b["status"] != "online"]
         dp_ok = len(unreachable) < len(backends)
         if unreachable:
-            if readiness_score == "READY":
+            # We don't mark as DEGRADED if we still have some backends online
+            # unless ALL active backends are down
+            if dp_ok:
+                warnings.append(f"Some inference backends are unreachable: {len(unreachable)}")
+            else:
                 readiness_score = "DEGRADED"
-            warnings.append(f"Unreachable inference backends: {len(unreachable)}")
+                critical_failures.append("All inference backends are unreachable")
     else:
         # No backends defined might be a warning or degraded
         if readiness_score == "READY":
@@ -445,6 +452,7 @@ async def health_deep(
         "postgres": db_detail,
         "redis": redis_detail,
         "queues": job_snapshot,
+        "inference_queues": proxy.queue_manager.get_snapshot(),
         "inference_backends": backends,
         "models": models,
         "rag": rag_status,
@@ -452,11 +460,11 @@ async def health_deep(
         "billing": billing_status,
         "security": security_info,
         "readiness_score": readiness_score,
+        "status": "ok" if readiness_score == "READY" else readiness_score.lower(),
         "warnings": warnings,
         "critical_failures": critical_failures,
         "total_latency_ms": round((perf_counter() - start_total) * 1000, 2)
     }
-    response["status"] = response["readiness_score"]
     response["dependencies"] = {
         "postgres": response["postgres"],
         "redis": response["redis"],
