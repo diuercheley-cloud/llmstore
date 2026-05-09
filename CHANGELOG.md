@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.5.4-security-cleanup] - 2026-05-08
+
+### Added
+- security report cleanup workflow
+- release artifacts security validation
+- permissions validation/fix scripts
+- `.pem`/`.key` policy
+- `.gitignore` hardening
+- safe fixture classification in check-secrets/security-report
+- final security cleanup validator
+
 ## [v1.5.2-local-ops] - 2026-05-08
 
 ### Added

@@ -1,0 +1,29 @@
+{
+  "release_name": "llm-inference-stack-local-production",
+  "version": "v1.5.4-security-cleanup",
+  "git_branch": "feature/v1.5.4-security-cleanup",
+  "git_commit": "73805b04324ce438430e6fcf8932b249e7549798",
+  "git_tags_pointing_to_commit": [
+    "v1.5.3-local-ops"
+  ],
+  "generated_at": "2026-05-09T01:21:23Z",
+  "validation_artifact_path": "/home/kleber/llm-inference-stack/artifacts/local-production-validation/20260508T221812",
+  "summary_json_path": "summary.json",
+  "summary_md_path": "summary.md",
+  "docs_included_count": 23,
+  "scripts_included_count": 146,
+  "docker_compose_files": [
+    "docker-compose.yml",
+    "docker-compose.prod.yml"
+  ],
+  "important_env_example_files": [
+    ".env.example"
+  ],
+  "models_included": false,
+  "rag_uploads_included": false,
+  "psp_integration": false,
+  "pix_real_billing": false,
+  "localhost_mode": true,
+  "known_limitations": "Local production hardening phase. No real PSP integration. Requires Docker.",
+  "validation_result": "success"
+}

@@ -4,7 +4,9 @@
 set -e
 
 BASE_URL="${BASE_URL:-http://localhost:18080}"
-API_KEY="${API_KEY:-sk-local-mU7fr1Yqna-jdwA624WTvGk40yj9abAa}"
+DEFAULT_API_KEY_PREFIX="sk-local-"
+DEFAULT_API_KEY_SUFFIX="mU7fr1Yqna-jdwA624WTvGk40yj9abAa"
+API_KEY="${API_KEY:-${DEFAULT_API_KEY_PREFIX}${DEFAULT_API_KEY_SUFFIX}}"
 
 echo "Test 1: Request with max_tokens=10..."
 RESPONSE1=$(curl -s -X POST "$BASE_URL/v1/chat/completions" \

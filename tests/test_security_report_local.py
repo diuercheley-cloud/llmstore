@@ -1,67 +1,62 @@
-import os
 import json
+import os
 import subprocess
 from pathlib import Path
 
-def test_security_report_local(tmp_path):
-    script_path = Path("scripts/security-report-local.sh")
-    assert script_path.exists()
-    assert os.access(script_path, os.X_OK)
 
-    # Test --help
-    res = subprocess.run([str(script_path), "--help"], capture_output=True, text=True)
+SCRIPT_PATH = Path("scripts/security-report-local.sh")
+
+
+def test_security_report_local(tmp_path):
+    assert SCRIPT_PATH.exists()
+    assert os.access(SCRIPT_PATH, os.X_OK)
+
+    res = subprocess.run([str(SCRIPT_PATH), "--help"], capture_output=True, text=True)
     assert "Usage:" in res.stdout
 
-    # Run the report with output to tmp_path
-    res = subprocess.run([str(script_path), "--output-dir", str(tmp_path), "--skip-artifacts-scan"], capture_output=True, text=True)
-    
-    # Even if it fails (due to some actual security issues), it should generate the JSON
-    # We find the timestamped dir
-    dirs = [d for d in tmp_path.iterdir() if d.is_dir()]
+    res = subprocess.run(
+        [str(SCRIPT_PATH), "--output-dir", str(tmp_path), "--skip-artifacts-scan"],
+        capture_output=True,
+        text=True,
+    )
+
+    dirs = [entry for entry in tmp_path.iterdir() if entry.is_dir()]
     assert len(dirs) == 1
     report_dir = dirs[0]
-    
+
     json_file = report_dir / "security-report.json"
     md_file = report_dir / "security-report.md"
-    
+
     assert json_file.exists()
     assert md_file.exists()
 
-    with open(json_file) as f:
-        data = json.load(f)
+    data = json.loads(json_file.read_text())
 
     assert "generated_at" in data
     assert "version" in data
     assert "git_branch" in data
     assert "git_commit" in data
-    assert "score" in data
-    assert data["score"] in ["PASS", "PASS_WITH_WARNINGS", "FAIL"]
-    
-    assert "totals" in data
-    assert "pass" in data["totals"]
-    assert "warn" in data["totals"]
-    assert "fail" in data["totals"]
-    assert "skip" in data["totals"]
-    assert "critical_failures" in data["totals"]
+    assert data["score"] in {"PASS", "PASS_WITH_WARNINGS", "FAIL"}
 
-    assert "checks" in data
+    assert set(data["totals"]) >= {"pass", "warn", "fail", "skip", "critical_failures"}
+    assert data["checks"]
+
     for check in data["checks"]:
-        assert "id" in check
-        assert "category" in check
-        assert "title" in check
-        assert "status" in check
-        assert check["status"] in ["pass", "warn", "fail", "skip"]
-        assert "severity" in check
-        assert check["severity"] in ["critical", "high", "medium", "low"]
-        assert "details" in check
-        assert "remediation" in check
-        assert "evidence" in check
+        assert set(check) >= {
+            "id",
+            "category",
+            "title",
+            "status",
+            "severity",
+            "details",
+            "remediation",
+            "evidence",
+            "meta",
+        }
+        assert check["status"] in {"pass", "warn", "fail", "skip"}
+        assert check["severity"] in {"critical", "high", "medium", "low"}
 
-    # Read md
     md_content = md_file.read_text()
     assert "# Security Report" in md_content
     assert data["git_branch"] in md_content
-    
-    # Ensure no actual secrets are in the output if it passed, but checking strictly for secrets here is hard.
-    # Check that check-secrets is referenced in checks
-    assert any(c["id"] == "sec-secrets-all" for c in data["checks"])
+    assert any(check["id"] == "sec-secrets-all" for check in data["checks"])

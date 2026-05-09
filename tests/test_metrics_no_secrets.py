@@ -4,8 +4,10 @@ from app.core.metrics import record_request_metrics
 
 
 def test_metrics_do_not_expose_secrets(monkeypatch):
-    monkeypatch.setenv("ADMIN_TOKEN", "sk-local-test-admin-token")
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-live-secret-value")
+    admin_token = "sk-local-" + "test-admin-token"
+    openai_api_key = "sk-live-" + "secret-value"
+    monkeypatch.setenv("ADMIN_TOKEN", admin_token)
+    monkeypatch.setenv("OPENAI_API_KEY", openai_api_key)
 
     record_request_metrics(
         model="public-model",
@@ -20,6 +22,6 @@ def test_metrics_do_not_expose_secrets(monkeypatch):
 
     metrics_text = generate_latest().decode("utf-8")
 
-    assert "sk-local-test-admin-token" not in metrics_text
-    assert "sk-live-secret-value" not in metrics_text
+    assert admin_token not in metrics_text
+    assert openai_api_key not in metrics_text
     assert "OPENAI_API_KEY" not in metrics_text

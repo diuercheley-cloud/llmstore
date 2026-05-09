@@ -17,6 +17,12 @@ check-secrets:
 security-report:
 	./scripts/security-report-local.sh
 
+fix-permissions:
+	./scripts/fix-local-permissions.sh --yes
+
+validate-permissions:
+	./scripts/validate-local-permissions.sh
+
 install-git-hooks:
 	./scripts/check-secrets.sh --install-hook
 
