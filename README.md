@@ -165,11 +165,13 @@ Documentação Adicional:
 - [Guia Rápido (Quickstart)](docs/LOCAL_PRODUCTION_QUICKSTART.md)
 - [Runbook de Produção Local](docs/LOCAL_PRODUCTION_RUNBOOK.md)
 - [Guia de Validação](docs/LOCAL_PRODUCTION_VALIDATION.md)
+- [Integrações (Open WebUI, n8n, LangChain, etc.)](docs/integrations/LANGCHAIN.md)
 
 Acesse:
 - Landing Page: http://localhost:18080/
 - Portal do Cliente: http://localhost:18080/client-portal
 - Admin Dashboard: http://localhost:18080/admin-dashboard
+- Matriz de Capacidades: [docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md)
 
 ## Demonstração Local
 

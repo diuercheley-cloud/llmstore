@@ -178,11 +178,30 @@ class BillingPlanCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     description: str | None = Field(default=None, max_length=500)
     rate_limit_per_minute: int = Field(ge=1, le=10000)
-    daily_token_quota: int = Field(ge=1000, le=1_000_000_000)
-    weekly_token_quota: int = Field(ge=1000, le=5_000_000_000)
-    monthly_token_quota: int = Field(ge=1000, le=10_000_000_000)
+    daily_token_quota: int = Field(ge=0, le=1_000_000_000)
+    weekly_token_quota: int = Field(ge=0, le=5_000_000_000)
+    monthly_token_quota: int = Field(ge=0, le=10_000_000_000)
     max_output_tokens: int = Field(ge=1, le=32768)
+    max_context_tokens: int = Field(default=4096, ge=512, le=131072)
     allow_streaming: bool = True
+    # Request Limits
+    requests_per_day: int = Field(default=0, ge=0)
+    requests_per_month: int = Field(default=0, ge=0)
+    # RAG
+    rag_enabled: bool = False
+    rag_max_documents: int | None = None
+    rag_max_storage_mb: int | None = None
+    # TTS
+    tts_enabled: bool = False
+    tts_chars_per_month: int = 0
+    # Embeddings
+    embeddings_enabled: bool = False
+    embeddings_requests_per_month: int = 0
+    # Feature Gates
+    responses_enabled: bool = True
+    tools_enabled: bool = False
+    export_enabled: bool = False
+    support_level: str = "Community"
     is_active: bool = True
     allowed_models: list[str] | None = None
     routing_policy: dict | None = None
@@ -192,11 +211,30 @@ class BillingPlanPatch(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=120)
     description: str | None = Field(default=None, max_length=500)
     rate_limit_per_minute: int | None = Field(default=None, ge=1, le=10000)
-    daily_token_quota: int | None = Field(default=None, ge=1000, le=1_000_000_000)
-    weekly_token_quota: int | None = Field(default=None, ge=1000, le=5_000_000_000)
-    monthly_token_quota: int | None = Field(default=None, ge=1000, le=10_000_000_000)
+    daily_token_quota: int | None = Field(default=None, ge=0, le=1_000_000_000)
+    weekly_token_quota: int | None = Field(default=None, ge=0, le=5_000_000_000)
+    monthly_token_quota: int | None = Field(default=None, ge=0, le=10_000_000_000)
     max_output_tokens: int | None = Field(default=None, ge=1, le=32768)
+    max_context_tokens: int | None = Field(default=None, ge=512, le=131072)
     allow_streaming: bool | None = None
+    # Request Limits
+    requests_per_day: int | None = None
+    requests_per_month: int | None = None
+    # RAG
+    rag_enabled: bool | None = None
+    rag_max_documents: int | None = None
+    rag_max_storage_mb: int | None = None
+    # TTS
+    tts_enabled: bool | None = None
+    tts_chars_per_month: int | None = None
+    # Embeddings
+    embeddings_enabled: bool | None = None
+    embeddings_requests_per_month: int | None = None
+    # Feature Gates
+    responses_enabled: bool | None = None
+    tools_enabled: bool | None = None
+    export_enabled: bool | None = None
+    support_level: str | None = None
     is_active: bool | None = None
     allowed_models: list[str] | None = None
     routing_policy: dict | None = None
@@ -212,7 +250,26 @@ class BillingPlanRead(BaseModel):
     weekly_token_quota: int
     monthly_token_quota: int
     max_output_tokens: int
+    max_context_tokens: int
     allow_streaming: bool
+    # Request Limits
+    requests_per_day: int
+    requests_per_month: int
+    # RAG
+    rag_enabled: bool
+    rag_max_documents: int | None
+    rag_max_storage_mb: int | None
+    # TTS
+    tts_enabled: bool
+    tts_chars_per_month: int
+    # Embeddings
+    embeddings_enabled: bool
+    embeddings_requests_per_month: int
+    # Feature Gates
+    responses_enabled: bool
+    tools_enabled: bool
+    export_enabled: bool
+    support_level: str
     is_active: bool
     allowed_models_json: str | None
     routing_policy_json: str | None
@@ -362,3 +419,12 @@ class RoutingExplainResponse(BaseModel):
     chosen_backend: str | None
     candidates_order: list[dict]
     rejected_candidates: list[dict]
+
+
+class CapabilityRead(BaseModel):
+    feature: str
+    status: str
+    backend_support: str
+    production_ready: bool
+    limitations: str | None = None
+    validator_script: str | None = None

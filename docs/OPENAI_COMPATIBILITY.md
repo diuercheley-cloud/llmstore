@@ -36,6 +36,17 @@ A llm-inference-stack visa oferecer alta compatibilidade com a API da OpenAI par
 - **Status**: Suportado
 - **Descrição**: Lista modelos de chat e agora modelos de embedding ativos.
 
+## Integrações com Ferramentas Externas
+
+A stack foi validada e possui guias de configuração para as seguintes ferramentas:
+
+- [Open WebUI](integrations/OPEN_WEBUI.md)
+- [n8n](integrations/N8N.md)
+- [LangChain](integrations/LANGCHAIN.md)
+- [AnythingLLM](integrations/ANYTHINGLLM.md)
+
+Para qualquer outra ferramenta que suporte OpenAI, utilize a Base URL `http://localhost:18080/v1` e uma API Key gerada no sistema.
+
 ## Configuração de Embeddings
 
 No arquivo `.env`:
@@ -48,8 +59,25 @@ EMBEDDING_DIMENSIONS=384
 
 ## Limites e Cotas
 
-Os embeddings possuem limites separados de tokens de chat nos planos de faturamento:
-- **Embeddings Enabled**: Ativa/Desativa o recurso para o cliente.
-- **Requests per Month**: Limite de chamadas ao endpoint.
-- **Tokens per Month**: Limite de tokens processados (estimados: 4 chars = 1 token).
-- **Max Inputs per Request**: Máximo de strings em um array por chamada.
+Os limites são aplicados conforme o Plano Comercial associado ao cliente:
+- **RPM / RPD**: Limite de requisições por minuto e por dia.
+- **Monthly Token Quota**: Limite de tokens acumulados no mês.
+- **Max Context Tokens**: Limite de tokens de entrada (Prompt + History).
+- **Feature Gates**: Bloqueio de RAG, TTS, Embeddings ou Responses caso não permitidos no plano (ex: Plano Free possui RAG desabilitado).
+- **Model Access**: Restrição de quais modelos podem ser chamados.
+
+## Matriz de Capacidades
+
+O sistema expõe uma matriz detalhada do que é mock, local real ou production-ready em `docs/CAPABILITY_MATRIX.md`.
+
+Administradores podem consultar as capacidades programaticamente via:
+`GET /admin/capabilities` (requer `X-Admin-Token`).
+
+## Capabilities no Metadata do Modelo
+
+O endpoint `/v1/models` inclui agora um campo `capabilities` dentro de `metadata` para cada modelo, indicando suporte a:
+- `supports_chat` (boolean)
+- `supports_streaming` (boolean)
+- `supports_embeddings` (boolean)
+- `supports_responses` (boolean)
+- `supports_tools` (boolean)

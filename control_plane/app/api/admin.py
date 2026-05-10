@@ -51,6 +51,7 @@ from app.schemas.admin import (
     BillingPlanPatch,
     BillingPlanModelsPatch,
     BillingPlanRead,
+    CapabilityRead,
     ClientBillingPlanPatch,
     ClientCreate,
     ClientPatch,
@@ -153,6 +154,159 @@ from app.services.security_monitor import (
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
+
+
+@router.get("/capabilities", response_model=list[CapabilityRead])
+async def get_capabilities():
+    """
+    Retorna a matriz de capacidades do sistema por ambiente/backend.
+    """
+    return [
+        {
+            "feature": "/v1/chat/completions",
+            "status": "GA",
+            "backend_support": "llama.cpp, ollama, vllm, mock",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/test-chat.sh"
+        },
+        {
+            "feature": "streaming",
+            "status": "GA",
+            "backend_support": "llama.cpp, ollama, vllm, mock",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/test-stream.sh"
+        },
+        {
+            "feature": "/v1/models",
+            "status": "GA",
+            "backend_support": "control-plane",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": None
+        },
+        {
+            "feature": "/v1/embeddings",
+            "status": "Partial",
+            "backend_support": "mock",
+            "production_ready": False,
+            "limitations": "Mock determinístico apenas",
+            "validator_script": "scripts/test-embeddings.sh"
+        },
+        {
+            "feature": "/v1/responses",
+            "status": "Beta",
+            "backend_support": "control-plane-proxy",
+            "production_ready": True,
+            "limitations": "Sem suporte a streaming ou tools",
+            "validator_script": "scripts/test-responses.sh"
+        },
+        {
+            "feature": "tools/function calling",
+            "status": "Unsupported",
+            "backend_support": "None",
+            "production_ready": False,
+            "limitations": "Não implementado no proxy",
+            "validator_script": None
+        },
+        {
+            "feature": "RAG",
+            "status": "GA",
+            "backend_support": "local-rag-engine",
+            "production_ready": True,
+            "limitations": "Requer embeddings (mesmo que mock)",
+            "validator_script": "scripts/test-rag.sh"
+        },
+        {
+            "feature": "TTS",
+            "status": "GA",
+            "backend_support": "pocket-tts",
+            "production_ready": True,
+            "limitations": "Local only",
+            "validator_script": "scripts/pocket-tts.sh"
+        },
+        {
+            "feature": "billing manual/local",
+            "status": "GA",
+            "backend_support": "control-plane",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/run-billing-cycle.sh"
+        },
+        {
+            "feature": "PSP/PIX real",
+            "status": "Future",
+            "backend_support": "None",
+            "production_ready": False,
+            "limitations": "Não implementado",
+            "validator_script": None
+        },
+        {
+            "feature": "Client Portal",
+            "status": "GA",
+            "backend_support": "static-frontend",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/ui-health.sh"
+        },
+        {
+            "feature": "Admin Dashboard",
+            "status": "GA",
+            "backend_support": "static-frontend",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/ui-health.sh"
+        },
+        {
+            "feature": "Admin Lab",
+            "status": "GA",
+            "backend_support": "static-frontend",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/ui-health.sh"
+        },
+        {
+            "feature": "DR/backup/restore",
+            "status": "GA",
+            "backend_support": "scripts",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/dr-test-local.sh"
+        },
+        {
+            "feature": "upgrade/rollback",
+            "status": "GA",
+            "backend_support": "scripts",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/upgrade-test.sh"
+        },
+        {
+            "feature": "tenant export/delete",
+            "status": "GA",
+            "backend_support": "control-plane",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/export-client-local.sh"
+        },
+        {
+            "feature": "security report",
+            "status": "GA",
+            "backend_support": "scripts",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/security-report-local.sh"
+        },
+        {
+            "feature": "readiness report",
+            "status": "GA",
+            "backend_support": "scripts",
+            "production_ready": True,
+            "limitations": None,
+            "validator_script": "scripts/production-readiness-local.sh"
+        }
+    ]
 settings = get_settings()
 
 
@@ -199,6 +353,16 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
     architecture = architecture_for_model(model)
     reasoning = reasoning_defaults_for_model(model)
     backend_health = health_map.get(str(model.inference_backend_id)) if health_map and model.inference_backend_id else None
+    # Derive capabilities
+    is_chat = model.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    capabilities = {
+        "supports_chat": is_chat,
+        "supports_streaming": is_chat,
+        "supports_embeddings": "embedding" in model.model_id.lower() or metadata.get("type") == "embedding",
+        "supports_responses": is_chat,
+        "supports_tools": False,
+    }
+
     return {
         "id": str(model.id),
         "display_name": display_name_for_model(model),
@@ -220,6 +384,7 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
         "include_reasoning_default": reasoning["include_reasoning_default"],
         "metadata_json": model.metadata_json,
         "metadata": metadata,
+        "capabilities": capabilities,
         "routes": serialize_routing_table(model),
         "backend_health": backend_health,
         "created_at": model.created_at.isoformat(),
@@ -409,10 +574,7 @@ async def purge_client(
                 await session.execute(delete(RagUsageEvent).where(RagUsageEvent.client_id == client_id))
             
             if payload.delete_tts_metadata:
-                # TTS metadata is likely in RequestLog or separate if implemented
-                # Assuming pocket_tts uses standard paths for now, but if there's a model:
-                # await session.execute(delete(TTSModel).where(TTSModel.client_id == client_id))
-                pass
+                await session.execute(delete(TtsUsageEvent).where(TtsUsageEvent.client_id == client_id))
 
             await session.execute(delete(ClientFeatureBlock).where(ClientFeatureBlock.client_id == client_id))
             await session.execute(delete(ApiKey).where(ApiKey.client_id == client_id))
@@ -649,6 +811,7 @@ async def export_client_data(
     usage = (await session.execute(select(UsageRecord).where(UsageRecord.client_id == client.id))).scalars().all()
     rag_docs = (await session.execute(select(RAGDocument).where(RAGDocument.client_id == client.id))).scalars().all()
     security_events = (await session.execute(select(SecurityEvent).where(SecurityEvent.client_id == client.id))).scalars().all()
+    tts_events = (await session.execute(select(TtsUsageEvent).where(TtsUsageEvent.client_id == client.id))).scalars().all()
 
     export_payload = {
         "export_version": "1.1",
@@ -689,6 +852,8 @@ async def export_client_data(
                 "request_count": u.request_count,
                 "prompt_tokens": u.prompt_tokens,
                 "completion_tokens": u.completion_tokens,
+                "embeddings_requests": u.embeddings_requests,
+                "embeddings_tokens": u.embeddings_tokens,
                 "created_at": u.created_at.isoformat(),
             }
             for u in usage
@@ -718,7 +883,16 @@ async def export_client_data(
             }
             for d in rag_docs
         ],
-        "tts": [], 
+        "tts": [
+            {
+                "id": str(t.id),
+                "chars_input": t.chars_input,
+                "audio_file_id": t.audio_file_id,
+                "audio_size_bytes": t.audio_size_bytes,
+                "created_at": t.created_at.isoformat(),
+            }
+            for t in tts_events
+        ], 
         "audit_events": [
             {
                 "id": str(e.id),

@@ -126,6 +126,13 @@ else
 fi
 
 # 6. Migrations
+echo "[upgrade] Validando migrations antes de aplicar..."
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo "[dry-run] ./scripts/validate-migrations-local.sh"
+else
+  ./scripts/validate-migrations-local.sh
+fi
+
 echo "[upgrade] Verificando banco de dados e rodando migrations..."
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "[dry-run] dc exec -T control-plane alembic upgrade head"
@@ -138,6 +145,13 @@ else
     sleep 2
   done
   dc exec -T control-plane alembic upgrade head
+fi
+
+echo "[upgrade] Validando status das migrations após upgrade..."
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo "[dry-run] ./scripts/validate-migrations-local.sh"
+else
+  ./scripts/validate-migrations-local.sh
 fi
 
 # 7. Smoke tests

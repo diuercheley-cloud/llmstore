@@ -229,6 +229,17 @@ def serialize_model_card(item: ModelRegistry) -> dict:
             metadata = json.loads(item.metadata_json)
         except json.JSONDecodeError:
             metadata = {"raw_metadata": item.metadata_json}
+
+    # Derive capabilities
+    is_chat = item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    capabilities = {
+        "supports_chat": is_chat,
+        "supports_streaming": is_chat,
+        "supports_embeddings": "embedding" in item.model_id.lower() or metadata.get("type") == "embedding",
+        "supports_responses": is_chat,
+        "supports_tools": False,  # Marked as unsupported/partial in matrix
+    }
+
     return {
         "id": item.model_alias or item.model_id,
         "object": "model",
@@ -240,6 +251,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
             "provider": item.provider,
             "context_length": item.context_length,
             "is_default": item.is_default,
+            "capabilities": capabilities,
         },
     }
 

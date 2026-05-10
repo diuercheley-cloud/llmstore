@@ -27,9 +27,15 @@ class EffectivePlan:
     monthly_token_quota: int
     max_output_tokens: int
     allow_streaming: bool
+    max_context_tokens: int = 4096
     monthly_price: Decimal = Decimal("0")
     overage_price_per_1k_tokens: Decimal = Decimal("0")
     currency: str = "USD"
+    # Request Limits
+    requests_per_day: int = 0
+    requests_per_month: int = 0
+    # RAG
+    rag_enabled: bool = False
     rag_max_documents: int | None = None
     rag_max_storage_mb: int | None = None
     rag_max_pages_per_month: int | None = None
@@ -46,6 +52,11 @@ class EffectivePlan:
     embeddings_requests_per_month: int = 0
     embeddings_tokens_per_month: int = 0
     embeddings_max_inputs_per_request: int = 16
+    # Feature Gates
+    responses_enabled: bool = True
+    tools_enabled: bool = False
+    export_enabled: bool = False
+    support_level: str = "Community"
 
 
 DEFAULT_BILLING_PLANS = [
@@ -59,6 +70,7 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 50000,
         "max_output_tokens": 32768,
         "allow_streaming": False,
+        "rag_enabled": True,
         "rag_max_documents": 5,
         "rag_max_storage_mb": 50,
         "rag_max_pages_per_month": 100,
@@ -82,6 +94,7 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 750000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_enabled": True,
         "rag_max_documents": 10,
         "rag_max_storage_mb": 100,
         "rag_max_pages_per_month": 500,
@@ -105,6 +118,7 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 4000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_enabled": True,
         "rag_max_documents": 100,
         "rag_max_storage_mb": 2048,
         "rag_max_pages_per_month": 5000,
@@ -128,6 +142,7 @@ DEFAULT_BILLING_PLANS = [
         "monthly_token_quota": 15000000,
         "max_output_tokens": 32768,
         "allow_streaming": True,
+        "rag_enabled": True,
         "rag_max_documents": None,
         "rag_max_storage_mb": None,
         "rag_max_pages_per_month": None,
@@ -262,10 +277,14 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             weekly_token_quota=plan.weekly_token_quota,
             monthly_token_quota=plan.monthly_token_quota,
             max_output_tokens=plan.max_output_tokens,
+            max_context_tokens=getattr(plan, "max_context_tokens", 4096),
             allow_streaming=plan.allow_streaming,
             monthly_price=pricing_rule.monthly_price if pricing_rule else Decimal("0"),
             overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens if pricing_rule else Decimal("0"),
             currency=pricing_rule.currency if pricing_rule else "USD",
+            requests_per_day=getattr(plan, "requests_per_day", 0),
+            requests_per_month=getattr(plan, "requests_per_month", 0),
+            rag_enabled=getattr(plan, "rag_enabled", False),
             rag_max_documents=getattr(plan, "rag_max_documents", 5),
             rag_max_storage_mb=getattr(plan, "rag_max_storage_mb", 50),
             rag_max_pages_per_month=getattr(plan, "rag_max_pages_per_month", 100),
@@ -282,6 +301,11 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             embeddings_requests_per_month=getattr(plan, "embeddings_requests_per_month", 0),
             embeddings_tokens_per_month=getattr(plan, "embeddings_tokens_per_month", 0),
             embeddings_max_inputs_per_request=getattr(plan, "embeddings_max_inputs_per_request", 16),
+            # Feature Gates
+            responses_enabled=getattr(plan, "responses_enabled", True),
+            tools_enabled=getattr(plan, "tools_enabled", False),
+            export_enabled=getattr(plan, "export_enabled", False),
+            support_level=getattr(plan, "support_level", "Community"),
         )
     return EffectivePlan(
         code="legacy",
@@ -291,7 +315,9 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         weekly_token_quota=client.weekly_token_quota,
         monthly_token_quota=client.monthly_token_quota,
         max_output_tokens=client.max_output_tokens,
+        max_context_tokens=client.max_context_tokens,
         allow_streaming=True,
+        rag_enabled=True,
         rag_max_documents=5,
         rag_max_storage_mb=50,
         rag_max_pages_per_month=100,
@@ -309,6 +335,10 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         monthly_price=Decimal("0"),
         overage_price_per_1k_tokens=Decimal("0"),
         currency="USD",
+        responses_enabled=True,
+        tools_enabled=False,
+        export_enabled=False,
+        support_level="Community",
     )
 
 

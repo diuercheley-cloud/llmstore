@@ -36,3 +36,11 @@ ou
 ```bash
 docker compose down
 ```
+
+---
+
+## LOCAL_APPLIANCE_MODE
+
+Este sistema opera por padrão em **LOCAL_APPLIANCE_MODE=true**. Este modo garante configurações seguras para uso local, como faturamento manual, CORS restrito a localhost e validações de segurança automáticas.
+
+Para mais detalhes, consulte o guia de [LOCAL_APPLIANCE_MODE](LOCAL_APPLIANCE_MODE.md).

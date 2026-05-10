@@ -44,6 +44,7 @@ async def test_rag_max_documents_limit(mock_verify, client_with_limits):
         plan = BillingPlan(
             code="rag_limited",
             name="RAG Limited",
+            rag_enabled=True,
             rag_max_documents=1,
             rate_limit_per_minute=10,
             daily_token_quota=1000,

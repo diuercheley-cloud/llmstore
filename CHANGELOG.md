@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.6.1-product-hardening] - 2026-05-10
+
+### Added
+- Makefile consolidado como entrypoint operacional para rotinas locais de produto e validação.
+- System Control Center com cobertura de API, UI e sanitização de saídas administrativas.
+- Hardening de migrations com validações de heads, safety checks de upgrade e documentação de operação.
+- `LOCAL_APPLIANCE_MODE` com guards de release e validações específicas de segurança local.
+- Isolamento multi-tenant reforçado para embeddings, responses, TTS, billing portal e export/delete.
+- Proteções contra abuso com autenticação, limites, validação de payloads e isolamento por tenant.
+- Matriz comercial de planos e gates de features refletidos em API, portal e pricing.
+- Capability matrix e documentação de integrações com exemplos locais sem secrets.
+
+### Notes
+- Release preparada para validação local completa, incluindo relatórios de segurança, readiness e bundle sem artefatos proibidos versionados.
+
 ## [v1.5.6-runtime-hardening] - 2026-05-09
 
 ### Added

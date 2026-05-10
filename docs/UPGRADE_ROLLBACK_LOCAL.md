@@ -20,9 +20,35 @@ O script `scripts/upgrade-local.sh` automatiza o processo de atualização.
 2. Cria um backup completo (Banco de dados e arquivos RAG) em `artifacts/backups-local/`.
 3. Troca o código para a versão desejada (`git checkout`).
 4. Reconstrói as imagens Docker (se necessário).
-5. Sobe a stack e aplica migrations do banco de dados.
-6. Executa testes de fumaça (smoke tests) para validar a saúde da aplicação.
-7. Gera um relatório em `artifacts/upgrades/`.
+5. Valida a integridade das migrations do Alembic (`validate-migrations-local.sh`).
+6. Sobe a stack e aplica migrations do banco de dados.
+7. Valida novamente o status das migrations após o upgrade.
+8. Executa testes de fumaça (smoke tests) para validar a saúde da aplicação.
+9. Gera um relatório em `artifacts/upgrades/`.
+
+---
+
+## Validação de Migrations
+
+Para garantir que as migrations não quebrem o banco de dados, existem dois scripts dedicados:
+
+### Validação Estática e Local
+```bash
+# Verifica heads duplicadas, conflitos e imports
+./scripts/validate-migrations-local.sh
+```
+
+### Validação com Banco Temporário (Isolado)
+Este modo sobe um container Postgres limpo, aplica todas as migrations do zero e valida o schema final.
+```bash
+./scripts/validate-migrations-local.sh --temp-db
+```
+
+### Simulação Completa de Upgrade
+Valida o fluxo completo: backup -> validação -> upgrade -> health check -> smoke test.
+```bash
+./scripts/validate-upgrade-migrations-local.sh
+```
 
 ### Opções úteis
 - `--dry-run`: Simula o processo sem alterar arquivos ou estado.

@@ -45,6 +45,10 @@ async def proxy_pocket_tts(
     if is_blocked:
         raise HTTPException(status_code=403, detail=f"TTS feature blocked: {block_reason}")
 
+    effective_plan = resolve_effective_plan(client)
+    if not effective_plan.tts_enabled:
+        raise HTTPException(status_code=403, detail="TTS feature is not enabled for your plan")
+
     url = f"{POCKET_TTS_URL}/{path}"
     
     request_content = None

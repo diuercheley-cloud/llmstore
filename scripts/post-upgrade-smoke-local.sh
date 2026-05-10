@@ -128,6 +128,17 @@ check_endpoint "health" "GET" "/health" "200"
 check_endpoint "ready" "GET" "/ready" "200"
 check_endpoint "metrics" "GET" "/metrics" "200"
 
+# 1.1 Migrations Status
+if [[ -x "./scripts/validate-migrations-local.sh" ]]; then
+  if ./scripts/validate-migrations-local.sh > "${LOG_DIR}/migrations-val.log" 2>&1; then
+      log_test "migrations_status" "PASS" "Alembic migrations OK"
+  else
+      log_test "migrations_status" "FAIL" "Alembic migrations com erro (veja logs/migrations-val.log)"
+  fi
+else
+  log_test "migrations_status" "SKIP" "Script de validação não encontrado"
+fi
+
 # 2. Docker Status
 if [[ "${JSON_OUTPUT}" == "false" ]]; then
   docker compose ps > "${LOG_DIR}/docker-ps.log" 2>&1

@@ -25,12 +25,23 @@ O endpoint `POST /public/signup` retorna:
 
 A API key e retornada apenas uma vez. O cliente deve armazenar esse valor no momento do cadastro.
 
-## Oferta comercial padrao
+## Oferta comercial padrao (Local Edition)
 
-- `free`: plano gratuito com quotas pequenas, sem streaming e sem overage.
-- `basic`: entrada paga para workloads compartilhados.
-- `pro`: plano destacado para uso recorrente em producao.
-- `enterprise`: trilha de rollout com maior capacidade e suporte prioritario.
+O sistema utiliza faturamento local/manual nesta versão.
+
+| Recurso | Free | Basic | Pro | Enterprise Local |
+| :--- | :--- | :--- | :--- | :--- |
+| **Requisições (RPM/RPD)** | 10 / 100 | 30 / 1.000 | 60 / 5.000 | 300 / 1.000.000 |
+| **Tokens (Mês)** | 50.000 | 500.000 | 5.000.000 | 50.000.000 |
+| **Contexto Máximo** | 4.096 | 8.192 | 16.384 | 131.072 |
+| **Streaming** | Sim | Sim | Sim | Sim |
+| **RAG** | Não | Sim (5 docs) | Sim (50 docs) | Sim (1.000 docs) |
+| **TTS** | Não | Sim | Sim | Sim |
+| **Embeddings** | Não | Sim | Sim | Sim |
+| **Exportação de Uso** | Não | Não | Sim | Sim |
+| **Suporte** | Comunitário | E-mail | E-mail Prioritário | 24/7 Dedicado |
+
+**Nota:** O faturamento é realizado de forma manual/local. Não há integração direta com PSP/PIX nesta versão.
 
 ## Deploy publico
 

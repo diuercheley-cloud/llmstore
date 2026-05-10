@@ -144,6 +144,8 @@ async def export_usage(session: AsyncSession, *, start_date: date | None, end_da
             "prompt_tokens": record.prompt_tokens,
             "completion_tokens": record.completion_tokens,
             "total_tokens": record.prompt_tokens + record.completion_tokens,
+            "embeddings_requests": record.embeddings_requests,
+            "embeddings_tokens": record.embeddings_tokens,
             "created_at": _iso(record.created_at),
             "updated_at": _iso(record.updated_at),
         }

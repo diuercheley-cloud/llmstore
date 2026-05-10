@@ -64,6 +64,7 @@ async def get_rag_usage_and_limits(session: AsyncSession, client: Client):
 
     return {
         "plan": effective_plan.code,
+        "rag_enabled": effective_plan.rag_enabled,
         "limits": {
             "max_documents": effective_plan.rag_max_documents,
             "max_storage_mb": effective_plan.rag_max_storage_mb,

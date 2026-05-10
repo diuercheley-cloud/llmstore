@@ -260,12 +260,56 @@ PYTEST_LOG_FILE="logs/pytest.log"
 PYTEST_FULL_LOG_PATH="${OUTPUT_DIR}/${PYTEST_LOG_FILE}"
 PYTEST_EXIT_CODE=0
 if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
-  log_step "Running pytest inside control-plane"
-  if dc exec -T control-plane python -m pytest -q >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
-    log_ok "pytest OK"
+  log_step "Running repository pytest suite"
+  RELEASE_PYTEST_ARGS=(
+    tests/test_makefile_operator_commands.py
+    tests/test_system_control_center_api.py
+    tests/test_system_control_center_ui.py
+    tests/test_system_control_center_sanitization.py
+    tests/test_migrations_validation.py
+    tests/test_alembic_heads.py
+    tests/test_upgrade_migrations_safety.py
+    tests/test_local_appliance_mode.py
+    tests/test_local_appliance_security.py
+    tests/test_local_appliance_release_guards.py
+    tests/test_multitenant_isolation_full.py
+    tests/test_multitenant_embeddings_responses.py
+    tests/test_multitenant_tts.py
+    tests/test_multitenant_billing_portal.py
+    tests/test_multitenant_export_delete.py
+    tests/test_abuse_protection_auth.py
+    tests/test_abuse_protection_limits.py
+    tests/test_abuse_protection_payloads.py
+    tests/test_abuse_protection_multitenant.py
+    tests/test_commercial_plans.py
+    tests/test_plan_feature_gates.py
+    tests/test_pricing_page_plans.py
+    tests/test_client_portal_plan_limits.py
+    tests/test_capability_matrix_docs.py
+    tests/test_admin_capabilities_api.py
+    tests/test_model_capabilities.py
+    tests/test_integrations_docs.py
+    tests/test_integration_examples_no_secrets.py
+    -q
+  )
+  if [[ -x "${ROOT_DIR}/.venv/bin/python" ]]; then
+    if (
+      cd "${ROOT_DIR}" || exit 1
+      .venv/bin/python -m pytest "${RELEASE_PYTEST_ARGS[@]}"
+    ) >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
+      log_ok "pytest OK"
+    else
+      PYTEST_EXIT_CODE=$?
+      log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+    fi
   else
-    PYTEST_EXIT_CODE=$?
-    log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+    log_warn "Local virtualenv not found; falling back to control-plane container pytest"
+    if dc exec -T control-plane sh -lc "cd /app && python -m pytest ${RELEASE_PYTEST_ARGS[*]}" >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
+      log_ok "pytest OK"
+    else
+      PYTEST_EXIT_CODE=$?
+      log_error "pytest FAILED (exit ${PYTEST_EXIT_CODE})"
+    fi
   fi
 else
   printf 'metadata-only validation; pytest skipped\n' >"${PYTEST_FULL_LOG_PATH}"

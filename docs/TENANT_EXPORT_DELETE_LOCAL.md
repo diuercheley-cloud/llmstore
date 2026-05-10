@@ -24,9 +24,10 @@ Utilize o script `scripts/export-client-local.sh`.
 - Metadados do cliente (nome, descrição, status)
 - Plano de faturamento associado
 - API Keys (redigidas: apenas ID, prefixo e datas; o valor completo nunca é exportado)
-- Resumo de uso (Usage Records)
+- Resumo de uso (Usage Records), incluindo Chat, Embeddings e Responses
 - Faturas e pagamentos locais
-- Metadados de documentos RAG
+- Metadados de documentos RAG e eventos de uso de RAG
+- Metadados de arquivos TTS e eventos de uso de TTS
 - Eventos de auditoria/segurança relacionados ao cliente
 - Políticas de acesso a modelos
 - Metadados da própria exportação

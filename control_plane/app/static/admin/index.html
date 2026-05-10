@@ -125,6 +125,7 @@
       .stat-card { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); }
       .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
       .stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+      .stat-details { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
 
       .hidden { display: none; }
     </style>
@@ -142,6 +143,67 @@
     </header>
 
     <main id="adminContent" class="hidden">
+      <!-- System Control Center -->
+      <section id="systemControlCenterSection" class="wide">
+        <h2>System Control Center <button class="secondary" onclick="toggleDebug('controlCenterDebug')">JSON</button></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="status-card" id="cc-health">
+            <div class="stat-label">Health Status</div>
+            <div id="cc-health-val" class="stat-value">LOADING...</div>
+            <div id="cc-health-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-readiness">
+            <div class="stat-label">Readiness Score</div>
+            <div id="cc-readiness-val" class="stat-value">LOADING...</div>
+            <div id="cc-readiness-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-security">
+            <div class="stat-label">Security Score</div>
+            <div id="cc-security-val" class="stat-value">LOADING...</div>
+            <div id="cc-security-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-version">
+            <div class="stat-label">Version / Branch</div>
+            <div id="cc-version-val" class="stat-value">LOADING...</div>
+            <div id="cc-version-det" class="stat-details"></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">Latest Artifacts</h3>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+           <div class="stat-card">
+              <div class="stat-label">Last Validation</div>
+              <div id="cc-art-validation" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Demo</div>
+              <div id="cc-art-demo" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Release</div>
+              <div id="cc-art-release" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Backup</div>
+              <div id="cc-art-backup" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Upgrade</div>
+              <div id="cc-art-upgrade" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Benchmark</div>
+              <div id="cc-art-benchmark" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">Suggested Commands</h3>
+        <div id="suggestedCommands" class="action-row" style="flex-wrap: wrap;">
+        </div>
+
+        <pre id="controlCenterDebug" class="debug"></pre>
+      </section>
+
       <!-- Runtime & Readiness -->
       <section class="wide">
         <h2>Runtime & Hardening Status</h2>
@@ -298,7 +360,8 @@
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, runtimeSummary, readinessReport, securityReport, demoSummary] = await Promise.all([
+          const [controlCenter, health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, runtimeSummary, readinessReport, securityReport, demoSummary, plans] = await Promise.all([
+            adminFetch('/admin/system/control-center'),
             adminFetch('/admin/health/deep'),
             adminFetch('/admin/usage/summary'),
             adminFetch('/admin/usage/by-client'),
@@ -311,9 +374,11 @@
             adminFetch('/admin/runtime/summary'),
             adminFetch('/admin/readiness/latest'),
             adminFetch('/admin/security/latest'),
-            adminFetch('/admin/demo/summary').catch(() => null)
+            adminFetch('/admin/demo/summary').catch(() => null),
+            adminFetch('/admin/billing/plans')
           ]);
 
+          renderControlCenter(controlCenter);
           renderRuntimeSummary(runtimeSummary);
           renderReadinessReport(readinessReport);
           renderSecurityReport(securityReport);
@@ -326,8 +391,11 @@
           renderRequests(requests);
           renderRevenue(revenue);
           renderRagUsage(rag);
+          renderPlans(plans);
 
           // Fill debugs
+          document.getElementById('plansDebug').textContent = JSON.stringify(plans, null, 2);
+          document.getElementById('controlCenterDebug').textContent = JSON.stringify(controlCenter, null, 2);
           document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
           document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
           document.getElementById('usageDebug').textContent = JSON.stringify({ summary: usageSummary, by_client: usageByClient, by_model: usageByModel }, null, 2);
@@ -339,6 +407,100 @@
         } catch (err) {
           alert('Failed to load admin data: ' + err.message);
         }
+      }
+
+      function renderControlCenter(data) {
+        // Health
+        const hEl = document.getElementById('cc-health');
+        const hVal = document.getElementById('cc-health-val');
+        const hDet = document.getElementById('cc-health-det');
+        hVal.textContent = data.health_status.toUpperCase();
+        hEl.className = 'status-card';
+        if (data.health_status === 'ok') {
+           hEl.classList.add('status-ready');
+           hVal.style.color = 'var(--success)';
+        } else if (data.health_status === 'degraded') {
+           hEl.classList.add('status-degraded');
+           hVal.style.color = '#f59e0b';
+        } else {
+           hEl.classList.add('status-not-ready');
+           hVal.style.color = 'var(--danger)';
+        }
+        hDet.textContent = `Uptime: ${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m`;
+
+        // Readiness
+        const rEl = document.getElementById('cc-readiness');
+        const rVal = document.getElementById('cc-readiness-val');
+        const rDet = document.getElementById('cc-readiness-det');
+        rVal.textContent = data.readiness_score || 'N/A';
+        rEl.className = 'status-card';
+        if (data.readiness_score === 'READY') {
+           rEl.classList.add('status-ready');
+           rVal.style.color = 'var(--success)';
+        } else if (data.readiness_score === 'DEGRADED' || data.readiness_score === 'READY_WITH_WARNINGS') {
+           rEl.classList.add('status-degraded');
+           rVal.style.color = '#f59e0b';
+        } else {
+           rEl.classList.add('status-not-ready');
+           rVal.style.color = 'var(--danger)';
+        }
+        rDet.textContent = data.critical_failures.length > 0 ? `${data.critical_failures.length} failures` : `${data.warnings.length} warnings`;
+
+        // Security
+        const sEl = document.getElementById('cc-security');
+        const sVal = document.getElementById('cc-security-val');
+        const sDet = document.getElementById('cc-security-det');
+        sVal.textContent = data.security_score || 'N/A';
+        sEl.className = 'status-card';
+        if (typeof data.security_score === 'number') {
+           if (data.security_score >= 90) sEl.classList.add('status-ready');
+           else if (data.security_score >= 70) sEl.classList.add('status-degraded');
+           else sEl.classList.add('status-not-ready');
+        } else {
+           sEl.classList.add('status-unknown');
+        }
+        sDet.textContent = `Latest report: ${data.artifacts.security.timestamp || 'N/A'}`;
+
+        // Version
+        const vVal = document.getElementById('cc-version-val');
+        const vDet = document.getElementById('cc-version-det');
+        vVal.textContent = `v${data.version}`;
+        vDet.textContent = `Branch: ${data.git_branch || 'N/A'} (${data.git_commit || 'N/A'})`;
+
+        // Artifacts
+        const artMap = {
+           'cc-art-validation': data.artifacts.validation,
+           'cc-art-demo': data.artifacts.demo,
+           'cc-art-release': data.artifacts.release,
+           'cc-art-backup': data.artifacts.backup,
+           'cc-art-upgrade': data.artifacts.upgrade,
+           'cc-art-benchmark': data.artifacts.benchmark
+        };
+        for (const [id, art] of Object.entries(artMap)) {
+           const el = document.getElementById(id);
+           if (typeof art === 'string') {
+              el.textContent = art;
+              el.style.color = 'var(--muted)';
+           } else {
+              el.textContent = art.version || art.timestamp || 'Ready';
+              el.title = art.path;
+              el.style.color = 'var(--accent)';
+           }
+        }
+
+        // Suggested Commands
+        const cmdEl = document.getElementById('suggestedCommands');
+        cmdEl.innerHTML = '';
+        data.suggested_commands.forEach(cmd => {
+           const btn = document.createElement('button');
+           btn.className = 'secondary';
+           btn.textContent = cmd.label;
+           btn.onclick = () => {
+              navigator.clipboard.writeText(cmd.command);
+              alert(`Copied to clipboard: ${cmd.command}`);
+           };
+           cmdEl.appendChild(btn);
+        });
       }
 
       function runCommand(type) {
@@ -691,6 +853,21 @@
             <td>${r.storage_mb.toFixed(2)}</td>
             <td>${r.queries_month}</td>
             <td>${r.pages_month}</td>
+          </tr>
+        `).join('');
+      }
+    </script>
+  </body>
+</html>
+d><strong>${p.name}</strong></td>
+            <td>${p.rate_limit_per_minute} / ${p.requests_per_day.toLocaleString()}</td>
+            <td>${(p.monthly_token_quota/1000).toLocaleString()}k</td>
+            <td>$${num(p.monthly_price).toFixed(0)}</td>
+            <td><span class="pill ${p.rag_enabled ? 'pill-success' : 'pill-muted'}">${p.rag_enabled ? 'YES' : 'NO'}</span></td>
+            <td><span class="pill ${p.tts_enabled ? 'pill-success' : 'pill-muted'}">${p.tts_enabled ? 'YES' : 'NO'}</span></td>
+            <td><span class="pill ${p.embeddings_enabled ? 'pill-success' : 'pill-muted'}">${p.embeddings_enabled ? 'YES' : 'NO'}</span></td>
+            <td>${p.support_level}</td>
+            <td><span class="pill ${p.is_active ? 'pill-success' : 'pill-danger'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
           </tr>
         `).join('');
       }

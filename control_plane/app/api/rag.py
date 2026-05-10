@@ -66,7 +66,11 @@ async def get_client_rag_usage(
     if is_blocked:
         raise HTTPException(status_code=403, detail=f"RAG feature blocked: {block_reason}")
     
-    return await get_rag_usage_and_limits(session, client)
+    usage_info = await get_rag_usage_and_limits(session, client)
+    if not usage_info["rag_enabled"]:
+        raise HTTPException(status_code=403, detail="RAG feature is not enabled for your plan")
+    
+    return usage_info
 
 @client_rag_router.post("/documents", response_model=RAGFileResponse)
 async def upload_client_rag_document(
@@ -76,6 +80,10 @@ async def upload_client_rag_document(
 ):
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
+
+    usage_info = await get_rag_usage_and_limits(session, client)
+    if not usage_info["rag_enabled"]:
+        raise HTTPException(status_code=403, detail="RAG feature is not enabled for your plan")
 
     is_blocked, block_reason = await check_rag_feature_blocked(session, client.id)
     if is_blocked:
@@ -380,6 +388,9 @@ async def query_rag(
         raise HTTPException(status_code=403, detail=f"RAG feature blocked: {block_reason}")
 
     usage_info = await get_rag_usage_and_limits(session, client)
+    if not usage_info["rag_enabled"]:
+        raise HTTPException(status_code=403, detail="RAG feature is not enabled for your plan")
+
     limits = usage_info["limits"]
     usage = usage_info["usage"]
 

@@ -498,6 +498,10 @@ async def responses(
             message="Streaming is not supported in /v1/responses yet.",
         )
 
+    effective_plan = resolve_effective_plan(client)
+    if not effective_plan.responses_enabled:
+        raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
+
     messages = _responses_input_to_messages(payload)
     
     chat_payload = ChatCompletionRequest(
@@ -631,7 +635,15 @@ async def _process_chat_completion(
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(
+            session, 
+            client.id, 
+            effective_plan.daily_token_quota, 
+            effective_plan.weekly_token_quota, 
+            effective_plan.monthly_token_quota, 
+            incoming_tokens,
+            requests_per_day_limit=effective_plan.requests_per_day
+        )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:
@@ -949,7 +961,15 @@ async def completions(
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(
+            session, 
+            client.id, 
+            effective_plan.daily_token_quota, 
+            effective_plan.weekly_token_quota, 
+            effective_plan.monthly_token_quota, 
+            incoming_tokens,
+            requests_per_day_limit=effective_plan.requests_per_day
+        )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:

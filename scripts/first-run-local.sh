@@ -124,6 +124,7 @@ if [ -z "$ADMIN_TOKEN" ] || [ "$ADMIN_TOKEN" = "default-admin-token" ]; then
 fi
 
 update_env "LOCALHOST_MODE" "true"
+update_env "LOCAL_APPLIANCE_MODE" "true"
 update_env "LOCAL_BILLING_MODE" "manual"
 update_env "BASE_URL" "$BASE_URL"
 update_env "PUBLIC_BASE_URL" "$BASE_URL"

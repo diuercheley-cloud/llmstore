@@ -48,6 +48,25 @@ echo "Branch: ${GIT_BRANCH}"
 echo "Commit: ${GIT_COMMIT}"
 echo "Last local-production tag: ${LAST_TAG}"
 
+# Detect LOCAL_APPLIANCE_MODE from .env.local
+LOCAL_APPLIANCE_MODE=$(grep "^LOCAL_APPLIANCE_MODE=" .env.local 2>/dev/null | cut -d '=' -f2 | tr -d '"' | tr -d "'" || echo "false")
+
+if [[ "${LOCAL_APPLIANCE_MODE}" == "true" ]]; then
+    echo "LOCAL_APPLIANCE_MODE detected. Enforcing security guards..."
+    
+    echo "Running secrets scan..."
+    if ! "${SCRIPT_DIR}/check-secrets.sh" --all; then
+        echo "Error: Secrets scan failed. Release aborted."
+        exit 1
+    fi
+
+    echo "Validating production readiness..."
+    if ! "${SCRIPT_DIR}/production-readiness-local.sh"; then
+        echo "Warning: Production readiness check failed or has warnings."
+        # Optionally abort here if we want to be strict
+    fi
+fi
+
 VALIDATION_RESULT="skipped"
 if [[ "${SKIP_VALIDATION}" == "false" ]]; then
     echo "Running validation..."

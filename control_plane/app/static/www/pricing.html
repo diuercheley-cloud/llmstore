@@ -159,10 +159,14 @@
               <div class="price">$${Number(plan.monthly_price).toFixed(0)}<span style="font-size:14px;color:var(--muted);font-weight:500;">/mo</span></div>
               <p>${plan.description || "Scalable LLM inference for your projects."}</p>
               <ul>
-                <li>${plan.rate_limit_per_minute} requests per minute</li>
-                <li>${plan.daily_token_quota.toLocaleString()} tokens per day</li>
-                <li>${plan.monthly_token_quota.toLocaleString()} tokens per month</li>
-                <li>${plan.allow_streaming ? "Streaming support" : "Standard response only"}</li>
+                <li>${plan.rate_limit_per_minute} RPM / ${plan.requests_per_day.toLocaleString()} RPD</li>
+                <li>${(plan.monthly_token_quota/1000).toLocaleString()}k tokens/mo</li>
+                <li>Context: ${plan.max_context_tokens.toLocaleString()} tokens</li>
+                <li>${plan.rag_enabled ? "RAG Support" : '<span style="text-decoration:line-through;opacity:0.6;">RAG Support</span>'}</li>
+                <li>${plan.tts_enabled ? "TTS Support" : '<span style="text-decoration:line-through;opacity:0.6;">TTS Support</span>'}</li>
+                <li>${plan.embeddings_enabled ? "Embeddings" : '<span style="text-decoration:line-through;opacity:0.6;">Embeddings</span>'}</li>
+                <li>${plan.export_enabled ? "Usage Export" : '<span style="text-decoration:line-through;opacity:0.6;">Usage Export</span>'}</li>
+                <li>Support: ${plan.support_level}</li>
               </ul>
               <div class="meta">
                 <div>Model access: ${plan.allowed_models_json ? "Restricted" : "All available"}</div>

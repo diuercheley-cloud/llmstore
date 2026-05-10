@@ -21,6 +21,18 @@ Demonstrar a soberania de dados, facilidade de implantação, portal do cliente,
    ./scripts/ui-health.sh
    ```
 
+## Matriz de Planos Comerciais
+O sistema agora suporta 4 planos padrão com limites automatizados:
+- **Free**: Ideal para testes, limitado a 100 requisições/dia.
+- **Basic**: Para pequenos projetos, inclui RAG e TTS.
+- **Pro**: Maior throughput e contexto de 16k tokens.
+- **Enterprise Local**: Foco em alta escala local com 131k de contexto.
+
+Para carregar os planos comerciais:
+```bash
+./scripts/seed-commercial-plans-local.sh
+```
+
 ## Como carregar dados demo
 O projeto inclui um script que provisiona automaticamente um cliente, plano, chaves de API, uso sintético e documentos RAG:
 ```bash

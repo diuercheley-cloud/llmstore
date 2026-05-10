@@ -36,6 +36,57 @@ def get_git_commit():
         return None
 
 
+def get_git_branch():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return None
+
+
+def _get_latest_artifact_info(base_dir: str, filename: str) -> dict | None:
+    try:
+        reports_dir = Path(base_dir)
+        if not reports_dir.exists():
+            return None
+        # Sort by directory name (timestamp)
+        reports = sorted([d for d in reports_dir.iterdir() if d.is_dir()], reverse=True)
+        if not reports:
+            return None
+        report_file = reports[0] / filename
+        if report_file.exists():
+            return {
+                "timestamp": reports[0].name,
+                "path": str(report_file.relative_to(Path.cwd()))
+            }
+        # If filename is empty, just return the directory info
+        if not filename:
+             return {
+                "timestamp": reports[0].name,
+                "path": str(reports[0].relative_to(Path.cwd()))
+            }
+    except Exception:
+        pass
+    return None
+
+
+def _get_latest_release_info() -> dict | None:
+    try:
+        release_dir = Path("releases")
+        if not release_dir.exists():
+            return None
+        # Releases are named like v1.5.6-runtime-hardening
+        releases = sorted([d for d in release_dir.iterdir() if d.is_dir() and d.name.startswith("v")], reverse=True)
+        if not releases:
+            return None
+        return {
+            "version": releases[0].name,
+            "path": str(releases[0].relative_to(Path.cwd()))
+        }
+    except Exception:
+        pass
+    return None
+
+
 def get_latest_security_report():
     try:
         reports_dir = Path("artifacts/security-reports")
@@ -127,6 +178,7 @@ async def system_status(
     
     return {
         "status": "ok" if db_ok and redis_ok and dp_health else "degraded",
+        "appliance_mode": settings.local_appliance_mode,
         "components": {
             "api": "online",
             "database": "online" if db_ok else "offline",
@@ -249,6 +301,7 @@ async def health_deep(
     # API and System
     uptime_seconds = round(time() - settings.start_time, 2)
     git_commit = get_git_commit()
+    appliance_mode = settings.local_appliance_mode
 
     # Database
     db_detail = {"status": "offline", "latency_ms": 0, "migrations_status": "unknown", "ok": False}
@@ -409,6 +462,15 @@ async def health_deep(
     critical_failures = []
     warnings = []
 
+    # Security check for admin token
+    if settings.admin_token == "default-admin-token":
+        warnings.append("Insecure default ADMIN_TOKEN in use")
+    elif len(settings.admin_token) < 32:
+        warnings.append("ADMIN_TOKEN is weak (less than 32 characters)")
+
+    if appliance_mode and settings.localhost_mode is False:
+        warnings.append("Appliance mode enabled but localhost_mode is false")
+
     if db_detail["status"] != "online":
         readiness_score = "NOT_READY"
         critical_failures.append("Postgres offline")
@@ -448,6 +510,7 @@ async def health_deep(
             "version": settings.project_version,
             "git_commit": git_commit,
             "uptime_seconds": uptime_seconds,
+            "appliance_mode": appliance_mode,
         },
         "postgres": db_detail,
         "redis": redis_detail,
@@ -481,6 +544,101 @@ async def health_deep(
         "rag": response["rag"],
     }
     return response
+
+
+@router.get("/admin/system/control-center", tags=["system"])
+async def get_control_center(
+    session: AsyncSession = Depends(get_db_session),
+    redis: Redis = Depends(get_redis),
+    proxy: InferenceProxy = Depends(get_inference_proxy),
+    admin=Depends(require_admin),
+):
+    deep_health = await health_deep(session, redis, proxy, admin)
+    
+    # Artifacts
+    readiness = _get_latest_artifact_info("artifacts/production-readiness", "report.json")
+    security = _get_latest_artifact_info("artifacts/security-reports", "security-report.json")
+    validation = _get_latest_artifact_info("artifacts/local-production-validation", "report.json")
+    if not validation:
+        validation = _get_latest_artifact_info("artifacts/validation", "report.json")
+    
+    demo = _get_latest_artifact_info("artifacts/local-demo", "summary.json")
+    release = _get_latest_release_info()
+    backup = _get_latest_artifact_info("artifacts/backups-local", "")
+    if not backup:
+        backup = _get_latest_artifact_info("artifacts/backups", "")
+        
+    upgrade = _get_latest_artifact_info("artifacts/upgrades", "report.json")
+    if not upgrade:
+        upgrade = _get_latest_artifact_info("artifacts/post-upgrade-smoke", "report.json")
+        
+    benchmark = _get_latest_artifact_info("artifacts/model-benchmarks", "summary.json")
+    if not benchmark:
+        benchmark = _get_latest_artifact_info("artifacts/benchmarks", "summary.json")
+
+    suggested_commands = [
+        {"label": "Health", "command": "make health"},
+        {"label": "Validate", "command": "make validate"},
+        {"label": "Demo", "command": "make demo"},
+        {"label": "Security", "command": "make security"},
+        {"label": "Readiness", "command": "make readiness"},
+        {"label": "Backup", "command": "make backup"},
+        {"label": "Smoke", "command": "make smoke"},
+        {"label": "Benchmark", "command": "make benchmark"},
+    ]
+
+    return {
+        "version": settings.project_version,
+        "git_commit": get_git_commit(),
+        "git_branch": get_git_branch(),
+        "uptime": deep_health.get("api", {}).get("uptime_seconds"),
+        "readiness_score": deep_health.get("readiness_score"),
+        "security_score": deep_health.get("security", {}).get("last_security_report_score"),
+        "health_status": deep_health.get("status"),
+        "warnings": deep_health.get("warnings", []),
+        "critical_failures": deep_health.get("critical_failures", []),
+        "artifacts": {
+            "readiness": readiness or "not generated yet",
+            "security": security or "not generated yet",
+            "validation": validation or "not generated yet",
+            "demo": demo or "not generated yet",
+            "release": release or "not generated yet",
+            "backup": backup or "not generated yet",
+            "upgrade": upgrade or "not generated yet",
+            "benchmark": benchmark or "not generated yet",
+        },
+        "suggested_commands": suggested_commands
+    }
+
+
+@router.get("/admin/system/reports/latest", tags=["system"])
+async def get_latest_reports(admin=Depends(require_admin)):
+    return {
+        "readiness": _get_latest_artifact_info("artifacts/production-readiness", "report.json"),
+        "security": _get_latest_artifact_info("artifacts/security-reports", "security-report.json"),
+        "validation": _get_latest_artifact_info("artifacts/local-production-validation", "report.json"),
+    }
+
+
+@router.get("/admin/system/releases/latest", tags=["system"])
+async def get_latest_release(admin=Depends(require_admin)):
+    return _get_latest_release_info() or {"status": "none"}
+
+
+@router.get("/admin/system/backups/latest", tags=["system"])
+async def get_latest_backup(admin=Depends(require_admin)):
+    backup = _get_latest_artifact_info("artifacts/backups-local", "")
+    if not backup:
+        backup = _get_latest_artifact_info("artifacts/backups", "")
+    return backup or {"status": "none"}
+
+
+@router.get("/admin/system/benchmarks/latest", tags=["system"])
+async def get_latest_benchmark(admin=Depends(require_admin)):
+    benchmark = _get_latest_artifact_info("artifacts/model-benchmarks", "summary.json")
+    if not benchmark:
+        benchmark = _get_latest_artifact_info("artifacts/benchmarks", "summary.json")
+    return benchmark or {"status": "none"}
 
 
 @router.get("/metrics", tags=["system"])

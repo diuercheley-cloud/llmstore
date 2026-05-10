@@ -20,11 +20,15 @@ def week_start(today: date) -> date:
     return today - timedelta(days=today.weekday())
 
 
-async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekly_limit: int, monthly_limit: int, incoming_tokens: int) -> None:
+async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekly_limit: int, monthly_limit: int, incoming_tokens: int, requests_per_day_limit: int = 0) -> None:
     today = date.today()
     daily = await _get_or_create_counter(session, client_id, today, "daily")
     weekly = await _get_or_create_counter(session, client_id, week_start(today), "weekly")
     monthly = await _get_or_create_counter(session, client_id, month_start(today), "monthly")
+    
+    if requests_per_day_limit > 0 and daily.used_requests + 1 > requests_per_day_limit:
+        raise QuotaExceeded("daily request quota exceeded")
+        
     if daily.used_tokens + incoming_tokens > daily_limit:
         raise QuotaExceeded("daily token quota exceeded")
     if weekly.used_tokens + incoming_tokens > weekly_limit:

@@ -98,6 +98,7 @@ class Settings(BaseSettings):
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
     app_env: str = Field(default="local", alias="APP_ENV")
     localhost_mode: bool = Field(default=False, alias="LOCALHOST_MODE")
+    local_appliance_mode: bool = Field(default=False, alias="LOCAL_APPLIANCE_MODE")
     app_public_url: str = Field(default="http://localhost:18080", alias="APP_PUBLIC_URL")
     public_base_url: str = Field(default="", alias="PUBLIC_BASE_URL")
     admin_base_url: str = Field(default="", alias="ADMIN_BASE_URL")
@@ -132,7 +133,18 @@ class Settings(BaseSettings):
     rag_embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL")
 
     @model_validator(mode="after")
-    def validate_localhost_mode(self) -> "Settings":
+    def validate_appliance_mode(self) -> "Settings":
+        if self.local_appliance_mode:
+            self.localhost_mode = True
+            self.local_billing_mode = "manual"
+            self.public_exposure = False
+            self.public_signup_enabled = False
+            
+            # Warn if using default tokens in appliance mode
+            # (In a real scenario, we might want to raise an error, 
+            # but for now we'll rely on health checks to show warnings)
+            pass
+
         if self.localhost_mode:
             # Default to localhost if not set
             if not self.public_base_url:
@@ -154,8 +166,13 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
-        if "*" in origins:
+        
+        if self.local_appliance_mode:
+            # Strictly forbid '*' in appliance mode
+            origins = [o for o in origins if o != "*"]
+        elif "*" in origins:
             return ["*"]
+        
         if self.localhost_mode:
             # Add common localhost origins if not already present
             localhost_origins = [
@@ -169,7 +186,11 @@ class Settings(BaseSettings):
             for origin in localhost_origins:
                 if origin not in origins:
                     origins.append(origin)
+        
+        # In appliance mode, if origins is still empty after adding localhost,
+        # we might want to add current machine IPs, but for now localhost is enough
         return origins
+
 
 
 @lru_cache

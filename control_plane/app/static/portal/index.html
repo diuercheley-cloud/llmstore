@@ -975,17 +975,22 @@
         const p = me.plan;
         
         els.planInferenceLimits.innerHTML = `
-          <div class="field"><div class="field-label">Rate Limit</div><div class="field-value">${p.rate_limit_per_minute} requisições por minuto</div></div>
+          <div class="field"><div class="field-label">Rate Limit</div><div class="field-value">${p.rate_limit_per_minute} RPM / ${p.requests_per_day.toLocaleString()} RPD</div></div>
           <div class="field"><div class="field-label">Token Quota (Dia)</div><div class="field-value">${p.daily_token_quota.toLocaleString()}</div></div>
           <div class="field"><div class="field-label">Token Quota (Mês)</div><div class="field-value">${p.monthly_token_quota.toLocaleString()}</div></div>
+          <div class="field"><div class="field-label">Max Context Tokens</div><div class="field-value">${p.max_context_tokens.toLocaleString()}</div></div>
           <div class="field"><div class="field-label">Max Output Tokens</div><div class="field-value">${p.max_output_tokens}</div></div>
           <div class="field"><div class="field-label">Streaming</div><div class="field-value">${p.allow_streaming ? 'Permitido' : 'Não permitido'}</div></div>
+          <div class="field"><div class="field-label">Nível de Suporte</div><div class="field-value">${p.support_level}</div></div>
         `;
         
         els.planRagLimits.innerHTML = `
-          <div class="field"><div class="field-label">Max Documentos</div><div class="field-value">${p.rag_max_documents || 'Ilimitado'}</div></div>
-          <div class="field"><div class="field-label">Armazenamento</div><div class="field-value">${p.rag_max_storage_mb || 'Ilimitado'} MB</div></div>
-          <div class="field"><div class="field-label">Consultas p/ Mês</div><div class="field-value">${p.rag_max_queries_per_month || 'Ilimitado'}</div></div>
+          <div class="field"><div class="field-label">RAG Habilitado</div><div class="field-value">${p.rag_enabled ? 'Sim' : 'Não'}</div></div>
+          <div class="field"><div class="field-label">Max Documentos</div><div class="field-value">${p.rag_max_documents || '0'}</div></div>
+          <div class="field"><div class="field-label">Armazenamento</div><div class="field-value">${p.rag_max_storage_mb || '0'} MB</div></div>
+          <div class="field"><div class="field-label">TTS Habilitado</div><div class="field-value">${p.tts_enabled ? 'Sim' : 'Não'}</div></div>
+          <div class="field"><div class="field-label">Embeddings</div><div class="field-value">${p.embeddings_enabled ? 'Sim' : 'Não'}</div></div>
+          <div class="field"><div class="field-label">Exportação de Uso</div><div class="field-value">${p.export_enabled ? 'Sim' : 'Não'}</div></div>
         `;
         
         els.planModelsList.innerHTML = state.models.map(m => `<span class="badge badge-active">${m.display_name}</span>`).join('');

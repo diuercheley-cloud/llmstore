@@ -27,11 +27,15 @@ if ENV_FILE.exists():
             os.environ.setdefault(key, value)
 
 # Required fallbacks for tests
-os.environ.setdefault("ADMIN_TOKEN", "test-admin-token")
-os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_FILE}")
-os.environ.setdefault("REDIS_URL", "redis://test.invalid:6379/0")
-os.environ.setdefault("DATA_PLANE_BASE_URL", "http://localhost:8081")
+os.environ["ADMIN_TOKEN"] = "test-admin-token"
+os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}?timeout=30"
+os.environ["REDIS_URL"] = "redis://test.invalid:6379/0"
+os.environ["DATA_PLANE_BASE_URL"] = "http://localhost:8081"
 os.environ["RAG_STORAGE_DIR"] = str(TEST_TMP / "rag_uploads")
+os.environ["LMSTUDIO_ENABLED"] = "false"
+os.environ["TTS_ENABLED"] = "false"
+os.environ["EMBEDDINGS_ENABLED"] = "true"
+os.environ["EMBEDDINGS_BACKEND"] = "mock"
 
 # Ensure control_plane is on path
 CONTROL_PLANE = ROOT / "control_plane"

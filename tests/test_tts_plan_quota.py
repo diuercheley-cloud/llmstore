@@ -122,7 +122,7 @@ async def test_tts_blocked_for_free_client(mock_verify, tts_setup):
         data={"text": "Hello world"}
     )
     assert response.status_code == 403
-    assert "TTS feature not enabled" in response.json()["detail"]
+    assert "TTS feature is not enabled for your plan" in response.json()["detail"]
 
 @pytest.mark.asyncio
 @patch("app.services.auth.verify_secret", return_value=True)
