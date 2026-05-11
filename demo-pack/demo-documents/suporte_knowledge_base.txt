@@ -1,0 +1,34 @@
+Knowledge Base - SuporteTech Helpdesk (DEMO)
+
+PROCEDIMENTO 01 - RESET DE SENHA
+
+1. Acesse o painel admin em /admin.
+2. Vá em Usuários > Buscar usuário.
+3. Clique em "Resetar Senha".
+4. O sistema enviará um e-mail automático com link de redefinição.
+5. Se o usuário não receber o e-mail em 5 minutos, verificar na pasta de Spam.
+6. Se ainda assim não encontrar, reenviar manualmente pelo painel.
+
+PROCEDIMENTO 02 - CONFIGURAÇÃO DE VPN
+
+1. Baixar o cliente WireGuard para o sistema operacional do usuário.
+2. Importar o arquivo .conf gerado pelo administrador.
+3. Ativar a conexão e verificar o IP: https://whatismyip.com
+4. Se não conectar: verificar se a porta 51820 está liberada no firewall.
+5. Testar conectividade com ping 10.0.0.1.
+
+PROCEDIMENTO 03 - TICKET DE REDE
+
+1. Coletar: modelo do roteador, firmware, número de dispositivos conectados.
+2. Verificar se o canal Wi-Fi está congestionado (usar app Wi-Fi Analyzer).
+3. Testar velocidade com cabo vs Wi-Fi.
+4. Se Wi-Fi lento mas cabo normal: trocar canal ou banda (2.4GHz vs 5GHz).
+5. Se ambos lentos: contatar provedor de internet.
+
+PROCEDIMENTO 04 - BACKUP E RECUPERAÇÃO
+
+1. Backup automático diário às 02:00 (horário do servidor).
+2. Reter backups por 30 dias.
+3. Para restaurar: painel > Sistema > Restaurar Backup.
+4. Selecionar a data desejada e confirmar.
+5. O sistema será reiniciado após a restauração (aprox. 5 minutos).

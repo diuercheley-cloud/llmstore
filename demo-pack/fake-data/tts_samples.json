@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "description": "Amostras TTS ficticias para demonstracao comercial - NENHUM dado real",
+    "version": "1.0",
+    "generated": "2026-05-11",
+    "demo_marker": true,
+    "warning": "TODOS OS DADOS SAO FICTICIOS. Nao usar em producao."
+  },
+  "tts_samples": [
+    {
+      "client_scenario": "clinica",
+      "demo": true,
+      "voice": "default",
+      "language": "pt-BR",
+      "text": "Ola, bem-vindo a Clinica Horizonte. Sua consulta esta agendada para amanha as 14:30. Por favor, confirme sua presenca respondendo a esta mensagem.",
+      "purpose": "Lembrete de consulta - dados ficticios"
+    },
+    {
+      "client_scenario": "juridico",
+      "demo": true,
+      "voice": "default",
+      "language": "pt-BR",
+      "text": "Este e um comunicado do Juridico Atlas. Sua audiencia da revisao trabalhista foi redesignada para 15 de junho de 2026 as 10:00.",
+      "purpose": "Comunicado processual - dados ficticios"
+    },
+    {
+      "client_scenario": "suporte",
+      "demo": true,
+      "voice": "default",
+      "language": "pt-BR",
+      "text": "Ola, aqui e o assistente virtual da Suporte Orion. Seu chamado 4521 foi atualizado. Um tecnico esta verificando o problema e retornara em ate 30 minutos.",
+      "purpose": "Atualizacao de ticket - dados ficticios"
+    },
+    {
+      "client_scenario": "educacao",
+      "demo": true,
+      "voice": "default",
+      "language": "pt-BR",
+      "text": "Aula de ciencias: O sistema digestorio e composto por boca, faringe, esofago, estomago, intestino delgado, intestino grosso e anus.",
+      "purpose": "Conteudo didatico - dados ficticios"
+    },
+    {
+      "client_scenario": "provedor-api",
+      "demo": true,
+      "voice": "default",
+      "language": "pt-BR",
+      "text": "Bem-vindo a API Nebula. Seu plano Enterprise foi ativado com 50 mil requisicoes por dia e suporte 24 horas por dia, 7 dias por semana.",
+      "purpose": "Mensagem de boas-vindas - dados ficticios"
+    }
+  ]
+}

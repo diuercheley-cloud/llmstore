@@ -23,6 +23,22 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 | security report | ✅ | ✅ | ✅ | GA | - | `scripts/security-report-local.sh` |
 | readiness report | ✅ | ✅ | ✅ | GA | - | `scripts/production-readiness-local.sh` |
 
+## Pagina de Capacidades (/capabilities)
+
+O sistema expoe uma pagina publica de capacidades em `GET /capabilities` com versao, lista de recursos, status e limitacoes.
+
+Endpoint JSON: `GET /public/capabilities` — retorna `version`, `features`, `limitations`, `local_appliance_mode`. Sem secrets expostos.
+
+```bash
+# Visualizar pagina
+open http://localhost:18080/capabilities
+
+# Visualizar JSON
+curl -s http://localhost:18080/public/capabilities | python3 -m json.tool
+```
+
+A pagina e atualizada automaticamente com a versao atual do sistema via JS. As limitacoes de PSP/PIX real, tools/function calling parcial e dependencia de hardware local sao exibidas explicitamente.
+
 ## Legenda
 
 - ✅ **Supported**: Funcionalidade completa e testada.

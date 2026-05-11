@@ -1,0 +1,37 @@
+Material Didático - Escola EducaMais (DEMO)
+
+AULA: SISTEMA DIGESTÓRIO - 8º ANO
+
+O sistema digestório é composto por: boca, faringe, esôfago, estômago, intestino delgado, intestino grosso e ânus. Cada órgão desempenha uma função específica na digestão dos alimentos.
+
+- Boca: mastigação e ação da amilase salivar (inicia digestão de carboidratos).
+- Esôfago: conduz o alimento ao estômago através de movimentos peristálticos.
+- Estômago: digestão de proteínas pela pepsina e ação do suco gástrico (pH ácido).
+- Intestino Delgado: principal local de absorção de nutrientes. Dividido em duodeno, jejuno e íleo.
+- Intestino Grosso: absorção de água e formação das fezes.
+
+AULA: REVOLUÇÃO INDUSTRIAL - 8º ANO
+
+A Revolução Industrial teve início na Inglaterra no século XVIII e transformou profundamente a sociedade.
+
+PRIMEIRA REVOLUÇÃO INDUSTRIAL (1760-1840):
+- Máquina a vapor (James Watt, 1769)
+- Mecanização da produção têxtil
+- Êxodo rural e crescimento urbano
+- Condições de trabalho precárias
+
+SEGUNDA REVOLUÇÃO INDUSTRIAL (1870-1914):
+- Eletricidade e petróleo como fontes de energia
+- Linha de montagem (Ford, 1913)
+- Aço e produtos químicos
+- Imperialismo e expansão colonial
+
+TERCEIRA REVOLUÇÃO INDUSTRIAL (1960-presente):
+- Computadores e automação
+- Internet e tecnologias digitais
+- Robótica e manufatura avançada
+
+QUARTA REVOLUÇÃO INDUSTRIAL (atual):
+- Inteligência Artificial
+- Internet das Coisas (IoT)
+- Big Data e computação em nuvem

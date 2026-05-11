@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
@@ -132,6 +132,26 @@ install: ## Install system dependencies
 install-git-hooks: ## Install pre-commit git hooks
 	./scripts/check-secrets.sh --install-hook
 
+demo-pack: ## Seed commercial demo pack (5 scenarios, clients, plans, RAG, invoices)
+	chmod +x ./scripts/seed-commercial-demo-pack.sh
+	./scripts/seed-commercial-demo-pack.sh
+
+validate-demo-pack: ## Validate commercial demo pack integrity and data
+	chmod +x ./scripts/validate-commercial-demo-pack.sh
+	./scripts/validate-commercial-demo-pack.sh
+
+reset-demo-pack: ## Safe dry-run reset of commercial demo pack (default: --dry-run, never deletes real data)
+	chmod +x ./scripts/reset-commercial-demo-pack.sh
+	./scripts/reset-commercial-demo-pack.sh --dry-run
+
+validate-reset-demo-pack: ## Validate reset safety (dry-run mode, no data harmed)
+	chmod +x ./scripts/validate-reset-commercial-demo-pack.sh
+	./scripts/validate-reset-commercial-demo-pack.sh
+
+validate-fake-data: ## Validate fake demo data integrity and safety
+	chmod +x ./scripts/validate-fake-demo-data.sh
+	./scripts/validate-fake-demo-data.sh
+
 clean-compose-local: ## Clean up docker-compose resources
 	./scripts/clean-compose-local.sh
 
@@ -151,6 +171,14 @@ validate-multitenant: ## Validate multi-tenant isolation
 	./scripts/validate-multitenant-isolation-full.sh
 
 validate-local-production: validate
+
+meeting-ready: ## Run meeting readiness check for client presentation
+	chmod +x ./scripts/meeting-ready-check-local.sh
+	./scripts/meeting-ready-check-local.sh
+
+validate-meeting-ready: ## Validate meeting-ready check script
+	chmod +x ./scripts/validate-meeting-ready-check-local.sh
+	./scripts/validate-meeting-ready-check-local.sh
 
 pre-client-check: ## Run pre-client installation checklist
 	./scripts/pre-client-checklist-local.sh --client-install

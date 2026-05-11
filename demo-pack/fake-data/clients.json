@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "description": "Clientes ficticios para demonstracao comercial - NENHUM dado real",
+    "version": "1.0",
+    "generated": "2026-05-11",
+    "demo_marker": true,
+    "warning": "TODOS OS DADOS SAO FICTICIOS. Nao usar em producao."
+  },
+  "clients": [
+    {
+      "client_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Clinica Horizonte Demo",
+      "description": "Clinica medica local - DEMO - dados ficticios - NADA REAL",
+      "scenario": "clinica",
+      "demo": true,
+      "email": "contato@horizonte.demo.local",
+      "phone": "+55 (11) 99999-0001",
+      "address": "Rua Ficticia, 100 - Centro - Cidade Demo - SP",
+      "segmento": "saude",
+      "uso_mensal_token": 85000,
+      "uso_mensal_requisicoes": 1200,
+      "invoice_media_brl": 297.00,
+      "metadata": {
+        "especialidades": ["clinica geral", "pediatria", "cardiologia"],
+        "pacientes_ficticios": 150,
+        "lgpd_ready": true,
+        "demo_pack": "v1.0"
+      },
+      "plan_code": "demo-clinica"
+    },
+    {
+      "client_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Juridico Atlas Demo",
+      "description": "Escritorio de advocacia local - DEMO - dados ficticios - NADA REAL",
+      "scenario": "juridico",
+      "demo": true,
+      "email": "contato@atlas.demo.local",
+      "phone": "+55 (21) 99999-0002",
+      "address": "Avenida Ficticia, 500 - Sala 302 - Cidade Demo - RJ",
+      "segmento": "juridico",
+      "uso_mensal_token": 210000,
+      "uso_mensal_requisicoes": 2500,
+      "invoice_media_brl": 497.00,
+      "metadata": {
+        "areas": ["trabalhista", "civil", "tributario"],
+        "contratos_ficticios": 80,
+        "advogados_ficticios": 5,
+        "demo_pack": "v1.0"
+      },
+      "plan_code": "demo-juridico"
+    },
+    {
+      "client_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Suporte Orion Demo",
+      "description": "Empresa de suporte tecnico - DEMO - dados ficticios - NADA REAL",
+      "scenario": "suporte",
+      "demo": true,
+      "email": "suporte@orion.demo.local",
+      "phone": "+55 (31) 99999-0003",
+      "address": "Rua Ficticia, 200 - Sala 1501 - Cidade Demo - MG",
+      "segmento": "suporte_tecnico",
+      "uso_mensal_token": 450000,
+      "uso_mensal_requisicoes": 4800,
+      "invoice_media_brl": 797.00,
+      "metadata": {
+        "sla_tipos": ["basico", "premium", "enterprise"],
+        "tickets_ficticios": 500,
+        "agentes_ficticios": 8,
+        "demo_pack": "v1.0"
+      },
+      "plan_code": "demo-suporte"
+    },
+    {
+      "client_id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Escola Prisma Demo",
+      "description": "Escola/treinamento interno - DEMO - dados ficticios - NADA REAL",
+      "scenario": "educacao",
+      "demo": true,
+      "email": "contato@prisma.demo.local",
+      "phone": "+55 (41) 99999-0004",
+      "address": "Rua Ficticia, 50 - Cidade Demo - PR",
+      "segmento": "educacao",
+      "uso_mensal_token": 65000,
+      "uso_mensal_requisicoes": 900,
+      "invoice_media_brl": 197.00,
+      "metadata": {
+        "niveis": ["fundamental", "medio", "tecnicista"],
+        "alunos_ficticios": 300,
+        "turmas_ficticias": 15,
+        "demo_pack": "v1.0"
+      },
+      "plan_code": "demo-educacao"
+    },
+    {
+      "client_id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "name": "Provedor API Nebula Demo",
+      "description": "Provedor de API de IA - DEMO - dados ficticios - NADA REAL",
+      "scenario": "provedor-api",
+      "demo": true,
+      "email": "ops@nebula.demo.local",
+      "phone": "+55 (11) 99999-0005",
+      "address": "Avenida Ficticia, 1000 - Conjunto 2001 - Cidade Demo - SP",
+      "segmento": "provedor_api",
+      "uso_mensal_token": 3200000,
+      "uso_mensal_requisicoes": 45000,
+      "invoice_media_brl": 1997.00,
+      "metadata": {
+        "modelos_disponiveis": ["gemma", "nemotron", "llama"],
+        "clientes_terceiros_ficticios": 10,
+        "planos_oferecidos": ["starter", "professional", "enterprise"],
+        "demo_pack": "v1.0"
+      },
+      "plan_code": "demo-provedor-api"
+    }
+  ]
+}

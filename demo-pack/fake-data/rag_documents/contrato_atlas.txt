@@ -1,0 +1,42 @@
+CONTRATO DE PRESTACAO DE SERVICOS ADVOCATICIOS - JURIDICO ATLAS (DEMO - DADOS FICTICIOS)
+Contrato ficticio para demonstracao comercial - Nenhum vinculo legal real
+
+[AVISO: ESTE DOCUMENTO E FICTICIO. Nao constitui aconselhamento juridico real.]
+
+CONTRATANTE: Carlos Pereira de Souza, portador do documento ficticio 123.456.789-00
+CONTRATADO: Juridico Atlas Demo Ltda., inscricao ficticia CNPJ 00.000.000/0001-00
+
+CLausula 1 - OBJETO
+O CONTRATADO prestara servicos de consultoria e representacao judicial ao CONTRATANTE em acao trabalhista ficticia contra a empresa inexistente "Industria Nacional Ficticia Ltda.".
+
+CLausula 2 - HONORARIOS
+2.1. Honorarios de contrato: R$ 3.500,00 (valor ficticio).
+2.2. Honorarios de exito: 20% sobre o valor da causa ficticia.
+2.3. Pagamento via boleto bancario ficticio (nao requer pagamento real).
+
+CLausula 3 - SIGILO
+3.1. Todas as informacoes compartilhadas sao confidenciais.
+3.2. O escritorio mantem sigilo absoluto sobre dados dos clientes.
+3.3. Este contrato e ficticio e nao gera obrigacoes legais reais.
+
+CLausula 4 - ESCOPO DO MANDATO
+4.1. Ajuizamento de reclamacao trabalhista ficticia.
+4.2. Acompanhamento de audiencias (simuladas).
+4.3. Interposicao de recursos cabiveis.
+
+CLausula 5 - RESCISAO
+5.1. Qualquer parte pode rescindir mediante aviso previo de 30 dias.
+5.2. Em caso de rescisao, honorarios proporcionais aos servicos efetivamente prestados.
+5.3. Multa rescisoria: 20% sobre o saldo do contrato.
+
+CLausula 6 - FORO
+Fica eleito o foro da Comarca de Cidade Demo - SP para quaisquer questoes relativas a este contrato ficticio.
+
+E, por estarem de acordo, as partes assinam este contrato ficticio em 2 (duas) vias.
+
+Cidade Demo, 01 de marco de 2026.
+
+Carlos Pereira de Souza (ficticio)
+Juridico Atlas Demo Ltda. (ficticio)
+
+FIM DO DOCUMENTO FICTICIO - JURIDICO ATLAS DEMO - NAO USAR EM PRODUCAO

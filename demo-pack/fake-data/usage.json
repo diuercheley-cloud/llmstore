@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "description": "Uso simulado para demonstracao comercial - NENHUM dado real",
+    "version": "1.0",
+    "generated": "2026-05-11",
+    "demo_marker": true,
+    "warning": "TODOS OS DADOS SAO FICTICIOS. Nao usar em producao."
+  },
+  "usage": [
+    {
+      "client_scenario": "clinica",
+      "demo": true,
+      "month": "2026-05",
+      "total_tokens": 85000,
+      "prompt_tokens": 55000,
+      "completion_tokens": 30000,
+      "requests": 1200,
+      "rag_queries": 85,
+      "tts_chars": 3200,
+      "embeddings_requests": 150,
+      "daily_avg_requests": 40,
+      "peak_day_requests": 78,
+      "top_model": "gemma",
+      "rag_docs_uploaded": 5
+    },
+    {
+      "client_scenario": "juridico",
+      "demo": true,
+      "month": "2026-05",
+      "total_tokens": 210000,
+      "prompt_tokens": 140000,
+      "completion_tokens": 70000,
+      "requests": 2500,
+      "rag_queries": 180,
+      "tts_chars": 1500,
+      "embeddings_requests": 420,
+      "daily_avg_requests": 83,
+      "peak_day_requests": 145,
+      "top_model": "nemotron",
+      "rag_docs_uploaded": 12
+    },
+    {
+      "client_scenario": "suporte",
+      "demo": true,
+      "month": "2026-05",
+      "total_tokens": 450000,
+      "prompt_tokens": 280000,
+      "completion_tokens": 170000,
+      "requests": 4800,
+      "rag_queries": 350,
+      "tts_chars": 8500,
+      "embeddings_requests": 680,
+      "daily_avg_requests": 160,
+      "peak_day_requests": 280,
+      "top_model": "llama",
+      "rag_docs_uploaded": 25
+    },
+    {
+      "client_scenario": "educacao",
+      "demo": true,
+      "month": "2026-05",
+      "total_tokens": 65000,
+      "prompt_tokens": 42000,
+      "completion_tokens": 23000,
+      "requests": 900,
+      "rag_queries": 60,
+      "tts_chars": 12000,
+      "embeddings_requests": 80,
+      "daily_avg_requests": 30,
+      "peak_day_requests": 55,
+      "top_model": "gemma",
+      "rag_docs_uploaded": 8
+    },
+    {
+      "client_scenario": "provedor-api",
+      "demo": true,
+      "month": "2026-05",
+      "total_tokens": 3200000,
+      "prompt_tokens": 2100000,
+      "completion_tokens": 1100000,
+      "requests": 45000,
+      "rag_queries": 1200,
+      "tts_chars": 25000,
+      "embeddings_requests": 5200,
+      "daily_avg_requests": 1500,
+      "peak_day_requests": 3200,
+      "top_model": "llama",
+      "rag_docs_uploaded": 45
+    }
+  ]
+}

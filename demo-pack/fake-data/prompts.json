@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "description": "Prompts de teste ficticios para demonstracao comercial - NENHUM dado real",
+    "version": "1.0",
+    "generated": "2026-05-11",
+    "demo_marker": true,
+    "warning": "TODOS OS DADOS SAO FICTICIOS. Nao usar em producao."
+  },
+  "prompts": [
+    {
+      "client_scenario": "clinica",
+      "demo": true,
+      "category": "resumo_prontuario",
+      "system_prompt": "Voce e um assistente medico auxiliar. Responda com linguagem clara e profissional. DADOS FICTICIOS.",
+      "user_prompt": "Resuma os riscos de um paciente diabetico com glicemia de 280 mg/dL. (Caso ficticio para demonstracao)",
+      "temperature": 0.3,
+      "max_tokens": 200
+    },
+    {
+      "client_scenario": "clinica",
+      "demo": true,
+      "category": "explicar_exame",
+      "system_prompt": "Voce e um medico explicando resultados para pacientes. Use linguagem simples. DADOS FICTICIOS.",
+      "user_prompt": "Explique em portugues claro o que significa colesterol LDL = 145 mg/dL. (Valor ficticio para demonstracao)",
+      "temperature": 0.4,
+      "max_tokens": 200
+    },
+    {
+      "client_scenario": "juridico",
+      "demo": true,
+      "category": "analise_contrato",
+      "system_prompt": "Voce e um assistente juridico. Analise contratos com precisao. DADOS FICTICIOS.",
+      "user_prompt": "Analise: multa rescisoria de 80% do valor remanescente e abusiva? Fundamente com base no Codigo Civil. (Cenario ficticio para demonstracao)",
+      "temperature": 0.2,
+      "max_tokens": 300
+    },
+    {
+      "client_scenario": "juridico",
+      "demo": true,
+      "category": "peticao",
+      "system_prompt": "Voce e um advogado especialista. Gere minutas com precisao tecnica. DADOS FICTICIOS.",
+      "user_prompt": "Gere uma minuta de peticao inicial para acao indenizatoria por negativa indevida de cobertura de plano de saude. Dados ficticios: autor Joao Ferreira, 52 anos. Caso ficticio para demonstracao.",
+      "temperature": 0.3,
+      "max_tokens": 500
+    },
+    {
+      "client_scenario": "suporte",
+      "demo": true,
+      "category": "resposta_ticket",
+      "system_prompt": "Voce e um analista de suporte tecnico. Seja objetivo e prestativo. DADOS FICTICIOS.",
+      "user_prompt": "Com base na knowledge base, elabore resposta para ticket sobre conexao Wi-Fi caindo a cada 30 minutos. Equipamento: TP-Link Archer C80. (Ticket ficticio para demonstracao)",
+      "temperature": 0.3,
+      "max_tokens": 250
+    },
+    {
+      "client_scenario": "suporte",
+      "demo": true,
+      "category": "troubleshooting",
+      "system_prompt": "Voce e um analista de suporte senior. Diagnostique problemas sistematicamente. DADOS FICTICIOS.",
+      "user_prompt": "O cliente reporta lentidao apos atualizacao versao 3.2.1. Quais perguntas fazer para diagnosticar? Liste em prioridade. (Cenario ficticio para demonstracao)",
+      "temperature": 0.4,
+      "max_tokens": 200
+    },
+    {
+      "client_scenario": "educacao",
+      "demo": true,
+      "category": "corrigir_redacao",
+      "system_prompt": "Voce e um professor de portugues. Corrija com gentileza e clareza. DADOS FICTICIOS.",
+      "user_prompt": "Corrija esta redacao de aluno do 9o ano sobre mudancas climaticas. Aponte erros e de nota 0-10. (Redacao ficticia para demonstracao)",
+      "temperature": 0.3,
+      "max_tokens": 300
+    },
+    {
+      "client_scenario": "educacao",
+      "demo": true,
+      "category": "plano_aula",
+      "system_prompt": "Voce e um pedagogo experiente. Gere planos de aula detalhados. DADOS FICTICIOS.",
+      "user_prompt": "Gere um plano de aula para 8o ano sobre Sistema Digestorio, 50 minutos, com objetivos, atividades e avaliacao. (Material ficticio para demonstracao)",
+      "temperature": 0.5,
+      "max_tokens": 400
+    },
+    {
+      "client_scenario": "provedor-api",
+      "demo": true,
+      "category": "compatibilidade",
+      "system_prompt": "Voce e um assistente de API. Seja preciso e tecnico. DADOS FICTICIOS.",
+      "user_prompt": "Liste os modelos disponiveis nesta API. (Resposta ficticia para demonstracao)",
+      "temperature": 0.2,
+      "max_tokens": 100
+    },
+    {
+      "client_scenario": "provedor-api",
+      "demo": true,
+      "category": "slogan",
+      "system_prompt": "Voce e um copywriter criativo. Gere slogans impactantes. DADOS FICTICIOS.",
+      "user_prompt": "Crie um slogan criativo para uma plataforma de IA local que respeita privacidade de dados. Tom profissional. (Conteudo ficticio para demonstracao)",
+      "temperature": 0.7,
+      "max_tokens": 100
+    }
+  ]
+}

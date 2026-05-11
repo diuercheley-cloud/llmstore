@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.6.4-customer-demo-pack] - 2026-05-11
+
+### Added
+- Demo pack comercial com 5 cenarios (clinica, juridico, suporte, educacao, provedor-api), planos e dados ficticios.
+- Roteiro de apresentacao para cliente com scripts de 15/30/60 minutos e talk tracks prontos.
+- Proposta tecnica Markdown/PDF geravel com `scripts/generate-proposal-pdf.sh`.
+- Reset demo seguro com dry-run padrao, --yes obrigatorio e metadata demo=true.
+- Dados ficticios realistas em `demo-pack/fake-data/` com validacao dedicada.
+- Meeting Ready Check (`scripts/meeting-ready-check-local.sh`) com status MEETING_READY, READY_WITH_WARNINGS, NOT_READY.
+- Pagina local /capabilities com recursos, status (GA/Beta/Future) e limitacoes explicitas (PSP, PIX, Tools/FC).
+- Endpoint JSON `GET /public/capabilities` com versao, features, limitations, local_appliance_mode, sem secrets.
+- Landing page atualizada com link para /capabilities.
+- Scripts de validacao: validate-commercial-demo-pack, validate-client-presentation-docs, validate-fake-demo-data, validate-meeting-ready-check, validate-capabilities-page, validate-proposals-local, validate-reset-commercial-demo-pack.
+- Testes dedicados para demo pack, apresentacao, propostas, meeting-ready, capabilities page e seguranca.
+
+### Notes
+- PSP real nao incluido — faturamento e manual.
+- PIX real nao incluido — sem QR Code ou cobranca automatica.
+- Tools/Function Calling parcial — depende do backend local.
+- Dados demo marcados como ficticios/demo via metadata.
+- Release preparada para bundle sem versionar secrets, `.env`/`.local`, modelos `.gguf`, uploads RAG ou artefatos brutos.
+
 ## [v1.6.3-readiness-cleanup] - 2026-05-11
 
 ### Added

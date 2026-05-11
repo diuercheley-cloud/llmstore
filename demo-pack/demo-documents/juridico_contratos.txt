@@ -1,0 +1,19 @@
+Modelos de Contratos - Escritório Jurídico Oliveira (DEMO)
+
+CLÁUSULA DE CONFIDENCIALIDADE (NDA)
+
+As Partes se comprometem a manter sigilo absoluto sobre todas as informações técnicas, comerciais, estratégicas e financeiras compartilhadas durante a vigência deste contrato, pelo período de 5 anos após seu término. O descumprimento acarretará multa equivalente a 10% do valor total do contrato.
+
+CLÁUSULA DE RESCISÃO
+
+Qualquer das Partes poderá rescindir este contrato mediante notificação com 30 dias de antecedência, sem justa causa. Em caso de descumprimento grave de cláusula essencial, a rescisão será imediata. A parte inadimplente arcará com multa de 20% sobre o saldo remanescente.
+
+CLÁUSULA DE PENALIDADES
+
+Pelo atraso no pagamento superior a 15 dias: multa de 2% sobre o valor devido, juros de mora de 1% ao mês e correção monetária pelo IPCA. Atraso superior a 60 dias autoriza a suspensão imediata dos serviços e cobrança judicial.
+
+JURISPRUDÊNCIA FICTÍCIA
+
+STJ - REsp 1.887.523/SP (2025): "É abusiva a cláusula que estabelece multa rescisória superior a 50% do saldo remanescente em contratos de prestação de serviços continuados, por configurar onerosidade excessiva ao consumidor."
+
+TJMG - Apelação Cível 1.0521.24.000123-4 (2026): "O plano de saúde não pode negar cobertura para procedimento de urgência sob alegação de carência quando o contrato já possui mais de 180 dias, conforme interpretação do art. 12, VI, da Lei 9.656/98."

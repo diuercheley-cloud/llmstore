@@ -1,0 +1,24 @@
+Termos de Uso - APILayer IA Provider (DEMO)
+
+TERMOS DE USO DA PLATAFORMA
+
+1. Aceitação dos Termos
+Ao utilizar a API, o cliente concorda com estes termos. O não cumprimento pode resultar em suspensão imediata da conta.
+
+2. Planos e Limites
+Cada plano possui limites específicos de requisições, tokens e recursos. O uso excessivo será bloqueado automaticamente até o próximo ciclo de faturamento.
+
+3. Privacidade e Dados
+A APILayer IA Provider opera 100% em infraestrutura local do contratante. Nenhum dado trafega para servidores externos. O contratante é o único controlador dos dados processados.
+
+4. Uso Aceitável
+Não é permitido: (a) uso para atividades ilegais; (b) tentativas de bypass de rate limiting; (c) compartilhamento de chaves de API; (d) engenharia reversa dos modelos.
+
+5. Faturamento
+O faturamento é local/manual. Faturas geradas mensalmente com vencimento em 7 dias. Atraso superior a 30 dias pode acarretar suspensão do serviço.
+
+6. Suporte
+Suporte via e-mail em horário comercial para planos Basic e Pro. Suporte 24/7 dedicado para Enterprise.
+
+7. Disponibilidade
+Target de uptime: 99.5% para planos pagos. Sem garantia de disponibilidade para plano Free.

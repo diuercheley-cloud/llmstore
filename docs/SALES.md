@@ -54,9 +54,65 @@ O sistema utiliza faturamento local/manual nesta versão.
 
 Em producao, use `STACK_MODE=prod` e `scripts/deploy-vps.sh`. O compose de producao sobe o Caddy na frente do control plane para obter HTTPS automatico com Let's Encrypt.
 
+## Demo Pack Comercial
+
+O `demo-pack/` contem um pacote completo de demonstracao com 5 cenarios comerciais ficticios. Use durante reunioes de vendas para demonstrar o valor do produto sem precisar configurar dados manualmente.
+
+```bash
+# Preparar ambiente de demonstracao
+make demo-pack
+
+# Executar validacao
+make validate-demo-pack
+```
+
+Documentacao completa da demonstracao em `demo-pack/demo-flow.md` (roteiro de 30-45 min).
+
+### Cenarios de venda
+
+| Cenario | Problema | Solucao |
+|---------|----------|---------|
+| Clinica Local | LGPD, dados sensiveis | Inferencia local + RAG + compliance |
+| Escritorio Juridico | Sigilo advocaticio | Stack local sem nuvem |
+| Suporte Tecnico | knowledge base dispersa | RAG + TTS + chat |
+| Escola/Treinamento | Orcamento limitado | Plano a partir de R$ 197/mes |
+| Provedor de API | Concorrer com OpenAI | Plataforma completa white-label |
+
+### Recursos de apoio
+
+- `demo-pack/demo-objection-handling.md` - Respostas para 15+ objecoes comuns
+- `demo-pack/demo-api-requests.md` - Requisicoes curl prontas para cada endpoint
+- `demo-pack/demo-prompts.md` - Prompts por cenario
+- `demo-pack/demo-flow.md` - Roteiro completo da reuniao
+
+### Documentos de Apresentação para Clientes
+
+Material adicional para reuniões comerciais e técnicas com clientes:
+
+- [Roteiro de Apresentação (15/30/60 min)](docs/CLIENT_PRESENTATION_SCRIPT.md) — 3 versões de roteiro
+- [Talk Track — Falas Prontas](docs/CLIENT_DEMO_TALK_TRACK.md) — Roteiro textual completo
+- [FAQ da Demo Comercial](docs/CLIENT_DEMO_FAQ.md) — Perguntas frequentes sobre o appliance
+- [Objeções Comuns](docs/CLIENT_DEMO_OBJECTIONS.md) — Respostas para 10+ objeções
+
+### Propostas Comerciais e Técnicas
+
+Templates de propostas em Markdown para envio formal a clientes:
+
+- [Proposta Técnica](proposals/TECHNICAL_PROPOSAL_TEMPLATE.md) — Completa: arquitetura, componentes, requisitos, segurança, implantação
+- [Proposta Comercial](proposals/COMMERCIAL_PROPOSAL_TEMPLATE.md) — Problema, solução, planos (placeholders), cronograma, suporte
+- [One-Pager Executivo](proposals/LOCAL_AI_APPLIANCE_ONE_PAGER.md) — Resumo de página única para apresentação rápida
+
+Geração de PDF local:
+```bash
+./scripts/generate-proposal-pdf.sh \
+  --input proposals/TECHNICAL_PROPOSAL_TEMPLATE.md \
+  --output proposals/generated/proposta-tecnica.pdf
+```
+
 ## Operacao de venda
 
 - Use a landing como CTA principal.
 - Direcione campanhas para `/pricing`.
 - Entregue trial ou free via `/signup`.
-- Faça upgrade de plano pelo Admin API ou pelo fluxo comercial interno.
+- Faca upgrade de plano pelo Admin API ou pelo fluxo comercial interno.
+- Use o **Demo Pack Comercial** para reunioes com clientes potenciais.

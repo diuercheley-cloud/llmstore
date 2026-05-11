@@ -210,6 +210,64 @@ Para demonstrações do produto em ambiente local (offline, notebooks, reuniões
 - [Roteiro de Apresentação](docs/LOCAL_DEMO_SCRIPT.md): Sequência sugerida para a demo comercial/técnica.
 - [FAQ da Demo Local](docs/LOCAL_DEMO_FAQ.md): Perguntas frequentes sobre o uso local e privacidade.
 
+## Demo Pack Comercial
+
+Pacote de demonstração comercial para apresentar o sistema a clientes sem configurar manualmente dados, roteiro e fluxos. Inclui 5 cenários fictícios com dados 100% demo.
+
+```bash
+# Carregar dados demo no sistema
+make demo-pack
+
+# Validar o demo pack
+make validate-demo-pack
+
+# Executar testes do demo pack
+.venv/bin/python -m pytest tests/test_commercial_demo_pack.py tests/test_commercial_demo_seed.py tests/test_commercial_demo_security.py -q
+```
+
+Cenários incluídos:
+- **Clínica Local** - Dados sensíveis de pacientes, compliance LGPD
+- **Escritório Jurídico** - Contratos, jurisprudência, pareceres
+- **Suporte Técnico** - Knowledge base, tickets, respostas automáticas
+- **Escola/Treinamento** - Material didático, correção, tutoria
+- **Provedor de API de IA** - Marketplace de modelos, API para terceiros
+
+Documentação completa em `demo-pack/README.md`.
+
+### Documentos de Apresentação Comercial para Clientes
+
+Para reuniões com clientes, utilize os seguintes documentos de apoio à demonstração:
+
+- [Roteiro de Apresentação (15/30/60 min)](docs/CLIENT_PRESENTATION_SCRIPT.md) — Script completo com 3 durações
+- [Talk Track — Falas Prontas](docs/CLIENT_DEMO_TALK_TRACK.md) — O que dizer em cada tela
+- [FAQ da Demo Comercial](docs/CLIENT_DEMO_FAQ.md) — Perguntas frequentes sobre o appliance local
+- [Objeções Comuns e Respostas](docs/CLIENT_DEMO_OBJECTIONS.md) — Prepare-se para objeções de clientes
+
+Validação dos documentos:
+```bash
+./scripts/validate-client-presentation-docs.sh
+.venv/bin/python -m pytest tests/test_client_presentation_docs.py tests/test_client_demo_objections.py -q
+```
+
+## Propostas Comerciais e Técnicas
+
+Templates de propostas para envio a clientes, em Markdown versionável. PDFs podem ser gerados localmente.
+
+- [Proposta Técnica](proposals/TECHNICAL_PROPOSAL_TEMPLATE.md) — Arquitetura, componentes, requisitos, segurança, plano de implantação
+- [Proposta Comercial](proposals/COMMERCIAL_PROPOSAL_TEMPLATE.md) — Problema, solução, planos (placeholders), cronograma, responsabilidades
+- [One-Pager Executivo](proposals/LOCAL_AI_APPLIANCE_ONE_PAGER.md) — Resumo de página única
+
+```bash
+# Gerar PDF da proposta técnica (requer pandoc, wkhtmltopdf ou Chrome)
+./scripts/generate-proposal-pdf.sh \
+  --input proposals/TECHNICAL_PROPOSAL_TEMPLATE.md \
+  --output proposals/generated/proposta-tecnica.pdf
+
+# Validar templates
+./scripts/validate-proposals-local.sh
+.venv/bin/python -m pytest tests/test_proposal_templates.py tests/test_generate_proposal_pdf.py tests/test_proposals_no_secrets.py -q
+```
+
 ## Health, readiness e conectividade
 
 ```bash

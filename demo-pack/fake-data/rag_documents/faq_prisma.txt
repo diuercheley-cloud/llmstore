@@ -1,0 +1,53 @@
+FAQ - ESCOLA PRISMA (DEMO - DADOS FICTICIOS)
+Perguntas Frequentes para Professores e Alunos - Ambiente Ficticio
+
+[AVISO: ESTE DOCUMENTO E FICTICIO. Alunos, turmas e materias sao ilustrativos.]
+
+--- ALUNOS ---
+
+P: Como acessar o portal do aluno?
+R: Acesse http://portal.prisma.demo.local com seu RA (Registro Academico ficticio) e senha inicial fornecida pela secretaria. Troque a senha no primeiro acesso. (Portal ficticio para demonstracao)
+
+P: Como solicitar segunda via do historico escolar?
+R: Envie solicitacao para secretaria@prisma.demo.local com nome completo e RA. Prazo: 5 dias uteis. Taxa ficticia: R$ 20,00. (Servico ficticio)
+
+P: O que fazer se esquecer a senha?
+R: Clique em "Esqueci minha senha" no portal. Um link de redefinicao sera enviado para o e-mail cadastrado. Se nao receber em 10 minutos, procure a secretaria presencialmente.
+
+P: Como justificar falta por motivo de saude?
+R: Entregar atestado medico na secretaria em ate 48h uteis apos a falta. O sistema abonara automaticamente as faltas ficticias do periodo.
+
+--- PROFESSORES ---
+
+P: Como lancar notas no sistema?
+R: Acesse http://professor.prisma.demo.local > Turmas > [turma ficticia] > Notas. Lembre-se de salvar antes de sair. O sistema trava apos 30 min de inatividade.
+
+P: Qual o prazo para entrega de notas?
+R: As notas devem ser lancadas em ate 7 dias corridos apos a prova. O sistema envia lembretes automaticos nos dias 5, 6 e 7.
+
+P: Como solicitar material didatico extra?
+R: Enviar solicitacao para coordenacao@prisma.demo.local com justificativa e quantidade de alunos. Prazo para aprovacao: 3 dias uteis.
+
+P: O sistema tem suporte para provas adaptadas?
+R: Sim. Alunos com necessidades especiais cadastrados na secretaria recebem automaticamente o formato adaptado (fonte ampliada, tempo adicional de 50%, ledor para deficientes visuais).
+
+--- TURMAS FICTICIAS ---
+
+Turma: 8o Ano A - Ensino Fundamental
+Disciplinas: Matematica, Portugues, Ciencias, Historia, Geografia, Ingles, Artes, Educacao Fisica
+Turno: Manha (07:30 - 12:00)
+Qtd alunos ficticios: 32
+
+Turma: 3o Ano B - Ensino Medio
+Disciplinas: Matematica, Portugues, Fisica, Quimica, Biologia, Historia, Geografia, Sociologia, Filosofia, Ingles
+Turno: Tarde (13:00 - 18:30)
+Qtd alunos ficticios: 28
+
+--- CALENDARIO FICTICIO 2026 ---
+Inicio do ano letivo: 02/02/2026
+Recesso julho: 20/07 a 31/07/2026
+Provas bimestrais: 10-14/04, 19-23/06, 18-22/09, 01-05/12/2026
+Formatura 3o ano: 15/12/2026 (evento ficticio)
+Fim do ano letivo: 19/12/2026
+
+FIM DO DOCUMENTO FICTICIO - ESCOLA PRISMA DEMO - NAO USAR EM PRODUCAO

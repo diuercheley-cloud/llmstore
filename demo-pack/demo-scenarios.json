@@ -1,0 +1,162 @@
+{
+  "scenarios": [
+    {
+      "id": "clinica",
+      "title": "Clínica Local com Dados Sensíveis",
+      "client_ref": "Clinica Saude Total Demo",
+      "problema_do_cliente": "Clínica precisa de um assistente interno para consultar prontuários, resumir evoluções e auxiliar em diagnósticos diferenciais, mas não pode enviar dados de pacientes para APIs externas por compliance LGPD. Precisam de soberania de dados com inferência local.",
+      "como_demonstrar": [
+        "1. Mostrar que o sistema roda 100% local, sem depender de internet",
+        "2. Demonstrar chat com contexto de prontuário fictício",
+        "3. Mostrar RAG consultando documentos de protocolos clínicos",
+        "4. Demonstrar que nenhum dado sai do ambiente do cliente",
+        "5. Mostrar a tela de billing com faturamento local/manual"
+      ],
+      "endpoints_ou_telas": {
+        "chat": "POST /v1/chat/completions",
+        "rag": "POST /v1/rag/query",
+        "portal": "/client-portal",
+        "admin_dashboard": "/admin-dashboard",
+        "admin_lab_faturamento": "/admin-lab"
+      },
+      "valor_comercial": "Soberania de dados + LGPD compliance + Assistente 24/7 sem dependência de nuvem. Economia de ~70% comparado a APIs de nuvem para volume moderado.",
+      "objecoes_comuns": [
+        "Precisa de GPU dedicada?",
+        "Como fica a acurácia comparada a GPT-4?",
+        "E se o modelo local não souber responder?"
+      ],
+      "respostas_sugeridas": [
+        "Funciona em GPU de notebook (RTX 4050 6GB) ou CPU com performance adequada para uso interno.",
+        "Modelos locais como Gemma-4 têm performance próxima para tarefas específicas e podemos fine-tunar.",
+        "O RAG garante que o modelo busque nos documentos oficiais da clínica, evitando alucinações."
+      ]
+    },
+    {
+      "id": "juridico",
+      "title": "Escritório Jurídico Local",
+      "client_ref": "Escritorio Juridico Oliveira Demo",
+      "problema_do_cliente": "Escritório de advocacia precisa revisar contratos, pesquisar jurisprudência e gerar minutas de petições. Dados de clientes são confidenciais (sigilo advocatício). Soluções em nuvem violam o sigilo.",
+      "como_demonstrar": [
+        "1. Upload de contrato fictício via RAG e perguntar sobre cláusulas",
+        "2. Demonstrar pesquisa em base de jurisprudência fictícia",
+        "3. Gerar minuta de petição com contexto de caso fictício",
+        "4. Mostrar controle de uso e billing no Client Portal",
+        "5. Demonstrar rate limiting e cotas por usuário do escritório"
+      ],
+      "endpoints_ou_telas": {
+        "chat": "POST /v1/chat/completions",
+        "rag": "POST /v1/rag/query",
+        "embeddings": "POST /v1/embeddings",
+        "portal": "/client-portal",
+        "admin_dashboard": "/admin-dashboard"
+      },
+      "valor_comercial": "Sigilo absoluto dos dados + Automação de revisão contratual + Redução de 60% no tempo de pesquisa de jurisprudência. Sem violação do sigilo advocatício (art. 7º, II, EOAB).",
+      "objecoes_comuns": [
+        "Advogados são resistentes a tecnologia",
+        "O modelo entende linguagem jurídica?",
+        "Como garantir que o contrato foi revisado corretamente?"
+      ],
+      "respostas_sugeridas": [
+        "A interface é simples como um chat. Qualquer advogado usa WhatsApp - é mais fácil que isso.",
+        "O modelo é treinado em texto jurídico e podemos alimentar com RAG dos seus contratos reais.",
+        "O advogado sempre revisa. A ferramenta acelera a primeira análise, não substitui o profissional."
+      ]
+    },
+    {
+      "id": "suporte",
+      "title": "Empresa de Suporte Técnico",
+      "client_ref": "SuporteTech Helpdesk Demo",
+      "problema_do_cliente": "Empresa de suporte técnico com time global precisa de um assistente que conheça a knowledge base e ajude agentes a responder tickets mais rápido. Dados de clientes e falhas técnicas não podem vazar.",
+      "como_demonstrar": [
+        "1. Demonstrar RAG consultando knowledge base fictícia",
+        "2. Mostrar chat completions com contexto de ticket fictício",
+        "3. Demonstrar TTS para respostas de voz em IVR",
+        "4. Mostrar embeddings para busca semântica em base de conhecimento",
+        "5. Demonstrar dashboard admin com métricas de uso por agente"
+      ],
+      "endpoints_ou_telas": {
+        "chat": "POST /v1/chat/completions",
+        "rag": "POST /v1/rag/query",
+        "tts": "POST /v1/audio/speech",
+        "embeddings": "POST /v1/embeddings",
+        "responses": "POST /v1/responses",
+        "portal": "/client-portal"
+      },
+      "valor_comercial": "Redução de 40% no tempo médio de resposta (TMA) + Consistência nas respostas + Onboarding de novos agentes em 1 dia vs 2 semanas. Tudo rodando local.",
+      "objecoes_comuns": [
+        "Já usamos Zendesk com IA",
+        "O modelo responde em português técnico?",
+        "Precisa de integração com nosso sistema de tickets?"
+      ],
+      "respostas_sugeridas": [
+        "Zendesk IA envia dados para nuvem. Aqui seus dados ficam locais. Podemos integrar com Zendesk via API mantendo soberania.",
+        "O modelo responde em português natural e entende jargão técnico. Alimente com RAG dos seus manuais.",
+        "Temos API REST compatível com OpenAI. Integramos com qualquer sistema em horas, não semanas."
+      ]
+    },
+    {
+      "id": "educacao",
+      "title": "Escola/Treinamento Interno",
+      "client_ref": "Escola EducaMais Demo",
+      "problema_do_cliente": "Escola precisa de um tutor IA para alunos, correção automática de redações e geração de material didático personalizado. Orçamento limitado e preocupação com conteúdo impróprio para menores.",
+      "como_demonstrar": [
+        "1. Demonstrar chat com contexto educacional (plano de aula)",
+        "2. Mostrar correção de redação fictícia via chat",
+        "3. Demonstrar RAG com material didático fictício",
+        "4. Mostrar TTS para leitura de textos em voz alta",
+        "5. Mostrar controle de conteúdo seguro (system prompt + rate limits)"
+      ],
+      "endpoints_ou_telas": {
+        "chat": "POST /v1/chat/completions",
+        "rag": "POST /v1/rag/query",
+        "tts": "POST /v1/audio/speech",
+        "portal": "/client-portal",
+        "admin_dashboard": "/admin-dashboard"
+      },
+      "valor_comercial": "Tutor IA 24/7 para alunos + Correção automática + Material personalizado por aluno. Custo de ~R$ 197/mês para escola inteira vs R$ milhares em plataformas prontas.",
+      "objecoes_comuns": [
+        "IA vai substituir professor?",
+        "Conteúdo gerado pode ser inadequado para crianças?",
+        "Escola não tem infraestrutura de TI"
+      ],
+      "respostas_sugeridas": [
+        "A IA é ferramenta de apoio, não substituta. Libera o professor para o que realmente importa: ensinar.",
+        "System prompt + filtros de conteúdo + modelo local controlado garantem segurança total para menores.",
+        "Funciona em qualquer notebook com Docker. Instalação em 15 minutos com script automatizado."
+      ]
+    },
+    {
+      "id": "provedor-api",
+      "title": "Provedor Local de API de IA",
+      "client_ref": "APILayer IA Provider Demo",
+      "problema_do_cliente": "Provedor quer oferecer API de IA para seus clientes sem depender de OpenAI ou Google. Precisa de dashboard para gerenciar clientes, planos e billing. Quer manter margem competitiva com inferência local.",
+      "como_demonstrar": [
+        "1. Mostrar Admin Dashboard com múltiplos clientes fictícios",
+        "2. Demonstrar criação de cliente + API key via Admin API",
+        "3. Mostrar plano comercial com limites configuráveis",
+        "4. Demonstrar geração de invoice e faturamento manual",
+        "5. Mostrar Client Portal do ponto de vista de um cliente terceiro",
+        "6. Demonstrar rate limiting e isolamento entre clientes"
+      ],
+      "endpoints_ou_telas": {
+        "admin_api": "POST /admin/clients, POST /admin/api-keys",
+        "billing": "POST /admin/billing/invoices/generate",
+        "client_api": "POST /v1/chat/completions",
+        "admin_dashboard": "/admin-dashboard",
+        "admin_lab": "/admin-lab",
+        "client_portal": "/client-portal"
+      },
+      "valor_comercial": "Plataforma completa de IA como serviço em 30 minutos. Margem de 80%+ comparado a revender OpenAI. Controle total sobre dados, preços e clientes.",
+      "objecoes_comuns": [
+        "Como competir com OpenAI/Gemini?",
+        "E se um cliente usar muitos tokens?",
+        "Precisa de equipe de DevOps?"
+      ],
+      "respostas_sugeridas": [
+        "Você atende clientes que não podem usar nuvem por regulação ou sigilo. É um nicho premium.",
+        "Rate limiting + cotas por plano + faturamento por overage. Tudo configurável no Admin Dashboard.",
+        "Instalação com make install-local. Script cuida de Docker, GPU e certificados. Sem DevOps dedicado."
+      ]
+    }
+  ]
+}

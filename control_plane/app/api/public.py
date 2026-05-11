@@ -52,6 +52,48 @@ async def getting_started_page():
     return FileResponse(static_dir / "getting-started.html")
 
 
+@router.get("/capabilities", include_in_schema=False)
+async def capabilities_page():
+    return FileResponse(static_dir / "capabilities.html")
+
+
+@router.get("/public/capabilities")
+async def public_capabilities():
+    return {
+        "version": settings.project_version,
+        "local_appliance_mode": settings.local_appliance_mode,
+        "features": [
+            {"name": "OpenAI-compatible API", "status": "supported", "stage": "ga"},
+            {"name": "Chat Completions", "status": "supported", "stage": "ga"},
+            {"name": "Streaming", "status": "supported", "stage": "ga"},
+            {"name": "Models API", "status": "supported", "stage": "ga"},
+            {"name": "Embeddings", "status": "partial", "stage": "beta", "note": "Mock backend by default"},
+            {"name": "Responses API", "status": "supported", "stage": "beta", "note": "Without streaming"},
+            {"name": "Tools / Function Calling", "status": "unsupported", "stage": "future", "note": "Partial, depends on backend"},
+            {"name": "RAG", "status": "supported", "stage": "ga"},
+            {"name": "TTS", "status": "supported", "stage": "ga"},
+            {"name": "Client Portal", "status": "supported", "stage": "ga"},
+            {"name": "Admin Dashboard", "status": "supported", "stage": "ga"},
+            {"name": "Admin Lab", "status": "supported", "stage": "ga"},
+            {"name": "Billing Local / Manual", "status": "supported", "stage": "ga"},
+            {"name": "Security Report", "status": "supported", "stage": "ga"},
+            {"name": "Production Readiness", "status": "supported", "stage": "ga"},
+            {"name": "Backup / Restore", "status": "supported", "stage": "ga"},
+            {"name": "Upgrade / Rollback", "status": "supported", "stage": "ga"},
+            {"name": "Demo Pack", "status": "supported", "stage": "ga"},
+        ],
+        "limitations": [
+            "PSP real nao incluido — faturamento e manual",
+            "PIX real nao incluido — sem QR Code ou cobranca automatica",
+            "Tools / Function Calling parcial — depende do backend local",
+            "Modelos dependem do hardware local — qualidade varia conforme GPU/CPU",
+            "HTTPS opcional em localhost — producao deve configurar TLS",
+            "Nao prometemos seguranca absoluta — consulte equipe de compliance",
+        ],
+        "note": "Dados ficticios para demonstracao. Sem secrets expostos.",
+    }
+
+
 @router.get("/public/plans")
 async def public_plans(session: AsyncSession = Depends(get_db_session)):
     return {"brand_name": settings.public_brand_name, "plans": await list_public_plans(session)}

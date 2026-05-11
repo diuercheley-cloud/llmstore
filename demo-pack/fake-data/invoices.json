@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "description": "Faturas ficticias para demonstracao comercial - NENHUM dado real",
+    "version": "1.0",
+    "generated": "2026-05-11",
+    "demo_marker": true,
+    "warning": "TODOS OS DADOS SAO FICTICIOS. Nao usar em producao."
+  },
+  "invoices": [
+    {
+      "client_scenario": "clinica",
+      "client_name": "Clinica Horizonte Demo",
+      "invoice_number": "DEMO-INV-2026-0001",
+      "demo": true,
+      "issue_date": "2026-05-01",
+      "due_date": "2026-05-08",
+      "due_in_days": 7,
+      "payment_method": "manual_pix",
+      "payment_instructions": "Fatura demonstrativa - Clinica Horizonte - dados ficticios",
+      "items": [
+        { "description": "Plano Demo Clinica - Maio/2026", "amount_brl": 297.00 }
+      ],
+      "total_brl": 297.00,
+      "status": "pending",
+      "notes": "Fatura ficticia para demonstracao. Nao requer pagamento real."
+    },
+    {
+      "client_scenario": "juridico",
+      "client_name": "Juridico Atlas Demo",
+      "invoice_number": "DEMO-INV-2026-0002",
+      "demo": true,
+      "issue_date": "2026-05-01",
+      "due_date": "2026-05-08",
+      "due_in_days": 7,
+      "payment_method": "manual_pix",
+      "payment_instructions": "Fatura demonstrativa - Juridico Atlas - dados ficticios",
+      "items": [
+        { "description": "Plano Demo Juridico - Maio/2026", "amount_brl": 497.00 }
+      ],
+      "total_brl": 497.00,
+      "status": "pending",
+      "notes": "Fatura ficticia para demonstracao. Nao requer pagamento real."
+    },
+    {
+      "client_scenario": "suporte",
+      "client_name": "Suporte Orion Demo",
+      "invoice_number": "DEMO-INV-2026-0003",
+      "demo": true,
+      "issue_date": "2026-05-01",
+      "due_date": "2026-05-08",
+      "due_in_days": 7,
+      "payment_method": "manual_pix",
+      "payment_instructions": "Fatura demonstrativa - Suporte Orion - dados ficticios",
+      "items": [
+        { "description": "Plano Demo Suporte - Maio/2026", "amount_brl": 797.00 }
+      ],
+      "total_brl": 797.00,
+      "status": "pending",
+      "notes": "Fatura ficticia para demonstracao. Nao requer pagamento real."
+    },
+    {
+      "client_scenario": "educacao",
+      "client_name": "Escola Prisma Demo",
+      "invoice_number": "DEMO-INV-2026-0004",
+      "demo": true,
+      "issue_date": "2026-05-01",
+      "due_date": "2026-05-08",
+      "due_in_days": 7,
+      "payment_method": "manual_pix",
+      "payment_instructions": "Fatura demonstrativa - Escola Prisma - dados ficticios",
+      "items": [
+        { "description": "Plano Demo Educacao - Maio/2026", "amount_brl": 197.00 }
+      ],
+      "total_brl": 197.00,
+      "status": "pending",
+      "notes": "Fatura ficticia para demonstracao. Nao requer pagamento real."
+    },
+    {
+      "client_scenario": "provedor-api",
+      "client_name": "Provedor API Nebula Demo",
+      "invoice_number": "DEMO-INV-2026-0005",
+      "demo": true,
+      "issue_date": "2026-05-01",
+      "due_date": "2026-05-08",
+      "due_in_days": 7,
+      "payment_method": "manual_pix",
+      "payment_instructions": "Fatura demonstrativa - Nebula API - dados ficticios",
+      "items": [
+        { "description": "Plano Demo Provedor API - Maio/2026", "amount_brl": 1997.00 }
+      ],
+      "total_brl": 1997.00,
+      "status": "pending",
+      "notes": "Fatura ficticia para demonstracao. Nao requer pagamento real."
+    }
+  ]
+}

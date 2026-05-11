@@ -20,6 +20,9 @@ SAFE_PATTERNS=(
     "admin-token-123"
     "token_admin"
     "sk-local-example"
+    "sk-demo-"
+    "sk-demo-example"
+    "sk-demo-xxxx"
     "your-api-key"
     "changeme"
     "example"
@@ -40,6 +43,7 @@ SAFE_PATTERNS=(
     "sk-\\*\\*\\*masked\\*\\*\\*"
     "Bearer \\*\\*\\*masked\\*\\*\\*"
     "ADMIN_TOKEN=\\*\\*\\*masked\\*\\*\\*"
+    "\\*\\*\\*masked\\*\\*\\*"
 )
 
 VERBOSE=false

@@ -1,0 +1,56 @@
+MANUAL DE SUPORTE TECNICO - ORION HELPDESK (DEMO - DADOS FICTICIOS)
+Versao: 2.3 | Data: 2026-03-15 | Apenas para demonstracao comercial
+
+[AVISO: ESTE DOCUMENTO E FICTICIO. Procedimentos, equipamentos e cenarios sao ilustrativos.]
+
+PROCEDIMENTO P01 - RESET DE SENHA (SISTEMA ORION)
+1. Acessar painel admin em http://orion-admin.demo.local
+2. Navegar: Usuarios > Buscar
+3. Clicar em "Resetar Senha"
+4. Sistema envia e-mail automatico com link de redefinicao (valido por 30 min)
+5. Se nao receber em 5 min: verificar pasta de Spam
+6. Se persistir: reenviar manualmente pelo painel
+7. Se o e-mail do usuario nao for encontrado: verificar ortografia ou cadastro
+
+PROCEDIMENTO P02 - CONFIGURACAO DE VPN WIREGUARD
+1. Baixar cliente WireGuard para o SO do usuario
+2. Importar arquivo .conf gerado pelo administrador
+3. Ativar conexao e verificar IP em http://whatismyip.com (exemplo ficticio)
+4. Se nao conectar: verificar porta 51820 liberada no firewall
+5. Testar conectividade: ping 10.0.0.1 (5 pacotes)
+6. Se perder pacotes > 10%: verificar qualidade da conexao de internet
+7. Logs: /var/log/wireguard.log
+
+PROCEDIMENTO P03 - DIAGNOSTICO DE REDE LENTA
+1. Coletar: modelo do roteador, firmware, numero de dispositivos
+2. Verificar congestao de canal Wi-Fi (usar app Wi-Fi Analyzer)
+3. Testar velocidade com cabo vs Wi-Fi (speedtest.net - exemplo ficticio)
+4. Se Wi-Fi lento mas cabo normal: trocar canal ou banda (2.4GHz vs 5GHz)
+5. Se ambos lentos: contatar provedor de internet e verificar plano contratado
+6. Verificar consumo de banda por dispositivo na rede
+
+PROCEDIMENTO P04 - BACKUP E RECUPERACAO
+1. Backup automatico diario as 02:00 (horario do servidor)
+2. Reter backups por 30 dias corridos
+3. Backup armazenado em /backup/orion/[data]/
+4. Para restaurar: painel > Sistema > Restaurar Backup
+5. Selecionar data desejada e confirmar
+6. Sistema reinicia apos restauracao (aprox. 5 minutos)
+7. Verificar integridade: comparar checksums SHA-256
+
+PROCEDIMENTO P05 - ONBOARDING DE NOVOS AGENTES
+1. Criar usuario no painel admin
+2. Atribuir perfil de acesso (basico/premium/enterprise)
+3. Enviar convite com link de primeiro acesso
+4. Treinamento inicial: 3 dias (roteiro em /docs/onboarding/)
+5. Periodo de trial: 7 dias com mentor designado
+6. Avaliacao apos trial: teste pratico com ticket simulado
+
+PROCEDIMENTO P06 - ESCALACAO DE TICKETS
+1. Nivel 1 (atendente): problemas simples, resolucao em ate 2h
+2. Nivel 2 (analista): problemas moderados, resolucao em ate 8h
+3. Nivel 3 (engenharia): problemas complexos, resolucao em ate 24h
+4. Escalacao automatica apos timeout do nivel anterior
+5. Escalacao manual a criterio do analista responsavel
+
+FIM DO DOCUMENTO FICTICIO - ORION HELPDESK DEMO - NAO USAR EM PRODUCAO

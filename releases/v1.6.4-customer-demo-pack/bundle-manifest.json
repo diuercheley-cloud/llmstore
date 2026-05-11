@@ -1,0 +1,16 @@
+{
+  "version": "v1.6.4-customer-demo-pack",
+  "git_branch": "feature/v1.6.4-customer-demo-pack",
+  "git_commit": "473b07feea8ae2bb401b753378af1ff3d7f87fd3",
+  "generated_at": "2026-05-11T19:57:12Z",
+  "included_paths": ["control_plane","data_plane_mock","docker","scripts","Makefile","README.md","CHANGELOG.md","VERSION","docker-compose.yml","docker-compose.prod.yml","test-compose.yml","test-override.yml",".env.example","docs","examples","demo"],
+  "excluded_paths": [".git",".venv","node_modules","__pycache__",".pytest_cache",".mypy_cache",".ruff_cache",".env",".env.local",".local","models","data/rag_uploads","backups","exports","artifacts","*.gguf","*.pem","*.key","*.tar.gz"],
+  "files_count": 407,
+  "archive_name": "llm-inference-stack-v1.6.4-customer-demo-pack.tar.gz",
+  "archive_sha256": "060e98f7bd21160bfc75b7bfb1652facd72319d253baecc72845d2420ee6c110",
+  "secrets_scan_passed": true,
+  "models_included": false,
+  "rag_uploads_included": false,
+  "env_included": false,
+  "local_data_included": false
+}

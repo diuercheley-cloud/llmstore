@@ -1,0 +1,33 @@
+POLITICA INTERNA - CLINICA HORIZONTE (DEMO - DADOS FICTICIOS)
+Versao: 1.0 | Data: 2026-04-01 | Apenas para demonstracao comercial
+
+[AVISO: ESTE DOCUMENTO E FICTICIO. Nenhum paciente, medico ou procedimento real esta descrito aqui.]
+
+1. POLITICA DE ATENDIMENTO
+1.1. O agendamento deve ser feito com no minimo 24h de antecedencia.
+1.2. Cancelamentos com menos de 2h de antecedencia serao registrados como falta.
+1.3. Apos 3 faltas consecutivas, o paciente ficticio sera notificado para reavaliacao.
+1.4. Teleconsulta: disponivel para retorno de pacientes cadastrados.
+
+2. POLITICA DE PRONTUARIOS
+2.1. Todos os prontuarios sao armazenados localmente (nuvem nao utilizada).
+2.2. Acesso apenas por medico responsavel e paciente mediante solicitacao formal.
+2.3. Retencao minima de 5 anos apos o ultimo atendimento.
+2.4. Prontuarios de pacientes ficticios sao marcados com tag INTERNO_DEMO.
+
+3. PROCEDIMENTOS DE URGENCIA
+3.1. Paciente com glicemia capilar acima de 300 mg/dL: encaminhar imediatamente a unidade de referencia.
+3.2. Protocolo de queda de idoso: avaliar escala de Glasgow, imobilizar coluna cervical se necessario.
+3.3. Reacao alergica grave: adrenalina IM 0,3-0,5 mg (1:1000) no vasto lateral da coxa.
+
+4. CONDUTAS CLINICAS (CENARIOS FICTICIOS)
+4.1. Diabetes tipo 2 descompensado: iniciar ou ajustar metformina, reavaliar em 7 dias.
+4.2. Hipertensao estagio 1 (PA 130-139 / 80-89): dieta hipossodica e reavaliacao em 30 dias.
+4.3. Cefaleia tensional: analgesico simples + compressa fria. Se recorrente, encaminhar para neurologia.
+
+5. CONTROLE DE INFECCAO
+5.1. Higienizacao das maos: antes e apos cada atendimento.
+5.2. EPI obrigatorio: luvas para procedimentos invasivos, mascara para sintomas respiratorios.
+5.3. Superficies: desinfeccao com alcool 70% apos cada paciente.
+
+FIM DO DOCUMENTO FICTICIO - CLINICA HORIZONTE DEMO - NAO USAR EM PRODUCAO

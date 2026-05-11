@@ -33,6 +33,10 @@ control_plane/*.sqlite
 tmp_client.txt
 tmp_key.txt
 
+# Generated proposals
+proposals/generated/
+*.proposal.generated.pdf
+
 # Models (IMPORTANT)
 /bin
 /models/

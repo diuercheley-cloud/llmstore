@@ -1,0 +1,65 @@
+BASE DE CONHECIMENTO TECNICO - NEBULA API PROVEDOR (DEMO - DADOS FICTICIOS)
+Documentacao da Plataforma de IA Local - Versao 2.1 - Apenas para demonstracao
+
+[AVISO: ESTE DOCUMENTO E FICTICIO. Endpoints, limites e configuracoes sao ilustrativos.]
+
+1. INTRODUCAO
+A Nebula API e uma plataforma de IA que opera 100% em infraestrutura local. Nenhum dado trafega para servidores externos. Compativel com OpenAI API format.
+
+2. AUTENTICACAO
+Todas as requisicoes exigem header `Authorization: Bearer {API_KEY}` (exemplo: `sk-demo-XXXXXXXX`).
+As chaves de API sao geradas pelo administrador no painel Admin.
+Formato da chave: sk-demo-XXXXXXXX (chaves ficticias para demonstracao).
+NUNCA compartilhe chaves de API. Cada cliente deve ter sua propria chave.
+
+3. ENDPOINTS DISPONIVEIS
+   POST /v1/chat/completions - Chat completion (compativel OpenAI)
+   POST /v1/rag/query        - Busca semantica em documentos
+   POST /v1/audio/speech     - Text-to-speech
+   POST /v1/embeddings       - Geracao de embeddings
+   POST /v1/responses        - Respostas estruturadas
+   GET  /v1/models           - Listar modelos disponiveis
+
+4. MODELOS DISPONIVEIS (CENARIO FICTICIO)
+   gemma      - Modelo leve, rapido, bom para chatbots e uso geral
+   nemotron    - Modelo balanceado, otimo para RAG e analise de documentos
+   llama       - Modelo grande, maxima qualidade para tarefas complexas
+   padrao      - Alias para o modelo recomendado (atualmente: gemma)
+
+5. LIMITES POR PLANO (VALORES FICTICIOS)
+   Free:       10 req/min,    5k tokens/dia
+   Starter:    60 req/min,   50k tokens/dia
+   Professional: 300 req/min, 500k tokens/dia
+   Enterprise: 1000 req/min,  ilimitado (sujeito a uso justo)
+
+6. EXEMPLO DE CHAT COMPLETION
+curl -X POST http://nebula-api.demo.local/v1/chat/completions \
+  -H "Authorization: Bearer sk-demo-XXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gemma", "messages": [{"role": "user", "content": "Ola, quem e voce?"}], "max_tokens": 100}'
+
+7. EXEMPLO DE RAG QUERY
+curl -X POST http://nebula-api.demo.local/v1/rag/query \
+  -H "Authorization: Bearer sk-demo-XXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Qual o limite de tokens do plano Starter?"}'
+
+8. ISOLAMENTO MULTI-CLIENTE
+Cada cliente possui:
+- Sua propria chave de API unica
+- Cotas de uso independentes (nao compartilhadas)
+- Documentos RAG privados (inacessiveis a outros clientes)
+- Historico de uso e faturas separados
+- Rate limits individuais configurados por plano
+
+9. RATE LIMITING
+   - Resposta HTTP 429 quando limite excedido
+   - Headers de rate limit: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+   - O rate limit e resetado a cada minuto (janela fixa)
+
+10. MONITORAMENTO
+    - Dashboard admin: metricas de uso por cliente
+    - Logs de auditoria: todas as requisicoes sao registradas
+    - Alertas configuráveis por cliente (80%, 90%, 100% da cota)
+
+FIM DO DOCUMENTO FICTICIO - NEBULA API DEMO - NAO USAR EM PRODUCAO

@@ -1,0 +1,29 @@
+{
+  "version": "v1.6.4-customer-demo-pack",
+  "branch": "feature/v1.6.4-customer-demo-pack",
+  "commit": "473b07feea8ae2bb401b753378af1ff3d7f87fd3",
+  "generated_at": "2026-05-11T16:57:04-03:00",
+  "status": "ready",
+  "validation_result": "success",
+  "checks": {
+    "secrets_scan": "PASS",
+    "security_report": "PASS",
+    "production_readiness": "READY",
+    "demo_pack_validation": "PASS",
+    "client_presentation_docs": "PASS",
+    "proposals": "PASS",
+    "reset_demo_safety": "PASS",
+    "fake_data": "PASS",
+    "meeting_ready_check": "PASS",
+    "capabilities_page": "PASS",
+    "full_validation": "PASS",
+    "demo": "PASS"
+  },
+  "notes": [
+    "PSP real nao incluido - faturamento e manual",
+    "PIX real nao incluido - sem QR Code ou cobranca automatica",
+    "Tools/Function Calling parcial - depende do backend local",
+    "Dados demo marcados como ficticios/demo via metadata",
+    "Release sem versionar secrets, .env/.local, modelos .gguf, uploads RAG ou artefatos brutos"
+  ]
+}

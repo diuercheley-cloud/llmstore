@@ -1,0 +1,27 @@
+Protocolos Clínicos - Clínica Saúde Total (DEMO)
+
+PROTOCOLO DE ATENDIMENTO - HIPERTENSÃO ARTERIAL
+
+1. Aferir pressão arterial com paciente sentado, braço na altura do coração.
+2. Se PA > 140x90 mmHg, repetir após 5 minutos.
+3. Se confirmado: prescrever monoterapia com IECA ou BRA.
+4. Se PA > 160x100 mmHg: iniciar com combinação de dois fármacos.
+5. Solicitar exames: creatinina, potássio, glicemia, lipidograma, EAS.
+6. Retorno em 30 dias para reavaliação.
+
+PROTOCOLO DE ATENDIMENTO - DIABETES MELLITUS TIPO 2
+
+1. Glicemia em jejum > 126 mg/dL ou HbA1c > 6,5% confirma diagnóstico.
+2. Iniciar Metformina 500mg 1x/dia, aumentar para 850mg 2x/dia em 2 semanas.
+3. Se HbA1c > 7% após 3 meses: associar dapagliflozina 10mg/dia.
+4. Avaliar risco cardiovascular anualmente.
+5. Encaminhar para oftalmologista anual.
+6. Orientar dieta e atividade física.
+
+PROTOCOLO DE ATENDIMENTO - CRIANÇA COM FEBRE
+
+1. Temperatura axilar > 37,8°C: considerar febre.
+2. Se 3-6 meses com febre > 39°C: encaminhar para emergência.
+3. Se > 6 meses: prescrever dipirona 10-15 mg/kg/dose de 6/6h.
+4. Orientar hidratação e observação de sinais de alarme.
+5. Retornar se febre persistir por mais de 72 horas.
