@@ -19,8 +19,8 @@ def test_bundle_script_exclusions():
     assert "\"data/rag_uploads\"" in content
     assert "\"*.gguf\"" in content
 
-def test_first_run_sets_appliance_mode():
-    with open("scripts/first-run-local.sh", "r") as f:
+def test_wizard_sets_appliance_mode():
+    with open("scripts/configure-local-wizard.sh", "r") as f:
         content = f.read()
     
     assert "update_env \"LOCAL_APPLIANCE_MODE\" \"true\"" in content

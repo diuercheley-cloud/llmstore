@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Load operator errors library
+if [[ -f "${SCRIPT_DIR}/lib/operator-errors.sh" ]]; then
+  source "${SCRIPT_DIR}/lib/operator-errors.sh"
+fi
+
 WITH_DEMO=false
 SKIP_BUILD=false
 CPU_ONLY=false
@@ -61,11 +67,19 @@ log() {
 }
 
 warn() {
-  echo "[WARN] $1" | tee -a "$REPORT_DIR/logs/setup.log"
+  if declare -F operator_warning >/dev/null; then
+    operator_warning "VALIDATION_FAILED" "$1" "Verifique o log de instalação em $REPORT_DIR/logs/setup.log"
+  else
+    echo "[WARN] $1" | tee -a "$REPORT_DIR/logs/setup.log"
+  fi
 }
 
 error() {
-  echo "[ERROR] $1" | tee -a "$REPORT_DIR/logs/setup.log"
+  if declare -F operator_error >/dev/null; then
+    operator_error "VALIDATION_FAILED" "$1" "Verifique o log de instalação em $REPORT_DIR/logs/setup.log"
+  else
+    echo "[ERROR] $1" | tee -a "$REPORT_DIR/logs/setup.log"
+  fi
   exit 1
 }
 
@@ -87,47 +101,18 @@ if command -v nvidia-smi >/dev/null 2>&1; then
 fi
 
 # b) Prepare configuration
-ENV_CREATED=false
-ENV_BACKUP_PATH=""
-if [ ! -f .env.local ]; then
-  log "Creating .env.local from .env.example..."
-  if [ -f .env.local.example ]; then
-    cp .env.local.example .env.local
-  else
-    cp .env.example .env.local
-  fi
-  chmod 600 .env.local
-  ENV_CREATED=true
-else
-  log ".env.local exists, creating backup just in case..."
-  ENV_BACKUP_PATH=".env.local.bak.$TIMESTAMP"
-  cp .env.local "$ENV_BACKUP_PATH"
-  chmod 600 "$ENV_BACKUP_PATH"
-fi
+log "Preparing configuration..."
 
-# Update .env.local safely
-update_env() {
-  local key=$1
-  local val=$2
-  if grep -q "^$key=" .env.local; then
-    sed -i "s|^$key=.*|$key=$val|" .env.local
-  else
-    echo "$key=$val" >> .env.local
-  fi
-}
+WIZARD_ARGS=("--non-interactive" "--base-url" "${BASE_URL}")
+if [ "$YES" = true ]; then WIZARD_ARGS+=("--yes"); fi
+if [ "$GPU" = true ]; then WIZARD_ARGS+=("--gpu"); fi
+if [ "$CPU_ONLY" = true ]; then WIZARD_ARGS+=("--cpu-only"); fi
+if [ "$WITH_DEMO" = true ]; then WIZARD_ARGS+=("--enable-demo"); fi
 
-ADMIN_TOKEN=$(grep "^ADMIN_TOKEN=" .env.local | cut -d '=' -f2 || echo "")
-if [ -z "$ADMIN_TOKEN" ] || [ "$ADMIN_TOKEN" = "default-admin-token" ]; then
-  log "Generating secure ADMIN_TOKEN..."
-  NEW_TOKEN=$(openssl rand -hex 32)
-  update_env "ADMIN_TOKEN" "$NEW_TOKEN"
-fi
+./scripts/configure-local-wizard.sh "${WIZARD_ARGS[@]}"
 
-update_env "LOCALHOST_MODE" "true"
-update_env "LOCAL_APPLIANCE_MODE" "true"
-update_env "LOCAL_BILLING_MODE" "manual"
-update_env "BASE_URL" "$BASE_URL"
-update_env "PUBLIC_BASE_URL" "$BASE_URL"
+ENV_CREATED=false # Handled by wizard
+ENV_BACKUP_PATH="" # Handled by wizard
 
 # c) Verify models
 MODELS_DETECTED=0
@@ -168,7 +153,8 @@ while [ $retries -gt 0 ]; do
 done
 
 if [ $retries -eq 0 ]; then
-  error "Stack health check failed."
+  operator_error "HEALTH_FAILED" "O stack falhou no teste de saúde (health check)." "Verifique se os containers estão rodando com 'docker compose ps' e analise os logs." "Timeout aguardando por $BASE_URL/health"
+  exit 1
 fi
 
 log "Waiting for /ready..."
@@ -248,9 +234,12 @@ cat <<EOF > "$REPORT_MD"
 EOF
 
 log "First run complete! Report saved to $REPORT_DIR"
-log "Recommended next steps: Open $BASE_URL in your browser."
+operator_success "Configuração inicial local concluída!"
 
-echo "Report path: $REPORT_DIR"
-echo "Security guarantees: No secrets exposed in logs, .env.local created securely with mode 600."
+add_next_step "Abra ${BASE_URL} no seu navegador."
+add_next_step "Revise o relatório em $REPORT_MD"
+add_next_step "Execute 'make health' para verificar o status contínuo."
+
+print_next_steps
 
 exit 0

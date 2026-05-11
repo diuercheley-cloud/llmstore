@@ -49,13 +49,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "${TO_VERSION}" ]] || [[ -z "${BACKUP_ID}" ]]; then
-  echo "Erro: --to-version e --backup-id são obrigatórios."
+  operator_error "VALIDATION_FAILED" "Os parâmetros --to-version e --backup-id são obrigatórios." "Informe a versão e o diretório de backup, por exemplo: --to-version v1.6.1 --backup-id artifacts/backups-local/..."
   usage
   exit 1
 fi
 
 if [[ ! -d "${BACKUP_ID}" ]] && [[ "${DRY_RUN}" == "false" ]]; then
-  echo "Erro: Backup ID (diretório) não encontrado: ${BACKUP_ID}"
+  operator_error "RESTORE_FAILED" "O diretório de backup não foi encontrado." "Verifique se o caminho informado em --backup-id está correto." "Diretório ${BACKUP_ID} não existe."
   exit 1
 fi
 
@@ -63,7 +63,7 @@ fi
 if [[ "${DRY_RUN}" == "false" ]]; then
   if [[ "${SKIP_GIT_CHECK}" == "false" ]]; then
     if ! git diff-index --quiet HEAD --; then
-      echo "[rollback][error] Working tree is dirty. Please commit or stash changes." >&2
+      operator_error "VALIDATION_FAILED" "O working tree do Git possui alterações não confirmadas." "Faça commit ou stash das suas alterações antes de prosseguir com o rollback." "git diff-index falhou."
       exit 1
     fi
   fi
@@ -99,17 +99,18 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   echo "[dry-run] git checkout ${TO_VERSION}"
 else
   if ! git checkout "${TO_VERSION}"; then
-    echo "[rollback][error] Falha ao trocar para a versão ${TO_VERSION}." >&2
+    operator_error "ROLLBACK_FAILED" "Falha ao trocar para a versão ${TO_VERSION}." "Verifique se a tag ou branch '${TO_VERSION}' existe no repositório." "git checkout falhou."
     exit 1
   fi
 fi
 
 # 5. Restore backup
-echo "[rollback] Restaurando backup..."
+echo "[rollback] Restaurando backup a partir de: ${BACKUP_ID}"
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "[dry-run] ./scripts/restore-local.sh --yes ${BACKUP_ID}"
 else
   ./scripts/restore-local.sh --yes "${BACKUP_ID}"
+  echo "[rollback] Backup restaurado: ${BACKUP_ID}"
 fi
 
 # 6. Build and Up
@@ -130,14 +131,14 @@ else
 fi
 
 # 7. Smoke tests
+SMOKE_STATUS="success"
 echo "[rollback] Rodando smoke tests pós-rollback..."
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "[dry-run] ./scripts/post-upgrade-smoke-local.sh"
 else
-  ./scripts/post-upgrade-smoke-local.sh || {
-    echo "[rollback][error] Smoke tests FAILED after rollback!"
-    exit 1
-  }
+  if ! ./scripts/post-upgrade-smoke-local.sh; then
+    SMOKE_STATUS="failed"
+  fi
 fi
 
 # 8. Report
@@ -153,7 +154,7 @@ if [[ "${DRY_RUN}" == "false" ]]; then
   "timestamp": "${ROLLBACK_TIMESTAMP}",
   "to_version": "${TO_VERSION}",
   "backup_id": "${BACKUP_ID}",
-  "status": "success"
+  "status": "${SMOKE_STATUS}"
 }
 EOF
 
@@ -161,19 +162,26 @@ EOF
 # Rollback Report - ${ROLLBACK_TIMESTAMP}
 
 - **To Version:** ${TO_VERSION}
-- **Backup ID:** ${BACKUP_ID}
-- **Status:** Success
+- **Backup ID (used):** ${BACKUP_ID}
+- **Status:** ${SMOKE_STATUS}
 - **Date:** $(date)
 
-Rollback local concluído com sucesso.
+Rollback local concluído com status de smoke test: ${SMOKE_STATUS}.
 EOF
 
+  if [[ "${SMOKE_STATUS}" == "failed" ]]; then
+    operator_error "ROLLBACK_FAILED" "O rollback foi concluído, mas os testes de fumaça (smoke tests) falharam!" "Revise os logs e considere restaurar o backup manualmente ou tentar outro rollback." "post-upgrade-smoke-local.sh falhou."
+    exit 1
+  fi
+
   echo "--------------------------------------------------------"
-  echo "[rollback] Rollback concluído com sucesso!"
-  echo "[rollback] Relatório: ${REPORT_FILE_MD}"
+  operator_success "Rollback da stack concluído com sucesso!"
+  add_next_step "Acesse o sistema em ${BASE_URL:-http://localhost:18080}"
+  add_next_step "Revise o relatório de rollback: ${REPORT_FILE_MD}"
+  print_next_steps
   echo "--------------------------------------------------------"
 else
   echo "--------------------------------------------------------"
-  echo "[rollback] Dry-run concluído com sucesso."
+  operator_success "Simulação de rollback (dry-run) concluída com sucesso."
   echo "--------------------------------------------------------"
 fi

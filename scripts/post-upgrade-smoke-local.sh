@@ -260,17 +260,17 @@ if [[ "${JSON_OUTPUT}" == "true" ]]; then
   cat "${REPORT_JSON}"
 else
   echo ""
-  echo "Relatório gerado:"
-  echo "  MD:   ${REPORT_MD}"
-  echo "  JSON: ${REPORT_JSON}"
-  echo "Tempo total: ${DURATION}s"
   
   # Exit with error if any PASS failed (excluding WARN/SKIP/INFO)
   if echo "${RESULTS_JSON_LIST}" | python3 -c "import json, sys; data=json.load(sys.stdin); sys.exit(1 if any(r['status'] == 'FAIL' for r in data) else 0)"; then
-    echo "--- Smoke Test CONCLUÍDO COM SUCESSO ---"
+    operator_success "Smoke test da stack concluído com sucesso!"
+    add_next_step "Relatório completo em: ${REPORT_MD}"
+    print_next_steps
     exit 0
   else
-    echo "--- Smoke Test FALHOU ---"
+    operator_error "HEALTH_FAILED" "O smoke test identificou falhas na stack." "Revise os logs detalhados e o relatório em ${REPORT_MD}" "Um ou mais testes falharam com status FAIL."
+    add_next_step "Relatório completo em: ${REPORT_MD}"
+    print_next_steps
     exit 1
   fi
 fi

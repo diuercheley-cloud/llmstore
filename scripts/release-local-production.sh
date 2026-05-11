@@ -7,6 +7,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
+# Load operator errors library
+if [[ -f "${SCRIPT_DIR}/lib/operator-errors.sh" ]]; then
+  source "${SCRIPT_DIR}/lib/operator-errors.sh"
+fi
+
 VERSION_ARG=""
 ALLOW_DIRTY=false
 SKIP_VALIDATION=false
@@ -34,7 +39,7 @@ fi
 # Check git status
 if [[ "${ALLOW_DIRTY}" == "false" ]]; then
     if ! git diff-index --quiet HEAD --; then
-        echo "Error: Git workspace is dirty. Use --allow-dirty to proceed anyway."
+        operator_error "VALIDATION_FAILED" "O workspace do Git possui alterações não confirmadas." "Faça commit ou stash das suas alterações antes de realizar a release, ou use --allow-dirty."
         exit 1
     fi
 fi
@@ -56,14 +61,13 @@ if [[ "${LOCAL_APPLIANCE_MODE}" == "true" ]]; then
     
     echo "Running secrets scan..."
     if ! "${SCRIPT_DIR}/check-secrets.sh" --all; then
-        echo "Error: Secrets scan failed. Release aborted."
+        operator_error "SECRET_DETECTED" "A varredura de segredos encontrou problemas." "Remova todos os segredos antes de realizar a release para garantir a segurança."
         exit 1
     fi
 
     echo "Validating production readiness..."
     if ! "${SCRIPT_DIR}/production-readiness-local.sh"; then
-        echo "Warning: Production readiness check failed or has warnings."
-        # Optionally abort here if we want to be strict
+        operator_warning "READY_DEGRADED" "O teste de prontidão de produção (readiness) falhou ou tem avisos." "Revise o relatório de readiness antes de prosseguir com a release."
     fi
 fi
 
@@ -120,17 +124,17 @@ echo "Redacting sensitive information from release artifacts..."
 
 echo "Validating release artifacts security..."
 if ! "${SCRIPT_DIR}/validate-release-artifacts-security.sh" --release-dir "${RELEASE_DIR}"; then
-    echo "ERROR: Security validation failed for ${RELEASE_DIR}!"
+    operator_error "SECURITY_FAILED" "A validação de segurança dos artefatos de release falhou!" "Corrija as falhas de segurança apontadas nos artefatos em ${RELEASE_DIR}."
     exit 1
 fi
 
 echo "--------------------------------------------------"
-echo "Release ${VERSION_ARG} prepared in ${RELEASE_DIR}"
-ls -l "${RELEASE_DIR}"
-echo "--------------------------------------------------"
-echo "Next suggested commands:"
-echo "  git add releases/${VERSION_ARG}"
-echo "  git commit -m \"chore: release ${VERSION_ARG}\""
-echo "  git tag ${VERSION_ARG}"
-echo "  git push origin ${GIT_BRANCH}"
-echo "  git push origin ${VERSION_ARG}"
+operator_success "Release ${VERSION_ARG} preparada com sucesso em ${RELEASE_DIR}"
+
+add_next_step "git add releases/${VERSION_ARG}"
+add_next_step "git commit -m \"chore: release ${VERSION_ARG}\""
+add_next_step "git tag ${VERSION_ARG}"
+add_next_step "git push origin ${GIT_BRANCH}"
+add_next_step "git push origin ${VERSION_ARG}"
+
+print_next_steps

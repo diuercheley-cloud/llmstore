@@ -52,7 +52,7 @@ Valida o fluxo completo: backup -> validação -> upgrade -> health check -> smo
 
 ### Opções úteis
 - `--dry-run`: Simula o processo sem alterar arquivos ou estado.
-- `--skip-backup`: Pula a criação do backup (NÃO RECOMENDADO).
+- `--skip-backup`: Pula a criação do backup automático. NÃO RECOMENDADO. Requer o uso da flag explícita de confirmação `--yes`.
 - `--no-build`: Pula a reconstrução das imagens.
 
 ---
@@ -109,6 +109,10 @@ Caso ocorra um erro após o upgrade, use o script `scripts/rollback-local.sh`.
 ## Validação de Scripts
 
 Para validar que os scripts de upgrade/rollback estão funcionando corretamente (sem realizar uma troca real):
+```bash
+./scripts/validate-upgrade-rollback-local.sh
+```
+a troca real):
 ```bash
 ./scripts/validate-upgrade-rollback-local.sh
 ```

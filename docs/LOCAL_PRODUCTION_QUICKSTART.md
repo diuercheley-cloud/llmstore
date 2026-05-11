@@ -1,6 +1,13 @@
 # Local Production Quickstart
 
-> **Novo Instalador:** Para realizar a instalação completa a partir do zero em uma máquina nova, veja o [First Run Local](./FIRST_RUN_LOCAL.md).
+> **Novo Instalador (Recomendado):** Use os comandos abaixo para uma configuração guiada e instalação completa:
+> ```bash
+> make configure-local
+> make install-local
+> ```
+> O comando `configure-local` ajuda a configurar o ambiente (.env.local, GPU/CPU, portas) e o `install-local` realiza todos os pré-checks e validações necessários.
+
+Para mais detalhes sobre o processo de primeira execução, veja o [First Run Local](./FIRST_RUN_LOCAL.md).
 
 Versão curta para subir e testar o ambiente rapidamente.
 

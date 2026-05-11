@@ -581,6 +581,8 @@ log_step "Redacting sensitive tokens from artifacts"
 log_section "Validation Report"
 log_info "Summary JSON: ${SUMMARY_JSON}"
 log_info "Summary MD: ${SUMMARY_MD}"
+
+VALIDATION_STATUS=0
 if python3 - "${SUMMARY_JSON}" <<'PY'
 import json
 import sys
@@ -588,9 +590,17 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     sys.exit(0 if json.load(handle)["validation_result"]["success"] else 1)
 PY
 then
+  operator_success "Validação de produção local concluída com sucesso!"
   log_ok "VALIDATION SUCCESSFUL"
-  exit 0
+  VALIDATION_STATUS=0
+else
+  operator_error "VALIDATION_FAILED" "A validação de produção local encontrou falhas críticas." "Revise o arquivo ${SUMMARY_MD} para detalhes das falhas."
+  log_error "VALIDATION FAILED"
+  VALIDATION_STATUS=1
 fi
 
-log_error "VALIDATION FAILED"
-exit 1
+add_next_step "Revise o relatório completo em: ${SUMMARY_MD}"
+add_next_step "Verifique os logs detalhados em: ${LOGS_DIR}"
+print_next_steps
+
+exit ${VALIDATION_STATUS}

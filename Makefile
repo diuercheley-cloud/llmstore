@@ -14,6 +14,12 @@ help: ## Show this help message
 first-run: ## First run setup with demo data
 	./scripts/first-run-local.sh --with-demo
 
+configure-local: ## Guided wizard to configure local appliance
+	./scripts/configure-local-wizard.sh --interactive
+
+configure-local-noninteractive: ## Configure local appliance with defaults
+	./scripts/configure-local-wizard.sh --non-interactive --yes
+
 up: ## Start the stack in background
 	./scripts/up.sh
 
@@ -33,6 +39,9 @@ health: ## Check stack health (endpoints: /health, /ready, /status)
 validate-control-center: ## Validate System Control Center (Backend + UI)
 	./scripts/validate-system-control-center-local.sh
 
+validate-post-install: ## Run post-installation validation
+	./scripts/validate-post-install-local.sh --with-demo
+
 validate: ## Full production validation
 	./scripts/validate-local-production-full.sh
 
@@ -50,6 +59,14 @@ demo: ## Run full demo (no build)
 
 security: ## Generate security report
 	./scripts/security-report-local.sh
+
+pre-client-check: ## Run pre-client installation checklist
+	chmod +x ./scripts/pre-client-checklist-local.sh
+	./scripts/pre-client-checklist-local.sh --client-install
+
+pre-demo-check: ## Run pre-demo checklist
+	chmod +x ./scripts/pre-client-checklist-local.sh
+	./scripts/pre-client-checklist-local.sh --demo
 
 readiness: ## Run production readiness check
 	./scripts/production-readiness-local.sh
@@ -97,6 +114,15 @@ check-secrets: ## Scan for secrets in the codebase
 fix-permissions: ## Fix local file permissions
 	./scripts/fix-local-permissions.sh --yes
 
+install-local: ## Install system as local appliance with demo data
+	./scripts/install-local-appliance.sh --with-demo
+
+validate-install-local: ## Validate local appliance installer
+	./scripts/validate-install-local-appliance.sh
+
+validate-backup-before-upgrade: ## Validate backup before upgrade logic
+	./scripts/validate-backup-before-upgrade-local.sh
+
 install: ## Install system dependencies
 	./scripts/install.sh
 
@@ -122,3 +148,9 @@ validate-multitenant: ## Validate multi-tenant isolation
 	./scripts/validate-multitenant-isolation-full.sh
 
 validate-local-production: validate
+
+pre-client-check: ## Run pre-client installation checklist
+	./scripts/pre-client-checklist-local.sh --client-install
+
+pre-demo-check: ## Run pre-demo checklist
+	./scripts/pre-client-checklist-local.sh --demo

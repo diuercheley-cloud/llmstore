@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.6.2-installer-polish] - 2026-05-11
+
+### Added
+- Instalador local `install-local-appliance.sh` e wizard `configure-local-wizard.sh` para preparar appliances de cliente final com mensagens operacionais amigáveis.
+- Checklist pré-demo/pré-cliente, documentação de instalação para cliente final e catálogo de erros operacionais sanitizados.
+- Backup automático antes de upgrade, integração de rollback com backup de upgrade e validação completa pós-instalação.
+- Scripts de validação local para instalador, wizard, checklist, documentação, erros operacionais, backup/upgrade e pós-instalação.
+- Cobertura de testes dedicada para segurança, relatórios e fluxos operacionais da release `installer-polish`.
+
+### Notes
+- Release preparada para bundle e validação local completa sem versionar secrets, `.env`/`.local`, modelos `.gguf`, uploads RAG ou artefatos brutos.
+
 ## [v1.6.1-product-hardening] - 2026-05-10
 
 ### Added

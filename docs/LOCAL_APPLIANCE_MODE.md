@@ -25,9 +25,16 @@ The appliance mode introduces several guards, especially during the release proc
 
 ## How to Enable
 
-`LOCAL_APPLIANCE_MODE` is enabled by default during the initial setup via `scripts/first-run-local.sh`.
+The easiest way to enable and configure `LOCAL_APPLIANCE_MODE` is by using the **Configuration Wizard**:
 
-To enable it manually, add or update the following in your `.env.local`:
+```bash
+make configure-local
+```
+
+This wizard will guide you through the setup of `.env.local` and ensure all appliance-specific settings are correctly applied.
+
+Alternatively, you can enable it manually by adding or updating the following in your `.env.local`:
+
 
 ```env
 LOCAL_APPLIANCE_MODE=true

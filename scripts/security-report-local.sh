@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Load operator errors library if available
+if [[ -f "${SCRIPT_DIR}/lib/operator-errors.sh" ]]; then
+  source "${SCRIPT_DIR}/lib/operator-errors.sh"
+fi
+
 BASE_URL="http://localhost:18080"
 OUTPUT_DIR="artifacts/security-reports"
 STRICT=false
@@ -667,4 +673,20 @@ EOF
 # Redact the report directory
 echo "Redacting security report artifacts..."
 ./scripts/redact-local-sensitive-artifacts.sh --path "${OUTPUT_DIR}" --in-place
+
+# Friendly output
+if [[ $? -eq 0 ]]; then
+    if python3 -c "import json, sys, glob; f = glob.glob('${OUTPUT_DIR}/*/security-report.json')[-1]; data = json.load(open(f)); sys.exit(0 if data['score'] == 'PASS' else 1)"; then
+        operator_success "Relatório de segurança gerado com sucesso! Nenhum problema crítico encontrado."
+    else
+        operator_warning "SECURITY_FAILED" "O relatório de segurança identificou vulnerabilidades ou riscos." "Revise o relatório em ${OUTPUT_DIR} e corrija as falhas apontadas."
+    fi
+else
+    operator_error "SECURITY_FAILED" "Falha ao gerar o relatório de segurança." "Verifique se todas as dependências estão instaladas e se o sistema está acessível."
+fi
+
+REPORT_MD=$(ls -t "${OUTPUT_DIR}"/*/security-report.md | head -n 1)
+add_next_step "Revise o relatório completo em: ${REPORT_MD}"
+add_next_step "Execute ./scripts/redact-local-sensitive-artifacts.sh se houver segredos expostos."
+print_next_steps
 

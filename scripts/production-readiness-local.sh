@@ -642,8 +642,21 @@ selected_model = ""
 if models_list:
     selected_model = models_list[0].get("id") or models_list[0].get("model_id") or ""
 
+chat_capable_model = ""
+for model in models_list:
+    model_id = model.get("id") or model.get("model_id") or ""
+    model_type = str((model.get("metadata") or {}).get("type", "")).lower()
+    if model_type == "embedding":
+        continue
+    if "embedding" in model_id.lower():
+        continue
+    chat_capable_model = model_id
+    break
+
+chat_probe_model = chat_capable_model or selected_model or "default"
+
 chat_payload = {
-    "model": selected_model or "default",
+    "model": chat_probe_model,
     "messages": [{"role": "user", "content": "Return only the word ok."}],
     "max_tokens": 8,
     "stream": False,
@@ -657,14 +670,22 @@ chat_status, chat_body, _, chat_error = http_request(
 )
 chat_log = write_log("api_chat_completions", f"status={chat_status}\nerror={chat_error}\nbody:\n{chat_body}")
 chat_ok = chat_status == 200 and ("choices" in chat_body or '"id"' in chat_body)
+chat_missing_model = chat_status == 404 and "requested model not found" in chat_body.lower()
+chat_status_label = "pass" if chat_ok else "fail"
+chat_details = f"HTTP {chat_status}" if chat_status is not None else f"erro de conexão: {chat_error}"
+chat_remediation = "Recupere autenticação de cliente, modelos registrados e data plane antes da operação."
+if chat_missing_model and not chat_capable_model:
+    chat_status_label = "warn"
+    chat_details = f"HTTP {chat_status}; /v1/models não expôs modelo de chat utilizável (probe={chat_probe_model})"
+    chat_remediation = "Publique ao menos um modelo generativo em /v1/models para validar chat ponta a ponta neste relatório."
 add_check(
     "api_chat_completions",
     "api",
     "POST /v1/chat/completions",
-    "pass" if chat_ok else "fail",
+    chat_status_label,
     "critical",
-    f"HTTP {chat_status}" if chat_status is not None else f"erro de conexão: {chat_error}",
-    "Recupere autenticação de cliente, modelos registrados e data plane antes da operação.",
+    chat_details,
+    chat_remediation,
     chat_log,
 )
 
@@ -1458,6 +1479,24 @@ PY
 # Redact the report directory
 echo "Redacting production readiness artifacts..."
 ./scripts/redact-local-sensitive-artifacts.sh --path "${RUN_DIR}" --in-place
+
+# Friendly output
+if [[ $? -eq 0 ]]; then
+    FINAL_SCORE=$(python3 -c "import json; print(json.load(open('${REPORT_JSON}'))['score'])")
+    if [[ "${FINAL_SCORE}" == "READY" ]]; then
+        operator_success "Sistema pronto para produção local! Score: READY"
+    elif [[ "${FINAL_SCORE}" == "READY_WITH_WARNINGS" ]]; then
+        operator_warning "READY_DEGRADED" "Sistema pronto, mas com avisos." "Revise os avisos no relatório em ${REPORT_MD}"
+    else
+        operator_error "VALIDATION_FAILED" "O sistema NÃO está pronto para produção local." "Corrija as falhas críticas apontadas no relatório em ${REPORT_MD}"
+    fi
+else
+    operator_error "VALIDATION_FAILED" "Falha ao gerar o relatório de prontidão." "Verifique se o sistema está acessível e se as dependências estão instaladas."
+fi
+
+add_next_step "Revise o relatório completo em: ${REPORT_MD}"
+add_next_step "Execute 'make health' para monitoramento contínuo."
+print_next_steps
 
 if [[ "${JSON_ONLY}" == "true" ]]; then
   cat "${REPORT_JSON}"

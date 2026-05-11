@@ -4,6 +4,13 @@
 
 Transformar o stack em um produto vendavel com onboarding self-serve, plano free limitado, pagina publica de oferta e deploy simples em VPS.
 
+### Technical Readiness & Safety
+O sistema inclui ferramentas de auto-diagnóstico para garantir o sucesso da venda:
+
+- **Pre-Demo Checklist**: `make pre-demo-check` (Garante que a demo não falhe ao vivo).
+- **Pre-Client Checklist**: `make pre-client-check` (Valida segurança e performance antes da entrega).
+- **Security Report**: Relatório detalhado de mitigação de riscos.
+
 ## Fluxo comercial
 
 1. O visitante acessa `/` para entender a proposta do produto.

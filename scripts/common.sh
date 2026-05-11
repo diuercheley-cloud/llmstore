@@ -2,6 +2,11 @@
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Load operator errors library if available
+if [[ -f "${ROOT_DIR}/scripts/lib/operator-errors.sh" ]]; then
+  source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
+fi
+
 CURL_BASE_URL_LAST_MODE="uninitialized"
 CURL_BASE_URL_LAST_URL=""
 
@@ -17,6 +22,7 @@ record_curl_mode() {
 
 load_env_file() {
   local env_path="$1"
+  local preserve_existing="${STACK_ENV_PRESERVE_EXISTING:-false}"
   while IFS= read -r line || [[ -n "${line}" ]]; do
     if [[ -z "${line}" ]] || [[ "${line}" =~ ^[[:space:]]*# ]]; then
       continue
@@ -26,7 +32,7 @@ load_env_file() {
     fi
     local key="${line%%=*}"
     local value="${line#*=}"
-    if [[ -v "${key}" ]]; then
+    if [[ "${preserve_existing}" == "true" && -v "${key}" ]]; then
       continue
     fi
     export "${key}=${value}"

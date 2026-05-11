@@ -5,6 +5,15 @@ Este guia descreve como preparar e executar uma demonstração completa do produ
 ## Objetivo da Demo
 Demonstrar a soberania de dados, facilidade de implantação, portal do cliente, governança de API e billing manual, tudo rodando localmente com aceleração de GPU (quando disponível).
 
+## Pre-Demo Checklist
+Antes de iniciar a demonstração, execute o checklist automatizado para garantir que o ambiente está pronto:
+
+```bash
+make pre-demo-check
+```
+
+Isso gerará um relatório em `artifacts/pre-client-checklists/` validando saúde, segurança e prontidão dos dados de demo.
+
 ## Pré-requisitos
 - Docker e Docker Compose instalados.
 - WSL2 (se estiver no Windows) com drivers NVIDIA configurados.

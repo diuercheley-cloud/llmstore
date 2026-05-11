@@ -73,7 +73,36 @@ Esses valores são conservadores. Dependendo do build do `llama.cpp`, do driver 
 ./scripts/install-wsl-deps.sh
 ```
 
-2. Escolha o arquivo de ambiente:
+## Instalação como appliance local
+
+O instalador principal configura o sistema completo para uso local, com validação de produção, relatórios de segurança e readiness.
+
+```bash
+# Recomendado: instalação completa com demo data
+make install-local
+
+# Ou execute o script diretamente com opções
+./scripts/install-local-appliance.sh --with-demo --gpu
+```
+
+Opções suportadas:
+- `--yes`: Pula confirmações.
+- `--dry-run`: Apenas mostra o que seria feito.
+- `--with-demo`: Carrega dados de exemplo.
+- `--gpu`: Tenta configurar aceleração NVIDIA.
+- `--base-url`: Define a URL pública (padrão: http://localhost:18080).
+
+Após a instalação, um relatório detalhado é gerado em `artifacts/install-local-appliance/<timestamp>/`.
+
+## Instalação para cliente final
+
+Para clientes finais que desejam instalar o sistema sem se aprofundar na arquitetura interna, criamos um conjunto de documentos simplificados:
+- [Guia de Requisitos do Sistema](docs/CUSTOMER_REQUIREMENTS.md)
+- [Guia de Instalação](docs/CUSTOMER_INSTALL_GUIDE.md)
+- [Quickstart (Caminho Curto)](docs/CUSTOMER_QUICKSTART.md)
+- [Solução de Problemas (Troubleshooting)](docs/CUSTOMER_TROUBLESHOOTING.md)
+
+## Escolha o arquivo de ambiente
 
 ```bash
 vi .env.local
