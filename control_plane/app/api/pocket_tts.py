@@ -1,8 +1,5 @@
 from pathlib import Path
 
-import uuid
-from pathlib import Path
-
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Response, Depends
 from fastapi.responses import FileResponse
@@ -108,7 +105,7 @@ async def proxy_pocket_tts(
             )
             
             # Record usage if successful
-            if path == "tts" and request.method == "POST" and proxy_resp.status_code == 200:
+            if path == "tts" and request.method == "POST" and proxy_resp.status_code in {200, 201}:
                 plan = resolve_effective_plan(client)
                 await record_tts_event(
                     session,

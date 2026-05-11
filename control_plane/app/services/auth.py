@@ -135,6 +135,8 @@ async def require_client(
         select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == api_key.client_id)
     )
     client = client_result.scalar_one_or_none()
+    if request is not None:
+        request.state.api_key_prefix = api_key.key_prefix
     if client is None or client.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="client blocked or not found")
     if client.billing_status == "suspended":

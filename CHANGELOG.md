@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.6.3-readiness-cleanup] - 2026-05-11
+
+### Added
+- Correção de warnings do Production Readiness report com diagnóstico automatizado.
+- Modelo de chat utilizável no `/v1/models` probe para validação de readiness.
+- Probe chat/SSE robusto com capability opcional e fallback seguro.
+- TTS readiness auth corrigido com validação de autenticação explícita.
+- Rate limit probe seguro com cleanup e verificação de segurança.
+- CORS local/appliance explícito com defaults seguros e probe de readiness.
+- Production Readiness final READY com score de validação e security report PASS.
+- Testes dedicados para readiness cleanup v1.6.3 e production readiness ready score.
+
+### Notes
+- Release preparada para bundle e validação local completa sem versionar secrets, `.env`/`.local`, modelos `.gguf`, uploads RAG ou artefatos brutos.
+
 ## [v1.6.2-installer-polish] - 2026-05-11
 
 ### Added

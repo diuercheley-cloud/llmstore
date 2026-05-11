@@ -8,6 +8,7 @@ The `configure-local-wizard.sh` script provides a guided, interactive way to con
 - **Non-Interactive Mode**: Can be used with flags for automated deployments.
 - **Security First**: 
   - Generates secure `ADMIN_TOKEN`.
+  - Configures secure CORS defaults (localhost and 127.0.0.1).
   - Sets strict file permissions (600 for `.env.local`).
   - Masks secrets in reports.
 - **Automatic Backups**: Creates a backup of your existing `.env.local` before making changes.

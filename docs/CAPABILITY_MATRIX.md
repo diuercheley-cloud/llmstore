@@ -4,9 +4,9 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 
 | Feature | Mock | Local Real | Production Local | Status | Limitações | Validador |
 |---------|------|------------|------------------|--------|------------|-----------|
-| `/v1/chat/completions` | ✅ | ✅ | ✅ | GA | - | `scripts/test-chat.sh` |
-| streaming | ✅ | ✅ | ✅ | GA | - | `scripts/test-stream.sh` |
-| `/v1/models` | ✅ | ✅ | ✅ | GA | - | `curl /v1/models` |
+| `/v1/chat/completions` | ✅ | ✅ | ✅ | GA | - | `scripts/test-chat.sh`, `scripts/validate-chat-sse-readiness-local.sh` |
+| streaming | ✅ | ✅ | ✅ | GA | - | `scripts/test-stream.sh`, `scripts/validate-chat-sse-readiness-local.sh` |
+| `/v1/models` | ✅ | ✅ | ✅ | GA | - | `curl /v1/models` (Includes capabilities, status and readiness flags) |
 | `/v1/embeddings` | ✅ (Deterministic) | ❌ | ⚠️ (Mock) | Partial | Mock por padrão | `scripts/test-embeddings.sh` |
 | `/v1/responses` | ✅ | ✅ | ✅ | Beta | Sem streaming | `scripts/test-responses.sh` |
 | tools/function calling | ❌ | ⚠️ (Partial) | ❌ | Unsupported | Depende do backend | - |

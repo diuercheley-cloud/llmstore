@@ -408,12 +408,22 @@ async def portal_usage(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
+    from app.services.tts_usage import get_tts_usage_and_limits
+    
     effective_plan = resolve_effective_plan(client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-    invoice_preview = build_invoice_preview(effective_plan=effective_plan, monthly_used_tokens=monthly_used)
+    
+    tts_info = await get_tts_usage_and_limits(session, client)
+    monthly_tts_used = tts_info["usage"]["monthly_chars"]
+    
+    invoice_preview = build_invoice_preview(
+        effective_plan=effective_plan, 
+        monthly_used_tokens=monthly_used,
+        monthly_used_tts_chars=monthly_tts_used
+    )
     return {
         "client_id": str(client.id),
         "billing_status": client.billing_status,
@@ -432,6 +442,7 @@ async def portal_usage(
             "remaining_tokens": max(effective_plan.monthly_token_quota - monthly_used, 0),
             "quota": effective_plan.monthly_token_quota,
         },
+        "tts_usage": tts_info,
         "invoice_preview": invoice_preview,
     }
 

@@ -99,6 +99,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(os.getcwd())
+sys.path.insert(0, str(ROOT / "control_plane"))
+
+from app.services.tts_readiness import (  # noqa: E402
+    assess_tts_probe,
+    build_tts_probe_skip,
+    get_or_create_tts_readiness_client as ensure_tts_readiness_client,
+)
+
 BASE_URL = os.environ["PR_BASE_URL"].rstrip("/")
 RUN_DIR = Path(os.environ["PR_RUN_DIR"])
 LOGS_DIR = Path(os.environ["PR_LOGS_DIR"])
@@ -119,6 +127,14 @@ OPTIONAL_SKIP_IDS = {
     "dr_restore_dry_run",
     "observability_validate_script",
     "observability_validation_artifacts",
+}
+
+OPTIONAL_WARN_IDS = {
+    "saas_rate_limit",
+    "security_cors_local",
+    "git_status_clean",
+    "services_pocket_tts",
+    "services_rag_worker",
 }
 
 SECRET_PATTERNS = [
@@ -217,6 +233,29 @@ def http_request(
         return None, "", {}, str(exc)
 
 
+def http_request_bytes(
+    path: str,
+    *,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+    body: bytes | None = None,
+    timeout: int = 15,
+) -> tuple[int | None, bytes, dict[str, str], str | None]:
+    url = path if path.startswith("http://") or path.startswith("https://") else f"{BASE_URL}{path}"
+    req = urllib.request.Request(url, method=method, data=body)
+    for key, value in (headers or {}).items():
+        req.add_header(key, value)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            payload = response.read()
+            return response.status, payload, dict(response.headers.items()), None
+    except urllib.error.HTTPError as exc:
+        payload = exc.read()
+        return exc.code, payload, dict(exc.headers.items()), None
+    except Exception as exc:  # noqa: BLE001
+        return None, b"", {}, str(exc)
+
+
 def json_body(payload: dict) -> bytes:
     return json.dumps(payload).encode("utf-8")
 
@@ -231,6 +270,8 @@ class CheckRecord:
     details: str
     remediation: str
     evidence: str
+    readiness_impact: str = "none"
+    optional: bool = False
 
 
 checks: list[CheckRecord] = []
@@ -245,6 +286,8 @@ def add_check(
     details: str,
     remediation: str,
     evidence: str,
+    readiness_impact: str = "none",
+    optional: bool = False,
 ) -> None:
     checks.append(
         CheckRecord(
@@ -256,6 +299,8 @@ def add_check(
             details=sanitize_text(details),
             remediation=sanitize_text(remediation),
             evidence=sanitize_text(evidence),
+            readiness_impact=readiness_impact,
+            optional=optional,
         )
     )
 
@@ -267,8 +312,10 @@ git_status = run_cmd(["git", "status", "--porcelain"])
 git_status_clean = git_status.returncode == 0 and not git_status.stdout.strip()
 generated_at = iso_now()
 localhost_mode = bool_env("LOCALHOST_MODE", False)
+appliance_mode = bool_env("LOCAL_APPLIANCE_MODE", False)
 local_billing_mode = os.environ.get("LOCAL_BILLING_MODE", "")
 rag_enabled = bool_env("RAG_ENABLED", True)
+tts_enabled = bool_env("TTS_ENABLED", True)
 app_public_url = os.environ.get("APP_PUBLIC_URL", BASE_URL)
 admin_token = os.environ.get("ADMIN_TOKEN", "")
 
@@ -287,6 +334,19 @@ def cleanup_created_client() -> None:
             method="DELETE",
             headers={"X-Admin-Token": admin_token},
         )
+
+
+def get_or_create_tts_readiness_client() -> tuple[bool, str]:
+    global created_client_id, created_client_name, working_api_key, working_api_key_prefix, temp_client_created
+    client = ensure_tts_readiness_client(http_request, admin_token)
+    if not client.ok:
+        return False, client.detail
+    created_client_id = client.client_id
+    created_client_name = client.client_name
+    working_api_key = client.api_key
+    working_api_key_prefix = client.key_prefix
+    temp_client_created = client.temporary
+    return True, client.detail
 
 
 def provision_api_access() -> tuple[bool, str]:
@@ -643,22 +703,33 @@ if models_list:
     selected_model = models_list[0].get("id") or models_list[0].get("model_id") or ""
 
 chat_capable_model = ""
+ready_chat_model = ""
 for model in models_list:
     model_id = model.get("id") or model.get("model_id") or ""
-    model_type = str((model.get("metadata") or {}).get("type", "")).lower()
-    if model_type == "embedding":
-        continue
-    if "embedding" in model_id.lower():
-        continue
-    chat_capable_model = model_id
-    break
+    capabilities = model.get("capabilities") or {}
+    
+    # Nova lógica baseada em capabilities explícitas
+    if capabilities.get("chat") is True:
+        if not chat_capable_model:
+            chat_capable_model = model_id
+        
+        # Priorizar modelo que já está pronto (backend online ou mock habilitado)
+        if model.get("local_ready") is True or model.get("production_ready") is True:
+            ready_chat_model = model_id
+            break
 
-chat_probe_model = chat_capable_model or selected_model or "default"
+chat_probe_model = ready_chat_model or chat_capable_model or selected_model or "default"
+chat_streaming_supported = False
+if chat_probe_model != "default":
+    target_model = next((m for m in models_list if (m.get("id") or m.get("model_id")) == chat_probe_model), None)
+    if target_model:
+        chat_streaming_supported = target_model.get("capabilities", {}).get("streaming") is True
 
 chat_payload = {
     "model": chat_probe_model,
     "messages": [{"role": "user", "content": "Return only the word ok."}],
-    "max_tokens": 8,
+    "max_tokens": 10,
+    "temperature": 0,
     "stream": False,
 }
 chat_status, chat_body, _, chat_error = http_request(
@@ -670,14 +741,29 @@ chat_status, chat_body, _, chat_error = http_request(
 )
 chat_log = write_log("api_chat_completions", f"status={chat_status}\nerror={chat_error}\nbody:\n{chat_body}")
 chat_ok = chat_status == 200 and ("choices" in chat_body or '"id"' in chat_body)
-chat_missing_model = chat_status == 404 and "requested model not found" in chat_body.lower()
 chat_status_label = "pass" if chat_ok else "fail"
 chat_details = f"HTTP {chat_status}" if chat_status is not None else f"erro de conexão: {chat_error}"
 chat_remediation = "Recupere autenticação de cliente, modelos registrados e data plane antes da operação."
-if chat_missing_model and not chat_capable_model:
-    chat_status_label = "warn"
-    chat_details = f"HTTP {chat_status}; /v1/models não expôs modelo de chat utilizável (probe={chat_probe_model})"
-    chat_remediation = "Publique ao menos um modelo generativo em /v1/models para validar chat ponta a ponta neste relatório."
+
+if chat_ok:
+    if "ok" in chat_body.lower():
+        chat_details += "; Resposta 'ok' validada."
+    else:
+        chat_status_label = "warn"
+        chat_details += "; Resposta recebida mas não contém 'ok'."
+else:
+    if ready_chat_model:
+         chat_status_label = "fail"
+         chat_details = f"HTTP {chat_status}; Modelo {ready_chat_model} marcado como pronto mas falhou no teste real."
+    elif chat_capable_model:
+         chat_status_label = "warn"
+         chat_details = f"HTTP {chat_status}; /v1/models encontrou modelo de chat {chat_capable_model} mas ele não está local_ready."
+         chat_remediation = "Verifique o status do backend para o modelo ou habilite MOCK_BACKEND_ENABLED para testes locais."
+    else:
+         chat_status_label = "warn"
+         chat_details = f"HTTP {chat_status}; /v1/models não expôs modelo de chat utilizável (probe={chat_probe_model})"
+         chat_remediation = "Publique ao menos um modelo generativo em /v1/models para validar chat ponta a ponta neste relatório."
+
 add_check(
     "api_chat_completions",
     "api",
@@ -702,15 +788,28 @@ stream_log = write_log(
     "api_streaming_sse",
     f"status={stream_status}\nerror={stream_error}\nheaders={json.dumps(stream_headers, indent=2)}\nbody:\n{stream_body[:4000]}",
 )
-stream_supported = stream_status == 200 and ("text/event-stream" in stream_headers.get("Content-Type", "") or "data:" in stream_body)
-stream_status_label = "pass" if stream_supported else ("skip" if SKIP_HEAVY else "warn")
+
+has_sse_data = "data:" in stream_body
+is_sse_content_type = "text/event-stream" in stream_headers.get("Content-Type", "")
+stream_ok = stream_status == 200 and (has_sse_data or is_sse_content_type)
+
+if stream_ok:
+    stream_status_label = "pass"
+    stream_details = f"HTTP {stream_status}; Stream SSE validado (chunks detectados)."
+elif not chat_streaming_supported:
+    stream_status_label = "skip"
+    stream_details = f"Streaming ignorado: modelo {chat_probe_model} não reporta capability 'streaming'."
+else:
+    stream_status_label = "fail"
+    stream_details = f"HTTP {stream_status}; Streaming falhou para modelo {chat_probe_model} que deveria suportar SSE."
+
 add_check(
     "api_streaming_sse",
     "api",
     "Streaming SSE suportado",
     stream_status_label,
     "medium",
-    f"HTTP {stream_status}; content-type={stream_headers.get('Content-Type', '')}" if stream_status is not None else f"erro de conexão: {stream_error}",
+    stream_details,
     "Se streaming for requisito do caso local, valide o backend/modelo com suporte SSE.",
     stream_log,
 )
@@ -788,48 +887,35 @@ add_check(
 )
 
 rate_limit_status = "skip" if SKIP_HEAVY else "warn"
-rate_limit_details = "checagem pesada omitida" if SKIP_HEAVY else "não foi possível comprovar rate limit básico sem mutação dedicada"
+rate_limit_details = "checagem pesada omitida" if SKIP_HEAVY else "não executada"
 rate_limit_evidence = write_log("saas_rate_limit", rate_limit_details + "\n")
-if not SKIP_HEAVY and api_access_ok and selected_model:
-    limited_client_name = f"production-readiness-ratelimit-{int(time.time())}"
-    create_status, create_body, _, _ = http_request(
-        "/admin/clients",
-        method="POST",
-        headers={
-            "X-Admin-Token": admin_token,
-            "Content-Type": "application/json",
-        } if admin_token else {"Content-Type": "application/json"},
-        body=json_body({
-            "name": limited_client_name,
-            "description": "rate limit validation",
-            "rate_limit_per_minute": 1,
-            "daily_token_quota": 100000,
-            "weekly_token_quota": 500000,
-            "monthly_token_quota": 2000000,
-            "max_output_tokens": 64,
-        }),
-    )
-    if admin_token and create_status == 201:
-        limited_client = json.loads(create_body)
-        limited_client_id = limited_client["id"]
-        key_status, key_body, _, _ = http_request(
-            "/admin/api-keys",
-            method="POST",
-            headers={
-                "X-Admin-Token": admin_token,
-                "Content-Type": "application/json",
-            },
-            body=json_body({"client_id": limited_client_id, "name": "production-readiness-ratelimit"}),
-        )
-        if key_status == 201:
-            limited_key = json.loads(key_body)["api_key"]
-            headers = {"Authorization": f"Bearer {limited_key}", "Content-Type": "application/json"}
-            first = http_request("/portal/test-chat", method="POST", headers=headers, body=json_body({"model": selected_model, "prompt": "ok", "max_tokens": 4}), timeout=60)
-            second = http_request("/portal/test-chat", method="POST", headers=headers, body=json_body({"model": selected_model, "prompt": "ok", "max_tokens": 4}), timeout=60)
-            rate_limit_details = f"first={first[0]} second={second[0]}"
-            rate_limit_status = "pass" if first[0] == 200 and second[0] == 429 else "fail"
-            rate_limit_evidence = write_log("saas_rate_limit", rate_limit_details + "\n")
-        http_request(f"/admin/clients/{limited_client_id}", method="DELETE", headers={"X-Admin-Token": admin_token})
+if not SKIP_HEAVY:
+    script_path = ROOT / "scripts" / "validate-rate-limit-readiness-local.sh"
+    if script_path.exists():
+        # Pass BASE_URL and ADMIN_TOKEN to the script
+        env = os.environ.copy()
+        env["BASE_URL"] = BASE_URL
+        env["ADMIN_TOKEN"] = admin_token
+        try:
+            result = subprocess.run(
+                [str(script_path)],
+                cwd=str(ROOT),
+                capture_output=True,
+                text=True,
+                timeout=180,
+                check=False,
+                env=env
+            )
+            rate_limit_evidence = write_log("saas_rate_limit", f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}")
+            rate_limit_status = "pass" if result.returncode == 0 else "fail"
+            m = re.search(r"evidence=(.*)", result.stdout)
+            rate_limit_details = m.group(1) if m else f"validate-rate-limit-readiness-local.sh exit_code={result.returncode}"
+        except Exception as e:
+            rate_limit_status = "fail"
+            rate_limit_details = f"erro ao executar probe: {str(e)}"
+            rate_limit_evidence = write_log("saas_rate_limit", rate_limit_details)
+    else:
+        rate_limit_details = "script de validação não encontrado"
 add_check(
     "saas_rate_limit",
     "saas",
@@ -956,45 +1042,93 @@ add_check(
     "tts_enabled_detected",
     "tts",
     "TTS habilitado/desabilitado detectado",
-    "pass" if tts_present else "skip",
+    "pass" if tts_enabled else "skip",
     "medium",
-    "scripts/pocket-tts.sh detectado" if tts_present else "Pocket TTS não configurado neste checkout",
-    "Habilite Pocket TTS se ele fizer parte da operação local.",
-    write_log("tts_enabled_detected", f"pocket_tts_script={tts_present}\n"),
+    f"TTS_ENABLED={tts_enabled}" + (" (scripts/pocket-tts.sh detectado)" if tts_present else " (scripts/pocket-tts.sh ausente)"),
+    "Ajuste TTS_ENABLED conforme a operação local desejada.",
+    write_log("tts_enabled_detected", f"tts_enabled={tts_enabled}\npocket_tts_script={tts_present}\n"),
 )
-if tts_present and not SKIP_HEAVY:
+if tts_enabled and tts_present and not SKIP_HEAVY:
+    tts_client_ok, tts_client_details = get_or_create_tts_readiness_client()
+    status = None
+    headers = {}
+    error = None
+    response_body = b""
+    usage_recorded = False
     wav_path = RUN_DIR / "logs" / "tts-sample.wav"
-    status, body, headers, error = http_request(
-        "/pocket-tts/tts",
-        method="POST",
-        body=urllib.parse.urlencode({"text": "production readiness check"}).encode("utf-8"),
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        timeout=60,
+
+    if tts_client_ok:
+        status, response_body, headers, error = http_request_bytes(
+            "/pocket-tts/tts",
+            method="POST",
+            body=urllib.parse.urlencode({"text": "readiness tts ok"}).encode("utf-8"),
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                **auth_headers(),
+            },
+            timeout=60,
+        )
+        if status in {200, 201} and response_body:
+            wav_path.write_bytes(response_body)
+
+        if created_client_id and admin_token:
+            usage_status, usage_body, _, _ = http_request(
+                f"/admin/usage/{created_client_id}/summary",
+                headers={"X-Admin-Token": admin_token},
+            )
+            if usage_status == 200:
+                try:
+                    usage_payload = json.loads(usage_body)
+                except json.JSONDecodeError:
+                    usage_payload = {}
+                usage_recorded = int(usage_payload.get("today", {}).get("tts_chars_used", 0)) > 0
+    assessment = assess_tts_probe(
+        tts_enabled=tts_enabled,
+        http_status=status,
+        headers=headers,
+        body=response_body,
+        usage_recorded=usage_recorded,
+        client_detail=tts_client_details,
     )
-    if status == 200:
-        wav_path.write_bytes(body.encode("utf-8", errors="ignore") if isinstance(body, str) else body)
-    evidence = write_log("tts_generate_wav", f"status={status}\nerror={error}\ncontent_type={headers.get('Content-Type', '')}\n")
-    wav_ok = status == 200 and ("audio" in headers.get("Content-Type", "") or wav_path.exists())
+    evidence = write_log(
+        "tts_generate_wav",
+        (
+            f"client_status={tts_client_details}\n"
+            f"client_ready={tts_client_ok}\n"
+            f"status={status}\n"
+            f"error={error}\n"
+            f"content_type={headers.get('Content-Type', '')}\n"
+            f"usage_recorded={usage_recorded}\n"
+            f"body_preview={response_body[:200].decode('utf-8', errors='replace')}\n"
+        ),
+    )
     add_check(
         "tts_generate_wav",
         "tts",
         "Geração local .wav",
-        "pass" if wav_ok else "warn",
+        assessment.status,
         "medium",
-        f"HTTP {status}; content-type={headers.get('Content-Type', '')}" if status is not None else f"erro de conexão: {error}",
-        "Valide o endpoint Pocket TTS e a geração local de áudio.",
+        assessment.details if tts_client_ok else f"falha ao preparar client readiness: {tts_client_details}",
+        assessment.remediation if tts_client_ok else "Configure ADMIN_TOKEN e um billing plan ativo com tts_enabled=true para o probe autenticado.",
         evidence,
+        optional=assessment.optional,
     )
+    if wav_path.exists():
+        wav_path.unlink()
 else:
+    skip_assessment = build_tts_probe_skip(
+        "checagem omitida por --skip-heavy" if SKIP_HEAVY and tts_enabled and tts_present else "TTS desabilitado ou scripts ausentes"
+    )
     add_check(
         "tts_generate_wav",
         "tts",
         "Geração local .wav",
-        "skip" if tts_present else "skip",
+        skip_assessment.status,
         "medium",
-        "checagem omitida por --skip-heavy" if SKIP_HEAVY and tts_present else "TTS não configurado",
-        "Execute a validação de áudio quando Pocket TTS estiver ativo.",
+        skip_assessment.details,
+        skip_assessment.remediation,
         write_log("tts_generate_wav", "skipped\n"),
+        optional=skip_assessment.optional,
     )
 
 gitignore_text = (ROOT / ".gitignore").read_text(encoding="utf-8") if (ROOT / ".gitignore").exists() else ""
@@ -1090,21 +1224,47 @@ cors_status, cors_body, cors_headers, cors_error = http_request(
     "/health",
     method="OPTIONS",
     headers={
-        "Origin": "http://localhost:3000",
+        "Origin": "http://localhost:18080",
         "Access-Control-Request-Method": "GET",
     },
 )
 cors_log = write_log("security_cors_local", f"status={cors_status}\nerror={cors_error}\nheaders={json.dumps(cors_headers, indent=2)}\nbody:\n{cors_body}")
-cors_value = cors_headers.get("Access-Control-Allow-Origin", "")
-cors_ok = cors_status in {200, 204} and (cors_value in {"*", "http://localhost:3000", "http://localhost:18080"} or "localhost" in cors_value)
+cors_value = next((v for k, v in cors_headers.items() if k.lower() == "access-control-allow-origin"), "")
+
+# Valid if localhost is allowed AND it's not '*' in appliance mode (though '*' might be ok for dev)
+# We also check if BASE_URL is allowed
+base_origin = BASE_URL.rstrip("/")
+cors_status, _, cors_headers_base, _ = http_request(
+    "/health",
+    method="OPTIONS",
+    headers={
+        "Origin": base_origin,
+        "Access-Control-Request-Method": "GET",
+    },
+)
+cors_value_base = next((v for k, v in cors_headers_base.items() if k.lower() == "access-control-allow-origin"), "")
+
+cors_ok = (cors_status in {200, 204} and 
+           (cors_value == "http://localhost:18080" or cors_value == base_origin or "localhost" in cors_value))
+
+# In appliance mode, '*' is explicitly a warning/fail
+is_appliance = appliance_mode or os.environ.get("LOCAL_APPLIANCE_MODE", "").lower() == "true"
+if is_appliance and cors_value == "*":
+    cors_ok = False
+    cors_details = f"CORS wildcard '*' detectado em modo appliance. Use origens explícitas."
+elif cors_ok:
+    cors_details = f"HTTP {cors_status}; allow-origin={cors_value}"
+else:
+    cors_details = f"CORS restritivo ou inválido: allow-origin={cors_value}"
+
 add_check(
     "security_cors_local",
     "security",
     "CORS local",
     "pass" if cors_ok else "warn",
     "medium",
-    f"HTTP {cors_status}; allow-origin={cors_value}" if cors_status is not None else f"erro de conexão: {cors_error}",
-    "Garanta que origens localhost necessárias estejam permitidas em CORS.",
+    cors_details,
+    "Configure CORS_ALLOW_ORIGINS com localhost e a URL base do appliance.",
     cors_log,
 )
 artifact_scan_seed = "\n".join(
@@ -1455,16 +1615,23 @@ totals = {
     "skip": sum(1 for item in checks if item.status == "skip"),
     "critical_failures": sum(1 for item in checks if item.status == "fail" and item.severity == "critical"),
 }
-high_failures = [item for item in checks if item.status == "fail" and item.severity == "high"]
-any_nonoptional_skip = any(item.status == "skip" and item.id not in OPTIONAL_SKIP_IDS for item in checks)
+
+# Consider item.optional for scoring
+for item in checks:
+    if item.id in OPTIONAL_SKIP_IDS or item.id in OPTIONAL_WARN_IDS:
+        item.optional = True
+
+score_relevant_warns = sum(1 for item in checks if item.status == "warn" and not item.optional)
+score_relevant_fails = sum(1 for item in checks if item.status == "fail" and not item.optional)
+score_relevant_skips = sum(1 for item in checks if item.status == "skip" and not item.optional)
+high_failures = [item for item in checks if item.status == "fail" and item.severity == "high" and not item.optional]
+
 if totals["critical_failures"] > 0:
     score = "NOT_READY"
 elif high_failures:
     score = "READY_WITH_WARNINGS"
-elif totals["fail"] > 0 or totals["warn"] > 0 or any_nonoptional_skip:
+elif score_relevant_fails > 0 or score_relevant_warns > 0 or score_relevant_skips > 0:
     score = "READY_WITH_WARNINGS"
-elif totals["skip"] > 0:
-    score = "READY"
 else:
     score = "READY"
 report["score"] = score

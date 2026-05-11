@@ -75,10 +75,10 @@ DEFAULT_BILLING_PLANS = [
         "rag_max_storage_mb": 50,
         "rag_max_pages_per_month": 100,
         "rag_max_queries_per_month": 50,
-        "tts_enabled": False,
-        "tts_chars_per_request": 0,
-        "tts_chars_per_day": 0,
-        "tts_chars_per_month": 0,
+        "tts_enabled": True,
+        "tts_chars_per_request": 1000,
+        "tts_chars_per_day": 5000,
+        "tts_chars_per_month": 50000,
         "embeddings_enabled": True,
         "embeddings_requests_per_month": 100,
         "embeddings_tokens_per_month": 100000,
@@ -265,6 +265,16 @@ def derive_client_billing_status(
     return "active"
 
 
+def _min_quota(a: int | None, b: int | None) -> int:
+    if a is None and b is None:
+        return 0
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return min(a, b)
+
+
 def resolve_effective_plan(client: Client) -> EffectivePlan:
     if client.billing_plan is not None:
         plan = client.billing_plan
@@ -272,12 +282,12 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         return EffectivePlan(
             code=plan.code,
             name=plan.name,
-            rate_limit_per_minute=plan.rate_limit_per_minute,
-            daily_token_quota=plan.daily_token_quota,
-            weekly_token_quota=plan.weekly_token_quota,
-            monthly_token_quota=plan.monthly_token_quota,
-            max_output_tokens=plan.max_output_tokens,
-            max_context_tokens=getattr(plan, "max_context_tokens", 4096),
+            rate_limit_per_minute=_min_quota(plan.rate_limit_per_minute, client.rate_limit_per_minute),
+            daily_token_quota=_min_quota(plan.daily_token_quota, client.daily_token_quota),
+            weekly_token_quota=_min_quota(plan.weekly_token_quota, client.weekly_token_quota),
+            monthly_token_quota=_min_quota(plan.monthly_token_quota, client.monthly_token_quota),
+            max_output_tokens=_min_quota(plan.max_output_tokens, client.max_output_tokens),
+            max_context_tokens=_min_quota(getattr(plan, "max_context_tokens", 4096), client.max_context_tokens),
             allow_streaming=plan.allow_streaming,
             monthly_price=pricing_rule.monthly_price if pricing_rule else Decimal("0"),
             overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens if pricing_rule else Decimal("0"),

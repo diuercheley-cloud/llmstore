@@ -34,7 +34,20 @@ A llm-inference-stack visa oferecer alta compatibilidade com a API da OpenAI par
 
 ### Models (`/v1/models`)
 - **Status**: Suportado
-- **Descrição**: Lista modelos de chat e agora modelos de embedding ativos.
+- **Descrição**: Lista modelos de chat e modelos de embedding ativos. O endpoint foi estendido com metadados de capacidades e prontidão.
+
+## Capabilities e Status no Modelo
+
+O endpoint `/v1/models` inclui campos estendidos para facilitar a orquestração e o diagnóstico de prontidão:
+
+- **capabilities**: Objeto indicando suporte a `chat`, `streaming`, `embeddings`, `responses`, `tools`.
+- **enabled**: `true` se o modelo estiver ativo para consumo.
+- **backend_status**: Status do backend associado (`healthy`, `degraded`, `unhealthy`, `disabled`, `mock_fallback`).
+- **local_ready**: `true` se o modelo puder ser usado no ambiente local (inclui fallback para mock).
+- **production_ready**: `true` se o modelo estiver pronto para produção (exige backend real saudável).
+- **reason**: Mensagem explicativa caso o modelo não esteja pronto.
+
+Estes metadados ajudam clientes e integradores a filtrar modelos utilizáveis sem precisar de tentativas e erro.
 
 ## Integrações com Ferramentas Externas
 
@@ -72,12 +85,3 @@ O sistema expõe uma matriz detalhada do que é mock, local real ou production-r
 
 Administradores podem consultar as capacidades programaticamente via:
 `GET /admin/capabilities` (requer `X-Admin-Token`).
-
-## Capabilities no Metadata do Modelo
-
-O endpoint `/v1/models` inclui agora um campo `capabilities` dentro de `metadata` para cada modelo, indicando suporte a:
-- `supports_chat` (boolean)
-- `supports_streaming` (boolean)
-- `supports_embeddings` (boolean)
-- `supports_responses` (boolean)
-- `supports_tools` (boolean)

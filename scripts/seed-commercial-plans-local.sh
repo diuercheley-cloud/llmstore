@@ -53,15 +53,15 @@ FREE_PLAN='{
   "rag_enabled": false,
   "rag_max_documents": 0,
   "rag_max_storage_mb": 0,
-  "tts_enabled": false,
-  "tts_chars_per_month": 0,
+  "tts_enabled": true,
+  "tts_chars_per_month": 10000,
   "embeddings_enabled": false,
   "embeddings_requests_per_month": 0,
   "responses_enabled": true,
   "tools_enabled": false,
   "export_enabled": false,
   "support_level": "Community",
-  "allowed_models": ["gemma-2b"]
+  "allowed_models": ["gemma"]
 }'
 
 # 2. BASIC PLAN
@@ -88,7 +88,7 @@ BASIC_PLAN='{
   "tools_enabled": false,
   "export_enabled": false,
   "support_level": "Email",
-  "allowed_models": ["gemma-2b", "gemma-7b"]
+  "allowed_models": ["gemma", "nemotron"]
 }'
 
 # 3. PRO PLAN

@@ -179,6 +179,7 @@ async def system_status(
     return {
         "status": "ok" if db_ok and redis_ok and dp_health else "degraded",
         "appliance_mode": settings.local_appliance_mode,
+        "cors_configured": bool(settings.cors_allow_origins or settings.localhost_mode or settings.local_appliance_mode),
         "components": {
             "api": "online",
             "database": "online" if db_ok else "offline",
@@ -454,13 +455,22 @@ async def health_deep(
     sec_report = get_latest_security_report()
     security_info = {
         "last_security_report_score": sec_report.get("score") if sec_report else "N/A",
-        "check_secrets_available": os.path.exists("scripts/check-secrets.sh")
+        "check_secrets_available": os.path.exists("scripts/check-secrets.sh"),
+        "local_appliance_mode": settings.local_appliance_mode,
+        "cors_configured": bool(settings.cors_allow_origins or settings.localhost_mode or settings.local_appliance_mode),
+        "cors_origins_count": len(settings.cors_origins),
+        "cors_warnings": settings.cors_warnings
     }
 
     # Readiness Score
     readiness_score = "READY"
     critical_failures = []
     warnings = []
+
+    for w in settings.cors_warnings:
+        if w["severity"] == "high":
+            readiness_score = "READY_WITH_WARNINGS"
+        warnings.append(f"CORS: {w['message']}")
 
     # Security check for admin token
     if settings.admin_token == "default-admin-token":

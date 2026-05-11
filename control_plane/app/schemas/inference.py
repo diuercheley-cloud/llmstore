@@ -1,3 +1,4 @@
+import time
 from typing import Any, Literal, Union
 from uuid import UUID
 
@@ -48,10 +49,25 @@ class PortalTestChatRequest(BaseModel):
     max_tokens: int | None = Field(default=128, ge=1, le=32768)
 
 
+class ModelCapabilities(BaseModel):
+    chat: bool = True
+    streaming: bool = True
+    embeddings: bool = False
+    responses: bool = True
+    tools: bool = False
+
+
 class ModelCard(BaseModel):
     id: str
     object: str = "model"
+    created: int = Field(default_factory=lambda: int(time.time()))
     owned_by: str = "local"
+    capabilities: ModelCapabilities = Field(default_factory=ModelCapabilities)
+    enabled: bool = True
+    backend_status: str = "unknown"
+    production_ready: bool = False
+    local_ready: bool = False
+    reason: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

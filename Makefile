@@ -51,6 +51,9 @@ validate-migrations: ## Validate Alembic migrations integrity
 validate-abuse: ## Run abuse protection validation suite
 	./scripts/validate-abuse-protection-local.sh
 
+validate-cors: ## Validate CORS configuration for local appliance
+	./scripts/validate-cors-local-appliance.sh
+
 validate-migrations-temp: ## Validate migrations from scratch using temporary DB
 	./scripts/validate-migrations-local.sh --temp-db
 

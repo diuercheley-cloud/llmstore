@@ -31,5 +31,7 @@ curl -fsS "${BASE_URL}/admin/billing/plans" \
     \"weekly_token_quota\": ${PLAN_WEEKLY},
     \"monthly_token_quota\": ${PLAN_MONTHLY},
     \"max_output_tokens\": ${PLAN_MAX_TOKENS},
-    \"allow_streaming\": ${PLAN_ALLOW_STREAMING}
+    \"allow_streaming\": ${PLAN_ALLOW_STREAMING},
+    \"tts_enabled\": true,
+    \"rag_enabled\": true
   }" | python3 -m json.tool

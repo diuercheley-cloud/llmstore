@@ -78,5 +78,5 @@ async def test_model_capabilities_v1_models(admin_client: AsyncClient, admin_tok
     assert len(found) >= 1
     model = found[0]
     
-    assert "capabilities" in model["metadata"]
-    assert model["metadata"]["capabilities"]["supports_chat"] is True
+    assert "capabilities" in model
+    assert model["capabilities"]["chat"] is True

@@ -10,12 +10,12 @@ class ClientCreate(BaseModel):
     name: str = Field(min_length=3, max_length=120)
     description: str | None = Field(default=None, max_length=500)
     billing_plan_id: UUID | None = None
-    rate_limit_per_minute: int = Field(default=5, ge=1, le=120)
-    daily_token_quota: int = Field(default=20000, ge=1000, le=10_000_000)
-    weekly_token_quota: int = Field(default=100000, ge=1000, le=50_000_000)
-    monthly_token_quota: int = Field(default=300000, ge=1000, le=100_000_000)
-    max_context_tokens: int = Field(default=32768, ge=512, le=131072)
-    max_output_tokens: int = Field(default=2048, ge=128, le=32768)
+    rate_limit_per_minute: int = Field(default=1000, ge=1, le=10000)
+    daily_token_quota: int = Field(default=100_000_000, ge=1000, le=1_000_000_000)
+    weekly_token_quota: int = Field(default=500_000_000, ge=1000, le=5_000_000_000)
+    monthly_token_quota: int = Field(default=1_000_000_000, ge=1000, le=10_000_000_000)
+    max_context_tokens: int = Field(default=131072, ge=512, le=131072)
+    max_output_tokens: int = Field(default=32768, ge=128, le=32768)
     allowed_models: list[str] | None = None
     ip_allowlist: list[str] | None = None
     ip_blocklist: list[str] | None = None

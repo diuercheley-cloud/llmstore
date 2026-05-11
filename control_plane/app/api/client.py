@@ -334,6 +334,17 @@ async def list_models(
                 "id": settings.default_embedding_model,
                 "object": "model",
                 "owned_by": "local-mock" if settings.embeddings_backend == "mock" else "local",
+                "capabilities": {
+                    "chat": False,
+                    "streaming": False,
+                    "embeddings": True,
+                    "responses": False,
+                    "tools": False,
+                },
+                "enabled": True,
+                "backend_status": "healthy" if settings.embeddings_backend == "mock" else "unknown",
+                "production_ready": settings.app_env == "production",
+                "local_ready": True,
                 "metadata": {"type": "embedding", "dimensions": settings.embedding_dimensions}
             })
         return ModelList(data=filtered)

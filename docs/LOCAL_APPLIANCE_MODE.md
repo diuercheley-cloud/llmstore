@@ -12,7 +12,16 @@ When `LOCAL_APPLIANCE_MODE=true` is set in `.env.local`:
 2.  **LOCAL_BILLING_MODE=manual**: Real payment provider integrations (PSP/PIX) are disabled in favor of manual/local billing.
 3.  **PUBLIC_EXPOSURE=false**: Restricts features that might expose the system to the public internet.
 4.  **PUBLIC_SIGNUP_ENABLED=false**: Disables public user registration.
-5.  **CORS Restrictions**: CORS is strictly limited to localhost and standard local loopback addresses. `*` is not allowed.
+5.  **CORS Restrictions**: CORS is strictly limited to localhost and standard local loopback addresses. `*` is not allowed. Secure defaults are applied automatically based on `HOST_PORT` and `PUBLIC_BASE_URL`.
+
+## CORS Configuration
+
+In `LOCAL_APPLIANCE_MODE`, CORS is configured to be "secure-by-default":
+
+- **Explicit Origins**: Use `CORS_ALLOW_ORIGINS` in `.env.local` to list permitted origins (e.g., `http://localhost:3000`).
+- **Secure Defaults**: If `CORS_ALLOW_ORIGINS` is empty, the system automatically allows `http://localhost`, `http://127.0.0.1`, and variants with the configured `HOST_PORT`.
+- **Wildcard Forbidden**: Setting `CORS_ALLOW_ORIGINS=*` is strictly forbidden in appliance mode and will be ignored (falling back to secure defaults).
+- **Validation**: Use `./scripts/validate-cors-local-appliance.sh` to verify your CORS setup.
 
 ## Security Guards
 

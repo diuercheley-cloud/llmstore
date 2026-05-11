@@ -6,6 +6,7 @@ from sqlalchemy import inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import get_settings
 from app.models.client import Client
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
@@ -17,6 +18,32 @@ MODEL_REGISTRY_ROUTING_LOADS = (
     selectinload(ModelRegistry.inference_backend),
     selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
 )
+
+
+async def get_usable_chat_model(session: AsyncSession) -> tuple[dict | None, str | None]:
+    """
+    Finds the best usable chat model.
+    Prioritizes default models and requires chat capability.
+    Accepts unhealthy backends if mock fallback is enabled.
+    """
+    models = await list_active_registry_models(session)
+    if not models:
+        return None, "no_models_registered"
+
+    cards = [serialize_model_card(m) for m in models]
+    
+    # Filter for chat models
+    chat_models = [c for c in cards if c["capabilities"]["chat"]]
+    if not chat_models:
+        return None, "no_chat_models_registered"
+        
+    # Find first ready (prioritizes default due to list_active_registry_models order)
+    for card in chat_models:
+        if card["local_ready"]:
+            return card, None
+            
+    # None ready, return reason from the first chat model (likely the default one)
+    return None, chat_models[0].get("reason") or "no_ready_chat_model"
 
 
 def _parse_allowed_models(raw: str | None) -> set[str]:
@@ -223,6 +250,7 @@ def serialize_routing_table(model: ModelRegistry) -> list[dict]:
 
 
 def serialize_model_card(item: ModelRegistry) -> dict:
+    settings = get_settings()
     metadata = {}
     if item.metadata_json:
         try:
@@ -231,19 +259,52 @@ def serialize_model_card(item: ModelRegistry) -> dict:
             metadata = {"raw_metadata": item.metadata_json}
 
     # Derive capabilities
-    is_chat = item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    is_embedding = "embedding" in item.model_id.lower() or metadata.get("type") == "embedding"
+    is_chat = not is_embedding and item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    
     capabilities = {
-        "supports_chat": is_chat,
-        "supports_streaming": is_chat,
-        "supports_embeddings": "embedding" in item.model_id.lower() or metadata.get("type") == "embedding",
-        "supports_responses": is_chat,
-        "supports_tools": False,  # Marked as unsupported/partial in matrix
+        "chat": is_chat,
+        "streaming": is_chat,
+        "embeddings": is_embedding,
+        "responses": is_chat,
+        "tools": False,
     }
+
+    # Backend status and routing
+    routes = get_routing_candidates(item)
+    backend_status = "unknown"
+    if routes:
+        backend_status = routes[0].state
+    elif item.inference_backend_id:
+        backend_status = "no_route"
+    
+    # Readiness logic
+    is_ready = backend_status in {"healthy", "degraded"}
+    
+    # Accept mock if enabled or in local/test environment
+    is_mock_env = settings.app_env in {"local", "test"}
+    if not is_ready and (settings.mock_backend_enabled or is_mock_env):
+        is_ready = True
+        if backend_status == "unknown" or backend_status == "no_route":
+            backend_status = "mock_fallback"
+
+    reason = None
+    if not is_ready:
+        if not routes and not item.inference_backend_id:
+            reason = "no_active_routes"
+        else:
+            reason = f"backend_{backend_status}"
 
     return {
         "id": item.model_alias or item.model_id,
         "object": "model",
         "owned_by": item.provider,
+        "capabilities": capabilities,
+        "enabled": item.is_active,
+        "backend_status": backend_status,
+        "production_ready": is_ready and settings.app_env == "production",
+        "local_ready": is_ready,
+        "reason": reason,
         "metadata": {
             **metadata,
             "model_id": item.model_id,
@@ -251,7 +312,6 @@ def serialize_model_card(item: ModelRegistry) -> dict:
             "provider": item.provider,
             "context_length": item.context_length,
             "is_default": item.is_default,
-            "capabilities": capabilities,
         },
     }
 

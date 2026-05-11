@@ -229,6 +229,7 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
   run_validation "validate-localhost-mode.sh" "true"
   run_validation "validate-status-local.sh" "true"
   run_validation "validate-admin-lab-local.sh" "true"
+  run_validation "validate-usable-chat-model-local.sh" "true"
 
   if curl -fsS --connect-timeout 2 --max-time 5 "${LM_STUDIO_BASE_URL}/models" >/dev/null 2>&1; then
     LM_STUDIO_ONLINE="true"
@@ -288,6 +289,8 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
     tests/test_capability_matrix_docs.py
     tests/test_admin_capabilities_api.py
     tests/test_model_capabilities.py
+    tests/test_models_capabilities_metadata.py
+    tests/test_models_usable_chat_probe.py
     tests/test_integrations_docs.py
     tests/test_integration_examples_no_secrets.py
     -q

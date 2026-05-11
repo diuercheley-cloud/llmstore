@@ -121,6 +121,9 @@ class Settings(BaseSettings):
     embeddings_backend: str = Field(default="mock", alias="EMBEDDINGS_BACKEND")
     default_embedding_model: str = Field(default="text-embedding-3-small", alias="DEFAULT_EMBEDDING_MODEL")
     embedding_dimensions: int = Field(default=384, alias="EMBEDDING_DIMENSIONS")
+
+    # Backend Settings
+    mock_backend_enabled: bool = Field(default=False, alias="MOCK_BACKEND_ENABLED")
     
     # RAG Settings
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
@@ -165,31 +168,90 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
-        
-        if self.local_appliance_mode:
-            # Strictly forbid '*' in appliance mode
-            origins = [o for o in origins if o != "*"]
-        elif "*" in origins:
-            return ["*"]
-        
-        if self.localhost_mode:
-            # Add common localhost origins if not already present
-            localhost_origins = [
-                "http://localhost",
-                "http://localhost:18080",
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1",
-                "http://127.0.0.1:18080",
-            ]
-            for origin in localhost_origins:
+        raw_origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        origins = []
+
+        # Validate and sanitize origins
+        for origin in raw_origins:
+            if origin == "*":
+                if self.local_appliance_mode:
+                    # Strictly forbid '*' in appliance mode as default/explicit
+                    continue
+                return ["*"]
+            
+            # Simple validation: must start with http:// or https://
+            if origin.startswith(("http://", "https://")):
+                origins.append(origin.rstrip("/"))
+
+        if self.localhost_mode or self.local_appliance_mode:
+            # Add secure defaults for local operation
+            # Use public_base_url if it's a valid origin
+            if self.public_base_url.startswith(("http://", "https://")):
+                origin = self.public_base_url.rstrip("/")
                 if origin not in origins:
                     origins.append(origin)
+
+            # Standard localhost variants
+            localhost_variants = [
+                "http://localhost",
+                "http://127.0.0.1",
+                "http://0.0.0.0",
+            ]
+            
+            # If we know the port, add variants with port
+            port_match = None
+            if self.public_base_url:
+                import re
+                match = re.search(r":(\d+)", self.public_base_url)
+                if match:
+                    port_match = match.group(1)
+
+            for base in localhost_variants:
+                if base not in origins:
+                    origins.append(base)
+                if port_match:
+                    with_port = f"{base}:{port_match}"
+                    if with_port not in origins:
+                        origins.append(with_port)
+                
+                # Always include common dev ports if in localhost_mode but not necessarily appliance
+                if not self.local_appliance_mode:
+                    for p in ["18080", "3000", "3001"]:
+                        with_common_port = f"{base}:{p}"
+                        if with_common_port not in origins:
+                            origins.append(with_common_port)
+
+        return sorted(list(set(origins)))
+
+    @property
+    def cors_warnings(self) -> list[dict[str, str]]:
+        warnings = []
+        raw_origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
         
-        # In appliance mode, if origins is still empty after adding localhost,
-        # we might want to add current machine IPs, but for now localhost is enough
-        return origins
+        if self.local_appliance_mode:
+            if not raw_origins:
+                warnings.append({
+                    "id": "CORS_EMPTY_APPLIANCE",
+                    "severity": "medium",
+                    "message": "CORS_ALLOW_ORIGINS is empty in appliance mode. Using secure local defaults."
+                })
+            if "*" in raw_origins:
+                warnings.append({
+                    "id": "CORS_WILDCARD_APPLIANCE",
+                    "severity": "high",
+                    "message": "Wildcard '*' CORS is not allowed in LOCAL_APPLIANCE_MODE and was ignored."
+                })
+        
+        # Check for invalid origins
+        for origin in raw_origins:
+            if origin != "*" and not origin.startswith(("http://", "https://")):
+                warnings.append({
+                    "id": "CORS_INVALID_ORIGIN",
+                    "severity": "low",
+                    "message": f"Invalid CORS origin ignored: {origin}. Must start with http:// or https://"
+                })
+                
+        return warnings
 
 
 

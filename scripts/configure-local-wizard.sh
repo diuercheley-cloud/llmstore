@@ -249,6 +249,15 @@ update_env "PUBLIC_BASE_URL" "$BASE_URL"
 update_env "APP_PUBLIC_URL" "$BASE_URL"
 update_env "HOST_PORT" "$HOST_PORT"
 
+# Set secure CORS defaults
+CORS_ORIGINS="http://localhost:${HOST_PORT},http://127.0.0.1:${HOST_PORT}"
+if [[ "$BASE_URL" != "http://localhost:${HOST_PORT}" && "$BASE_URL" != "http://127.0.0.1:${HOST_PORT}" ]]; then
+  # Remove trailing slash for CORS origin
+  CLEAN_BASE_URL=$(echo "$BASE_URL" | sed 's|/$||')
+  CORS_ORIGINS="${CORS_ORIGINS},${CLEAN_BASE_URL}"
+fi
+update_env "CORS_ALLOW_ORIGINS" "$CORS_ORIGINS"
+
 if [ "$GPU" = true ]; then
   update_env "LLAMA_N_GPU_LAYERS" "20" # Default for GPU
 elif [ "$CPU_ONLY" = true ]; then
