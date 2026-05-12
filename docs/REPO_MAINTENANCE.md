@@ -59,3 +59,37 @@ A branch is classified as `delete_safe` when ALL apply:
 3. Has a corresponding tag (release)
 
 Otherwise the branch gets `review` or `keep`.
+
+## Release Line Audit
+
+A release line audit verifies consistency of tags, stable branches, VERSION, CHANGELOG,
+release manifests, docs and scripts for a given release line.
+
+### Running the audit
+
+```bash
+# Run the full v1.6.x audit
+./scripts/audit-v1.6-release-line.sh
+```
+
+Output is written to `artifacts/final-qa/v1.6-audit/<timestamp>/`.
+
+### Validating the audit
+
+```bash
+# Validate audit artifacts
+./scripts/validate-v1.6-release-line-audit.sh
+```
+
+### Running audit tests
+
+```bash
+.venv/bin/python -m pytest tests/test_v1_6_release_line_audit.py \
+  tests/test_v1_6_release_history_consistency.py \
+  tests/test_v1_6_release_artifacts_security.py -q
+```
+
+### Audit summary
+
+The consolidated audit summary for the v1.6.x line is maintained at
+[docs/V1_6_AUDIT_SUMMARY.md](V1_6_AUDIT_SUMMARY.md).

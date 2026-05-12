@@ -5,6 +5,17 @@ Este guia descreve como preparar e executar uma demonstração completa do produ
 ## Objetivo da Demo
 Demonstrar a soberania de dados, facilidade de implantação, portal do cliente, governança de API e billing manual, tudo rodando localmente com aceleração de GPU (quando disponível).
 
+### Validacao E2E da Demo Comercial
+
+Para validar o fluxo completo da demonstracao comercial (seed, validacao, meeting-ready, APIs, propostas, orcamentos, relatorios):
+
+```bash
+./scripts/validate-commercial-demo-e2e-local.sh --seed-demo
+```
+
+Flags disponiveis: `--skip-tts`, `--skip-rag`, `--reset-first`, `--base-url`.
+Relatorio gerado em `artifacts/final-qa/commercial-demo-e2e/<timestamp>/`.
+
 ## Pre-Demo Checklist
 Antes de iniciar a demonstração, execute o checklist automatizado para garantir que o ambiente está pronto:
 

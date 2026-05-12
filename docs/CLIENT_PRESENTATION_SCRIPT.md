@@ -1,6 +1,11 @@
 # Roteiro de Apresentação Comercial — llm-inference-stack
 
 > **Aviso importante:** Esta demonstração utiliza **dados fictícios** para fins ilustrativos. Nenhuma informação exibida representa dados reais de pacientes, clientes ou operações financeiras. O sistema opera em **modo appliance local** — toda inferência, armazenamento e processamento ocorrem dentro da infraestrutura do cliente. O billing é **local/manual** e **não inclui PSP/PIX real**. Este material não substitui análise jurídica ou de compliance.
+>
+> Para validacao E2E automatica da demo antes da apresentacao:
+> ```bash
+> ./scripts/validate-commercial-demo-e2e-local.sh --seed-demo --skip-tts --skip-rag
+> ```
 
 ---
 

@@ -771,3 +771,46 @@ Exemplo de uso:
 ## Release History
 
 Consulte [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md) para o histórico consolidado de versões.
+
+## Release Line Audit
+
+Auditoria geral da linha v1.6.x disponível em [docs/V1_6_AUDIT_SUMMARY.md](docs/V1_6_AUDIT_SUMMARY.md).
+Script de auditoria: `scripts/audit-v1.6-release-line.sh`.
+Validação: `scripts/validate-v1.6-release-line-audit.sh`.
+Testes: `tests/test_v1_6_release_line_audit.py`, `tests/test_v1_6_release_history_consistency.py`, `tests/test_v1_6_release_artifacts_security.py`.
+
+## Client Ready Final Report
+
+Relatorio final consolidado de pronto para cliente da linha v1.6.x.
+Documento versionavel em [docs/CLIENT_READY_FINAL_REPORT.md](docs/CLIENT_READY_FINAL_REPORT.md).
+
+```bash
+# Gerar relatorio client-ready
+make client-ready-report
+
+# Validar relatorio
+make validate-client-ready-report
+
+# Testes
+.venv/bin/python -m pytest tests/test_client_ready_report.py tests/test_client_ready_report_security.py tests/test_client_ready_report_status.py -q
+```
+
+Artifacts gerados em `artifacts/final-qa/client-ready/<timestamp>/`.
+
+## v1.7.0 Release Checklist
+
+Checklist formal para promover a linha v1.6.x para v1.7.0-local-ai-appliance.
+Documento versionavel em [docs/V1_7_RELEASE_CHECKLIST.md](docs/V1_7_RELEASE_CHECKLIST.md).
+
+```bash
+# Validar checklist
+make validate-v1.7-checklist
+
+# Gerar status automatico
+make v1.7-checklist-status
+
+# Testes
+.venv/bin/python -m pytest tests/test_v1_7_release_checklist.py tests/test_v1_7_release_checklist_status.py -q
+```
+
+Artifacts gerados em `artifacts/final-qa/v1.7-checklist/<timestamp>/`.

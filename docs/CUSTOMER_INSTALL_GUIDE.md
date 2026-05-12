@@ -50,6 +50,19 @@ make validate
 make validate-post-install
 ```
 
+### Validacao de Instalacao Limpa (para operadores)
+Para simular uma instalacao do zero em ambiente isolado (sandbox), sem afetar o repositorio real:
+```bash
+# Dry-run (seguro, nao altera nada)
+./scripts/validate-clean-install-local.sh --dry-run
+
+# Validacao completa (cria sandbox, executa instalador e validacoes)
+./scripts/validate-clean-install-local.sh --yes
+
+# Validar os resultados
+./scripts/validate-clean-install-validator.sh
+```
+
 ## 9. Backup Inicial
 Logo após a instalação e validação, crie o seu primeiro ponto de restauração seguro:
 ```bash

@@ -75,6 +75,23 @@ make post-upgrade-smoke
 
 Os relatórios detalhados são salvos em `artifacts/post-upgrade-smoke/<timestamp>/`.
 
+### Validacao de Restore e Rollback (Ambiente Controlado)
+
+Para validar o fluxo completo de restore/rollback sem risco ao ambiente real:
+
+```bash
+# Dry-run (seguro, apenas verifica scripts existentes e requisitos)
+./scripts/validate-real-restore-rollback-local.sh --dry-run
+
+# Validacao completa com backup, upgrade simulado e rollback
+./scripts/validate-real-restore-rollback-local.sh --yes
+
+# Executar testes
+.venv/bin/python -m pytest tests/test_real_restore_rollback_validator.py tests/test_real_restore_rollback_safety.py tests/test_real_restore_rollback_report.py -q
+```
+
+Relatorio gerado em `artifacts/restore-rollback-test/<timestamp>/`.
+
 ---
 
 ## Rollback Local

@@ -48,3 +48,15 @@ Após finalizar o `make demo`, as ferramentas já estarão online no seu IP loca
 - **Documentação Local da API:** `http://localhost:18080/docs`
 
 Se ocorrer qualquer problema, consulte o [CUSTOMER_TROUBLESHOOTING.md](./CUSTOMER_TROUBLESHOOTING.md).
+
+## Instalação Limpa (Sandbox)
+
+Para testar uma instalação do zero sem risco ao sistema atual:
+
+```bash
+# Simular instalação limpa (modo dry-run)
+./scripts/validate-clean-install-local.sh --dry-run
+
+# Validar o resultado
+./scripts/validate-clean-install-validator.sh
+```

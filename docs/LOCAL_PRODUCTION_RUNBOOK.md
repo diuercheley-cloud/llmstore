@@ -21,6 +21,11 @@ make pre-client-check
 Verifique o relatório em `artifacts/pre-client-checklists/` e garanta o status **GO**.
 
 > **Dica para Operadores:** Em caso de erro em qualquer script de manutenção ou validação, consulte o [Catálogo de Códigos de Erro](OPERATOR_ERROR_CODES.md) para diagnósticos rápidos e ações corretivas padronizadas.
+>
+> Para validar uma instalação limpa do zero em ambiente isolado (sandbox), use:
+> ```bash
+> ./scripts/validate-clean-install-local.sh --dry-run
+> ```
 
 Este script realiza:
 - Verificação de dependências (Docker, Python, Git, etc).
@@ -110,4 +115,15 @@ Realize upgrades utilizando o script de automação, que força a criação de b
 Em caso de falhas documentadas nos smoke tests gerados após o upgrade, restaure o estado usando:
 ```bash
 ./scripts/rollback-local.sh --to-version <versao-anterior> --backup-id <path-do-backup>
+```
+
+### Validacao de Restore e Rollback
+
+Para validar o fluxo completo de backup, upgrade, restore e rollback em ambiente controlado:
+```bash
+# Modo dry-run (seguro)
+./scripts/validate-real-restore-rollback-local.sh --dry-run
+
+# Modo real (exige --yes, executa backup, upgrade, rollback)
+./scripts/validate-real-restore-rollback-local.sh --yes
 ```

@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.6.7-final-qa] - 2026-05-12
+
+### Added
+- Client Ready Report consolidado com artifacts JSON/MD e documento versionavel.
+- Checklist formal de promocao para v1.7.0-local-ai-appliance com 13 categorias.
+- Geracao de status automatico do checklist v1.7.0 com Go/No-Go.
+- Validacao de release checklist com script dedicado.
+- Auditoria geral da linha v1.6.x documentada em V1_6_AUDIT_SUMMARY.md.
+- Testes de seguranca, status e integridade para client-ready report e v1.7 checklist.
+
+### Changed
+- VERSION atualizada de v1.6.6-repo-cleanup para v1.6.7-final-qa.
+- RELEASE_HISTORY.md: adicionada entrada v1.6.7-final-qa e v1.6.6-repo-cleanup.
+- Makefile: novos targets client-ready-report, validate-client-ready-report, validate-v1.7-checklist, v1.7-checklist-status.
+- README.md: secoes para Client Ready Report e v1.7 Release Checklist.
+- CAPABILITY_MATRIX.md: PSP/PIX documentado como future.
+
+### Notes
+- PSP/PIX real permanecem fora do escopo.
+- Rate limit readiness apresenta warning conhecido (exit code 127).
+- Release manifests v1.6.5 e v1.6.6 com git_commit da versao anterior (inconsistencia documentada).
+- Linha v1.6.x concluida. Proximo release: v1.7.0-local-ai-appliance.
+
 ## [v1.6.6-repo-cleanup] - 2026-05-12
 
 ### Added

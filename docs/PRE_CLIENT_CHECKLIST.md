@@ -5,6 +5,16 @@ Este documento descreve o processo de validação automatizada antes de realizar
 ## Objetivo
 Garantir que todos os componentes críticos estejam operacionais, seguros e seguindo as melhores práticas antes da exposição ao cliente.
 
+## Validacao E2E da Demo Comercial
+
+Para uma validacao completa do fluxo de demonstracao comercial (seed, meeting-ready, APIs, propostas, orcamentos, SOW, relatorios):
+
+```bash
+./scripts/validate-commercial-demo-e2e-local.sh --seed-demo
+```
+
+Relatorio gerado em `artifacts/final-qa/commercial-demo-e2e/<timestamp>/` com status `DEMO_READY`, `DEMO_READY_WITH_WARNINGS` ou `DEMO_FAILED`.
+
 ## Como Executar
 
 ### Para Demonstração

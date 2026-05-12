@@ -54,7 +54,9 @@ timeline
     2026-05-11 : 1.6.2-installer-polish : Installer Polish
     2026-05-11 : 1.6.3-readiness-cleanup : Readiness Cleanup
     2026-05-11 : 1.6.4-customer-demo-pack : Customer Demo Pack
-    2026-05-12 : 1.6.5-sales-ops : Sales Ops
+     2026-05-12 : 1.6.5-sales-ops : Sales Ops
+     2026-05-12 : 1.6.6-repo-cleanup : Repo Cleanup
+     2026-05-12 : 1.6.7-final-qa : Final QA
 ```
 
 ## Releases
@@ -100,12 +102,16 @@ timeline
 | 1.6.3-readiness-cleanup | `v1.6.3-readiness-cleanup` | stable/v1.6.3-readiness-cleanup | `473b07f` | 2026-05-11 | Readiness Cleanup | archived | 2026-05-11; Correção de warnings do Production Readiness rep |
 | 1.6.4-customer-demo-pack | `v1.6.4-customer-demo-pack` | stable/v1.6.4-customer-demo-pack | `874e0dc` | 2026-05-11 | Customer Demo Pack | active | 2026-05-11; Demo pack comercial com 5 cenarios (clinica, jur |
 | 1.6.5-sales-ops | `v1.6.5-sales-ops` | stable/v1.6.5-sales-ops | `8db6be3` | 2026-05-12 | Sales Ops | active | 2026-05-12; CRM local simples para leads com fluxo comercial |
+| 1.6.6-repo-cleanup | `v1.6.6-repo-cleanup` | stable/v1.6.6-repo-cleanup | `1c89b0c` | 2026-05-12 | Repo Cleanup | active | 2026-05-12; Consolidacao do layout, padronizacao shell, historico de releases |
+| 1.6.7-final-qa | `v1.6.7-final-qa` | — | `1c89b0c` | 2026-05-12 | Final QA | active | 2026-05-12; Client ready report consolidado, checklist v1.7.0, documentacao final, preparacao para v1.7.0 |
 
 ## Releases Recomendadas
 
 | Versao | Motivo |
 |--------|--------|
-| `v1.6.5-sales-ops` | **Atual.** Fluxos comerciais: CRM, propostas, orcamentos, contratos, white-label. |
+| `v1.6.7-final-qa` | **Atual.** Client ready report, documentacao final para transicao v1.7.0. |
+| `v1.6.6-repo-cleanup` | Ultima versao estavel da linha v1.6.x antes do QA final. |
+| `v1.6.5-sales-ops` | Fluxos comerciais: CRM, propostas, orcamentos, contratos, white-label. |
 | `v1.6.4-customer-demo-pack` | Demo pack comercial com 5 cenarios, meeting ready check, capabilities page. |
 | `v1.6.3-readiness-cleanup` | Readiness final com correcao de warnings, probe chat/SSE/TTS/CORS. |
 
@@ -122,6 +128,11 @@ timeline
 | v1.6.0 | v1.6.0-openai-compat | OpenAI-compatible responses e embeddings APIs. |
 | v1.6.1 | v1.6.1-product-hardening | Makefile, system control center, migrations hardening, multi-tenant, abuse protection. |
 | v1.6.2 | v1.6.2-installer-polish | Instalador local, wizard, checklist, backup/upgrade, validacao pos-instalacao. |
+| v1.6.3 | v1.6.3-readiness-cleanup | Readiness cleanup: correcao de warnings, probe chat/SSE/TTS/CORS, production readiness final. |
+| v1.6.4 | v1.6.4-customer-demo-pack | Demo pack comercial: 5 cenarios, meeting ready check, capabilities page, propostas. |
+| v1.6.5 | v1.6.5-sales-ops | Sales ops: CRM, propostas, orcamentos, contratos, white-label, relatorio mensal. |
+| v1.6.6 | v1.6.6-repo-cleanup | Repo cleanup: consolidacao do layout, padronizacao shell, historico de releases, validacoes. |
+| v1.6.7 | v1.6.7-final-qa | Final QA: client ready report consolidado, documentacao final, preparacao para v1.7.0-local-ai-appliance. |
 
 ## Como Restaurar uma Versao
 

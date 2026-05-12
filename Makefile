@@ -3,13 +3,13 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
 	@echo "Usage: make <target> [BACKUP_DIR=/path/to/backup]"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 first-run: ## First run setup with demo data
 	./scripts/first-run-local.sh --with-demo
@@ -185,11 +185,21 @@ validate-meeting-ready: ## Validate meeting-ready check script
 	chmod +x ./scripts/validate-meeting-ready-check-local.sh
 	./scripts/validate-meeting-ready-check-local.sh
 
-pre-client-check: ## Run pre-client installation checklist
-	./scripts/pre-client-checklist-local.sh --client-install
+client-ready-report: ## Generate client ready final report
+	chmod +x ./scripts/generate-client-ready-report.sh
+	./scripts/generate-client-ready-report.sh
 
-pre-demo-check: ## Run pre-demo checklist
-	./scripts/pre-client-checklist-local.sh --demo
+validate-client-ready-report: ## Validate client ready final report
+	chmod +x ./scripts/validate-client-ready-report.sh
+	./scripts/validate-client-ready-report.sh
+
+validate-v1.7-checklist: ## Validate v1.7.0 release checklist
+	chmod +x ./scripts/validate-v1.7-release-checklist.sh
+	./scripts/validate-v1.7-release-checklist.sh
+
+v1.7-checklist-status: ## Generate v1.7.0 release checklist status
+	chmod +x ./scripts/generate-v1.7-release-checklist-status.sh
+	./scripts/generate-v1.7-release-checklist-status.sh
 
 # --- Sales Ops ---
 
@@ -233,6 +243,30 @@ validate-monthly-report: ## Validate monthly report generator
 
 validate-white-label: ## Validate white-label branding configuration
 	./scripts/validate-white-label-local.sh
+
+# --- Commercial Demo E2E Validation ---
+
+validate-commercial-demo-e2e: ## Run end-to-end commercial demo validation
+	./scripts/validate-commercial-demo-e2e-local.sh --seed-demo
+
+# --- Restore & Rollback Validation ---
+
+validate-restore-rollback: ## Run restore/rollback validation (dry-run, safe)
+	./scripts/validate-real-restore-rollback-local.sh --dry-run
+
+validate-restore-rollback-full: ## Run restore/rollback with backup, upgrade and rollback
+	./scripts/validate-real-restore-rollback-local.sh --yes
+
+# --- Clean Install Validation ---
+
+validate-clean-install: ## Run clean install validation (dry-run, safe)
+	./scripts/validate-clean-install-local.sh --dry-run
+
+validate-clean-install-full: ## Run clean install validation with sandbox (requires --yes)
+	./scripts/validate-clean-install-local.sh --yes
+
+validate-clean-install-validator: ## Validate clean install script and outputs
+	./scripts/validate-clean-install-validator.sh
 
 # --- Repo Maintenance ---
 
