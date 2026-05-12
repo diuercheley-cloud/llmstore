@@ -1,0 +1,22 @@
+{
+  "provider_name": "Local AI Solutions",
+  "provider_contact": "sales@local-ai.solutions",
+  "default_currency": "BRL",
+  "default_validity_days": 15,
+  "default_setup_fee": 5000,
+  "default_monthly_fee": 2000,
+  "default_support_hours": "09:00 - 18:00 (Seg-Sex)",
+  "default_scope": [
+    "Instalação do llm-inference-stack",
+    "Configuração de 1 modelo de linguagem (LLM)",
+    "Configuração de 1 modelo de embeddings",
+    "Integração com 1 base de conhecimento para RAG",
+    "Treinamento básico de uso da API"
+  ],
+  "exclusions": [
+    "Hardware (servidores/GPUs)",
+    "Configuração de infraestrutura de rede complexa",
+    "Desenvolvimento de integrações customizadas no frontend do cliente",
+    "Processamento de pagamentos (PSP/PIX real) - faturamento é manual"
+  ]
+}

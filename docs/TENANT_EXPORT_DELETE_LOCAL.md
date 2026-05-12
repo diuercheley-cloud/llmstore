@@ -79,7 +79,17 @@ Mantém os registros (como faturas para contabilidade) mas remove todas as infor
 - **Relatório de Deleção:** Um relatório JSON é gerado em `artifacts/client-deletions/`.
 - **Eventos de Auditoria:** São registrados eventos `client.delete.requested`, `client.deleted` ou `client.anonymized` na tabela de segurança.
 
-## 3. Fluxo Recomendado de Offboarding
+## 3. Relatório Mensal de Uso
+
+Antes do offboarding, gere um relatório mensal final de uso do cliente para registro:
+
+```bash
+./scripts/generate-client-monthly-report.sh --client-id UUID --month YYYY-MM
+```
+
+O relatório inclui consumo de tokens, requests, embeddings, RAG, TTS, faturamento local/manual, status de pagamento e recomendações.
+
+## 4. Fluxo Recomendado de Offboarding
 1. Execute o script de deleção com export obrigatório:
    ```bash
    ./scripts/delete-client-local.sh --client-id UUID --require-export --delete-rag-files --delete-tts-files

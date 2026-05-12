@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.local_dr_backup import host_path_for_data_dir, host_path_for_models_dir
+from local_dr_backup import host_path_for_data_dir, host_path_for_models_dir
 
 
 def test_restore_local_script_mentions_clean_restore_flow():

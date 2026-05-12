@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import subprocess
@@ -1163,6 +1164,7 @@ async def get_runtime_summary(
 async def get_usage_summary(
     session: AsyncSession = Depends(get_db_session),
     proxy: InferenceProxy = Depends(get_inference_proxy),
+    compact: bool = Query(default=False),
 ):
     await observe_billing_status_metrics(session)
     queue_snapshot = proxy.queue_manager.get_snapshot()
@@ -1189,9 +1191,9 @@ async def get_usage_summary(
     backend_rows = (await session.execute(select(InferenceBackend))).scalars().all()
     backends_total = len(backend_rows)
     backends_online = 0
-    for b in backend_rows:
-        if await proxy.health_url(b.backend_url, b.healthcheck_path):
-            backends_online += 1
+    if backend_rows:
+        health_results = await asyncio.gather(*[proxy.health_url(b.backend_url, b.healthcheck_path) for b in backend_rows])
+        backends_online = sum(1 for ok in health_results if ok)
 
     model_registry_rows = (await session.execute(select(ModelRegistry))).scalars().all()
     models_total = len(model_registry_rows)
@@ -1289,11 +1291,11 @@ async def get_usage_summary(
             "models_total": models_total,
         },
         "plans": plans,
-        "clients": clients,
-        "models": models,
+        "clients": [] if compact else clients,
+        "models": [] if compact else models,
         "queues": queue_snapshot,
         "rag": rag_summary,
-        "tts": tts_usage_all,
+        "tts": {} if compact else tts_usage_all,
         "invoices": {
             "pending": summary["invoices_pending"],
             "paid": summary["invoices_paid"],
@@ -2002,7 +2004,7 @@ async def get_models(
     backends = (
         await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))
     ).scalars().all()
-    backend_health = [await proxy.health_backend(item) for item in backends]
+    backend_health = await asyncio.gather(*[proxy.health_backend(item) for item in backends])
     health_map = {item["backend_id"]: item for item in backend_health}
     plans = (await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))).scalars().all()
     return {
@@ -2027,7 +2029,8 @@ async def list_backends(
     await ensure_default_backends(session)
     await session.commit()
     rows = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
-    return [_serialize_backend_admin(item, await proxy.health_backend(item)) for item in rows]
+    health_results = await asyncio.gather(*[proxy.health_backend(item) for item in rows])
+    return [_serialize_backend_admin(item, health) for item, health in zip(rows, health_results)]
 
 
 @router.post("/backends", status_code=201)
@@ -2307,7 +2310,7 @@ async def backends_health(
     rows = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
     return {
         "generated_at": utc_now().isoformat(),
-        "backends": [await proxy.health_backend(item) for item in rows],
+        "backends": await asyncio.gather(*[proxy.health_backend(item) for item in rows]),
     }
 
 
@@ -2319,10 +2322,8 @@ async def backends_routing(
     backend_rows = (
         await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))
     ).scalars().all()
-    backend_health = {
-        item["backend_id"]: item
-        for item in [await proxy.health_backend(row) for row in backend_rows]
-    }
+    backend_health_list = await asyncio.gather(*[proxy.health_backend(row) for row in backend_rows])
+    backend_health = {item["backend_id"]: item for item in backend_health_list}
     models = (
         await session.execute(
             select(ModelRegistry)
@@ -3141,4 +3142,3 @@ async def get_model_benchmark(model: str):
             return json.load(f)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading benchmark: {str(e)}")
-

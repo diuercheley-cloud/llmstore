@@ -36,3 +36,33 @@ Ferramentas suportadas (detectadas automaticamente): `pandoc`, `wkhtmltopdf`, `g
 - **Não incluir preços definitivos sem política clara.** Use `R$ [ Valor ]` ou "Sob consulta".
 - **Não prometer PSP/PIX real.** Especificar que billing é manual/local.
 - **Não prometer SLA não contratado.** SLA depende do plano contratado.
+
+## Gerador de Propostas Personalizadas
+
+Para automatizar a criação de propostas preenchidas para clientes específicos, utilize o script de geração:
+
+```bash
+./scripts/generate-client-proposal.sh --company-name "Nome da Empresa" --segment "Saúde" --plan "Pro"
+```
+
+### Funcionalidades:
+- Integração com CRM (via `--lead-id`).
+- Geração automática de seções de diagnóstico, escopo, valores e cronograma.
+- Criação de metadata JSON para integração com outros sistemas.
+- Suporte opcional a PDF (via `generate-proposal-pdf.sh`).
+
+As propostas geradas em `artifacts/proposals/` são ignoradas pelo Git por padrão.
+
+## Contratos e SOW
+
+Templates de contrato e SOW para implantação local estão disponíveis em `contracts/`. Consulte `contracts/README.md` para detalhes.
+
+```bash
+# Gerar SOW personalizado
+./scripts/generate-sow-local.sh --company-name "Cliente" --project-name "Local AI Appliance" --plan Pro
+
+# Validar templates
+./scripts/validate-contract-templates-local.sh
+```
+
+**AVISO:** Todos os templates exigem revisão jurídica obrigatória. Não versionar contratos preenchidos no repositório.

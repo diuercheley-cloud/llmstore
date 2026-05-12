@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/lib/validation-logging.sh"
+source "${ROOT_DIR}/lib/validation-logging.sh"
 
 init_stack_env
 

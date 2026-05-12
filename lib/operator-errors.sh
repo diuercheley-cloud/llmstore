@@ -65,7 +65,7 @@ add_next_step() {
 mask_sensitive() {
     local input="$1"
     # Basic redaction for common secret patterns if found in strings
-    # This is a simple helper, real redaction happens in dedicated scripts/lib/redaction.sh
+    # This is a simple helper, real redaction happens in dedicated lib/redaction.sh
     if [[ -f "$(dirname "${BASH_SOURCE[0]}")/redaction.sh" ]]; then
         source "$(dirname "${BASH_SOURCE[0]}")/redaction.sh"
         echo "$input" | redact_stream

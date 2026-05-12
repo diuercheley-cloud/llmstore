@@ -89,9 +89,9 @@ echo "Modelo inexistente OK (script nao crashou)"
 # 7. Stress exige confirmacao
 echo "[7/7] Verificando flag --stress..."
 if [[ -f "${ROOT_DIR}/.venv/bin/python" ]]; then
-    "${ROOT_DIR}/.venv/bin/python" "${SCRIPT_DIR}/benchmark_model_local_runner.py" --help | grep -q "stress"
+    "${ROOT_DIR}/.venv/bin/python" "${ROOT_DIR}/benchmark_model_local_runner.py" --help | grep -q "stress"
 else
-    python3 "${SCRIPT_DIR}/benchmark_model_local_runner.py" --help | grep -q "stress" || echo "Aviso: Nao foi possivel verificar flags sem venv"
+    python3 "${ROOT_DIR}/benchmark_model_local_runner.py" --help | grep -q "stress" || echo "Aviso: Nao foi possivel verificar flags sem venv"
 fi
 echo "Flag --stress presente (ou venv indisponivel)"
 

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import subprocess
@@ -353,8 +354,8 @@ async def health_deep(
     if db_detail["status"] == "online":
         try:
             backend_rows = (await session.execute(select(InferenceBackend).where(InferenceBackend.is_active == True))).scalars().all()
-            for b in backend_rows:
-                h = await proxy.health_backend(b)
+            health_results = await asyncio.gather(*[proxy.health_backend(b) for b in backend_rows])
+            for b, h in zip(backend_rows, health_results):
                 m_count = (await session.execute(
                     select(func.count(ModelRegistry.id)).where(ModelRegistry.inference_backend_id == b.id)
                 )).scalar() or 0

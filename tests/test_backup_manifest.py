@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.local_dr_backup import (
+from local_dr_backup import (
     BackupManifestInput,
     build_manifest,
     collect_asset_metadata,

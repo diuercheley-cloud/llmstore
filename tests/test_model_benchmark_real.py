@@ -11,7 +11,7 @@ def test_benchmark_runner_quick_mode():
     
     # Run the benchmark runner
     cmd = [
-        "python3", "scripts/benchmark_model_local_runner.py",
+        "python3", "benchmark_model_local_runner.py",
         "--model", model,
         "--quick",
         "--output-dir", output_dir,
@@ -36,7 +36,7 @@ def test_benchmark_runner_quick_mode():
 
 def test_recommendation_logic():
     """Test the recommendation logic directly."""
-    from scripts.benchmark_model_local_runner import get_recommendation
+    from benchmark_model_local_runner import get_recommendation
     
     # safe_for_free: high tps, low latency
     rec, _ = get_recommendation(tps=40, latency_p95=500, error_rate=0)

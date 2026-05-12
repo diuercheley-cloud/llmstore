@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 # Load library
-LIB_PATH="${SCRIPT_DIR}/lib/operator-errors.sh"
+LIB_PATH="${ROOT_DIR}/lib/operator-errors.sh"
 if [[ ! -f "${LIB_PATH}" ]]; then
     echo "[ERROR] Library not found: ${LIB_PATH}"
     exit 1
@@ -54,7 +54,7 @@ TEST_API_KEY="$(printf '%s%s' 'abcdefghijklmnop' 'qrstuvwxyz12')"
 TEST_MSG="Secret: API_KEY=${TEST_API_KEY}"
 MASKED=$(mask_sensitive "${TEST_MSG}")
 if [[ "${MASKED}" == *"${TEST_API_KEY}"* ]]; then
-    operator_error "SECURITY_FAILED" "A máscara de sensíveis falhou." "Revise a função mask_sensitive em scripts/lib/operator-errors.sh."
+    operator_error "SECURITY_FAILED" "A máscara de sensíveis falhou." "Revise a função mask_sensitive em lib/operator-errors.sh."
     exit 1
 else
     echo "[OK] mask_sensitive is working: ${MASKED}"

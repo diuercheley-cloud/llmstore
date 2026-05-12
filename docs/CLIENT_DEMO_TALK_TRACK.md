@@ -218,3 +218,15 @@ Cada item recebe um status: ✅ verde (ok), 🟡 amarelo (atenção), 🔴 verme
 | "Dados ficam seguros?" | "Ficam na sua rede. Não enviamos nada para fora. Mas não garantimos segurança absoluta." |
 | "Suporta LangChain?" | "Sim. Basta apontar base_url para http://localhost:18080/v1." |
 | "Qual modelo usa?" | "Gemma 4, Llama 3, Mistral — qualquer GGUF. Você escolhe e troca pela UI." |
+
+---
+
+## Follow-up Imediato
+
+Após a demo, você pode gerar a proposta personalizada para o cliente em segundos para envio imediato:
+
+```bash
+make generate-proposal COMPANY_NAME="Nome do Cliente" SEGMENT="Segmento do Cliente"
+```
+
+Isso gera um arquivo Markdown profissional em `artifacts/proposals/` pronto para ser revisado e enviado.

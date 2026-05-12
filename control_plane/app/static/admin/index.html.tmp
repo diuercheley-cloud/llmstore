@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Dashboard - LLM Inference Stack</title>
+    <style>
+      :root {
+        --bg: #f1f5f9;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --accent: #0f766e;
+        --accent-hover: #0d9488;
+        --border: #e2e8f0;
+        --danger: #ef4444;
+        --success: #10b981;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--ink);
+        line-height: 1.5;
+      }
+      header {
+        background: white;
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .brand h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+      .auth-box { display: flex; gap: 0.5rem; }
+      
+      input, button {
+        font: inherit;
+        border-radius: 0.375rem;
+        border: 1px solid var(--border);
+        padding: 0.5rem 0.75rem;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover { background: var(--accent-hover); }
+      button.secondary { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
+      button.secondary:hover { background: #f1f5f9; color: var(--ink); }
+
+      main {
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      }
+      .wide { grid-column: 1 / -1; }
+      h2 { margin-top: 0; font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+      
+      table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+      th, td { text-align: left; padding: 0.625rem; border-bottom: 1px solid var(--border); }
+      th { background: #f8fafc; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.025em; }
+      
+      .pill {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .pill-success { background: #d1fae5; color: #065f46; }
+      .pill-warning { background: #fef3c7; color: #92400e; }
+      .pill-danger { background: #fee2e2; color: #991b1b; }
+      .pill-muted { background: #f1f5f9; color: #475569; }
+      .pill-unknown { background: #e2e8f0; color: #64748b; }
+
+      .status-card {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .status-ready { border-left: 4px solid var(--success); }
+      .status-degraded { border-left: 4px solid #f59e0b; }
+      .status-not-ready { border-left: 4px solid var(--danger); }
+      .status-unknown { border-left: 4px solid var(--muted); }
+
+      .action-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      pre.debug {
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        max-height: 300px;
+        overflow: auto;
+        display: none;
+        margin-top: 1rem;
+      }
+      
+      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+      .stat-card { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); }
+      .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+      .stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+      .stat-details { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>LLM Stack Admin</h1>
+      </div>
+      <div class="auth-box">
+        <input id="adminToken" type="password" placeholder="Admin Token" />
+        <button id="connect">Connect</button>
+        <button id="refresh" class="secondary">Refresh</button>
+      </div>
+    </header>
+
+    <main id="adminContent" class="hidden">
+      <!-- System Control Center -->
+      <section id="systemControlCenterSection" class="wide">
+        <h2>System Control Center <button class="secondary" onclick="toggleDebug('controlCenterDebug')">JSON</button></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="status-card" id="cc-health">
+            <div class="stat-label">Health Status</div>
+            <div id="cc-health-val" class="stat-value">LOADING...</div>
+            <div id="cc-health-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-readiness">
+            <div class="stat-label">Readiness Score</div>
+            <div id="cc-readiness-val" class="stat-value">LOADING...</div>
+            <div id="cc-readiness-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-security">
+            <div class="stat-label">Security Score</div>
+            <div id="cc-security-val" class="stat-value">LOADING...</div>
+            <div id="cc-security-det" class="stat-details"></div>
+          </div>
+          <div class="status-card" id="cc-version">
+            <div class="stat-label">Version / Branch</div>
+            <div id="cc-version-val" class="stat-value">LOADING...</div>
+            <div id="cc-version-det" class="stat-details"></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">Latest Artifacts</h3>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+           <div class="stat-card">
+              <div class="stat-label">Last Validation</div>
+              <div id="cc-art-validation" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Demo</div>
+              <div id="cc-art-demo" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Release</div>
+              <div id="cc-art-release" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Backup</div>
+              <div id="cc-art-backup" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Last Upgrade</div>
+              <div id="cc-art-upgrade" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+           <div class="stat-card">
+              <div class="stat-label">Benchmark</div>
+              <div id="cc-art-benchmark" style="font-size: 0.8125rem; font-weight: 600;">-</div>
+           </div>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; font-size: 1rem;">Suggested Commands</h3>
+        <div id="suggestedCommands" class="action-row" style="flex-wrap: wrap;">
+        </div>
+
+        <pre id="controlCenterDebug" class="debug"></pre>
+      </section>
+
+      <!-- Runtime & Readiness -->
+      <section class="wide">
+        <h2>Runtime & Hardening Status</h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          <div id="runtimeCard" class="status-card status-unknown">
+            <div class="stat-label">Runtime Health</div>
+            <div id="runtimeValue" class="stat-value">LOADING...</div>
+            <div id="runtimeDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking system components...</div>
+          </div>
+          <div id="readinessCard" class="status-card status-unknown">
+            <div class="stat-label">Production Readiness</div>
+            <div id="readinessValue" class="stat-value">LOADING...</div>
+            <div id="readinessDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking latest report...</div>
+          </div>
+          <div id="securityReportCard" class="status-card status-unknown">
+            <div class="stat-label">Security Report</div>
+            <div id="securityValue" class="stat-value">LOADING...</div>
+            <div id="securityDetails" style="font-size: 0.8125rem; color: var(--muted);">Checking latest report...</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="secondary" onclick="runCommand('readiness')">Generate Readiness Report</button>
+          <button class="secondary" onclick="runCommand('security')">Generate Security Report</button>
+        </div>
+      </section>
+
+      <!-- Demo Summary -->
+      <section id="demoSection" class="wide hidden" style="border: 2px solid var(--accent); background-color: #f0fdfa;">
+        <h2>Demo Environment <span class="pill pill-success" style="margin-left: 1rem;">DEMO_MODE=true</span></h2>
+        <div id="demoStats" class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));"></div>
+        <div id="demoWarnings" style="color: var(--danger); font-weight: bold; margin-top: 1rem;"></div>
+      </section>
+
+      <!-- Health & Status -->
+      <section>
+        <h2>System Health <button class="secondary" onclick="toggleDebug('healthDebug')">JSON</button></h2>
+        <div id="healthStats" class="stat-grid"></div>
+        <pre id="healthDebug" class="debug"></pre>
+      </section>
+
+      <section>
+        <h2>Model Status <button class="secondary" onclick="toggleDebug('modelDebug')">JSON</button></h2>
+        <div id="modelStats" class="stat-grid"></div>
+        <pre id="modelDebug" class="debug"></pre>
+      </section>
+
+      <!-- Revenue & Financials -->
+      <section class="wide">
+        <h2>Revenue Summary <button class="secondary" onclick="toggleDebug('revenueDebug')">JSON</button></h2>
+        <div id="revenueStats" class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"></div>
+        <pre id="revenueDebug" class="debug"></pre>
+      </section>
+
+      <!-- Usage & Billing -->
+      <section class="wide">
+        <h2>Usage & Observability <button class="secondary" onclick="toggleDebug('usageDebug')">JSON</button></h2>
+        <div id="usageStats" class="stat-grid" style="margin-bottom: 1rem;"></div>
+        <div style="display: grid; gap: 1rem;">
+          <div style="overflow-x: auto;"><div id="clientUsageTable"></div></div>
+          <div style="overflow-x: auto;"><div id="modelUsageTable"></div></div>
+        </div>
+        <pre id="usageDebug" class="debug"></pre>
+      </section>
+
+      <!-- Infrastructure -->
+      <section class="wide">
+        <h2>Inference Backends <button class="secondary" onclick="toggleDebug('backendDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="backendTable"></div></div>
+        <pre id="backendDebug" class="debug"></pre>
+      </section>
+
+      <!-- Security & Logs -->
+      <section class="wide">
+        <h2>Security Events <button class="secondary" onclick="toggleDebug('securityDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="securityTable"></div></div>
+        <pre id="securityDebug" class="debug"></pre>
+      </section>
+
+      <section class="wide">
+        <h2>Recent Requests <button class="secondary" onclick="toggleDebug('requestDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="requestTable"></div></div>
+        <pre id="requestDebug" class="debug"></pre>
+      </section>
+    <section class="wide">
+      <h2>Uso de RAG por Cliente</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>ID</th>
+              <th>Docs</th>
+              <th>Storage (MB)</th>
+              <th>Consultas (Mês)</th>
+              <th>Páginas (Mês)</th>
+            </tr>
+          </thead>
+          <tbody id="ragUsageList"></tbody>
+        </table>
+      </div>
+    </section>
+    </main>
+    <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted);">
+      <p>Please enter your Admin Token to access the dashboard.</p>
+    </div>
+
+    <script>
+      const elements = {
+        adminToken: document.getElementById('adminToken'),
+        connect: document.getElementById('connect'),
+        refresh: document.getElementById('refresh'),
+        adminContent: document.getElementById('adminContent'),
+        loginPrompt: document.getElementById('loginPrompt')
+      };
+
+      const savedToken = localStorage.getItem('adminToken');
+      if (savedToken) {
+        elements.adminToken.value = savedToken;
+        initAdmin();
+      }
+
+      elements.connect.addEventListener('click', () => {
+        localStorage.setItem('adminToken', elements.adminToken.value.trim());
+        initAdmin();
+      });
+
+      elements.refresh.addEventListener('click', initAdmin);
+
+      function toggleDebug(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      }
+
+      function shortId(value) {
+        return typeof value === 'string' ? value.substring(0, 8) : 'N/A';
+      }
+
+      function num(value, fallback = 0) {
+        return typeof value === 'number' ? value : fallback;
+      }
+
+      async function adminFetch(path) {
+        const token = elements.adminToken.value.trim();
+        const response = await fetch(path, {
+          headers: { 'X-Admin-Token': token }
+        });
+        if (!response.ok) throw new Error(response.statusText);
+        return response.json();
+      }
+
+      async function initAdmin() {
+        if (!elements.adminToken.value.trim()) return;
+        elements.adminContent.classList.remove('hidden');
+        elements.loginPrompt.classList.add('hidden');
+
+        try {
+          const [controlCenter, health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, runtimeSummary, readinessReport, securityReport, demoSummary, plans] = await Promise.all([
+            adminFetch('/admin/system/control-center'),
+            adminFetch('/admin/health/deep'),
+            adminFetch('/admin/usage/summary'),
+            adminFetch('/admin/usage/by-client'),
+            adminFetch('/admin/usage/by-model'),
+            adminFetch('/admin/models'),
+            adminFetch('/admin/security/events'),
+            adminFetch('/admin/requests'),
+            adminFetch('/admin/revenue/summary'),
+            adminFetch('/admin/rag/usage'),
+            adminFetch('/admin/runtime/summary'),
+            adminFetch('/admin/readiness/latest'),
+            adminFetch('/admin/security/latest'),
+            adminFetch('/admin/demo/summary').catch(() => null),
+            adminFetch('/admin/billing/plans')
+          ]);
+
+          renderControlCenter(controlCenter);
+          renderRuntimeSummary(runtimeSummary);
+          renderReadinessReport(readinessReport);
+          renderSecurityReport(securityReport);
+          renderDemo(demoSummary);
+          renderHealth(health);
+          renderModels(models);
+          renderUsage(usageSummary, usageByClient, usageByModel);
+          renderBackends(models.backends);
+          renderSecurity(security);
+          renderRequests(requests);
+          renderRevenue(revenue);
+          renderRagUsage(rag);
+          // renderPlans(plans);
+          renderPlans(plans);
+
+          // document.getElementById("plansDebug").textContent = JSON.stringify(plans, null, 2);
+          // Fill debugs
+          document.getElementById('plansDebug').textContent = JSON.stringify(plans, null, 2);
+          document.getElementById('controlCenterDebug').textContent = JSON.stringify(controlCenter, null, 2);
+          document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
+          document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
+          document.getElementById('usageDebug').textContent = JSON.stringify({ summary: usageSummary, by_client: usageByClient, by_model: usageByModel }, null, 2);
+          document.getElementById('backendDebug').textContent = JSON.stringify(models.backends, null, 2);
+          document.getElementById('securityDebug').textContent = JSON.stringify(security, null, 2);
+          document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
+          document.getElementById('revenueDebug').textContent = JSON.stringify(revenue, null, 2);
+
+        } catch (err) {
+          alert('Failed to load admin data: ' + err.message);
+        }
+      }
+
+      function renderControlCenter(data) {
+        // Health
+        const hEl = document.getElementById('cc-health');
+        const hVal = document.getElementById('cc-health-val');
+        const hDet = document.getElementById('cc-health-det');
+        hVal.textContent = data.health_status.toUpperCase();
+        hEl.className = 'status-card';
+        if (data.health_status === 'ok') {
+           hEl.classList.add('status-ready');
+           hVal.style.color = 'var(--success)';
+        } else if (data.health_status === 'degraded') {
+           hEl.classList.add('status-degraded');
+           hVal.style.color = '#f59e0b';
+        } else {
+           hEl.classList.add('status-not-ready');
+           hVal.style.color = 'var(--danger)';
+        }
+        hDet.textContent = `Uptime: ${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m`;
+
+        // Readiness
+        const rEl = document.getElementById('cc-readiness');
+        const rVal = document.getElementById('cc-readiness-val');
+        const rDet = document.getElementById('cc-readiness-det');
+        rVal.textContent = data.readiness_score || 'N/A';
+        rEl.className = 'status-card';
+        if (data.readiness_score === 'READY') {
+           rEl.classList.add('status-ready');
+           rVal.style.color = 'var(--success)';
+        } else if (data.readiness_score === 'DEGRADED' || data.readiness_score === 'READY_WITH_WARNINGS') {
+           rEl.classList.add('status-degraded');
+           rVal.style.color = '#f59e0b';
+        } else {
+           rEl.classList.add('status-not-ready');
+           rVal.style.color = 'var(--danger)';
+        }
+        rDet.textContent = data.critical_failures.length > 0 ? `${data.critical_failures.length} failures` : `${data.warnings.length} warnings`;
+
+        // Security
+        const sEl = document.getElementById('cc-security');
+        const sVal = document.getElementById('cc-security-val');
+        const sDet = document.getElementById('cc-security-det');
+        sVal.textContent = data.security_score || 'N/A';
+        sEl.className = 'status-card';
+        if (typeof data.security_score === 'number') {
+           if (data.security_score >= 90) sEl.classList.add('status-ready');
+           else if (data.security_score >= 70) sEl.classList.add('status-degraded');
+           else sEl.classList.add('status-not-ready');
+        } else {
+           sEl.classList.add('status-unknown');
+        }
+        sDet.textContent = `Latest report: ${data.artifacts.security.timestamp || 'N/A'}`;
+
+        // Version
+        const vVal = document.getElementById('cc-version-val');
+        const vDet = document.getElementById('cc-version-det');
+        vVal.textContent = `v${data.version}`;
+        vDet.textContent = `Branch: ${data.git_branch || 'N/A'} (${data.git_commit || 'N/A'})`;
+
+        // Artifacts
+        const artMap = {
+           'cc-art-validation': data.artifacts.validation,
+           'cc-art-demo': data.artifacts.demo,
+           'cc-art-release': data.artifacts.release,
+           'cc-art-backup': data.artifacts.backup,
+           'cc-art-upgrade': data.artifacts.upgrade,
+           'cc-art-benchmark': data.artifacts.benchmark
+        };
+        for (const [id, art] of Object.entries(artMap)) {
+           const el = document.getElementById(id);
+           if (typeof art === 'string') {
+              el.textContent = art;
+              el.style.color = 'var(--muted)';
+           } else {
+              el.textContent = art.version || art.timestamp || 'Ready';
+              el.title = art.path;
+              el.style.color = 'var(--accent)';
+           }
+        }
+
+        // Suggested Commands
+        const cmdEl = document.getElementById('suggestedCommands');
+        cmdEl.innerHTML = '';
+        data.suggested_commands.forEach(cmd => {
+           const btn = document.createElement('button');
+           btn.className = 'secondary';
+           btn.textContent = cmd.label;
+           btn.onclick = () => {
+              navigator.clipboard.writeText(cmd.command);
+              alert(`Copied to clipboard: ${cmd.command}`);
+           };
+           cmdEl.appendChild(btn);
+        });
+      }
+
+      function runCommand(type) {
+        const cmd = type === 'readiness' ? './scripts/production-readiness-local.sh' : './scripts/security-report-local.sh';
+        alert('Para gerar o relatório, execute no terminal:\n\n' + cmd);
+      }
+
+      function renderRuntimeSummary(data) {
+        const el = document.getElementById('runtimeCard');
+        const val = document.getElementById('runtimeValue');
+        const det = document.getElementById('runtimeDetails');
+        
+        val.textContent = data.health;
+        el.className = 'status-card';
+        if (data.ready) {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.health === 'DEGRADED') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const h = data.deep_health || {};
+        det.innerHTML = `
+          DB: ${h.postgres || 'OFF'} | 
+          Redis: ${h.redis || 'OFF'} | 
+          DP: ${h.data_plane || 'OFF'} | 
+          Backends: ${data.backend_status || 0}
+        `;
+      }
+
+      function renderReadinessReport(data) {
+        const el = document.getElementById('readinessCard');
+        const val = document.getElementById('readinessValue');
+        const det = document.getElementById('readinessDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run production-readiness-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'READY') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'READY_WITH_WARNINGS') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
+      }
+
+      function renderSecurityReport(data) {
+        const el = document.getElementById('securityReportCard');
+        const val = document.getElementById('securityValue');
+        const det = document.getElementById('securityDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run security-report-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'PASS') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'WARN') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
+      }
+
+      function renderDemo(demo) {
+        if (!demo || !demo.demo_enabled) return;
+        const section = document.getElementById('demoSection');
+        section.classList.remove('hidden');
+        
+        const isSynthetic = demo.is_synthetic;
+        const badgeHtml = isSynthetic 
+          ? '<span class="pill" style="background: #fef3c7; color: #92400e; margin-left: 1rem;">SYNTHETIC DATA (DEMO)</span>'
+          : '<span class="pill pill-success" style="margin-left: 1rem;">REAL DATA</span>';
+        
+        section.querySelector('h2 span').outerHTML = badgeHtml;
+
+        let warningsHtml = (demo.warnings || []).map(w => `<p>⚠️ ${w}</p>`).join('');
+        document.getElementById('demoWarnings').innerHTML = warningsHtml;
+
+        const u = demo.demo_usage || {};
+        const b = demo.demo_billing || {};
+        const r = demo.demo_rag || {};
+        
+        document.getElementById('demoStats').innerHTML = `
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Demo Client</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${demo.demo_client?.name || 'Not Found'}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${shortId(demo.demo_client?.id)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Requests (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.requests_today)} / ${num(u.requests_month)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Tokens (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.tokens_today).toLocaleString()} / ${num(u.tokens_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Estimated Invoice</div>
+            <div class="stat-value" style="font-size: 1.1rem;">$${num(b.total_estimated).toFixed(2)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">RAG Storage / Queries</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(r.storage_mb || r.storage_bytes / 1024 / 1024).toFixed(2)}MB / ${num(r.queries_month)}</div>
+          </div>
+        `;
+      }
+
+      function renderHealth(data) {
+        const h = data.dependencies || {};
+        const req = data.requests || {};
+        document.getElementById('healthStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Postgres</div>
+            <div class="stat-value ${h.postgres?.ok ? '' : 'pill-danger'}">${h.postgres?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Redis</div>
+            <div class="stat-value ${h.redis?.ok ? '' : 'pill-danger'}">${h.redis?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Data Plane</div>
+            <div class="stat-value ${h.data_plane?.ok ? '' : 'pill-danger'}">${h.data_plane?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Latency (Last 100)</div>
+            <div class="stat-value">${num(req.avg_latency_ms).toFixed(2)}ms</div>
+          </div>
+        `;
+      }
+
+      function renderModels(data) {
+        const m = data.registry || [];
+        const activeCount = m.filter(i => i.is_active).length;
+        document.getElementById('modelStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Active Models</div>
+            <div class="stat-value">${activeCount}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Models</div>
+            <div class="stat-value">${m.length}</div>
+          </div>
+        `;
+      }
+
+      function renderRevenue(data) {
+        const revenue = num(data?.revenue_usd);
+        const pending = num(data?.pending_usd);
+        const overdue = num(data?.overdue_usd);
+        document.getElementById('revenueStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value" style="color: var(--success);">$${revenue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_paid)} paid invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Revenue</div>
+            <div class="stat-value">$${pending.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_pending)} pending invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Overdue Revenue</div>
+            <div class="stat-value" style="color: var(--danger);">$${overdue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_overdue)} overdue invoices</div>
+          </div>
+        `;
+      }
+
+      function renderUsage(summaryEnvelope, byClient, byModel) {
+        const summary = summaryEnvelope.summary || summaryEnvelope;
+        const totals = summaryEnvelope.totals || {};
+        const rag = summaryEnvelope.rag || {};
+        const stats = document.getElementById('usageStats');
+        stats.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Requests Hoje</div>
+            <div class="stat-value">${num(summary.requests_today).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens Mês</div>
+            <div class="stat-value">${num(summary.tokens_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clientes Ativos</div>
+            <div class="stat-value">${num(summary.clients_active)} / ${num(totals.clients_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Modelos Online</div>
+            <div class="stat-value">${num(totals.models_online)} / ${num(totals.models_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Backends Online</div>
+            <div class="stat-value">${num(totals.backends_online)} / ${num(totals.backends_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cache Hit Rate</div>
+            <div class="stat-value">${(num(summary.cache_hit_rate_month) * 100).toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">RAG Storage</div>
+            <div class="stat-value">${num(rag.total_storage_mb).toFixed(2)} MB</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Invoices Vencidas</div>
+            <div class="stat-value ${num(summary.invoices_overdue) > 0 ? 'pill-danger' : ''}">${num(summary.invoices_overdue)}</div>
+          </div>
+        `;
+        const queueGroups = summary.queues_by_plan?.queues || summary.queues?.queues || {};
+        Object.entries(queueGroups).forEach(([queueName, queue]) => {
+          const title = queueName.replace('inference_', '').toUpperCase();
+          stats.insertAdjacentHTML('beforeend', `
+            <div class="stat-card">
+              <div class="stat-label">Queue ${title}</div>
+              <div class="stat-value">${num(queue.waiting).toLocaleString()} waiting</div>
+              <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">${num(queue.active).toLocaleString()} active / ${num(queue.max_active).toLocaleString()} max</div>
+            </div>
+          `);
+        });
+
+        const clients = Array.isArray(byClient) ? byClient : [];
+        let clientHtml = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
+        clients.forEach(c => {
+          clientHtml += `
+            <tr>
+              <td><strong>${c.client_name || 'Unnamed client'}</strong><br/><small style="color:var(--muted)">${shortId(c.client_id)}</small></td>
+              <td>${c.billing_plan_code || '-'}</td>
+              <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status || 'unknown'}</span></td>
+              <td>${num(c.requests_today).toLocaleString()} / ${num(c.requests_month).toLocaleString()}</td>
+              <td>${num(c.tokens_today).toLocaleString()} / ${num(c.tokens_month).toLocaleString()}</td>
+              <td>${num(c.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${(num(c.cache_hit_rate_month) * 100).toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+        clientHtml += '</tbody></table>';
+        document.getElementById('clientUsageTable').innerHTML = clientHtml;
+
+        const models = Array.isArray(byModel) ? byModel : [];
+        let modelHtml = '<table><thead><tr><th>Model</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Backend Errors</th><th>Model Errors</th><th>Cache</th></tr></thead><tbody>';
+        models.forEach(m => {
+          modelHtml += `
+            <tr>
+              <td><strong>${m.model}</strong></td>
+              <td>${num(m.requests_today).toLocaleString()} / ${num(m.requests_month).toLocaleString()}</td>
+              <td>${num(m.tokens_today).toLocaleString()} / ${num(m.tokens_month).toLocaleString()}</td>
+              <td>${num(m.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${num(m.backend_errors_month)}</td>
+              <td>${num(m.model_errors_month)}</td>
+              <td>${(num(m.cache_hit_rate_month) * 100).toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+        modelHtml += '</tbody></table>';
+        document.getElementById('modelUsageTable').innerHTML = modelHtml;
+      }
+
+      function renderBackends(backends) {
+        let html = '<table><thead><tr><th>Name</th><th>URL</th><th>Status</th><th>Latency</th><th>Current Jobs</th></tr></thead><tbody>';
+        backends.forEach(b => {
+          html += `
+            <tr>
+              <td>${b.name}</td>
+              <td><small>${b.backend_url}</small></td>
+              <td><span class="pill ${b.ok ? 'pill-success' : 'pill-danger'}">${b.ok ? 'Healthy' : 'Down'}</span></td>
+              <td>${b.latency_ms}ms</td>
+              <td>${b.current_running} / ${b.max_parallel_requests}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('backendTable').innerHTML = html;
+      }
+
+      function renderSecurity(events) {
+        let html = '<table><thead><tr><th>Time</th><th>Type</th><th>Severity</th><th>Client</th><th>Message</th></tr></thead><tbody>';
+        events.slice(0, 10).forEach(e => {
+          html += `
+            <tr>
+              <td><small>${e.created_at}</small></td>
+              <td>${e.event_type}</td>
+              <td><span class="pill ${e.severity === 'high' ? 'pill-danger' : 'pill-muted'}">${e.severity}</span></td>
+              <td><small>${shortId(e.client_id)}</small></td>
+              <td>${e.title}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('securityTable').innerHTML = html;
+      }
+
+      function renderRequests(reqs) {
+        let html = '<table><thead><tr><th>Time</th><th>Method</th><th>Status</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
+        reqs.slice(0, 15).forEach(r => {
+          html += `
+            <tr>
+              <td><small>${r.created_at}</small></td>
+              <td>${r.method || 'POST'}</td>
+              <td><span class="pill ${r.status < 400 ? 'pill-success' : 'pill-danger'}">${r.status}</span></td>
+              <td>${r.latency_ms}ms</td>
+              <td><span class="pill pill-muted">${r.cache_hit ? 'HIT' : 'MISS'}</span></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('requestTable').innerHTML = html;
+      }
+
+      function renderRagUsage(data) {
+        const list = document.getElementById('ragUsageList');
+        list.innerHTML = data.map(r => `
+          <tr>
+            <td><strong>${r.client_name}</strong></td>
+            <td><code>${shortId(r.client_id)}</code></td>
+            <td>${r.documents_count}</td>
+            <td>${r.storage_mb.toFixed(2)}</td>
+            <td>${r.queries_month}</td>
+            <td>${r.pages_month}</td>
+          </tr>
+        `).join('');
+      }

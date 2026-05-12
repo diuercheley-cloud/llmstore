@@ -158,7 +158,7 @@ if [[ "${BACKUP_INCLUDE_RAG_FILES}" == "True" || "${BACKUP_INCLUDE_RAG_FILES}" =
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import host_path_for_data_dir
+from local_dr_backup import host_path_for_data_dir
 
 root = Path(sys.argv[1])
 storage_dir = sys.argv[2]

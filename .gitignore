@@ -37,6 +37,9 @@ tmp_key.txt
 proposals/generated/
 *.proposal.generated.pdf
 
+# Branding (local config, never commit real client branding)
+config/branding.local.json
+
 # Models (IMPORTANT)
 /bin
 /models/

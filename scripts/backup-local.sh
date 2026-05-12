@@ -86,7 +86,7 @@ python3 - "${ENV_SOURCE_FILE}" "${CONFIG_FILE}" <<'PY'
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import parse_env_file, sanitize_env_snapshot
+from local_dr_backup import parse_env_file, sanitize_env_snapshot
 
 env_file = Path(sys.argv[1])
 target = Path(sys.argv[2])
@@ -109,7 +109,7 @@ if [[ "${include_rag_files}" == "true" ]]; then
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import host_path_for_data_dir
+from local_dr_backup import host_path_for_data_dir
 
 root = Path(sys.argv[1])
 storage_dir = sys.argv[2]
@@ -131,7 +131,7 @@ import hashlib
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import (
+from local_dr_backup import (
     BackupManifestInput,
     build_manifest,
     collect_asset_metadata,

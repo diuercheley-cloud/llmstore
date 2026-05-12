@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
+from app.api.sales import router as sales_router
 from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
 from app.api.rag import router as rag_router, client_rag_router
@@ -77,6 +78,7 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(sales_router)
 app.include_router(admin_tests_router)
 app.include_router(client_router)
 app.include_router(rag_router)

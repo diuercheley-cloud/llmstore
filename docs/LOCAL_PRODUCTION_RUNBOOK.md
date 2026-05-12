@@ -79,6 +79,26 @@ make validate-abuse
 ```
 Check the generated report in `artifacts/abuse-protection/<timestamp>/abuse-report.md`.
 
+### 8. Paid Implementation Checklist (Client Deployment)
+
+For paid/full-client deployments, generate and fill the implementation checklist:
+```bash
+make implementation-checklist
+make validate-implementation-checklist
+```
+
+This checklist covers hardware, access, responsibilities, backup, installation, configuration, models, security, acceptance tests, operator training, and final delivery.
+
+### 9. Client Monthly Report
+
+Generate monthly usage reports for each client with consumption, billing, and recommendations:
+```bash
+make monthly-report-demo
+make validate-monthly-report
+```
+
+Reports are generated in `artifacts/monthly-reports/` and include: chat tokens, requests, responses, embeddings, RAG, TTS, errors, rate limit events, local/manual billing, payment status, and upgrade/downgrade suggestions.
+
 ## Maintenance
 
 ### Upgrades

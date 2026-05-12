@@ -170,3 +170,7 @@ O appliance roda em hardware fornecido pelo cliente. Abaixo, referências de con
 **Preços são placeholders — consulte proposta comercial vigente.**
 **Billing é local/manual — não inclui PSP/PIX real.**
 **Este documento não substitui análise jurídica ou de compliance.**
+
+
+--- 
+*Nota: Esta é uma ESTIMATIVA LOCAL gerada para fins de demonstração. Valores sujeitos a alteração após análise de escopo.*

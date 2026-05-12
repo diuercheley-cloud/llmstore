@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/lib/validation-logging.sh"
+source "${SCRIPT_DIR}/../lib/validation-logging.sh"
 init_stack_env
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"

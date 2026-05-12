@@ -440,3 +440,10 @@ make validate-meeting-ready
 | Backup | `./scripts/backup.sh` |
 | Criar cliente | `./scripts/create-client.sh` |
 | Validar dados fictícios | `make validate-fake-data` |
+
+## 8. Gestão Comercial (CRM Local)
+
+- **Cenário**: Mostrar como a empresa gerencia o pipeline de vendas da própria solução.
+- **Ação**: Navegar até a seção "Sales / Leads" no Admin Dashboard.
+- **Destaque**: "Toda a gestão de leads é feita aqui mesmo, localmente. Não usamos CRM externo para garantir que nem mesmo os dados dos nossos potenciais clientes saiam da nossa infraestrutura."
+- **Ação**: Mostrar um lead demo (ex: Clínica Horizonte), avançar o estágio e adicionar uma nota.

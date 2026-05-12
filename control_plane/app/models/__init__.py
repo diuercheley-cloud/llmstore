@@ -17,6 +17,7 @@ from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.client_feature_block import ClientFeatureBlock
 from app.models.rag_usage_event import RagUsageEvent
+from app.models.sales_lead import SalesLead, SalesLeadNote
 
 __all__ = [
     "ApiKey",
@@ -34,6 +35,8 @@ __all__ = [
     "RAGDocumentChunk",
     "ClientFeatureBlock",
     "RagUsageEvent",
+    "SalesLead",
+    "SalesLeadNote",
     "RequestLog",
     "ResponseCache",
     "SecurityEvent",

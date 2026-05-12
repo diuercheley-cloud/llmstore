@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load operator errors library if available
-if [[ -f "${SCRIPT_DIR}/lib/operator-errors.sh" ]]; then
-  source "${SCRIPT_DIR}/lib/operator-errors.sh"
+if [[ -f "${SCRIPT_DIR}/../lib/operator-errors.sh" ]]; then
+  source "${SCRIPT_DIR}/../lib/operator-errors.sh"
 fi
 
 BASE_URL="http://localhost:18080"

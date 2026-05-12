@@ -36,3 +36,14 @@ async def test_admin_usage_summary_enhanced(admin_client: AsyncClient, admin_tok
     assert "total_storage_mb" in data["rag"]
     assert "total_queries_month" in data["rag"]
 
+@pytest.mark.asyncio
+async def test_admin_usage_summary_compact_omits_heavy_lists(admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    response = await admin_client.get(
+        "/admin/usage/summary?compact=1",
+        headers=admin_token_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["clients"] == []
+    assert data["models"] == []
+    assert data["tts"] == {}

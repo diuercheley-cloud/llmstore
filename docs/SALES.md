@@ -1,118 +1,115 @@
-# SaaS Sales Flow
+# Sales CRM Local
 
-## Objetivo
+Este módulo fornece um CRM simples e local para gestão de leads e oportunidades comerciais, permitindo o acompanhamento do funil de vendas sem depender de serviços externos ou expor dados na internet.
 
-Transformar o stack em um produto vendavel com onboarding self-serve, plano free limitado, pagina publica de oferta e deploy simples em VPS.
+## Funcionalidades
 
-### Technical Readiness & Safety
-O sistema inclui ferramentas de auto-diagnóstico para garantir o sucesso da venda:
+- **Gestão de Leads**: Cadastro e edição de empresas, contatos e segmentos.
+- **Funil de Vendas**: Acompanhamento de estágios (Novo, Contatado, Demo Agendada, Proposta Enviada, Negociação, Ganho, Perdido).
+- **Timeline de Notas**: Histórico de interações e mudanças de estágio.
+- **Estimativa de Valor**: Valor potencial de cada oportunidade em BRL.
+- **Next Follow-up**: Agendamento da próxima ação de acompanhamento.
+- **Privacidade Total**: Todos os dados são armazenados localmente no banco de dados do Control Plane.
 
-- **Pre-Demo Checklist**: `make pre-demo-check` (Garante que a demo não falhe ao vivo).
-- **Pre-Client Checklist**: `make pre-client-check` (Valida segurança e performance antes da entrega).
-- **Security Report**: Relatório detalhado de mitigação de riscos.
+## API Administrativa
 
-## Fluxo comercial
+Todos os endpoints requerem `X-Admin-Token`.
 
-1. O visitante acessa `/` para entender a proposta do produto.
-2. O visitante compara planos em `/pricing`.
-3. O cadastro acontece em `/signup` ou direto no endpoint `POST /public/signup`.
-4. O control plane cria o cliente, associa o plano e gera uma API key inicial.
-5. O cliente usa a chave em `/v1/*` e acompanha uso, invoices e teste de prompt em `/client-portal`.
+- `GET /admin/sales/leads`: Lista leads (filtro opcional por `status`).
+- `POST /admin/sales/leads`: Cria novo lead.
+- `GET /admin/sales/leads/{id}`: Detalhes do lead e notas.
+- `PATCH /admin/sales/leads/{id}`: Atualiza dados do lead.
+- `DELETE /admin/sales/leads/{id}`: Remove um lead.
+- `POST /admin/sales/leads/{id}/notes`: Adiciona uma nota.
+- `POST /admin/sales/leads/{id}/advance-stage`: Avança o estágio com nota automática.
 
-## Onboarding automatico
+## Interface (Admin Dashboard)
 
-O endpoint `POST /public/signup` retorna:
+Acesse o **Admin Dashboard** e localize a seção **Sales / Leads**. Lá você poderá visualizar o funil, adicionar novos leads e gerenciar o status de cada um.
 
-- `client_id`
-- `account_name`
-- `plan_code`
-- `api_key`
-- `portal_url`
-- `api_base_url`
+## Dados de Demonstração
 
-A API key e retornada apenas uma vez. O cliente deve armazenar esse valor no momento do cadastro.
-
-## Oferta comercial padrao (Local Edition)
-
-O sistema utiliza faturamento local/manual nesta versão.
-
-| Recurso | Free | Basic | Pro | Enterprise Local |
-| :--- | :--- | :--- | :--- | :--- |
-| **Requisições (RPM/RPD)** | 10 / 100 | 30 / 1.000 | 60 / 5.000 | 300 / 1.000.000 |
-| **Tokens (Mês)** | 50.000 | 500.000 | 5.000.000 | 50.000.000 |
-| **Contexto Máximo** | 4.096 | 8.192 | 16.384 | 131.072 |
-| **Streaming** | Sim | Sim | Sim | Sim |
-| **RAG** | Não | Sim (5 docs) | Sim (50 docs) | Sim (1.000 docs) |
-| **TTS** | Não | Sim | Sim | Sim |
-| **Embeddings** | Não | Sim | Sim | Sim |
-| **Exportação de Uso** | Não | Não | Sim | Sim |
-| **Suporte** | Comunitário | E-mail | E-mail Prioritário | 24/7 Dedicado |
-
-**Nota:** O faturamento é realizado de forma manual/local. Não há integração direta com PSP/PIX nesta versão.
-
-## Deploy publico
-
-Em producao, use `STACK_MODE=prod` e `scripts/deploy-vps.sh`. O compose de producao sobe o Caddy na frente do control plane para obter HTTPS automatico com Let's Encrypt.
-
-## Demo Pack Comercial
-
-O `demo-pack/` contem um pacote completo de demonstracao com 5 cenarios comerciais ficticios. Use durante reunioes de vendas para demonstrar o valor do produto sem precisar configurar dados manualmente.
+Para popular o CRM com dados fictícios de exemplo:
 
 ```bash
-# Preparar ambiente de demonstracao
-make demo-pack
-
-# Executar validacao
-make validate-demo-pack
+make sales-seed
 ```
 
-Documentacao completa da demonstracao em `demo-pack/demo-flow.md` (roteiro de 30-45 min).
+## Geração de Propostas
 
-### Cenarios de venda
+Você pode gerar uma proposta comercial personalizada em Markdown (e opcionalmente PDF) a partir de um lead existente no CRM ou informando os dados manualmente.
 
-| Cenario | Problema | Solucao |
-|---------|----------|---------|
-| Clinica Local | LGPD, dados sensiveis | Inferencia local + RAG + compliance |
-| Escritorio Juridico | Sigilo advocaticio | Stack local sem nuvem |
-| Suporte Tecnico | knowledge base dispersa | RAG + TTS + chat |
-| Escola/Treinamento | Orcamento limitado | Plano a partir de R$ 197/mes |
-| Provedor de API | Concorrer com OpenAI | Plataforma completa white-label |
+### Comandos principais
 
-### Recursos de apoio
-
-- `demo-pack/demo-objection-handling.md` - Respostas para 15+ objecoes comuns
-- `demo-pack/demo-api-requests.md` - Requisicoes curl prontas para cada endpoint
-- `demo-pack/demo-prompts.md` - Prompts por cenario
-- `demo-pack/demo-flow.md` - Roteiro completo da reuniao
-
-### Documentos de Apresentação para Clientes
-
-Material adicional para reuniões comerciais e técnicas com clientes:
-
-- [Roteiro de Apresentação (15/30/60 min)](docs/CLIENT_PRESENTATION_SCRIPT.md) — 3 versões de roteiro
-- [Talk Track — Falas Prontas](docs/CLIENT_DEMO_TALK_TRACK.md) — Roteiro textual completo
-- [FAQ da Demo Comercial](docs/CLIENT_DEMO_FAQ.md) — Perguntas frequentes sobre o appliance
-- [Objeções Comuns](docs/CLIENT_DEMO_OBJECTIONS.md) — Respostas para 10+ objeções
-
-### Propostas Comerciais e Técnicas
-
-Templates de propostas em Markdown para envio formal a clientes:
-
-- [Proposta Técnica](proposals/TECHNICAL_PROPOSAL_TEMPLATE.md) — Completa: arquitetura, componentes, requisitos, segurança, implantação
-- [Proposta Comercial](proposals/COMMERCIAL_PROPOSAL_TEMPLATE.md) — Problema, solução, planos (placeholders), cronograma, suporte
-- [One-Pager Executivo](proposals/LOCAL_AI_APPLIANCE_ONE_PAGER.md) — Resumo de página única para apresentação rápida
-
-Geração de PDF local:
+**Gerar para um lead do CRM:**
 ```bash
-./scripts/generate-proposal-pdf.sh \
-  --input proposals/TECHNICAL_PROPOSAL_TEMPLATE.md \
-  --output proposals/generated/proposta-tecnica.pdf
+make generate-proposal LEAD_ID=lead-uuid-aqui
 ```
 
-## Operacao de venda
+**Gerar informando dados manuais:**
+```bash
+./scripts/generate-client-proposal.sh --company-name "Minha Empresa" --contact-name "João Silva" --plan "Pro"
+```
 
-- Use a landing como CTA principal.
-- Direcione campanhas para `/pricing`.
-- Entregue trial ou free via `/signup`.
-- Faca upgrade de plano pelo Admin API ou pelo fluxo comercial interno.
-- Use o **Demo Pack Comercial** para reunioes com clientes potenciais.
+As propostas são geradas em `artifacts/proposals/<timestamp>/` e incluem o arquivo `.md` e um `proposal-metadata.json`.
+
+### Configuração de Preços e Padrões
+Edite ou crie `config/sales-proposal.json` para definir os valores padrão de setup, mensalidade, moeda e escopo. Utilize `config/sales-proposal.example.json` como base.
+
+
+### Gerador de Orçamento Local (v1.6.5)
+
+Para demonstrações rápidas, utilize o script local ou a interface no Admin Dashboard.
+Os valores são configuráveis em `config/pricing.local.json`.
+
+**Via CLI:**
+```bash
+./scripts/generate-local-quote.sh --company-name "Nome da Empresa" --plan Pro --rag
+```
+
+## Contratos e SOW
+
+Templates de contrato e SOW (Statement of Work) para implantação local estão disponíveis em `contracts/`.
+
+**Gerar SOW personalizado:**
+```bash
+./scripts/generate-sow-local.sh --company-name "Nome da Empresa" --project-name "Local AI Appliance" --plan Pro
+```
+
+**Validar templates de contrato:**
+```bash
+./scripts/validate-contract-templates-local.sh
+```
+
+**AVISO:** Todos os templates exigem revisão jurídica obrigatória antes da assinatura. Consulte `contracts/README.md` para detalhes.
+
+### Relatório Mensal por Cliente
+
+Gere relatórios mensais de uso, faturamento e recomendações para clientes:
+
+```bash
+# Via CLI
+./scripts/generate-client-monthly-report.sh --email cliente@exemplo.com --month 2026-05
+
+# Com ID do cliente (busca dados da API)
+./scripts/generate-client-monthly-report.sh --client-id <uuid> --month 2026-05
+
+# Via Make
+make monthly-report-demo
+
+# Endpoint Admin (preview via API)
+GET /admin/sales/monthly-report-preview?client_id=<uuid>&month=2026-05
+Headers: X-Admin-Token: <token>
+```
+
+Os relatórios são gerados em `artifacts/monthly-reports/` (ignorados pelo Git).
+
+## White-Label / Branding
+
+O sistema suporta personalização de marca (nome do produto, cores, textos) via arquivo de configuração. Consulte `docs/WHITE_LABEL_LOCAL.md` para detalhes.
+
+```bash
+cp config/branding.example.json config/branding.local.json
+# Edite o arquivo e reinicie o stack
+make validate-white-label
+```

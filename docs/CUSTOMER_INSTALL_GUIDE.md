@@ -59,7 +59,37 @@ Logo após a instalação e validação, crie o seu primeiro ponto de restauraç
 ## 10. Atualização Futura
 Para atualizar quando recebermos novas versões (via pacote ou repositório), você executará um script de `rollback/upgrade` seguro, garantindo que a versão dos dados seja compatível. O upgrade automaticamente realiza um backup preventivo obrigatório; para pular este passo, o operador deve confirmar os riscos explicitamente (ex. `--skip-backup --yes`). Siga as instruções do pacote de liberação entregue na época.
 
-## 11. Desinstalação Segura
+## 11. White-Label / Branding Personalizado
+
+É possível personalizar a identidade visual do sistema (nome do produto, cores, textos) sem alterar código. Consulte `docs/WHITE_LABEL_LOCAL.md` para instruções.
+
+## 12. Termos Contratuais
+
+Templates de contrato e SOW para referência estão disponíveis no diretório `contracts/`. Esses templates:
+
+- São fornecidos apenas para pré-alinhamento comercial.
+- **Não substituem assessoria jurídica.**
+- **Não constituem aconselhamento jurídico.**
+- **Não prometem garantias absolutas de funcionamento ou compliance.**
+- **Não incluem processamento de pagamentos reais (PSP/PIX).**
+
+Consulte `contracts/README.md` para detalhes sobre cada template.
+
+## 12. Checklist de Implantação Paga
+
+Para implantações comerciais com prestação de serviços, utilize o **Paid Implementation Checklist** disponível em `docs/PAID_IMPLEMENTATION_CHECKLIST.md`. Este checklist:
+
+- Separa responsabilidades entre cliente e fornecedor.
+- Abrange hardware, instalação, configuração, modelos, segurança, testes de aceite e treinamento.
+- Inclui campos para assinatura e aceite formal.
+- **Não inclui processamento de pagamentos reais (PSP/PIX).**
+
+```bash
+# Gerar checklist personalizado para o cliente
+./scripts/paid-implementation-checklist-local.sh --company-name "Cliente" --operator-name "Fornecedor"
+```
+
+## 13. Desinstalação Segura
 Caso precise remover todo o sistema, os contêineres e redes podem ser removidos. Seus dados no disco (`models/`, bancos de dados mapeados) permanecerão, a menos que deletados manualmente. Use o docker-compose para parar:
 ```bash
 docker compose down -v

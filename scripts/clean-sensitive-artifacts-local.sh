@@ -16,8 +16,8 @@ else
 fi
 
 # shellcheck source=/dev/null
-if [[ -f "${SCRIPT_DIR}/lib/redaction.sh" ]]; then
-  source "${SCRIPT_DIR}/lib/redaction.sh"
+if [[ -f "${SCRIPT_DIR}/../lib/redaction.sh" ]]; then
+  source "${SCRIPT_DIR}/../lib/redaction.sh"
 else
   echo "Error: lib/redaction.sh not found in ${SCRIPT_DIR}"
   exit 1

@@ -269,7 +269,7 @@ rag_path_to_host() {
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import host_path_for_data_dir
+from local_dr_backup import host_path_for_data_dir
 
 root = Path(sys.argv[1])
 storage_path = sys.argv[2]
@@ -386,7 +386,7 @@ RAG_STORAGE_DIR_HOST="$(python3 - "${ROOT_DIR}" "${RAG_STORAGE_DIR_CONTAINER}" <
 from pathlib import Path
 import sys
 
-from scripts.local_dr_backup import host_path_for_data_dir
+from local_dr_backup import host_path_for_data_dir
 
 root = Path(sys.argv[1])
 storage_dir = sys.argv[2]

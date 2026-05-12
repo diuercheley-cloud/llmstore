@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LLM Inference Stack - Edição Local</title>
+    <script src="/static/www/branding-init.js"></script>
     <style>
       :root {
         --bg: #f4efe6;
@@ -177,11 +178,11 @@
   <body>
     <div class="shell">
       <nav class="nav">
-        <div class="brand">LLM Stack Local</div>
+        <div class="brand" data-brand="product_name">LLM Stack Local</div>
         <div class="links">
           <a href="/capabilities">Capabilities</a>
           <a href="/docs">Docs</a>
-          <a href="/portal/">Client Portal</a>
+          <a href="/client-portal">Client Portal</a>
           <a href="/admin/">Admin Lab</a>
           <a class="cta primary" href="/signup">Instalar Agora</a>
         </div>
@@ -190,14 +191,14 @@
       <section class="hero">
         <div>
           <span class="eyebrow">Local Product Demo</span>
-          <h1>LLM Local para Empresas</h1>
+          <h1 data-brand="tagline">LLM Local para Empresas</h1>
           <p class="lead">
             Infraestrutura de IA privada, segura e sob seu controle. 
             Uma stack completa com API compatível com OpenAI, RAG com documentos internos e gestão de clientes.
           </p>
           <div class="hero-actions">
             <a class="cta primary" href="/admin/">Abrir Admin Dashboard</a>
-            <a class="cta secondary" href="/portal/">Abrir Client Portal</a>
+            <a class="cta secondary" href="/client-portal">Abrir Client Portal</a>
             <a class="cta secondary" href="/docs">Ver Documentação</a>
           </div>
         </div>
@@ -263,7 +264,7 @@
           <div class="card">
             <strong>Client Portal Demo</strong>
             <p>Área do usuário para gerenciar chaves de API, testar chat e ver faturas simuladas.</p>
-            <a href="/portal/" style="display: block; margin-top: 16px; color: var(--accent); font-weight: 600;">Abrir Client Portal →</a>
+            <a href="/client-portal" style="display: block; margin-top: 16px; color: var(--accent); font-weight: 600;">Abrir Client Portal →</a>
           </div>
           <div class="card">
             <strong>Admin Dashboard</strong>
@@ -296,7 +297,7 @@
       </section>
 
       <div class="footer">
-        <div>© 2026 LLM Inference Stack • Local Production Edition</div>
+        <div data-brand="footer_text">© 2026 LLM Inference Stack • Local Production Edition</div>
         <div style="display: flex; gap: 16px;">
           <a href="/docs">Documentação</a>
           <a href="/admin/">Admin Dashboard</a>

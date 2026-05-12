@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
 # shellcheck source=/dev/null
-source "${SCRIPT_DIR}/lib/validation-logging.sh"
+source "${ROOT_DIR}/lib/validation-logging.sh"
 init_stack_env
 
 TIMESTAMP="$(date +%Y%m%dT%H%M%S)"

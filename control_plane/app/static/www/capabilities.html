@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Capabilities - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
     <style>
       :root {
         --bg: #f4efe6;
@@ -101,7 +102,7 @@
   <body>
     <div class="shell">
       <nav class="nav">
-        <div class="brand">LLM Stack Local</div>
+        <div class="brand" data-brand="product_name">LLM Stack Local</div>
         <div class="links">
           <a href="/">Inicio</a>
           <a href="/docs">Docs</a>
@@ -113,7 +114,7 @@
 
       <h1>Local AI Appliance Capabilities</h1>
       <p class="subtitle">
-        Resumo dos recursos, status e limitacoes do appliance local de LLM-as-a-Service.
+        <span data-brand="capabilities_title">Resumo dos recursos, status e limitacoes do appliance local de LLM-as-a-Service.</span>
         <span id="version-tag" style="color:var(--muted);font-size:14px;"></span>
       </p>
 
@@ -173,7 +174,7 @@
       </div>
 
       <div class="footer">
-        <div>© 2026 LLM Inference Stack &mdash; Edicao Local</div>
+        <div data-brand="footer_text">© 2026 LLM Inference Stack &mdash; Edicao Local</div>
         <div style="display:flex;gap:16px;">
           <a href="/">Inicio</a>
           <a href="/docs">Documentacao</a>

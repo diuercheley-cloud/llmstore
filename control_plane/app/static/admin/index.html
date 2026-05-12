@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Admin Dashboard - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
     <style>
       :root {
         --bg: #f1f5f9;
@@ -121,6 +122,7 @@
         margin-top: 1rem;
       }
       
+      .hidden { display: none !important; }
       .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
       .stat-card { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); }
       .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
@@ -128,13 +130,23 @@
       .stat-details { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
 
       .hidden { display: none; }
+      .toolbar-status {
+        margin: 0 auto 0 1rem;
+        font-size: 0.8125rem;
+        color: var(--muted);
+      }
+      .toolbar-status.error {
+        color: var(--danger);
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
     <header>
       <div class="brand">
-        <h1>LLM Stack Admin</h1>
+        <h1 data-brand="product_name">LLM Stack Admin</h1>
       </div>
+      <div id="toolbarStatus" class="toolbar-status">Aguardando token de admin.</div>
       <div class="auth-box">
         <input id="adminToken" type="password" placeholder="Admin Token" />
         <button id="connect">Connect</button>
@@ -250,6 +262,64 @@
         <pre id="modelDebug" class="debug"></pre>
       </section>
 
+      
+      <!-- Sales & Leads (CRM) -->
+      <section id="salesSection" class="wide">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="margin: 0;">Sales / Leads</h2>
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="leadStatusFilter" onchange="fetchLeads()">
+              <option value="">All Status</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="demo_scheduled">Demo Scheduled</option>
+              <option value="proposal_sent">Proposal Sent</option>
+              <option value="negotiation">Negotiation</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+            <button onclick="showAddLeadForm()">+ New Lead</button>
+          </div>
+        </div>
+
+        <div id="addLeadForm" class="hidden" style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); margin-bottom: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <input type="text" id="leadCompany" placeholder="Company Name">
+            <input type="text" id="leadContact" placeholder="Contact Name">
+            <input type="email" id="leadEmail" placeholder="Email">
+            <input type="text" id="leadPhone" placeholder="Phone (Optional)">
+            <input type="text" id="leadSegment" placeholder="Segment (e.g. Health, Legal)">
+            <input type="text" id="leadSource" placeholder="Source (e.g. Website, Referral)">
+            <input type="number" id="leadValue" placeholder="Estimated Value (BRL)">
+            <input type="date" id="leadFollowUp" placeholder="Next Follow-up">
+          </div>
+          <textarea id="leadNotes" placeholder="Initial Notes" style="width: 100%; margin-top: 1rem; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid var(--border); font-family: inherit;"></textarea>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <button onclick="submitLead()">Save Lead</button>
+            <button class="secondary" onclick="hideAddLeadForm()">Cancel</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table id="leadsTable">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Contact</th>
+                <th>Segment</th>
+                <th>Status</th>
+                <th>Estimated Value</th>
+                <th>Next Follow-up</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leadsBody">
+              <tr><td colspan="7" style="text-align: center;">Loading leads...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- Revenue & Financials -->
       <section class="wide">
         <h2>Revenue Summary <button class="secondary" onclick="toggleDebug('revenueDebug')">JSON</button></h2>
@@ -305,6 +375,75 @@
         </table>
       </div>
     </section>
+
+      <!-- Quote Calculator Section -->
+      <section id="quoteCalculatorSection" class="wide">
+        <h2>Calculadora de Orçamento Local <span class="pill pill-warning">Valores Configuráveis</span></h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div id="quoteForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <label style="display:block; font-size: 0.75rem; color: var(--muted);">Empresa</label>
+                <input id="quoteCompany" type="text" style="width:100%;" placeholder="Ex: Cliente Demo" />
+              </div>
+              <div>
+                <label style="display:block; font-size: 0.75rem; color: var(--muted);">Plano</label>
+                <select id="quotePlan" style="width:100%; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid var(--border);">
+                  <option value="Free">Free</option>
+                  <option value="Basic" selected>Basic</option>
+                  <option value="Pro">Pro</option>
+                  <option value="Enterprise Local">Enterprise Local</option>
+                </select>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <label style="display:block; font-size: 0.75rem; color: var(--muted);">Suporte (Horas/Mês)</label>
+                <input id="quoteSupport" type="number" style="width:100%;" value="0" />
+              </div>
+              <div>
+                <label style="display:block; font-size: 0.75rem; color: var(--muted);">Integração (Horas)</label>
+                <input id="quoteIntegration" type="number" style="width:100%;" value="0" />
+              </div>
+              <div>
+                <label style="display:block; font-size: 0.75rem; color: var(--muted);">Desconto (%)</label>
+                <input id="quoteDiscount" type="number" style="width:100%;" value="0" />
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <label><input id="quoteRag" type="checkbox" /> RAG Setup</label>
+              <label><input id="quoteTts" type="checkbox" /> TTS Setup</label>
+              <label><input id="quoteEmbeddings" type="checkbox" /> Embeddings</label>
+            </div>
+            <button onclick="calculateQuote()" style="width:100%;">Gerar Prévia de Orçamento</button>
+          </div>
+          <div id="quoteResult" style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+            <div id="quotePlaceholder" style="text-align:center; color: var(--muted); padding: 2rem;">
+              Preencha os dados e clique em gerar para ver a prévia.
+            </div>
+            <div id="quoteDetails" class="hidden">
+              <h3 id="resCompany" style="margin-top:0;">Empresa</h3>
+              <div class="stat-grid" style="margin-bottom: 1rem;">
+                <div class="stat-card">
+                  <div class="stat-label">Total Setup</div>
+                  <div id="resSetup" class="stat-value">R$ 0</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Total Recorrente</div>
+                  <div id="resRecurring" class="stat-value">R$ 0</div>
+                </div>
+              </div>
+              <div class="stat-card" style="background: var(--accent); color: white;">
+                <div class="stat-label" style="color: rgba(255,255,255,0.8);">Valor Final Primeiro Mês (com desconto)</div>
+                <div id="resFinal" class="stat-value" style="color: white; font-size: 1.5rem;">R$ 0</div>
+              </div>
+              <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--muted);">
+                * Estes valores são estimativos e configurados localmente para demonstração comercial.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
     <div id="loginPrompt" style="text-align: center; margin-top: 100px; color: var(--muted);">
       <p>Please enter your Admin Token to access the dashboard.</p>
@@ -316,8 +455,10 @@
         connect: document.getElementById('connect'),
         refresh: document.getElementById('refresh'),
         adminContent: document.getElementById('adminContent'),
-        loginPrompt: document.getElementById('loginPrompt')
+        loginPrompt: document.getElementById('loginPrompt'),
+        toolbarStatus: document.getElementById('toolbarStatus')
       };
+      let isLoading = false;
 
       const savedToken = localStorage.getItem('adminToken');
       if (savedToken) {
@@ -345,25 +486,45 @@
         return typeof value === 'number' ? value : fallback;
       }
 
+      function setToolbarStatus(message, isError = false) {
+        elements.toolbarStatus.textContent = message;
+        elements.toolbarStatus.classList.toggle('error', isError);
+      }
+
+      function setLoadingState(loading) {
+        isLoading = loading;
+        elements.connect.disabled = loading;
+        elements.refresh.disabled = loading;
+      }
+
       async function adminFetch(path) {
         const token = elements.adminToken.value.trim();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         const response = await fetch(path, {
+          signal: controller.signal,
           headers: { 'X-Admin-Token': token }
         });
+        clearTimeout(timeoutId);
         if (!response.ok) throw new Error(response.statusText);
         return response.json();
       }
 
       async function initAdmin() {
-        if (!elements.adminToken.value.trim()) return;
+        if (isLoading) return;
+        if (!elements.adminToken.value.trim()) {
+          setToolbarStatus('Informe o admin token para carregar o dashboard.', true);
+          return;
+        }
+        setLoadingState(true);
+        setToolbarStatus('Carregando dashboard...');
         elements.adminContent.classList.remove('hidden');
         elements.loginPrompt.classList.add('hidden');
 
         try {
-          const [controlCenter, health, usageSummary, usageByClient, usageByModel, models, security, requests, revenue, rag, runtimeSummary, readinessReport, securityReport, demoSummary, plans] = await Promise.all([
+          const results = await Promise.allSettled([
             adminFetch('/admin/system/control-center'),
             adminFetch('/admin/health/deep'),
-            adminFetch('/admin/usage/summary'),
             adminFetch('/admin/usage/by-client'),
             adminFetch('/admin/usage/by-model'),
             adminFetch('/admin/models'),
@@ -374,9 +535,54 @@
             adminFetch('/admin/runtime/summary'),
             adminFetch('/admin/readiness/latest'),
             adminFetch('/admin/security/latest'),
-            adminFetch('/admin/demo/summary').catch(() => null),
+            adminFetch('/admin/demo/summary'),
             adminFetch('/admin/billing/plans')
           ]);
+
+          const [
+            controlCenterResult,
+            healthResult,
+            usageByClientResult,
+            usageByModelResult,
+            modelsResult,
+            securityResult,
+            requestsResult,
+            revenueResult,
+            ragResult,
+            runtimeSummaryResult,
+            readinessReportResult,
+            securityReportResult,
+            demoSummaryResult,
+            plansResult
+          ] = results;
+
+          const requiredFailures = [];
+          if (controlCenterResult.status !== 'fulfilled') requiredFailures.push('control center');
+          if (healthResult.status !== 'fulfilled') requiredFailures.push('health');
+          if (modelsResult.status !== 'fulfilled') requiredFailures.push('models');
+          if (runtimeSummaryResult.status !== 'fulfilled') requiredFailures.push('runtime');
+          if (readinessReportResult.status !== 'fulfilled') requiredFailures.push('readiness');
+          if (securityReportResult.status !== 'fulfilled') requiredFailures.push('security');
+
+          if (requiredFailures.length > 0) {
+            throw new Error(`Falha ao carregar blocos obrigatórios: ${requiredFailures.join(', ')}`);
+          }
+
+          const controlCenter = controlCenterResult.value;
+          const health = healthResult.value;
+          const usageByClient = usageByClientResult.status === 'fulfilled' ? usageByClientResult.value : [];
+          const usageByModel = usageByModelResult.status === 'fulfilled' ? usageByModelResult.value : [];
+          const models = modelsResult.value;
+          const security = securityResult.status === 'fulfilled' ? securityResult.value : [];
+          const requests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
+          const revenue = revenueResult.status === 'fulfilled' ? revenueResult.value : {};
+          const rag = ragResult.status === 'fulfilled' ? ragResult.value : [];
+          const runtimeSummary = runtimeSummaryResult.value;
+          const readinessReport = readinessReportResult.value;
+          const securityReport = securityReportResult.value;
+          const demoSummary = demoSummaryResult.status === 'fulfilled' ? demoSummaryResult.value : null;
+          const plans = plansResult.status === 'fulfilled' ? plansResult.value : [];
+          const usageSummary = buildUsageSummaryEnvelope(usageByClient, usageByModel, models, rag);
 
           renderControlCenter(controlCenter);
           renderRuntimeSummary(runtimeSummary);
@@ -391,10 +597,10 @@
           renderRequests(requests);
           renderRevenue(revenue);
           renderRagUsage(rag);
-          renderPlans(plans);
+          // renderPlans(plans);
 
+          // document.getElementById("plansDebug").textContent = JSON.stringify(plans, null, 2);
           // Fill debugs
-          document.getElementById('plansDebug').textContent = JSON.stringify(plans, null, 2);
           document.getElementById('controlCenterDebug').textContent = JSON.stringify(controlCenter, null, 2);
           document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
           document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
@@ -404,9 +610,81 @@
           document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
           document.getElementById('revenueDebug').textContent = JSON.stringify(revenue, null, 2);
 
+          const optionalFailures = results
+            .map((result, index) => ({ result, index }))
+            .filter(item => item.result.status !== 'fulfilled')
+            .map(item => item.index);
+          const optionalCount = optionalFailures.length;
+          if (optionalCount > 0) {
+            setToolbarStatus(`Dashboard atualizado com ${optionalCount} bloco(s) opcional(is) indisponível(is).`, true);
+          } else {
+            setToolbarStatus(`Dashboard atualizado em ${new Date().toLocaleTimeString('pt-BR')}.`);
+          }
         } catch (err) {
-          alert('Failed to load admin data: ' + err.message);
+          console.error('Admin Load Error:', err);
+          const message = err && err.name === 'AbortError'
+            ? 'Timeout ao carregar o dashboard. Verifique se algum endpoint admin está lento.'
+            : 'Falha ao carregar dados do admin: ' + err.message;
+          setToolbarStatus(message, true);
+          alert(message);
+        } finally {
+          setLoadingState(false);
         }
+      }
+
+      function buildUsageSummaryEnvelope(byClient, byModel, modelsPayload, ragPayload) {
+        const clients = Array.isArray(byClient) ? byClient : [];
+        const modelRows = Array.isArray(byModel) ? byModel : [];
+        const ragRows = Array.isArray(ragPayload) ? ragPayload : [];
+        const registry = Array.isArray(modelsPayload?.registry) ? modelsPayload.registry : [];
+        const backends = Array.isArray(modelsPayload?.backends) ? modelsPayload.backends : [];
+
+        const summary = clients.reduce((acc, client) => {
+          acc.requests_today += num(client.requests_today);
+          acc.requests_month += num(client.requests_month);
+          acc.tokens_today += num(client.tokens_today);
+          acc.tokens_month += num(client.tokens_month);
+          acc.cache_hits_month += num(client.cache_hits_month);
+          acc.cache_misses_month += num(client.cache_misses_month);
+          acc.invoices_overdue += num(client.billing_status === 'overdue' || client.billing_status === 'past_due' ? 1 : 0);
+          if (client.billing_status === 'active') acc.clients_active += 1;
+          if (client.billing_status === 'suspended') acc.clients_suspended += 1;
+          return acc;
+        }, {
+          requests_today: 0,
+          requests_month: 0,
+          tokens_today: 0,
+          tokens_month: 0,
+          cache_hits_month: 0,
+          cache_misses_month: 0,
+          invoices_overdue: 0,
+          clients_active: 0,
+          clients_suspended: 0
+        });
+
+        const latencySamples = clients.filter(item => num(item.requests_month) > 0);
+        const weightedLatency = latencySamples.reduce((total, item) => total + (num(item.avg_latency_ms_month) * num(item.requests_month)), 0);
+        const weightedRequests = latencySamples.reduce((total, item) => total + num(item.requests_month), 0);
+        summary.avg_latency_ms_month = weightedRequests ? Number((weightedLatency / weightedRequests).toFixed(2)) : 0;
+        summary.cache_hit_rate_month = (summary.cache_hits_month + summary.cache_misses_month)
+          ? summary.cache_hits_month / (summary.cache_hits_month + summary.cache_misses_month)
+          : 0;
+
+        return {
+          summary,
+          totals: {
+            clients_total: clients.length,
+            models_total: registry.length || modelRows.length,
+            models_online: registry.filter(item => item.is_active).length || modelRows.length,
+            backends_total: backends.length,
+            backends_online: backends.filter(item => item.ok).length
+          },
+          rag: {
+            total_docs: ragRows.reduce((total, item) => total + num(item.documents_count), 0),
+            total_storage_mb: ragRows.reduce((total, item) => total + num(item.storage_mb), 0),
+            total_queries_month: ragRows.reduce((total, item) => total + num(item.queries_month), 0)
+          }
+        };
       }
 
       function renderControlCenter(data) {
@@ -856,20 +1134,152 @@
           </tr>
         `).join('');
       }
-    </script>
-  </body>
-</html>
-d><strong>${p.name}</strong></td>
-            <td>${p.rate_limit_per_minute} / ${p.requests_per_day.toLocaleString()}</td>
-            <td>${(p.monthly_token_quota/1000).toLocaleString()}k</td>
-            <td>$${num(p.monthly_price).toFixed(0)}</td>
-            <td><span class="pill ${p.rag_enabled ? 'pill-success' : 'pill-muted'}">${p.rag_enabled ? 'YES' : 'NO'}</span></td>
-            <td><span class="pill ${p.tts_enabled ? 'pill-success' : 'pill-muted'}">${p.tts_enabled ? 'YES' : 'NO'}</span></td>
-            <td><span class="pill ${p.embeddings_enabled ? 'pill-success' : 'pill-muted'}">${p.embeddings_enabled ? 'YES' : 'NO'}</span></td>
-            <td>${p.support_level}</td>
-            <td><span class="pill ${p.is_active ? 'pill-success' : 'pill-danger'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
-          </tr>
-        `).join('');
+
+      async function fetchLeads() {
+        const token = document.getElementById('adminToken').value;
+        const status = document.getElementById('leadStatusFilter').value;
+        let url = '/admin/sales/leads';
+        if (status) url += '?status=' + status;
+        
+        try {
+          const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+          const leads = await res.json();
+          renderLeads(leads);
+        } catch (e) {
+          console.error('Error fetching leads:', e);
+        }
+      }
+
+      function renderLeads(leads) {
+        const body = document.getElementById('leadsBody');
+        if (!leads || !Array.isArray(leads) || leads.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align: center;">No leads found.</td></tr>';
+          return;
+        }
+        
+        body.innerHTML = leads.map(l => {
+          const followUp = l.next_follow_up_at ? new Date(l.next_follow_up_at).toLocaleDateString() : '-';
+          return `
+            <tr>
+              <td><strong>${l.company_name}</strong>${l.is_demo ? ' <span class="pill pill-muted">DEMO</span>' : ''}</td>
+              <td>${l.contact_name}<br/><small>${l.contact_email}</small></td>
+              <td>${l.segment}</td>
+              <td><span class="pill ${getStatusPillClass(l.status)}">${l.status}</span></td>
+              <td>R$ ${Number(l.estimated_value).toLocaleString()}</td>
+              <td>${followUp}</td>
+              <td>
+                <button class="secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="advanceLead('${l.id}')">Advance</button>
+                <button class="secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--danger);" onclick="deleteLead('${l.id}')">Del</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function getStatusPillClass(status) {
+        switch(status) {
+          case 'won': return 'pill-success';
+          case 'lost': return 'pill-danger';
+          case 'new': return 'pill-unknown';
+          case 'negotiation': return 'pill-warning';
+          default: return 'pill-muted';
+        }
+      }
+
+      function showAddLeadForm() { document.getElementById('addLeadForm').classList.remove('hidden'); }
+      function hideAddLeadForm() { document.getElementById('addLeadForm').classList.add('hidden'); }
+
+      async function submitLead() {
+        const token = document.getElementById('adminToken').value;
+        const lead = {
+          company_name: document.getElementById('leadCompany').value,
+          contact_name: document.getElementById('leadContact').value,
+          contact_email: document.getElementById('leadEmail').value,
+          contact_phone: document.getElementById('leadPhone').value || null,
+          segment: document.getElementById('leadSegment').value,
+          source: document.getElementById('leadSource').value,
+          estimated_value: parseFloat(document.getElementById('leadValue').value) || 0,
+          next_follow_up_at: document.getElementById('leadFollowUp').value ? new Date(document.getElementById('leadFollowUp').value).toISOString() : null,
+          notes: document.getElementById('leadNotes').value
+        };
+        
+        const res = await fetch('/admin/sales/leads', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(lead)
+        });
+        
+        if (res.ok) {
+          hideAddLeadForm();
+          fetchLeads();
+          ['leadCompany', 'leadContact', 'leadEmail', 'leadPhone', 'leadSegment', 'leadSource', 'leadValue', 'leadFollowUp', 'leadNotes'].forEach(id => document.getElementById(id).value = '');
+        } else {
+          alert('Error saving lead');
+        }
+      }
+
+      async function advanceLead(id) {
+        const newStatus = prompt('Enter new status (contacted, demo_scheduled, proposal_sent, negotiation, won, lost):');
+        if (!newStatus) return;
+        
+        const token = document.getElementById('adminToken').value;
+        const res = await fetch('/admin/sales/leads/' + id + '/advance-stage', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_status: newStatus })
+        });
+        
+        if (res.ok) fetchLeads();
+      }
+
+      async function deleteLead(id) {
+        if (!confirm('Are you sure you want to delete this lead?')) return;
+        const token = document.getElementById('adminToken').value;
+        const res = await fetch('/admin/sales/leads/' + id, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': token }
+        });
+        if (res.ok) fetchLeads();
+      }
+
+
+      async function calculateQuote() {
+        const token = document.getElementById('adminToken').value;
+        const request = {
+          company_name: document.getElementById('quoteCompany').value || "Cliente Demo",
+          plan: document.getElementById('quotePlan').value,
+          support_hours: parseInt(document.getElementById('quoteSupport').value) || 0,
+          custom_integration_hours: parseInt(document.getElementById('quoteIntegration').value) || 0,
+          discount_percent: parseFloat(document.getElementById('quoteDiscount').value) || 0,
+          rag: document.getElementById('quoteRag').checked,
+          tts: document.getElementById('quoteTts').checked,
+          embeddings: document.getElementById('quoteEmbeddings').checked
+        };
+
+        try {
+          const res = await fetch('/admin/sales/quote-preview', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(request)
+          });
+          
+          if (!res.ok) throw new Error('Falha ao gerar orçamento');
+          
+          const data = await res.json();
+          renderQuoteResult(data);
+        } catch (e) {
+          alert('Erro: ' + e.message);
+        }
+      }
+
+      function renderQuoteResult(data) {
+        document.getElementById('quotePlaceholder').classList.add('hidden');
+        document.getElementById('quoteDetails').classList.remove('hidden');
+        
+        document.getElementById('resCompany').textContent = data.company_name;
+        document.getElementById('resSetup').textContent = `${data.currency} ${data.totals.setup.toLocaleString()}`;
+        document.getElementById('resRecurring').textContent = `${data.currency} ${data.totals.recurring.toLocaleString()}`;
+        document.getElementById('resFinal').textContent = `${data.currency} ${data.totals.first_month_final.toLocaleString()}`;
       }
     </script>
   </body>

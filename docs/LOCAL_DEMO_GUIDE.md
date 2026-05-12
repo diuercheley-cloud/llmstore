@@ -248,3 +248,12 @@ make validate-meeting-ready
 - **Domínio Público**: O acesso é apenas via `localhost`.
 - **HTTPS**: Embora o Caddy suporte, para demo local o HTTP é o padrão.
 - **Escalabilidade**: Esta demo foca em uma única instância.
+
+## Demonstração do CRM Local (Sales Ops)
+
+O sistema inclui um CRM local para demonstrar a capacidade de estender o painel administrativo para operações de vendas.
+
+1. **Popular Leads**: Execute `make sales-seed` para criar leads fictícios.
+2. **Acessar Dashboard**: Vá para o Admin Dashboard.
+3. **Gerenciar Leads**: Use a seção "Sales / Leads" para filtrar por status, adicionar novos contatos e avançar oportunidades no funil.
+4. **Privacidade**: Note que nenhum dado de lead é enviado para serviços externos.

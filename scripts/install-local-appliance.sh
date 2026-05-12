@@ -9,8 +9,8 @@ ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 VERSION=$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo "unknown")
 
 # Load operator errors library
-if [[ -f "${SCRIPT_DIR}/lib/operator-errors.sh" ]]; then
-  source "${SCRIPT_DIR}/lib/operator-errors.sh"
+if [[ -f "${ROOT_DIR}/lib/operator-errors.sh" ]]; then
+  source "${ROOT_DIR}/lib/operator-errors.sh"
 fi
 
 # Default values

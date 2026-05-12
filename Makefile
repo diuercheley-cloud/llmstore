@@ -149,6 +149,11 @@ validate-reset-demo-pack: ## Validate reset safety (dry-run mode, no data harmed
 	./scripts/validate-reset-commercial-demo-pack.sh
 
 validate-fake-data: ## Validate fake demo data integrity and safety
+sales-seed: ## Seed commercial demo leads
+	./scripts/seed-sales-demo-leads.sh
+
+validate-sales-crm: ## Validate Sales CRM (API + UI)
+	./scripts/validate-sales-crm-local.sh
 	chmod +x ./scripts/validate-fake-demo-data.sh
 	./scripts/validate-fake-demo-data.sh
 
@@ -185,3 +190,46 @@ pre-client-check: ## Run pre-client installation checklist
 
 pre-demo-check: ## Run pre-demo checklist
 	./scripts/pre-client-checklist-local.sh --demo
+
+# --- Sales Ops ---
+
+generate-proposal:
+	./scripts/generate-client-proposal.sh 		--company-name "$(COMPANY_NAME)" 		--segment "$(SEGMENT)" 		--plan "$(PLAN)" 		--lead-id "$(LEAD_ID)"
+
+validate-proposal:
+	./scripts/validate-client-proposal-local.sh
+
+quote-demo: ## Generate a demo quote (Pro plan, RAG, 4h support)
+	./scripts/generate-local-quote.sh --company-name "Cliente Demo" --plan Pro --rag --tts --support-hours 4
+
+validate-quote: ## Validate local quote generator
+	./scripts/validate-local-quote.sh
+
+# --- Contracts / SOW ---
+
+generate-sow: ## Generate a personalized SOW from template
+	./scripts/generate-sow-local.sh --company-name "Cliente Demo" --project-name "Local AI Appliance"
+
+validate-contracts: ## Validate contract templates integrity
+	./scripts/validate-contract-templates-local.sh
+
+# --- Implementation Checklist ---
+
+implementation-checklist: ## Generate a paid implementation checklist
+	./scripts/paid-implementation-checklist-local.sh --company-name "Cliente Demo" --operator-name "Fornecedor Demo"
+
+validate-implementation-checklist: ## Validate implementation checklist template and generation
+	./scripts/validate-paid-implementation-checklist.sh
+
+# --- Monthly Report ---
+
+monthly-report-demo: ## Generate a demo monthly report for a client
+	./scripts/generate-client-monthly-report.sh --email demo@example.local --month 2026-05
+
+validate-monthly-report: ## Validate monthly report generator
+	./scripts/validate-client-monthly-report.sh
+
+# --- White-Label / Branding ---
+
+validate-white-label: ## Validate white-label branding configuration
+	./scripts/validate-white-label-local.sh

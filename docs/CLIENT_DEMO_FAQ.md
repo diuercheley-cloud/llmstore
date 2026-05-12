@@ -194,3 +194,7 @@ Quando o data plane está ocupado, as requisições entram em fila:
 - Priorização não implementada nesta versão (FIFO)
 - Máximo de gerações simultâneas configurável
 - Circuit breaker protege contra data plane lento
+
+
+**Q: Como posso obter um orçamento estimado durante a demo?**
+A: O operador técnico pode gerar uma prévia de orçamento instantânea através do Admin Dashboard, selecionando o plano e os opcionais desejados (RAG, TTS, Suporte). Note que estes valores são configurados localmente para fins de demonstração e não representam uma oferta vinculativa final.

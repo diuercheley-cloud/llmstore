@@ -94,6 +94,12 @@ async def public_capabilities():
     }
 
 
+@router.get("/public/branding")
+async def public_branding():
+    from app.services.branding import get_safe_branding
+    return get_safe_branding()
+
+
 @router.get("/public/plans")
 async def public_plans(session: AsyncSession = Depends(get_db_session)):
     return {"brand_name": settings.public_brand_name, "plans": await list_public_plans(session)}

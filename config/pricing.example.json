@@ -1,0 +1,31 @@
+{
+  "currency": "BRL",
+  "plans": [
+    "Free",
+    "Basic",
+    "Pro",
+    "Enterprise Local"
+  ],
+  "setup_fee_by_plan": {
+    "Free": 0,
+    "Basic": 1500,
+    "Pro": 5000,
+    "Enterprise Local": 15000
+  },
+  "monthly_fee_by_plan": {
+    "Free": 0,
+    "Basic": 500,
+    "Pro": 2000,
+    "Enterprise Local": 8000
+  },
+  "support_hour_rate": 250,
+  "extra_gpu_support_fee": 1000,
+  "rag_setup_fee": 2500,
+  "tts_setup_fee": 1500,
+  "training_fee": 2000,
+  "custom_integration_hour_rate": 350,
+  "discount_rules": {
+    "max_allowed_percent": 25,
+    "requires_manager_approval_above": 15
+  }
+}

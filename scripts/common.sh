@@ -3,8 +3,8 @@
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Load operator errors library if available
-if [[ -f "${ROOT_DIR}/scripts/lib/operator-errors.sh" ]]; then
-  source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
+if [[ -f "${ROOT_DIR}/lib/operator-errors.sh" ]]; then
+  source "${ROOT_DIR}/lib/operator-errors.sh"
 fi
 
 CURL_BASE_URL_LAST_MODE="uninitialized"

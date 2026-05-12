@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.6.5-sales-ops] - 2026-05-12
+
+### Added
+- CRM local simples para leads com fluxo comercial basico e dados demo locais.
+- Proposta comercial preenchivel por cliente com template e validacoes de seguranca.
+- Gerador de orcamento local com cobertura administrativa e controles de exposicao.
+- Templates de contrato/SOW com geracao local e protecao contra inclusao de secrets.
+- Checklist de implantacao paga e relatorio operacional associado.
+- Relatorio mensal para cliente com API administrativa, template e validacoes dedicadas.
+- Modo white-label basico com configuracao local, branding publico e UI associada.
+- Scripts de validacao dedicados para CRM, propostas, orcamentos, contratos, implantacao paga, relatorio mensal e white-label.
+- Suite de testes dedicada para fluxos comerciais, contratos, relatórios e seguranca da release.
+
+### Notes
+- PSP/PIX real permanecem fora do escopo desta release.
+- Release preparada para bundle sem versionar secrets, `.env`/`.local`, modelos `.gguf`, uploads RAG, `.tar.gz` ou artefatos comerciais gerados.
+
 ## [v1.6.4-customer-demo-pack] - 2026-05-11
 
 ### Added

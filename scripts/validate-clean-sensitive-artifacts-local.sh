@@ -42,7 +42,7 @@ cat <<EOF > "${TEST_DIR}/test_artifact.log"
 EOF
 
 # Create a tracked file to ensure it's NOT touched
-TRACKED_FILE="${PROJECT_ROOT}/scripts/__init__.py"
+TRACKED_FILE="${PROJECT_ROOT}/__init__.py"
 if [[ ! -f "${TRACKED_FILE}" ]]; then
     touch "${TRACKED_FILE}"
 fi

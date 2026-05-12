@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# scripts/lib/redaction.sh
+# lib/redaction.sh
 # Centralized redaction logic for llm-inference-stack.
 # Provides functions to mask sensitive information in strings and files.
 
