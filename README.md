@@ -1,8 +1,18 @@
 # Local LLM Inference Stack for WSL2 and SaaS Packaging
 
+**⭐️ Versão Consolidada: v1.7.0 Local AI Appliance ⭐️**
+
 Stack local e portátil para servir `unsloth/gemma-4-E4B-it-GGUF` com separação explícita entre control plane e data plane. O foco é simplicidade operacional, isolamento do runtime de inferência e defaults conservadores para uma NVIDIA RTX 4050 Laptop GPU com 6 GB de VRAM.
 
-Na versão `1.0.0-beta`, o repositório também inclui a camada mínima para venda como SaaS: landing page, pricing, signup self-serve, geração automática de API key, plano free limitado, client portal e deploy com Caddy + HTTPS.
+A versão **v1.7.0-local-ai-appliance** consolida a linha v1.6.x, entregando uma solução empresarial completa para implantação on-premise com RAG, fluxos comerciais e relatórios prontos.
+
+## Documentos da Release v1.7.0
+- [Release Notes (v1.7.0)](docs/V1_7_RELEASE_NOTES.md)
+- [Client Ready Final Report](docs/CLIENT_READY_FINAL_REPORT.md)
+- [Release Checklist](docs/V1_7_RELEASE_CHECKLIST.md)
+- [Go/No-Go Summary](docs/V1_7_GO_NO_GO_SUMMARY.md)
+
+Na versão inicial, o repositório incluía a camada mínima para venda como SaaS: landing page, pricing, signup self-serve, geração automática de API key, plano free limitado, client portal e deploy com Caddy + HTTPS. A arquitetura evoluiu para focar na entrega de um **Appliance de IA Local**.
 
 ## Arquitetura
 

@@ -8,13 +8,13 @@ BRANDING_CONFIG_PATH = Path(__file__).resolve().parent.parent.parent.parent / "c
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 DEFAULT_BRANDING = {
-    "product_name": "LLM Inference Stack",
-    "company_name": "LLM Inference Stack",
-    "tagline": "LLM Local para Empresas",
+    "product_name": "Local AI Appliance",
+    "company_name": "Local AI Solutions",
+    "tagline": "Private local AI infrastructure for teams and clients.",
     "support_email": "suporte@example.com",
     "primary_color": "#c84c2f",
     "secondary_color": "#0f766e",
-    "footer_text": "© 2026 LLM Inference Stack. Todos os direitos reservados.",
+    "footer_text": "© 2026 Local AI Solutions. Todos os direitos reservados.",
     "show_powered_by": True,
     "capabilities_title": "Capabilities & Features",
 }

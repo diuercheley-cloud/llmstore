@@ -1,4 +1,4 @@
-# Roteiro de Apresentação Comercial — llm-inference-stack
+# Roteiro de Apresentação Comercial — Local AI Appliance
 
 > **Aviso importante:** Esta demonstração utiliza **dados fictícios** para fins ilustrativos. Nenhuma informação exibida representa dados reais de pacientes, clientes ou operações financeiras. O sistema opera em **modo appliance local** — toda inferência, armazenamento e processamento ocorrem dentro da infraestrutura do cliente. O billing é **local/manual** e **não inclui PSP/PIX real**. Este material não substitui análise jurídica ou de compliance.
 >
@@ -46,7 +46,7 @@
 ## Roteiro de 30 Minutos
 
 ### Abertura (1 min)
-"Olá, hoje vou apresentar o llm-inference-stack — um appliance local de LLM-as-a-Service. API compatível com OpenAI, RAG, TTS, billing local/manual, portal do cliente e admin dashboard. Tudo on-premise. Os dados desta demo são fictícios. O sistema não inclui PSP/PIX real — o faturamento é manual. Vamos começar?"
+"Olá, hoje vou apresentar o Local AI Appliance — um appliance local de LLM-as-a-Service. API compatível com OpenAI, RAG, TTS, billing local/manual, portal do cliente e admin dashboard. Tudo on-premise. Os dados desta demo são fictícios. O sistema não inclui PSP/PIX real — o faturamento é manual. Vamos começar?"
 
 ### Apresentação do Problema (3 min)
 "Três problemas principais: (1) Dados sensíveis trafegando por APIs públicas de IA — todo prompt enviado ao ChatGPT ou OpenAI API sai da sua rede. (2) Custos imprevisíveis — sem controle de budget, cada funcionário pode gerar despesas inesperadas. (3) Complexidade operacional — montar um stack local de IA exige GPU, CUDA, llama.cpp, Kubernetes... entregamos isso pronto, como appliance."

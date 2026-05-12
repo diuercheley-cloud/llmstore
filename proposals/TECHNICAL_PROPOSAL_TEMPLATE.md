@@ -1,4 +1,4 @@
-# Proposta Técnica — llm-inference-stack
+# Proposta Técnica — Local AI Appliance
 
 > **Atenção:** Este documento é um template. Substitua `[Nome do Cliente]`, `[Data]` e demais placeholders antes de entregar ao cliente.
 > Esta proposta descreve um **appliance local**. Não oferecemos cloud gerenciada.
@@ -15,7 +15,7 @@
 
 ## 1. Visão Geral
 
-O llm-inference-stack é uma plataforma local de LLM-as-a-Service que expõe API 100% compatível com OpenAI, com suporte nativo a RAG (Retrieval-Augmented Generation), TTS (Text-to-Speech), billing local/manual, portal do cliente e painel administrativo. Tudo roda **on-premise**, na infraestrutura do cliente.
+O Local AI Appliance é uma plataforma local de LLM-as-a-Service que expõe API 100% compatível com OpenAI, com suporte nativo a RAG (Retrieval-Augmented Generation), TTS (Text-to-Speech), billing local/manual, portal do cliente e painel administrativo. Tudo roda **on-premise**, na infraestrutura do cliente.
 
 ### Objetivo
 

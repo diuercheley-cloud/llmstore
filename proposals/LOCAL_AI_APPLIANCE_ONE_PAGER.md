@@ -1,4 +1,4 @@
-# llm-inference-stack — Local AI Appliance
+# Local AI Appliance
 
 > **Appliance local de LLM-as-a-Service | API OpenAI-compatible | RAG | TTS**
 > Billing local/manual — sem PSP/PIX real. Dados fictícios em demonstração.

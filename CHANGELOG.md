@@ -1,5 +1,36 @@
 # Changelog
 
+## [v1.7.0-local-ai-appliance] - 2026-05-12
+
+### Added
+- Consolidação da linha v1.6.x (v1.6.0 a v1.6.7).
+- Transformação em um produto empacotado para implantação on-premise/air-gapped.
+- RAG multi-tenant, TTS local, embeddings e responses locais.
+- Admin Dashboard e Client Portal.
+- Fluxos comerciais completos (CRM, propostas, contratos, faturamento manual).
+- White-label básico.
+- Processos completos de backup, restore e rollback.
+- Release bundle seguro com manifests e checksums versionados (sem .tar.gz).
+- Checklist formal v1.7.0 com 13 categorias e 49 blockers.
+- Go/No-Go Summary versionável (`docs/V1_7_GO_NO_GO_SUMMARY.md`).
+- Validação final consolidada (`scripts/validate-v1.7-final-local.sh`).
+- Script de preparação de release bundle (`scripts/prepare-v1.7-release-bundle.sh`).
+
+### Changed
+- VERSION atualizada de v1.6.7-final-qa para v1.7.0-local-ai-appliance.
+- README.md atualizado com referências ao Go/No-Go Summary e release bundle.
+- CLIENT_READY_FINAL_REPORT.md atualizado para v1.7.0-local-ai-appliance.
+- V1_7_RELEASE_NOTES.md expandido com seções de release bundle e validação final.
+- V1_7_RELEASE_CHECKLIST.md: status Go/No-Go atualizado para GO_WITH_WARNINGS.
+- RELEASE_HISTORY.md: adicionada entrada v1.7.0-local-ai-appliance como current.
+- LOCAL_PRODUCTION_RUNBOOK.md: adicionada seção de release bundle.
+
+### Notes
+- Consulte `docs/V1_7_RELEASE_NOTES.md` para a lista completa de features consolidadas.
+- PSP/PIX real permanecem fora do escopo (documentado como future).
+- Cloud gerenciada permanece fora do escopo (appliance offline-first).
+- Nenhum .tar.gz versionado no git (apenas manifests e checksums).
+
 ## [v1.6.7-final-qa] - 2026-05-12
 
 ### Added

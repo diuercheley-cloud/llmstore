@@ -7,6 +7,8 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "validate-commercial-demo-e2e-local.sh"
 
+# FAKE SECRET FOR TESTS ONLY - do not remove
+
 
 def test_demo_scripts_have_no_hardcoded_secrets():
     demo_scripts = [

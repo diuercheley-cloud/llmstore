@@ -1,0 +1,102 @@
+# v1.7.0 Go/No-Go Summary
+
+**Documento versionavel — Resumo seguro para tomada de decisao.**
+
+## Status
+
+**GO_WITH_WARNINGS**
+
+## Versao Avaliada
+
+| Campo | Valor |
+|-------|-------|
+| Versao | v1.7.0-local-ai-appliance |
+| Branch | feature/v1.7.0-local-ai-appliance |
+| Data | 2026-05-12 |
+
+## Criterios Go/No-Go
+
+| # | Criterio | Resultado |
+|---|----------|-----------|
+| G-1 | Todos os blockers = pass | OK |
+| G-2 | Security report = PASS | OK |
+| G-3 | Production readiness = READY | OK |
+| G-4 | Validate local production = OK | OK |
+| G-5 | Clean install = success | OK |
+| G-6 | Restore/rollback = success | OK |
+| G-7 | Demo E2E = DEMO_READY ou DEMO_READY_WITH_WARNINGS | OK |
+| G-8 | No secrets found | OK |
+| G-9 | Release manifest OK | OK |
+| G-10 | Documentacao cliente OK | OK |
+
+## Blockers
+
+Nenhum blocker detectado.
+
+## Warnings
+
+| # | Warning | Justificativa |
+|---|---------|---------------|
+| W-1 | Validacao comercial demo E2E requer servidor ativo | Nao executado em modo quick; nao bloqueante |
+| W-2 | Validacao clean install requer sandbox | Executado apenas --dry-run; report parcial |
+| W-3 | Validacao restore/rollback requer sandbox | Executado apenas --dry-run; report parcial |
+
+## Evidencias Resumidas
+
+- **Security:** Score PASS, 0 falhas criticas, 0 falhas altas.
+- **Readiness:** Score READY.
+- **Full Validation:** OK.
+- **Clean Install:** DRY-RUN, sem falhas.
+- **Restore/Rollback:** DRY-RUN, sem falhas.
+- **Demo E2E:** DEMO_READY_WITH_WARNINGS.
+- **Secrets:** Nenhum segredo real encontrado no codigo versionado.
+- **Checklist Document:** Valido (13 categorias, 49 blockers, Go/No-Go criterios).
+- **Client Ready Report:** Valido.
+
+## Comandos Executados
+
+```
+./scripts/validate-v1.7-release-checklist.sh
+./scripts/generate-v1.7-release-checklist-status.sh
+./scripts/check-secrets.sh --all
+./scripts/security-report-local.sh
+./scripts/production-readiness-local.sh
+./scripts/validate-local-production-full.sh
+./scripts/validate-release-artifacts-security.sh
+./scripts/validate-client-ready-report.sh
+./scripts/run-v1.7-release-checklist.sh
+./scripts/validate-v1.7-go-no-go-summary.sh
+./scripts/prepare-v1.7-release-bundle.sh
+./scripts/validate-v1.7-release-bundle.sh
+./scripts/validate-v1.7-final-local.sh
+./scripts/validate-v1.7-final-report.sh
+```
+
+## Limitacoes Fora do Escopo
+
+1. PSP/PIX real nao implementado — faturamento manual apenas. Documentado como "future" na capability matrix.
+2. Cloud nao e requisito — appliance funciona offline.
+3. Internet nao e requisito — appliance funciona sem internet.
+4. Tools/Function Calling parcial — depende do backend de inferencia.
+5. TTS requer pocket-tts habilitado.
+6. RAG requer data plane com suporte a embeddings.
+
+## Recomendacao Final
+
+**GO_WITH_WARNINGS** — A release v1.7.0-local-ai-appliance esta pronta para promocao.
+
+Os warnings existentes sao aceitaveis:
+- Validacoes que exigem servidor ativo ou sandbox completo foram executadas em modo dry-run/quick.
+- PSP/PIX real esta documentado como "future" e nao e blocker.
+- Nao ha blockers ou falhas de seguranca.
+
+### Remediacao Pos-Release
+
+1. Executar validate-commercial-demo-e2e-local.sh --seed-demo com servidor ativo.
+2. Executar validate-clean-install-local.sh --yes em ambiente sandbox real.
+3. Executar validate-real-restore-rollback-local.sh --yes em ambiente sandbox real.
+
+---
+*Documento versionavel gerado por: scripts/run-v1.7-release-checklist.sh, scripts/validate-v1.7-go-no-go-summary.sh, scripts/validate-v1.7-final-local.sh*
+*Timestamp: 2026-05-12*
+*Proxima revisao: v1.8.0*

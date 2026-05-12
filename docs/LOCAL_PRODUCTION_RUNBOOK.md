@@ -2,6 +2,27 @@
 
 This document describes the steps to set up, validate, and maintain the local production environment.
 
+## Release Bundle (v1.7.0+)
+
+A partir da v1.7.0-local-ai-appliance, o release bundle e gerado via:
+
+```bash
+# Preparar bundle completo (validacao + tar.gz + manifests + security)
+./scripts/prepare-v1.7-release-bundle.sh --version v1.7.0-local-ai-appliance
+
+# Validar diretorio de release
+./scripts/validate-v1.7-release-bundle.sh
+```
+
+O bundle gerado em `releases/v1.7.0-local-ai-appliance/` contem:
+- `release-manifest.json` - Metadados da release
+- `summary.json` / `summary.md` - Resumo da validacao
+- `bundle-manifest.json` - Manifesto do bundle (comprova exclusoes seguras)
+- `bundle-checksums.sha256` - Checksums do arquivo .tar.gz
+
+Importante: o arquivo `.tar.gz` e removido do diretorio versionavel (git).
+Apenas manifests e checksums seguros sao versionados.
+
 ## 1. Setup
 
 O método recomendado para configurar o ambiente de produção local é através do instalador de appliance:

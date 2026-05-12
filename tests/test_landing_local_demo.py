@@ -47,8 +47,10 @@ def test_landing_page_content():
 def test_landing_page_local_links():
     content = landing_page_path().read_text()
     
-    assert 'href="/portal/"' in content
-    assert 'href="/admin/"' in content
+    assert 'href="/client-portal"' in content
+    assert 'href="/admin-dashboard"' in content
+    assert 'href="/admin-lab"' in content
+    assert 'href="/admin-tests"' in content
     assert 'href="/docs"' in content
     assert 'href="/examples"' in content
     assert 'href="/getting-started"' in content

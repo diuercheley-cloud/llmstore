@@ -104,12 +104,14 @@ timeline
 | 1.6.5-sales-ops | `v1.6.5-sales-ops` | stable/v1.6.5-sales-ops | `8db6be3` | 2026-05-12 | Sales Ops | active | 2026-05-12; CRM local simples para leads com fluxo comercial |
 | 1.6.6-repo-cleanup | `v1.6.6-repo-cleanup` | stable/v1.6.6-repo-cleanup | `1c89b0c` | 2026-05-12 | Repo Cleanup | active | 2026-05-12; Consolidacao do layout, padronizacao shell, historico de releases |
 | 1.6.7-final-qa | `v1.6.7-final-qa` | — | `1c89b0c` | 2026-05-12 | Final QA | active | 2026-05-12; Client ready report consolidado, checklist v1.7.0, documentacao final, preparacao para v1.7.0 |
+| 1.7.0-local-ai-appliance | `v1.7.0-local-ai-appliance` | — | — | 2026-05-12 | Local AI Appliance | current | 2026-05-12; Consolidacao final da linha v1.6.x, release bundle, Go/No-Go formal, documentacao de producao |
 
 ## Releases Recomendadas
 
 | Versao | Motivo |
 |--------|--------|
-| `v1.6.7-final-qa` | **Atual.** Client ready report, documentacao final para transicao v1.7.0. |
+| `v1.7.0-local-ai-appliance` | **Atual.** Release consolidada do Local AI Appliance. |
+| `v1.6.7-final-qa` | Ultima versao estavel da linha v1.6.x antes da transicao. |
 | `v1.6.6-repo-cleanup` | Ultima versao estavel da linha v1.6.x antes do QA final. |
 | `v1.6.5-sales-ops` | Fluxos comerciais: CRM, propostas, orcamentos, contratos, white-label. |
 | `v1.6.4-customer-demo-pack` | Demo pack comercial com 5 cenarios, meeting ready check, capabilities page. |

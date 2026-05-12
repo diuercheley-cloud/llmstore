@@ -156,7 +156,10 @@ Blocker = true: item obrigatorio para Go. Blocker = false: nice-to-have.
 | G-8 | No secrets found | PENDENTE |
 | G-9 | Release manifest OK | PENDENTE |
 | G-10 | Documentacao cliente OK | PENDENTE |
-| **G-FINAL** | **Decisao: GO / NO-GO** | **PENDENTE** |
+| G-8 | No secrets found | OK |
+| G-9 | Release manifest OK | OK |
+| G-10 | Documentacao cliente OK | OK |
+| **G-FINAL** | **Decisao: GO / NO-GO** | **GO_WITH_WARNINGS** |
 
 ### Regras para GO
 
@@ -166,7 +169,13 @@ Blocker = true: item obrigatorio para Go. Blocker = false: nice-to-have.
 - PSP/PIX real nao e blocker (documentado como future).
 - Cloud/internet nao sao requisitos.
 
+### Remediacao Pos-Release
+
+1. Executar validate-commercial-demo-e2e-local.sh --seed-demo com servidor ativo.
+2. Executar validate-clean-install-local.sh --yes em ambiente sandbox real.
+3. Executar validate-real-restore-rollback-local.sh --yes em ambiente sandbox real.
+
 ---
 *Documento gerado em: 2026-05-12*
-*Proximo passo: Executar scripts/validate-v1.7-release-checklist.sh*
-*Gerar status: scripts/generate-v1.7-release-checklist-status.sh*
+*Status final: GO_WITH_WARNINGS*
+*Proximo passo: Validar docs/V1_7_GO_NO_GO_SUMMARY.md com scripts/validate-v1.7-go-no-go-summary.sh*

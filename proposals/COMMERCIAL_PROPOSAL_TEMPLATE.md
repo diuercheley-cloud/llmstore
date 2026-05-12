@@ -1,4 +1,4 @@
-# Proposta Comercial — llm-inference-stack
+# Proposta Comercial — Local AI Appliance
 
 > **Atenção:** Este documento é um template. Substitua `[Nome do Cliente]`, `[Data]` e demais placeholders.
 > **Dados fictícios para demonstração.** Preços são placeholders — consulte proposta comercial vigente.
@@ -30,7 +30,7 @@ Sua empresa enfrenta desafios com a adoção de IA generativa:
 
 ## 2. Solução Proposta
 
-O **llm-inference-stack** é um appliance local de LLM-as-a-Service que oferece:
+O **Local AI Appliance** é um appliance local de LLM-as-a-Service que oferece:
 
 - **API 100% compatível com OpenAI** — zero retrabalho nas aplicações existentes
 - **RAG nativo** — respostas baseadas em documentos internos, sem enviar dados para nuvem

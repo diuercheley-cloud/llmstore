@@ -8,7 +8,7 @@
 ## Abertura da Reunião
 
 ### Versão Executiva (1 min)
-"Olá, obrigado pela presença. Hoje vou apresentar o **llm-inference-stack** — um appliance local de IA que oferece API compatível com OpenAI, RAG, TTS e portal do cliente, tudo rodando dentro da sua infraestrutura. Dados fictícios na demo. Billing local e manual — sem PSP/PIX integrado. Vamos direto ao ponto?"
+"Olá, obrigado pela presença. Hoje vou apresentar o **Local AI Appliance** — um appliance local de IA que oferece API compatível com OpenAI, RAG, TTS e portal do cliente, tudo rodando dentro da sua infraestrutura. Dados fictícios na demo. Billing local e manual — sem PSP/PIX integrado. Vamos direto ao ponto?"
 
 ### Versão Técnica (2 min)
 "Olá, vou demonstrar nossa plataforma local de LLM-as-a-Service. A stack expõe uma API 100% compatível com OpenAI — `/v1/chat/completions`, `/v1/embeddings`, `/v1/models` — com RAG, TTS e billing local. Tudo on-premise. O control plane gerencia autenticação, rate limiting, multitenancy e fila. O data plane roda inferência com llama.cpp. Esta demo usa dados fictícios e o billing é manual, sem PSP/PIX real. Vamos ver cada componente?"

@@ -36,6 +36,8 @@ SAFE_PATTERNS=(
     "test-admin-token"
     "change-this-admin-token"
     "__redacted__"
+    "BEGIN.PRIVATE.KEY"
+    "hardcoded = "
     "os.environ.get"
     "os.getenv"
     "\\*\\*\\*REDACTED\\*\\*\\*"
