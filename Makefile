@@ -233,3 +233,8 @@ validate-monthly-report: ## Validate monthly report generator
 
 validate-white-label: ## Validate white-label branding configuration
 	./scripts/validate-white-label-local.sh
+
+# --- Repo Maintenance ---
+
+cleanup-branches: ## List safe-to-delete local branches (dry-run)
+	./scripts/cleanup-local-branches.sh --dry-run --merged-only

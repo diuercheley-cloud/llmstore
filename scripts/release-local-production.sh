@@ -7,9 +7,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
-# Load operator errors library
-if [[ -f "${ROOT_DIR}/lib/operator-errors.sh" ]]; then
-  source "${ROOT_DIR}/lib/operator-errors.sh"
+# Load operator errors library from the standardized shell lib path.
+if [[ -f "${ROOT_DIR}/scripts/lib/operator-errors.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
 fi
 
 VERSION_ARG=""

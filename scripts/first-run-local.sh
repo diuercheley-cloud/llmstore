@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load operator errors library
 if [[ -f "${SCRIPT_DIR}/../lib/operator-errors.sh" ]]; then
-  source "${SCRIPT_DIR}/../lib/operator-errors.sh"
+  source "${SCRIPT_DIR}/lib/operator-errors.sh"
 fi
 
 WITH_DEMO=false

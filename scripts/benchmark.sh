@@ -81,7 +81,7 @@ for ctx in "${CTX_SIZES[@]}"; do
         
         # Rodar benchmark runner
         CONFIG_JSON="{\"ctx\":$ctx, \"layers\":$layers, \"batch\":$batch, \"ubatch\":$ubatch}"
-        python3 "${ROOT_DIR}/benchmark_runner.py" "${CONFIG_JSON}" "${RESULTS_FILE}"
+        python3 "${ROOT_DIR}/scripts/benchmark_runner.py" "${CONFIG_JSON}" "${RESULTS_FILE}"
         
         # Parar data-plane para o próximo teste
         dc stop data-plane-gemma

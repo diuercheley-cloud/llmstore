@@ -1,4 +1,9 @@
 from pathlib import Path
+import sys
+
+# Add scripts to path for imports
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT_DIR / "scripts"))
 
 from local_dr_backup import host_path_for_data_dir, host_path_for_models_dir
 

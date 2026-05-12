@@ -767,3 +767,7 @@ Exemplo de uso:
 ```bash
 ./scripts/pocket-tts.sh generate "Olá, esta é uma mensagem de voz do sistema."
 ```
+
+## Release History
+
+Consulte [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md) para o histórico consolidado de versões.

@@ -10,7 +10,7 @@ VERSION=$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo "unknown")
 
 # Load operator errors library
 if [[ -f "${ROOT_DIR}/lib/operator-errors.sh" ]]; then
-  source "${ROOT_DIR}/lib/operator-errors.sh"
+  source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
 fi
 
 if ! declare -F operator_success >/dev/null; then

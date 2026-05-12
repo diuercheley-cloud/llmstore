@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.6.6-repo-cleanup] - 2026-05-12
+
+### Added
+- Consolidacao do layout do repositorio com arquivos operacionais movidos para a raiz.
+- Padronizacao das bibliotecas shell compartilhadas em `scripts/lib/`.
+- Validacoes automatizadas para imports, paths de scripts, Makefile e layout do repositorio.
+- Script seguro para limpeza de branches locais com suporte a `--dry-run` e protecoes para branches estaveis.
+- Historico consolidado de releases em `docs/RELEASE_HISTORY.md` com geracao e validacao dedicadas.
+- Suite de testes e auditorias locais para fechar a release de repo cleanup com seguranca.
+
+### Notes
+- Release preparada para bundle e validacao local completa sem versionar secrets, `.env`/`.local`, modelos `.gguf`, uploads RAG, `.tar.gz` ou artefatos brutos.
+
 ## [v1.6.5-sales-ops] - 2026-05-12
 
 ### Added

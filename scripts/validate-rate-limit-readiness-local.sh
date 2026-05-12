@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 # shellcheck source=/dev/null
 if [[ -f "${SCRIPT_DIR}/../lib/validation-logging.sh" ]]; then
-  source "${SCRIPT_DIR}/../lib/validation-logging.sh"
+  source "${SCRIPT_DIR}/lib/validation-logging.sh"
 fi
 init_stack_env
 

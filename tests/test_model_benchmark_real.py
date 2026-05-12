@@ -2,22 +2,26 @@ import pytest
 import subprocess
 import json
 import os
+import sys
 from pathlib import Path
+
+# Add scripts to path for imports
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT_DIR / "scripts"))
 
 def test_benchmark_runner_quick_mode():
     """Test that the benchmark runner works in quick mode and generates expected files."""
     model = "test-mock-runner"
     output_dir = "artifacts/test-bench-runner"
-    
+
     # Run the benchmark runner
     cmd = [
-        "python3", "benchmark_model_local_runner.py",
+        "python3", str(ROOT_DIR / "scripts" / "benchmark_model_local_runner.py"),
         "--model", model,
         "--quick",
         "--output-dir", output_dir,
         "--base-url", "http://localhost:18080" # Assuming mock or just checking file gen
     ]
-    
     # We might need to mock the API response if it's not running, 
     # but the task implies running it against the local stack.
     # For a pure unit test, we'd mock httpx. 

@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 # shellcheck source=/dev/null
-source "${ROOT_DIR}/lib/redaction.sh"
+source "${ROOT_DIR}/scripts/lib/redaction.sh"
 
 CHECK_PATH="${ROOT_DIR}/artifacts"
 IN_PLACE=false
@@ -43,7 +43,7 @@ process_file() {
     if [[ "${extension}" == "json" ]]; then
         if [[ "${DRY_RUN}" == "true" ]]; then
             local diff_count
-            diff_count=$("${ROOT_DIR}/redact_json.py" "$file" | diff "$file" - | grep -c "^[<>]" || true)
+            diff_count=$("${ROOT_DIR}/scripts/redact_json.py" "$file" | diff "$file" - | grep -c "^[<>]" || true)
             if [[ $diff_count -gt 0 ]]; then
                 echo "[DRY-RUN] Found sensitive data in JSON: ${file}"
                 REDACTION_COUNT=$((REDACTION_COUNT + 1))
@@ -51,7 +51,7 @@ process_file() {
         elif [[ "${IN_PLACE}" == "true" ]]; then
             local original_md5
             original_md5=$(md5sum "$file" | awk '{print $1}')
-            "${ROOT_DIR}/redact_json.py" --inplace --file "$file"
+            "${ROOT_DIR}/scripts/redact_json.py" --inplace --file "$file"
             local new_md5
             new_md5=$(md5sum "$file" | awk '{print $1}')
             if [[ "${original_md5}" != "${new_md5}" ]]; then
@@ -59,7 +59,7 @@ process_file() {
                 REDACTION_COUNT=$((REDACTION_COUNT + 1))
             fi
         else
-            "${ROOT_DIR}/redact_json.py" "$file"
+            "${ROOT_DIR}/scripts/redact_json.py" "$file"
         fi
     else
         if [[ "${DRY_RUN}" == "true" ]]; then

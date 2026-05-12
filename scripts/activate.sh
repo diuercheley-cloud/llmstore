@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 # Atalho para ativar/subir o sistema LLM Inference Stack
-"$(dirname "$0")/up.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${SCRIPT_DIR}/up.sh" "$@"

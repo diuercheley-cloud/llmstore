@@ -11,4 +11,4 @@ if [[ -f "${ROOT_DIR}/.venv/bin/activate" ]]; then
 fi
 
 # Execute the python runner
-exec python "${ROOT_DIR}/benchmark_model_local_runner.py" "$@"
+exec python "${ROOT_DIR}/scripts/benchmark_model_local_runner.py" "$@"

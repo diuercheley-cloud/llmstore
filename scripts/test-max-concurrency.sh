@@ -25,7 +25,7 @@ echo "Starting concurrency test for model: ${MODEL}"
 echo "Base URL: ${BASE_URL}"
 echo "------------------------------------------------"
 
-"${PYTHON_BIN}" "${ROOT_DIR}/test-max-concurrency.py" \
+"${PYTHON_BIN}" "${ROOT_DIR}/scripts/test-max-concurrency.py" \
     --url "${BASE_URL}" \
     --api-key "${API_KEY}" \
     --model "${MODEL}" \

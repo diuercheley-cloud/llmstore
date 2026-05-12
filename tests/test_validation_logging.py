@@ -2,7 +2,7 @@ import os
 import subprocess
 import pytest
 
-HELPER_PATH = "lib/validation-logging.sh"
+HELPER_PATH = "scripts/lib/validation-logging.sh"
 
 def test_helper_exists():
     assert os.path.exists(HELPER_PATH)

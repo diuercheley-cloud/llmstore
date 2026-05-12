@@ -8,7 +8,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/common.sh"
 # shellcheck source=/dev/null
-source "${ROOT_DIR}/lib/validation-logging.sh"
+source "${ROOT_DIR}/scripts/lib/validation-logging.sh"
 init_stack_env
 
 log_section "status endpoints validation"

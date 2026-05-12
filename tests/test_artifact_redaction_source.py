@@ -7,8 +7,8 @@ import pytest
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
-REDACTION_SH = ROOT_DIR / "lib" / "redaction.sh"
-REDACT_JSON_PY = ROOT_DIR / "redact_json.py"
+REDACTION_SH = ROOT_DIR / "scripts" / "lib" / "redaction.sh"
+REDACT_JSON_PY = ROOT_DIR / "scripts" / "redact_json.py"
 
 def test_redaction_sh_exists():
     assert REDACTION_SH.exists()
@@ -63,7 +63,7 @@ def test_redaction_scripts_referenced():
         "scripts/security-report-local.sh",
         "scripts/production-readiness-local.sh",
         "scripts/demo-full-local.sh",
-        "lib/validation-logging.sh"
+        "scripts/lib/validation-logging.sh"
     ]
     
     for script in scripts_to_check:

@@ -2,8 +2,9 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root to sys.path to import the client
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+# Add scripts directory to sys.path to import the client
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT_DIR / "scripts"))
 
 from llm_stack_client import LLMStackClient
 

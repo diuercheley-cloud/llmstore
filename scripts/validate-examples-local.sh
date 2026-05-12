@@ -4,7 +4,8 @@ set -e
 # Base URL for local validation
 export BASE_URL=${BASE_URL:-"http://localhost:18080"}
 
-source "$(dirname "$0")/common.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
 cd "$ROOT_DIR"
 
 echo "--- Validating API Examples ---"

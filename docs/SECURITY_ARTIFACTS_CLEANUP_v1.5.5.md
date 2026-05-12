@@ -7,7 +7,7 @@
 
 1. **Centralização da Lógica de Redaction**:
    - Criado `lib/redaction.sh` para redação em fluxos de shell.
-   - Criado `redact_json.py` para redação segura em arquivos JSON sem quebrar a estrutura.
+   - Criado `scripts/redact_json.py` para redação segura em arquivos JSON sem quebrar a estrutura.
 
 2. **Integração nos Geradores de Artifacts**:
    - `scripts/validate-local-production-full.sh`: Agora usa o script centralizado para redigir o diretório de saída.
