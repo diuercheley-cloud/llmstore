@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e validate-real-provider-env validate-openai-real-dry validate-openai-real validate-deepseek-real-dry validate-deepseek-real validate-anthropic-real-dry validate-anthropic-real validate-real-fallback-dry validate-real-fallback measure-provider-costs-dry measure-provider-costs
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
@@ -296,6 +296,50 @@ validate-hybrid-abuse: ## Validate hybrid abuse detection (anti-spam, anti-loop,
 	chmod +x ./scripts/validate-hybrid-abuse-detection-local.sh
 	./scripts/validate-hybrid-abuse-detection-local.sh
 
+validate-real-provider-env: ## Validate real provider environment (.env.local, keys, security)
+	chmod +x ./scripts/validate-real-provider-env-local.sh
+	./scripts/validate-real-provider-env-local.sh
+
+validate-openai-real-dry: ## Validate OpenAI real provider (dry-run, no cost)
+	chmod +x ./scripts/validate-openai-real-provider.sh
+	./scripts/validate-openai-real-provider.sh --dry-run
+
+validate-openai-real: ## Validate OpenAI real provider (real calls, may incur cost)
+	chmod +x ./scripts/validate-openai-real-provider.sh
+	./scripts/validate-openai-real-provider.sh --real --model gpt-4o-mini
+
+validate-deepseek-real-dry: ## Validate DeepSeek real provider (dry-run, no cost)
+	chmod +x ./scripts/validate-deepseek-real-provider.sh
+	./scripts/validate-deepseek-real-provider.sh --dry-run
+
+validate-deepseek-real: ## Validate DeepSeek real provider (real calls, may incur cost)
+	chmod +x ./scripts/validate-deepseek-real-provider.sh
+	./scripts/validate-deepseek-real-provider.sh --real --model deepseek-chat
+
+validate-anthropic-real-dry: ## Validate Anthropic real provider (dry-run, no cost)
+	chmod +x ./scripts/validate-anthropic-real-provider.sh
+	./scripts/validate-anthropic-real-provider.sh --dry-run
+
+validate-anthropic-real: ## Validate Anthropic real provider (real calls, may incur cost)
+	chmod +x ./scripts/validate-anthropic-real-provider.sh
+	./scripts/validate-anthropic-real-provider.sh --real --model claude-3-haiku-20240307
+
+measure-provider-costs-dry: ## Measure provider costs (dry-run, no real calls)
+	chmod +x ./scripts/measure-real-provider-costs.sh
+	./scripts/measure-real-provider-costs.sh --dry-run
+
+measure-provider-costs: ## Measure provider costs (real calls, may incur cost)
+	chmod +x ./scripts/measure-real-provider-costs.sh
+	./scripts/measure-real-provider-costs.sh --real
+
+validate-real-fallback-dry: ## Validate fallback local-to-cloud (dry-run, no cost)
+	chmod +x ./scripts/validate-real-fallback-local-to-cloud.sh
+	./scripts/validate-real-fallback-local-to-cloud.sh --dry-run
+
+validate-real-fallback: ## Validate fallback local-to-cloud (real calls, may incur cost)
+	chmod +x ./scripts/validate-real-fallback-local-to-cloud.sh
+	./scripts/validate-real-fallback-local-to-cloud.sh --real --provider auto
+
 validate-hybrid-e2e: ## Run hybrid platform E2E validation (v1.8.0)
 	chmod +x ./scripts/validate-hybrid-platform-e2e-local.sh ./scripts/validate-hybrid-platform-report.sh
 	./scripts/validate-hybrid-platform-e2e-local.sh
@@ -337,3 +381,36 @@ validate-fresh-machine-docs: ## Validate fresh machine validation docs and scrip
 
 cleanup-branches: ## List safe-to-delete local branches (dry-run)
 	./scripts/cleanup-local-branches.sh --dry-run --merged-only
+
+# --- Provider Cost Validation ---
+
+measure-provider-costs-dry:
+	./scripts/measure-real-provider-costs.sh --dry-run
+
+measure-provider-costs:
+	./scripts/measure-real-provider-costs.sh --real
+
+# --- Real Billing Margin Validation ---
+
+validate-real-billing-margin-dry:
+	./scripts/validate-real-billing-margin.sh --dry-run
+
+validate-real-billing-margin:
+	./scripts/validate-real-billing-margin.sh --real --provider auto
+
+# --- Real Provider Artifact Sanitization ---
+
+scan-real-provider-artifacts:
+	./scripts/scan-real-provider-artifacts.sh --fail-on-findings
+
+validate-real-provider-sanitization:
+	./scripts/validate-real-provider-sanitization.sh
+
+# --- Real Providers E2E ---
+
+validate-real-providers-e2e-dry:
+	./scripts/validate-real-providers-e2e.sh --dry-run
+
+validate-real-providers-e2e:
+	./scripts/validate-real-providers-e2e.sh --real
+

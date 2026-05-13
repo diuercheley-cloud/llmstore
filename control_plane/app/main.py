@@ -22,6 +22,7 @@ from app.api.billing_admin import router as billing_admin_router
 from app.api.wallet_admin import router as wallet_admin_router
 from app.api.providers import router as providers_router
 from app.api.routing_admin import router as routing_admin_router
+from app.api.routing_test import router as routing_test_router
 from app.api.hybrid_admin import router as hybrid_admin_router
 from app.api.abuse_admin import router as abuse_admin_router
 from app.core.config import get_settings
@@ -99,6 +100,7 @@ app.include_router(billing_admin_router)
 app.include_router(wallet_admin_router)
 app.include_router(providers_router)
 app.include_router(routing_admin_router)
+app.include_router(routing_test_router)
 app.include_router(hybrid_admin_router)
 app.include_router(abuse_admin_router)
 app.include_router(pocket_tts_router)

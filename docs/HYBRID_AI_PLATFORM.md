@@ -190,7 +190,62 @@ The E2E validation generates a comprehensive report in `artifacts/hybrid-platfor
 - Full Local Production Validation
 
 **Out of scope:**
-- Real cloud provider calls (OpenAI, Anthropic, DeepSeek, OpenRouter)
 - Real PSP/PIX integration
 - Real GPU stress testing
 - Real SSL/DNS validation
+
+### 12. Real Provider Validation (v1.8.1)
+
+A validação de providers reais (OpenAI, DeepSeek, Anthropic) permite testar
+chaves e conectividade com segurança, sem comprometer secrets:
+
+- **Opt-in obrigatório:** `REAL_PROVIDER_VALIDATION_ENABLED=true` + `*_PROVIDER_ENABLED=true`
+- **Cost cap:** `REAL_PROVIDER_MAX_COST_BRL` limita custo por requisição
+- **Chaves mascaradas:** `mask_provider_key()` exibe apenas `sk-p****abcd`
+- **Sem internet nos testes:** testes unitários não dependem de rede
+- **SKIP_PROVIDER_NOT_CONFIGURED:** providers sem chave são ignorados
+
+Documentação completa: [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.md)
+
+```bash
+# Validar ambiente
+make validate-real-provider-env
+
+# Rodar testes (sem internet)
+.venv/bin/python -m pytest \
+  tests/test_real_provider_env.py \
+  tests/test_real_provider_env_security.py \
+  tests/test_real_provider_env_example.py \
+  -q
+```
+
+**Segurança:**
+- `.env.local` em `.gitignore` — chaves nunca versionadas
+- `check-secrets.sh` detecta vazamentos
+- Permissão 600 recomendada em `.env.local`
+- Nenhum provider real é obrigatório — stack funciona 100% local
+
+### Fallback Local-to-Cloud Validation (v1.8.1)
+
+A validação de fallback garante que o roteamento híbrido funcione corretamente:
+- Local é tentado primeiro
+- Se local falhar, cloud configurado assume (se autorizado)
+- Se cloud não autorizado, fallback para local/mock
+- Billing registra `fallback_used` e `cloud_used`
+
+Mecanismo: `ROUTING_TEST_FORCE_LOCAL_FAILURE` — quando `=true`, providers locais
+são tratados como indisponíveis pelo smart router. Totalmente em memória, sem
+afetar containers ou ambiente real.
+
+```bash
+# Dry-run (simulação de roteamento)
+make validate-real-fallback-dry
+
+# Real (com chamada para cloud)
+make validate-real-fallback
+
+# Testes unitários
+.venv/bin/python -m pytest tests/test_real_fallback_*.py -q
+```
+
+Documentação: [SMART_ROUTING.md](SMART_ROUTING.md), [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.md)

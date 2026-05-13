@@ -17,10 +17,15 @@ class AnthropicProvider(ProviderAdapter):
         self._base_url = settings.anthropic_base_url or "https://api.anthropic.com/v1"
         self._timeout = settings.provider_timeout_seconds
         configured = bool(self._api_key)
+        enabled = (
+            settings.cloud_providers_enabled
+            and settings.anthropic_provider_enabled
+            and settings.real_provider_validation_enabled
+        )
         super().__init__(
             provider_id="anthropic",
             provider_type=ProviderType.ANTHROPIC,
-            enabled=settings.cloud_providers_enabled,
+            enabled=enabled,
             configured=configured,
         )
 
@@ -54,14 +59,21 @@ class AnthropicProvider(ProviderAdapter):
         return []
 
     async def chat_completion(self, payload: dict[str, Any]) -> dict[str, Any]:
-        system = payload.pop("system", None)
+        messages = self._map_messages(payload.get("messages", []))
+        system = self._extract_system(payload.get("messages", []))
         body: dict[str, Any] = {
             "model": payload.get("model"),
             "max_tokens": payload.get("max_tokens", 1024),
-            "messages": payload.get("messages", []),
+            "messages": messages,
         }
         if system:
             body["system"] = system
+        if payload.get("temperature") is not None:
+            body["temperature"] = payload["temperature"]
+        if payload.get("top_p") is not None:
+            body["top_p"] = payload["top_p"]
+        if payload.get("stop"):
+            body["stop_sequences"] = payload["stop"] if isinstance(payload["stop"], list) else [payload["stop"]]
         if payload.get("stream"):
             body["stream"] = True
         async with await self._client() as client:
@@ -71,7 +83,7 @@ class AnthropicProvider(ProviderAdapter):
             return self._to_openai_format(raw, payload.get("model", ""))
 
     async def responses(self, payload: dict[str, Any]) -> dict[str, Any]:
-        return await self.chat_completion(payload)
+        raise NotImplementedError("Anthropic does not support Responses API — use chat_completion (Messages API)")
 
     async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError("Anthropic does not support embeddings via Messages API")
@@ -83,6 +95,7 @@ class AnthropicProvider(ProviderAdapter):
             "claude-3-haiku": (0.25, 1.25),
             "claude-3-5-sonnet": (3.00, 15.00),
             "claude-3-5-haiku": (0.80, 4.00),
+            "claude-4-sonnet": (15.00, 75.00),
         }
         key = model
         if key not in pricing:
@@ -94,6 +107,24 @@ class AnthropicProvider(ProviderAdapter):
                 return 0.0
         prompt_price, completion_price = pricing[key]
         return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+
+    def log_prompt_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_log_prompts
+        except Exception:
+            return False
+
+    def store_response_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_store_responses
+        except Exception:
+            return False
+
+    def max_cost_brl(self) -> float:
+        try:
+            return get_settings().real_provider_max_cost_brl
+        except Exception:
+            return 2.00
 
     def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(
@@ -107,6 +138,61 @@ class AnthropicProvider(ProviderAdapter):
             max_context_tokens=200000,
             pricing_configured=True,
         )
+
+    def _extract_system(self, messages: list[dict[str, Any]]) -> str | None:
+        system_parts = []
+        remaining = []
+        for m in messages:
+            role = m.get("role", "")
+            if role == "system":
+                content = m.get("content", "")
+                if isinstance(content, list):
+                    text = " ".join(c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text")
+                else:
+                    text = str(content)
+                if text:
+                    system_parts.append(text)
+            else:
+                remaining.append(m)
+        messages[:] = remaining
+        return "\n".join(system_parts) if system_parts else None
+
+    def _map_messages(self, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        mapped = []
+        for m in messages:
+            role = m.get("role", "user")
+            if role == "system":
+                continue
+            if role == "assistant":
+                mapped.append({"role": "assistant", "content": self._map_content(m.get("content", ""))})
+            else:
+                mapped.append({"role": "user", "content": self._map_content(m.get("content", ""))})
+        return mapped
+
+    def _map_content(self, content: str | list[Any]) -> str | list[dict[str, Any]]:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            blocks = []
+            for block in content:
+                if isinstance(block, dict):
+                    t = block.get("type", "text")
+                    if t == "text":
+                        blocks.append({"type": "text", "text": block.get("text", "")})
+                    elif t == "image_url":
+                        source = block.get("image_url", {})
+                        url = source.get("url", "")
+                        if url.startswith("data:image"):
+                            import re
+                            media_type = url.split(";")[0].split(":")[1] if ";" in url else "image/png"
+                            data = url.split(",")[1] if "," in url else url
+                            blocks.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}})
+                    elif t == "tool_use":
+                        blocks.append(block)
+                    elif t == "tool_result":
+                        blocks.append(block)
+            return blocks
+        return str(content)
 
     def _to_openai_format(self, raw: dict[str, Any], model: str) -> dict[str, Any]:
         content = ""

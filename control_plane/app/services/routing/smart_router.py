@@ -96,7 +96,13 @@ def _get_provider_config(provider_id: str) -> dict[str, Any]:
 
 def _is_provider_available(provider_id: str) -> bool:
     cfg = _get_provider_config(provider_id)
-    return cfg.get("enabled", False) and cfg.get("configured", False)
+    if not (cfg.get("enabled", False) and cfg.get("configured", False)):
+        return False
+    if provider_id in LOCAL_PROVIDERS:
+        force_fail = get_settings().routing_test_force_local_failure
+        if force_fail:
+            return False
+    return True
 
 
 def _get_cloud_providers_enabled() -> bool:

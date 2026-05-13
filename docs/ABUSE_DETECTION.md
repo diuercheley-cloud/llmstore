@@ -69,3 +69,6 @@ make validate-hybrid-abuse
 # ou
 ./scripts/validate-hybrid-abuse-detection-local.sh
 ```
+
+## Abuse Detection in Artifacts
+Real prompts and responses generated during validation runs are hashed into `__redacted_sha256: <hash>` to prevent any data exposure that could be abused.

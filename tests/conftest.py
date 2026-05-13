@@ -13,18 +13,23 @@ from fastapi import FastAPI
 # Resolve project root and load .env before any app imports
 ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / ".env"
+ENV_LOCAL = ROOT / ".env.local"
 TEST_TMP = Path("/tmp/llm-inference-stack-tests")
 TEST_TMP.mkdir(parents=True, exist_ok=True)
 TEST_DB_FILE = TEST_TMP / "unit-tests.db"
 
-if ENV_FILE.exists():
-    with open(ENV_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            os.environ.setdefault(key, value)
+def _load_env_file(path: Path) -> None:
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key, value)
+
+_load_env_file(ENV_FILE)
+_load_env_file(ENV_LOCAL)
 
 # Required fallbacks for tests
 os.environ["ADMIN_TOKEN"] = "test-admin-token"

@@ -5,6 +5,7 @@ import httpx
 
 from app.core.config import get_settings
 from app.services.providers.base import ProviderAdapter, ProviderType
+from app.services.providers.errors import ProviderNotConfiguredError
 from app.services.providers.schemas import ProviderCapabilities
 
 logger = logging.getLogger(__name__)
@@ -17,10 +18,15 @@ class DeepSeekProvider(ProviderAdapter):
         self._base_url = settings.deepseek_base_url or "https://api.deepseek.com"
         self._timeout = settings.provider_timeout_seconds
         configured = bool(self._api_key)
+        enabled = (
+            settings.cloud_providers_enabled
+            and settings.deepseek_provider_enabled
+            and settings.real_provider_validation_enabled
+        )
         super().__init__(
             provider_id="deepseek",
             provider_type=ProviderType.DEEPSEEK,
-            enabled=settings.cloud_providers_enabled,
+            enabled=enabled,
             configured=configured,
         )
 
@@ -54,22 +60,18 @@ class DeepSeekProvider(ProviderAdapter):
         return []
 
     async def chat_completion(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if not self.configured:
+            raise ProviderNotConfiguredError("DeepSeek API key not configured")
         async with await self._client() as client:
             resp = await client.post("/v1/chat/completions", json=payload)
             resp.raise_for_status()
             return resp.json()
 
     async def responses(self, payload: dict[str, Any]) -> dict[str, Any]:
-        async with await self._client() as client:
-            resp = await client.post("/v1/responses", json=payload)
-            resp.raise_for_status()
-            return resp.json()
+        raise NotImplementedError("DeepSeek does not support the Responses API")
 
     async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
-        async with await self._client() as client:
-            resp = await client.post("/v1/embeddings", json=payload)
-            resp.raise_for_status()
-            return resp.json()
+        raise NotImplementedError("DeepSeek does not support the Embeddings API")
 
     def estimate_cost(self, model: str, prompt_tokens: int, completion_tokens: int) -> float:
         pricing = {
@@ -87,12 +89,30 @@ class DeepSeekProvider(ProviderAdapter):
         prompt_price, completion_price = pricing[key]
         return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
 
+    def log_prompt_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_log_prompts
+        except Exception:
+            return False
+
+    def store_response_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_store_responses
+        except Exception:
+            return False
+
+    def max_cost_brl(self) -> float:
+        try:
+            return get_settings().real_provider_max_cost_brl
+        except Exception:
+            return 2.00
+
     def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(
             chat=True,
             streaming=True,
-            responses=True,
-            embeddings=True,
+            responses=False,
+            embeddings=False,
             tools=True,
             vision=False,
             json_mode=True,

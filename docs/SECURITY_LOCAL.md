@@ -67,3 +67,6 @@ Auto-suspensão é **desligada por padrão** e **dry-run** é ativado.
 | openpyxl | Parse XLSX | Não (fallback) |
 
 Serviços externos: **Nenhum obrigatório**.
+
+## Provider Keys Sanitization
+All validations that use real provider API keys will execute a redaction script to replace secrets with `__redacted_provider_secret__`.

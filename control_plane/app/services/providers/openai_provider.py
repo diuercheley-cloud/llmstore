@@ -18,10 +18,15 @@ class OpenAIProvider(ProviderAdapter):
         self._timeout = settings.provider_timeout_seconds
         self._max_retries = settings.provider_max_retries
         configured = bool(self._api_key)
+        enabled = (
+            settings.cloud_providers_enabled
+            and settings.openai_provider_enabled
+            and settings.real_provider_validation_enabled
+        )
         super().__init__(
             provider_id="openai",
             provider_type=ProviderType.OPENAI,
-            enabled=settings.cloud_providers_enabled,
+            enabled=enabled,
             configured=configured,
         )
 
@@ -94,6 +99,24 @@ class OpenAIProvider(ProviderAdapter):
                 return 0.0
         prompt_price, completion_price = pricing[key]
         return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+
+    def log_prompt_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_log_prompts
+        except Exception:
+            return False
+
+    def store_response_enabled(self) -> bool:
+        try:
+            return get_settings().real_provider_store_responses
+        except Exception:
+            return False
+
+    def max_cost_brl(self) -> float:
+        try:
+            return get_settings().real_provider_max_cost_brl
+        except Exception:
+            return 2.00
 
     def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(

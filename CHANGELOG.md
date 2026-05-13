@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.8.1-real-provider-validation] - 2026-05-13
+
+### Added
+- Validação real opt-in para OpenAI, DeepSeek e Anthropic via `.env.local`, com dry-run e execução real separadas.
+- Fallback real `local -> cloud` com política de `SKIP` controlado quando provider real não está configurado.
+- Medição de custo real por provider e validação de billing/margem em BRL com requests reais opcionais.
+- Scanner de artefatos/logs para impedir vazamento de API keys, prompts e respostas reais.
+- E2E opcional de real providers com relatório consolidado, política de `SKIP/PASS/FAIL` e sanitização obrigatória.
+- Documentação operacional da release em `docs/V1_8_1_RELEASE_NOTES.md` e `docs/REAL_PROVIDER_VALIDATION.md`.
+
+### Changed
+- VERSION atualizada de `v1.8.0-hybrid-ai-platform` para `v1.8.1-real-provider-validation`.
+- `.env.example` expandido com gates `REAL_PROVIDER_VALIDATION_ENABLED`, limites de custo/timeout e blocos dedicados para OpenAI, DeepSeek e Anthropic.
+- Scripts locais e `Makefile` passaram a expor comandos de validação real em modo dry-run e modo real opt-in.
+- README e documentação de providers/routing/billing foram alinhados com a política de cloud opt-in e sem versionamento de chaves.
+
+### Notes
+- Providers reais continuam opcionais; ausência de `.env.local` ou de chaves reais deve resultar em `SKIP`, não em falha da release.
+- `Security Report` deve permanecer `PASS` e `Production Readiness` deve permanecer `READY`.
+- Cloud real continua opt-in.
+- PIX real e PSP real continuam fora do escopo.
+- `.env.local`, API keys, logs reais, prompts/respostas reais, `artifacts/real-provider-validation/` e bundles `.tar.gz` continuam proibidos no versionamento.
+
 ## [v1.8.0-hybrid-ai-platform] - 2026-05-13
 
 ### Added

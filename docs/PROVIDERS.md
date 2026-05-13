@@ -114,3 +114,97 @@ Para providers locais, o custo é sempre 0.0.
 3. Adicionar env vars em `config.py`
 4. Adicionar ao enum `ProviderType` em `base.py`
 5. Adicionar documentação
+
+## Real Provider Validation (v1.8.1)
+
+Para validar providers reais com segurança:
+
+- Chaves vão **APENAS** em `.env.local` (nunca em `.env.example`)
+- Provider precisa de `*_PROVIDER_ENABLED=true` + `REAL_PROVIDER_VALIDATION_ENABLED=true`
+- O helper `scripts/lib/real-provider-env.sh` provê funções seguras de validação
+- O script `scripts/validate-real-provider-env-local.sh` verifica ambiente completo
+- Testes em `tests/test_real_provider_env*.py` (sem dependência de internet)
+
+### OpenAI Real Provider
+
+O adapter OpenAI (`openai_provider.py`) agora verifica **três guards** antes de ativar:
+1. `CLOUD_PROVIDERS_ENABLED=true` (global)
+2. `OPENAI_PROVIDER_ENABLED=true` (específico OpenAI)
+3. `REAL_PROVIDER_VALIDATION_ENABLED=true` (gatekeeper global)
+
+Validação dedicada:
+
+```bash
+# Dry-run (sem custo)
+make validate-openai-real-dry
+
+# Real (com chamadas reais)
+make validate-openai-real
+```
+
+### DeepSeek Real Provider
+
+O adapter DeepSeek (`deepseek_provider.py`) verifica **três guards** antes de ativar:
+1. `CLOUD_PROVIDERS_ENABLED=true` (global)
+2. `DEEPSEEK_PROVIDER_ENABLED=true` (específico DeepSeek)
+3. `REAL_PROVIDER_VALIDATION_ENABLED=true` (gatekeeper global)
+
+DeepSeek não implementa Responses API nem Embeddings API — `capabilities.responses=False`,
+`capabilities.embeddings=False`. Esses métodos retornam `NotImplementedError`.
+
+Validação dedicada:
+
+```bash
+# Dry-run (sem custo)
+make validate-deepseek-real-dry
+
+# Real (com chamadas reais)
+make validate-deepseek-real
+```
+
+### Anthropic
+
+O adapter Anthropic (`anthropic_provider.py`) verifica **três guards** antes de ativar:
+1. `CLOUD_PROVIDERS_ENABLED=true` (global)
+2. `ANTHROPIC_PROVIDER_ENABLED=true` (específico Anthropic)
+3. `REAL_PROVIDER_VALIDATION_ENABLED=true` (gatekeeper global)
+
+Anthropic não implementa Responses API nem Embeddings API — `capabilities.responses=False`,
+`capabilities.embeddings=False`. Esses métodos retornam `NotImplementedError`.
+
+O adapter mapeia automaticamente o formato interno de mensagens para a **Messages API**:
+- System prompt (`role=system`) → parâmetro `system` separado
+- Content blocks com `image_url` → `image` blocks em base64
+- Usage: `input_tokens`/`output_tokens` → `prompt_tokens`/`completion_tokens`
+
+Validação dedicada:
+
+```bash
+# Dry-run (sem custo)
+make validate-anthropic-real-dry
+
+# Real (com chamadas reais)
+make validate-anthropic-real
+```
+
+Documentação completa: [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.md)
+
+### Real Provider Cost Validation (v1.8.1)
+
+O script `scripts/measure-real-provider-costs.sh` mede custo real/estimado:
+
+```bash
+# Dry-run (sem custo)
+make measure-provider-costs-dry
+
+# Real (custo real mínimo por provider)
+make measure-provider-costs
+```
+
+Gera relatório por provider com: custo USD, custo BRL, preço cliente, lucro bruto e margem.
+Resultados em `artifacts/real-provider-validation/costs/<timestamp>/`.
+
+Endpoint: `GET /admin/providers/cost-validation/latest`
+
+## Cost Validation
+Providers costs are verified via `make measure-provider-costs`. This script ensures margins and limits are respected.

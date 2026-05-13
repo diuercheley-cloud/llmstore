@@ -89,8 +89,15 @@ checks = []
 
 def run_cmd(cmd: str):
     try:
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
         return res.returncode, res.stdout, res.stderr
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        message = f"Command timed out after 15s: {cmd}"
+        if stderr:
+            message = f"{message}\n{stderr}"
+        return 124, stdout, message
     except Exception as exc:
         return -1, "", str(exc)
 
@@ -473,7 +480,7 @@ else:
         "No pem/key files found.",
     )
 
-code, out, err = run_cmd(f'curl -s -o /dev/null -w "%{{http_code}}" {BASE_URL}/admin/clients')
+code, out, err = run_cmd(f'curl -fsS --connect-timeout 3 --max-time 10 -o /dev/null -w "%{{http_code}}" {BASE_URL}/admin/clients')
 if out == "401":
     add_check(
         "api-admin-token",
@@ -689,4 +696,3 @@ REPORT_MD=$(ls -t "${OUTPUT_DIR}"/*/security-report.md | head -n 1)
 add_next_step "Revise o relatório completo em: ${REPORT_MD}"
 add_next_step "Execute ./scripts/redact-local-sensitive-artifacts.sh se houver segredos expostos."
 print_next_steps
-

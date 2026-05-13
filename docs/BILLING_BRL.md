@@ -216,3 +216,97 @@ Cache hits pagam 50% do valor normal por padrão. Pode ser sobrescrito por polí
 - Admin vê margem completa
 - Sem integração de cobrança real (PIX) nesta etapa
 - Sem dados bancários armazenados
+
+## Real Provider Validation (v1.8.1)
+
+O billing integra-se com a validação de providers reais:
+
+- `REAL_PROVIDER_MAX_COST_BRL` limita custo por requisição
+- Providers desabilitados geram `SKIP_PROVIDER_NOT_CONFIGURED`
+- Custo real do provider é registrado em `RequestFinancial` apenas se chamada real ocorrer
+- O validador OpenAI registra custo estimado USD/BRL e valida contra o cost cap
+- Testes de billing são 100% offline — sem chamadas reais a providers
+
+### OpenAI Billing Mapping
+
+O provider OpenAI expõe `estimate_cost()` que calcula custo USD por modelo:
+
+| Modelo | Prompt (USD/1M tokens) | Completion (USD/1M tokens) |
+|--------|----------------------|---------------------------|
+| gpt-4o | 2.50 | 10.00 |
+| gpt-4o-mini | 0.15 | 0.60 |
+| gpt-4-turbo | 10.00 | 30.00 |
+| gpt-3.5-turbo | 0.50 | 1.50 |
+| text-embedding-3-small | 0.02 | 0.02 |
+| text-embedding-3-large | 0.13 | 0.13 |
+
+### DeepSeek Billing Mapping
+
+O provider DeepSeek expõe `estimate_cost()` que calcula custo USD por modelo:
+
+| Modelo | Prompt (USD/1M tokens) | Completion (USD/1M tokens) |
+|--------|----------------------|---------------------------|
+| deepseek-chat | 0.14 | 0.28 |
+| deepseek-reasoner | 0.55 | 2.19 |
+
+DeepSeek não possui suporte a Embeddings API ou Responses API — essas capabilities
+retornam `False` e os métodos lançam `NotImplementedError`.
+
+A validação real chama `estimate_provider_cost()` e `calculate_customer_price()` da
+pricing engine para mapear o billing BRL completo.
+
+### Anthropic Billing Mapping
+
+O provider Anthropic expõe `estimate_cost()` que calcula custo USD por modelo:
+
+| Modelo | Prompt (USD/1M tokens) | Completion (USD/1M tokens) |
+|--------|----------------------|---------------------------|
+| claude-3-opus | 15.00 | 75.00 |
+| claude-3-sonnet | 3.00 | 15.00 |
+| claude-3-haiku | 0.25 | 1.25 |
+| claude-3-5-sonnet | 3.00 | 15.00 |
+| claude-3-5-haiku | 0.80 | 4.00 |
+| claude-4-sonnet | 15.00 | 75.00 |
+
+Anthropic utiliza **Messages API** (`POST /v1/messages`) e não possui Responses API
+nem Embeddings API. O adapter mapeia `input_tokens`/`output_tokens` do retorno da API
+para o formato de usage compatível. `capabilities.responses=False`,
+`capabilities.embeddings=False`.
+
+O validador real chama `estimate_provider_cost()` e `calculate_customer_price()` da
+pricing engine para mapear o billing BRL completo, incluindo:
+- `provider_cost_brl` — custo do provider em BRL
+- `customer_price_brl` — preço cobrado do cliente
+- `gross_profit_brl` — margem bruta
+- `margin_percent` — margem percentual
+
+Consulte [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.md) para detalhes de configuração.
+
+### Medição de Custos Reais (v1.8.1)
+
+O script `scripts/measure-real-provider-costs.sh` integra-se ao billing:
+
+1. Carrega `provider-pricing.example.json` para custos USD por provider
+2. Carrega `customer-pricing.example.json` para preços do plano Pro
+3. Faz request mínimo para providers configurados
+4. Calcula:
+   - `provider_cost_usd` via pricing config
+   - `provider_cost_brl` via `USD_BRL_RATE`
+   - `customer_price_brl` via plano Pro
+   - `gross_profit_brl` = customer_price - provider_cost
+   - `margin_percent` = (gross_profit / customer_price) * 100
+5. Gera relatório em `artifacts/real-provider-validation/costs/<timestamp>/`
+
+Endpoint admin: `GET /admin/providers/cost-validation/latest` (protegido, sanitizado).
+
+### Real Provider Cost Validation Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /admin/providers/cost-validation/latest | Último relatório de medição de custos |
+
+## Real Provider Validation
+Provider costs are measured with minimal payloads and converted to BRL based on real requests. See `docs/REAL_PROVIDER_VALIDATION.md` for more details.
+
+## Real Billing Margin Validation
+Billing margins are correctly applied to wallet deductions. See `docs/REAL_PROVIDER_VALIDATION.md`.

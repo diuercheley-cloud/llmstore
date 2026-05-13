@@ -107,3 +107,6 @@ Protegidos por `X-Admin-Token`.
 - Nenhum dado bancário armazenado
 - Admin token validado em todas as operações administrativas
 - Cliente não pode modificar saldo
+
+## Real Billing Margin Validation
+Prepaid wallets are debited accurately during real requests validation.

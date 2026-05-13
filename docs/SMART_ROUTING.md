@@ -79,7 +79,7 @@ Classe `SmartRouter` com método `route(SmartRouterInput) -> RoutingDecision`.
 ## Heurísticas
 
 1. **cloud_allowed=false**: somente local/lmstudio/mock
-2. **task_type=coding + Anthropic configurado**: Anthropic
+2. **task_type=coding + Anthropic configurado**: Anthropic (desde que `cloud_allowed=true` e provider configured)
 3. **low_budget + DeepSeek configurado**: DeepSeek
 4. **premium_quality + OpenAI configurado**: OpenAI
 5. **Provider down**: próximo fallback
@@ -121,6 +121,33 @@ Arquivo `config/routing-policies.example.json`:
 - Razões sanitizadas (máx 500 chars, sem quebras de linha)
 - Cloud providers disabled por padrão
 - Prompt consciente: nunca enviar dados sensíveis para cloud sem autorização
+
+## Fallback Validation (v1.8.1)
+
+A validação de fallback local-to-cloud utiliza `ROUTING_TEST_FORCE_LOCAL_FAILURE`
+para simular falha de providers locais de forma controlada:
+
+- `_is_provider_available()` retorna `False` para `local`/`lmstudio` quando a flag está ativa
+- Todas as estratégias de roteamento respeitam a flag automaticamente
+- Endpoint `POST /admin/routing/test/force-local-failure` para toggle via API
+- Apenas ativo quando `REAL_PROVIDER_VALIDATION_ENABLED=true`
+- Flag sempre restaurada ao final da validação
+
+### Fluxo de Fallback
+
+1. Local providers tentados primeiro (normal)
+2. Se `ROUTING_TEST_FORCE_LOCAL_FAILURE=true`, locais ignorados
+3. Cloud providers considerados se `cloud_allowed=true` e configurados
+4. Mock como fallback final se nenhum cloud disponível
+5. Wallet balance verificado antes de rotear para cloud
+6. Cost cap respeitado (`max_provider_cost_per_request_brl`)
+
+Para validar:
+
+```bash
+make validate-real-fallback-dry    # simulação apenas
+make validate-real-fallback        # com chamada real para cloud
+```
 
 ## Exemplo de Requisição
 

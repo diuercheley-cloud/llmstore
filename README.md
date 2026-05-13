@@ -2,9 +2,11 @@
 
 **OpenAI-compatible hybrid AI infrastructure — local + cloud, multi-provider, multi-tenant, white-label ready.**
 
-> Current build: `v1.8.0-hybrid-ai-platform`  
-> Previous stable: [`v1.7.1-post-release-polish`](releases/v1.7.1-post-release-polish)  
-> Hybrid AI docs: [`docs/HYBRID_AI_PLATFORM.md`](docs/HYBRID_AI_PLATFORM.md)
+> Current build: `v1.8.1-real-provider-validation`  
+> Previous stable: [`v1.8.0-hybrid-ai-platform`](releases/v1.8.0-hybrid-ai-platform)  
+> Release notes: [`docs/V1_8_1_RELEASE_NOTES.md`](docs/V1_8_1_RELEASE_NOTES.md)  
+> Hybrid AI docs: [`docs/HYBRID_AI_PLATFORM.md`](docs/HYBRID_AI_PLATFORM.md)  
+> Real Provider Validation: [`docs/REAL_PROVIDER_VALIDATION.md`](docs/REAL_PROVIDER_VALIDATION.md)
 
 ---
 
@@ -32,6 +34,7 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 |---------|-----------|
 | API OpenAI-compatible | `/v1/chat/completions`, `/v1/models`, streaming SSE |
 | Multi-Provider | Local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter |
+| Real Provider Validation | Teste seguro de chaves reais (opt-in, cost cap, sem leak) |
 | Admin Dashboard | Gestão de clientes, API keys, uso, billing, providers |
 | Admin Lab | Gestão de modelos, backends, testes de prompt |
 | Client Portal | Interface do cliente com uso e consumo |
@@ -184,6 +187,9 @@ make fresh-machine-check
 
 # Escanear secrets no código
 ./scripts/check-secrets.sh --all
+
+# Validar ambiente de providers reais
+make validate-real-provider-env
 ```
 
 - [Security Report](docs/SECURITY_LOCAL.md)
@@ -197,7 +203,7 @@ make fresh-machine-check
 - **PIX real está fora do escopo.** Não há integração com gateways de pagamento brasileiros.
 - **Cloud gerenciada está fora do escopo.** O appliance é on-premise; não oferecemos versão SaaS gerenciada neste repositório.
 - **Modelos dependem do hardware local.** Desempenho varia conforme GPU, RAM e quantização. Consulte [docs/MODEL_BENCHMARK_LOCAL.md](docs/MODEL_BENCHMARK_LOCAL.md).
-- **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade e cache requerem ativação explícita em `.env.local`.
+- **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade, cache e providers cloud requerem ativação explícita em `.env.local`.
 - **Troca de modelo GGUF exige reinício do container data plane.**
 - **Cálculo de tokens é estimado**, não usa tokenizer oficial.
 - **Cancelamento de geração** depende do encerramento da conexão HTTP do stream.
@@ -206,7 +212,8 @@ make fresh-machine-check
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [Release Notes v1.7.0](docs/V1_7_RELEASE_NOTES.md) | Novidades e mudanças da release |
+| [Release Notes v1.8.1](docs/V1_8_1_RELEASE_NOTES.md) | Novidades, política de custo e validação real opcional |
+| [Release Notes v1.7.0](docs/V1_7_RELEASE_NOTES.md) | Histórico da release de appliance local |
 | [Client Ready Final Report](docs/CLIENT_READY_FINAL_REPORT.md) | Status consolidado de prontidão |
 | [Go/No-Go Summary](docs/V1_7_GO_NO_GO_SUMMARY.md) | Resumo da decisão de release |
 | [Fresh Machine Validation](docs/FRESH_MACHINE_VALIDATION.md) | Roteiro para máquina nova/WSL limpo |
