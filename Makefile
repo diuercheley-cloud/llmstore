@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
@@ -47,6 +47,21 @@ validate: ## Full production validation
 
 validate-migrations: ## Validate Alembic migrations integrity
 	./scripts/validate-migrations-local.sh
+
+validate-providers: ## Validate multi-provider layer
+	./scripts/validate-providers-local.sh
+
+validate-smart-routing: ## Validate smart routing engine
+	chmod +x ./scripts/validate-smart-routing-local.sh
+	./scripts/validate-smart-routing-local.sh
+
+validate-billing-brl: ## Validate billing BRL engine
+	chmod +x ./scripts/validate-billing-brl-local.sh
+	./scripts/validate-billing-brl-local.sh
+
+validate-prepaid-wallet: ## Validate prepaid wallet in BRL
+	chmod +x ./scripts/validate-prepaid-wallet-local.sh
+	./scripts/validate-prepaid-wallet-local.sh
 
 validate-abuse: ## Run abuse protection validation suite
 	./scripts/validate-abuse-protection-local.sh
@@ -171,6 +186,10 @@ rollback-local: rollback
 post-upgrade-smoke: smoke
 benchmark-quick: benchmark
 benchmark-model: benchmark
+validate-intelligent-cache: ## Validate intelligent cache (exact + semantic + tenant isolation)
+	chmod +x ./scripts/validate-intelligent-cache-local.sh
+	./scripts/validate-intelligent-cache-local.sh
+
 validate-multitenant: ## Validate multi-tenant isolation
 	chmod +x ./scripts/validate-multitenant-isolation-full.sh
 	./scripts/validate-multitenant-isolation-full.sh
@@ -264,6 +283,23 @@ validate-clean-install: ## Run clean install validation (dry-run, safe)
 
 validate-clean-install-full: ## Run clean install validation with sandbox (requires --yes)
 	./scripts/validate-clean-install-local.sh --yes
+
+validate-enterprise-rag: ## Validate enterprise RAG pipeline (chunking, parsers, policies, security)
+	chmod +x ./scripts/validate-enterprise-rag-local.sh
+	./scripts/validate-enterprise-rag-local.sh
+
+validate-hybrid-admin: ## Validate hybrid admin dashboard (API, UI, sanitization, internal margin)
+	chmod +x ./scripts/validate-hybrid-admin-dashboard-local.sh
+	./scripts/validate-hybrid-admin-dashboard-local.sh
+
+validate-hybrid-abuse: ## Validate hybrid abuse detection (anti-spam, anti-loop, rate limit, anomaly)
+	chmod +x ./scripts/validate-hybrid-abuse-detection-local.sh
+	./scripts/validate-hybrid-abuse-detection-local.sh
+
+validate-hybrid-e2e: ## Run hybrid platform E2E validation (v1.8.0)
+	chmod +x ./scripts/validate-hybrid-platform-e2e-local.sh ./scripts/validate-hybrid-platform-report.sh
+	./scripts/validate-hybrid-platform-e2e-local.sh
+	./scripts/validate-hybrid-platform-report.sh
 
 validate-clean-install-validator: ## Validate clean install script and outputs
 	./scripts/validate-clean-install-validator.sh

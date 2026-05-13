@@ -108,6 +108,10 @@ class Settings(BaseSettings):
     test_tools_enabled: bool = Field(default=False, alias="TEST_TOOLS_ENABLED")
     jwt_secret: str = Field(default="change-me-at-all-costs", alias="JWT_SECRET")
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
+    abuse_detection_enabled: bool = Field(default=True, alias="ABUSE_DETECTION_ENABLED")
+    abuse_auto_suspend_enabled: bool = Field(default=False, alias="ABUSE_AUTO_SUSPEND_ENABLED")
+    abuse_dry_run: bool = Field(default=True, alias="ABUSE_DRY_RUN")
+
     inference_max_context_tokens: int = Field(default=4096, alias="INFERENCE_MAX_CONTEXT_TOKENS")
     inference_max_completion_tokens: int = Field(default=512, alias="INFERENCE_MAX_COMPLETION_TOKENS")
     inference_max_system_chars: int = Field(default=2500, alias="INFERENCE_MAX_SYSTEM_CHARS")
@@ -125,6 +129,21 @@ class Settings(BaseSettings):
     # Backend Settings
     mock_backend_enabled: bool = Field(default=False, alias="MOCK_BACKEND_ENABLED")
     
+    # Provider Settings
+    providers_enabled: str = Field(default="local,lmstudio", alias="PROVIDERS_ENABLED")
+    cloud_providers_enabled: bool = Field(default=False, alias="CLOUD_PROVIDERS_ENABLED")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    deepseek_api_key: str = Field(default="", alias="DEEPSEEK_API_KEY")
+    openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
+    openai_base_url: str = Field(default="", alias="OPENAI_BASE_URL")
+    anthropic_base_url: str = Field(default="", alias="ANTHROPIC_BASE_URL")
+    deepseek_base_url: str = Field(default="", alias="DEEPSEEK_BASE_URL")
+    openrouter_base_url: str = Field(default="", alias="OPENROUTER_BASE_URL")
+    provider_timeout_seconds: int = Field(default=30, alias="PROVIDER_TIMEOUT_SECONDS")
+    provider_max_retries: int = Field(default=2, alias="PROVIDER_MAX_RETRIES")
+    provider_fail_closed: bool = Field(default=True, alias="PROVIDER_FAIL_CLOSED")
+
     # RAG Settings
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
     rag_storage_dir: str = Field(default="./data/rag_uploads", alias="RAG_STORAGE_DIR")

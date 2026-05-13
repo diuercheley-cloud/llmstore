@@ -463,6 +463,26 @@ async def health_deep(
         "cors_warnings": settings.cors_warnings
     }
 
+    # Providers
+    providers_data = []
+    try:
+        from app.services.providers.registry import get_all_provider_health, get_all_provider_statuses
+        provider_health_list = await get_all_provider_health()
+        provider_statuses = get_all_provider_statuses()
+        status_map = {s.provider_id: s for s in provider_statuses}
+        for ph in provider_health_list:
+            st = status_map.get(ph.provider_id)
+            providers_data.append({
+                "provider_id": ph.provider_id,
+                "enabled": ph.enabled,
+                "configured": ph.configured,
+                "healthy": ph.healthy,
+                "capabilities": st.capabilities.model_dump() if st else {},
+                "last_error_sanitized": ph.last_error_sanitized,
+            })
+    except Exception as e:
+        providers_data = [{"error": "providers check failed", "detail": str(e)}]
+
     # Readiness Score
     readiness_score = "READY"
     critical_failures = []
@@ -529,6 +549,7 @@ async def health_deep(
         "inference_queues": proxy.queue_manager.get_snapshot(),
         "inference_backends": backends,
         "models": models,
+        "providers": providers_data,
         "rag": rag_status,
         "tts": tts_status,
         "billing": billing_status,

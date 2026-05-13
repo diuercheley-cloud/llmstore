@@ -1,5 +1,29 @@
 # Changelog
 
+## [v1.8.0-hybrid-ai-platform] - 2026-05-13
+
+### Added
+- Suporte híbrido multi-provider para inferência local/cloud com registry centralizado, adapters configuráveis e health sanitizado.
+- Smart routing com políticas `local_first`, `premium_quality`, `lowest_cost`, `coding` e fallback controlado.
+- Billing em BRL com custo, preço e margem por requisição, regras por cliente e visibilidade administrativa separada do portal.
+- Wallet pré-paga em BRL com crédito manual, débito por uso, idempotência transacional e bloqueio por saldo insuficiente.
+- Cache inteligente com modos exato e semântico, integração com billing e isolamento multi-tenant.
+- RAG empresarial com ingestão, chunking, retrieval, políticas e segurança por tenant.
+- Admin híbrido com sumário consolidado de providers, routing, billing, wallet, cache, RAG e abuse detection.
+- Abuse detection com dry-run seguro por padrão, sinais múltiplos e APIs administrativas sanitizadas.
+- Validação E2E híbrida com script, relatório consolidado e checagens de segurança da plataforma.
+
+### Changed
+- VERSION atualizada de `v1.7.1-post-release-polish` para `v1.8.0-hybrid-ai-platform`.
+- Release notes expandidas em `docs/V1_8_RELEASE_NOTES.md` com resumo executivo, limitações e upgrade path da plataforma híbrida.
+- Cloud providers permanecem desabilitados por padrão para preservar o modo local-first e evitar chamadas acidentais em ambientes locais.
+
+### Notes
+- PIX real permanece fora do escopo desta release.
+- PSP real permanece fora do escopo desta release.
+- Testes e validações locais não devem disparar chamadas cloud reais.
+- Bundles `.tar.gz`, secrets, `.env`/`.local`, chaves de providers, modelos `.gguf`, uploads RAG e artefatos brutos continuam proibidos no versionamento.
+
 ## [v1.7.1-post-release-polish] - 2026-05-13
 
 ### Added

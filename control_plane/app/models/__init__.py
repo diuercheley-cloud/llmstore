@@ -11,13 +11,19 @@ from app.models.pricing_rule import PricingRule
 from app.models.quota_counter import QuotaCounter
 from app.models.request_log import RequestLog
 from app.models.response_cache import ResponseCache
+from app.models.semantic_cache_entry import SemanticCacheEntry
+from app.models.cache_policy import CachePolicy
 from app.models.security_event import SecurityEvent
 from app.models.usage_record import UsageRecord
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.client_feature_block import ClientFeatureBlock
 from app.models.rag_usage_event import RagUsageEvent
+from app.models.request_financial import RequestFinancial
 from app.models.sales_lead import SalesLead, SalesLeadNote
+from app.models.ai_wallet import AiWallet, AiWalletTransaction
+from app.models.abuse_event import AbuseEvent
+from app.models.abuse_action import AbuseAction
 
 __all__ = [
     "ApiKey",
@@ -37,8 +43,15 @@ __all__ = [
     "RagUsageEvent",
     "SalesLead",
     "SalesLeadNote",
+    "AiWallet",
+    "AiWalletTransaction",
+    "AbuseEvent",
+    "AbuseAction",
+    "RequestFinancial",
     "RequestLog",
     "ResponseCache",
+    "SemanticCacheEntry",
+    "CachePolicy",
     "SecurityEvent",
     "UsageRecord",
 ]

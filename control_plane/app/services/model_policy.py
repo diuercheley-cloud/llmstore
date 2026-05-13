@@ -295,6 +295,24 @@ def serialize_model_card(item: ModelRegistry) -> dict:
         else:
             reason = f"backend_{backend_status}"
 
+    provider_info = None
+    try:
+        from app.services.providers.registry import get_provider
+        for pid in ("local", "lmstudio", "openai", "anthropic", "deepseek"):
+            prov = get_provider(pid)
+            if prov and prov.enabled and prov.configured:
+                caps = prov.capabilities()
+                provider_info = {
+                    "provider_id": prov.provider_id,
+                    "provider_type": prov.provider_type.value,
+                    "enabled": prov.enabled,
+                    "configured": prov.configured,
+                    "capabilities": caps.model_dump(),
+                }
+                break
+    except Exception:
+        pass
+
     return {
         "id": item.model_alias or item.model_id,
         "object": "model",
@@ -313,6 +331,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
             "context_length": item.context_length,
             "is_default": item.is_default,
         },
+        "provider_info": provider_info,
     }
 
 

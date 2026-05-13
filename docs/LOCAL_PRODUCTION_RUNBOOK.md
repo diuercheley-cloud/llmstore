@@ -23,6 +23,44 @@ O bundle gerado em `releases/v1.7.0-local-ai-appliance/` contem:
 Importante: o arquivo `.tar.gz` e removido do diretorio versionavel (git).
 Apenas manifests e checksums seguros sao versionados.
 
+## Billing BRL (v1.8.0)
+
+A v1.8.0 adiciona contabilidade financeira por request via `RequestFinancial` (tabela `request_financials`).
+
+### Configuração
+
+1. Editar `config/provider-pricing.example.json` com custos reais dos providers
+2. Editar `config/customer-pricing.example.json` com markup e preços por plano
+3. Definir `USD_BRL_RATE` no `.env.local` (default: 5.00)
+4. A taxa de câmbio é manual (nenhuma chamada externa por padrão)
+
+### Verificação
+
+```bash
+# Simular precificação
+curl -X POST http://localhost:8080/admin/billing/pricing/simulate \
+  -H "X-Admin-Token: seu-token" \
+  -d '{"provider":"local","prompt_tokens":1000,"completion_tokens":500,"plan_code":"basic"}'
+
+# Verificar custos dos providers
+curl http://localhost:8080/admin/billing/provider-costs \
+  -H "X-Admin-Token: seu-token"
+
+# Verificar margens
+curl http://localhost:8080/admin/billing/margins/summary \
+  -H "X-Admin-Token: seu-token"
+
+# Verificar registros financeiros
+curl http://localhost:8080/admin/billing/usage-financials \
+  -H "X-Admin-Token: seu-token"
+```
+
+### Validação
+
+```bash
+make validate-billing-brl
+```
+
 ## 1. Setup
 
 O método recomendado para configurar o ambiente de produção local é através do instalador de appliance:
@@ -164,4 +202,52 @@ Para validar o fluxo completo de backup, upgrade, restore e rollback em ambiente
 
 # Modo real (exige --yes, executa backup, upgrade, rollback)
 ./scripts/validate-real-restore-rollback-local.sh --yes
+```
+
+## Hybrid Admin Dashboard (v1.8.0)
+
+O Admin Dashboard foi atualizado com cards específicos para a plataforma híbrida:
+
+- **Hybrid AI Platform** — Overview: cloud enabled/disabled, requests, custos, margem, wallets, cache
+- **Providers** — Status, capacidades, API key mascarada
+- **Provider Health** — Saúde de cada provider
+- **Routing Decisions** — Últimas decisões com estratégia, cloud vs local
+- **Provider Costs** — Custos configurados USD/1K tokens
+- **Revenue & Margin** — Receita, custo, margem (admin apenas)
+- **Wallet Balances** — Saldo BRL das carteiras
+- **Cache Stats** — Status e hits do cache exato/semântico
+- **Enterprise RAG** — Overview: documentos, chunks, coleções, storage
+
+### Hybrid Admin Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /admin/hybrid/summary | Agregador completo |
+| GET | /admin/hybrid/providers | Providers com API key mascarada |
+| GET | /admin/hybrid/routing | Políticas e últimas decisões |
+| GET | /admin/hybrid/financials | Custos, receita e margem por provider |
+| GET | /admin/hybrid/cache | Estatísticas do cache |
+| GET | /admin/hybrid/wallets | Saldos das carteiras |
+| GET | /admin/hybrid/rag | Overview RAG empresarial |
+
+### Validação
+
+```bash
+make validate-hybrid-admin
+
+# Testes automatizados
+.venv/bin/python -m pytest \
+  tests/test_hybrid_admin_summary_api.py \
+  tests/test_hybrid_admin_dashboard_ui.py \
+  tests/test_hybrid_admin_sanitization.py \
+  tests/test_client_portal_no_internal_margin.py \
+  -q
+```
+
+### Sanitização
+
+- API keys de providers são mascaradas
+- Prompts e respostas não expostos
+- Documentos RAG não expostos (apenas metadados agregados)
+- Margem interna visível apenas no admin dashboard
 ```

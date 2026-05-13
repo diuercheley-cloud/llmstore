@@ -145,6 +145,13 @@ from app.services.model_policy import (
     serialize_routing_table,
 )
 from app.services.model_registry import ensure_default_model
+from app.services.cache.intelligent_cache import (
+    cache_stats as intelligent_cache_stats,
+    ensure_cache_policy,
+    get_cache_policies,
+    invalidate_client_cache,
+    list_cache_entries,
+)
 from app.services.response_cache import clear_response_cache, get_response_cache_stats
 from app.services.security_monitor import (
     log_security_event,
@@ -1978,7 +1985,84 @@ async def monthly_report(
 
 @router.get("/cache/stats")
 async def cache_stats(session: AsyncSession = Depends(get_db_session)):
-    return await get_response_cache_stats(session)
+    return await intelligent_cache_stats(session)
+
+
+@router.get("/cache/entries")
+async def cache_entries(
+    client_id: uuid.UUID | None = Query(default=None),
+    cache_type: str | None = Query(default=None, pattern="^(exact|semantic)$"),
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+    session: AsyncSession = Depends(get_db_session),
+):
+    entries = await list_cache_entries(
+        session,
+        client_id=str(client_id) if client_id else None,
+        cache_type=cache_type,
+        limit=limit,
+        offset=offset,
+    )
+    return {"entries": entries, "total": len(entries)}
+
+
+@router.post("/cache/invalidate")
+async def cache_invalidate(
+    client_id: uuid.UUID | None = Query(default=None),
+    endpoint_type: str | None = Query(default=None),
+    model: str | None = Query(default=None),
+    session: AsyncSession = Depends(get_db_session),
+):
+    result = await invalidate_client_cache(
+        session,
+        client_id=str(client_id) if client_id else None,
+        endpoint_type=endpoint_type,
+        model=model,
+    )
+    await session.commit()
+    return {"status": "invalidated", **result}
+
+
+@router.get("/cache/policies")
+async def cache_policies(session: AsyncSession = Depends(get_db_session)):
+    return await get_cache_policies(session)
+
+
+@router.post("/cache/policies")
+async def create_cache_policy(
+    client_id: uuid.UUID | None = Query(default=None),
+    billing_plan_code: str | None = Query(default=None),
+    cache_enabled: bool = Query(default=True),
+    semantic_cache_enabled: bool = Query(default=False),
+    cache_ttl_seconds: int = Query(default=3600),
+    cache_sensitive_data_allowed: bool = Query(default=False),
+    cache_price_discount_percent: float = Query(default=100.0),
+    max_cache_entries: int | None = Query(default=None),
+    session: AsyncSession = Depends(get_db_session),
+):
+    policy = await ensure_cache_policy(
+        session,
+        client_id=str(client_id) if client_id else None,
+        billing_plan_code=billing_plan_code,
+        cache_enabled=cache_enabled,
+        semantic_cache_enabled=semantic_cache_enabled,
+        cache_ttl_seconds=cache_ttl_seconds,
+        cache_sensitive_data_allowed=cache_sensitive_data_allowed,
+        cache_price_discount_percent=cache_price_discount_percent,
+        max_cache_entries=max_cache_entries,
+    )
+    await session.commit()
+    return {
+        "id": str(policy.id),
+        "client_id": str(policy.client_id) if policy.client_id else None,
+        "billing_plan_code": policy.billing_plan_code,
+        "cache_enabled": policy.cache_enabled,
+        "semantic_cache_enabled": policy.semantic_cache_enabled,
+        "cache_ttl_seconds": policy.cache_ttl_seconds,
+        "cache_sensitive_data_allowed": policy.cache_sensitive_data_allowed,
+        "cache_price_discount_percent": policy.cache_price_discount_percent,
+        "max_cache_entries": policy.max_cache_entries,
+    }
 
 
 @router.delete("/cache/responses")

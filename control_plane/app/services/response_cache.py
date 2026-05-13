@@ -85,18 +85,15 @@ async def lookup_exact_cache(
         return CacheLookupResult(hit=False)
 
     now = utc_now()
-    row = (
-        await session.execute(
-            select(ResponseCache).where(
-                ResponseCache.cache_type == "exact",
-                ResponseCache.endpoint == endpoint,
-                ResponseCache.model == model,
-                ResponseCache.request_hash == request_hash,
-                ResponseCache.is_active.is_(True),
-                ResponseCache.expires_at > now,
-            )
-        )
-    ).scalar_one_or_none()
+    stmt = select(ResponseCache).where(
+        ResponseCache.cache_type == "exact",
+        ResponseCache.endpoint_type == endpoint,
+        ResponseCache.model == model,
+        ResponseCache.request_hash == request_hash,
+        ResponseCache.is_active.is_(True),
+        ResponseCache.expires_at > now,
+    )
+    row = (await session.execute(stmt)).scalar_one_or_none()
     if row is None:
         record_cache_result(hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint)
         return CacheLookupResult(hit=False)
@@ -133,7 +130,7 @@ async def store_exact_cache(
         await session.execute(
             select(ResponseCache).where(
                 ResponseCache.cache_type == "exact",
-                ResponseCache.endpoint == endpoint,
+                ResponseCache.endpoint_type == endpoint,
                 ResponseCache.model == model,
                 ResponseCache.request_hash == request_hash,
             )
@@ -142,7 +139,7 @@ async def store_exact_cache(
     if row is None:
         row = ResponseCache(
             cache_type="exact",
-            endpoint=endpoint,
+            endpoint_type=endpoint,
             model=model,
             request_hash=request_hash,
             request_fingerprint=request_fingerprint,

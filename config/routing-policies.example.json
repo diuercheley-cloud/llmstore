@@ -1,0 +1,11 @@
+{
+  "default_strategy": "local_first",
+  "allow_cloud_fallback": false,
+  "complexity_threshold": 4000,
+  "coding_provider_preference": "anthropic",
+  "low_budget_provider_preference": "deepseek",
+  "premium_provider_preference": "openai",
+  "max_provider_cost_per_request_brl": 0.50,
+  "tenant_policy_overrides": {},
+  "fallback_order": ["local", "lmstudio", "mock"]
+}

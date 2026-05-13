@@ -37,3 +37,4 @@ class Client(Base):
     billing_plan = relationship("BillingPlan", back_populates="clients")
     invoices = relationship("BillingInvoice", back_populates="client", cascade="all, delete-orphan")
     payments = relationship("CustomerPayment", back_populates="client", cascade="all, delete-orphan")
+    wallet = relationship("AiWallet", back_populates="client", uselist=False, cascade="all, delete-orphan")

@@ -155,6 +155,177 @@
     </header>
 
     <main id="adminContent" class="hidden">
+      <!-- Hybrid AI Platform -->
+      <section id="hybridSection" class="wide" style="border: 2px solid #0f766e; background-color: #f0fdfa;">
+        <h2>Hybrid AI Platform <span id="hybridBadge" class="pill pill-unknown">LOADING...</span></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+          <div class="stat-card">
+            <div class="stat-label">Total Requests</div>
+            <div id="hybridTotalRequests" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Local / Cloud</div>
+            <div id="hybridLocalCloud" class="stat-value" style="font-size: 1rem;">- / -</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cache Hit Rate</div>
+            <div id="hybridCacheRate" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Provider Cost (BRL)</div>
+            <div id="hybridProviderCost" class="stat-value">R$ -</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Revenue (BRL)</div>
+            <div id="hybridRevenue" class="stat-value">R$ -</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Gross Profit (BRL)</div>
+            <div id="hybridProfit" class="stat-value">R$ -</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Margin</div>
+            <div id="hybridMargin" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Wallets</div>
+            <div id="hybridWallets" class="stat-value">-</div>
+          </div>
+        </div>
+        <div id="hybridWarnings" style="margin-top: 0.75rem; font-size: 0.8125rem;"></div>
+        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <a href="/admin-lab" style="font-size: 0.75rem; color: var(--accent);">Admin Lab</a>
+          <a href="/docs/HYBRID_AI_PLATFORM.md" style="font-size: 0.75rem; color: var(--accent);">Hybrid Platform Docs</a>
+          <a href="/docs/SMART_ROUTING.md" style="font-size: 0.75rem; color: var(--accent);">Smart Routing Docs</a>
+        </div>
+        <pre id="hybridDebug" class="debug"></pre>
+      </section>
+
+      <!-- Providers -->
+      <section id="providersSection" class="wide">
+        <h2>Providers <button class="secondary" onclick="toggleDebug('providersDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="providersTable"></div></div>
+        <pre id="providersDebug" class="debug"></pre>
+      </section>
+
+      <!-- Provider Health -->
+      <section id="providerHealthSection" class="wide">
+        <h2>Provider Health <button class="secondary" onclick="toggleDebug('providerHealthDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="providerHealthTable"></div></div>
+        <pre id="providerHealthDebug" class="debug"></pre>
+      </section>
+
+      <!-- Routing Decisions -->
+      <section id="routingSection" class="wide">
+        <h2>Routing Decisions <button class="secondary" onclick="toggleDebug('routingDebug')">JSON</button></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">Default Strategy</div>
+            <div id="routingStrategy" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cloud Fallback</div>
+            <div id="routingCloudFallback" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cloud Enabled</div>
+            <div id="routingCloudEnabled" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+        </div>
+        <div style="overflow-x: auto;"><div id="routingDecisionsTable"></div></div>
+        <pre id="routingDebug" class="debug"></pre>
+      </section>
+
+      <!-- Provider Costs -->
+      <section id="costsSection" class="wide">
+        <h2>Provider Costs <button class="secondary" onclick="toggleDebug('costsDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="costsTable"></div></div>
+        <pre id="costsDebug" class="debug"></pre>
+      </section>
+
+      <!-- Revenue / Margin -->
+      <section id="marginSection" class="wide">
+        <h2>Revenue & Margin <button class="secondary" onclick="toggleDebug('marginDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="marginTable"></div></div>
+        <pre id="marginDebug" class="debug"></pre>
+      </section>
+
+      <!-- Wallet Balances -->
+      <section id="walletSection" class="wide">
+        <h2>Wallet Balances <button class="secondary" onclick="toggleDebug('walletDebug')">JSON</button></h2>
+        <div style="overflow-x: auto;"><div id="walletTable"></div></div>
+        <pre id="walletDebug" class="debug"></pre>
+      </section>
+
+      <!-- Cache Stats -->
+      <section id="cacheSection" class="wide">
+        <h2>Cache Stats <button class="secondary" onclick="toggleDebug('cacheDebug')">JSON</button></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">Exact Cache</div>
+            <div id="cacheExactEnabled" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Semantic Cache</div>
+            <div id="cacheSemanticEnabled" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">TTL (s)</div>
+            <div id="cacheTtl" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Exact Hits</div>
+            <div id="cacheExactHits" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Semantic Hits</div>
+            <div id="cacheSemanticHits" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Entries</div>
+            <div id="cacheTotalEntries" class="stat-value">-</div>
+          </div>
+        </div>
+        <pre id="cacheDebug" class="debug"></pre>
+      </section>
+
+      <!-- Enterprise RAG -->
+      <section id="hybridRagSection" class="wide">
+        <h2>Enterprise RAG <button class="secondary" onclick="toggleDebug('hybridRagDebug')">JSON</button></h2>
+        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">RAG Enabled</div>
+            <div id="ragEnabled" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Embedding Provider</div>
+            <div id="ragEmbeddingProvider" class="stat-value" style="font-size: 1rem;">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Documents</div>
+            <div id="ragDocuments" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Chunks</div>
+            <div id="ragChunks" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Collections</div>
+            <div id="ragCollections" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clients with RAG</div>
+            <div id="ragClients" class="stat-value">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Storage</div>
+            <div id="ragStorage" class="stat-value">-</div>
+          </div>
+        </div>
+        <div id="ragDocStatus" style="font-size: 0.8125rem; color: var(--muted); margin-top: 0.5rem;"></div>
+        <pre id="hybridRagDebug" class="debug"></pre>
+      </section>
+
       <!-- System Control Center -->
       <section id="systemControlCenterSection" class="wide">
         <h2>System Control Center <button class="secondary" onclick="toggleDebug('controlCenterDebug')">JSON</button></h2>
@@ -536,7 +707,14 @@
             adminFetch('/admin/readiness/latest'),
             adminFetch('/admin/security/latest'),
             adminFetch('/admin/demo/summary'),
-            adminFetch('/admin/billing/plans')
+            adminFetch('/admin/billing/plans'),
+            adminFetch('/admin/hybrid/summary'),
+            adminFetch('/admin/hybrid/providers'),
+            adminFetch('/admin/hybrid/routing'),
+            adminFetch('/admin/hybrid/financials'),
+            adminFetch('/admin/hybrid/cache'),
+            adminFetch('/admin/hybrid/wallets'),
+            adminFetch('/admin/hybrid/rag')
           ]);
 
           const [
@@ -553,7 +731,14 @@
             readinessReportResult,
             securityReportResult,
             demoSummaryResult,
-            plansResult
+            plansResult,
+            hybridSummaryResult,
+            hybridProvidersResult,
+            hybridRoutingResult,
+            hybridFinancialsResult,
+            hybridCacheResult,
+            hybridWalletsResult,
+            hybridRagResult
           ] = results;
 
           const requiredFailures = [];
@@ -599,6 +784,23 @@
           renderRagUsage(rag);
           // renderPlans(plans);
 
+          // Hybrid
+          const hybridSummary = hybridSummaryResult.status === 'fulfilled' ? hybridSummaryResult.value : null;
+          const hybridProviders = hybridProvidersResult.status === 'fulfilled' ? hybridProvidersResult.value : [];
+          const hybridRouting = hybridRoutingResult.status === 'fulfilled' ? hybridRoutingResult.value : null;
+          const hybridFinancials = hybridFinancialsResult.status === 'fulfilled' ? hybridFinancialsResult.value : null;
+          const hybridCache = hybridCacheResult.status === 'fulfilled' ? hybridCacheResult.value : null;
+          const hybridWallets = hybridWalletsResult.status === 'fulfilled' ? hybridWalletsResult.value : [];
+          const hybridRag = hybridRagResult.status === 'fulfilled' ? hybridRagResult.value : null;
+
+          renderHybridSummary(hybridSummary);
+          renderHybridProviders(hybridProviders);
+          renderHybridRouting(hybridRouting);
+          renderHybridFinancials(hybridFinancials);
+          renderHybridCache(hybridCache);
+          renderHybridWallets(hybridWallets);
+          renderHybridRag(hybridRag);
+
           // document.getElementById("plansDebug").textContent = JSON.stringify(plans, null, 2);
           // Fill debugs
           document.getElementById('controlCenterDebug').textContent = JSON.stringify(controlCenter, null, 2);
@@ -609,6 +811,15 @@
           document.getElementById('securityDebug').textContent = JSON.stringify(security, null, 2);
           document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
           document.getElementById('revenueDebug').textContent = JSON.stringify(revenue, null, 2);
+
+          document.getElementById('hybridDebug').textContent = JSON.stringify(hybridSummary, null, 2);
+          document.getElementById('providersDebug').textContent = JSON.stringify(hybridProviders, null, 2);
+          document.getElementById('routingDebug').textContent = JSON.stringify(hybridRouting, null, 2);
+          document.getElementById('costsDebug').textContent = JSON.stringify(hybridFinancials, null, 2);
+          document.getElementById('marginDebug').textContent = JSON.stringify(hybridFinancials, null, 2);
+          document.getElementById('walletDebug').textContent = JSON.stringify(hybridWallets, null, 2);
+          document.getElementById('cacheDebug').textContent = JSON.stringify(hybridCache, null, 2);
+          document.getElementById('hybridRagDebug').textContent = JSON.stringify(hybridRag, null, 2);
 
           const optionalFailures = results
             .map((result, index) => ({ result, index }))
@@ -1133,6 +1344,227 @@
             <td>${r.pages_month}</td>
           </tr>
         `).join('');
+      }
+
+      function renderHybridSummary(data) {
+        if (!data) {
+          document.getElementById('hybridBadge').textContent = 'UNAVAILABLE';
+          document.getElementById('hybridBadge').className = 'pill pill-danger';
+          return;
+        }
+        document.getElementById('hybridTotalRequests').textContent = (data.total_requests || 0).toLocaleString();
+        document.getElementById('hybridLocalCloud').textContent = `${(data.local_requests || 0).toLocaleString()} / ${(data.cloud_requests || 0).toLocaleString()}`;
+        document.getElementById('hybridCacheRate').textContent = (data.cache_hit_rate || 0).toFixed(1) + '%';
+        document.getElementById('hybridProviderCost').textContent = 'R$ ' + (data.provider_cost_brl || 0).toFixed(2);
+        document.getElementById('hybridRevenue').textContent = 'R$ ' + (data.customer_revenue_brl || 0).toFixed(2);
+        document.getElementById('hybridProfit').textContent = 'R$ ' + (data.gross_profit_brl || 0).toFixed(2);
+        document.getElementById('hybridMargin').textContent = (data.margin_percent || 0).toFixed(1) + '%';
+        document.getElementById('hybridWallets').textContent = `${data.active_wallets || 0} (${data.low_balance_clients || 0} low)` ;
+
+        const badge = document.getElementById('hybridBadge');
+        if (data.cloud_enabled) {
+          badge.textContent = 'CLOUD ENABLED';
+          badge.className = 'pill pill-warning';
+        } else {
+          badge.textContent = 'CLOUD DISABLED';
+          badge.className = 'pill pill-muted';
+        }
+
+        const warningsEl = document.getElementById('hybridWarnings');
+        let html = '';
+        (data.warnings || []).forEach(w => {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ ${w}</div>`;
+        });
+        (data.critical_failures || []).forEach(cf => {
+          html += `<div style="color: #991b1b; background: #fee2e2; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">🔴 ${cf}</div>`;
+        });
+        if (data.cloud_enabled) {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ Cloud providers are enabled. Verify API keys are configured.</div>`;
+        }
+        if (!data.local_first) {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ No local-first provider configured (local/lmstudio).</div>`;
+        }
+        warningsEl.innerHTML = html;
+      }
+
+      function renderHybridProviders(providers) {
+        if (!Array.isArray(providers)) {
+          document.getElementById('providersTable').innerHTML = '<div style="color: var(--muted);">No provider data available.</div>';
+          return;
+        }
+        // Also render provider health
+        let html = '<table><thead><tr><th>Provider</th><th>Type</th><th>Enabled</th><th>Configured</th><th>Capabilities</th><th>API Key</th></tr></thead><tbody>';
+        providers.forEach(p => {
+          const caps = p.capabilities || {};
+          const capList = Object.entries(caps).filter(([k, v]) => v === true).map(([k]) => k).join(', ') || 'none';
+          html += `
+            <tr>
+              <td><strong>${p.provider_id}</strong></td>
+              <td>${p.provider_type}</td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-muted'}">${p.enabled ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.configured ? 'pill-success' : 'pill-danger'}">${p.configured ? 'YES' : 'NO'}</span></td>
+              <td><small>${capList}</small></td>
+              <td><code>${p.masked_api_key || '—'}</code></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('providersTable').innerHTML = html;
+
+        // Health table
+        let healthHtml = '<table><thead><tr><th>Provider</th><th>Enabled</th><th>Configured</th><th>Healthy</th></tr></thead><tbody>';
+        providers.forEach(p => {
+          healthHtml += `
+            <tr>
+              <td><strong>${p.provider_id}</strong></td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-muted'}">${p.enabled ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.configured ? 'pill-success' : 'pill-danger'}">${p.configured ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.healthy === true ? 'pill-success' : p.healthy === false ? 'pill-danger' : 'pill-unknown'}">${p.healthy === true ? 'HEALTHY' : p.healthy === false ? 'DOWN' : 'UNKNOWN'}</span></td>
+            </tr>
+          `;
+        });
+        healthHtml += '</tbody></table>';
+        document.getElementById('providerHealthTable').innerHTML = healthHtml;
+      }
+
+      function renderHybridRouting(data) {
+        if (!data) {
+          document.getElementById('routingStrategy').textContent = 'N/A';
+          document.getElementById('routingCloudFallback').textContent = 'N/A';
+          document.getElementById('routingCloudEnabled').textContent = 'N/A';
+          document.getElementById('routingDecisionsTable').innerHTML = '<div style="color: var(--muted);">No routing data.</div>';
+          return;
+        }
+        document.getElementById('routingStrategy').textContent = data.default_strategy || 'N/A';
+        document.getElementById('routingCloudFallback').textContent = data.allow_cloud_fallback ? 'YES' : 'NO';
+        document.getElementById('routingCloudEnabled').textContent = data.cloud_providers_enabled ? 'YES' : 'NO';
+
+        const decisions = data.last_decisions || [];
+        let html = '<table><thead><tr><th>Time</th><th>Model</th><th>Provider</th><th>Strategy</th><th>Cloud</th><th>Fallback</th><th>Cost BRL</th></tr></thead><tbody>';
+        decisions.forEach(d => {
+          const ts = d.timestamp ? new Date(d.timestamp).toLocaleTimeString('pt-BR') : '-';
+          html += `
+            <tr>
+              <td><small>${ts}</small></td>
+              <td>${d.requested_model || '-'}</td>
+              <td>${d.selected_provider || '-'}</td>
+              <td><span class="pill pill-muted">${d.routing_strategy || '-'}</span></td>
+              <td><span class="pill ${d.cloud_used ? 'pill-warning' : 'pill-success'}">${d.cloud_used ? 'CLOUD' : 'LOCAL'}</span></td>
+              <td>${d.fallback_used ? 'YES' : 'NO'}</td>
+              <td>${d.estimated_cost_brl ? 'R$ ' + d.estimated_cost_brl.toFixed(4) : '-'}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('routingDecisionsTable').innerHTML = html;
+      }
+
+      function renderHybridFinancials(data) {
+        if (!data) {
+          document.getElementById('costsTable').innerHTML = '<div style="color: var(--muted);">No financial data.</div>';
+          document.getElementById('marginTable').innerHTML = '<div style="color: var(--muted);">No margin data.</div>';
+          return;
+        }
+        // Costs config table
+        const costs = data.costs_config || {};
+        let costHtml = '<table><thead><tr><th>Provider</th><th>Cost Prompt (USD/1K)</th><th>Cost Completion (USD/1K)</th><th>Pricing Configured</th></tr></thead><tbody>';
+        Object.entries(costs).forEach(([pid, cfg]) => {
+          costHtml += `
+            <tr>
+              <td><strong>${pid}</strong></td>
+              <td>$${cfg.cost_usd_per_1k_prompt.toFixed(6)}</td>
+              <td>$${cfg.cost_usd_per_1k_completion.toFixed(6)}</td>
+              <td><span class="pill ${cfg.pricing_configured ? 'pill-success' : 'pill-danger'}">${cfg.pricing_configured ? 'YES' : 'NO'}</span></td>
+            </tr>
+          `;
+        });
+        costHtml += '</tbody></table>';
+        document.getElementById('costsTable').innerHTML = costHtml;
+
+        // Revenue by provider (margin data)
+        const margins = data.provider_costs || [];
+        let marginHtml = '<table><thead><tr><th>Provider</th><th>Requests</th><th>Provider Cost (BRL)</th><th>Customer Price (BRL)</th><th>Gross Profit (BRL)</th><th>Avg Margin</th></tr></thead><tbody>';
+        margins.forEach(m => {
+          marginHtml += `
+            <tr>
+              <td><strong>${m.provider}</strong></td>
+              <td>${(m.total_requests || 0).toLocaleString()}</td>
+              <td>R$ ${(m.total_provider_cost_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(m.total_customer_price_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(m.total_gross_profit_brl || 0).toFixed(2)}</td>
+              <td>${m.avg_margin_percent !== null && m.avg_margin_percent !== undefined ? m.avg_margin_percent.toFixed(1) + '%' : '-'}</td>
+            </tr>
+          `;
+        });
+        marginHtml += '</tbody></table>';
+        document.getElementById('marginTable').innerHTML = marginHtml;
+      }
+
+      function renderHybridCache(data) {
+        if (!data) {
+          document.getElementById('cacheExactEnabled').textContent = 'N/A';
+          document.getElementById('cacheSemanticEnabled').textContent = 'N/A';
+          document.getElementById('cacheTtl').textContent = 'N/A';
+          document.getElementById('cacheExactHits').textContent = 'N/A';
+          document.getElementById('cacheSemanticHits').textContent = 'N/A';
+          document.getElementById('cacheTotalEntries').textContent = 'N/A';
+          return;
+        }
+        document.getElementById('cacheExactEnabled').textContent = data.exact_cache_enabled ? 'ON' : 'OFF';
+        document.getElementById('cacheSemanticEnabled').textContent = data.semantic_cache_enabled ? 'ON' : 'OFF';
+        document.getElementById('cacheTtl').textContent = data.ttl_seconds || 0;
+        document.getElementById('cacheExactHits').textContent = (data.exact_hits || 0).toLocaleString();
+        document.getElementById('cacheSemanticHits').textContent = (data.semantic_hits || 0).toLocaleString();
+        document.getElementById('cacheTotalEntries').textContent = (data.total_entries || 0).toLocaleString();
+      }
+
+      function renderHybridWallets(wallets) {
+        if (!Array.isArray(wallets) || wallets.length === 0) {
+          document.getElementById('walletTable').innerHTML = '<div style="color: var(--muted);">No wallets found.</div>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Client ID</th><th>Currency</th><th>Balance (BRL)</th><th>Reserved (BRL)</th><th>Available (BRL)</th><th>Status</th></tr></thead><tbody>';
+        wallets.forEach(w => {
+          html += `
+            <tr>
+              <td><code>${shortId(w.client_id)}</code></td>
+              <td>${w.currency}</td>
+              <td>R$ ${(w.balance_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(w.reserved_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(w.available_brl || 0).toFixed(2)}</td>
+              <td><span class="pill ${w.status === 'active' ? 'pill-success' : 'pill-danger'}">${w.status}</span></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('walletTable').innerHTML = html;
+      }
+
+      function renderHybridRag(data) {
+        if (!data) {
+          document.getElementById('ragEnabled').textContent = 'N/A';
+          document.getElementById('ragEmbeddingProvider').textContent = 'N/A';
+          document.getElementById('ragDocuments').textContent = 'N/A';
+          document.getElementById('ragChunks').textContent = 'N/A';
+          document.getElementById('ragCollections').textContent = 'N/A';
+          document.getElementById('ragClients').textContent = 'N/A';
+          document.getElementById('ragStorage').textContent = 'N/A';
+          return;
+        }
+        document.getElementById('ragEnabled').textContent = data.rag_enabled ? 'YES' : 'NO';
+        document.getElementById('ragEmbeddingProvider').textContent = data.embedding_provider || 'N/A';
+        document.getElementById('ragDocuments').textContent = (data.total_documents || 0).toLocaleString();
+        document.getElementById('ragChunks').textContent = (data.total_chunks || 0).toLocaleString();
+        document.getElementById('ragCollections').textContent = (data.total_collections || 0).toLocaleString();
+        document.getElementById('ragClients').textContent = (data.clients_with_rag || 0).toLocaleString();
+        const storageMb = data.total_storage_bytes ? (data.total_storage_bytes / (1024 * 1024)).toFixed(2) : '0';
+        document.getElementById('ragStorage').textContent = storageMb + ' MB';
+
+        const status = data.documents_by_status || {};
+        const statusHtml = Object.entries(status).map(([s, count]) =>
+          `<span class="pill pill-muted" style="margin-right: 0.25rem;">${s}: ${count}</span>`
+        ).join('');
+        document.getElementById('ragDocStatus').innerHTML = statusHtml ? '<strong>Docs by status:</strong> ' + statusHtml : '';
       }
 
       async function fetchLeads() {

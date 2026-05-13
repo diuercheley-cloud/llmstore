@@ -12,11 +12,18 @@ from app.api.sales import router as sales_router
 from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
 from app.api.rag import router as rag_router, client_rag_router
+from app.api.rag_enterprise import router as rag_enterprise_router, admin_router as admin_rag_router
 from app.api.portal import router as portal_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
 from app.api.pocket_tts import router as pocket_tts_router
 from app.api.developer_docs import router as developer_docs_router
+from app.api.billing_admin import router as billing_admin_router
+from app.api.wallet_admin import router as wallet_admin_router
+from app.api.providers import router as providers_router
+from app.api.routing_admin import router as routing_admin_router
+from app.api.hybrid_admin import router as hybrid_admin_router
+from app.api.abuse_admin import router as abuse_admin_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
@@ -83,9 +90,17 @@ app.include_router(admin_tests_router)
 app.include_router(client_router)
 app.include_router(rag_router)
 app.include_router(client_rag_router)
+app.include_router(rag_enterprise_router)
+app.include_router(admin_rag_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(portal_router, prefix="/v1") # Alias for /account
 app.include_router(developer_docs_router)
+app.include_router(billing_admin_router)
+app.include_router(wallet_admin_router)
+app.include_router(providers_router)
+app.include_router(routing_admin_router)
+app.include_router(hybrid_admin_router)
+app.include_router(abuse_admin_router)
 app.include_router(pocket_tts_router)
 
 static_dir = Path(__file__).resolve().parent / "static"

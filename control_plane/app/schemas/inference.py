@@ -69,6 +69,7 @@ class ModelCard(BaseModel):
     local_ready: bool = False
     reason: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    provider_info: dict[str, Any] | None = Field(default=None, description="Provider capabilities from multi-provider layer")
 
 
 class ModelList(BaseModel):

@@ -1,39 +1,69 @@
-# Local Security Policy and Guidelines
+# SECURITY LOCAL - Appliance Local de IA
 
-This document outlines the security checks and guidelines for the local environment of the `llm-inference-stack`.
+## Enterprise RAG Security
 
-## CORS Policy (Local Appliance)
+### Isolamento Multi-Tenant
 
-In `LOCAL_APPLIANCE_MODE`, the stack enforces a strict "deny-by-default" CORS policy:
+Cada documento e chunk RAG é vinculado a um `client_id`:
 
-- **Wildcard Prohibition**: `*` is not permitted as an origin.
-- **Explicit Safelist**: Only origins listed in `CORS_ALLOW_ORIGINS` are accepted.
-- **Loopback Defaults**: If no origins are configured, `localhost` and `127.0.0.1` are allowed by default for the configured `HOST_PORT`.
-- **Validation**: Run `./scripts/validate-cors-local-appliance.sh` to confirm the active CORS policy.
+- `rag_documents.client_id` — FK para clients
+- `rag_document_chunks.client_id` — FK para clients
+- `rag_document_chunks.metadata_json.tenant_id` — Metadado de auditoria
 
-## Running the Security Report
-Before releasing, demonstrating, or validating local changes, run the security report to ensure no sensitive data is leaked or poorly configured:
-```bash
-make security-report
-```
-Or directly:
-```bash
-./scripts/security-report-local.sh --strict
+### Busca com Isolamento
+
+Toda consulta RAG filtra por `client_id`:
+
+```sql
+SELECT ... FROM rag_document_chunks WHERE client_id = :client_id
 ```
 
-## Abuse Protection Validation
-To ensure the system remains stable under misuse or targeted abuse (invalid keys, floods, giant payloads), run the abuse protection suite:
-```bash
-make validate-abuse
-```
-This script validates:
-- Authentication failures (invalid/revoked keys)
-- Rate limiting and quotas (via safe probe with `readiness-rate-limit-test` plan)
-- Payload size and complexity limits
-- Multi-tenant isolation under abuse
+### Proteção de Dados
 
-## Interpreting the Score
-The report returns a score based on its findings:
-- **PASS**: All checks passed, were skipped, or findings were classified as safe (e.g., redacted artifacts). The environment is considered clean.
-- **WARN**: Some non-critical findings were detected. Review the report in `artifacts/security-report/`.
-- **FAIL**: Critical security issues or secret leaks detected. **Do not proceed with release.**
+- Uploads são armazenados em diretórios tenant-isolated: `{RAG_STORAGE_DIR}/{client_id}/enterprise/`
+- Conteúdo RAG nunca é exposto em logs
+- Nomes de arquivos internos usam UUIDs
+- Cloud embeddings desabilitado por padrão
+- Documentos e chunks são deletados em cascade
+
+### LGPD e Retenção
+
+- retention_days pode ser configurado por política
+- Delete remove chunks + arquivo + registro ORM
+- Nenhum dado é enviado para cloud sem autorização explícita
+
+### Abuse Detection
+
+O sistema de detecção de abuso opera localmente com 11 sinais:
+
+- `requests_per_minute_above_plan` — requests acima do plano
+- `tokens_per_minute_above_plan` — tokens acima da cota
+- `repeated_auth_errors` — 5+ erros 401/403 em 5min
+- `repeated_giant_prompts` — 3+ prompts gigantes repetidos
+- `request_loop` — 5+ mesma request exata
+- `high_cache_miss_repetitive` — cache miss率高 com padrão repetitivo
+- `cloud_without_balance` — tentativa de usar cloud sem saldo
+- `high_estimated_cost` — custo > R$5 em período curto
+- `repeated_streaming_abort` — streaming abortado repetidamente
+- `excessive_rag_upload` — 5+ uploads RAG em 5min
+- `excessive_tts_chars` — caracteres TTS acima do limite
+
+Auto-suspensão é **desligada por padrão** e **dry-run** é ativado.
+
+### Validação de Segurança
+
+```bash
+./scripts/check-secrets.sh --all
+./scripts/validate-enterprise-rag-local.sh
+./scripts/validate-hybrid-abuse-detection-local.sh
+```
+
+### Dependências Críticas
+
+| Pacote | Função | Obrigatório |
+|--------|--------|-------------|
+| pymupdf | Parse PDF | Não (fallback) |
+| python-docx | Parse DOCX | Não (fallback) |
+| openpyxl | Parse XLSX | Não (fallback) |
+
+Serviços externos: **Nenhum obrigatório**.

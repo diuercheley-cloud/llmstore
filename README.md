@@ -1,10 +1,10 @@
-# Local AI Appliance
+# Hybrid AI Platform (formerly Local AI Appliance)
 
-**OpenAI-compatible local AI infrastructure with admin, client portal, RAG, TTS, billing, security and demo tooling.**
+**OpenAI-compatible hybrid AI infrastructure — local + cloud, multi-provider, multi-tenant, white-label ready.**
 
-> Current build: `v1.7.1-post-release-polish`  
-> Stable release: [`v1.7.0-local-ai-appliance`](docs/V1_7_RELEASE_NOTES.md)  
-> Status: [Client Ready](docs/CLIENT_READY_FINAL_REPORT.md) | [Go/No-Go Summary](docs/V1_7_GO_NO_GO_SUMMARY.md)
+> Current build: `v1.8.0-hybrid-ai-platform`  
+> Previous stable: [`v1.7.1-post-release-polish`](releases/v1.7.1-post-release-polish)  
+> Hybrid AI docs: [`docs/HYBRID_AI_PLATFORM.md`](docs/HYBRID_AI_PLATFORM.md)
 
 ---
 
@@ -31,15 +31,16 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | Recurso | Descrição |
 |---------|-----------|
 | API OpenAI-compatible | `/v1/chat/completions`, `/v1/models`, streaming SSE |
-| Admin Dashboard | Gestão de clientes, API keys, uso, billing |
+| Multi-Provider | Local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter |
+| Admin Dashboard | Gestão de clientes, API keys, uso, billing, providers |
 | Admin Lab | Gestão de modelos, backends, testes de prompt |
 | Client Portal | Interface do cliente com uso e consumo |
 | RAG | Upload de documentos (.pdf, .txt, .md) e busca semântica |
 | TTS | Text-to-speech local com pocket-tts |
 | Billing manual | Invoices, ciclos, suspensão automática |
-| Múltiplos modelos | Suporte a GGUF via llama.cpp, backends HTTP |
+| Múltiplos modelos | Suporte a GGUF via llama.cpp, backends HTTP, cloud APIs |
 | Segurança | Rate limiting, quotas, API keys hasheadas, circuit breaker |
-| Observabilidade | Métricas Prometheus, health/ready endpoints |
+| Observabilidade | Métricas Prometheus, health/ready endpoints, provider health |
 
 ## Quick start
 

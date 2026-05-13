@@ -1,0 +1,42 @@
+{
+  "plans": {
+    "free": {
+      "label": "Free",
+      "markup_percent": 0,
+      "price_brl_per_1k_prompt": 0.0,
+      "price_brl_per_1k_completion": 0.0,
+      "monthly_included_tokens": 50000,
+      "cloud_allowed": false,
+      "max_cost_per_request_brl": 0.0
+    },
+    "basic": {
+      "label": "Basic",
+      "markup_percent": 50,
+      "price_brl_per_1k_prompt": 0.02,
+      "price_brl_per_1k_completion": 0.06,
+      "monthly_included_tokens": 750000,
+      "cloud_allowed": false,
+      "max_cost_per_request_brl": 0.10
+    },
+    "pro": {
+      "label": "Pro",
+      "markup_percent": 40,
+      "price_brl_per_1k_prompt": 0.015,
+      "price_brl_per_1k_completion": 0.05,
+      "monthly_included_tokens": 4000000,
+      "cloud_allowed": true,
+      "max_cost_per_request_brl": 0.50
+    },
+    "enterprise": {
+      "label": "Enterprise Local",
+      "markup_percent": 30,
+      "price_brl_per_1k_prompt": 0.01,
+      "price_brl_per_1k_completion": 0.04,
+      "monthly_included_tokens": 15000000,
+      "cloud_allowed": true,
+      "max_cost_per_request_brl": 1.00
+    }
+  },
+  "default_markup_percent": 50,
+  "cache_discount_percent": 50
+}

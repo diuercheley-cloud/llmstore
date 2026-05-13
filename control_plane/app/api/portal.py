@@ -40,6 +40,7 @@ from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_fr
 
 from app.models.billing_plan import BillingPlan
 from app.models.pricing_rule import PricingRule
+from app.models.ai_wallet import AiWallet, AiWalletTransaction
 from app.models.api_key import ApiKey
 from app.models.request_log import RequestLog
 from app.models.model_registry import ModelRegistry
@@ -496,6 +497,36 @@ async def portal_invoices(
             }
             for payment in payments
         ],
+    }
+
+
+@router.get("/wallet")
+async def portal_wallet(
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    from app.services.billing.wallet_service import get_balance, list_transactions, serialize_transaction
+    from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+    balance = await get_balance(session, client.id)
+    txs = await list_transactions(session, client.id, limit=20)
+    effective_plan = resolve_effective_plan(client)
+    counters = await get_current_usage_snapshot(session, client.id)
+    monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
+    monthly_quota = effective_plan.monthly_token_quota
+    overage_price = float(effective_plan.overage_price_per_1k_tokens)
+    if monthly_used > monthly_quota:
+        overage_tokens = monthly_used - monthly_quota
+        estimated_consumption_brl = (overage_tokens / 1000.0) * overage_price
+    else:
+        estimated_consumption_brl = 0.0
+    return {
+        **balance,
+        "consumption_estimate_brl": round(estimated_consumption_brl, 4),
+        "monthly_used_tokens": monthly_used,
+        "monthly_quota_tokens": monthly_quota,
+        "pix_notice": "Recarga via PIX real ainda não está disponível nesta versão. "
+                      "Créditos devem ser adicionados manualmente pelo administrador.",
+        "transactions": [serialize_transaction(tx) for tx in txs],
     }
 
 

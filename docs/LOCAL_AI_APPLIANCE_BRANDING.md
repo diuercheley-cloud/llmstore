@@ -28,6 +28,16 @@ O Local AI Appliance é uma solução completa de infraestrutura de Inteligênci
 - **Versão:** v1.7.0-local-ai-appliance
 - **Destaque:** "Explore the built-in capabilities of the Local AI Appliance."
 
+## v1.8.0 - Hybrid AI Platform
+
+A partir da v1.8.0, o sistema evolui para **Hybrid AI Platform**:
+- Multi-provider (local + cloud)
+- Providers cloud: OpenAI, Anthropic, DeepSeek, OpenRouter (opcional)
+- Cloud providers disabled por padrão, seguros por default
+- Sem chaves cloud, tudo continua funcionando local/mock
+- Billing em tempo real (próximas etapas)
+- Cache inteligente (próximas etapas)
+
 ## Limitações que devem aparecer em materiais públicos
 - **PSP Real:** Not included / Fora do escopo (Faturamento é manual/offline).
 - **PIX Real:** Not included / Fora do escopo (Sem integração direta com bancos).
