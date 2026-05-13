@@ -254,6 +254,48 @@ Validar o script:
 make validate-meeting-ready
 ```
 
+## Comando Unico de Demo Comercial
+
+Para preparar e validar uma demonstração comercial completa em um único comando:
+
+```bash
+# Modo rapido (padrao)
+make customer-demo
+
+# Modo completo (com seed de dados)
+make customer-demo-full
+
+# Validar o script de customer demo
+make validate-customer-demo
+```
+
+O comando `make customer-demo` executa:
+- Validação de saúde da stack (/health, /ready)
+- Security report e production readiness
+- Validação de todas as interfaces (Admin Dashboard, Client Portal, Admin Lab)
+- Validação de /capabilities, Sales/Leads, API, RAG, TTS
+- Meeting-ready check
+- Plano de screenshots
+- Relatório final em `artifacts/customer-demo/<timestamp>/`
+
+## Guia Visual de Demonstração
+
+Para uma demonstração padronizada com screenshots e storyboard, consulte o [Guia Visual de Demonstração](demo-visual-guide/README.md).
+
+Inclui:
+- **Storyboard** com ordem, fala sugerida e screenshot esperado
+- **Checklist de captura** de screenshots
+- **Comandos de captura** automática (Playwright) ou manual
+- **Placeholders sanitizados** para versionamento
+
+```bash
+# Gerar plano de captura de screenshots
+make demo-screenshot-plan
+
+# Validar guia visual
+make validate-demo-visual-guide
+```
+
 ## Limitações e Fora de Escopo
 - **PSP Real**: Não há integração com cartões ou PIX real nesta versão local.
 - **Domínio Público**: O acesso é apenas via `localhost`.

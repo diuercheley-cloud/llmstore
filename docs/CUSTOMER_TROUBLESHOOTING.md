@@ -57,6 +57,11 @@ Consulte o catálogo completo em [docs/OPERATOR_ERROR_CODES.md](OPERATOR_ERROR_C
 - **Sintoma:** O comando `make security` aponta falhas ou alertas.
 - **Solução:** Analise o log do reporte (ex. `scripts/parse-security-report-local.sh`). Alertas de arquivos soltos ou permissões excessivas (ex: `chmod 777`) devem ser corrigidos na máquina host.
 
+## 11. Fresh Machine Validation Failed
+
+- **Sintoma:** `fresh-machine-readiness-check.sh --dry-run` aponta falhas.
+- **Solução:** Consulte [FRESH_MACHINE_VALIDATION.md](FRESH_MACHINE_VALIDATION.md) para o checklist completo. Verifique Docker, permissões de script, `.env.local` e disponibilidade de modelo GGUF.
+
 ## Como coletar logs
 Se o suporte técnico for necessário, colete os logs completos usando:
 ```bash

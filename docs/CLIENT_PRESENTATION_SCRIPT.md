@@ -401,6 +401,30 @@ open http://localhost:18080/capabilities
 
 **O que falar:** "Esta pagina lista todos os recursos do sistema com status claro — o que funciona, o que e parcial e o que nao esta disponivel. As limitacoes sao explicitas: nao temos PSP/PIX real, tools/function calling e parcial, e a performance depende do hardware local. Isso mostra nosso compromisso com transparencia."
 
+## Comando Unico de Demo Comercial
+
+```bash
+# Preparar e validar a demo completa
+make customer-demo
+
+# Full demo com seed de dados
+make customer-demo-full
+```
+
+Relatório gerado em `artifacts/customer-demo/<timestamp>/`.
+
+## Guia Visual de Demonstração
+
+Para uma demonstração padronizada com screenshots, storyboard e plano de captura, consulte o [Guia Visual de Demonstração](demo-visual-guide/README.md).
+
+```bash
+# Gerar plano de screenshots
+make demo-screenshot-plan
+
+# Validar guia visual
+make validate-demo-visual-guide
+```
+
 ## Apêndice: URLs de Referência
 
 | Interface | URL |

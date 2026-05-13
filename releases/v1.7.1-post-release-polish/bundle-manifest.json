@@ -1,0 +1,16 @@
+{
+  "version": "v1.7.1-post-release-polish",
+  "git_branch": "feature/v1.7.1-post-release-polish",
+  "git_commit": "16457188fb693616e9039cd2ceafefaeba99e441",
+  "generated_at": "2026-05-13T11:31:37Z",
+  "included_paths": ["control_plane","data_plane_mock","docker","scripts","Makefile","README.md","CHANGELOG.md","VERSION","docker-compose.yml","docker-compose.prod.yml","test-compose.yml","test-override.yml",".env.example","docs","examples","demo"],
+  "excluded_paths": [".git",".venv","node_modules","__pycache__",".pytest_cache",".mypy_cache",".ruff_cache",".env",".env.local",".local","models","data/rag_uploads","backups","exports","artifacts","*.gguf","*.pem","*.key","*.tar.gz"],
+  "files_count": 502,
+  "archive_name": "llm-inference-stack-v1.7.1-post-release-polish.tar.gz",
+  "archive_sha256": "1887e16165cc52760d65505e8aaec1ec257be615d55713fc3acdd231e66fe589",
+  "secrets_scan_passed": true,
+  "models_included": false,
+  "rag_uploads_included": false,
+  "env_included": false,
+  "local_data_included": false
+}

@@ -5,7 +5,7 @@
 ## Executivo
 
 Este documento consolida a avaliacao final de prontidao da versao
-**v1.7.0-local-ai-appliance** (branch `feature/v1.7.0-local-ai-appliance`)
+**v1.7.0-local-ai-appliance** (branch `feature/v1.7.1-post-release-polish`)
 para entrega a cliente como Local AI Appliance.
 
 ## Versao Avaliada
@@ -13,12 +13,13 @@ para entrega a cliente como Local AI Appliance.
 | Campo | Valor |
 |-------|-------|
 | Versao | v1.7.0-local-ai-appliance |
-| Branch | feature/v1.7.0-local-ai-appliance |
+| Branch | feature/v1.7.1-post-release-polish |
+| Fase | Post-Release Polish (v1.7.1) |
 | Data | 2026-05-12 |
 
 ## Status Geral
 
-**CLIENT_READY_WITH_WARNINGS**
+**CLIENT_READY_WITH_ACCEPTED_WARNINGS**
 
 ## Criterios Avaliados
 
@@ -33,14 +34,14 @@ para entrega a cliente como Local AI Appliance.
 | No secrets in codebase | true |
 | No forbidden files versioned | True |
 | Release metadata OK | True |
-| Go/No-Go Decision | GO_WITH_WARNINGS |
-| Final Validation | V1_7_READY_WITH_WARNINGS |
+| Go/No-Go Decision | GO (ACCEPTED WARNINGS) |
+| Final Validation | V1_7_READY_WITH_ACCEPTED_WARNINGS |
 | Release Bundle | PASS |
 
 ## Evidencias Resumidas
 
-- **Final Validation:** V1_7_READY_WITH_WARNINGS — Nenhum blocker detectado.
-- **Go/No-Go:** GO_WITH_WARNINGS — Nenhum blocker detectado.
+- **Final Validation:** V1_7_READY_WITH_ACCEPTED_WARNINGS — Warnings auditados e aceitos no polish v1.7.1.
+- **Go/No-Go:** GO — Bloqueadores resolvidos.
 - **Security:** Score PASS, 0 falhas criticas, 0 falhas altas.
 - **Readiness:** Score READY.
 - **Full Validation:** OK.
@@ -67,8 +68,8 @@ para entrega a cliente como Local AI Appliance.
 
 ## Recomendacao
 
-**CLIENT_READY_WITH_WARNINGS** — A release v1.7.0-local-ai-appliance esta
-pronta para promocao. Warnings aceitaveis com remediacao pos-release.
+**CLIENT_READY_WITH_ACCEPTED_WARNINGS** — A release v1.7.0-local-ai-appliance esta
+pronta para promocao. Warnings auditados e documentados no v1.7.1.
 
 ## Checklist Final
 
@@ -83,11 +84,11 @@ pronta para promocao. Warnings aceitaveis com remediacao pos-release.
 | No secrets found | OK |
 | No forbidden files | OK |
 | Release metadata OK | OK |
-| Go/No-Go Summary | GO_WITH_WARNINGS |
+| Go/No-Go Summary | GO (ACCEPTED WARNINGS) |
 | PSP/PIX out of scope | OK |
 | Cloud/internet not required | OK |
 
 ---
 *Documento versionavel gerado por: scripts/generate-client-ready-report.sh e scripts/run-v1.7-release-checklist.sh*
 *Timestamp: 2026-05-12*
-*Decisao: GO_WITH_WARNINGS*
+*Decisao: GO (ACCEPTED WARNINGS)*

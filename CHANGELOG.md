@@ -1,5 +1,33 @@
 # Changelog
 
+## [v1.7.1-post-release-polish] - 2026-05-13
+
+### Added
+- Diagnóstico e limpeza de warnings não bloqueantes pós-v1.7.0, com classificação e aceitação formal.
+- Guia visual de demonstração com storyboard, screenshots e plano de captura (`docs/demo-visual-guide/`).
+- Script `customer-demo-local.sh` para preparação e validação de demonstração para cliente (modos `--quick` e `--full`).
+- Validação de fresh machine / WSL limpo com checklist e script dedicados (`FRESH_MACHINE_VALIDATION.md`, `fresh-machine-readiness-check.sh`).
+- README.md reorganizado como porta de entrada profissional/comercial (seções: O que é, Para quem serve, Quick start, Customer demo, Limitações, etc.).
+- README_CLIENT.md atualizado com exemplos de embeddings, responses API e referência ao SDK Python `scripts/llm_stack_client.py`.
+- Script de validação `validate-readme-product-local.sh` com 24 checagens (título, comandos, limitações, links, secrets, scripts).
+- Três suítes de teste: `test_readme_product_positioning.py`, `test_readme_links.py`, `test_readme_no_secrets.py`.
+- Scripts de validação: `validate-demo-visual-guide.sh`, `validate-customer-demo-local.sh`, `validate-fresh-machine-docs.sh`, `validate-v1.7-warning-cleanup.sh`.
+- Script de preparação de screenshots: `prepare-demo-screenshots-local.sh`.
+- Documento de warning cleanup: `docs/V1_7_1_WARNING_CLEANUP.md`.
+
+### Changed
+- VERSION atualizada de v1.7.0-local-ai-appliance para v1.7.1-post-release-polish.
+- README.md: estrutura reorganizada e limitações explicitadas (PSP/PIX real, cloud gerenciada, hardware-dependente).
+- README_CLIENT.md: seção Client SDK adicionada com LLMStackClient.
+- .gitignore: cobertura para artefatos de screenshot e demonstração.
+- Makefile: targets customer-demo, fresh-machine-check, demo-screenshot-plan e validadores associados.
+
+### Notes
+- PSP/PIX real permanecem fora do escopo (documentado como limitação).
+- Cloud gerenciada permanece fora do escopo (appliance on-premise).
+- Screenshots gerados em `artifacts/` não são versionados.
+- Nenhum .tar.gz versionado no git (apenas manifests e checksums).
+
 ## [v1.7.0-local-ai-appliance] - 2026-05-12
 
 ### Added

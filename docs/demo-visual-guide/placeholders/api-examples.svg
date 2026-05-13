@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#f0f4f8"/>
+  <rect x="40" y="40" width="1200" height="60" rx="8" fill="#d0d8e0"/>
+  <text x="640" y="78" font-family="monospace" font-size="20" fill="#333" text-anchor="middle" font-weight="bold">Local AI Appliance — API Examples</text>
+  <rect x="40" y="120" width="1200" height="640" rx="8" fill="#ffffff" stroke="#d0d8e0" stroke-width="2"/>
+  <text x="640" y="460" font-family="monospace" font-size="16" fill="#888" text-anchor="middle">API Examples</text>
+  <text x="640" y="490" font-family="monospace" font-size="14" fill="#aaa" text-anchor="middle">placeholder — dados fictícios</text>
+</svg>

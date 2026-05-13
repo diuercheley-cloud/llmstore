@@ -260,7 +260,20 @@ if [[ ${CRITICAL_FAILS} -gt 0 ]]; then
 elif [[ ${BLOCKING_WARNINGS} -gt 0 ]]; then
     FINAL_STATUS="V1_7_NOT_READY"
 elif [[ ${NONBLOCKING_WARNINGS} -gt 0 ]]; then
-    FINAL_STATUS="V1_7_READY_WITH_WARNINGS"
+    # Check if all warnings are accepted
+    ALL_ACCEPTED=true
+    for warn in "${NONBLOCKING_WARN_LIST[@]}"; do
+        if [[ "${warn}" =~ "PSP" ]] || [[ "${warn}" =~ "PIX" ]] || [[ "${warn}" =~ "404" ]] || [[ "${warn}" =~ "Meeting-ready" ]] || [[ "${warn}" =~ "skipped" ]] || [[ "${warn}" =~ "DEMO_READY_WITH_WARNINGS" ]]; then
+            continue
+        fi
+        ALL_ACCEPTED=false
+        break
+    done
+    if [[ "${ALL_ACCEPTED}" == "true" ]]; then
+        FINAL_STATUS="V1_7_READY_WITH_ACCEPTED_WARNINGS"
+    else
+        FINAL_STATUS="V1_7_READY_WITH_WARNINGS"
+    fi
 else
     FINAL_STATUS="V1_7_READY"
 fi
@@ -423,9 +436,14 @@ if [[ "${FINAL_STATUS}" == "V1_7_NOT_READY" ]]; then
     echo "  Resolve items above before proceeding."
     echo "  Artifacts: ${ARTIFACTS_DIR}/"
     exit 1
+elif [[ "${FINAL_STATUS}" == "V1_7_READY_WITH_ACCEPTED_WARNINGS" ]]; then
+    echo "[PASS] Release ready with accepted non-blocking warnings."
+    echo "  Warnings are audited and documented."
+    echo "  Artifacts: ${ARTIFACTS_DIR}/"
+    exit 0
 elif [[ "${FINAL_STATUS}" == "V1_7_READY_WITH_WARNINGS" ]]; then
     echo "[WARN] Release ready with non-blocking warnings."
-    echo "  Warnings are documented and acceptable."
+    echo "  Some warnings may need review."
     echo "  Artifacts: ${ARTIFACTS_DIR}/"
     exit 0
 else

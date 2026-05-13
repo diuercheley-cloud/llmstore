@@ -221,6 +221,15 @@ Cada item recebe um status: ✅ verde (ok), 🟡 amarelo (atenção), 🔴 verme
 
 ---
 
+## Guia Visual de Demonstração
+
+Para uma demonstração padronizada com storyboard visual, screenshots esperados e plano de captura, consulte o [Guia Visual de Demonstração](demo-visual-guide/README.md).
+
+```bash
+make demo-screenshot-plan
+make validate-demo-visual-guide
+```
+
 ## Follow-up Imediato
 
 Após a demo, você pode gerar a proposta personalizada para o cliente em segundos para envio imediato:

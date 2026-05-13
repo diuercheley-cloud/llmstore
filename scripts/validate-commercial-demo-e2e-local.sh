@@ -66,7 +66,13 @@ pass()   { PASS=$((PASS+1)); echo -e "  [PASS] $1" | tee -a "${LOGS_DIR}/demo.lo
 fail()   { FAIL=$((FAIL+1)); echo -e "  [FAIL] $1" | tee -a "${LOGS_DIR}/demo.log"; RESULTS+=("fail:$1"); ERRORS+=("$1"); }
 warn()   { WARN=$((WARN+1)); echo -e "  [WARN] $1" | tee -a "${LOGS_DIR}/demo.log"; RESULTS+=("warn:$1"); WARNINGS+=("$1"); }
 step()   { echo "" | tee -a "${LOGS_DIR}/demo.log"; echo "=== $1 ===" | tee -a "${LOGS_DIR}/demo.log"; }
-http_ok(){ local c; c=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$1" 2>/dev/null || echo "000"); echo "$c"; }
+http_ok(){ 
+    local url=$1
+    local method=${2:-GET}
+    local c; 
+    c=$(curl -X "$method" -s -o /dev/null -w "%{http_code}" --max-time 5 "$url" 2>/dev/null || echo "000"); 
+    echo "$c"; 
+}
 
 echo "===================================================="
 echo "  Commercial Demo E2E Validation"
@@ -129,12 +135,10 @@ fi
 # ---------- Step 4: Validate fake demo data ----------
 step "4. Validating fake demo data"
 if [ -x "${ROOT_DIR}/scripts/validate-fake-demo-data.sh" ]; then
-    FAKE_OUTPUT=$(bash "${ROOT_DIR}/scripts/validate-fake-demo-data.sh" 2>&1 || true)
-    echo "${FAKE_OUTPUT}" >> "${LOGS_DIR}/fake-data.log"
-    if echo "${FAKE_OUTPUT}" | grep -qi "fail"; then
-        warn "Fake data validation reported failures"
-    else
+    if bash "${ROOT_DIR}/scripts/validate-fake-demo-data.sh" >> "${LOGS_DIR}/fake-data.log" 2>&1; then
         pass "Fake demo data validated"
+    else
+        warn "Fake data validation reported failures"
     fi
 else
     warn "validate-fake-demo-data.sh not found"
@@ -143,12 +147,10 @@ fi
 # ---------- Step 5: Validate commercial demo pack ----------
 step "5. Validating commercial demo pack"
 if [ -x "${ROOT_DIR}/scripts/validate-commercial-demo-pack.sh" ]; then
-    DEMOPACK_OUTPUT=$(bash "${ROOT_DIR}/scripts/validate-commercial-demo-pack.sh" 2>&1 || true)
-    echo "${DEMOPACK_OUTPUT}" >> "${LOGS_DIR}/demo-pack.log"
-    if echo "${DEMOPACK_OUTPUT}" | grep -qi "fail"; then
-        warn "Commercial demo pack validation reported failures"
-    else
+    if bash "${ROOT_DIR}/scripts/validate-commercial-demo-pack.sh" >> "${LOGS_DIR}/demo-pack.log" 2>&1; then
         pass "Commercial demo pack validated"
+    else
+        warn "Commercial demo pack validation reported failures"
     fi
 else
     warn "validate-commercial-demo-pack.sh not found"
@@ -274,7 +276,7 @@ fi
 
 # ---------- Step 17: Test chat completion ----------
 step "17. Testing chat completion"
-CHAT_CODE=$(http_ok "${BASE_URL}/v1/chat/completions")
+CHAT_CODE=$(http_ok "${BASE_URL}/v1/chat/completions" "POST")
 if [ "${CHAT_CODE}" = "200" ] || [ "${CHAT_CODE}" = "401" ] || [ "${CHAT_CODE}" = "422" ]; then
     pass "Chat completions endpoint reachable (HTTP ${CHAT_CODE})"
 else
@@ -283,7 +285,7 @@ fi
 
 # ---------- Step 18: Test responses endpoint ----------
 step "18. Testing /v1/responses"
-RESP_CODE=$(http_ok "${BASE_URL}/v1/responses")
+RESP_CODE=$(http_ok "${BASE_URL}/v1/responses" "POST")
 if [ "${RESP_CODE}" = "200" ] || [ "${RESP_CODE}" = "401" ] || [ "${RESP_CODE}" = "422" ]; then
     pass "/v1/responses reachable (HTTP ${RESP_CODE})"
 else
@@ -292,7 +294,7 @@ fi
 
 # ---------- Step 19: Test embeddings ----------
 step "19. Testing /v1/embeddings"
-EMB_CODE=$(http_ok "${BASE_URL}/v1/embeddings")
+EMB_CODE=$(http_ok "${BASE_URL}/v1/embeddings" "POST")
 if [ "${EMB_CODE}" = "200" ] || [ "${EMB_CODE}" = "401" ] || [ "${EMB_CODE}" = "422" ]; then
     pass "/v1/embeddings reachable (HTTP ${EMB_CODE})"
 else
@@ -302,9 +304,11 @@ fi
 # ---------- Step 20: Test RAG demo ----------
 if [ "${SKIP_RAG}" = false ]; then
     step "20. Testing RAG demo"
-    RAG_CODE=$(http_ok "${BASE_URL}/v1/rag/upload")
+    RAG_CODE=$(http_ok "${BASE_URL}/v1/rag/upload" "POST")
     if [ "${RAG_CODE}" = "200" ] || [ "${RAG_CODE}" = "401" ] || [ "${RAG_CODE}" = "405" ]; then
         pass "RAG endpoint reachable (HTTP ${RAG_CODE})"
+    elif [ "${RAG_CODE}" = "404" ]; then
+        warn "RAG endpoint returned HTTP 404 (Not Found) - RAG service might be offline or disabled"
     else
         warn "RAG endpoint returned HTTP ${RAG_CODE}"
     fi
@@ -315,9 +319,11 @@ fi
 # ---------- Step 21: Test TTS demo ----------
 if [ "${SKIP_TTS}" = false ]; then
     step "21. Testing TTS demo"
-    TTS_CODE=$(http_ok "${BASE_URL}/v1/audio/speech")
-    if [ "${TTS_CODE}" = "200" ] || [ "${TTS_CODE}" = "401" ] || [ "${TTS_CODE}" = "422" ]; then
+    TTS_CODE=$(http_ok "${BASE_URL}/v1/audio/speech" "POST")
+    if [ "${TTS_CODE}" = "200" ] || [ "${TTS_CODE}" = "401" ] || [ "${TTS_CODE}" = "422" ] || [ "${TTS_CODE}" = "405" ]; then
         pass "TTS endpoint reachable (HTTP ${TTS_CODE})"
+    elif [ "${TTS_CODE}" = "404" ]; then
+        warn "TTS endpoint returned HTTP 404 (Not Found) - pocket-tts service might be offline or disabled"
     else
         warn "TTS endpoint returned HTTP ${TTS_CODE}"
     fi

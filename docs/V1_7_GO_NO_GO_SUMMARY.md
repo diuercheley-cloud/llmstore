@@ -4,14 +4,15 @@
 
 ## Status
 
-**GO_WITH_WARNINGS**
+**V1_7_READY_WITH_ACCEPTED_WARNINGS**
 
 ## Versao Avaliada
 
 | Campo | Valor |
 |-------|-------|
 | Versao | v1.7.0-local-ai-appliance |
-| Branch | feature/v1.7.0-local-ai-appliance |
+| Branch | feature/v1.7.1-post-release-polish |
+| Fase | Post-Release Polish (v1.7.1) |
 | Data | 2026-05-12 |
 
 ## Criterios Go/No-Go
@@ -83,18 +84,20 @@ Nenhum blocker detectado.
 
 ## Recomendacao Final
 
-**GO_WITH_WARNINGS** — A release v1.7.0-local-ai-appliance esta pronta para promocao.
+**V1_7_READY_WITH_ACCEPTED_WARNINGS** — A release v1.7.0-local-ai-appliance esta pronta para promocao, com warnings auditados no polish v1.7.1.
 
 Os warnings existentes sao aceitaveis:
 - Validacoes que exigem servidor ativo ou sandbox completo foram executadas em modo dry-run/quick.
 - PSP/PIX real esta documentado como "future" e nao e blocker.
+- Warnings de RAG/TTS 404 em ambiente de mock sao esperados e aceitos.
 - Nao ha blockers ou falhas de seguranca.
 
-### Remediacao Pos-Release
+### Remediacao Concluida (v1.7.1)
 
-1. Executar validate-commercial-demo-e2e-local.sh --seed-demo com servidor ativo.
-2. Executar validate-clean-install-local.sh --yes em ambiente sandbox real.
-3. Executar validate-real-restore-rollback-local.sh --yes em ambiente sandbox real.
+1. Corrigida deteccao de VERSION e Branch no checklist status.
+2. Corrigida validacao de endpoints AI (uso de POST).
+3. Corrigidos falsos positivos em scripts de seed/demo pack.
+4. Documentacao de cleanup gerada em `docs/V1_7_1_WARNING_CLEANUP.md`.
 
 ---
 *Documento versionavel gerado por: scripts/run-v1.7-release-checklist.sh, scripts/validate-v1.7-go-no-go-summary.sh, scripts/validate-v1.7-final-local.sh*

@@ -24,6 +24,7 @@ redis-data/
 # Artifacts & Backups
 artifacts/
 exports/
+artifacts/demo-screenshots/
 backups/
 *.log
 *.wav

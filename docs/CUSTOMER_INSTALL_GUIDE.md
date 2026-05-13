@@ -63,20 +63,34 @@ Para simular uma instalacao do zero em ambiente isolado (sandbox), sem afetar o 
 ./scripts/validate-clean-install-validator.sh
 ```
 
-## 9. Backup Inicial
+## 9. Fresh Machine Validation (para operadores)
+
+Antes de instalar em uma máquina nova, utilize o validador de readiness:
+
+```bash
+# Verificar pré-requisitos da máquina
+./scripts/fresh-machine-readiness-check.sh --dry-run
+
+# Com relatório JSON
+./scripts/fresh-machine-readiness-check.sh --dry-run --json
+```
+
+Consulte o roteiro completo em [docs/FRESH_MACHINE_VALIDATION.md](FRESH_MACHINE_VALIDATION.md).
+
+## 10. Backup Inicial
 Logo após a instalação e validação, crie o seu primeiro ponto de restauração seguro:
 ```bash
 ./scripts/backup-local.sh
 ```
 
-## 10. Atualização Futura
+## 11. Atualização Futura
 Para atualizar quando recebermos novas versões (via pacote ou repositório), você executará um script de `rollback/upgrade` seguro, garantindo que a versão dos dados seja compatível. O upgrade automaticamente realiza um backup preventivo obrigatório; para pular este passo, o operador deve confirmar os riscos explicitamente (ex. `--skip-backup --yes`). Siga as instruções do pacote de liberação entregue na época.
 
-## 11. White-Label / Branding Personalizado
+## 12. White-Label / Branding Personalizado
 
 É possível personalizar a identidade visual do sistema (nome do produto, cores, textos) sem alterar código. Consulte `docs/WHITE_LABEL_LOCAL.md` para instruções.
 
-## 12. Termos Contratuais
+## 13. Termos Contratuais
 
 Templates de contrato e SOW para referência estão disponíveis no diretório `contracts/`. Esses templates:
 
@@ -102,7 +116,7 @@ Para implantações comerciais com prestação de serviços, utilize o **Paid Im
 ./scripts/paid-implementation-checklist-local.sh --company-name "Cliente" --operator-name "Fornecedor"
 ```
 
-## 13. Desinstalação Segura
+## 14. Desinstalação Segura
 Caso precise remover todo o sistema, os contêineres e redes podem ser removidos. Seus dados no disco (`models/`, bancos de dados mapeados) permanecerão, a menos que deletados manualmente. Use o docker-compose para parar:
 ```bash
 docker compose down -v

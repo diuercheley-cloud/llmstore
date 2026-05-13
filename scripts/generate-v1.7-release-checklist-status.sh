@@ -128,8 +128,27 @@ de_status = read_json_field(de_json, "status")
 
 # Build items from automated checks
 items = []
-items.append({"id": "1.1", "item": "VERSION atualizada", "auto_status": "todo", "blocker": True, "note": f"VERSION={VERSION}"})
-items.append({"id": "1.2", "item": "Branch correta", "auto_status": "todo", "blocker": True, "note": f"branch={GIT_BRANCH}"})
+
+# Version check: must start with v1.7
+version_ok = VERSION.startswith("v1.7")
+items.append({
+    "id": "1.1", 
+    "item": "VERSION atualizada", 
+    "auto_status": "pass" if version_ok else "fail", 
+    "blocker": True, 
+    "note": f"VERSION={VERSION}"
+})
+
+# Branch check: accept main, release/v1.7.*, or feature/v1.7.*
+branch_ok = GIT_BRANCH in ("main", "master") or GIT_BRANCH.startswith("release/v1.7") or GIT_BRANCH.startswith("feature/v1.7")
+items.append({
+    "id": "1.2", 
+    "item": "Branch correta", 
+    "auto_status": "pass" if branch_ok else "warn", 
+    "blocker": True, 
+    "note": f"branch={GIT_BRANCH}"
+})
+
 items.append({"id": "2.1", "item": "Security report PASS", "auto_status": "pass" if sec_score == "PASS" else "fail", "blocker": True, "note": f"score={sec_score}"})
 items.append({"id": "2.2", "item": "check-secrets --all limpo", "auto_status": check_script("check-secrets.sh", ["--all"]), "blocker": True})
 items.append({"id": "2.3", "item": ".env nao versionado", "auto_status": check_git_not_tracked(".env"), "blocker": True})
@@ -163,6 +182,10 @@ blockers_warn = sum(1 for i in items if i.get("blocker") and i["auto_status"] ==
 blockers_todo = sum(1 for i in items if i.get("blocker") and i["auto_status"] == "todo")
 blockers_total = sum(1 for i in items if i.get("blocker"))
 
+# Check release manifest
+manifest_path = ROOT / "releases" / VERSION / "release-manifest.json"
+manifest_ok = manifest_path.exists()
+
 # Go/No-Go decision
 go_criteria = {
     "G-1": {"desc": "Todos os blockers = pass", "result": "PENDENTE" if blockers_fail > 0 or blockers_todo > 0 else "OK"},
@@ -173,7 +196,7 @@ go_criteria = {
     "G-6": {"desc": "Restore/rollback = success", "result": "OK" if rr_status == "success" else "PENDENTE"},
     "G-7": {"desc": "Demo E2E = DEMO_READY ou DEMO_READY_WITH_WARNINGS", "result": "OK" if de_status in ("DEMO_READY", "DEMO_READY_WITH_WARNINGS") else "PENDENTE"},
     "G-8": {"desc": "No secrets found", "result": "OK" if check_script("check-secrets.sh", ["--all"]) == "pass" else "PENDENTE"},
-    "G-9": {"desc": "Release manifest OK", "result": "PENDENTE"},
+    "G-9": {"desc": "Release manifest OK", "result": "OK" if manifest_ok else "PENDENTE"},
     "G-10": {"desc": "Documentacao cliente OK", "result": "OK" if check_file_exists(ROOT / "docs/CUSTOMER_REQUIREMENTS.md") == "pass" else "PENDENTE"},
 }
 

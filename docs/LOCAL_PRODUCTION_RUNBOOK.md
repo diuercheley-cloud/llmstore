@@ -57,6 +57,23 @@ Este script realiza:
 - Validação completa de produção, segurança e readiness.
 - Geração de relatório detalhado em \`artifacts/install-local-appliance/\`.
 
+## Fresh Machine Validation
+
+Antes de implantar em uma máquina nova, valide os pré-requisitos:
+
+```bash
+# Validacao de readiness de maquina limpa
+./scripts/fresh-machine-readiness-check.sh --dry-run
+
+# Validacao completa dos docs e scripts
+./scripts/validate-fresh-machine-docs.sh
+
+# Testes automaticos
+python -m pytest tests/test_fresh_machine_validation_docs.py tests/test_fresh_machine_readiness_check.py tests/test_fresh_machine_security.py -q
+```
+
+Consulte [FRESH_MACHINE_VALIDATION.md](FRESH_MACHINE_VALIDATION.md) para o roteiro completo e checklist de aceite.
+
 ## Validation Steps
 
 ### 1. Post-Installation Validation

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
@@ -267,6 +267,35 @@ validate-clean-install-full: ## Run clean install validation with sandbox (requi
 
 validate-clean-install-validator: ## Validate clean install script and outputs
 	./scripts/validate-clean-install-validator.sh
+
+# --- Customer Demo (Comando Unico) ---
+
+customer-demo: ## Prepare and validate a customer demo (quick mode)
+	./scripts/customer-demo-local.sh --quick --no-build
+
+customer-demo-full: ## Prepare and validate a customer demo (full mode)
+	./scripts/customer-demo-local.sh --full --no-build
+
+validate-customer-demo: ## Validate customer demo script and artifacts
+	./scripts/validate-customer-demo-local.sh
+
+# --- Demo Visual Guide ---
+
+demo-screenshot-plan: ## Generate screenshot capture plan (or capture with Playwright)
+	./scripts/prepare-demo-screenshots-local.sh
+
+validate-demo-visual-guide: ## Validate demo visual guide integrity and security
+	./scripts/validate-demo-visual-guide.sh
+
+# --- Fresh Machine Validation ---
+
+fresh-machine-check: ## Run fresh machine readiness check (dry-run)
+	chmod +x ./scripts/fresh-machine-readiness-check.sh
+	./scripts/fresh-machine-readiness-check.sh --dry-run
+
+validate-fresh-machine-docs: ## Validate fresh machine validation docs and scripts
+	chmod +x ./scripts/validate-fresh-machine-docs.sh
+	./scripts/validate-fresh-machine-docs.sh
 
 # --- Repo Maintenance ---
 
