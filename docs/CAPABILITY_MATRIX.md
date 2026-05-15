@@ -8,13 +8,13 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 | streaming | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/test-stream.sh` |
 | `/v1/models` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui provider_info | `curl /v1/models` |
 | `/v1/embeddings` | ✅ (Deterministic) | ❌ | ⚠️ (Mock) | ✅ | ❌ | ✅ | Partial | Mock por padrão | `scripts/test-embeddings.sh` |
-| `/v1/responses` | ✅ | ✅ | ✅ | ✅ | ⚠️ (via chat) | ✅ | Beta | Sem streaming | `scripts/test-responses.sh` |
-| tools/function calling | ❌ | ⚠️ (Partial) | ❌ | ✅ | ✅ | ✅ | Partial | Depende do backend/provider | - |
+| `/v1/responses` | ✅ | ✅ | ✅ | ✅ | ⚠️ (via chat) | ✅ | Beta | Sem streaming; tools seguem capability do provider/modelo | `scripts/test-responses.sh` |
+| tools/function calling | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | Partial | `openai_compatible` nativo; `llama.cpp`/`ollama`/`vllm` retornam `capability_not_supported`; logs persistem preview sanitizado | - |
 | Smart Routing | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-smart-routing-local.sh` |
 | Multi-Provider | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
 | Provider Registry | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
 | Billing BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | FX rate via env, sem chamada externa | `scripts/validate-billing-brl-local.sh` |
-| Prepaid Wallet BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | PIX real não implementado | `scripts/validate-prepaid-wallet-local.sh` |
+| Prepaid Wallet BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | Topup mock local; PSP real opt-in | `scripts/validate-prepaid-wallet-local.sh` |
 | Enterprise RAG | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | PDF/DOCX/XLSX opcionais | `scripts/validate-enterprise-rag-local.sh` |
 | Intelligent Cache (exact) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | - | `scripts/validate-intelligent-cache-local.sh` |
 | Intelligent Cache (semantic) | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | Beta (v1.8) | Requer sentence-transformers | `scripts/validate-intelligent-cache-local.sh` |
@@ -24,7 +24,7 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 | RAG | ⚠️ (Partial) | ✅ | ✅ | ❌ | ❌ | ❌ | GA | Requer embeddings | `scripts/test-rag.sh` |
 | TTS | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | Via pocket-tts | `scripts/pocket-tts.sh` |
 | billing manual/local | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/run-billing-cycle.sh` |
-| PSP/PIX real | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Future | Não implementado | - |
+| PSP/PIX real | ✅ (mock) | ⚠️ (opt-in) | ⚠️ (opt-in) | ❌ | ❌ | ❌ | Partial | `PAYMENT_REAL_ENABLED=false` por padrão; adapter real placeholder | - |
 | Client Portal | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/ui-health.sh` |
 | Admin Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui providers view | `scripts/ui-health.sh` |
 | Admin Lab | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/ui-health.sh` |
@@ -48,7 +48,27 @@ open http://localhost:18080/capabilities
 curl -s http://localhost:18080/public/capabilities | python3 -m json.tool
 ```
 
-A pagina e atualizada automaticamente com a versao atual do sistema via JS. As limitacoes de PSP/PIX real, tools/function calling parcial e dependencia de hardware local sao exibidas explicitamente.
+A pagina e atualizada automaticamente com a versao atual do sistema via JS. As limitacoes de PSP/PIX real, tools/function calling parcial, streaming em `/v1/responses` e dependencia de hardware local sao exibidas explicitamente.
+
+## Function Calling
+
+Resumo rapido por provider/modelo:
+
+| Provider/modelo registrado | `/v1/chat/completions` | `/v1/responses` | Observacoes |
+|---|---|---|---|
+| `openai_compatible` | Supported | Supported | Payload OpenAI encaminhado nativamente, com validacao local e logs sanitizados |
+| `llama.cpp` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
+| `ollama` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
+| `vllm` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
+
+Regras de seguranca local-first:
+
+- Maximo de `tools` por request: `16`
+- Schema por tool: `24 KiB`
+- Profundidade maxima de schema: `8`
+- Propriedades maximas por schema: `256`
+- Argumentos de tool retornados pelo provider: `16 KiB`
+- `RequestLog` persiste apenas `tool_call_count` e preview sanitizado, nunca os argumentos completos
 
 ## Legenda
 

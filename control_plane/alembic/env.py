@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet  # noqa: F401
+from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts  # noqa: F401
 
 config = context.config
 settings = get_settings()

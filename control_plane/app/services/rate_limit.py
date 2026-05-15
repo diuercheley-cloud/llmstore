@@ -28,3 +28,14 @@ async def enforce_ip_rate_limit(redis: Redis, source_ip: str, limit_per_minute: 
     if current > limit_per_minute:
         raise RateLimitExceeded(f"IP address {source_ip} exceeded {limit_per_minute} requests per minute")
 
+
+async def enforce_global_rate_limit(redis: Redis, limit_per_minute: int = 1000) -> None:
+    # Protects the whole SaaS cluster from massive spikes
+    current_minute = int(time.time() // 60)
+    key = f"ratelimit:global:{current_minute}"
+    current = await redis.incr(key)
+    if current == 1:
+        await redis.expire(key, 65)
+    if current > limit_per_minute:
+        raise RateLimitExceeded(f"Global rate limit exceeded ({limit_per_minute} req/min)")
+

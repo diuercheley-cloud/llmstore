@@ -45,6 +45,15 @@ chmod +x examples/curl/*.sh
 ./examples/curl/responses.sh
 ```
 
+## Official SDKs (Recomendado)
+
+Para uma integração mais fácil, utilize os SDKs oficiais:
+
+- **Python SDK**: Localizado em `sdk/python`.
+- **Node.js SDK**: Localizado em `sdk/node`.
+
+Veja o guia completo em [docs/SDKS.md](../docs/SDKS.md).
+
 ## Exemplos Python
 
 Os exemplos Python usam a biblioteca `requests`.

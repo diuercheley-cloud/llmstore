@@ -213,7 +213,27 @@ async def create_chat_generation_job(
     payload: ChatCompletionRequest,
 ) -> GenerationJob:
     prepared = await prepare_async_chat_job(session, redis=redis, client=client, payload=payload)
+    from app.services.routing.commercial_qos import CommercialQoSService
+    from app.services.routing.qos_rate_limiter import QoSRateLimiter
+    
+    qos_tier = await CommercialQoSService.resolve_qos_tier(session, client.id, None)
+    
+    # QoS Phase 24: Rate Limiting
+    rl = QoSRateLimiter(redis)
+    is_allowed, rl_status, rl_reason = await rl.check_rate_limit(
+        client.id, qos_tier.name, prepared.selected_model_id
+    )
+    
+    if not is_allowed:
+        raise HTTPException(status_code=429, detail=rl_reason)
+
     now = utc_now()
+    
+    # Calculate effective priority for Sorted Set
+    priority_weight = qos_tier.queue_priority
+    created_at_ms = int(now.timestamp() * 1000)
+    effective_priority = -(priority_weight * 1_000_000) + created_at_ms
+
     job = GenerationJob(
         client_id=client.id,
         model_registry_id=prepared.selected_model_db_id,
@@ -227,6 +247,12 @@ async def create_chat_generation_job(
         prompt_tokens_estimated=prepared.prompt_tokens,
         estimated_cost_usd=prepared.estimated_request_cost,
         max_tokens_requested=prepared.max_tokens,
+        priority=qos_tier.queue_priority,
+        # New Phase 24 fields
+        qos_tier=qos_tier.name,
+        effective_priority=effective_priority,
+        rate_limit_status=rl_status,
+        rate_limit_reason=rl_reason,
         queued_at=now,
         created_at=now,
         updated_at=now,
@@ -236,9 +262,27 @@ async def create_chat_generation_job(
     return job
 
 
-async def enqueue_generation_job(redis: Redis, job_id: uuid.UUID) -> None:
-    queue_depth = await redis.rpush(get_settings().async_job_queue_name, str(job_id))
-    ASYNC_QUEUE_DEPTH.set(int(queue_depth))
+async def enqueue_generation_job(redis: Redis, job_id: uuid.UUID, priority: int = 100, effective_priority: float = 0) -> None:
+    settings = get_settings()
+    
+    # 1. Legacy Enqueue (Always if not active, or if shadow)
+    if not settings.commercial_qos_priority_queue_enabled or settings.commercial_qos_priority_queue_mode != "active":
+        queue_depth = await redis.rpush(settings.async_job_queue_name, str(job_id))
+        ASYNC_QUEUE_DEPTH.set(int(queue_depth))
+    
+    # 2. QoS Priority Queue (if enabled or shadow)
+    if settings.commercial_qos_priority_queue_enabled:
+        from app.services.routing.qos_priority_queue import QoSPriorityQueue
+        pq = QoSPriorityQueue(redis)
+        # Use provided effective_priority if available, otherwise calculate
+        if effective_priority == 0:
+            now_ms = int(time.time() * 1000)
+            effective_priority = -(priority * 1_000_000) + now_ms
+            
+        await pq.enqueue(job_id, priority, int(time.time() * 1000)) # Simple enqueue for now
+        # Re-using the calculated score if we want exact same score
+        await redis.zadd(QoSPriorityQueue.QUEUE_KEY, {str(job_id): effective_priority})
+        
     ASYNC_JOB_COUNTER.labels(status="queued").inc()
 
 
@@ -381,6 +425,16 @@ async def process_generation_job(
             error_message=None,
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
             plan_code=effective_plan.code,
+            request_payload=request_body,
+            response_payload=cached.payload,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias if selected_model else None,
+                "provider": selected_model.provider if selected_model else None,
+                "prompt_template": selected_model.prompt_template if selected_model else None,
+                "runtime_engine": selected_model.provider if selected_model else None,
+                "model_metadata_json": selected_model.metadata_json if selected_model else None,
+                "metadata_json": {"cache_hit": True, "async_job": True},
+            },
         )
         job.status = "completed"
         job.backend_name = "cache:exact"
@@ -420,6 +474,11 @@ async def process_generation_job(
     now = utc_now()
     job.status = "running"
     job.started_at = now
+    job.dequeued_at = now
+    if job.queued_at:
+        wait_delta = now - job.queued_at
+        job.queue_wait_ms = int(wait_delta.total_seconds() * 1000)
+    
     job.updated_at = now
     job.inference_backend_id = chosen_route.inference_backend_id
     job.backend_name = chosen_route.inference_backend.name if chosen_route.inference_backend else None
@@ -479,6 +538,17 @@ async def process_generation_job(
             error_message=None,
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
             plan_code=effective_plan.code,
+            request_payload=request_body,
+            response_payload=response_payload,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias,
+                "provider": chosen_route.inference_backend.provider,
+                "prompt_template": selected_model.prompt_template,
+                "runtime_engine": chosen_route.inference_backend.provider,
+                "model_metadata_json": selected_model.metadata_json,
+                "backend_metadata_json": chosen_route.inference_backend.metadata_json,
+                "metadata_json": {"async_job": True},
+            },
         )
         finished_at = utc_now()
         job.status = "completed"
@@ -514,6 +584,17 @@ async def process_generation_job(
             error_message=str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail),
             request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
             plan_code=effective_plan.code,
+            request_payload=request_body,
+            response_payload=None,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias,
+                "provider": chosen_route.inference_backend.provider,
+                "prompt_template": selected_model.prompt_template,
+                "runtime_engine": chosen_route.inference_backend.provider,
+                "model_metadata_json": selected_model.metadata_json,
+                "backend_metadata_json": chosen_route.inference_backend.metadata_json,
+                "metadata_json": {"async_job": True, "audit_event": "replay_failed"},
+            },
         )
         job.status = "failed"
         job.error_message = str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail)

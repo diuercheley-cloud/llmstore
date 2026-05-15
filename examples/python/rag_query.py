@@ -1,54 +1,27 @@
 import os
-import requests
-import json
 import sys
 
-# Configuration from environment variables
-BASE_URL = os.getenv("BASE_URL", "http://localhost:18080")
-API_KEY = os.getenv("CLIENT_API_KEY")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../sdk/python"))
 
-if not API_KEY:
-    print("Error: CLIENT_API_KEY is not set.")
-    exit(1)
+from kleberai import Client
 
 def main():
-    question = sys.argv[1] if len(sys.argv) > 1 else "What is in the uploaded documents?"
+    api_key = os.getenv("KLEBERAI_API_KEY", "test-key")
+    base_url = os.getenv("KLEBERAI_BASE_URL", "http://localhost:18080")
     
-    url = f"{BASE_URL}/v1/rag/query"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "question": question,
-        "model": "default",
-        "top_k": 3,
-        "max_tokens": 500,
-        "temperature": 0.2
-    }
-
-    print(f"Sending RAG query to {url}...")
-    print(f"Question: {question}")
+    client = Client(api_key=api_key, base_url=base_url)
     
-    response = requests.post(url, headers=headers, json=data)
-
-    if response.status_code == 200:
-        result = response.json()
-        print("\nAnswer:")
-        print(result.get("answer"))
-        
-        print("\nSources:")
-        for source in result.get("sources", []):
-            print(f"- {source['filename']} (Page {source['page']}, Score: {source['score']:.4f})")
-            
-        usage = result.get("usage", {})
-        print(f"\nUsage: {usage.get('total_tokens')} tokens")
-    elif response.status_code == 403:
-        print("Error: RAG is disabled or feature blocked.")
-        print(response.text)
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
+    print("Executando consulta RAG...")
+    try:
+        # Se você tiver IDs de documentos específicos, passe aqui: file_ids=["uuid1", "uuid2"]
+        response = client.rag_query("Como configurar o stack?")
+        print("\nResposta RAG:")
+        print(response["answer"])
+        print("\nFontes:")
+        for source in response.get("sources", []):
+            print(f"- {source['filename']} (pág {source['page']})")
+    except Exception as e:
+        print(f"Erro: {e}")
 
 if __name__ == "__main__":
     main()

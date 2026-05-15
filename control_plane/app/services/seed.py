@@ -8,6 +8,7 @@ from app.models.api_key import ApiKey
 from app.models.client import Client
 from app.services.billing import ensure_default_billing_plans, ensure_default_pricing_rules
 from app.services.model_registry import ensure_default_model
+from app.services.routing.commercial_safety_policies import ensure_default_safety_policies
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ async def seed_defaults(session: AsyncSession) -> None:
     await ensure_default_model(session)
     plans = await ensure_default_billing_plans(session)
     await ensure_default_pricing_rules(session, plans)
+    await ensure_default_safety_policies(session)
     demo_plan = plans["basic"]
 
     result = await session.execute(select(Client).where(Client.name == settings.demo_client_name))

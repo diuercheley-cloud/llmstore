@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse, Response
 
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
+from app.core.request_context import get_correlation_id
 from app.db.session import get_db_session, get_redis
 from app.models.client import Client
 from app.models.model_backend_route import ModelBackendRoute
@@ -32,10 +33,18 @@ from app.schemas.inference import (
 from app.services.audit import log_request
 from app.services.auth import require_client
 from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.commercial_guardrails import (
+    build_openai_guardrail_error_payload,
+    build_runtime_enforcement_context,
+    record_enforcement_outcome,
+    record_report_only_events,
+)
+from app.services.routing import commercial_analytics
 from app.services.generation_jobs import cancel_job, create_chat_generation_job, enqueue_generation_job, get_job_for_client, serialize_job
 from app.services.context_manager import ContextManager, get_context_manager
 from app.services.embeddings_mock import process_mock_embeddings
 from app.services.inference_proxy import InferenceProxy
+from app.services.provider_classification import is_cloud_provider
 from app.services.model_policy import (
     get_effective_allowed_models,
     list_active_registry_models,
@@ -59,6 +68,14 @@ from app.services.security_monitor import (
 )
 from app.utils.request_summary import summarize_chat_request, summarize_completion_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.utils.tool_calling import (
+    chat_response_has_tool_calls,
+    enforce_tool_argument_limits,
+    extract_tool_calls_from_chat_payload,
+    provider_supports_native_tools,
+    sanitize_tool_calls,
+    validate_tooling_request,
+)
 from app.utils.validation import normalize_messages, validate_params
 
 logger = logging.getLogger(__name__)
@@ -66,6 +83,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1", tags=["client"])
 
 settings = get_settings()
+
+
+class CommercialGuardrailBlockedError(Exception):
+    pass
 
 
 def _unsupported_feature_response(*, code: str, message: str) -> JSONResponse:
@@ -76,6 +97,19 @@ def _unsupported_feature_response(*, code: str, message: str) -> JSONResponse:
                 "message": message,
                 "type": "unsupported_feature",
                 "code": code,
+            }
+        },
+    )
+
+
+def _capability_not_supported_response(*, provider: str, endpoint: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=501,
+        content={
+            "error": {
+                "message": f"Tool calling is not supported for provider '{provider}' on {endpoint}.",
+                "type": "capability_not_supported",
+                "code": "capability_not_supported",
             }
         },
     )
@@ -138,6 +172,33 @@ def _responses_input_to_messages(payload: ResponsesRequest) -> list[dict[str, st
     return messages
 
 
+def _response_tool_outputs(choice: dict) -> list[ResponseOutput]:
+    outputs: list[ResponseOutput] = []
+    message = choice.get("message") or {}
+    content = message.get("content") or ""
+    if content:
+        outputs.append(
+            ResponseOutput(
+                type="message",
+                message=ResponseOutputMessage(
+                    role=message.get("role", "assistant"),
+                    content=[ResponseOutputText(text=content)],
+                ),
+            )
+        )
+    for tool_call in message.get("tool_calls") or []:
+        function = tool_call.get("function") or {}
+        outputs.append(
+            ResponseOutput(
+                type="function_call",
+                name=function.get("name"),
+                arguments=function.get("arguments"),
+                call_id=tool_call.get("id"),
+            )
+        )
+    return outputs
+
+
 def _is_retryable_backend_error(exc: HTTPException) -> bool:
     return exc.status_code >= 500 or exc.status_code in {503, 504}
 
@@ -163,8 +224,71 @@ async def _chat_with_fallback(
     stream: bool,
     include_reasoning: bool,
     client: Client | None = None,
+    cloud_blocked_by_guardrail: bool = False,
+    commercial_guardrail_context: dict | None = None,
+    session: AsyncSession | None = None,
 ):
-    routes = plan_routing_order(selected_model, client=client)
+    from app.services.routing.commercial_qos import CommercialQoSService
+    qos_tier = None
+    if session:
+        qos_tier = await CommercialQoSService.resolve_qos_tier(
+            session, 
+            client.id if client else None, 
+            client.billing_plan.code if client and client.billing_plan else None
+        )
+
+    routes = plan_routing_order(
+        selected_model,
+        client=client,
+        cloud_blocked_by_guardrail=cloud_blocked_by_guardrail,
+        commercial_guardrail_context=commercial_guardrail_context,
+        qos_tier=qos_tier,
+    )
+    
+    # Record commercial routing analytics event (best-effort)
+    if session:
+        from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+        from app.schemas.routing import TaskType
+        
+        selected_pid = routes[0].inference_backend.provider if routes else None
+        est_cost = 0.0
+        est_rev = 0.0
+        if selected_pid:
+            est_cost_res = estimate_provider_cost(selected_pid, 100, 500)
+            est_rev_res = calculate_customer_price(client.billing_plan.code if client and client.billing_plan else "free", 100, 500)
+            est_cost = est_cost_res.cost_brl
+            est_rev = est_rev_res.price_brl
+        
+        await commercial_analytics.record_routing_event(
+            session,
+            client_id=client.id if client else None,
+            correlation_id=get_correlation_id(),
+            endpoint="/v1/chat/completions", # Simplified
+            model_requested=selected_model.model_id,
+            task_type=TaskType.general,
+            policy="commercial_profit",
+            selected_provider=selected_pid,
+            selected_model=routes[0].inference_backend.name if routes else None,
+            selected_is_cloud=is_cloud_provider(selected_pid) if selected_pid else False,
+            blocked=not routes and bool(commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback")),
+            block_reason="guardrail_block" if not routes and commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback") else None,
+            estimated_cost_brl=est_cost,
+            estimated_revenue_brl=est_rev,
+            estimated_margin_brl=est_rev - est_cost,
+            estimated_margin_percent=((est_rev - est_cost) / est_rev * 100) if est_rev > 0 else 0,
+            ranked_routes=routes,
+            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", []) if commercial_guardrail_context else [],
+            qos_tier=qos_tier.name if qos_tier else None,
+            sla_pass=len(routes) > 0,
+            qos_priority=qos_tier.priority if qos_tier else None,
+        )
+
+    record_report_only_events(commercial_guardrail_context)
+    if not routes:
+        if commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback"):
+            record_enforcement_outcome(commercial_guardrail_context, blocked_without_fallback=True)
+            raise CommercialGuardrailBlockedError()
+        raise HTTPException(status_code=503, detail="model backend is not active")
     backend_errors: list[dict] = []
     last_exc: HTTPException | None = None
 
@@ -208,8 +332,9 @@ async def _chat_with_fallback(
                 is_admin=is_admin,
             )
             result.attempts = attempt
-            result.fallback_used = attempt > 1
+            result.fallback_used = attempt > 1 or bool(commercial_guardrail_context and commercial_guardrail_context.get("guardrail_fallback_active"))
             result.backend_errors = backend_errors
+            record_enforcement_outcome(commercial_guardrail_context, selected_provider=backend.provider)
             return result
         except HTTPException as exc:
             last_exc = exc
@@ -232,8 +357,71 @@ async def _completion_with_fallback(
     body: dict,
     stream: bool,
     client: Client | None = None,
+    cloud_blocked_by_guardrail: bool = False,
+    commercial_guardrail_context: dict | None = None,
+    session: AsyncSession | None = None,
 ):
-    routes = plan_routing_order(selected_model, client=client)
+    from app.services.routing.commercial_qos import CommercialQoSService
+    qos_tier = None
+    if session:
+        qos_tier = await CommercialQoSService.resolve_qos_tier(
+            session, 
+            client.id if client else None, 
+            client.billing_plan.code if client and client.billing_plan else None
+        )
+
+    routes = plan_routing_order(
+        selected_model,
+        client=client,
+        cloud_blocked_by_guardrail=cloud_blocked_by_guardrail,
+        commercial_guardrail_context=commercial_guardrail_context,
+        qos_tier=qos_tier,
+    )
+    
+    # Record commercial routing analytics event (best-effort)
+    if session:
+        from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+        from app.schemas.routing import TaskType
+        
+        selected_pid = routes[0].inference_backend.provider if routes else None
+        est_cost = 0.0
+        est_rev = 0.0
+        if selected_pid:
+            est_cost_res = estimate_provider_cost(selected_pid, 100, 500)
+            est_rev_res = calculate_customer_price(client.billing_plan.code if client and client.billing_plan else "free", 100, 500)
+            est_cost = est_cost_res.cost_brl
+            est_rev = est_rev_res.price_brl
+        
+        await commercial_analytics.record_routing_event(
+            session,
+            client_id=client.id if client else None,
+            correlation_id=get_correlation_id(),
+            endpoint="/v1/chat/completions", # Simplified
+            model_requested=selected_model.model_id,
+            task_type=TaskType.general,
+            policy="commercial_profit",
+            selected_provider=selected_pid,
+            selected_model=routes[0].inference_backend.name if routes else None,
+            selected_is_cloud=is_cloud_provider(selected_pid) if selected_pid else False,
+            blocked=not routes and bool(commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback")),
+            block_reason="guardrail_block" if not routes and commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback") else None,
+            estimated_cost_brl=est_cost,
+            estimated_revenue_brl=est_rev,
+            estimated_margin_brl=est_rev - est_cost,
+            estimated_margin_percent=((est_rev - est_cost) / est_rev * 100) if est_rev > 0 else 0,
+            ranked_routes=routes,
+            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", []) if commercial_guardrail_context else [],
+            qos_tier=qos_tier.name if qos_tier else None,
+            sla_pass=len(routes) > 0,
+            qos_priority=qos_tier.priority if qos_tier else None,
+        )
+
+    record_report_only_events(commercial_guardrail_context)
+    if not routes:
+        if commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback"):
+            record_enforcement_outcome(commercial_guardrail_context, blocked_without_fallback=True)
+            raise CommercialGuardrailBlockedError()
+        raise HTTPException(status_code=503, detail="model backend is not active")
     backend_errors: list[dict] = []
     last_exc: HTTPException | None = None
 
@@ -275,8 +463,9 @@ async def _completion_with_fallback(
                 is_admin=is_admin,
             )
             result.attempts = attempt
-            result.fallback_used = attempt > 1
+            result.fallback_used = attempt > 1 or bool(commercial_guardrail_context and commercial_guardrail_context.get("guardrail_fallback_active"))
             result.backend_errors = backend_errors
+            record_enforcement_outcome(commercial_guardrail_context, selected_provider=backend.provider)
             return result
         except HTTPException as exc:
             last_exc = exc
@@ -497,12 +686,6 @@ async def responses(
     Endpoint de compatibilidade simplificado /v1/responses.
     Mapeia para o pipeline de chat completions.
     """
-    if payload.tools or payload.tool_choice is not None:
-        return _unsupported_feature_response(
-            code="responses_tools_unsupported",
-            message="Tools are not supported in /v1/responses yet.",
-        )
-    
     if payload.stream:
         return _unsupported_feature_response(
             code="responses_streaming",
@@ -514,7 +697,7 @@ async def responses(
         raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
 
     messages = _responses_input_to_messages(payload)
-    
+
     chat_payload = ChatCompletionRequest(
         model=payload.model,
         messages=messages,
@@ -522,6 +705,10 @@ async def responses(
         top_p=payload.top_p,
         max_tokens=payload.max_output_tokens,
         stream=False,
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        parallel_tool_calls=payload.parallel_tool_calls,
+        response_format=payload.response_format,
     )
 
     response = await _process_chat_completion(
@@ -536,7 +723,11 @@ async def responses(
     )
 
     if isinstance(response, JSONResponse):
+        if response.status_code >= 400:
+            return response
         data = json.loads(response.body.decode("utf-8"))
+        if "choices" not in data:
+            return response
         choices = data.get("choices") or []
         output = []
         output_text = ""
@@ -544,13 +735,7 @@ async def responses(
             choice = choices[0]
             msg = choice.get("message", {})
             output_text = msg.get("content", "") or ""
-            output.append(ResponseOutput(
-                type="message",
-                message=ResponseOutputMessage(
-                    role=msg.get("role", "assistant"),
-                    content=[ResponseOutputText(text=output_text)],
-                ),
-            ))
+            output.extend(_response_tool_outputs(choice))
 
         responses_payload = ResponsesResponse(
             id=data.get("id"),
@@ -565,7 +750,7 @@ async def responses(
         )
         return JSONResponse(
             status_code=response.status_code,
-            content=responses_payload.model_dump(),
+            content=responses_payload.model_dump(exclude_none=True),
             headers=_passthrough_response_headers(dict(response.headers)),
         )
     
@@ -582,11 +767,53 @@ async def _process_chat_completion(
     context_manager: ContextManager,
     endpoint: str = "/v1/chat/completions",
 ):
+    cloud_blocked_by_guardrail = False
+
+    validate_tooling_request(
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        parallel_tool_calls=payload.parallel_tool_calls,
+        response_format=payload.response_format,
+    )
     selected_model, _ = await resolve_requested_model(
         session,
         client=client,
         requested_model=payload.model,
     )
+    
+    # Phase 18: Cross-Cluster Forwarding
+    if endpoint in ["/v1/chat/completions", "/v1/completions"]:
+        request_payload = {
+            "tenant_id": getattr(client, "tenant_id", None),
+            "provider": selected_model.provider if selected_model else None,
+            "model": payload.model,
+            "correlation_id": get_correlation_id(),
+            "client_id": str(client.id)
+        }
+        shifter = CommercialGlobalTrafficShifter(session)
+        decision = await shifter.decide_cluster_for_request(request_payload)
+
+        if decision.decision == "shift_to_target" and decision.target_cluster_id:
+            res = await session.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == decision.target_cluster_id))
+            target_cluster = res.scalar_one_or_none()
+            if target_cluster:
+                forwarder = CommercialCrossClusterForwarder(session)
+                if forwarder.should_forward_request(target_cluster):
+                    body_bytes = await request.body()
+                    if payload.stream:
+                        response = await forwarder.stream_sse_forward(request, target_cluster, body_bytes)
+                    else:
+                        response = await forwarder.forward_request(request, target_cluster, body_bytes)
+                    if response is not None:
+                        return response
+                    # Fallback local if response is None
+
+    # If cloud is blocked by guardrail and the selected model is ONLY cloud, we should ideally fallback to a local default
+    # But resolve_requested_model doesn't know about guardrails yet.
+    # For now, plan_routing_order will return an empty list if ONLY cloud routes exist and are blocked.
+    
+    if payload.tools and not provider_supports_native_tools(selected_model.provider):
+        return _capability_not_supported_response(provider=selected_model.provider, endpoint=endpoint)
     
     logger.debug(
         "chat completions request resolved",
@@ -602,7 +829,7 @@ async def _process_chat_completion(
     )
     
     # Normalize messages (handling content parts)
-    messages = normalize_messages([item.model_dump() for item in payload.messages])
+    messages = normalize_messages([item.model_dump(exclude_none=True) for item in payload.messages])
     
     # Apply Client System Prompt if available
     if client.system_prompt:
@@ -660,7 +887,7 @@ async def _process_chat_completion(
     except QuotaExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
 
-    body = payload.model_dump(exclude={"include_reasoning", "safety_profile"})
+    body = payload.model_dump(exclude={"include_reasoning", "safety_profile"}, exclude_none=True)
     body["messages"] = messages
     body["model"] = selected_model.model_id
     body["max_tokens"] = max_tokens
@@ -682,6 +909,10 @@ async def _process_chat_completion(
         top_p=body["top_p"],
         max_tokens=max_tokens,
         include_reasoning=getattr(payload, "include_reasoning", False),
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        parallel_tool_calls=payload.parallel_tool_calls,
+        response_format=payload.response_format,
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
@@ -698,6 +929,8 @@ async def _process_chat_completion(
     request_summary = summarize_chat_request(
         messages,
         include_reasoning=getattr(payload, "include_reasoning", False),
+        tool_count=len(payload.tools or []),
+        tool_choice=payload.tool_choice if isinstance(payload.tool_choice, str) else ((payload.tool_choice or {}).get("function") or {}).get("name"),
     )
     await maybe_record_repeated_large_prompt(
         session,
@@ -719,6 +952,13 @@ async def _process_chat_completion(
         monthly_used_before=monthly_used_before,
     )
     started = perf_counter()
+    commercial_guardrail_context = await build_runtime_enforcement_context(
+        session,
+        client_id=str(client.id),
+        plan_code=effective_plan.code,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=max_tokens,
+    )
     try:
         if not payload.stream:
             cached = await lookup_exact_cache(
@@ -730,6 +970,7 @@ async def _process_chat_completion(
             )
             if cached.hit and cached.payload is not None:
                 latency_ms = int((perf_counter() - started) * 1000)
+                cached_tool_calls = sanitize_tool_calls(extract_tool_calls_from_chat_payload(cached.payload))
                 await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
                 await log_request(
                     session,
@@ -746,11 +987,23 @@ async def _process_chat_completion(
                     attempts=0,
                     fallback_used=False,
                     cache_hit=True,
+                    tool_call_count=len(cached_tool_calls),
+                    tool_calls=cached_tool_calls,
                     backend_errors=[],
                     error_message=None,
                     request_summary=request_summary,
                     plan_code=effective_plan.code,
                     safety_profile=getattr(payload, "safety_profile", "default"),
+                    request_payload=body,
+                    response_payload=cached.payload,
+                    reproducibility_context={
+                        "model_alias": selected_model.model_alias,
+                        "provider": selected_model.provider,
+                        "prompt_template": selected_model.prompt_template,
+                        "runtime_engine": selected_model.provider,
+                        "model_metadata_json": selected_model.metadata_json,
+                        "metadata_json": {"cache_hit": True},
+                    },
                 )
                 await session.commit()
                 cached_response = JSONResponse(status_code=200, content=cached.payload)
@@ -771,6 +1024,9 @@ async def _process_chat_completion(
             payload.stream,
             getattr(payload, "include_reasoning", False),
             client=client,
+            cloud_blocked_by_guardrail=cloud_blocked_by_guardrail,
+            commercial_guardrail_context=commercial_guardrail_context,
+            session=session,
         )
         latency_ms = int((perf_counter() - started) * 1000)
         compat_headers = _response_compat_headers(
@@ -797,15 +1053,46 @@ async def _process_chat_completion(
                 attempts=result.attempts,
                 fallback_used=result.fallback_used,
                 cache_hit=False,
+                tool_call_count=0,
+                tool_calls=None,
                 backend_errors=result.backend_errors,
                 error_message=None,
                 request_summary=request_summary,
                 plan_code=effective_plan.code,
                 safety_profile=getattr(payload, "safety_profile", "default"),
+                request_payload=body,
+                response_payload=None,
+                reproducibility_context={
+                    "model_alias": selected_model.model_alias,
+                    "provider": selected_model.provider,
+                    "prompt_template": selected_model.prompt_template,
+                    "runtime_engine": selected_model.provider,
+                    "model_metadata_json": selected_model.metadata_json,
+                    "metadata_json": {"audit_event": "replay_disabled_stream", "stream": True},
+                },
                 )
+            
+            # Update commercial routing analytics with actual results (stream)
+            try:
+                from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+                act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, estimated_stream_tokens)
+                act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, estimated_stream_tokens)
+                
+                await commercial_analytics.update_actual_financials(
+                    session,
+                    correlation_id=get_correlation_id(),
+                    actual_cost_brl=act_cost_res.cost_brl,
+                    actual_revenue_brl=act_rev_res.price_brl,
+                    latency_ms=latency_ms,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to update commercial analytics: {e}")
+
             await session.commit()
             return _apply_compat_headers(result.response, compat_headers)
         response_payload = json.loads(result.response.body.decode("utf-8"))
+        tool_calls = extract_tool_calls_from_chat_payload(response_payload)
+        sanitized_tool_calls = enforce_tool_argument_limits(tool_calls)
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
         await store_exact_cache(
             session,
@@ -833,14 +1120,81 @@ async def _process_chat_completion(
             attempts=result.attempts,
             fallback_used=result.fallback_used,
             cache_hit=False,
+            tool_call_count=len(tool_calls),
+            tool_calls=sanitized_tool_calls,
             backend_errors=result.backend_errors,
             error_message=None,
             request_summary=request_summary,
             plan_code=effective_plan.code,
             safety_profile=getattr(payload, "safety_profile", "default"),
+            request_payload=body,
+            response_payload=response_payload,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias,
+                "provider": selected_model.provider,
+                "prompt_template": selected_model.prompt_template,
+                "runtime_engine": selected_model.provider,
+                "model_metadata_json": selected_model.metadata_json,
+                "metadata_json": {"cache_hit": False},
+            },
         )
+        
+        # Update commercial routing analytics with actual results
+        try:
+            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, completion_tokens)
+            act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, completion_tokens)
+            
+            await commercial_analytics.update_actual_financials(
+                session,
+                correlation_id=get_correlation_id(),
+                actual_cost_brl=act_cost_res.cost_brl,
+                actual_revenue_brl=act_rev_res.price_brl,
+                latency_ms=latency_ms,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to update commercial analytics: {e}")
+
         await session.commit()
         return _apply_compat_headers(result.response, compat_headers)
+    except CommercialGuardrailBlockedError:
+        latency_ms = int((perf_counter() - started) * 1000)
+        payload_body = build_openai_guardrail_error_payload()
+        await log_request(
+            session,
+            client_id=client.id,
+            model=selected_model.model_id,
+            endpoint=endpoint,
+            prompt_tokens=prompt_tokens if 'prompt_tokens' in locals() else 0,
+            completion_tokens=0,
+            latency_ms=latency_ms,
+            status_code=503,
+            is_stream=payload.stream,
+            estimated_cost_usd=estimated_request_cost if 'estimated_request_cost' in locals() else 0,
+            backend_name=None,
+            attempts=0,
+            fallback_used=False,
+            cache_hit=False,
+            tool_call_count=0,
+            tool_calls=None,
+            backend_errors=[],
+            error_message=payload_body["error"]["message"],
+            request_summary=request_summary if 'request_summary' in locals() else "",
+            plan_code=effective_plan.code if 'effective_plan' in locals() else "free",
+            safety_profile=getattr(payload, "safety_profile", "default"),
+            request_payload=body if 'body' in locals() else None,
+            response_payload=None,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias if 'selected_model' in locals() else None,
+                "provider": selected_model.provider if 'selected_model' in locals() else None,
+                "prompt_template": selected_model.prompt_template if 'selected_model' in locals() else None,
+                "runtime_engine": selected_model.provider if 'selected_model' in locals() else None,
+                "model_metadata_json": selected_model.metadata_json if 'selected_model' in locals() else None,
+                "metadata_json": {"audit_event": "replay_failed_guardrail"},
+            },
+        )
+        await session.commit()
+        return JSONResponse(status_code=503, content=payload_body)
     except HTTPException as exc:
         latency_ms = int((perf_counter() - started) * 1000)
         backend_errors = _backend_errors_for_log(exc.detail)
@@ -859,11 +1213,23 @@ async def _process_chat_completion(
             attempts=max(len(backend_errors), 1),
             fallback_used=len(backend_errors) > 1,
             cache_hit=False,
+            tool_call_count=0,
+            tool_calls=None,
             backend_errors=backend_errors,
             error_message=_error_message_for_log(exc.detail),
             request_summary=request_summary if 'request_summary' in locals() else "",
             plan_code=effective_plan.code if 'effective_plan' in locals() else "free",
             safety_profile=getattr(payload, "safety_profile", "default"),
+            request_payload=body if 'body' in locals() else None,
+            response_payload=None,
+            reproducibility_context={
+                "model_alias": selected_model.model_alias if 'selected_model' in locals() else None,
+                "provider": selected_model.provider if 'selected_model' in locals() else None,
+                "prompt_template": selected_model.prompt_template if 'selected_model' in locals() else None,
+                "runtime_engine": selected_model.provider if 'selected_model' in locals() else None,
+                "model_metadata_json": selected_model.metadata_json if 'selected_model' in locals() else None,
+                "metadata_json": {"audit_event": "replay_failed_http_exception"},
+            },
         )
         await maybe_record_request_error_burst(
             session,
@@ -886,7 +1252,12 @@ async def chat_completions_async(
 ):
     job = await create_chat_generation_job(session, redis, client, payload)
     await session.commit()
-    await enqueue_generation_job(redis, job.id)
+    await enqueue_generation_job(
+        redis, 
+        job.id, 
+        priority=job.priority, 
+        effective_priority=float(job.effective_priority or 0)
+    )
     return {
         "id": job.id,
         "status": job.status,
@@ -928,6 +1299,8 @@ async def completions(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
+    cloud_blocked_by_guardrail = False
+
     selected_model, _ = await resolve_requested_model(
         session,
         client=client,
@@ -949,7 +1322,9 @@ async def completions(
     prompt_tokens = estimate_prompt_tokens(prompt=payload.prompt)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = _validated_params(client, payload)
+    
+    # Using validate_params instead of _validated_params
+    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
     
     prompt = payload.prompt
     if client.system_prompt:
@@ -1041,6 +1416,13 @@ async def completions(
         monthly_used_before=monthly_used_before,
     )
     started = perf_counter()
+    commercial_guardrail_context = await build_runtime_enforcement_context(
+        session,
+        client_id=str(client.id),
+        plan_code=effective_plan.code,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=max_tokens,
+    )
     try:
         if not payload.stream:
             cached = await lookup_exact_cache(
@@ -1083,6 +1465,9 @@ async def completions(
             body,
             payload.stream,
             client=client,
+            cloud_blocked_by_guardrail=cloud_blocked_by_guardrail,
+            commercial_guardrail_context=commercial_guardrail_context,
+            session=session,
         )
         latency_ms = int((perf_counter() - started) * 1000)
         if payload.stream:
@@ -1145,8 +1530,72 @@ async def completions(
             plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
+        
+        # Update commercial routing analytics with actual results
+        try:
+            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            # Try to get completion tokens from local scope if available
+            c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
+            act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)
+            act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, c_tokens)
+            
+            await commercial_analytics.update_actual_financials(
+                session,
+                correlation_id=get_correlation_id(),
+                actual_cost_brl=act_cost_res.cost_brl,
+                actual_revenue_brl=act_rev_res.price_brl,
+                latency_ms=latency_ms,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to update commercial analytics: {e}")
+
         await session.commit()
         return result.response
+    except CommercialGuardrailBlockedError:
+        latency_ms = int((perf_counter() - started) * 1000)
+        payload_body = build_openai_guardrail_error_payload()
+        await log_request(
+            session,
+            client_id=client.id,
+            model=selected_model.model_id,
+            endpoint="/v1/completions",
+            prompt_tokens=prompt_tokens,
+            completion_tokens=0,
+            latency_ms=latency_ms,
+            status_code=503,
+            is_stream=payload.stream,
+            estimated_cost_usd=estimated_request_cost,
+            backend_name=None,
+            attempts=0,
+            fallback_used=False,
+            cache_hit=False,
+            backend_errors=[],
+            error_message=payload_body["error"]["message"],
+            request_summary=request_summary,
+            plan_code=effective_plan.code,
+            safety_profile=payload.safety_profile,
+        )
+        
+        # Update commercial routing analytics with actual results
+        try:
+            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            # Try to get completion tokens from local scope if available
+            c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
+            act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)
+            act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, c_tokens)
+            
+            await commercial_analytics.update_actual_financials(
+                session,
+                correlation_id=get_correlation_id(),
+                actual_cost_brl=act_cost_res.cost_brl,
+                actual_revenue_brl=act_rev_res.price_brl,
+                latency_ms=latency_ms,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to update commercial analytics: {e}")
+
+        await session.commit()
+        return JSONResponse(status_code=503, content=payload_body)
     except HTTPException as exc:
         latency_ms = int((perf_counter() - started) * 1000)
         backend_errors = _backend_errors_for_log(exc.detail)

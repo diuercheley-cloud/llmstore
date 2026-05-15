@@ -28,6 +28,7 @@ from app.models.customer_payment import CustomerPayment
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
+from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.models.pricing_rule import PricingRule
 from app.models.quota_counter import QuotaCounter
 from app.models.request_log import RequestLog
@@ -144,6 +145,8 @@ from app.services.model_policy import (
     resolve_requested_model,
     serialize_routing_table,
 )
+from app.services.models.model_provenance import summarize_model_provenance
+from app.services.models.signed_model_registry import latest_registry_map
 from app.services.model_registry import ensure_default_model
 from app.services.cache.intelligent_cache import (
     cache_stats as intelligent_cache_stats,
@@ -160,6 +163,7 @@ from app.services.security_monitor import (
     suspend_client_for_security,
     unsuspend_client_for_security,
 )
+from app.utils.tool_calling import provider_supports_native_tools
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -207,15 +211,15 @@ async def get_capabilities():
             "status": "Beta",
             "backend_support": "control-plane-proxy",
             "production_ready": True,
-            "limitations": "Sem suporte a streaming ou tools",
+            "limitations": "Streaming ainda não suportado; tools dependem da capability do provider/modelo",
             "validator_script": "scripts/test-responses.sh"
         },
         {
             "feature": "tools/function calling",
-            "status": "Unsupported",
-            "backend_support": "None",
-            "production_ready": False,
-            "limitations": "Não implementado no proxy",
+            "status": "Partial",
+            "backend_support": "openai_compatible=native, llama.cpp/ollama/vllm=capability_not_supported",
+            "production_ready": True,
+            "limitations": "Schemas passam por validação e argumentos sensíveis são sanitizados nos logs",
             "validator_script": None
         },
         {
@@ -313,6 +317,14 @@ async def get_capabilities():
             "production_ready": True,
             "limitations": None,
             "validator_script": "scripts/production-readiness-local.sh"
+        },
+        {
+            "feature": "Confidential Computing & Tenant Encryption",
+            "status": "GA",
+            "backend_support": "AES-256-GCM local envelope encryption",
+            "production_ready": True,
+            "limitations": "Sem suporte nativo a HSM/KMS externo nesta versão",
+            "validator_script": "scripts/validate-tenant-encryption.sh"
         }
     ]
 settings = get_settings()
@@ -368,7 +380,7 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
         "supports_streaming": is_chat,
         "supports_embeddings": "embedding" in model.model_id.lower() or metadata.get("type") == "embedding",
         "supports_responses": is_chat,
-        "supports_tools": False,
+        "supports_tools": is_chat and provider_supports_native_tools(model.provider),
     }
 
     return {
@@ -1138,6 +1150,7 @@ async def get_runtime_summary(
 ):
     from datetime import datetime, timezone
     from app.api.system import health_deep
+    from app.models.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
     
     # Use existing deep health as base
     deep = await health_deep(session, redis, proxy)
@@ -1148,6 +1161,16 @@ async def get_runtime_summary(
     # Latest report scores
     readiness = _get_latest_artifact_report("artifacts/production-readiness", "report.json")
     security = _get_latest_artifact_report("artifacts/security-reports", "security-report.json")
+    reproducibility_total = (
+        await session.execute(select(func.count(CommercialInferenceReproducibilityRecord.id)))
+    ).scalar() or 0
+    reproducibility_replayable = (
+        await session.execute(
+            select(func.count(CommercialInferenceReproducibilityRecord.id)).where(
+                CommercialInferenceReproducibilityRecord.replay_supported.is_(True)
+            )
+        )
+    ).scalar() or 0
 
     return {
         "health": deep.get("readiness_score", "UNKNOWN"),
@@ -1163,6 +1186,12 @@ async def get_runtime_summary(
         "tts": deep.get("tts", {}),
         "latest_security_score": security.get("score") if security else "not_generated",
         "latest_readiness_score": readiness.get("score") if readiness else "not_generated",
+        "reproducibility": {
+            "records": int(reproducibility_total),
+            "replayable": int(reproducibility_replayable),
+            "coverage": round((reproducibility_replayable / reproducibility_total) if reproducibility_total else 0.0, 4),
+            "best_effort_only": True,
+        },
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -1782,6 +1811,9 @@ async def get_requests(session: AsyncSession = Depends(get_db_session)):
             "attempts": row.attempts,
             "fallback_used": row.fallback_used,
             "cache_hit": row.cache_hit,
+            "tool_call_count": row.tool_call_count,
+            "had_tool_call": row.tool_call_count > 0,
+            "tool_calls": json.loads(row.tool_calls_json) if row.tool_calls_json else [],
             "backend_errors": json.loads(row.backend_errors_json) if row.backend_errors_json else [],
             "error": row.error_message,
             "correlation_id": row.correlation_id,
@@ -2090,9 +2122,35 @@ async def get_models(
     ).scalars().all()
     backend_health = await asyncio.gather(*[proxy.health_backend(item) for item in backends])
     health_map = {item["backend_id"]: item for item in backend_health}
+    supply_chain_map = await latest_registry_map(session)
     plans = (await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))).scalars().all()
+    registry_payload = []
+    for item in registry:
+        payload = _serialize_model_admin(item, health_map)
+        trust_entry = supply_chain_map.get(item.model_alias or item.model_id) or supply_chain_map.get(item.model_id)
+        if trust_entry is not None:
+            payload["supply_chain"] = {
+                "registry_entry_id": str(trust_entry.id),
+                "trust_state": trust_entry.trust_state,
+                "checksum_sha256": trust_entry.checksum_sha256,
+                "manifest_hash": trust_entry.manifest_hash,
+                "approved_at": trust_entry.approved_at.isoformat() if trust_entry.approved_at else None,
+                "approved_by": trust_entry.approved_by,
+                "provenance_summary": await summarize_model_provenance(session, trust_entry.provenance_id),
+            }
+        else:
+            payload["supply_chain"] = {
+                "registry_entry_id": None,
+                "trust_state": "untrusted",
+                "checksum_sha256": None,
+                "manifest_hash": None,
+                "approved_at": None,
+                "approved_by": None,
+                "provenance_summary": None,
+            }
+        registry_payload.append(payload)
     return {
-        "registry": [_serialize_model_admin(item, health_map) for item in registry if item.status != "soft-deleted"],
+        "registry": [item for item in registry_payload if item["status"] != "soft-deleted"],
         "plan_access": [
             {
                 "billing_plan_id": str(plan.id),

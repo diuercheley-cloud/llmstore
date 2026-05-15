@@ -26,6 +26,8 @@ class RequestLog(Base):
     attempts: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     cache_hit: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tool_call_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tool_calls_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     backend_errors_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text(), nullable=True)
     request_summary: Mapped[str | None] = mapped_column(String(280), nullable=True)

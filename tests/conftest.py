@@ -2,13 +2,14 @@ import os
 import sys
 from collections import defaultdict
 from collections.abc import AsyncIterator, Awaitable, Callable
-from typing import Any
+from typing import Any, Optional
 from pathlib import Path
 
 import httpx
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Resolve project root and load .env before any app imports
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,11 +58,133 @@ class FakeRedis:
     def __init__(self) -> None:
         self._store: dict[str, Any] = {}
         self._lists: dict[str, list[Any]] = defaultdict(list)
+        self._zsets: dict[str, dict[str, float]] = defaultdict(dict)
         self._expires: dict[str, int] = {}
         self.calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+        self._pipeline_ops: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+        self._in_pipeline = False
 
     def _record(self, name: str, *args: Any, **kwargs: Any) -> None:
         self.calls.append((name, args, kwargs))
+
+    def pipeline(self):
+        self._in_pipeline = True
+        self._pipeline_ops = []
+        return self
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self._in_pipeline = False
+
+    async def execute(self):
+        results = []
+        for name, args, kwargs in self._pipeline_ops:
+            method = getattr(self, f"_do_{name}", None)
+            if method:
+                res = await method(*args, **kwargs)
+                results.append(res)
+            else:
+                results.append(None)
+        self._pipeline_ops = []
+        self._in_pipeline = False
+        return results
+
+    def __getattribute__(self, name):
+        pipeline_methods = {"zremrangebyscore", "zcard", "zadd", "expire", "zcount"}
+        try:
+            in_pipeline = object.__getattribute__(self, "_in_pipeline")
+        except AttributeError:
+            in_pipeline = False
+
+        if in_pipeline and name in pipeline_methods:
+            def mock_method(*args, **kwargs):
+                self._record(name, *args, **kwargs)
+                self._pipeline_ops.append((name, args, kwargs))
+                return self
+            return mock_method
+        return object.__getattribute__(self, name)
+
+    async def _do_zremrangebyscore(self, key, min_val, max_val):
+        count = 0
+        to_del = []
+        for member, score in self._zsets[key].items():
+            if score >= min_val and score <= max_val:
+                to_del.append(member)
+        for m in to_del:
+            del self._zsets[key][m]
+            count += 1
+        return count
+
+    async def _do_zcard(self, key):
+        return len(self._zsets[key])
+
+    async def _do_zadd(self, key, mapping, **kwargs):
+        for member, score in mapping.items():
+            self._zsets[key][member] = float(score)
+        return len(mapping)
+
+    async def _do_expire(self, key, seconds):
+        self._expires[key] = seconds
+        return True
+
+    async def _do_zcount(self, key, min_val, max_val):
+        count = 0
+        for score in self._zsets[key].values():
+            if score >= min_val and score <= max_val:
+                count += 1
+        return count
+
+    async def zadd(self, key, mapping, **kwargs):
+        self._record("zadd", key, mapping)
+        return await self._do_zadd(key, mapping)
+
+    async def zcard(self, key):
+        self._record("zcard", key)
+        return await self._do_zcard(key)
+
+    async def zpopmin(self, key, count=1):
+        self._record("zpopmin", key, count)
+        if not self._zsets[key]:
+            return []
+        sorted_items = sorted(self._zsets[key].items(), key=lambda x: x[1])
+        result = []
+        for i in range(min(count, len(sorted_items))):
+            member, score = sorted_items[i]
+            del self._zsets[key][member]
+            result.append((member, score))
+        return result
+
+    async def zrange(self, key, start, stop, withscores=False):
+        self._record("zrange", key, start, stop, withscores=withscores)
+        if not self._zsets[key]:
+            return []
+        sorted_items = sorted(self._zsets[key].items(), key=lambda x: x[1])
+        if stop == -1:
+            stop = len(sorted_items) - 1
+        subset = sorted_items[start:stop+1]
+        if withscores:
+            return subset
+        return [item[0] for item in subset]
+
+    async def zscore(self, key, member):
+        self._record("zscore", key, member)
+        return self._zsets[key].get(member)
+
+    async def zremrangebyscore(self, key, min_val, max_val):
+        self._record("zremrangebyscore", key, min_val, max_val)
+        return await self._do_zremrangebyscore(key, min_val, max_val)
+
+    async def eval(self, script, numkeys, *keys_and_args):
+        self._record("eval", script, numkeys, *keys_and_args)
+        if "redis.call('ZADD', queue_key, score - aging_step, job_id)" in script:
+            queue_key = keys_and_args[0]
+            aging_step = float(keys_and_args[1])
+            for job_id in list(self._zsets[queue_key].keys()):
+                self._zsets[queue_key][job_id] -= aging_step
+            return len(self._zsets[queue_key])
+        return None
 
     async def ping(self) -> bool:
         self._record("ping")
@@ -87,9 +210,15 @@ class FakeRedis:
         self._record("delete", *keys)
         deleted = 0
         for key in keys:
-            deleted += int(key in self._store)
-            self._store.pop(key, None)
-            self._lists.pop(key, None)
+            if key in self._store:
+                deleted += 1
+                del self._store[key]
+            if key in self._lists:
+                deleted += 1
+                del self._lists[key]
+            if key in self._zsets:
+                deleted += 1
+                del self._zsets[key]
             self._expires.pop(key, None)
         return deleted
 
@@ -101,7 +230,7 @@ class FakeRedis:
 
     async def expire(self, key: str, seconds: int) -> bool:
         self._record("expire", key, seconds)
-        if key not in self._store and key not in self._lists:
+        if key not in self._store and key not in self._lists and key not in self._zsets:
             return False
         self._expires[key] = seconds
         return True
@@ -136,6 +265,7 @@ class FakeRedis:
         return {
             "store": dict(self._store),
             "lists": {key: list(values) for key, values in self._lists.items()},
+            "zsets": {key: dict(values) for key, values in self._zsets.items()},
             "expires": dict(self._expires),
         }
 
@@ -143,6 +273,29 @@ class FakeRedis:
 @pytest.fixture
 def fake_redis() -> FakeRedis:
     return FakeRedis()
+
+
+@pytest.fixture
+def redis_client(fake_redis) -> FakeRedis:
+    return fake_redis
+
+
+@pytest.fixture
+def settings():
+    from app.core.config import get_settings
+    return get_settings()
+
+
+@pytest.fixture(autouse=True)
+def global_reset(monkeypatch: pytest.MonkeyPatch):
+    """
+    Resets global state between tests to ensure determinism.
+    Autouse=True means it runs for EVERY test.
+    """
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture
@@ -190,6 +343,23 @@ def models_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     directory.mkdir()
     monkeypatch.setattr(model_mgmt, "resolve_models_dir", lambda: directory)
     return directory
+
+
+@pytest_asyncio.fixture
+async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from app.db.base import Base
+
+    engine = create_async_engine(isolated_db_url)
+    testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with testing_session_local() as session:
+        yield session
+
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture

@@ -11,6 +11,18 @@ from app.models.ai_wallet import AiWallet
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.rag_collection import RAGCollection
+from app.models.commercial_rag_vault import (
+    CommercialRAGDocument,
+    CommercialRAGLegalHold,
+    CommercialRAGPoisoningAlert,
+    CommercialRAGRetrievalAudit,
+    CommercialRAGVault,
+)
+from app.models.commercial_retrieval_proofs import (
+    CommercialContextLineage,
+    CommercialRetrievalProof,
+    CommercialRetrievalReplayRecord,
+)
 from app.models.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import get_provider_pricing_config
@@ -382,6 +394,7 @@ async def hybrid_rag(
 ):
     result = {
         "rag_enabled": settings.rag_enabled,
+        "regulated_rag_vault_enabled": settings.commercial_rag_vault_enabled,
         "embedding_provider": settings.rag_embedding_provider,
         "total_documents": 0,
         "total_chunks": 0,
@@ -389,6 +402,22 @@ async def hybrid_rag(
         "total_storage_bytes": 0,
         "clients_with_rag": 0,
         "documents_by_status": {},
+        "regulated_rag_vault": {
+            "vaults": 0,
+            "retrievals": 0,
+            "poisoning_alerts": 0,
+            "acl_violations": 0,
+            "legal_holds": 0,
+            "signed_documents": 0,
+            "confidential_retrieval_percent": 0.0,
+        },
+        "context_lineage_retrieval_proofs": {
+            "retrieval_proofs": 0,
+            "lineage_nodes": 0,
+            "replay_records": 0,
+            "verified_proofs": 0,
+            "drift_events": 0,
+        },
     }
     if not settings.rag_enabled:
         return result
@@ -432,5 +461,27 @@ async def hybrid_rag(
         result["documents_by_status"] = dict(status_rows.all())
     except Exception:
         pass
+
+    if settings.commercial_rag_vault_enabled:
+        try:
+            result["regulated_rag_vault"]["vaults"] = (await session.execute(select(func.count(CommercialRAGVault.id)))).scalar() or 0
+            result["regulated_rag_vault"]["retrievals"] = (await session.execute(select(func.count(CommercialRAGRetrievalAudit.id)))).scalar() or 0
+            result["regulated_rag_vault"]["poisoning_alerts"] = (await session.execute(select(func.count(CommercialRAGPoisoningAlert.id)).where(CommercialRAGPoisoningAlert.resolved == False))).scalar() or 0
+            result["regulated_rag_vault"]["acl_violations"] = (await session.execute(select(func.count(CommercialRAGRetrievalAudit.id)).where(CommercialRAGRetrievalAudit.policy_result != "allow"))).scalar() or 0
+            result["regulated_rag_vault"]["legal_holds"] = (await session.execute(select(func.count(CommercialRAGLegalHold.id)).where(CommercialRAGLegalHold.active == True))).scalar() or 0
+            result["regulated_rag_vault"]["signed_documents"] = (await session.execute(select(func.count(CommercialRAGDocument.id)).where(CommercialRAGDocument.signed_manifest_hash.is_not(None)))).scalar() or 0
+            confidential_count = (await session.execute(select(func.count(CommercialRAGVault.id)).where(CommercialRAGVault.vault_mode.in_(["confidential", "sovereign", "airgap"])))).scalar() or 0
+            total_vaults = result["regulated_rag_vault"]["vaults"] or 0
+            result["regulated_rag_vault"]["confidential_retrieval_percent"] = round((confidential_count / total_vaults) * 100, 2) if total_vaults else 0.0
+        except Exception:
+            pass
+        try:
+            result["context_lineage_retrieval_proofs"]["retrieval_proofs"] = (await session.execute(select(func.count(CommercialRetrievalProof.id)))).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["lineage_nodes"] = (await session.execute(select(func.count(CommercialContextLineage.id)))).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["replay_records"] = (await session.execute(select(func.count(CommercialRetrievalReplayRecord.id)))).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["verified_proofs"] = (await session.execute(select(func.count(CommercialRetrievalProof.id)).where(CommercialRetrievalProof.verification_status == "valid"))).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["drift_events"] = (await session.execute(select(func.count(CommercialRetrievalReplayRecord.id)).where(CommercialRetrievalReplayRecord.drift_status != "stable"))).scalar() or 0
+        except Exception:
+            pass
 
     return result

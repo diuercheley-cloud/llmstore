@@ -13,7 +13,10 @@ class ChatContentPart(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant", "tool"]
-    content: Union[str, list[ChatContentPart]]
+    content: Union[str, list[ChatContentPart], None]
+    tool_call_id: str | None = None
+    name: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
 
 
 class ChatCompletionRequest(BaseModel):
@@ -21,10 +24,18 @@ class ChatCompletionRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=128)
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    top_k: int | None = Field(default=None, ge=1, le=1000000)
+    min_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    repetition_penalty: float | None = Field(default=None, ge=0.0, le=10.0)
     max_tokens: int | None = Field(default=None, ge=1, le=1000000)
+    seed: int | None = None
     stream: bool = False
     safety_profile: Literal["default", "strict", "relaxed"] = "default"
     include_reasoning: bool = False
+    tools: list[dict[str, Any]] | None = None
+    tool_choice: Union[str, dict[str, Any]] | None = None
+    parallel_tool_calls: bool | None = None
+    response_format: dict[str, Any] | None = None
 
     @model_validator(mode="after")
     def ensure_non_empty_user_content(self) -> "ChatCompletionRequest":
@@ -38,7 +49,11 @@ class CompletionRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=20000)
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    top_k: int | None = Field(default=None, ge=1, le=1000000)
+    min_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    repetition_penalty: float | None = Field(default=None, ge=0.0, le=10.0)
     max_tokens: int | None = Field(default=None, ge=1, le=1000000)
+    seed: int | None = None
     stream: bool = False
     safety_profile: Literal["default", "strict", "relaxed"] = "default"
 
@@ -113,9 +128,15 @@ class OnboardingEventRequest(BaseModel):
     event: str = Field(min_length=1, max_length=100)
 
 
+class PortalWalletRechargeRequest(BaseModel):
+    amount_brl: float | None = Field(default=None, ge=0)
+    note: str | None = Field(default=None, max_length=500)
+
+
 class ChatCompletionChoiceMessage(BaseModel):
     role: str = "assistant"
-    content: str
+    content: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
 
 
 class ChatCompletionChoice(BaseModel):
@@ -179,8 +200,11 @@ class ResponseOutputMessage(BaseModel):
 
 
 class ResponseOutput(BaseModel):
-    type: Literal["message"] = "message"
-    message: ResponseOutputMessage
+    type: str = "message"
+    message: ResponseOutputMessage | None = None
+    name: str | None = None
+    arguments: str | None = None
+    call_id: str | None = None
 
 
 class ResponsesResponse(BaseModel):
@@ -201,8 +225,14 @@ class ResponsesRequest(BaseModel):
     instructions: str | None = None
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    top_k: int | None = Field(default=None, ge=1, le=1000000)
+    min_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    repetition_penalty: float | None = Field(default=None, ge=0.0, le=10.0)
     max_output_tokens: int | None = Field(default=None, ge=1, le=1000000)
+    seed: int | None = None
     stream: bool = False
-    tools: list[Any] | None = None
+    tools: list[dict[str, Any]] | None = None
     tool_choice: Union[str, dict[str, Any]] | None = None
+    parallel_tool_calls: bool | None = None
+    response_format: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None

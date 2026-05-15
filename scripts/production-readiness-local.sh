@@ -313,7 +313,49 @@ git_status_clean = git_status.returncode == 0 and not git_status.stdout.strip()
 generated_at = iso_now()
 localhost_mode = bool_env("LOCALHOST_MODE", False)
 appliance_mode = bool_env("LOCAL_APPLIANCE_MODE", False)
+deployment_mode = os.environ.get("DEPLOYMENT_MODE", "appliance")
 local_billing_mode = os.environ.get("LOCAL_BILLING_MODE", "")
+# ... (around line 240)
+add_check(
+    "env_deployment_mode",
+    "environment",
+    "Deployment Mode",
+    "pass",
+    "low",
+    f"mode={deployment_mode}",
+    "Ajuste DEPLOYMENT_MODE conforme necessário (appliance|saas).",
+    write_log("env_deployment_mode", f"DEPLOYMENT_MODE={deployment_mode}\n"),
+)
+
+if deployment_mode == "saas":
+    # 1. Strong ADMIN_TOKEN for SaaS
+    token_ok = len(admin_token) >= 32 and any(c.islower() for c in admin_token) and any(c.isupper() for c in admin_token) and any(c.isdigit() for c in admin_token)
+    add_check(
+        "saas_admin_token_strength",
+        "security",
+        "ADMIN_TOKEN força SaaS",
+        "pass" if token_ok else "fail",
+        "critical",
+        "token atende requisitos SaaS (32+ chars, mixed case/digit)" if token_ok else "token não atende requisitos SaaS",
+        "Aumente ADMIN_TOKEN para 32+ caracteres com letras maiúsculas, minúsculas e números.",
+        write_log("saas_admin_token_strength", "check complete\n"),
+    )
+    
+    # 2. Explicit CORS for SaaS
+    # (reuse existing security_cors_local logic but force failure if it was warn/skip)
+    
+    # 3. Cost Guardrails defined
+    max_global_cost = os.environ.get("MAX_GLOBAL_PROVIDER_COST_PER_DAY_BRL")
+    add_check(
+        "saas_cost_guardrails",
+        "saas",
+        "Guardrails financeiros SaaS",
+        "pass" if max_global_cost else "warn",
+        "high",
+        f"MAX_GLOBAL_PROVIDER_COST_PER_DAY_BRL={max_global_cost}",
+        "Configure limites financeiros globais para evitar gastos inesperados.",
+        write_log("saas_cost_guardrails", f"global_limit={max_global_cost}\n"),
+    )
 rag_enabled = bool_env("RAG_ENABLED", True)
 tts_enabled = bool_env("TTS_ENABLED", True)
 app_public_url = os.environ.get("APP_PUBLIC_URL", BASE_URL)
@@ -1247,22 +1289,26 @@ cors_value_base = next((v for k, v in cors_headers_base.items() if k.lower() == 
 cors_ok = (cors_status in {200, 204} and 
            (cors_value == "http://localhost:18080" or cors_value == base_origin or "localhost" in cors_value))
 
-# In appliance mode, '*' is explicitly a warning/fail
+# In appliance or SaaS mode, '*' is explicitly a warning/fail
 is_appliance = appliance_mode or os.environ.get("LOCAL_APPLIANCE_MODE", "").lower() == "true"
-if is_appliance and cors_value == "*":
+is_saas = deployment_mode == "saas"
+if (is_appliance or is_saas) and cors_value == "*":
     cors_ok = False
-    cors_details = f"CORS wildcard '*' detectado em modo appliance. Use origens explícitas."
+    cors_details = f"CORS wildcard '*' detectado em modo {deployment_mode}. Use origens explícitas."
+    cors_severity = "critical" if is_saas else "high"
 elif cors_ok:
     cors_details = f"HTTP {cors_status}; allow-origin={cors_value}"
+    cors_severity = "medium"
 else:
     cors_details = f"CORS restritivo ou inválido: allow-origin={cors_value}"
+    cors_severity = "high"
 
 add_check(
     "security_cors_local",
     "security",
     "CORS local",
-    "pass" if cors_ok else "warn",
-    "medium",
+    "pass" if cors_ok else ("fail" if is_saas else "warn"),
+    cors_severity,
     cors_details,
     "Configure CORS_ALLOW_ORIGINS com localhost e a URL base do appliance.",
     cors_log,

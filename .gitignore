@@ -16,6 +16,7 @@ __pycache__/
 
 # Node (se houver)
 node_modules/
+sdk/node/dist/
 
 # Docker volumes / data
 postgres-data/
@@ -75,3 +76,6 @@ releases/**/raw-results*
 *.key
 !tests/fixtures/fake_*.pem
 !tests/fixtures/fake_*.key
+venv/
+__pycache__/
+*.pyc

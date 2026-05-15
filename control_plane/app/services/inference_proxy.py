@@ -25,6 +25,7 @@ from app.utils.anti_loop import detect_repetition, truncate_at_repetition
 from app.utils.model_prompting import apply_prompt_template_settings
 from app.utils.openai_response import normalize_chat_completion, normalize_chat_stream_line
 from app.utils.token_estimator import estimate_tokens_from_text
+from app.utils.tool_calling import sanitize_tool_calls
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +166,32 @@ class InferenceProxy:
             include_reasoning=include_reasoning,
             backend=backend,
         )
+
+    def _sanitize_logged_payload(self, payload: dict) -> dict:
+        logged_payload = dict(payload)
+        if "messages" in logged_payload:
+            logged_payload["messages"] = [
+                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
+                for m in logged_payload["messages"]
+            ]
+        if "tools" in logged_payload and isinstance(logged_payload["tools"], list):
+            logged_payload["tools"] = [
+                {
+                    "type": item.get("type"),
+                    "function": {
+                        "name": (item.get("function") or {}).get("name"),
+                        "has_parameters": "parameters" in (item.get("function") or {}),
+                    },
+                }
+                for item in logged_payload["tools"]
+                if isinstance(item, dict)
+            ]
+        if "tool_choice" in logged_payload and isinstance(logged_payload["tool_choice"], dict):
+            logged_payload["tool_choice"] = {
+                "type": logged_payload["tool_choice"].get("type"),
+                "function": {"name": (logged_payload["tool_choice"].get("function") or {}).get("name")},
+            }
+        return logged_payload
 
     async def chat(
         self,
@@ -400,13 +427,7 @@ class InferenceProxy:
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=False)
 
         # Secure debug log for payload
-        logged_payload = dict(request_payload)
-        if "messages" in logged_payload:
-            # Mask message content for safety, keeping roles and length
-            logged_payload["messages"] = [
-                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
-                for m in logged_payload["messages"]
-            ]
+        logged_payload = self._sanitize_logged_payload(request_payload)
         logger.info(
             "forwarding request to data plane",
             extra={
@@ -451,8 +472,8 @@ class InferenceProxy:
                 response_payload = response.json()
                 if backend == "ollama":
                     response_payload = self._translate_ollama_response(response_payload, endpoint, payload.get("model", ""))
-                if endpoint == "/v1/chat/completions":
-                    response_payload = normalize_chat_completion(
+                    if endpoint == "/v1/chat/completions":
+                        response_payload = normalize_chat_completion(
                         response_payload,
                         include_reasoning=include_reasoning,
                         prompt_template=prompt_template,
@@ -467,6 +488,23 @@ class InferenceProxy:
                                 content, prompt_template=prompt_template
                             )
                             choices[0]["finish_reason"] = "length"
+                    logger.info(
+                        "data plane response normalized",
+                        extra={
+                            "extra_data": {
+                                "endpoint": endpoint,
+                                "backend_name": backend_name or backend,
+                                "tool_calls": sanitize_tool_calls(
+                                    [
+                                        tool_call
+                                        for choice in response_payload.get("choices", [])
+                                        for tool_call in ((choice.get("message") or {}).get("tool_calls") or [])
+                                        if isinstance(tool_call, dict)
+                                    ]
+                                ),
+                            }
+                        },
+                    )
 
                 return ForwardResult(
                     response=JSONResponse(status_code=response.status_code, content=response_payload),
@@ -545,12 +583,7 @@ class InferenceProxy:
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=True)
         
         # Secure debug log for payload
-        logged_payload = dict(request_payload)
-        if "messages" in logged_payload:
-            logged_payload["messages"] = [
-                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
-                for m in logged_payload["messages"]
-            ]
+        logged_payload = self._sanitize_logged_payload(request_payload)
         logger.info(
             "forwarding stream request to data plane",
             extra={

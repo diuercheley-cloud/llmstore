@@ -5,6 +5,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from pydantic import BaseModel
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
@@ -15,7 +16,15 @@ from app.models.client import Client
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.rag_collection import RAGCollection
-from app.services.auth import require_client, require_admin_role
+from app.models.commercial_rag_vault import (
+    CommercialRAGDocument,
+    CommercialRAGLegalHold,
+    CommercialRAGPoisoningAlert,
+    CommercialRAGRetrievalAudit,
+    CommercialRAGVault,
+)
+from app.models.commercial_retrieval_proofs import CommercialRetrievalProof
+from app.services.auth import AdminRole, require_client, require_admin_role
 from app.services.rag_enterprise.schemas import (
     CollectionCreate, CollectionResponse, CollectionListResponse,
     EnterpriseDocumentResponse, EnterpriseDocumentListResponse,
@@ -24,6 +33,19 @@ from app.services.rag_enterprise.schemas import (
 )
 from app.services.rag_enterprise.ingestion import ingest_document, delete_enterprise_document
 from app.services.rag_enterprise.retrieval import execute_enterprise_query, build_rag_context
+from app.services.rag.rag_access_control import RetrievalAccessDenied
+from app.services.rag.rag_audit import record_retrieval_audit
+from app.services.rag.rag_vault import get_or_create_default_vault
+from app.services.rag.rag_vault import register_document as register_regulated_document
+from app.services.rag.rag_vault import sanitize_metadata as sanitize_rag_metadata
+from app.services.rag.rag_vault import sanitize_text as sanitize_rag_text
+from app.services.rag.retrieval_proofs import (
+    export_retrieval_proof,
+    generate_retrieval_proof,
+    replay_retrieval_proof,
+    verify_lineage_consistency,
+    verify_retrieval_proof,
+)
 from app.services.rag_enterprise.policies import (
     resolve_enterprise_rag_policy,
     check_quota_documents,
@@ -46,6 +68,38 @@ settings = get_settings()
 
 router = APIRouter(prefix="/v1/rag", tags=["rag_enterprise"])
 admin_router = APIRouter(prefix="/admin/rag", tags=["admin_rag"])
+
+
+class AdminVaultCreatePayload(BaseModel):
+    client_id: uuid.UUID | None = None
+    vault_name: str
+    vault_mode: str = "standard"
+    encryption_required: bool = False
+    retrieval_mode: str = "hybrid"
+    retention_policy_seconds: int | None = None
+    immutable_audit_enabled: bool = True
+
+
+class AdminDocumentCreatePayload(BaseModel):
+    vault_id: uuid.UUID
+    document_title: str
+    plaintext: str = ""
+    classification: str = "internal"
+    source_type: str = "admin"
+    provenance_hash: str | None = None
+    signed_manifest_hash: str | None = None
+    legal_hold: bool = False
+    metadata_json: dict | None = None
+
+
+class AdminLegalHoldCreatePayload(BaseModel):
+    vault_id: uuid.UUID
+    document_id: uuid.UUID | None = None
+    hold_reason: str
+
+
+class AdminRetrievalReplayPayload(BaseModel):
+    replay_sources: list[dict]
 
 
 # --- Helper ---
@@ -324,16 +378,23 @@ async def query_enterprise_rag(
     policy = await resolve_enterprise_rag_policy(session, client)
     cloud_allowed = await is_cloud_embedding_allowed(client, policy)
 
-    sources, scores = await execute_enterprise_query(
-        session=session,
-        client_id=client.id,
-        question=payload.question,
-        top_k=payload.top_k,
-        score_threshold=payload.score_threshold,
-        document_ids=payload.document_ids,
-        collection_ids=payload.collection_ids,
-        cloud_allowed=cloud_allowed,
-    )
+    try:
+        sources, scores, retrieval_audit = await execute_enterprise_query(
+            session=session,
+            client_id=client.id,
+            question=payload.question,
+            top_k=payload.top_k,
+            score_threshold=payload.score_threshold,
+            document_ids=payload.document_ids,
+            collection_ids=payload.collection_ids,
+            cloud_allowed=cloud_allowed,
+            user_identity=payload.user_identity,
+            requested_model=payload.model,
+            abac_attributes=payload.abac_attributes,
+            return_audit=True,
+        )
+    except RetrievalAccessDenied as exc:
+        raise HTTPException(status_code=403, detail=f"Regulated RAG policy denied retrieval: {exc.reason}")
 
     if not sources:
         return EnterpriseQueryResponse(
@@ -390,6 +451,37 @@ Resposta:"""
     await record_rag_event(session, client.id, "rag_query", quantity=1)
     await record_rag_event(session, client.id, "rag_query_tokens", quantity=prompt_tokens + completion_tokens)
 
+    if settings.commercial_rag_vault_enabled:
+        vault = await get_or_create_default_vault(session, client_id=client.id)
+        audit = await record_retrieval_audit(
+            session,
+            vault=vault,
+            client_id=client.id,
+            request_payload={
+                "question": payload.question,
+                "document_ids": [str(item) for item in (payload.document_ids or [])],
+                "collection_ids": [str(item) for item in (payload.collection_ids or [])],
+                "user_identity": payload.user_identity,
+            },
+            retrieval_payload={
+                "retrieval_audit": retrieval_audit,
+                "source_count": len(sources),
+                "scores": scores,
+            },
+            user_identity=payload.user_identity,
+            retrieved_chunk_count=len(sources),
+            policy_result=retrieval_audit.get("policy_result", "allow"),
+            model_id=selected_model.model_id,
+        )
+        await generate_retrieval_proof(
+            session,
+            vault=vault,
+            audit=audit,
+            sources=sources,
+            retrieval_metadata=retrieval_audit,
+            model_id=selected_model.model_id,
+        )
+
     await session.commit()
 
     return EnterpriseQueryResponse(
@@ -408,7 +500,7 @@ Resposta:"""
 @admin_router.get("/overview")
 async def admin_rag_overview(
     session: AsyncSession = Depends(get_db_session),
-    admin=Depends(require_admin_role("READ")),
+    admin=Depends(require_admin_role(AdminRole.READ)),
 ):
     total_docs = (await session.execute(select(func.count(RAGDocument.id)))).scalar() or 0
     total_chunks = (await session.execute(select(func.count(RAGDocumentChunk.id)))).scalar() or 0
@@ -455,7 +547,7 @@ async def admin_rag_overview(
 async def admin_list_client_documents(
     client_id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
-    admin=Depends(require_admin_role("READ")),
+    admin=Depends(require_admin_role(AdminRole.READ)),
 ):
     docs = (await session.execute(
         select(RAGDocument).where(RAGDocument.client_id == client_id)
@@ -475,10 +567,293 @@ async def admin_list_client_documents(
     )
 
 
+@admin_router.get("/vaults")
+async def admin_list_vaults(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    rows = (await session.execute(select(CommercialRAGVault).order_by(CommercialRAGVault.created_at.desc()))).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "client_id": str(item.client_id) if item.client_id else None,
+            "vault_name": item.vault_name,
+            "vault_mode": item.vault_mode,
+            "encryption_required": item.encryption_required,
+            "retrieval_mode": item.retrieval_mode,
+            "retention_policy_seconds": item.retention_policy_seconds,
+            "immutable_audit_enabled": item.immutable_audit_enabled,
+            "created_at": item.created_at.isoformat(),
+            "updated_at": item.updated_at.isoformat(),
+        }
+        for item in rows
+    ]
+
+
+@admin_router.post("/vaults")
+async def admin_create_vault(
+    payload: AdminVaultCreatePayload,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    vault = CommercialRAGVault(
+        client_id=payload.client_id,
+        vault_name=sanitize_rag_text(payload.vault_name),
+        vault_mode=payload.vault_mode,
+        encryption_required=payload.encryption_required,
+        retrieval_mode=payload.retrieval_mode,
+        retention_policy_seconds=payload.retention_policy_seconds,
+        immutable_audit_enabled=payload.immutable_audit_enabled,
+    )
+    session.add(vault)
+    await session.commit()
+    await session.refresh(vault)
+    return {"id": str(vault.id), "vault_name": vault.vault_name}
+
+
+@admin_router.get("/documents")
+async def admin_list_regulated_documents(
+    vault_id: uuid.UUID | None = Query(None),
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    stmt = select(CommercialRAGDocument).order_by(CommercialRAGDocument.created_at.desc())
+    if vault_id:
+        stmt = stmt.where(CommercialRAGDocument.vault_id == vault_id)
+    rows = (await session.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "vault_id": str(item.vault_id),
+            "document_hash": item.document_hash[:16],
+            "document_title": item.document_title,
+            "classification": item.classification,
+            "ingestion_status": item.ingestion_status,
+            "source_type": item.source_type,
+            "signed_manifest_hash": item.signed_manifest_hash[:16] if item.signed_manifest_hash else None,
+            "legal_hold": item.legal_hold,
+            "metadata_json": sanitize_rag_metadata(item.metadata_json or {}),
+            "created_at": item.created_at.isoformat(),
+        }
+        for item in rows
+    ]
+
+
+@admin_router.post("/documents")
+async def admin_create_regulated_document(
+    payload: AdminDocumentCreatePayload,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    vault = await session.get(CommercialRAGVault, payload.vault_id)
+    if vault is None:
+        raise HTTPException(status_code=404, detail="Vault not found")
+    document = await register_regulated_document(
+        session,
+        vault=vault,
+        title=payload.document_title,
+        plaintext=payload.plaintext or payload.document_title,
+        classification=payload.classification,
+        source_type=payload.source_type,
+        metadata_json=payload.metadata_json,
+        provenance_hash=payload.provenance_hash,
+        signed_manifest_hash=payload.signed_manifest_hash,
+        legal_hold=payload.legal_hold,
+    )
+    await session.commit()
+    return {"id": str(document.id), "document_hash": document.document_hash}
+
+
+@admin_router.get("/retrieval-audit")
+async def admin_list_retrieval_audit(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    rows = (await session.execute(
+        select(CommercialRAGRetrievalAudit).order_by(CommercialRAGRetrievalAudit.created_at.desc()).limit(200)
+    )).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "vault_id": str(item.vault_id),
+            "client_id": str(item.client_id) if item.client_id else None,
+            "request_hash": item.request_hash[:16],
+            "retrieval_hash": item.retrieval_hash[:16],
+            "retrieved_chunk_count": item.retrieved_chunk_count,
+            "policy_result": item.policy_result,
+            "model_id": item.model_id,
+            "immutable_hash": item.immutable_hash[:16] if item.immutable_hash else None,
+            "created_at": item.created_at.isoformat(),
+        }
+        for item in rows
+    ]
+
+
+@admin_router.get("/retrieval-proofs")
+async def admin_list_retrieval_proofs(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    rows = (await session.execute(
+        select(CommercialRetrievalProof).order_by(CommercialRetrievalProof.created_at.desc()).limit(200)
+    )).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "retrieval_audit_id": str(item.retrieval_audit_id),
+            "vault_id": str(item.vault_id),
+            "timeline_id": str(item.timeline_id) if item.timeline_id else None,
+            "proof_hash": item.proof_hash[:16],
+            "verification_status": item.verification_status,
+            "lineage_root_hash": item.lineage_root_hash[:16],
+            "retrieval_sent_hash": item.retrieval_sent_hash[:16],
+            "created_at": item.created_at.isoformat(),
+        }
+        for item in rows
+    ]
+
+
+@admin_router.get("/retrieval-proofs/{proof_id}/export")
+async def admin_export_retrieval_proof(
+    proof_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    proof = await session.get(CommercialRetrievalProof, proof_id)
+    if proof is None:
+        raise HTTPException(status_code=404, detail="Retrieval proof not found")
+    return await export_retrieval_proof(session, proof)
+
+
+@admin_router.post("/retrieval-proofs/{proof_id}/verify")
+async def admin_verify_retrieval_proof(
+    proof_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    proof = await session.get(CommercialRetrievalProof, proof_id)
+    if proof is None:
+        raise HTTPException(status_code=404, detail="Retrieval proof not found")
+    result = await verify_retrieval_proof(session, proof)
+    await session.commit()
+    return result
+
+
+@admin_router.post("/retrieval-proofs/{proof_id}/replay")
+async def admin_replay_retrieval_proof(
+    proof_id: uuid.UUID,
+    payload: AdminRetrievalReplayPayload,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    proof = await session.get(CommercialRetrievalProof, proof_id)
+    if proof is None:
+        raise HTTPException(status_code=404, detail="Retrieval proof not found")
+    replay = await replay_retrieval_proof(session, proof=proof, replay_sources=payload.replay_sources)
+    await session.commit()
+    return {
+        "id": str(replay.id),
+        "replay_status": replay.replay_status,
+        "drift_status": replay.drift_status,
+        "drift_score": replay.drift_score,
+    }
+
+
+@admin_router.get("/retrieval-proofs/{proof_id}/lineage")
+async def admin_verify_lineage_consistency(
+    proof_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    proof = await session.get(CommercialRetrievalProof, proof_id)
+    if proof is None:
+        raise HTTPException(status_code=404, detail="Retrieval proof not found")
+    return {"valid": await verify_lineage_consistency(session, proof), "lineage_root_hash": proof.lineage_root_hash}
+
+
+@admin_router.get("/poison-alerts")
+async def admin_list_poison_alerts(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    rows = (await session.execute(
+        select(CommercialRAGPoisoningAlert).order_by(CommercialRAGPoisoningAlert.created_at.desc()).limit(200)
+    )).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "vault_id": str(item.vault_id),
+            "alert_type": item.alert_type,
+            "severity": item.severity,
+            "summary": item.summary,
+            "resolved": item.resolved,
+            "created_at": item.created_at.isoformat(),
+        }
+        for item in rows
+    ]
+
+
+@admin_router.post("/poison-alerts/{alert_id}/resolve")
+async def admin_resolve_poison_alert(
+    alert_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    alert = await session.get(CommercialRAGPoisoningAlert, alert_id)
+    if alert is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    alert.resolved = True
+    await session.commit()
+    return {"status": "resolved", "id": str(alert.id)}
+
+
+@admin_router.get("/legal-holds")
+async def admin_list_legal_holds(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.READ)),
+):
+    rows = (await session.execute(
+        select(CommercialRAGLegalHold).order_by(CommercialRAGLegalHold.created_at.desc()).limit(200)
+    )).scalars().all()
+    return [
+        {
+            "id": str(item.id),
+            "vault_id": str(item.vault_id),
+            "document_id": str(item.document_id) if item.document_id else None,
+            "hold_reason": item.hold_reason,
+            "active": item.active,
+            "created_at": item.created_at.isoformat(),
+            "released_at": item.released_at.isoformat() if item.released_at else None,
+        }
+        for item in rows
+    ]
+
+
+@admin_router.post("/legal-holds")
+async def admin_create_legal_hold(
+    payload: AdminLegalHoldCreatePayload,
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
+):
+    hold = CommercialRAGLegalHold(
+        vault_id=payload.vault_id,
+        document_id=payload.document_id,
+        hold_reason=sanitize_rag_text(payload.hold_reason, max_len=255),
+        active=True,
+    )
+    session.add(hold)
+    if payload.document_id:
+        document = await session.get(CommercialRAGDocument, payload.document_id)
+        if document:
+            document.legal_hold = True
+    await session.commit()
+    return {"id": str(hold.id), "active": hold.active}
+
+
 @admin_router.post("/reindex")
 async def admin_reindex(
     session: AsyncSession = Depends(get_db_session),
-    admin=Depends(require_admin_role("WRITE")),
+    admin=Depends(require_admin_role(AdminRole.WRITE)),
 ):
     docs = (await session.execute(
         select(RAGDocument).where(RAGDocument.status.in_(["failed", "indexed"]))

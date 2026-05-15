@@ -23,6 +23,11 @@ from app.models.security_event import SecurityEvent
 from app.models.usage_record import UsageRecord
 from app.services.billing import list_client_billing_snapshots, refresh_billing_statuses, resolve_effective_plan
 from app.services.security_monitor import serialize_security_event
+from app.services.security.tenant_encryption import TenantEncryptionService
+from app.core.config import get_settings
+
+_settings = get_settings()
+_encryption_service = TenantEncryptionService(_settings)
 
 
 def _json_list(raw: str | None):
@@ -235,7 +240,17 @@ async def export_security_events(session: AsyncSession, *, start_date: date | No
     if clauses:
         query = query.where(and_(*clauses))
     rows = (await session.execute(query)).scalars().all()
-    return [serialize_security_event(row) for row in rows]
+    events = [serialize_security_event(row) for row in rows]
+    
+    if _settings.commercial_tenant_encryption_enabled:
+        controlled_events = []
+        for event in events:
+            c_id = uuid.UUID(event["client_id"]) if event.get("client_id") else None
+            controlled_event = await _encryption_service.confidential_export_control(session, c_id, event)
+            controlled_events.append(controlled_event)
+        return controlled_events
+        
+    return events
 
 
 async def export_request_logs(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
@@ -246,7 +261,7 @@ async def export_request_logs(session: AsyncSession, *, start_date: date | None,
     if clauses:
         query = query.where(and_(*clauses))
     rows = (await session.execute(query)).scalars().all()
-    return [
+    logs = [
         {
             "id": str(row.id),
             "client_id": str(row.client_id),
@@ -262,6 +277,8 @@ async def export_request_logs(session: AsyncSession, *, start_date: date | None,
             "attempts": row.attempts,
             "fallback_used": row.fallback_used,
             "cache_hit": row.cache_hit,
+            "tool_call_count": row.tool_call_count,
+            "tool_calls": _json_list(row.tool_calls_json),
             "backend_errors": _json_list(row.backend_errors_json),
             "error_message": row.error_message,
             "request_summary": row.request_summary,
@@ -271,6 +288,16 @@ async def export_request_logs(session: AsyncSession, *, start_date: date | None,
         }
         for row in rows
     ]
+    
+    if _settings.commercial_tenant_encryption_enabled:
+        controlled_logs = []
+        for log in logs:
+            c_id = uuid.UUID(log["client_id"]) if log["client_id"] else None
+            controlled_log = await _encryption_service.confidential_export_control(session, c_id, log)
+            controlled_logs.append(controlled_log)
+        return controlled_logs
+        
+    return logs
 
 
 async def build_usage_by_client(session: AsyncSession) -> list[dict]:

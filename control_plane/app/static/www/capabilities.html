@@ -133,14 +133,15 @@
           <tr><td>Streaming</td><td class="cap-status supported">Suportado</td><td>GA — SSE chunks com delimitador [DONE]</td></tr>
           <tr><td>Models API</td><td class="cap-status supported">Suportado</td><td>GA — /v1/models com capabilities e readiness</td></tr>
           <tr><td>Embeddings</td><td class="cap-status partial">Parcial</td><td>Mock por padrao, sem backend real</td></tr>
-          <tr><td>Responses API</td><td class="cap-status supported">Suportado</td><td>Beta — sem streaming de responses</td></tr>
-          <tr><td>Tools / Function Calling</td><td class="cap-status unsupported">Nao suportado</td><td>Parcial — depende do backend local</td></tr>
+          <tr><td>Responses API</td><td class="cap-status supported">Suportado</td><td>Beta — sem streaming; tools seguem capability do provider/modelo</td></tr>
+          <tr><td>Tools / Function Calling</td><td class="cap-status partial">Parcial</td><td>`openai_compatible` nativo; local sem suporte retorna erro explicito</td></tr>
           <tr><td>RAG</td><td class="cap-status supported">Suportado</td><td>GA — indexacao e consulta de documentos internos</td></tr>
           <tr><td>TTS</td><td class="cap-status supported">Suportado</td><td>GA — via pocket-tts local</td></tr>
           <tr><td>Client Portal</td><td class="cap-status supported">Suportado</td><td>GA — autogerenciamento de chaves e consumo</td></tr>
           <tr><td>Admin Dashboard</td><td class="cap-status supported">Suportado</td><td>GA — monitoria em tempo real</td></tr>
           <tr><td>Admin Lab</td><td class="cap-status supported">Suportado</td><td>GA — gestao de modelos, clientes e financeiro</td></tr>
           <tr><td>Billing Local / Manual</td><td class="cap-status supported">Suportado</td><td>GA — geracao de faturas e confirmacao manual</td></tr>
+          <tr><td>Chargeback automatico</td><td class="cap-status unsupported">Nao suportado</td><td>Fora do escopo do modulo local de wallet</td></tr>
           <tr><td>Security Report</td><td class="cap-status supported">Suportado</td><td>GA — varredura de secrets e permissoes</td></tr>
           <tr><td>Production Readiness</td><td class="cap-status supported">Suportado</td><td>GA — relatorio de prontidao operacional</td></tr>
           <tr><td>Backup / Restore</td><td class="cap-status supported">Suportado</td><td>GA — backup local com restore</td></tr>
@@ -152,8 +153,7 @@
       <div class="limits-box">
         <h3>Limitacoes (fora do escopo nesta versao)</h3>
         <ul>
-          <li><strong>PSP real nao incluido</strong> — Nao ha integracao com Stripe, Asaas ou similar. O faturamento e manual.</li>
-          <li><strong>PIX real nao incluido</strong> — Nao ha geracao de QR Code PIX ou cobranca automatica via banco.</li>
+          <li><strong>PSP/PIX real opt-in</strong> — O modo padrao permanece desabilitado/offline; mock local disponivel para testes.</li>
           <li><strong>Tools / Function Calling parcial</strong> — Suporte limitado, depende do backend e modelo local.</li>
           <li><strong>Modelos dependem do hardware local</strong> — Qualidade e performance variam conforme GPU/CPU disponivel.</li>
           <li><strong>HTTPS opcional em localhost</strong> — Por padrao a demo usa HTTP. Producao deve configurar TLS via Caddy.</li>

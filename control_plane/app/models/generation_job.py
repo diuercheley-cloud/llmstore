@@ -33,6 +33,16 @@ class GenerationJob(Base):
     completion_tokens_estimated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     estimated_cost_usd: Mapped[float] = mapped_column(Numeric(12, 6), default=0, nullable=False)
     max_tokens_requested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False) # QoS Priority
+    
+    # QoS Phase 24 fields
+    qos_tier: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    effective_priority: Mapped[float | None] = mapped_column(Numeric(20, 6), nullable=True)
+    dequeued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    queue_wait_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rate_limit_status: Mapped[str | None] = mapped_column(String(32), nullable=True) # allowed|throttled|rejected
+    rate_limit_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

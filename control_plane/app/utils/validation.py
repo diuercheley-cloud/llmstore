@@ -62,6 +62,10 @@ def normalize_messages(messages: list[dict]) -> list[dict]:
     normalized = []
     for msg in messages:
         content = msg.get("content")
+        if content is None:
+            msg["content"] = ""
+            normalized.append(msg)
+            continue
         if isinstance(content, list):
             text_parts = []
             for part in content:

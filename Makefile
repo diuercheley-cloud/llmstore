@@ -3,7 +3,25 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e validate-real-provider-env validate-openai-real-dry validate-openai-real validate-deepseek-real-dry validate-deepseek-real validate-anthropic-real-dry validate-anthropic-real validate-real-fallback-dry validate-real-fallback measure-provider-costs-dry measure-provider-costs
+.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e validate-margin-dashboard validate-commercial-guardrails validate-real-provider-env validate-openai-real-dry validate-openai-real validate-deepseek-real-dry validate-deepseek-real validate-anthropic-real-dry validate-anthropic-real validate-real-fallback-dry validate-real-fallback measure-provider-costs-dry measure-provider-costs validate-commercial-distributed-analytics validate-commercial-ha validate-commercial-federation validate-commercial-global-router validate-operational-controls validate-tenant-encryption validate-sovereign-airgap-governance validate-model-supply-chain validate-model-integrity-monitor validate-inference-reproducibility validate-cryptographic-receipts validate-rag-vault validate-retrieval-proofs validate-runtime-attestation validate-federated-workflows
+
+customer-ready: ## Validate final client installation (Ready/Not Ready)
+	./scripts/validate-customer-ready.sh
+
+appliance-local: ## Install as local appliance (no cloud)
+	./scripts/install-customer.sh appliance-local
+
+hybrid-provider: ## Install with cloud providers enabled
+	./scripts/install-customer.sh hybrid-provider
+
+demo-sales: ## Install optimized for sales demos
+	./scripts/install-customer.sh demo-sales
+
+enterprise-rag: ## Install optimized for RAG
+	./scripts/install-customer.sh enterprise-rag
+
+dev-lab: ## Install for development and testing
+	./scripts/install-customer.sh dev-lab
 
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
@@ -38,6 +56,46 @@ health: ## Check stack health (endpoints: /health, /ready, /status)
 
 validate-control-center: ## Validate System Control Center (Backend + UI)
 	./scripts/validate-system-control-center-local.sh
+
+validate-operational-controls: ## Validate operational controls governance flows
+	chmod +x ./scripts/validate-operational-controls.sh
+	./scripts/validate-operational-controls.sh
+
+validate-tenant-encryption: ## Validate tenant encryption controls (Phase 36)
+	chmod +x scripts/validate-tenant-encryption.sh
+	./scripts/validate-tenant-encryption.sh
+
+validate-sovereign-airgap-governance: ## Validate sovereign airgap governance controls (Phase 37)
+	chmod +x scripts/validate-sovereign-airgap-governance.sh
+	./scripts/validate-sovereign-airgap-governance.sh
+
+validate-model-supply-chain: ## Validate secure model supply chain controls (Phase 38)
+	chmod +x scripts/validate-model-supply-chain.sh
+	./scripts/validate-model-supply-chain.sh
+
+validate-model-integrity-monitor: ## Validate runtime model integrity monitor (Phase 39)
+	chmod +x scripts/validate-model-integrity-monitor.sh
+	./scripts/validate-model-integrity-monitor.sh
+
+validate-cryptographic-receipts: ## Validate cryptographic inference receipts (Phase 41)
+	chmod +x scripts/validate-cryptographic-receipts.sh
+	./scripts/validate-cryptographic-receipts.sh
+
+validate-rag-vault: ## Validate regulated RAG vault controls (Phase 48)
+	chmod +x scripts/validate-rag-vault.sh
+	./scripts/validate-rag-vault.sh
+
+validate-retrieval-proofs: ## Validate retrieval proofs + context lineage (Phase 49)
+	chmod +x scripts/validate-retrieval-proofs.sh
+	./scripts/validate-retrieval-proofs.sh
+
+validate-execution-proofs: ## Validate verifiable AI execution proofs + Merkle audit timelines (Phase 60)
+	chmod +x scripts/validate-execution-proofs.sh
+	./scripts/validate-execution-proofs.sh
+
+validate-inference-reproducibility: ## Validate deterministic inference audit + replay controls (Phase 40)
+	chmod +x scripts/validate-inference-reproducibility.sh
+	./scripts/validate-inference-reproducibility.sh
 
 validate-post-install: ## Run post-installation validation
 	./scripts/validate-post-install-local.sh --with-demo
@@ -296,6 +354,85 @@ validate-hybrid-abuse: ## Validate hybrid abuse detection (anti-spam, anti-loop,
 	chmod +x ./scripts/validate-hybrid-abuse-detection-local.sh
 	./scripts/validate-hybrid-abuse-detection-local.sh
 
+validate-margin-dashboard: ## Validate admin margin dashboard endpoint and payload sanitization
+	chmod +x ./scripts/validate-margin-dashboard.sh
+	./scripts/validate-margin-dashboard.sh
+
+validate-commercial-calibration: ## Validate Commercial Calibration (Phase 6)
+	chmod +x ./scripts/validate-commercial-calibration.sh
+	./scripts/validate-commercial-calibration.sh
+
+validate-commercial-guardrails: ## Validate commercial guardrails admin endpoints and payload sanitization
+	chmod +x ./scripts/validate-commercial-guardrails.sh
+	./scripts/validate-commercial-guardrails.sh
+
+validate-commercial-config-apply: ## Validate manual controlled application of commercial configs
+	chmod +x ./scripts/validate-commercial-config-apply.sh
+	./scripts/validate-commercial-config-apply.sh
+
+validate-commercial-auto-apply-canary: ## Validate Phase 8 Auto Apply Canary (Dry-run, Canary, Promotion)
+	chmod +x ./scripts/validate-commercial-auto-apply-canary.sh
+	./scripts/validate-commercial-auto-apply-canary.sh
+
+validate-commercial-canary-promotion: ## Validate Phase 9 Canary Auto Promotion (SLO, Steps, Rollback)
+	chmod +x ./scripts/validate-commercial-canary-promotion.sh
+	./scripts/validate-commercial-canary-promotion.sh
+
+validate-commercial-executive-dashboard: ## Validate Phase 10 Executive Profitability and Drift Dashboard
+	chmod +x ./scripts/validate-commercial-executive-dashboard.sh
+	./scripts/validate-commercial-executive-dashboard.sh
+
+validate-commercial-report-export: ## Validate Phase 11 Executive Report Export and Scheduling
+	chmod +x ./scripts/validate-commercial-report-export.sh
+	./scripts/validate-commercial-report-export.sh
+
+validate-commercial-report-email: ## Validate Phase 12 SMTP opt-in executive report email delivery
+	chmod +x ./scripts/validate-commercial-report-email.sh
+	./scripts/validate-commercial-report-email.sh
+
+validate-commercial-routing-analytics: ## Validate commercial routing analytics persistence and summary
+	chmod +x ./scripts/validate-commercial-routing-analytics.sh
+	./scripts/validate-commercial-routing-analytics.sh
+
+validate-commercial-distributed-analytics: ## Validate distributed commercial routing analytics endpoints and exports
+	chmod +x ./scripts/validate-commercial-distributed-analytics.sh
+	./scripts/validate-commercial-distributed-analytics.sh
+
+validate-commercial-ha: ## Validate Commercial HA / leader election
+	chmod +x ./scripts/validate-commercial-ha.sh
+	./scripts/validate-commercial-ha.sh
+
+validate-commercial-global-traffic-shifting: ## Validate Phase 17 Traffic Shifting
+	bash -n scripts/validate-commercial-global-traffic-shifting.sh
+
+validate-commercial-federation: ## Validate Commercial Federation multi-cluster routing analytics
+	chmod +x ./scripts/validate-commercial-federation.sh
+	./scripts/validate-commercial-federation.sh
+
+validate-commercial-global-router: ## Validate Commercial Global Router (Phase 16)
+	chmod +x ./scripts/validate-commercial-global-router.sh
+	./scripts/validate-commercial-global-router.sh
+
+validate-commercial-financial-reconciliation: ## Validate financial reconciliation and disputes (Phase 27)
+	chmod +x ./scripts/validate-commercial-financial-reconciliation.sh
+	./scripts/validate-commercial-financial-reconciliation.sh
+
+validate-enterprise-audit-portal: ## Validate enterprise customer audit portal (Phase 32)
+	chmod +x ./scripts/validate-enterprise-audit-portal.sh
+	./scripts/validate-enterprise-audit-portal.sh
+
+validate-commercial-revenue-escalations: ## Validate revenue escalations (Phase 30)
+	chmod +x ./scripts/validate-commercial-revenue-escalations.sh
+	./scripts/validate-commercial-revenue-escalations.sh
+
+validate-commercial-profit-routing: ## Validate commercial profit routing with ranking and simulation
+	chmod +x ./scripts/validate-commercial-profit-routing.sh
+	./scripts/validate-commercial-profit-routing.sh
+
+validate-commercial-enforcement: ## Validate runtime enforcement with local-only test doubles
+	chmod +x ./scripts/validate-commercial-enforcement.sh
+	./scripts/validate-commercial-enforcement.sh
+
 validate-real-provider-env: ## Validate real provider environment (.env.local, keys, security)
 	chmod +x ./scripts/validate-real-provider-env-local.sh
 	./scripts/validate-real-provider-env-local.sh
@@ -414,3 +551,98 @@ validate-real-providers-e2e-dry:
 validate-real-providers-e2e:
 	./scripts/validate-real-providers-e2e.sh --real
 
+validate-commercial-geo-routing:
+	@bash scripts/validate-commercial-geo-routing.sh
+
+validate-commercial-qos-routing:
+	bash scripts/validate-commercial-qos-routing.sh
+
+validate-commercial-qos-queue:
+	bash scripts/validate-commercial-qos-queue.sh
+
+validate-commercial-qos-fairness:
+	bash scripts/validate-commercial-qos-fairness.sh
+
+validate-commercial-qos-billing:
+	bash scripts/validate-commercial-qos-billing.sh
+
+validate-commercial-capacity-planning:
+	bash scripts/validate-commercial-capacity-planning.sh
+
+test:
+
+validate-commercial-live-balancing:
+	bash scripts/validate-commercial-live-balancing.sh
+
+validate-commercial-infra-simulation:
+	bash scripts/validate-commercial-infra-simulation.sh
+
+validate-commercial-infra-execution:
+	bash scripts/validate-commercial-infra-execution.sh
+
+validate-commercial-revenue-forecasting:
+	bash scripts/validate-commercial-revenue-forecasting.sh
+
+validate-commercial-revenue-protection:
+	bash scripts/validate-commercial-revenue-protection.sh
+
+validate-commercial-compliance-controls:
+validate-policy-governance: ## Validate Enterprise Policy Governance (Phase 34) 
+	chmod +x scripts/validate-policy-governance.sh 
+	./scripts/validate-policy-governance.sh
+	bash scripts/validate-commercial-compliance-controls.sh
+validate-policy-governance: ## Validate Enterprise Policy Governance (Phase 34) 
+	chmod +x scripts/validate-policy-governance.sh 
+	./scripts/validate-policy-governance.sh
+
+validate-governance-federation: ## Validate Enterprise Multi-Region Governance Federation (Phase 35)
+	chmod +x scripts/validate-governance-federation.sh
+	./scripts/validate-governance-federation.sh
+
+validate-commercial-local-infra-adapters: ## Validate Proxmox and Local GPU adapters
+	chmod +x scripts/validate-commercial-local-infra-adapters.sh
+	./scripts/validate-commercial-local-infra-adapters.sh
+
+validate-public-verifier: ## Validate Public Verifier CLI (Phase 43)
+	chmod +x scripts/validate-public-verifier.sh
+	./scripts/validate-public-verifier.sh
+
+validate-public-attestation-gateway:
+	bash scripts/validate-public-attestation-gateway.sh
+
+validate-confidential-runtime:
+	bash scripts/validate-confidential-runtime.sh
+
+validate-confidential-agents:
+	bash scripts/validate-confidential-agents.sh
+
+validate-trusted-agent-runtime:
+	chmod +x scripts/validate-trusted-agent-runtime.sh
+	./scripts/validate-trusted-agent-runtime.sh
+
+validate-deterministic-workflows:
+	bash scripts/validate-deterministic-workflows.sh
+
+validate-runtime-attestation: ## Validate hardware-backed attestation runtime (Phase 58)
+	chmod +x scripts/validate-runtime-attestation.sh
+	./scripts/validate-runtime-attestation.sh
+
+validate-federated-workflows:
+	chmod +x scripts/validate-federated-workflows.sh
+	./scripts/validate-federated-workflows.sh
+
+validate-workflow-governance:
+	bash scripts/validate-workflow-governance.sh
+
+validate-phase56-migrations:
+	bash scripts/validate-phase56-migrations.sh
+
+validate-sovereign-appliance:
+	bash scripts/validate-sovereign-appliance.sh
+
+validate-confidential-rag-vault:
+	bash scripts/validate-confidential-rag-vault.sh
+
+validate-control-plane-mesh: ## Validate Distributed Sovereign Control Plane Mesh (Phase 63)
+	chmod +x scripts/validate-control-plane-mesh.sh
+	./scripts/validate-control-plane-mesh.sh

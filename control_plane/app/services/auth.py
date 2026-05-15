@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from enum import Enum
 from functools import total_ordering
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, APIKeyHeader
@@ -137,6 +138,12 @@ async def require_client(
     client = client_result.scalar_one_or_none()
     if request is not None:
         request.state.api_key_prefix = api_key.key_prefix
+        request.state.portal_actor_id = str(api_key.id)
+        request.state.portal_actor_name = api_key.name
+        try:
+            request.state.portal_actor_scopes = json.loads(api_key.scopes_json) if api_key.scopes_json else []
+        except json.JSONDecodeError:
+            request.state.portal_actor_scopes = []
     if client is None or client.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="client blocked or not found")
     if client.billing_status == "suspended":

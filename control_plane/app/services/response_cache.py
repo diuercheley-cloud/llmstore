@@ -39,6 +39,10 @@ def build_chat_cache_key(
     top_p: float,
     max_tokens: int,
     include_reasoning: bool,
+    tools: list[dict] | None = None,
+    tool_choice: str | dict | None = None,
+    parallel_tool_calls: bool | None = None,
+    response_format: dict | None = None,
 ) -> tuple[str, str]:
     request_payload = {
         "cache_schema_version": CACHE_SCHEMA_VERSION,
@@ -49,6 +53,10 @@ def build_chat_cache_key(
         "top_p": top_p,
         "max_tokens": max_tokens,
         "include_reasoning": include_reasoning,
+        "tools": tools,
+        "tool_choice": tool_choice,
+        "parallel_tool_calls": parallel_tool_calls,
+        "response_format": response_format,
     }
     return _hash_json(request_payload), f"chat:{model}:{len(messages)}"
 

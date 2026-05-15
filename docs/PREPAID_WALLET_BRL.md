@@ -3,8 +3,8 @@
 ## Visão Geral
 
 Sistema de carteira digital pré-paga em BRL para consumo de IA.
-Cliente faz recarga (futuramente via PIX), ganha créditos e utiliza a API.
-Nesta versão, o ledger é local/manual — sem integração com PSP/PIX real.
+Cliente faz recarga, ganha créditos e utiliza a API.
+O ledger continua local; PSP/PIX real é opcional e fica desabilitado por padrão.
 
 ## Tabelas
 
@@ -45,7 +45,7 @@ Nesta versão, o ledger é local/manual — sem integração com PSP/PIX real.
 - **Idempotência**: credit_manual e adjustment suportam idempotency_key
 - **Admin token obrigatório** para operações administrativas
 - **Cliente vê apenas saldo e transações** — não pode creditar manualmente
-- **PIX real fora do escopo** nesta versão
+- **PSP/PIX real opt-in**: desabilitado por padrão; mock disponível para testes locais
 
 ## Fluxo de Crédito Manual
 
@@ -83,6 +83,8 @@ Protegidos por `X-Admin-Token`.
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | /portal/wallet | Saldo, transações, aviso PIX |
+| POST | /portal/wallet/topups | Criar intenção de recarga via adapter configurado |
+| GET | /portal/wallet/topups | Listar recargas do próprio cliente |
 
 ## Serviço
 
@@ -103,10 +105,12 @@ Protegidos por `X-Admin-Token`.
 
 ## Segurança
 
-- Nenhuma integração com PSP/PIX real nesta versão
+- PSP/PIX real fica bloqueado salvo `PAYMENT_REAL_ENABLED=true`
 - Nenhum dado bancário armazenado
 - Admin token validado em todas as operações administrativas
 - Cliente não pode modificar saldo
+
+Detalhes do fluxo de topups, webhook e idempotência: `docs/WALLET_TOPUPS_PIX_PSP.md`.
 
 ## Real Billing Margin Validation
 Prepaid wallets are debited accurately during real requests validation.

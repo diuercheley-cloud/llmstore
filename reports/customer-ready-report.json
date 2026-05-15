@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-05-14T12:02:17Z",
+  "status": "READY",
+  "checks": {
+    "system": [
+      {
+        "name": "Health Check",
+        "status": "PASS",
+        "message": "HTTP 200",
+        "details": "{\"status\":\"ok\",\"process\":\"alive\"}"
+      },
+      {
+        "name": "Readiness Check",
+        "status": "PASS",
+        "message": "HTTP 200",
+        "details": "{\"status\":\"ready\",\"dependencies\":{\"postgres\":\"ok\",\"redis\":\"ok\",\"migrations\":\"ok\"}}"
+      }
+    ],
+    "api": [
+      {
+        "name": "Models API (No Auth - Expected 401)",
+        "status": "PASS",
+        "message": "HTTP 401",
+        "details": "{\"detail\":\"missing bearer token\"}"
+      }
+    ],
+    "admin": [
+      {
+        "name": "Admin (No Auth - Expected 401)",
+        "status": "PASS",
+        "message": "HTTP 401",
+        "details": "{\"detail\":\"invalid admin token\"}"
+      },
+      {
+        "name": "Deep Health",
+        "status": "PASS",
+        "message": "HTTP 200",
+        "details": "{\"api\":{\"status\":\"online\",\"version\":\"unknown\",\"git_commit\":null,\"uptime_seconds\":58437.99,\"appliance_mode\":true},\"postgres\":{\"status\":\"online\",\"latency_ms\":0.36,\"migrations_status\":\"ok\",\"ok\":true},\"redis\":{\"status\":\"online\",\"latency_ms\":0.19,\"ok\":true},\"queues\":{\"status\":\"ok\",\"waiting\":0,\"active\":0,\"failed\":0,\"delayed\":0},\"inference_queues\":{\"queues\":{\"inference_admin\":{\"waiting\":0,\"active\":0,\"max_waiting\":20,\"max_active\":10,\"priority\":0,\"timeout\":60},\"inference_premium\":{\"waiting\":0,\"active\":0,\"max_waiting\":15,\"max_active\":5,\"priority\":1,\"timeout\":30},\"inference_basic\":{\"waiting\":0,\"active\":0,\"max_waiting\":10,\"max_active\":2,\"priority\":2,\"timeout\":20},\"inference_free\":{\"waiting\":0,\"active\":0,\"max_waiting\":5,\"max_active\":1,\"priority\":3,\"timeout\":15}},\"total_pending\":0},\"inference_backends\":[{\"backend_id\":\"88f4c74e-b495-44fd-a1ab-369ece1dd812\",\"type\":\"llama.cpp\",\"status\":\"online\",\"ok\":true,\"latency_ms\":2.37,\"last_error_sanitized\":null,\"model_count\":1},{\"backend_id\":\"d54b59ff-7d4f-47f2-9f"
+      }
+    ],
+    "client": [
+      {
+        "name": "Chat API (Authenticated)",
+        "status": "PASS",
+        "message": "HTTP 200",
+        "details": "{\"id\":\"chatcmpl-1xy2W0EnNYo1wZ8YSL9RE3z4ITJh6z8O\",\"object\":\"chat.completion\",\"created\":1778760140,\"model\":\"gemma-4-E4B-it-Q4_0.gguf\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"Hello! How can I help you today? \ud83d\ude0a\"}}],\"usage\":{\"completion_tokens\":11,\"prompt_tokens\":10,\"total_tokens\":21,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"b2-c20c445\"}"
+      },
+      {
+        "name": "Portal Auth",
+        "status": "PASS",
+        "message": "HTTP 200",
+        "details": "{\"id\":\"7c18a74f-2e5a-4a62-8e11-7f57ea559a78\",\"name\":\"ready-check-1778760138\",\"description\":null,\"billing_status\":\"active\",\"is_blocked\":false,\"metadata_json\":null,\"demo_mode\":false,\"plan\":{\"code\":\"free\",\"name\":\"Free\",\"rate_limit_per_minute\":60,\"daily_token_quota\":5000,\"weekly_token_quota\":25000,\"monthly_token_quota\":50000,\"requests_per_day\":100,\"max_output_tokens\":32768,\"max_context_tokens\":4096,\"allow_streaming\":false,\"monthly_price\":0.0,\"currency\":\"USD\",\"rag_enabled\":true,\"rag_max_documents\":5,\"rag_max_storage_mb\":50,\"rag_max_pages_per_month\":100,\"rag_max_queries_per_month\":50,\"tts_enabled\":true,\"tts_chars_per_day\":5000,\"tts_chars_per_month\":50000,\"embeddings_enabled\":true,\"responses_enabled\":true,\"export_enabled\":false,\"support_level\":\"Community\"}}"
+      }
+    ],
+    "rag": [
+      {
+        "name": "Status",
+        "status": "SKIP",
+        "message": "RAG is disabled in settings",
+        "details": ""
+      }
+    ],
+    "security": [
+      {
+        "name": "Secret Scan",
+        "status": "PASS",
+        "message": "No unredacted secrets found in public artifacts",
+        "details": ""
+      }
+    ],
+    "backup": [
+      {
+        "name": "Last Backup",
+        "status": "WARNING",
+        "message": "No backup record found",
+        "details": ""
+      }
+    ]
+  }
+}

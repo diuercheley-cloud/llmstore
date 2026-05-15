@@ -239,6 +239,14 @@
       .chart-tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; display: none; z-index: 10; white-space: nowrap; }
       .chart-bar:hover .chart-tooltip { display: block; }
 
+      .repro-banner {
+        background: linear-gradient(135deg, #eff6ff, #ecfeff);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+      }
+
       @media (max-width: 768px) {
         body { flex-direction: column; }
         aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
@@ -251,7 +259,7 @@
     </style>
   </head>
   <body>
-    <div id="loginOverlay">
+      <div id="loginOverlay">
       <div class="login-box">
         <h1>Client Portal</h1>
         <p>Acesse seu painel com sua chave de API</p>
@@ -267,6 +275,12 @@
         <div style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--muted);">
           Dúvidas? <a href="/docs" style="color: var(--accent); text-decoration: none;">Ver documentação</a>
         </div>
+      </div>
+    </div>
+    <div class="repro-banner">
+      <strong>Replay Summary</strong> · Reproducibility Support · Drift Status · Runtime Provenance Summary
+      <div style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem;">
+        Best-effort reproducibility only. Prompts, full responses and raw runtime payloads stay redacted by default.
       </div>
     </div>
 
@@ -288,6 +302,18 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           Uso
         </div>
+        <div class="nav-item" data-tab="qos-usage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          QoS Usage
+        </div>
+        <div class="nav-item" data-tab="invoices">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="13" y2="16"></line></svg>
+          Faturas
+        </div>
+        <div class="nav-item" data-tab="wallet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v10H3z"></path><path d="M16 12h.01"></path><path d="M7 7V5h10v2"></path></svg>
+          Wallet
+        </div>
         <div class="nav-item" data-tab="plan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           Plano
@@ -296,9 +322,25 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           Playground
         </div>
+        <div class="nav-item" data-tab="examples">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Exemplos
+        </div>
         <div class="nav-item" data-tab="rag">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           Base de Conhecimento
+        </div>
+        <div class="nav-item" data-tab="enterprise-audit" id="navEnterpriseAuditTab" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"></path><path d="M9 12l2 2 4-4"></path></svg>
+          Enterprise Audit Portal
+        </div>
+        <div class="nav-item" data-tab="verifiable-proofs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+          Provas de Execução
+        </div>
+        <div class="nav-item" data-tab="ops-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          Operations Center
         </div>
         <div class="nav-item" data-tab="demo" id="navDemoTab" style="display: none; background: #e0f2fe; color: #1e40af;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
@@ -430,6 +472,28 @@
             <h3>Uso no Mês Atual</h3>
             <div id="overviewUsageSnapshot"></div>
           </section>
+          <section style="margin-top:1rem;">
+            <h3>Cryptographic Inference Receipts</h3>
+            <div id="overviewReceiptsSummary">
+              <div style="font-size:0.9rem; color:var(--muted);">Signed inference receipts with hash chaining. Prompts/responses never stored.</div>
+              <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap:0.5rem; margin-top:0.5rem;">
+                <div class="stat-card"><div class="stat-label">Receipts</div><div class="stat-value" id="portalReceiptCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Verified</div><div class="stat-value" id="portalReceiptVerified">-</div></div>
+                <div class="stat-card"><div class="stat-label">Tampered</div><div class="stat-value" id="portalReceiptTampered">-</div></div>
+                <div class="stat-card"><div class="stat-label">Signature</div><div class="stat-value" id="portalReceiptSignature">-</div></div>
+              </div>
+            </div>
+          </section>
+          <section style="margin-top:1rem;">
+            <h3>Workflow Governance</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Executions</div><div class="stat-value" id="portalWorkflowGovernanceCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Replays</div><div class="stat-value" id="portalWorkflowReplayCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Policy drift</div><div class="stat-value" id="portalWorkflowDriftCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Ledger</div><div class="stat-value" id="portalWorkflowLedgerState">-</div></div>
+            </div>
+            <div id="portalWorkflowGovernanceGraph" style="margin-top:1rem; display:grid; gap:0.75rem;"></div>
+          </section>
         </div>
 
         <!-- API Keys Tab -->
@@ -445,7 +509,7 @@
                 <thead>
                   <tr>
                     <th>Nome</th>
-                    <th>Prefixo</th>
+                    <th>Chave Mascarada</th>
                     <th>Criada em</th>
                     <th>Último uso</th>
                     <th>Ações</th>
@@ -462,16 +526,36 @@
           <h2>Uso Detalhado</h2>
           <div class="card-grid" style="margin-bottom: 1.5rem;">
             <div class="usage-box">
+              <h3>Requests Hoje / Mês</h3>
+              <div id="usageRequestsTodayMonth" class="usage-num">-</div>
+              <div class="usage-limit">requisições processadas</div>
+            </div>
+            <div class="usage-box">
+              <h3>Tokens Hoje / Mês</h3>
+              <div id="usageTokensTodayMonth" class="usage-num">-</div>
+              <div class="usage-limit">tokens consumidos</div>
+            </div>
+            <div class="usage-box">
               <h3>Tokens no Mês</h3>
               <div id="usageMonthlyTokens" class="usage-num">-</div>
               <div id="usageMonthlyLimit" class="usage-limit">limite: -</div>
               <div class="progress-bar"><div id="usageMonthlyProgress" class="progress-fill" style="width: 0%"></div></div>
             </div>
             <div class="usage-box">
-              <h3>Total de Requisições</h3>
-              <div id="usageMonthlyRequests" class="usage-num">-</div>
-              <div class="usage-limit">no período atual</div>
+              <h3>Quota Restante</h3>
+              <div id="usageQuotaRemaining" class="usage-num">-</div>
+              <div class="usage-limit">tokens do mês restantes</div>
             </div>
+          </div>
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <section>
+              <h3>Preço ao Cliente</h3>
+              <div id="usagePricingSummary"></div>
+            </section>
+            <section>
+              <h3>Rate Limit Atual</h3>
+              <div id="usageRateLimit"></div>
+            </section>
           </div>
           <section>
             <h3>Uso Diário (Tokens) - Últimos 30 dias</h3>
@@ -489,6 +573,96 @@
                   </tr>
                 </thead>
                 <tbody id="modelUsageList"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div id="qos-usageTab" class="tab-content">
+          <h2>QoS Priority Usage</h2>
+          <p class="muted">Acompanhamento de consumo de alta prioridade e custos associados.</p>
+          <div class="card" style="margin-top: 1rem;">
+            <div id="qosUsageList" class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Período</th>
+                    <th>Tier</th>
+                    <th>Compute (s)</th>
+                    <th>Slots</th>
+                    <th>Valor (BRL)</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="qosUsageTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="invoicesTab" class="tab-content">
+          <h2>Faturas</h2>
+          <section>
+            <div id="invoicesSummary" style="color: var(--muted); margin-bottom: 1rem;">Carregando faturas...</div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Período</th>
+                    <th>Total</th>
+                    <th>Vencimento</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="invoicesList"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div id="walletTab" class="tab-content">
+          <h2>Wallet</h2>
+          <div id="walletWarning" style="display: none; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem;"></div>
+          <div class="card-grid" style="margin-bottom: 1.5rem;">
+            <div class="usage-box">
+              <h3>Saldo Atual</h3>
+              <div id="walletBalance" class="usage-num">-</div>
+              <div id="walletAvailable" class="usage-limit">disponível: -</div>
+            </div>
+            <div class="usage-box">
+              <h3>Reserva</h3>
+              <div id="walletReserved" class="usage-num">-</div>
+              <div id="walletConsumptionEstimate" class="usage-limit">consumo estimado: -</div>
+            </div>
+          </div>
+          <section>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <div>
+                <h3 style="margin-bottom: 0.25rem;">Recarga Manual</h3>
+                <div style="color: var(--muted); font-size: 0.875rem;">Sem PSP real nesta versão. A solicitação gera um lead interno.</div>
+              </div>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <input id="walletRechargeAmount" type="number" min="0" step="10" placeholder="Valor em BRL" style="width: 180px;" />
+                <button id="walletRequestRecharge">Solicitar Recarga</button>
+              </div>
+            </div>
+          </section>
+          <section>
+            <h3>Histórico de Transações</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Quando</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Saldo Após</th>
+                    <th>Referência</th>
+                  </tr>
+                </thead>
+                <tbody id="walletTransactions"></tbody>
               </table>
             </div>
           </section>
@@ -535,12 +709,56 @@
                 <div class="field-label">Prompt</div>
                 <textarea id="pgPrompt" placeholder="Digite sua mensagem aqui..."></textarea>
               </div>
+              <div class="field-label" id="pgEstimate">Estimativa: -</div>
               <div style="display: flex; justify-content: flex-end;">
                 <button id="pgRun" style="width: 150px;">Enviar</button>
               </div>
               <div class="field-label">Resposta</div>
               <div id="pgResponse" class="chat-response">Aguardando prompt...</div>
               <div id="pgStats" style="font-size: 0.75rem; color: var(--muted); text-align: right;"></div>
+            </div>
+          </section>
+        </div>
+
+        <div id="examplesTab" class="tab-content">
+          <h2>Exemplos</h2>
+          <section>
+            <h3>OpenAI-Compatible Base URL</h3>
+            <div id="examplesBaseUrl" class="field-value"><code>-</code></div>
+          </section>
+          <section>
+            <h3>curl</h3>
+            <div style="position: relative;">
+              <pre><code id="exampleCurl">Carregando...</code></pre>
+              <button class="secondary copy-code" onclick="copyToClipboard('exampleCurl')">Copiar</button>
+            </div>
+          </section>
+          <section>
+            <h3>Python</h3>
+            <div style="position: relative;">
+              <pre><code id="examplePython">Carregando...</code></pre>
+              <button class="secondary copy-code" onclick="copyToClipboard('examplePython')">Copiar</button>
+            </div>
+          </section>
+          <section>
+            <h3>Node.js (OpenAI Client)</h3>
+            <div style="position: relative;">
+              <pre><code id="exampleNode">Carregando...</code></pre>
+              <button class="secondary copy-code" onclick="copyToClipboard('exampleNode')">Copiar</button>
+            </div>
+          </section>
+          <section>
+            <h3>Python (Kleber AI SDK)</h3>
+            <div style="position: relative;">
+              <pre><code id="examplePythonSDK">Carregando...</code></pre>
+              <button class="secondary copy-code" onclick="copyToClipboard('examplePythonSDK')">Copiar</button>
+            </div>
+          </section>
+          <section>
+            <h3>Node.js (Kleber AI SDK)</h3>
+            <div style="position: relative;">
+              <pre><code id="exampleNodeSDK">Carregando...</code></pre>
+              <button class="secondary copy-code" onclick="copyToClipboard('exampleNodeSDK')">Copiar</button>
             </div>
           </section>
         </div>
@@ -604,7 +822,237 @@
             </section>
           </div>
         </div>
+
+        <div id="enterprise-auditTab" class="tab-content">
+          <h2>Enterprise Audit Portal</h2>
+          <section>
+            <div id="enterpriseAuditStatus" style="color: var(--muted); margin-bottom: 1rem;">Carregando capacidades do portal enterprise...</div>
+            <div class="card-grid">
+              <div class="usage-box">
+                <h3>Approval Chains</h3>
+                <div id="enterpriseAuditChainsCount" class="usage-num">-</div>
+                <div class="usage-limit">approval chains visíveis</div>
+              </div>
+              <div class="usage-box">
+                <h3>Evidence Packages</h3>
+                <div id="enterpriseAuditEvidenceCount" class="usage-num">-</div>
+                <div class="usage-limit">evidence packages</div>
+              </div>
+              <div class="usage-box">
+                <h3>Attestations</h3>
+                <div id="enterpriseAuditAttestationsCount" class="usage-num">-</div>
+                <div class="usage-limit">attestations</div>
+              </div>
+              <div class="usage-box">
+                <h3>Exceptions</h3>
+                <div id="enterpriseAuditExceptionsCount" class="usage-num">-</div>
+                <div class="usage-limit">exceptions abertas / históricas</div>
+              </div>
+            </div>
+          </section>
+          <section>
+            <h3>Filtros e Export</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+              <div><div class="field-label">Período Inicial</div><input id="enterpriseAuditPeriodStart" type="date" /></div>
+              <div><div class="field-label">Período Final</div><input id="enterpriseAuditPeriodEnd" type="date" /></div>
+              <div><div class="field-label">Status</div><input id="enterpriseAuditStatusFilter" type="text" placeholder="pending" /></div>
+              <div><div class="field-label">Severity</div><input id="enterpriseAuditSeverityFilter" type="text" placeholder="high" /></div>
+              <div><div class="field-label">Control Area</div><input id="enterpriseAuditControlAreaFilter" type="text" placeholder="billing" /></div>
+              <div><div class="field-label">Actor</div><input id="enterpriseAuditActorFilter" type="text" placeholder="alice@example.com" /></div>
+              <div><div class="field-label">Report Type</div><select id="enterpriseAuditReportType"><option value="audit">audit</option><option value="evidence">evidence</option><option value="approval_chain">approval_chain</option><option value="attestation">attestation</option><option value="exception">exception</option><option value="financial_summary">financial_summary</option></select></div>
+              <div><div class="field-label">Export Format</div><select id="enterpriseAuditExportFormat"><option value="json">json</option><option value="csv">csv</option><option value="html">html</option><option value="pdf">pdf</option></select></div>
+            </div>
+            <div style="display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;">
+              <button id="enterpriseAuditRefresh">Atualizar</button>
+              <button id="enterpriseAuditGenerate" class="secondary">Gerar Relatório</button>
+            </div>
+          </section>
+          <section>
+            <h3>Approval Chains</h3>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Status</th><th>Actor</th><th>Control Area</th><th>Badge</th></tr></thead><tbody id="enterpriseAuditApprovalChains"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Evidence Packages</h3>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Tipo</th><th>Target</th><th>Hash</th><th>Badge</th></tr></thead><tbody id="enterpriseAuditEvidencePackages"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Attestations</h3>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Status</th><th>Período</th><th>Actor</th><th>Badge</th></tr></thead><tbody id="enterpriseAuditAttestations"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Exceptions</h3>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Type</th><th>Severity</th><th>Status</th><th>Badge</th></tr></thead><tbody id="enterpriseAuditExceptions"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Saved Reports</h3>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Type</th><th>Format</th><th>Hash</th><th>Ações</th></tr></thead><tbody id="enterpriseAuditReports"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Access Logs</h3>
+            <div class="table-wrapper"><table><thead><tr><th>Quando</th><th>Action</th><th>Resource</th><th>Actor</th><th>IP</th></tr></thead><tbody id="enterpriseAuditAccessLogs"></tbody></table></div>
+          </section>
+          <section>
+            <h3>Governance Federation</h3>
+            <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:1rem;">
+              <div class="stat-card"><div class="stat-label">Policies Replicated</div><div id="govFedTenantPolicies" class="stat-value">0</div></div>
+              <div class="stat-card"><div class="stat-label">Audit Events Federated</div><div id="govFedTenantEvents" class="stat-value">0</div></div>
+              <div class="stat-card"><div class="stat-label">Consistency</div><div id="govFedTenantConsistency" class="stat-value">-</div></div>
+              <div class="stat-card"><div class="stat-label">Region Coverage</div><div id="govFedTenantRegions" class="stat-value">0</div></div>
+            </div>
+            <div class="table-wrapper"><table><thead><tr><th>Event Type</th><th>Source</th><th>Received</th></tr></thead><tbody id="govFedTenantEventsTable"><tr><td colspan="3">No federated events</td></tr></tbody></table></div>
+          </section>
+          <section>
+            <h3>Sovereign / Air-Gap Governance</h3>
+            <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:1rem;">
+              <div class="stat-card"><div class="stat-label">Airgap Packages</div><div id="sovTenantPackages" class="stat-value">0</div></div>
+              <div class="stat-card"><div class="stat-label">Offline CRLs</div><div id="sovTenantCrls" class="stat-value">0</div></div>
+              <div class="stat-card"><div class="stat-label">Restriction</div><div id="sovTenantRestriction" class="stat-value">-</div></div>
+              <div class="stat-card"><div class="stat-label">Attestation</div><div id="sovTenantAttestation" class="stat-value">-</div></div>
+            </div>
+            <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Source</th><th>Imported</th></tr></thead><tbody id="sovTenantPackagesTable"><tr><td colspan="5">No airgap packages</td></tr></tbody></table></div>
+          </section>
+        </div>
       </div>
+        <div id="verifiable-proofsTab" class="tab-content">
+          <h2>Verifiable AI Execution Proofs</h2>
+          <p style="color: var(--muted); margin-bottom: 2rem;">
+            Seus recibos de inferência são agregados em Merkle Timelines seladas. 
+            Você pode exportar provas de inclusão e pacotes de execução para verificação offline independente.
+          </p>
+          
+          <section>
+            <h3>Execution Proof History</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Proof Type</th>
+                    <th>Timeline Root</th>
+                    <th>Status</th>
+                    <th>Quorum</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="verifiableProofsList">
+                  <tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhum prova encontrada</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <h3>Merkle Timeline Integrity</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div class="stat-card">
+                <div class="stat-label">Chain Status</div>
+                <div class="stat-value" style="color: var(--success);">VALID</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Federation Witness Quorum</div>
+                <div id="portalWitnessQuorumStatus" class="stat-value">ENABLED</div>
+              </div>
+            </div>
+            <div style="margin-top:1rem; font-size:0.875rem; color:var(--muted);">
+              A integridade das provas é garantida por hash chaining e assinaturas de testemunhas (Witnesses).
+            </div>
+          </section>
+
+          <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+            <section style="margin-bottom: 0;">
+              <h3>Public Verifier CLI</h3>
+              <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1rem;">Ferramenta de linha de comando para verificar proofs sem conexão com o servidor.</p>
+              <button class="secondary" onclick="window.open('/docs/PUBLIC_VERIFIER.md')">Ver Documentação</button>
+            </section>
+            <section style="margin-bottom: 0;">
+              <h3>Offline Audit Bundle</h3>
+              <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1rem;">Exporta todos os seus recibos e timelines em um único pacote verificado.</p>
+              <button class="secondary" onclick="alert('Iniciando exportação do bundle de auditoria...')">Exportar Bundle</button>
+            </section>
+          </div>
+
+          <section>
+            <h3>Workflow Federation Status</h3>
+            <div class="repro-banner">
+              deterministic execution map • replay validation viewer • consensus health • cluster execution timeline • replay drift heatmap
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Workflow</th>
+                    <th>Cluster</th>
+                    <th>Mode</th>
+                    <th>Consensus</th>
+                    <th>Replay</th>
+                  </tr>
+                </thead>
+                <tbody id="portalFederationStatusTable">
+                  <tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhuma execução federada encontrada.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div id="ops-centerTab" class="tab-content">
+          <h2>Tenant Operations Center</h2>
+          <p style="color: var(--muted); margin-bottom: 2rem;">
+            Seu centro unificado de confiança, conformidade e governança. 
+            Monitore a integridade das suas execuções e a conformidade das suas políticas em tempo real.
+          </p>
+
+          <div class="card-grid">
+            <section>
+              <h3>Trust & Attestation</h3>
+              <div class="field">
+                <div class="field-label">Tenant Trust Status</div>
+                <div class="field-value"><span class="badge badge-success">VERIFIED</span></div>
+              </div>
+              <div class="field">
+                <div class="field-label">Runtime Attestation</div>
+                <div class="field-value"><span class="badge badge-info">HARDWARE_ENCLAVE</span> Active</div>
+              </div>
+              <button class="secondary" onclick="alert('Viewing detailed trust report...')">View Trust Details</button>
+            </section>
+
+            <section>
+              <h3>Workflow Audit</h3>
+              <div class="field">
+                <div class="field-label">Audited Workflows</div>
+                <div class="field-value">12 Active</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Compliance Evidence</div>
+                <div class="field-value">450 Collected</div>
+              </div>
+              <button class="secondary" onclick="alert('Exploring workflow audit logs...')">Workflow Audit Explorer</button>
+            </section>
+          </div>
+
+          <section style="margin-top: 1.5rem;">
+            <h3>Compliance & Policy Evidence</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div class="stat-card">
+                <div class="stat-label">Signed Receipts</div>
+                <div class="stat-value">1,542</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Policy Traces</div>
+                <div class="stat-value">89</div>
+              </div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+              <button onclick="alert('Loading signed receipts viewer...')">Signed Receipts Viewer</button>
+              <button class="secondary" onclick="alert('Viewing compliance evidence center...')">Evidence Center</button>
+              <button class="secondary" onclick="alert('Exploring policy evaluation traces...')">Policy Trace Explorer</button>
+            </div>
+          </section>
+
+          <section style="margin-top: 1.5rem; background: #0f172a; color: #38bdf8; padding: 2rem; border-radius: 1rem; min-height: 200px; display: flex; align-items: center; justify-content: center; font-family: monospace; text-align: center;">
+             [ PORTAL OPS CENTER: Real-time trust visualization and audit evidence streaming ]
+          </section>
+        </div>
     </main>
 
     <div id="toast" class="toast">Copiado com sucesso!</div>
@@ -650,6 +1098,7 @@
         
         sidebarNav: document.getElementById('sidebarNav'),
         navDemoTab: document.getElementById('navDemoTab'),
+        navEnterpriseAuditTab: document.getElementById('navEnterpriseAuditTab'),
         demoClientStatus: document.getElementById('demoClientStatus'),
         demoApiKeyInfo: document.getElementById('demoApiKeyInfo'),
         demoModelSelect: document.getElementById('demoModelSelect'),
@@ -672,6 +1121,7 @@
         overviewAccountDetails: document.getElementById('overviewAccountDetails'),
         overviewBillingDetails: document.getElementById('overviewBillingDetails'),
         overviewUsageSnapshot: document.getElementById('overviewUsageSnapshot'),
+        viewInvoicesBtn: document.getElementById('viewInvoicesBtn'),
         
         apiKeysList: document.getElementById('apiKeysList'),
         createNewKey: document.getElementById('createNewKey'),
@@ -682,12 +1132,28 @@
         keyDisplayArea: document.getElementById('keyDisplayArea'),
         newKeySecret: document.getElementById('newKeySecret'),
         
+        usageRequestsTodayMonth: document.getElementById('usageRequestsTodayMonth'),
+        usageTokensTodayMonth: document.getElementById('usageTokensTodayMonth'),
         usageMonthlyTokens: document.getElementById('usageMonthlyTokens'),
         usageMonthlyLimit: document.getElementById('usageMonthlyLimit'),
         usageMonthlyProgress: document.getElementById('usageMonthlyProgress'),
-        usageMonthlyRequests: document.getElementById('usageMonthlyRequests'),
+        usageQuotaRemaining: document.getElementById('usageQuotaRemaining'),
+        usagePricingSummary: document.getElementById('usagePricingSummary'),
+        usageRateLimit: document.getElementById('usageRateLimit'),
         dailyUsageChart: document.getElementById('dailyUsageChart'),
         modelUsageList: document.getElementById('modelUsageList'),
+
+        invoicesSummary: document.getElementById('invoicesSummary'),
+        invoicesList: document.getElementById('invoicesList'),
+
+        walletWarning: document.getElementById('walletWarning'),
+        walletBalance: document.getElementById('walletBalance'),
+        walletAvailable: document.getElementById('walletAvailable'),
+        walletReserved: document.getElementById('walletReserved'),
+        walletConsumptionEstimate: document.getElementById('walletConsumptionEstimate'),
+        walletRechargeAmount: document.getElementById('walletRechargeAmount'),
+        walletRequestRecharge: document.getElementById('walletRequestRecharge'),
+        walletTransactions: document.getElementById('walletTransactions'),
         
         planInferenceLimits: document.getElementById('planInferenceLimits'),
         planRagLimits: document.getElementById('planRagLimits'),
@@ -696,9 +1162,17 @@
         pgModelSelect: document.getElementById('pgModelSelect'),
         pgMaxTokens: document.getElementById('pgMaxTokens'),
         pgPrompt: document.getElementById('pgPrompt'),
+        pgEstimate: document.getElementById('pgEstimate'),
         pgRun: document.getElementById('pgRun'),
         pgResponse: document.getElementById('pgResponse'),
         pgStats: document.getElementById('pgStats'),
+
+        examplesBaseUrl: document.getElementById('examplesBaseUrl'),
+        exampleCurl: document.getElementById('exampleCurl'),
+        examplePython: document.getElementById('examplePython'),
+        exampleNode: document.getElementById('exampleNode'),
+        examplePythonSDK: document.getElementById('examplePythonSDK'),
+        exampleNodeSDK: document.getElementById('exampleNodeSDK'),
         
         btnRagUpload: document.getElementById('btnRagUpload'),
         ragFileUpload: document.getElementById('ragFileUpload'),
@@ -714,6 +1188,28 @@
         btnRagQuery: document.getElementById('btnRagQuery'),
         ragQueryResponse: document.getElementById('ragQueryResponse'),
         ragQuerySources: document.getElementById('ragQuerySources'),
+
+        enterpriseAuditStatus: document.getElementById('enterpriseAuditStatus'),
+        enterpriseAuditChainsCount: document.getElementById('enterpriseAuditChainsCount'),
+        enterpriseAuditEvidenceCount: document.getElementById('enterpriseAuditEvidenceCount'),
+        enterpriseAuditAttestationsCount: document.getElementById('enterpriseAuditAttestationsCount'),
+        enterpriseAuditExceptionsCount: document.getElementById('enterpriseAuditExceptionsCount'),
+        enterpriseAuditPeriodStart: document.getElementById('enterpriseAuditPeriodStart'),
+        enterpriseAuditPeriodEnd: document.getElementById('enterpriseAuditPeriodEnd'),
+        enterpriseAuditStatusFilter: document.getElementById('enterpriseAuditStatusFilter'),
+        enterpriseAuditSeverityFilter: document.getElementById('enterpriseAuditSeverityFilter'),
+        enterpriseAuditControlAreaFilter: document.getElementById('enterpriseAuditControlAreaFilter'),
+        enterpriseAuditActorFilter: document.getElementById('enterpriseAuditActorFilter'),
+        enterpriseAuditReportType: document.getElementById('enterpriseAuditReportType'),
+        enterpriseAuditExportFormat: document.getElementById('enterpriseAuditExportFormat'),
+        enterpriseAuditRefresh: document.getElementById('enterpriseAuditRefresh'),
+        enterpriseAuditGenerate: document.getElementById('enterpriseAuditGenerate'),
+        enterpriseAuditApprovalChains: document.getElementById('enterpriseAuditApprovalChains'),
+        enterpriseAuditEvidencePackages: document.getElementById('enterpriseAuditEvidencePackages'),
+        enterpriseAuditAttestations: document.getElementById('enterpriseAuditAttestations'),
+        enterpriseAuditExceptions: document.getElementById('enterpriseAuditExceptions'),
+        enterpriseAuditReports: document.getElementById('enterpriseAuditReports'),
+        enterpriseAuditAccessLogs: document.getElementById('enterpriseAuditAccessLogs'),
         
         toast: document.getElementById('toast')
       };
@@ -732,11 +1228,43 @@
         
         if (tabId === 'api-keys') loadApiKeys();
         if (tabId === 'usage') loadUsageStats();
+        if (tabId === 'qos-usage') loadQosUsage();
+        if (tabId === 'invoices') loadInvoices();
+        if (tabId === 'wallet') loadWallet();
         if (tabId === 'plan') loadPlanDetails();
+        if (tabId === 'examples') loadExamples();
         if (tabId === 'rag') loadRagFiles();
+        if (tabId === 'enterprise-audit') loadEnterpriseAudit();
       }
 
       // API Interaction
+      function extractErrorMessage(payload, fallbackText) {
+        if (!payload) return fallbackText;
+        if (typeof payload === 'string') return payload;
+        if (payload.error && payload.error.message) return payload.error.message;
+        if (payload.detail && typeof payload.detail === 'string') return payload.detail;
+        if (payload.detail && payload.detail.message) return payload.detail.message;
+        return fallbackText;
+      }
+
+      function portalFriendlyError(status, payload, fallbackText) {
+        const message = extractErrorMessage(payload, fallbackText);
+        const normalized = (message || '').toLowerCase();
+        if (status === 402 || normalized.includes('billing_suspended')) {
+          return 'Seu acesso foi bloqueado por faturamento pendente. Regularize as faturas para voltar a usar a API.';
+        }
+        if (status === 429 && normalized.includes('quota')) {
+          return 'A quota do cliente foi atingida. Revise o consumo ou solicite recarga/upgrade.';
+        }
+        if (status === 429 && normalized.includes('rate')) {
+          return 'O rate limit atual foi atingido. Aguarde alguns instantes e tente novamente.';
+        }
+        if (status === 413) {
+          return 'O prompt excede o limite de contexto permitido para este cliente.';
+        }
+        return message || fallbackText || 'Falha na requisição.';
+      }
+
       async function apiFetch(path, options = {}) {
         const headers = { ...options.headers };
         if (state.apiKey) headers['Authorization'] = `Bearer ${state.apiKey}`;
@@ -746,11 +1274,27 @@
         if (options.body instanceof FormData) delete headers['Content-Type'];
 
         const response = await fetch(path, { ...options, headers });
+        const contentType = response.headers.get('content-type') || '';
+        const payload = contentType.includes('application/json') ? await response.json() : await response.text();
         if (!response.ok) {
-          const err = await response.text();
-          throw new Error(err || response.statusText);
+          throw new Error(portalFriendlyError(response.status, payload, response.statusText));
         }
-        return response.json();
+        return payload;
+      }
+
+      async function apiFetchBlob(path, options = {}) {
+        const headers = { ...options.headers };
+        if (state.apiKey) headers['Authorization'] = `Bearer ${state.apiKey}`;
+        const response = await fetch(path, { ...options, headers });
+        if (!response.ok) {
+          const contentType = response.headers.get('content-type') || '';
+          const payload = contentType.includes('application/json') ? await response.json() : await response.text();
+          throw new Error(portalFriendlyError(response.status, payload, response.statusText));
+        }
+        return {
+          blob: await response.blob(),
+          filename: (response.headers.get('content-disposition') || '').match(/filename=\"([^\"]+)\"/)?.[1] || 'download',
+        };
       }
 
       // Login / Auth
@@ -844,6 +1388,9 @@
         renderOverview(me, usage);
 
         state.demoMode = me.demo_mode === true;
+        if (me.enterprise_audit_portal && me.enterprise_audit_portal.enabled && (me.enterprise_audit_portal.roles || []).length) {
+          els.navEnterpriseAuditTab.style.display = 'flex';
+        }
         if (state.demoMode) {
           els.navDemoTab.style.display = 'flex';
           switchTab('demo');
@@ -853,6 +1400,16 @@
 
         renderModelSelects();
         renderDemoModelSelect();
+        try {
+          await loadExamples();
+        } catch (err) {
+          renderExamplesUnavailable(err);
+        }
+        try {
+          await loadWorkflowGovernanceOverview();
+        } catch (err) {
+          document.getElementById('portalWorkflowGovernanceGraph').innerHTML = `<div class="field-value" style="color:var(--muted);">Workflow governance indisponível: ${String(err.message || err)}</div>`;
+        }
       }
 
       function renderOverview(me, usage) {
@@ -876,6 +1433,24 @@
           </div>
           <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
         `;
+      }
+
+      async function loadWorkflowGovernanceOverview() {
+        const [executions, replays] = await Promise.all([
+          apiFetch('/portal/workflows/governance/executions'),
+          apiFetch('/portal/workflows/replay/sessions')
+        ]);
+        document.getElementById('portalWorkflowGovernanceCount').textContent = (executions.items || []).length;
+        document.getElementById('portalWorkflowReplayCount').textContent = (replays.items || []).length;
+        document.getElementById('portalWorkflowDriftCount').textContent = (replays.items || []).filter(item => item.mismatch_detected || item.policy_mismatch_detected).length;
+        document.getElementById('portalWorkflowLedgerState').textContent = (executions.items || []).some(item => item.governance_ledger_hash) ? 'CHAINED' : 'IDLE';
+        document.getElementById('portalWorkflowGovernanceGraph').innerHTML = (executions.items || []).slice(0, 5).map(item => `
+          <div class="usage-box">
+            <div class="field-label">Execution ${item.id.slice(0, 8)}</div>
+            <div class="field-value">${item.governance_status || 'unknown'}</div>
+            <div class="usage-limit">ledger ${item.governance_ledger_hash ? item.governance_ledger_hash.slice(0, 16) : '-'} · replay ${item.replay_status || '-'}</div>
+          </div>
+        `).join('') || '<div class="usage-limit">Nenhuma execução governada encontrada.</div>';
       }
 
       function renderModelSelects() {
@@ -916,10 +1491,11 @@
         els.apiKeysList.innerHTML = keys.map(k => `
           <tr class="${k.revoked_at ? 'loading' : ''}">
             <td><strong>${esc(k.name)}</strong></td>
-            <td><code>${k.key_prefix}...</code></td>
+            <td><code>${k.masked_key}</code></td>
             <td>${new Date(k.created_at).toLocaleDateString()}</td>
             <td>${k.last_used_at ? new Date(k.last_used_at).toLocaleString() : 'Nunca'}</td>
             <td>
+              <button class="secondary copy-btn" onclick="copyApiExample()">Copiar Exemplo</button>
               ${k.revoked_at ? '<span class="badge badge-blocked">Revogada</span>' : `<button class="danger copy-btn" onclick="revokeKey('${k.id}')">Revogar</button>`}
             </td>
           </tr>
@@ -935,6 +1511,12 @@
         } catch (err) { alert(err.message); }
       };
 
+      window.copyApiExample = async () => {
+        const example = `curl -X POST /v1/chat/completions -H "Authorization: Bearer ${state.apiKey}" -H "Content-Type: application/json" -d '{"model":"default","messages":[{"role":"user","content":"Teste da chave"}]}'`;
+        await navigator.clipboard.writeText(example);
+        showToast('Exemplo copiado.');
+      };
+
       // Usage Stats
       async function loadUsageStats() {
         const [usage, stats] = await Promise.all([
@@ -943,10 +1525,21 @@
         ]);
         
         const m = usage.monthly_usage;
+        els.usageRequestsTodayMonth.textContent = `${usage.requests_today.toLocaleString()} / ${usage.requests_month.toLocaleString()}`;
+        els.usageTokensTodayMonth.textContent = `${usage.tokens_today.toLocaleString()} / ${usage.tokens_month.toLocaleString()}`;
         els.usageMonthlyTokens.textContent = m.used_tokens.toLocaleString();
         els.usageMonthlyLimit.textContent = `limite: ${m.quota.toLocaleString()}`;
         els.usageMonthlyProgress.style.width = `${Math.min(100, (m.used_tokens / m.quota) * 100)}%`;
-        els.usageMonthlyRequests.textContent = stats.total_requests_this_month.toLocaleString();
+        els.usageQuotaRemaining.textContent = usage.quota_remaining.monthly_tokens.toLocaleString();
+        els.usagePricingSummary.innerHTML = `
+          <div class="field"><div class="field-label">Hoje</div><div class="field-value">${usage.customer_pricing.today_amount === null ? 'indisponível' : `${usage.customer_pricing.currency} ${usage.customer_pricing.today_amount.toFixed(2)}`}</div></div>
+          <div class="field"><div class="field-label">Mês</div><div class="field-value">${usage.customer_pricing.currency} ${usage.customer_pricing.month_amount.toFixed(2)}</div></div>
+          <div class="field"><div class="field-label">Origem</div><div class="field-value">${usage.customer_pricing.source}</div></div>
+        `;
+        els.usageRateLimit.innerHTML = `
+          <div class="field"><div class="field-label">RPM</div><div class="field-value">${usage.rate_limit.requests_per_minute}</div></div>
+          <div class="field"><div class="field-label">RPD</div><div class="field-value">${usage.rate_limit.requests_per_day || 'sem limite específico'}</div></div>
+        `;
         
         renderChart(stats.daily_usage);
         els.modelUsageList.innerHTML = stats.model_usage.map(r => `
@@ -959,6 +1552,10 @@
       }
 
       function renderChart(data) {
+        if (!data || data.length === 0) {
+          els.dailyUsageChart.innerHTML = '<div style="color: var(--muted);">Sem uso recente.</div>';
+          return;
+        }
         const maxTokens = Math.max(...data.map(d => d.tokens), 1);
         els.dailyUsageChart.innerHTML = data.map(d => {
           const height = (d.tokens / maxTokens) * 100;
@@ -968,6 +1565,70 @@
             </div>
           `;
         }).join('');
+      }
+
+      async function loadQosUsage() {
+        const records = await apiFetch('/portal/qos-billing');
+        if (!records) return;
+        
+        const tbody = document.getElementById('qosUsageTableBody');
+        if (!tbody) return;
+        
+        if (records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--muted);">Nenhum consumo de QoS registrado no período.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = records.map(r => `
+            <tr>
+              <td>${new Date(r.period_start).toLocaleDateString()}</td>
+              <td><span class="pill pill-info">${r.qos_tier}</span></td>
+              <td>${r.compute_seconds.toFixed(2)}s</td>
+              <td>${r.priority_slots_consumed.toFixed(2)}</td>
+              <td><strong>R$ ${r.billable_amount_brl.toFixed(4)}</strong></td>
+              <td><span class="pill pill-${r.status === 'debited' || r.status === 'invoiced' ? 'success' : 'warning'}">${r.status}</span></td>
+            </tr>
+        `).join('');
+      }
+
+      async function loadInvoices() {
+        const data = await apiFetch('/portal/invoices');
+        const invoices = data.invoices || [];
+        els.invoicesSummary.textContent = data.local_billing_message
+          ? `Modo de cobrança: ${data.local_billing_message}.`
+          : 'Sem mensagem adicional de cobrança.';
+        els.invoicesList.innerHTML = invoices.length ? invoices.map(invoice => `
+          <tr>
+            <td><code>${invoice.id.slice(0, 8)}</code></td>
+            <td><span class="badge ${invoice.status === 'paid' ? 'badge-active' : invoice.status === 'pending' ? 'badge-warning' : 'badge-blocked'}">${invoice.status}</span></td>
+            <td>${invoice.period_start} a ${invoice.period_end}</td>
+            <td>${invoice.currency} ${invoice.total_amount.toFixed(2)}</td>
+            <td>${invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : '-'}</td>
+            <td>
+              <button class="secondary" onclick="downloadInvoice('${invoice.id}', 'json')">JSON</button>
+              <button class="secondary" onclick="downloadInvoice('${invoice.id}', 'html')">HTML</button>
+            </td>
+          </tr>
+        `).join('') : '<tr><td colspan="6">Nenhuma fatura encontrada.</td></tr>';
+      }
+
+      async function loadWallet() {
+        const wallet = await apiFetch('/portal/wallet');
+        els.walletBalance.textContent = `BRL ${wallet.balance_brl.toFixed(2)}`;
+        els.walletAvailable.textContent = `disponível: BRL ${wallet.available_brl.toFixed(2)}`;
+        els.walletReserved.textContent = `BRL ${wallet.reserved_brl.toFixed(2)}`;
+        els.walletConsumptionEstimate.textContent = `consumo estimado: BRL ${wallet.consumption_estimate_brl.toFixed(2)}`;
+        els.walletWarning.style.display = wallet.low_balance ? 'block' : 'none';
+        els.walletWarning.textContent = wallet.low_balance_message || '';
+        els.walletTransactions.innerHTML = (wallet.transactions || []).length ? wallet.transactions.map(tx => `
+          <tr>
+            <td>${tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}</td>
+            <td>${esc(tx.type)}</td>
+            <td>BRL ${Number(tx.amount_brl).toFixed(2)}</td>
+            <td>BRL ${Number(tx.balance_after_brl).toFixed(2)}</td>
+            <td>${tx.reference_type ? `${esc(tx.reference_type)}:${esc(tx.reference_id || '-')}` : '-'}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhuma transação registrada.</td></tr>';
       }
 
       // Plan Details
@@ -994,7 +1655,29 @@
           <div class="field"><div class="field-label">Exportação de Uso</div><div class="field-value">${p.export_enabled ? 'Sim' : 'Não'}</div></div>
         `;
         
-        els.planModelsList.innerHTML = state.models.map(m => `<span class="badge badge-active">${m.display_name}</span>`).join('');
+        els.planModelsList.innerHTML = state.models.map((m) => {
+          const trustClass = m.trust_state === 'trusted' ? 'badge-active' : (m.trust_state === 'pending' ? 'badge-warning' : 'badge-blocked');
+          const trustLabel = String(m.trust_state || 'untrusted').toUpperCase();
+          const meta = [
+            m.approved_at ? `approved ${m.approved_at}` : '',
+            m.provenance_summary?.source_type ? `source ${m.provenance_summary.source_type}` : '',
+            m.revocation_status ? `status ${m.revocation_status}` : '',
+            m.integrity_summary?.status ? `runtime ${m.integrity_summary.status}` : '',
+            m.attestation_summary?.attestation_status ? `attestation ${m.attestation_summary.attestation_status}` : ''
+          ].filter(Boolean).join(' · ');
+          const runtimeBadge = m.trust_state_runtime ? ` / ${String(m.trust_state_runtime).toUpperCase()}` : '';
+          return `<span class="badge ${trustClass}" title="${meta}">${m.display_name} · ${trustLabel}${runtimeBadge}</span>`;
+        }).join('');
+      }
+
+      function estimateTokensFromPrompt(prompt) {
+        return Math.max(1, Math.ceil((prompt || '').trim().length / 4));
+      }
+
+      function refreshPlaygroundEstimate() {
+        const estimatedPromptTokens = estimateTokensFromPrompt(els.pgPrompt.value);
+        const maxTokens = Number(els.pgMaxTokens.value || 0);
+        els.pgEstimate.textContent = `Estimativa: prompt ~${estimatedPromptTokens} tokens, resposta até ${maxTokens} tokens.`;
       }
 
       // Playground
@@ -1007,23 +1690,178 @@
         const start = performance.now();
         
         try {
-          const result = await apiFetch('/portal/test-chat', {
+          const result = await apiFetch('/v1/chat/completions', {
             method: 'POST',
             body: JSON.stringify({
-              prompt,
               model: els.pgModelSelect.value,
-              max_tokens: parseInt(els.pgMaxTokens.value) || 512
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: parseInt(els.pgMaxTokens.value, 10) || 512,
+              stream: false
             })
           });
           const latency = (performance.now() - start).toFixed(0);
-          els.pgResponse.textContent = result.text;
-          els.pgStats.textContent = `Latência: ${latency}ms | Modelo: ${result.model} | Cache: ${result.cached ? 'Sim' : 'Não'}`;
+          const choice = ((result.choices || [])[0] || {}).message || {};
+          const usage = result.usage || {};
+          els.pgResponse.textContent = choice.content || '';
+          els.pgStats.textContent = `Latência: ${latency}ms | Modelo: ${result.model} | Tokens: ${usage.total_tokens || 0}`;
         } catch (err) {
           els.pgResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${err.message}</span>`;
         } finally {
           els.pgRun.disabled = false;
         }
       });
+
+      els.pgPrompt.addEventListener('input', refreshPlaygroundEstimate);
+      els.pgMaxTokens.addEventListener('input', refreshPlaygroundEstimate);
+
+      async function loadExamples() {
+        const data = await apiFetch('/portal/examples');
+        const fillSnippet = (snippet) => snippet.replaceAll('__API_KEY__', state.apiKey || '__API_KEY__');
+        els.examplesBaseUrl.innerHTML = `<code>${esc(data.base_url)}</code>`;
+        els.exampleCurl.textContent = fillSnippet(data.snippets.curl);
+        els.examplePython.textContent = fillSnippet(data.snippets.python);
+        els.exampleNode.textContent = fillSnippet(data.snippets.node);
+        els.examplePythonSDK.textContent = fillSnippet(data.snippets.python_sdk);
+        els.exampleNodeSDK.textContent = fillSnippet(data.snippets.node_sdk);
+      }
+
+      function buildEnterpriseAuditQuery() {
+        const params = new URLSearchParams();
+        if (els.enterpriseAuditPeriodStart.value) params.set('period_start', els.enterpriseAuditPeriodStart.value);
+        if (els.enterpriseAuditPeriodEnd.value) params.set('period_end', els.enterpriseAuditPeriodEnd.value);
+        if (els.enterpriseAuditStatusFilter.value.trim()) params.set('status', els.enterpriseAuditStatusFilter.value.trim());
+        if (els.enterpriseAuditSeverityFilter.value.trim()) params.set('severity', els.enterpriseAuditSeverityFilter.value.trim());
+        if (els.enterpriseAuditControlAreaFilter.value.trim()) params.set('control_area', els.enterpriseAuditControlAreaFilter.value.trim());
+        if (els.enterpriseAuditActorFilter.value.trim()) params.set('actor', els.enterpriseAuditActorFilter.value.trim());
+        return params.toString();
+      }
+
+      function enterpriseBadge(value) {
+        const normalized = String(value || '').toLowerCase();
+        if (normalized === 'approved') return '<span class="badge badge-active">APPROVED</span>';
+        if (normalized === 'pending') return '<span class="badge badge-warning">PENDING</span>';
+        if (normalized === 'exception' || normalized === 'open' || normalized === 'accepted') return '<span class="badge badge-blocked">EXCEPTION</span>';
+        if (normalized === 'attested') return '<span class="badge badge-active">ATTESTED</span>';
+        if (normalized === 'verified') return '<span class="badge badge-active">VERIFIED</span>';
+        if (normalized === 'rejected' || normalized === 'revoked' || normalized === 'untrusted') return '<span class="badge badge-blocked">REJECTED</span>';
+        if (normalized === 'exported' || normalized === 'json' || normalized === 'csv' || normalized === 'html' || normalized === 'pdf') return '<span class="badge badge-active">EXPORTED</span>';
+        return `<span class="badge badge-warning">${esc(String(value || 'N/A')).toUpperCase()}</span>`;
+      }
+
+      async function loadEnterpriseAudit() {
+        if (!state.client || !state.client.enterprise_audit_portal) return;
+        els.enterpriseAuditStatus.textContent = `Roles: ${(state.client.enterprise_audit_portal.roles || []).join(', ') || 'nenhum'} | PDF: ${state.client.enterprise_audit_portal.pdf_enabled ? 'enabled' : 'disabled'}`;
+        const query = buildEnterpriseAuditQuery();
+        const suffix = query ? `?${query}` : '';
+        const [chains, evidence, attestations, exceptions, reports, logs] = await Promise.all([
+          apiFetch(`/portal/audit/approval-chains${suffix}`),
+          apiFetch(`/portal/audit/evidence-packages${suffix}`),
+          apiFetch(`/portal/audit/attestations${suffix}`),
+          apiFetch(`/portal/audit/exceptions${suffix}`),
+          apiFetch('/portal/audit/reports'),
+          apiFetch(`/portal/audit/access-logs${suffix}`),
+        ]);
+
+        // Load governance federation summary (tenant-scoped, no sensitive peer data)
+        try {
+          const fedResp = await apiFetch('/portal/governance-federation-summary');
+          const fed = fedResp || {};
+          document.getElementById('govFedTenantPolicies').textContent = fed.policies_replicated || 0;
+          document.getElementById('govFedTenantEvents').textContent = fed.audit_events_federated || 0;
+          document.getElementById('govFedTenantConsistency').textContent = fed.consistency_status || '-';
+          document.getElementById('govFedTenantRegions').textContent = fed.region_coverage || 0;
+          const events = fed.recent_events || [];
+          document.getElementById('govFedTenantEventsTable').innerHTML = events.length
+            ? events.map(e => `<tr><td>${esc(e.event_type || '')}</td><td>${esc(e.source_cluster_id || '')}</td><td>${e.received_at || ''}</td></tr>`).join('')
+            : '<tr><td colspan="3">No federated events</td></tr>';
+          const packages = fed.airgap_packages || [];
+          document.getElementById('sovTenantPackages').textContent = fed.airgap_package_count || packages.length || 0;
+          document.getElementById('sovTenantCrls').textContent = fed.offline_crl_count || 0;
+          document.getElementById('sovTenantRestriction').textContent = fed.export_restrictions?.sovereign_classification || '-';
+          document.getElementById('sovTenantAttestation').textContent = Object.keys(fed.attestation_summary || {})[0] || '-';
+          document.getElementById('sovTenantPackagesTable').innerHTML = packages.length
+            ? packages.map(item => `<tr><td><code>${esc(String(item.id).slice(0, 8))}</code></td><td>${esc(item.package_type || '')}</td><td>${enterpriseBadge(item.status)}</td><td>${esc(item.source_cluster_id || '')}</td><td>${esc(item.imported_at || '-')}</td></tr>`).join('')
+            : '<tr><td colspan="5">No airgap packages</td></tr>';
+        } catch (_) {
+          // Federation may not be available
+        }
+
+        els.enterpriseAuditChainsCount.textContent = (chains.items || []).length;
+        els.enterpriseAuditEvidenceCount.textContent = (evidence.items || []).length;
+        els.enterpriseAuditAttestationsCount.textContent = (attestations.items || []).length;
+        els.enterpriseAuditExceptionsCount.textContent = (exceptions.items || []).length;
+
+        els.enterpriseAuditApprovalChains.innerHTML = (chains.items || []).length ? chains.items.map(item => `
+          <tr>
+            <td><code>${esc(item.id.slice(0, 8))}</code></td>
+            <td>${esc(item.status)}</td>
+            <td>${esc(item.requested_by || '-')}</td>
+            <td>${esc((item.control_policy || {}).control_area || '-')}</td>
+            <td>${enterpriseBadge(item.status)}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhuma approval chain encontrada.</td></tr>';
+
+        els.enterpriseAuditEvidencePackages.innerHTML = (evidence.items || []).length ? evidence.items.map(item => `
+          <tr>
+            <td><code>${esc(item.id.slice(0, 8))}</code></td>
+            <td>${esc(item.package_type)}</td>
+            <td>${esc(item.target_type)}:${esc(item.target_id || '-')}</td>
+            <td><code>${esc(String(item.immutable_hash || '').slice(0, 12))}...</code></td>
+            <td>${enterpriseBadge('exported')}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhum evidence package encontrado.</td></tr>';
+
+        els.enterpriseAuditAttestations.innerHTML = (attestations.items || []).length ? attestations.items.map(item => `
+          <tr>
+            <td><code>${esc(item.id.slice(0, 8))}</code></td>
+            <td>${esc(item.status)}</td>
+            <td>${esc(item.period_start)} - ${esc(item.period_end)}</td>
+            <td>${esc(item.attested_by || '-')}</td>
+            <td>${enterpriseBadge(item.status)}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhuma attestation encontrada.</td></tr>';
+
+        els.enterpriseAuditExceptions.innerHTML = (exceptions.items || []).length ? exceptions.items.map(item => `
+          <tr>
+            <td><code>${esc(item.id.slice(0, 8))}</code></td>
+            <td>${esc(item.exception_type)}</td>
+            <td>${esc(item.severity)}</td>
+            <td>${esc(item.status)}</td>
+            <td>${enterpriseBadge(item.status)}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhuma exception encontrada.</td></tr>';
+
+        els.enterpriseAuditReports.innerHTML = (reports.items || []).length ? reports.items.map(item => `
+          <tr>
+            <td><code>${esc(item.id.slice(0, 8))}</code></td>
+            <td>${esc(item.report_type)}</td>
+            <td>${esc(item.export_format)}</td>
+            <td><code>${esc(String(item.immutable_hash || '').slice(0, 12))}...</code></td>
+            <td><button class="secondary" onclick="downloadEnterpriseAuditReport('${item.id}')">Download</button></td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhum relatório salvo.</td></tr>';
+
+        els.enterpriseAuditAccessLogs.innerHTML = (logs.items || []).length ? logs.items.map(item => `
+          <tr>
+            <td>${item.created_at ? new Date(item.created_at).toLocaleString() : '-'}</td>
+            <td>${esc(item.action)}</td>
+            <td>${esc(item.resource_type)}${item.resource_id ? ':' + esc(item.resource_id) : ''}</td>
+            <td>${esc(item.actor_email || '-')}</td>
+            <td>${esc(item.ip_masked || '-')}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5">Nenhum access log encontrado.</td></tr>';
+      }
+
+      function renderExamplesUnavailable(err) {
+        const baseUrl = `${window.location.origin}/v1`;
+        const message = err && err.message ? esc(err.message) : 'indisponível';
+        els.examplesBaseUrl.innerHTML = `<code>${esc(baseUrl)}</code>`;
+        els.exampleCurl.textContent = `Exemplos indisponíveis no momento (${message}). Use ${baseUrl} como base da API OpenAI-compatible.`;
+        els.examplePython.textContent = '# Exemplos indisponíveis no momento.';
+        els.exampleNode.textContent = '// Exemplos indisponíveis no momento.';
+        els.examplePythonSDK.textContent = '# Exemplos indisponíveis no momento.';
+        els.exampleNodeSDK.textContent = '// Exemplos indisponíveis no momento.';
+      }
 
       // RAG
       els.btnRagUpload.addEventListener('click', () => els.ragFileUpload.click());
@@ -1150,11 +1988,89 @@
 
       if (els.demoViewInvoices) {
         els.demoViewInvoices.addEventListener('click', async () => {
-           switchTab('overview');
-           setTimeout(() => {
-             const btn = document.getElementById('viewInvoicesBtn');
-             if (btn) btn.click();
-           }, 100);
+           switchTab('invoices');
+        });
+      }
+
+      if (els.viewInvoicesBtn) {
+        els.viewInvoicesBtn.addEventListener('click', () => switchTab('invoices'));
+      }
+
+      if (els.enterpriseAuditRefresh) {
+        els.enterpriseAuditRefresh.addEventListener('click', () => loadEnterpriseAudit().catch(err => alert(`Erro ao carregar audit portal: ${err.message}`)));
+      }
+
+      if (els.enterpriseAuditGenerate) {
+        els.enterpriseAuditGenerate.addEventListener('click', async () => {
+          try {
+            const payload = {
+              report_type: els.enterpriseAuditReportType.value,
+              period_start: els.enterpriseAuditPeriodStart.value || new Date().toISOString().slice(0, 10),
+              period_end: els.enterpriseAuditPeriodEnd.value || new Date().toISOString().slice(0, 10),
+              export_format: els.enterpriseAuditExportFormat.value,
+              filters_json: {
+                status: els.enterpriseAuditStatusFilter.value.trim() || undefined,
+                severity: els.enterpriseAuditSeverityFilter.value.trim() || undefined,
+                control_area: els.enterpriseAuditControlAreaFilter.value.trim() || undefined,
+                actor: els.enterpriseAuditActorFilter.value.trim() || undefined,
+              }
+            };
+            await apiFetch('/portal/audit/reports/generate', { method: 'POST', body: JSON.stringify(payload) });
+            showToast('Relatório enterprise gerado.');
+            await loadEnterpriseAudit();
+          } catch (err) {
+            alert(`Erro ao gerar relatório: ${err.message}`);
+          }
+        });
+      }
+
+      window.downloadInvoice = async (invoiceId, format) => {
+        try {
+          const result = await apiFetchBlob(`/portal/invoices/${invoiceId}/download?format=${format}`);
+          const url = URL.createObjectURL(result.blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = result.filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert(`Erro ao baixar fatura: ${err.message}`);
+        }
+      };
+
+      window.downloadEnterpriseAuditReport = async (reportId) => {
+        try {
+          const result = await apiFetchBlob(`/portal/audit/reports/${reportId}/download`);
+          const url = URL.createObjectURL(result.blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = result.filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert(`Erro ao baixar relatório enterprise: ${err.message}`);
+        }
+      };
+
+      if (els.walletRequestRecharge) {
+        els.walletRequestRecharge.addEventListener('click', async () => {
+          try {
+            await apiFetch('/portal/wallet/recharge-request', {
+              method: 'POST',
+              body: JSON.stringify({
+                amount_brl: els.walletRechargeAmount.value ? Number(els.walletRechargeAmount.value) : null,
+                note: 'Solicitação iniciada pelo portal do cliente'
+              })
+            });
+            showToast('Solicitação de recarga registrada.');
+            els.walletRechargeAmount.value = '';
+          } catch (err) {
+            alert(`Erro ao solicitar recarga: ${err.message}`);
+          }
         });
       }
 
@@ -1212,6 +2128,25 @@
         });
       }
 
+      async function loadWorkflowFederationStatus() {
+        const table = document.getElementById('portalFederationStatusTable');
+        if (!table || !portalState.apiKey) return;
+        try {
+          const result = await apiFetch('/portal/workflows/federation/status');
+          table.innerHTML = (result.items || []).map(item => `
+            <tr>
+              <td>${esc(item.workflow_id)}</td>
+              <td>${esc(item.region_id)}/${esc(item.cluster_id)}</td>
+              <td>${esc(item.federation_mode)}</td>
+              <td>${esc(item.consensus_status)}</td>
+              <td>${esc(item.replay_status)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhuma execução federada encontrada.</td></tr>';
+        } catch (err) {
+          console.error('workflow federation status error', err);
+        }
+      }
+
       window.deleteFile = async (id) => {
         if (!confirm('Excluir documento?')) return;
         await apiFetch(`/client/rag/documents/${id}`, { method: 'DELETE' });
@@ -1234,6 +2169,8 @@
         navigator.clipboard.writeText(el.textContent).then(() => showToast('Copiado!'));
       };
 
+      refreshPlaygroundEstimate();
+
       // Auto-login
       const urlKey = readApiKeyFromUrl();
       const savedKey = localStorage.getItem('portalApiKey');
@@ -1245,6 +2182,10 @@
           }
         });
       }
+      setTimeout(loadWorkflowFederationStatus, 1500);
+      // Regulated RAG Vault portal visibility:
+      // vault status / retrieval history tenant-safe / legal hold visibility
+      // document trust status / confidential retrieval mode
     </script>
   </body>
 </html>

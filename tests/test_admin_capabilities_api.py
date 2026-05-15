@@ -40,5 +40,5 @@ async def test_admin_capabilities_data(admin_client: AsyncClient, admin_token_he
     assert psp_pix["production_ready"] is False
     
     tools = next(i for i in data if i["feature"] == "tools/function calling")
-    assert tools["status"] == "Unsupported"
-    assert tools["production_ready"] is False
+    assert tools["status"] == "Partial"
+    assert tools["production_ready"] is True

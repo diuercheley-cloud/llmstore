@@ -104,6 +104,8 @@ class EnterpriseQueryRequest(BaseModel):
     max_tokens: int = 700
     temperature: float = 0.2
     rerank: bool = False
+    user_identity: Optional[str] = None
+    abac_attributes: Optional[dict] = None
 
 
 class EnterpriseSource(BaseModel):

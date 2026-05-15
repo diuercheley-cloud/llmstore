@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +8,9 @@ from app.core.metrics import record_request_metrics
 from app.core.request_context import get_correlation_id, get_source_ip
 from app.core.time import utc_now
 from app.models.request_log import RequestLog
+from app.services.inference.reproducibility import capture_reproducibility_record
 
+logger = logging.getLogger(__name__)
 
 async def log_request(
     session: AsyncSession,
@@ -25,14 +28,19 @@ async def log_request(
     attempts: int,
     fallback_used: bool,
     cache_hit: bool,
-    backend_errors: list[dict] | None,
-    error_message: str | None,
-    request_summary: str | None,
+    tool_call_count: int = 0,
+    tool_calls: list[dict] | None = None,
+    backend_errors: list[dict] | None = None,
+    error_message: str | None = None,
+    request_summary: str | None = None,
     plan_code: str | None = None,
     safety_profile: str | None = "default",
     correlation_id: str | None = None,
     source_ip: str | None = None,
-) -> None:
+    request_payload: dict | None = None,
+    response_payload: dict | None = None,
+    reproducibility_context: dict | None = None,
+) -> RequestLog:
     resolved_correlation_id = correlation_id or get_correlation_id() or None
     resolved_source_ip = source_ip or get_source_ip() or None
     request_log = RequestLog(
@@ -49,6 +57,8 @@ async def log_request(
         attempts=attempts,
         fallback_used=fallback_used,
         cache_hit=cache_hit,
+        tool_call_count=tool_call_count,
+        tool_calls_json=json.dumps(tool_calls) if tool_calls else None,
         backend_errors_json=json.dumps(backend_errors) if backend_errors else None,
         error_message=error_message,
         request_summary=request_summary,
@@ -58,6 +68,7 @@ async def log_request(
         created_at=utc_now(),
     )
     session.add(request_log)
+    await session.flush()
     record_request_metrics(
         model=model,
         backend=backend_name,
@@ -68,3 +79,38 @@ async def log_request(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
     )
+    if request_payload is not None or response_payload is not None:
+        try:
+            context = reproducibility_context or {}
+            await capture_reproducibility_record(
+                session,
+                request_id=str(request_log.id),
+                correlation_id=resolved_correlation_id,
+                client_id=str(client_id) if client_id is not None else None,
+                model_name=model,
+                model_alias=context.get("model_alias"),
+                provider=context.get("provider"),
+                backend_name=backend_name,
+                request_payload=request_payload,
+                response_payload=response_payload,
+                prompt_template=context.get("prompt_template"),
+                tokenizer_name=context.get("tokenizer_name"),
+                tokenizer_version=context.get("tokenizer_version"),
+                runtime_engine=context.get("runtime_engine"),
+                runtime_engine_version=context.get("runtime_engine_version"),
+                model_metadata_json=context.get("model_metadata_json"),
+                backend_metadata_json=context.get("backend_metadata_json"),
+                metadata_json={
+                    "endpoint": endpoint,
+                    "request_summary": request_summary,
+                    "safety_profile": safety_profile,
+                    "tool_call_count": tool_call_count,
+                    "backend_errors": backend_errors or [],
+                    "error_message": error_message,
+                    "audit_event": "reproducibility_record_created",
+                    **(context.get("metadata_json") or {}),
+                },
+            )
+        except Exception:
+            logger.exception("failed to capture reproducibility record")
+    return request_log

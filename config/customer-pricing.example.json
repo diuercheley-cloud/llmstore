@@ -7,7 +7,10 @@
       "price_brl_per_1k_completion": 0.0,
       "monthly_included_tokens": 50000,
       "cloud_allowed": false,
-      "max_cost_per_request_brl": 0.0
+      "max_cost_per_request_brl": 0.0,
+      "commercial_routing_enabled": false,
+      "minimum_margin_percent": 0.0,
+      "strategy_override": "local_first"
     },
     "basic": {
       "label": "Basic",
@@ -16,7 +19,10 @@
       "price_brl_per_1k_completion": 0.06,
       "monthly_included_tokens": 750000,
       "cloud_allowed": false,
-      "max_cost_per_request_brl": 0.10
+      "max_cost_per_request_brl": 0.10,
+      "commercial_routing_enabled": true,
+      "minimum_margin_percent": 10.0,
+      "strategy_override": "local_first"
     },
     "pro": {
       "label": "Pro",
@@ -25,7 +31,10 @@
       "price_brl_per_1k_completion": 0.05,
       "monthly_included_tokens": 4000000,
       "cloud_allowed": true,
-      "max_cost_per_request_brl": 0.50
+      "max_cost_per_request_brl": 0.50,
+      "commercial_routing_enabled": true,
+      "minimum_margin_percent": 5.0,
+      "strategy_override": "lowest_cost"
     },
     "enterprise": {
       "label": "Enterprise Local",
@@ -34,8 +43,19 @@
       "price_brl_per_1k_completion": 0.04,
       "monthly_included_tokens": 15000000,
       "cloud_allowed": true,
-      "max_cost_per_request_brl": 1.00
+      "max_cost_per_request_brl": 1.00,
+      "commercial_routing_enabled": true,
+      "minimum_margin_percent": 5.0,
+      "strategy_override": "premium_quality"
     }
+  },
+  "commercial_routing": {
+    "enabled": false,
+    "default_minimum_margin_percent": 5.0,
+    "default_max_cost_per_request_brl": 0.50,
+    "suspended_plans_allow_local": true,
+    "low_balance_threshold_brl": 5.0,
+    "profiling_providers_order": ["deepseek", "local", "lmstudio", "openai", "anthropic", "openrouter", "mock"]
   },
   "default_markup_percent": 50,
   "cache_discount_percent": 50

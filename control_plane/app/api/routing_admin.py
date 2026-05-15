@@ -1,4 +1,6 @@
 from app.schemas.routing import (
+    CommercialSimulateRequest,
+    CommercialSimulateResponse,
     LastDecisionRead,
     PolicyRead,
     SimulateRoutingRequest,
@@ -6,6 +8,7 @@ from app.schemas.routing import (
     SmartRouterInput,
 )
 from app.services.auth import require_admin
+from app.services.routing.commercial_routing import simulate_commercial_routing
 from app.services.routing.smart_router import SmartRouter, get_smart_router
 from fastapi import APIRouter, Depends, Query
 
@@ -16,10 +19,15 @@ router = APIRouter(
 )
 
 
+from app.db.session import get_db_session
+from app.services.routing.commercial_config_store import CommercialConfigStore
+from sqlalchemy.ext.asyncio import AsyncSession
+
 @router.post("/simulate", response_model=SimulateRoutingResponse)
 async def simulate_routing(
     req: SimulateRoutingRequest,
     smart_router: SmartRouter = Depends(get_smart_router),
+    db: AsyncSession = Depends(get_db_session),
 ):
     inp = SmartRouterInput(
         tenant=req.tenant,
@@ -37,7 +45,11 @@ async def simulate_routing(
         budget_preference=req.budget_preference,
         strategy=req.strategy,
     )
-    decision, strategies, provider_states, config_snapshot = smart_router.simulate(inp)
+    
+    store = CommercialConfigStore(db)
+    dynamic_configs = await store.list_configs(active_only=True)
+    
+    decision, strategies, provider_states, config_snapshot = smart_router.simulate(inp, dynamic_configs=dynamic_configs)
     return SimulateRoutingResponse(
         decision=decision,
         strategies_considered=strategies,
@@ -93,3 +105,10 @@ async def get_last_decisions(
             sanitized_reason=d.get("sanitized_reason", ""),
         ))
     return result
+
+
+@router.post("/commercial/simulate", response_model=CommercialSimulateResponse)
+async def commercial_routing_simulate(
+    req: CommercialSimulateRequest,
+):
+    return simulate_commercial_routing(req)

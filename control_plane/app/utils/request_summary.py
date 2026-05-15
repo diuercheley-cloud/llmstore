@@ -1,13 +1,20 @@
 import hashlib
 
 
-def summarize_chat_request(messages: list[dict], *, include_reasoning: bool) -> str:
+def summarize_chat_request(
+    messages: list[dict],
+    *,
+    include_reasoning: bool,
+    tool_count: int = 0,
+    tool_choice: str | None = None,
+) -> str:
     roles = ",".join(message.get("role", "unknown") for message in messages[:8])
-    total_chars = sum(len(message.get("content", "")) for message in messages)
-    prompt_fingerprint = _fingerprint(" ".join(message.get("content", "") for message in messages))
+    total_chars = sum(len(str(message.get("content") or "")) for message in messages)
+    prompt_fingerprint = _fingerprint(" ".join(str(message.get("content") or "") for message in messages))
     return (
         f"chat messages={len(messages)} roles={roles} chars={total_chars} "
-        f"include_reasoning={str(include_reasoning).lower()} prompt_sha256={prompt_fingerprint}"
+        f"include_reasoning={str(include_reasoning).lower()} tools={tool_count} "
+        f"tool_choice={tool_choice or 'none'} prompt_sha256={prompt_fingerprint}"
     )
 
 

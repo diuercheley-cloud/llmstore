@@ -1,5 +1,6 @@
 import json
 import random
+from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import inspect, or_, select
@@ -10,6 +11,11 @@ from app.core.config import get_settings
 from app.models.client import Client
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
+from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
+from app.services.commercial_guardrails import filter_routes_by_commercial_guardrails
+from app.services.models.signed_model_registry import enforce_model_trust_or_warn
+from app.services.provider_classification import is_cloud_provider
+from app.utils.tool_calling import provider_supports_native_tools
 
 
 SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm"}
@@ -103,6 +109,25 @@ async def resolve_requested_model(
         selected = next((item for item in active_models if item.is_default), None) or active_models[0]
     if selected is None:
         raise HTTPException(status_code=404, detail="requested model not found")
+    await enforce_model_trust_or_warn(
+        session,
+        model_name=selected.model_alias or selected.model_id,
+        client=client,
+    )
+    constraints = get_active_revenue_protection_constraints(client_id=client.id, model=selected.model_id)
+    restricted_models = set(constraints.get("restricted_models") or [])
+    if selected.model_id in restricted_models or (selected.model_alias or "") in restricted_models:
+        fallback = next(
+            (
+                item
+                for item in active_models
+                if item.model_id not in restricted_models and (item.model_alias or "") not in restricted_models
+            ),
+            None,
+        )
+        if fallback is None:
+            raise HTTPException(status_code=403, detail="requested model restricted by revenue protection")
+        selected = fallback
     routes = get_routing_candidates(selected)
     if not routes:
         raise HTTPException(status_code=503, detail="model backend is not active")
@@ -150,11 +175,34 @@ def get_routing_candidates(model: ModelRegistry) -> list[ModelBackendRoute]:
 def apply_routing_policy(
     model: ModelRegistry, 
     client: Client | None, 
-    candidates: list[ModelBackendRoute]
+    candidates: list[ModelBackendRoute],
+    qos_tier: Any | None = None,
 ) -> list[ModelBackendRoute]:
     """
     Applies global routing policies from the client's billing plan to the candidates.
     """
+    from app.services.provider_classification import is_cloud_provider
+    
+    # Phase 20: QoS Tier Enforcement
+    if qos_tier:
+        if not qos_tier.allow_cloud:
+            candidates = [c for c in candidates if not is_cloud_provider(c.inference_backend.provider)]
+        
+        # Check if we should allow degraded based on QoS
+        if not qos_tier.allow_degraded_cluster:
+            candidates = [c for c in candidates if c.state == "healthy"]
+
+    constraints = get_active_revenue_protection_constraints(
+        client_id=getattr(client, "id", None),
+        model=model.model_id if model else None,
+        qos_tier=getattr(qos_tier, "name", None),
+    )
+    if constraints.get("force_local_only"):
+        candidates = [c for c in candidates if not is_cloud_provider(c.inference_backend.provider)]
+    restricted_models = set(constraints.get("restricted_models") or [])
+    if model.model_id in restricted_models or (model.model_alias or "") in restricted_models:
+        return []
+
     if not client or not client.billing_plan or not client.billing_plan.routing_policy_json:
         return candidates
         
@@ -202,12 +250,21 @@ def plan_routing_order(
     model: ModelRegistry, 
     rng: random.Random | None = None,
     client: Client | None = None,
+    cloud_blocked_by_guardrail: bool = False,
+    commercial_guardrail_context: dict | None = None,
+    qos_tier: Any | None = None,
 ) -> list[ModelBackendRoute]:
     routes = get_routing_candidates(model)
-    
+
     # Apply global policies from client plan
     if client:
-        routes = apply_routing_policy(model, client, routes)
+        routes = apply_routing_policy(model, client, routes, qos_tier=qos_tier)
+
+    # Legacy SaaS-only guardrail compatibility.
+    if cloud_blocked_by_guardrail:
+        routes = [r for r in routes if not is_cloud_provider(r.inference_backend.provider)]
+
+    routes = filter_routes_by_commercial_guardrails(routes, commercial_guardrail_context)
         
     if len(routes) <= 1:
         return routes
@@ -267,7 +324,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
         "streaming": is_chat,
         "embeddings": is_embedding,
         "responses": is_chat,
-        "tools": False,
+        "tools": is_chat and provider_supports_native_tools(item.provider),
     }
 
     # Backend status and routing

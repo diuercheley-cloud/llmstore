@@ -35,6 +35,7 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | API OpenAI-compatible | `/v1/chat/completions`, `/v1/models`, streaming SSE |
 | Multi-Provider | Local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter |
 | Real Provider Validation | Teste seguro de chaves reais (opt-in, cost cap, sem leak) |
+| Commercial Analytics | Persistência de eventos de roteamento, ranking e lucro |
 | Admin Dashboard | Gestão de clientes, API keys, uso, billing, providers |
 | Admin Lab | Gestão de modelos, backends, testes de prompt |
 | Client Portal | Interface do cliente com uso e consumo |
@@ -223,6 +224,7 @@ make validate-real-provider-env
 | [Local Production Runbook](docs/LOCAL_PRODUCTION_RUNBOOK.md) | Operação diária |
 | [Capability Matrix](docs/CAPABILITY_MATRIX.md) | Matriz de capacidades |
 | [Security Local](docs/SECURITY_LOCAL.md) | Segurança e hardening |
+| [Commercial Analytics](docs/COMMERCIAL_ROUTING_ANALYTICS.md) | Persistência de ranking e lucro |
 | [Production Readiness](docs/PRODUCTION_READINESS_LOCAL.md) | Readiness de produção |
 | [OpenAI Compatibility](docs/OPENAI_COMPATIBILITY.md) | Detalhes da API compatível |
 | [Release History](docs/RELEASE_HISTORY.md) | Histórico consolidado de versões |

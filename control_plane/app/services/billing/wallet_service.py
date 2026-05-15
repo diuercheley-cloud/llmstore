@@ -131,6 +131,42 @@ async def credit_manual(
     return tx
 
 
+async def credit_wallet_topup(
+    session: AsyncSession,
+    client_id: uuid.UUID,
+    amount_brl: Decimal,
+    *,
+    provider: str,
+    external_id: str | None,
+    idempotency_key: str,
+) -> AiWalletTransaction:
+    existing = await ensure_idempotency(session, idempotency_key)
+    if existing is not None:
+        return existing
+    wallet = await get_or_create_wallet(session, client_id)
+    if amount_brl <= 0:
+        raise ValueError("topup amount must be positive")
+    new_balance = wallet.balance_brl + amount_brl
+    wallet.balance_brl = new_balance
+    wallet.updated_at = utc_now()
+    metadata = {"provider": provider}
+    if external_id:
+        metadata["external_id"] = external_id
+    return await _record_transaction(
+        session,
+        wallet,
+        client_id,
+        tx_type="future_pix_credit",
+        amount_brl=amount_brl,
+        balance_after_brl=new_balance,
+        reference_type="wallet_topup",
+        reference_id=external_id,
+        idempotency_key=idempotency_key,
+        metadata_json=json.dumps(metadata),
+        created_by="payment_webhook",
+    )
+
+
 async def debit_usage(
     session: AsyncSession,
     client_id: uuid.UUID,

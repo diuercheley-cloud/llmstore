@@ -26,10 +26,21 @@ from app.services.rag_enterprise.policies import (
     is_cloud_embedding_allowed,
 )
 from app.services.rag_usage import record_rag_event
+from app.services.rag.rag_poison_detection import analyze_and_record_poisoning
+from app.services.rag.rag_vault import (
+    get_or_create_default_vault,
+    hash_text,
+    register_chunk as register_regulated_chunk,
+    register_document as register_regulated_document,
+    sanitize_chunk_preview,
+    should_encrypt_payload,
+    should_store_plaintext,
+)
 from app.utils.token_estimator import estimate_tokens_from_text
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+CLASSIFICATIONS = {"public", "internal", "confidential", "restricted", "sovereign_restricted"}
 
 
 async def ingest_document(
@@ -114,6 +125,35 @@ async def ingest_document(
     session.add(doc)
     await session.flush()
 
+    classification = "internal"
+    if tags:
+        for tag in tags:
+            normalized = str(tag).strip().lower()
+            if normalized in CLASSIFICATIONS:
+                classification = normalized
+                break
+
+    regulated_document = None
+    vault = None
+    if settings.commercial_rag_vault_enabled:
+        vault = await get_or_create_default_vault(session, client_id=client_id)
+        regulated_document = await register_regulated_document(
+            session,
+            vault=vault,
+            title=original_filename,
+            plaintext=parse_result.text,
+            classification=classification,
+            source_type="upload",
+            metadata_json={
+                **(parse_result.metadata or {}),
+                "tags": tags or [],
+                "legacy_document_id": str(doc_id),
+                "page_count": len(parse_result.pages),
+            },
+            provenance_hash=hash_text(str(parse_result.metadata or {})),
+            legal_hold=bool(tags and any(str(tag).lower() == "legal_hold" for tag in tags)),
+        )
+
     for i, (chunk_data, embedding) in enumerate(zip(raw_chunks, embeddings)):
         metadata = dict(chunk_data.metadata)
         if tags:
@@ -123,13 +163,34 @@ async def ingest_document(
         metadata["tenant_id"] = str(client_id)
         metadata["document_id"] = str(doc_id)
         metadata["source_file"] = original_filename
+        content = chunk_data.content
+        if regulated_document and vault:
+            regulated_chunk = await register_regulated_chunk(
+                session,
+                document=regulated_document,
+                chunk_index=i,
+                plaintext=chunk_data.content,
+                embedding=embedding,
+                acl_json={
+                    "allowed_client_ids": [str(client_id)],
+                    "allowed_roles": ["tenant_user", "tenant_admin"],
+                    "classification": classification,
+                },
+                encrypt_payload=should_encrypt_payload(vault, classification),
+                client_id=client_id,
+            )
+            metadata["commercial_chunk_id"] = str(regulated_chunk.id)
+            metadata["commercial_document_id"] = str(regulated_document.id)
+            await analyze_and_record_poisoning(session, vault_id=vault.id, text=chunk_data.content)
+            if not should_store_plaintext(classification):
+                content = sanitize_chunk_preview(chunk_data.content)
 
         chunk = RAGDocumentChunk(
             document_id=doc_id,
             client_id=client_id,
             chunk_index=i,
             page_number=chunk_data.page_number or 1,
-            content=chunk_data.content,
+            content=content,
             token_count=estimate_tokens_from_text(chunk_data.content),
             embedding=embedding,
             metadata_json=metadata,
