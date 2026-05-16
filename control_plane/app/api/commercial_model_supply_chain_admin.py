@@ -37,6 +37,7 @@ from app.services.models.runtime_integrity_monitor import (
 )
 from app.services.models.signed_model_registry import (
     approve_model,
+    latest_registry_map,
     quarantine_model,
     register_model_manifest,
     revoke_model,
@@ -195,7 +196,7 @@ def _serialize_bundle(item: CommercialModelPromotionBundle) -> dict[str, Any]:
     }
 
 
-@router.get("/admin/models/supply-chain/registry")
+@router.get("/supply-chain/registry")
 async def list_supply_chain_registry(db: AsyncSession = Depends(get_db_session)):
     rows = await db.execute(
         select(CommercialSignedModelRegistryEntry).order_by(desc(CommercialSignedModelRegistryEntry.updated_at))
@@ -203,7 +204,7 @@ async def list_supply_chain_registry(db: AsyncSession = Depends(get_db_session))
     return {"items": [_serialize_registry_entry(item) for item in rows.scalars().all()]}
 
 
-@router.post("/admin/models/supply-chain/register", status_code=201)
+@router.post("/supply-chain/register", status_code=201)
 async def post_supply_chain_register(payload: RegisterModelPayload, db: AsyncSession = Depends(get_db_session)):
     try:
         entry = await register_model_manifest(db, **payload.model_dump())
@@ -214,7 +215,7 @@ async def post_supply_chain_register(payload: RegisterModelPayload, db: AsyncSes
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.post("/admin/models/supply-chain/{entry_id}/verify")
+@router.post("/supply-chain/{entry_id}/verify")
 async def post_supply_chain_verify(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     entry = await db.get(CommercialSignedModelRegistryEntry, entry_id)
     if not entry:
@@ -238,7 +239,7 @@ async def post_supply_chain_verify(entry_id: uuid.UUID, db: AsyncSession = Depen
     return {"checksum": checksum, "signature_valid": signature_valid}
 
 
-@router.get("/admin/models/integrity/scans")
+@router.get("/integrity/scans")
 async def list_integrity_scans(
     limit: int = 100,
     db: AsyncSession = Depends(get_db_session),
@@ -251,14 +252,14 @@ async def list_integrity_scans(
     return {"items": [_serialize_integrity_scan(item) for item in rows.scalars().all()]}
 
 
-@router.post("/admin/models/integrity/scan")
+@router.post("/integrity/scan")
 async def post_integrity_scan(payload: ManualIntegrityScanPayload, db: AsyncSession = Depends(get_db_session)):
     result = await scan_registered_models(db, scan_type=payload.scan_type)
     await db.commit()
     return result
 
 
-@router.get("/admin/models/integrity/events")
+@router.get("/integrity/events")
 async def list_integrity_events(
     limit: int = 100,
     db: AsyncSession = Depends(get_db_session),
@@ -271,7 +272,7 @@ async def list_integrity_events(
     return {"items": [_serialize_integrity_event(item) for item in rows.scalars().all()]}
 
 
-@router.get("/admin/models/integrity/attestations")
+@router.get("/integrity/attestations")
 async def list_integrity_attestations(
     limit: int = 100,
     db: AsyncSession = Depends(get_db_session),
@@ -284,7 +285,7 @@ async def list_integrity_attestations(
     return {"items": [serialize_runtime_attestation(item) for item in rows.scalars().all()]}
 
 
-@router.post("/admin/models/integrity/quarantine/{entry_id}")
+@router.post("/integrity/quarantine/{entry_id}")
 async def post_integrity_quarantine(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     entry = await db.get(CommercialSignedModelRegistryEntry, entry_id)
     if not entry:
@@ -307,7 +308,7 @@ async def post_integrity_quarantine(entry_id: uuid.UUID, db: AsyncSession = Depe
     return result
 
 
-@router.post("/admin/models/integrity/reverify/{entry_id}")
+@router.post("/integrity/reverify/{entry_id}")
 async def post_integrity_reverify(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     entry = await db.get(CommercialSignedModelRegistryEntry, entry_id)
     if not entry:
@@ -339,12 +340,12 @@ async def post_integrity_reverify(entry_id: uuid.UUID, db: AsyncSession = Depend
     return {"reverified": True, "result": result, "trust_state": entry.trust_state}
 
 
-@router.get("/admin/models/integrity/status")
+@router.get("/integrity/status")
 async def get_integrity_status(db: AsyncSession = Depends(get_db_session)):
     return await summarize_integrity_status(db)
 
 
-@router.post("/admin/models/supply-chain/{entry_id}/approve")
+@router.post("/supply-chain/{entry_id}/approve")
 async def post_supply_chain_approve(
     entry_id: uuid.UUID,
     payload: ApproveModelPayload,
@@ -359,7 +360,7 @@ async def post_supply_chain_approve(
         raise HTTPException(status_code=404, detail=str(exc))
 
 
-@router.post("/admin/models/supply-chain/{entry_id}/quarantine")
+@router.post("/supply-chain/{entry_id}/quarantine")
 async def post_supply_chain_quarantine(
     entry_id: uuid.UUID,
     payload: QuarantineModelPayload,
@@ -374,7 +375,7 @@ async def post_supply_chain_quarantine(
         raise HTTPException(status_code=404, detail=str(exc))
 
 
-@router.post("/admin/models/supply-chain/{entry_id}/revoke")
+@router.post("/supply-chain/{entry_id}/revoke")
 async def post_supply_chain_revoke(
     entry_id: uuid.UUID,
     payload: RevokeModelPayload,
@@ -402,7 +403,7 @@ async def post_supply_chain_revoke(
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.get("/admin/models/supply-chain/provenance")
+@router.get("/supply-chain/provenance")
 async def list_supply_chain_provenance(db: AsyncSession = Depends(get_db_session)):
     rows = await db.execute(
         select(CommercialModelProvenanceAttestation).order_by(desc(CommercialModelProvenanceAttestation.created_at))
@@ -410,7 +411,7 @@ async def list_supply_chain_provenance(db: AsyncSession = Depends(get_db_session
     return {"items": [_serialize_provenance(item) for item in rows.scalars().all()]}
 
 
-@router.post("/admin/models/supply-chain/provenance", status_code=201)
+@router.post("/supply-chain/provenance", status_code=201)
 async def post_supply_chain_provenance(payload: ProvenancePayload, db: AsyncSession = Depends(get_db_session)):
     try:
         item = await create_provenance_attestation(db, **payload.model_dump())
@@ -421,12 +422,12 @@ async def post_supply_chain_provenance(payload: ProvenancePayload, db: AsyncSess
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.get("/admin/models/supply-chain/bundles")
+@router.get("/supply-chain/bundles")
 async def get_supply_chain_bundles(db: AsyncSession = Depends(get_db_session)):
     return {"items": [_serialize_bundle(item) for item in await list_bundles(db)]}
 
 
-@router.post("/admin/models/supply-chain/bundles", status_code=201)
+@router.post("/supply-chain/bundles", status_code=201)
 async def post_supply_chain_bundle(payload: BundlePayload, db: AsyncSession = Depends(get_db_session)):
     try:
         item = await create_model_promotion_bundle(db, **payload.model_dump())
@@ -437,7 +438,7 @@ async def post_supply_chain_bundle(payload: BundlePayload, db: AsyncSession = De
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.post("/admin/models/supply-chain/bundles/{bundle_id}/verify")
+@router.post("/supply-chain/bundles/{bundle_id}/verify")
 async def post_supply_chain_bundle_verify(bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     bundle = await db.get(CommercialModelPromotionBundle, bundle_id)
     if not bundle:
@@ -447,7 +448,7 @@ async def post_supply_chain_bundle_verify(bundle_id: uuid.UUID, db: AsyncSession
     return result
 
 
-@router.post("/admin/models/supply-chain/bundles/{bundle_id}/promote")
+@router.post("/supply-chain/bundles/{bundle_id}/promote")
 async def post_supply_chain_bundle_promote(bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     try:
         entry = await promote_model_from_bundle(db, bundle_id, imported_by="admin")
@@ -458,7 +459,7 @@ async def post_supply_chain_bundle_promote(bundle_id: uuid.UUID, db: AsyncSessio
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.post("/admin/models/supply-chain/bundles/{bundle_id}/reject")
+@router.post("/supply-chain/bundles/{bundle_id}/reject")
 async def post_supply_chain_bundle_reject(
     bundle_id: uuid.UUID,
     payload: RejectBundlePayload,
@@ -473,7 +474,7 @@ async def post_supply_chain_bundle_reject(
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@router.get("/admin/models/supply-chain/status")
+@router.get("/supply-chain/status")
 async def get_supply_chain_status(db: AsyncSession = Depends(get_db_session)):
     registry_rows = await db.execute(select(CommercialSignedModelRegistryEntry))
     entries = registry_rows.scalars().all()

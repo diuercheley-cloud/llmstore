@@ -79,6 +79,7 @@ async def register_cluster(
     normalized_status = status if status in VALID_CLUSTER_STATUSES else "active"
     scope = _normalize_tenant_scope(tenant_scope_json)
     metadata = sanitize_cluster_metadata(metadata_json)
+    timestamp = utc_now()
 
     existing = (
         await db.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == normalized_cluster_id))
@@ -95,6 +96,8 @@ async def register_cluster(
             tenant_scope_json=scope,
             metadata_json=metadata,
             last_seen_at=last_seen_at,
+            created_at=timestamp,
+            updated_at=timestamp,
         )
         db.add(existing)
     else:
@@ -107,7 +110,7 @@ async def register_cluster(
         existing.tenant_scope_json = scope
         existing.metadata_json = metadata
         existing.last_seen_at = last_seen_at if last_seen_at is not None else existing.last_seen_at
-        existing.updated_at = utc_now()
+        existing.updated_at = timestamp
     await db.flush()
     return existing
 

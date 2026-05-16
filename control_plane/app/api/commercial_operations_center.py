@@ -11,7 +11,7 @@ from app.services.security.trust_graph import TrustGraphService
 from app.services.security.trust_snapshotting import TrustSnapshottingService
 from app.services.security.trust_violation_detection import TrustViolationDetectionService
 
-router = APIRouter(prefix="/admin/ops-center", tags=["commercial_operations_center"])
+router = APIRouter(tags=["commercial_operations_center"])
 
 trust_graph_service = TrustGraphService()
 snapshot_service = TrustSnapshottingService()

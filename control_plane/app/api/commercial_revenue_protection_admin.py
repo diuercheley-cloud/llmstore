@@ -20,7 +20,6 @@ from app.services.compliance.financial_controls import evaluate_control_policy
 from app.services.routing.commercial_report_export import sanitize_report_payload
 
 router = APIRouter(
-    prefix="/admin/billing/revenue-protection",
     tags=["admin", "billing", "revenue-protection"],
     dependencies=[Depends(require_admin)],
 )

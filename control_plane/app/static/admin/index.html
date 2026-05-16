@@ -2293,23 +2293,90 @@
         toolbarStatus: document.getElementById('toolbarStatus')
       };
       let isLoading = false;
+      let currentTab = 'overview';
+      let marginRefreshTimer = null;
 
+      function readAdminTokenFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        return (
+          searchParams.get('admin_token') ||
+          searchParams.get('adminToken') ||
+          searchParams.get('api_key') ||
+          searchParams.get('apiKey') ||
+          hashParams.get('admin_token') ||
+          hashParams.get('adminToken') ||
+          hashParams.get('api_key') ||
+          hashParams.get('apiKey') ||
+          ''
+        ).trim();
+      }
+
+      function clearAdminTokenFromUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('admin_token');
+        url.searchParams.delete('adminToken');
+        url.searchParams.delete('api_key');
+        url.searchParams.delete('apiKey');
+        if (url.hash) {
+          const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
+          const hashParams = new URLSearchParams(hash);
+          hashParams.delete('admin_token');
+          hashParams.delete('adminToken');
+          hashParams.delete('api_key');
+          hashParams.delete('apiKey');
+          const nextHash = hashParams.toString();
+          url.hash = nextHash ? `#${nextHash}` : '';
+        }
+        window.history.replaceState({}, document.title, url.toString());
+      }
+
+      async function attemptAdminLogin(token, { persist = false } = {}) {
+        const nextToken = token.trim();
+        if (!nextToken) return;
+        elements.adminToken.value = nextToken;
+        await initAdmin({ throwOnError: true });
+        if (persist) {
+          localStorage.setItem('adminToken', nextToken);
+        }
+        clearAdminTokenFromUrl();
+      }
+
+      const urlToken = readAdminTokenFromUrl();
       const savedToken = localStorage.getItem('adminToken');
-      if (savedToken) {
-        elements.adminToken.value = savedToken;
-        initAdmin();
+      const initialToken = urlToken || savedToken;
+      if (initialToken) {
+        elements.adminToken.value = initialToken;
+        if (urlToken) {
+          attemptAdminLogin(initialToken, { persist: true }).catch(err => {
+            console.warn('Failed to initialize admin dashboard from URL token:', err);
+          });
+        } else {
+          initAdmin();
+        }
       }
 
       elements.connect.addEventListener('click', () => {
-        localStorage.setItem('adminToken', elements.adminToken.value.trim());
-        initAdmin();
+        attemptAdminLogin(elements.adminToken.value, { persist: true }).catch(err => {
+          console.warn('Failed to initialize admin dashboard from manual token:', err);
+        });
       });
 
       elements.refresh.addEventListener('click', initAdmin);
 
       function toggleDebug(id) {
         const el = document.getElementById(id);
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        if (!el) return;
+        const display = window.getComputedStyle(el).display;
+        el.style.display = (display === 'none') ? 'block' : 'none';
+      }
+
+      function fetchWithTimeout(url, options, timeout = 30000) {
+        return Promise.race([
+          fetch(url, options),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+        ]);
       }
 
       function escHtml(str) {
@@ -2328,8 +2395,6 @@
           .replaceAll("'", '&#39;');
       }
 
-      let currentTab = 'overview';
-      let marginRefreshTimer = null;
       function switchTab(tabId) {
         currentTab = tabId;
         document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
@@ -3154,7 +3219,7 @@
       async function adminFetch(path) {
         const token = elements.adminToken.value.trim();
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
         const response = await fetch(path, {
           signal: controller.signal,
           headers: { 'X-Admin-Token': token }
@@ -3164,7 +3229,7 @@
         return response.json();
       }
 
-      async function initAdmin() {
+      async function initAdmin({ throwOnError = false } = {}) {
         if (isLoading) return;
         if (!elements.adminToken.value.trim()) {
           setToolbarStatus('Informe o admin token para carregar o dashboard.', true);
@@ -3273,30 +3338,18 @@
             modelSupplyChainRegistryResult
           ] = results;
 
-          const requiredFailures = [];
-          if (controlCenterResult.status !== 'fulfilled') requiredFailures.push('control center');
-          if (healthResult.status !== 'fulfilled') requiredFailures.push('health');
-          if (modelsResult.status !== 'fulfilled') requiredFailures.push('models');
-          if (runtimeSummaryResult.status !== 'fulfilled') requiredFailures.push('runtime');
-          if (readinessReportResult.status !== 'fulfilled') requiredFailures.push('readiness');
-          if (securityReportResult.status !== 'fulfilled') requiredFailures.push('security');
-
-          if (requiredFailures.length > 0) {
-            throw new Error(`Falha ao carregar blocos obrigatórios: ${requiredFailures.join(', ')}`);
-          }
-
-          const controlCenter = controlCenterResult.value;
-          const health = healthResult.value;
+          const controlCenter = controlCenterResult.status === 'fulfilled' ? controlCenterResult.value : null;
+          const health = healthResult.status === 'fulfilled' ? healthResult.value : null;
           const usageByClient = usageByClientResult.status === 'fulfilled' ? usageByClientResult.value : [];
           const usageByModel = usageByModelResult.status === 'fulfilled' ? usageByModelResult.value : [];
-          const models = modelsResult.value;
+          const models = modelsResult.status === 'fulfilled' ? modelsResult.value : null;
           const security = securityResult.status === 'fulfilled' ? securityResult.value : [];
           const requests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
           const revenue = revenueResult.status === 'fulfilled' ? revenueResult.value : {};
           const rag = ragResult.status === 'fulfilled' ? ragResult.value : [];
-          const runtimeSummary = runtimeSummaryResult.value;
-          const readinessReport = readinessReportResult.value;
-          const securityReport = securityReportResult.value;
+          const runtimeSummary = runtimeSummaryResult.status === 'fulfilled' ? runtimeSummaryResult.value : null;
+          const readinessReport = readinessReportResult.status === 'fulfilled' ? readinessReportResult.value : null;
+          const securityReport = securityReportResult.status === 'fulfilled' ? securityReportResult.value : null;
           const demoSummary = demoSummaryResult.status === 'fulfilled' ? demoSummaryResult.value : null;
           const plans = plansResult.status === 'fulfilled' ? plansResult.value : [];
           const complianceControls = complianceControlsResult.status === 'fulfilled' ? complianceControlsResult.value : {};
@@ -3316,27 +3369,33 @@
           const modelSupplyChainRegistry = modelSupplyChainRegistryResult.status === 'fulfilled' ? modelSupplyChainRegistryResult.value : {};
           const usageSummary = buildUsageSummaryEnvelope(usageByClient, usageByModel, models, rag);
 
-          renderControlCenter(controlCenter);
-          renderComplianceControls(complianceControls, complianceApprovalChains, complianceEvidence, complianceExceptions);
-          renderOperationalControls(operationalControls, operationalEvidence, operationalReviews);
-          renderGovernanceFederation(govFedStatus, govFedConsistency, govFedAudit);
-          renderSovereignAirgapGovernance(sovereignPackages, sovereignCrls, sovereignAttestation);
-          renderModelSupplyChain(modelSupplyChainStatus, modelSupplyChainRegistry);
-          renderRuntimeSummary(runtimeSummary);
-          renderReadinessReport(readinessReport);
-          renderSecurityReport(securityReport);
-          renderDemo(demoSummary);
-          renderHealth(health);
-          renderModels(models);
-          renderUsage(usageSummary, usageByClient, usageByModel);
-          renderBackends(models.backends);
-          renderSecurity(security);
-          renderRequests(requests);
-          renderRevenue(revenue);
-          renderRagUsage(rag);
-          // renderPlans(plans);
+          function safeRender(fn, ...args) {
+            try {
+              fn(...args);
+            } catch (e) {
+              console.error('Render error:', fn.name, e);
+            }
+          }
 
-          // Hybrid
+          safeRender(renderControlCenter, controlCenter);
+          safeRender(renderComplianceControls, complianceControls, complianceApprovalChains, complianceEvidence, complianceExceptions);
+          safeRender(renderOperationalControls, operationalControls, operationalEvidence, operationalReviews);
+          safeRender(renderGovernanceFederation, govFedStatus, govFedConsistency, govFedAudit);
+          safeRender(renderSovereignAirgapGovernance, sovereignPackages, sovereignCrls, sovereignAttestation);
+          safeRender(renderModelSupplyChain, modelSupplyChainStatus, modelSupplyChainRegistry);
+          safeRender(renderRuntimeSummary, runtimeSummary);
+          safeRender(renderReadinessReport, readinessReport);
+          safeRender(renderSecurityReport, securityReport);
+          safeRender(renderDemo, demoSummary);
+          safeRender(renderHealth, health);
+          safeRender(renderModels, models);
+          safeRender(renderUsage, usageSummary, usageByClient, usageByModel);
+          safeRender(renderBackends, models ? models.backends : []);
+          safeRender(renderSecurity, security);
+          safeRender(renderRequests, requests);
+          safeRender(renderRevenue, revenue);
+          safeRender(renderRagUsage, rag);
+
           const hybridSummary = hybridSummaryResult.status === 'fulfilled' ? hybridSummaryResult.value : null;
           const hybridProviders = hybridProvidersResult.status === 'fulfilled' ? hybridProvidersResult.value : [];
           const hybridRouting = hybridRoutingResult.status === 'fulfilled' ? hybridRoutingResult.value : null;
@@ -3345,20 +3404,20 @@
           const hybridWallets = hybridWalletsResult.status === 'fulfilled' ? hybridWalletsResult.value : [];
           const hybridRag = hybridRagResult.status === 'fulfilled' ? hybridRagResult.value : null;
 
-          renderHybridSummary(hybridSummary);
-          renderHybridProviders(hybridProviders);
-          renderHybridRouting(hybridRouting);
-          renderHybridFinancials(hybridFinancials);
-          renderHybridCache(hybridCache);
-          renderHybridWallets(hybridWallets);
-          renderHybridRag(hybridRag);
+          safeRender(renderHybridSummary, hybridSummary);
+          safeRender(renderHybridProviders, hybridProviders);
+          safeRender(renderHybridRouting, hybridRouting);
+          safeRender(renderHybridFinancials, hybridFinancials);
+          safeRender(renderHybridCache, hybridCache);
+          safeRender(renderHybridWallets, hybridWallets);
+          safeRender(renderHybridRag, hybridRag);
 
           const commSummary = commAnalyticsSummaryResult.status === 'fulfilled' ? commAnalyticsSummaryResult.value : null;
           const commEvents = commAnalyticsEventsResult.status === 'fulfilled' ? commAnalyticsEventsResult.value : [];
-          renderCommercialAnalytics(commSummary, commEvents);
+          safeRender(renderCommercialAnalytics, commSummary, commEvents);
 
           const commCalibration = commCalibrationResult.status === 'fulfilled' ? commCalibrationResult.value : null;
-          renderCommercialCalibration(commCalibration);
+          safeRender(renderCommercialCalibration, commCalibration);
 
           const commDistributedNodes = commDistributedNodesResult.status === 'fulfilled' ? commDistributedNodesResult.value : null;
           const commClusterOverview = commClusterOverviewResult.status === 'fulfilled' ? commClusterOverviewResult.value : null;
@@ -3366,38 +3425,58 @@
           const federationClusters = federationClustersResult.status === 'fulfilled' ? federationClustersResult.value : null;
           const federationOverview = federationOverviewResult.status === 'fulfilled' ? federationOverviewResult.value : null;
           const federationCompare = federationCompareResult.status === 'fulfilled' ? federationCompareResult.value : null;
-          renderCommercialClusterAnalytics(commDistributedNodes, commClusterOverview);
-          renderCommercialHA(commHaClusterState);
-          renderCommercialFederation(federationClusters, federationOverview, federationCompare);
+          safeRender(renderCommercialClusterAnalytics, commDistributedNodes, commClusterOverview);
+          safeRender(renderCommercialHA, commHaClusterState);
+          safeRender(renderCommercialFederation, federationClusters, federationOverview, federationCompare);
 
-          // Load commercial configs
+          const debugs = {
+            'controlCenterDebug': controlCenter,
+            'modelDebug': models,
+            'usageDebug': { summary: usageSummary, by_client: usageByClient, by_model: usageByModel },
+            'backendDebug': models ? models.backends : null,
+            'securityDebug': security,
+            'requestDebug': requests,
+            'revenueDebug': revenue,
+            'hybridDebug': hybridSummary,
+            'providersDebug': hybridProviders,
+            'routingDebug': hybridRouting,
+            'costsDebug': hybridFinancials,
+            'marginDebug': hybridFinancials,
+            'walletDebug': hybridWallets,
+            'cacheDebug': hybridCache,
+            'hybridRagDebug': hybridRag,
+            'commClusterDebug': { nodes: commDistributedNodes, overview: commClusterOverview, ha: commHaClusterState },
+            'commFederationDebug': { clusters: federationClusters, overview: federationOverview, compare: federationCompare }
+          };
+
+          Object.keys(debugs).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = JSON.stringify(debugs[id], null, 2);
+          });
+
           fetchConfigs();
           fetchReportSchedules();
           fetchReportDeliveries();
           refreshExecutiveReportPreview();
           loadWorkflowGovernanceDashboard();
 
-          // document.getElementById("plansDebug").textContent = JSON.stringify(plans, null, 2);
-          // Fill debugs
-          document.getElementById('controlCenterDebug').textContent = JSON.stringify(controlCenter, null, 2);
-          document.getElementById('healthDebug').textContent = JSON.stringify(health, null, 2);
-          document.getElementById('modelDebug').textContent = JSON.stringify(models, null, 2);
-          document.getElementById('usageDebug').textContent = JSON.stringify({ summary: usageSummary, by_client: usageByClient, by_model: usageByModel }, null, 2);
-          document.getElementById('backendDebug').textContent = JSON.stringify(models.backends, null, 2);
-          document.getElementById('securityDebug').textContent = JSON.stringify(security, null, 2);
-          document.getElementById('requestDebug').textContent = JSON.stringify(requests, null, 2);
-          document.getElementById('revenueDebug').textContent = JSON.stringify(revenue, null, 2);
-
-          document.getElementById('hybridDebug').textContent = JSON.stringify(hybridSummary, null, 2);
-          document.getElementById('providersDebug').textContent = JSON.stringify(hybridProviders, null, 2);
-          document.getElementById('routingDebug').textContent = JSON.stringify(hybridRouting, null, 2);
-          document.getElementById('costsDebug').textContent = JSON.stringify(hybridFinancials, null, 2);
-          document.getElementById('marginDebug').textContent = JSON.stringify(hybridFinancials, null, 2);
-          document.getElementById('walletDebug').textContent = JSON.stringify(hybridWallets, null, 2);
-          document.getElementById('cacheDebug').textContent = JSON.stringify(hybridCache, null, 2);
-          document.getElementById('hybridRagDebug').textContent = JSON.stringify(hybridRag, null, 2);
-          document.getElementById('commClusterDebug').textContent = JSON.stringify({ nodes: commDistributedNodes, overview: commClusterOverview, ha: commHaClusterState }, null, 2);
-          document.getElementById('commFederationDebug').textContent = JSON.stringify({ clusters: federationClusters, overview: federationOverview, compare: federationCompare }, null, 2);
+          refreshRevenueProtection();
+          refreshRevenueEscalations();
+          fetchCanaryPromotions();
+          refreshRuntimeIntegrity();
+          loadAIOps();
+          loadPredictiveFailureSignals();
+          loadOperationalCorrelations();
+          loadRAG();
+          loadAppliance();
+          loadFederatedWorkflows();
+          loadWorkflows();
+          loadAgentGovernance();
+          loadConfidentialRuntime();
+          loadPublicAttestationGateway();
+          loadTransparencyGossip();
+          loadWitnessFederation();
+          loadMerkleProofsSection();
 
           const optionalFailures = results
             .map((result, index) => ({ result, index }))
@@ -3416,6 +3495,9 @@
             : 'Falha ao carregar dados do admin: ' + err.message;
           setToolbarStatus(message, true);
           alert(message);
+          if (throwOnError) {
+            throw err;
+          }
         } finally {
           setLoadingState(false);
         }
@@ -3484,8 +3566,9 @@
       }
 
       function renderComplianceControls(controlsEnvelope, approvalChains, evidencePackages, exceptions) {
+        if (!controlsEnvelope || !approvalChains) return;
         const summary = controlsEnvelope.summary || {};
-        const controls = controlsEnvelope.controls || [];
+        const controls = Array.isArray(controlsEnvelope.controls) ? controlsEnvelope.controls : [];
         document.getElementById('complianceActiveControls').textContent = summary.active_controls || 0;
         document.getElementById('compliancePendingChains').textContent = summary.pending_approval_chains || 0;
         document.getElementById('complianceEvidenceRecent').textContent = summary.recent_evidence_packages || 0;
@@ -3525,8 +3608,9 @@
       }
 
       function renderOperationalControls(controlsEnvelope, evidenceEnvelope, reviewsEnvelope) {
+        if (!controlsEnvelope || !evidenceEnvelope || !reviewsEnvelope) return;
         const summary = controlsEnvelope.summary || {};
-        const controls = controlsEnvelope.controls || [];
+        const controls = Array.isArray(controlsEnvelope.controls) ? controlsEnvelope.controls : [];
         const reviewCalendar = controlsEnvelope.review_calendar || [];
         const escalations = controlsEnvelope.escalation_status || [];
         const evidenceItems = evidenceEnvelope.items || [];
@@ -3563,18 +3647,22 @@
       }
 
       function renderGovernanceFederation(statusData, consistencyData, auditData) {
-        document.getElementById('govFedTotalPeers').textContent = statusData.total_peers || 0;
-        document.getElementById('govFedOnlinePeers').textContent = statusData.online_peers || 0;
-        document.getElementById('govFedOfflinePeers').textContent = statusData.offline_peers || 0;
+        if (!statusData || !consistencyData || !auditData) return;
+        function setEl(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+        function setHtml(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+        setEl('govFedTotalPeers', statusData.total_peers || 0);
+        setEl('govFedOnlinePeers', statusData.online_peers || 0);
+        setEl('govFedOfflinePeers', statusData.offline_peers || 0);
 
         const cc = consistencyData.compliance_consistency || {};
-        document.getElementById('govFedConflicts').textContent = cc.drift || 0;
-        document.getElementById('govFedEvents').textContent = auditData.total_events || 0;
+        setEl('govFedConflicts', cc.drift || 0);
+        setEl('govFedEvents', auditData.total_events || 0);
 
         const overallBadge = cc.overall_status === 'consistent'
           ? '<span class="pill pill-success">CONSISTENT</span>'
           : '<span class="pill pill-warning">INCONSISTENT</span>';
-        document.getElementById('govFedBadge').innerHTML = overallBadge;
+        setHtml('govFedBadge', overallBadge);
 
         const badges = [];
         if (statusData.offline_peers > 0) badges.push('<span class="pill pill-critical">OFFLINE</span>');
@@ -3582,23 +3670,24 @@
         if (statusData.mode !== 'disabled') badges.push('<span class="pill pill-success">SYNCED</span>');
         const conflicts = (statusData.recent_syncs || []).filter(s => s.status === 'conflict');
         if (conflicts.length > 0) badges.push('<span class="pill pill-warning">CONFLICT</span>');
-        document.getElementById('govFedBadges').innerHTML = badges.length ? badges.join(' ') : '<span class="pill pill-info">NO_DATA</span>';
+        setHtml('govFedBadges', badges.length ? badges.join(' ') : '<span class="pill pill-info">NO_DATA</span>');
 
         const peers = statusData.peers || [];
-        document.getElementById('govFedPeersTable').innerHTML = '<table><thead><tr><th>Cluster</th><th>Region</th><th>Env</th><th>Status</th><th>Sync</th><th>Trust</th><th>Last Policy Sync</th></tr></thead><tbody>' +
+        setHtml('govFedPeersTable', '<table><thead><tr><th>Cluster</th><th>Region</th><th>Env</th><th>Status</th><th>Sync</th><th>Trust</th><th>Last Policy Sync</th></tr></thead><tbody>' +
           peers.map(p => `<tr><td>${p.peer_cluster_id}</td><td>${p.region || '-'}</td><td>${p.environment}</td><td>${p.status}</td><td>${p.sync_mode}</td><td>${p.trust_level}</td><td>${p.last_policy_sync_at || '-'}</td></tr>`).join('') +
-          '</tbody></table>';
+          '</tbody></table>');
 
         const issues = cc.issues || [];
-        document.getElementById('govFedConsistencyTable').innerHTML = '<table><thead><tr><th>Peer</th><th>Issue</th><th>Severity</th><th>Detail</th></tr></thead><tbody>' +
+        setHtml('govFedConsistencyTable', '<table><thead><tr><th>Peer</th><th>Issue</th><th>Severity</th><th>Detail</th></tr></thead><tbody>' +
           issues.slice(0, 10).map(i => `<tr><td>${i.peer}</td><td>${i.issue}</td><td>${i.severity}</td><td>${i.detail || ''}</td></tr>`).join('') +
-          '</tbody></table>';
+          '</tbody></table>');
 
         const events = auditData.recent_events || [];
-        document.getElementById('govFedAuditTable').innerHTML = '<table><thead><tr><th>Source Cluster</th><th>Event Type</th><th>Received</th></tr></thead><tbody>' +
+        setHtml('govFedAuditTable', '<table><thead><tr><th>Source Cluster</th><th>Event Type</th><th>Received</th></tr></thead><tbody>' +
           events.slice(0, 10).map(e => `<tr><td>${e.source_cluster_id}</td><td>${e.event_type}</td><td>${e.received_at}</td></tr>`).join('') +
-          '</tbody></table>';
+          '</tbody></table>');
       }
+
 
       function sovereignBadge(status) {
         const normalized = String(status || '').toLowerCase();
@@ -3623,6 +3712,21 @@
       }
 
       function renderModelSupplyChain(statusData, registryData) {
+        const registryTotalEl = document.getElementById('modelSupplyChainRegistryTotal');
+        const trustedEl = document.getElementById('modelSupplyChainTrusted');
+        const pendingEl = document.getElementById('modelSupplyChainPending');
+        const blockedEl = document.getElementById('modelSupplyChainBlocked');
+        const bundlesEl = document.getElementById('modelSupplyChainBundles');
+        const modeEl = document.getElementById('modelSupplyChainMode');
+        const registryTableEl = document.getElementById('modelSupplyChainRegistryTable');
+        const riskTableEl = document.getElementById('modelSupplyChainRiskTable');
+
+        if (!statusData || !registryData) {
+          [registryTotalEl, trustedEl, pendingEl, blockedEl, bundlesEl, modeEl].forEach(el => { if(el) el.textContent = 'N/A'; });
+          if (registryTableEl) registryTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (riskTableEl) riskTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          return;
+        }
         const counts = statusData.trust_state_counts || {};
         const risk = statusData.model_risk_summary || {};
         const items = Array.isArray(registryData.items) ? registryData.items : [];
@@ -3661,6 +3765,16 @@
       }
 
       function renderSovereignAirgapGovernance(packages, crls, attestationEnvelope) {
+        const packagesTableEl = document.getElementById('sovAirgapPackagesTable');
+        const crlTableEl = document.getElementById('sovAirgapCrlTable');
+        const attestationTableEl = document.getElementById('sovAirgapAttestationTable');
+
+        if (!packages || !crls) {
+          if (packagesTableEl) packagesTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (crlTableEl) crlTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (attestationTableEl) attestationTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          return;
+        }
         const packageRows = Array.isArray(packages) ? packages : [];
         const crlRows = Array.isArray(crls) ? crls : [];
         const attestationItems = Array.isArray(attestationEnvelope?.items) ? attestationEnvelope.items : [];
@@ -3781,11 +3895,22 @@
       }
 
       function renderControlCenter(data) {
+        const hVal = document.getElementById('cc-health-val');
+        const rVal = document.getElementById('cc-readiness-val');
+        const sVal = document.getElementById('cc-security-val');
+        const vVal = document.getElementById('cc-version-val');
+
+        if (!data) {
+          if (hVal) hVal.textContent = 'N/A';
+          if (rVal) rVal.textContent = 'N/A';
+          if (sVal) sVal.textContent = 'N/A';
+          if (vVal) vVal.textContent = 'N/A';
+          return;
+        }
         // Health
         const hEl = document.getElementById('cc-health');
-        const hVal = document.getElementById('cc-health-val');
         const hDet = document.getElementById('cc-health-det');
-        hVal.textContent = data.health_status.toUpperCase();
+        hVal.textContent = (data.health_status || 'unknown').toUpperCase();
         hEl.className = 'status-card';
         if (data.health_status === 'ok') {
            hEl.classList.add('status-ready');
@@ -3801,7 +3926,6 @@
 
         // Readiness
         const rEl = document.getElementById('cc-readiness');
-        const rVal = document.getElementById('cc-readiness-val');
         const rDet = document.getElementById('cc-readiness-det');
         rVal.textContent = data.readiness_score || 'N/A';
         rEl.className = 'status-card';
@@ -3819,7 +3943,6 @@
 
         // Security
         const sEl = document.getElementById('cc-security');
-        const sVal = document.getElementById('cc-security-val');
         const sDet = document.getElementById('cc-security-det');
         sVal.textContent = data.security_score || 'N/A';
         sEl.className = 'status-card';
@@ -3833,7 +3956,6 @@
         sDet.textContent = `Latest report: ${data.artifacts.security.timestamp || 'N/A'}`;
 
         // Version
-        const vVal = document.getElementById('cc-version-val');
         const vDet = document.getElementById('cc-version-det');
         vVal.textContent = `v${data.version}`;
         vDet.textContent = `Branch: ${data.git_branch || 'N/A'} (${data.git_commit || 'N/A'})`;
@@ -3880,11 +4002,17 @@
       }
 
       function renderRuntimeSummary(data) {
-        const el = document.getElementById('runtimeCard');
         const val = document.getElementById('runtimeValue');
         const det = document.getElementById('runtimeDetails');
+
+        if (!data) {
+          if (val) val.textContent = 'N/A';
+          if (det) det.textContent = 'Data unavailable.';
+          return;
+        }
+        const el = document.getElementById('runtimeCard');
         
-        val.textContent = data.health;
+        val.textContent = data.health || 'UNKNOWN';
         el.className = 'status-card';
         if (data.ready) {
           el.classList.add('status-ready');
@@ -3907,6 +4035,7 @@
       }
 
       function renderReadinessReport(data) {
+        if (!data) return;
         const el = document.getElementById('readinessCard');
         const val = document.getElementById('readinessValue');
         const det = document.getElementById('readinessDetails');
@@ -3939,6 +4068,7 @@
       }
 
       function renderSecurityReport(data) {
+        if (!data) return;
         const el = document.getElementById('securityReportCard');
         const val = document.getElementById('securityValue');
         const det = document.getElementById('securityDetails');
@@ -4216,6 +4346,7 @@
 
       function renderRagUsage(data) {
         const list = document.getElementById('ragUsageList');
+        if (!data || !list) return;
         list.innerHTML = data.map(r => `
           <tr>
             <td><strong>${r.client_name}</strong></td>
@@ -5648,11 +5779,8 @@
         }
       }
       
-      // Refresh promotions periodically or on init
-      setTimeout(refreshRevenueProtection, 1200);
-      setTimeout(refreshRevenueEscalations, 1500);
-      setTimeout(fetchCanaryPromotions, 1000);
-      setTimeout(refreshRuntimeIntegrity, 1700);
+      // Sections now refreshed via initAdmin() 
+
 
       // ===== Phase 42: Merkle Execution Proofs =====
       async function loadMerkleProofsSection() {
@@ -6568,7 +6696,7 @@
         }
       }
 
-      setTimeout(loadAIOps, 1500);
+
 
       async function loadPredictiveFailureSignals() {
         const token = document.getElementById('adminToken').value;
@@ -6743,18 +6871,8 @@
         }
       }
 
-      setTimeout(loadPredictiveFailureSignals, 1600);
-      setTimeout(loadOperationalCorrelations, 1700);
-      setTimeout(loadRAG, 5500);
-      setTimeout(loadAppliance, 5000);
-      setTimeout(loadFederatedWorkflows, 4750);
-      setTimeout(loadWorkflows, 4500);
-      setTimeout(loadAgentGovernance, 4000);
-      setTimeout(loadConfidentialRuntime, 3500);
-      setTimeout(loadPublicAttestationGateway, 3000);
-      setTimeout(loadTransparencyGossip, 2500);
-      setTimeout(loadWitnessFederation, 2000);
-      setTimeout(loadMerkleProofsSection, 1800);
+      // Sections now refreshed via initAdmin()
+
 
       // Regulated RAG Vault dashboard hooks:
       // /admin/rag/vaults
