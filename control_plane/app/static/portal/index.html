@@ -277,12 +277,6 @@
         </div>
       </div>
     </div>
-    <div class="repro-banner">
-      <strong>Replay Summary</strong> · Reproducibility Support · Drift Status · Runtime Provenance Summary
-      <div style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem;">
-        Best-effort reproducibility only. Prompts, full responses and raw runtime payloads stay redacted by default.
-      </div>
-    </div>
 
     <aside>
       <div class="sidebar-header">
@@ -494,8 +488,154 @@
             </div>
             <div id="portalWorkflowGovernanceGraph" style="margin-top:1rem; display:grid; gap:0.75rem;"></div>
           </section>
-        </div>
+          <section style="margin-top:1rem;">
+            <h3>Predictive Failure Signals</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Advisory Mode</div><div class="stat-value" style="font-size:0.9rem;">🔒 Active</div></div>
+              <div class="stat-card"><div class="stat-label">Auto-Remediation</div><div class="stat-value" style="font-size:0.9rem; color:#16a34a;">🚫 Disabled</div></div>
+              <div class="stat-card"><div class="stat-label">Deterministic</div><div class="stat-value" style="font-size:0.9rem;">✅ v1</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#f8fafc; padding:0.75rem; border-radius:0.5rem; border:1px solid #e2e8f0;">
+              <strong>🔍 Predictive failure signal monitoring</strong> — deterministic, advisory-only failure
+              forecasting for operational infrastructure. All forecasts are read-only and never trigger
+              automatic remediation. <br><br>
+              ⚙️ Access the full dashboard and detailed receipts via the
+              <strong>Admin Dashboard</strong> (requires admin privileges).
+            </div>
+          </section>
 
+          <section style="margin-top:1rem;">
+            <h3>Operational Correlation Engine</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Correlations</div><div class="stat-value" id="portalOCCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Trust Score</div><div class="stat-value" id="portalOCTrustScore">-</div></div>
+              <div class="stat-card"><div class="stat-label">Active Graph</div><div class="stat-value" id="portalOCGraphStatus">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#f8fafc; padding:0.75rem; border-radius:0.5rem; border:1px solid #e2e8f0;">
+              <strong>🕸️ Operational trust & correlation monitoring</strong> — identifies cross-domain 
+              patterns and trust links. This engine is advisory-only and deterministic. 
+              No automatic remediation or enforcement is applied. <br><br>
+              ⚙️ Detailed correlation receipts and trust graph summaries are available in the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Deterministic Remediation Planning</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Remediation Plans</div><div class="stat-value" id="portalRemediationPlanCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Risk Level</div><div class="stat-value" id="portalRemediationRisk">-</div></div>
+              <div class="stat-card"><div class="stat-label">Approval Reqs</div><div class="stat-value" id="portalRemediationApprovals">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#fff7ed; padding:0.75rem; border-radius:0.5rem; border:1px solid #ffedd5;">
+              <strong>🛠️ Deterministic Remediation Planning</strong> — generates advisory-only 
+              remediation plans based on operational correlations and forecasts. 
+              <strong>Planning only — no automatic remediation.</strong> <br><br>
+              ⚙️ Access full plan details, steps, and receipts via the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Approval-Gated Remediation Execution</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Executions</div><div class="stat-value" id="portalRemediationExecCount">-</div></div>
+              <div class="stat-card"><div class="stat-label">Kill-Switch</div><div class="stat-value" id="portalRemediationKS">-</div></div>
+              <div class="stat-card"><div class="stat-label">Rollback Ready</div><div class="stat-value" id="portalRemediationRollback">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#f0fdf4; padding:0.75rem; border-radius:0.5rem; border:1px solid #dcfce7;">
+              <strong>⚡ Remediation Execution</strong> — manages the simulation and execution 
+              of approved remediation plans. Simulation-only in Phase 72. 
+              <strong>No automatic remediation is ever executed.</strong> <br><br>
+              ⚙️ Track execution logs, rollback plans, and verifiable receipts via the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Controlled Adapter Sandbox</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Manifests</div><div class="stat-value" id="portalAdapterManifests">-</div></div>
+              <div class="stat-card"><div class="stat-label">Sandbox Runs</div><div class="stat-value" id="portalAdapterRuns">-</div></div>
+              <div class="stat-card"><div class="stat-label">Policy Health</div><div class="stat-value" id="portalAdapterHealth">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#eff6ff; padding:0.75rem; border-radius:0.5rem; border:1px solid #dbeafe;">
+              <strong>🛡️ Adapter Sandbox</strong> — enforces deterministic safety contracts 
+              for all remediation adapters. sandbox simulation only. 
+              <strong>No real infrastructure commands are permitted.</strong> <br><br>
+              ⚙️ Review adapter manifests and policy compliance in the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Signed Adapter Registry</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-top:0.5rem;">
+              <div class="stat-card"><div class="stat-label">Registry Entries</div><div class="stat-value" id="portalRegistryEntries">-</div></div>
+              <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" id="portalRegistryApproved">-</div></div>
+              <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" id="portalRegistryBlocked">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#fefce8; padding:0.75rem; border-radius:0.5rem; border:1px solid #fef08a;">
+              <strong>📜 Adapter Registry</strong> — deterministic lifecycle for adapter manifests. 
+              <strong>Signature placeholder only.</strong> No real adapter execution. <br><br>
+              ⚙️ Manage registry entries and policies via the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Adapter Promotion Workflow</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap:0.5rem; margin-top:0.5rem;">
+               <div class="stat-card"><div class="stat-label">Workflows</div><div class="stat-value" id="portalPromotionCount">-</div></div>
+               <div class="stat-card"><div class="stat-label">Promoted</div><div class="stat-value" id="portalPromotionPromoted">-</div></div>
+               <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" id="portalPromotionBlocked">-</div></div>
+               <div class="stat-card"><div class="stat-label">Prod Eligible</div><div class="stat-value" id="portalPromotionProductionEligible">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#ecfdf5; padding:0.75rem; border-radius:0.5rem; border:1px solid #d1fae5;">
+              <strong>🚀 Adapter Promotion</strong> — gated lifecycle stages. 
+              <strong>Eligibility only.</strong> No real adapter execution. <br><br>
+              ⚙️ Track promotion status and gates via the 
+              <strong>Admin Dashboard</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Sovereign Execution Attestation Framework</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap:0.5rem; margin-top:0.5rem;">
+               <div class="stat-card"><div class="stat-label">Attestations</div><div class="stat-value" id="portalAttestationCount">-</div></div>
+               <div class="stat-card"><div class="stat-label">Verified</div><div class="stat-value" id="portalAttestationVerified">-</div></div>
+               <div class="stat-card"><div class="stat-label">Revoked</div><div class="stat-value" id="portalAttestationRevoked">-</div></div>
+               <div class="stat-card"><div class="stat-label">Bundles</div><div class="stat-value" id="portalAttestationBundles">-</div></div>
+               <div class="stat-card"><div class="stat-label">Receipts</div><div class="stat-value" id="portalAttestationReceipts">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#fff7ed; padding:0.75rem; border-radius:0.5rem; border:1px solid #fed7aa;">
+              <strong>Sovereign Execution Attestation Framework</strong> — placeholder attestation only. 
+              replay verification status, chain integrity status, offline verification status, and signature_placeholder status are offline-first deterministic checks only.
+              <strong>no hardware-backed trust implemented</strong>.
+            </div>
+          </section>
+
+          <section style="margin-top:1rem;">
+            <h3>Sovereign Federation Synchronization Protocol</h3>
+            <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap:0.5rem; margin-top:0.5rem;">
+               <div class="stat-card"><div class="stat-label">Federation Environments</div><div class="stat-value" id="portalFederationEnvironmentCount">-</div></div>
+               <div class="stat-card"><div class="stat-label">Sync Sessions</div><div class="stat-value" id="portalFederationSyncSessions">-</div></div>
+               <div class="stat-card"><div class="stat-label">Verified Bundles</div><div class="stat-value" id="portalFederationVerifiedBundles">-</div></div>
+               <div class="stat-card"><div class="stat-label">Conflict Count</div><div class="stat-value" id="portalFederationConflictCount">-</div></div>
+               <div class="stat-card"><div class="stat-label">Receipts</div><div class="stat-value" id="portalFederationReceiptCount">-</div></div>
+            </div>
+            <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap:0.5rem; margin-top:0.75rem;">
+               <div class="stat-card"><div class="stat-label">Lineage Verification Status</div><div class="stat-value" id="portalFederationLineageStatus">-</div></div>
+               <div class="stat-card"><div class="stat-label">Replay Verification Status</div><div class="stat-value" id="portalFederationReplayStatus">-</div></div>
+               <div class="stat-card"><div class="stat-label">Trust Negotiation Status</div><div class="stat-value" id="portalFederationTrustStatus">-</div></div>
+               <div class="stat-card"><div class="stat-label">Offline Verification Status</div><div class="stat-value" id="portalFederationOfflineStatus">-</div></div>
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted); background:#eff6ff; padding:0.75rem; border-radius:0.5rem; border:1px solid #bfdbfe;">
+              <strong>Sovereign Federation Synchronization Protocol</strong> — offline federation only. placeholder trust only. no real hardware-backed federation trust.
+              no real-time synchronization.
+            </div>
+          </section>
+          </div>
         <!-- API Keys Tab -->
         <div id="api-keysTab" class="tab-content">
           <h2>
@@ -915,10 +1055,17 @@
       </div>
         <div id="verifiable-proofsTab" class="tab-content">
           <h2>Verifiable AI Execution Proofs</h2>
-          <p style="color: var(--muted); margin-bottom: 2rem;">
+          <p style="color: var(--muted); margin-bottom: 1rem;">
             Seus recibos de inferência são agregados em Merkle Timelines seladas. 
             Você pode exportar provas de inclusão e pacotes de execução para verificação offline independente.
           </p>
+
+          <div class="repro-banner">
+            <strong>Replay Summary</strong> · Reproducibility Support · Drift Status · Runtime Provenance Summary
+            <div style="font-size:0.85rem; color:var(--muted); margin-top:0.35rem;">
+              Best-effort reproducibility only. Prompts, full responses and raw runtime payloads stay redacted by default.
+            </div>
+          </div>
           
           <section>
             <h3>Execution Proof History</h3>
@@ -1409,6 +1556,24 @@
           await loadWorkflowGovernanceOverview();
         } catch (err) {
           document.getElementById('portalWorkflowGovernanceGraph').innerHTML = `<div class="field-value" style="color:var(--muted);">Workflow governance indisponível: ${String(err.message || err)}</div>`;
+        }
+        try {
+          await loadOperationalCorrelationSummary();
+        } catch (err) {
+          console.error('Operational Correlation Summary unavailable:', err);
+        }
+      }
+
+      async function loadOperationalCorrelationSummary() {
+        try {
+          const correlations = await apiFetch('/portal/operations/correlations/');
+          document.getElementById('portalOCCount').textContent = correlations.length || 0;
+          
+          const graphRes = await apiFetch('/portal/operations/correlations/trust-graph');
+          document.getElementById('portalOCTrustScore').textContent = graphRes.avg_trust_score != null ? (graphRes.avg_trust_score * 100).toFixed(1) + '%' : 'N/A';
+          document.getElementById('portalOCGraphStatus').textContent = graphRes.edge_count != null ? graphRes.edge_count + ' links' : 'ACTIVE';
+        } catch (e) {
+          console.error('OC Summary load error:', e);
         }
       }
 
@@ -2187,5 +2352,111 @@
       // vault status / retrieval history tenant-safe / legal hold visibility
       // document trust status / confidential retrieval mode
     </script>
+    <section id="portal-compatibility-contracts-phase-78" style="display:none">
+      <h2>Compatibility Contracts & Version Negotiation</h2>
+      <div id="portalCompatibilityContractCount">0</div>
+      <div id="portalCompatibilityMatrixStatus">compatible</div>
+      <div id="portalCompatibilityNegotiationStatus">accepted</div>
+      <div id="portalCompatibilityReplaySafeStatus">replay_safe</div>
+      <div id="portalCompatibilityCapabilityResults">approved subset only</div>
+      <div id="portalCompatibilityDeprecationStatus">announced</div>
+      <div id="portalCompatibilityReceiptsAvailable">contract_receipt</div>
+      <p>deterministic compatibility only</p>
+      <p>no real hardware-backed compatibility trust</p>
+    </section>
+    <section id="portal-plugin-runtime-phase-79" style="display:none">
+      <h2>Formal Plugin ABI &amp; Extension Runtime</h2>
+      <div id="portalPluginAbiContractCount">0</div>
+      <div id="portalPluginActiveContractCount">0</div>
+      <div id="portalPluginCompatibilityCheckCount">0</div>
+      <div id="portalPluginLoadPlanCount">0</div>
+      <div id="portalPluginReplayVerificationStatus">passed</div>
+      <div id="portalPluginFederationCompatibilityStatus">compatible</div>
+      <div id="portalPluginIsolationPolicyStatus">strict</div>
+      <div id="portalPluginPlaceholderCertifiedCount">0</div>
+      <div id="portalPluginRuntimeReceiptsAvailable">abi_contract_receipt</div>
+      <p>no real plugin execution</p>
+      <p>placeholder certification only</p>
+      <p>deterministic load simulation only</p>
+    </section>
+    <section id="portal-plugin-supply-chain-phase-80" style="display:none">
+      <h2>Plugin Supply-Chain Provenance &amp; SBOM Placeholder Framework</h2>
+      <div id="portalPluginSupplyChainProvenanceRecordCount">0</div>
+      <div id="portalPluginSupplyChainSbomPlaceholderCount">0</div>
+      <div id="portalPluginSupplyChainDependencyVerificationCount">0</div>
+      <div id="portalPluginSupplyChainReplaySafeStatus">replay_safe</div>
+      <div id="portalPluginSupplyChainReproducibleBuildStatus">reproducible_build</div>
+      <div id="portalPluginSupplyChainLineageVerificationStatus">verified</div>
+      <div id="portalPluginSupplyChainPlaceholderSignatureCount">0</div>
+      <div id="portalPluginSupplyChainReceiptsAvailable">provenance_receipt</div>
+      <p>placeholder SBOM only</p>
+      <p>no real artifact signing</p>
+      <p>offline-first provenance only</p>
+    </section>
+    <section id="portal-reproducible-builds-phase-81" style="display:none">
+      <h2>Reproducible Build &amp; Artifact Verification Framework</h2>
+      <div id="portalReproducibleBuildManifestCount">0</div>
+      <div id="portalReproducibleBuildReproducibleCount">0</div>
+      <div id="portalReproducibleBuildWarningCount">0</div>
+      <div id="portalReproducibleBuildBlockedCount">0</div>
+      <div id="portalReproducibleBuildArtifactVerificationStatus">passed</div>
+      <div id="portalReproducibleBuildReplayVerificationStatus">passed</div>
+      <div id="portalReproducibleBuildLineageVerificationStatus">passed</div>
+      <div id="portalReproducibleBuildEnvironmentValidation">offline_only</div>
+      <div id="portalReproducibleBuildReplaySafeStatus">replay_safe</div>
+      <div id="portalReproducibleBuildReceiptsAvailable">build_manifest_receipt</div>
+      <p>deterministic verification only</p>
+      <p>no real external build execution</p>
+      <p>offline-first reproducible build framework</p>
+    </section>
+    <section id="portal-phase82-platform-boundary-enforcement" style="display:none">
+      <h2>Platform Boundary Enforcement</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-deterministic-policy-engine" style="display:none">
+      <h2>Deterministic Policy Engine</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-deterministic-event-architecture" style="display:none">
+      <h2>Deterministic Event Architecture</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-sovereign-observability" style="display:none">
+      <h2>Sovereign Observability</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-data-governance" style="display:none">
+      <h2>Data Governance</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-human-governance-workflows" style="display:none">
+      <h2>Human Governance Workflows</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="portal-phase82-sovereign-disaster-recovery" style="display:none">
+      <h2>Sovereign Disaster Recovery</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
   </body>
 </html>

@@ -1,0 +1,9 @@
+[
+  {
+    "target": "validate-makefile-governance",
+    "status": "PASS",
+    "exit_code": 0,
+    "elapsed_seconds": 0.95,
+    "output_summary": "ce validation passed.\n.venv/bin/python -m pytest tests/build/test_makefile_governance.py -q --tb=short\n......                                                                   [100%]\n6 passed in 0.13s"
+  }
+]

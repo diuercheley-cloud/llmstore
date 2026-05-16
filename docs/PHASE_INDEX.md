@@ -43,6 +43,17 @@ This document provides a chronological index of the development phases that buil
 - **Key Files**: `tools/public_verifier/verifier_cli.py`.
 - **Validation**: `scripts/validate-public-verifier.sh`.
 
+## Advanced Operations Phases (60-70)
+### Phase 69: Predictive Failure Signals + Deterministic Forecasting
+- **Objective**: Infrastructure for predictive failure signals and deterministic forecasting.
+- **Key Files**: `control_plane/app/services/operations/forecasting/`.
+- **Reference**: `docs/phases/phase_69_predictive_failure_signals.md`.
+
+### Phase 70: Deterministic Operations Correlation Engine
+- **Objective**: Deterministic cross-domain correlation and Operational Trust Graph.
+- **Key Files**: `control_plane/app/services/operations/correlation/`.
+- **Reference**: `docs/phases/phase_70_operations_correlation_engine.md`.
+
 ---
 
 **Next Steps**: See [TRUST_CHAIN.md](TRUST_CHAIN.md) for the detailed security model.

@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.9.0-release-engineering-baseline] - 2026-05-16
+
+### Added
+- Macrofases 69–82 implementation baseline.
+- Plugin runtime foundation for modular platform extensions.
+- Reproducible build metadata support.
+- Platform sustainability governance models.
+- Platform release baseline and validation snapshot infrastructure.
+
+### Changed
+- Technical freeze for Phases 69–82 established.
+- Enhanced smoke/full validation split for operational stability.
+
+### Governance
+- Foundation for release engineering governance.
+- Integration of version governance in platform core.
+- Release receipt issuance and verification logic.
+
+### Validation
+- Operational stability baseline established.
+- Deterministic validation snapshot tooling.
+- Offline-first release verification suite.
+
+### Documentation
+- Release engineering documentation suite (process, governance, versioning).
+- Operational runbooks for internal platform releases.
+- Release baseline examples and manifest templates.
+
+
 ## [v1.8.1-real-provider-validation] - 2026-05-13
 
 ### Added

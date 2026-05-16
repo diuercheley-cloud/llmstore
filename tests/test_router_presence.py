@@ -23,7 +23,8 @@ def test_required_routers_are_present():
         ("/admin/tests/auth/whoami", "GET"),
         ("/health", "GET"),
         ("/ready", "GET"),
-        ("/v1/chat/completions", "POST")
+        ("/v1/chat/completions", "POST"),
+        ("/admin/governance/deterministic-policies", "GET"),
     ]
     
     for path, method in required_endpoints:

@@ -80,6 +80,21 @@ from app.api.commercial_operations_center import router as commercial_ops_center
 from app.api.commercial_rag_admin import router as commercial_rag_admin_router
 from app.api.commercial_model_lifecycle_admin import router as commercial_model_lifecycle_admin_router
 from app.api.commercial_model_lifecycle_admin import portal_router as commercial_model_lifecycle_portal_router
+from app.api.operations_admin import router as operations_admin_router
+from app.api.operations_correlation_admin import router as operations_correlation_admin_router
+from app.api.operations_correlation_portal import router as operations_correlation_portal_router
+from app.api.operations_remediation_admin import router as operations_remediation_admin_router
+from app.api.operations_remediation_execution_admin import router as operations_remediation_execution_admin_router
+from app.api.operations_adapter_sandbox_admin import router as operations_adapter_sandbox_admin_router
+from app.api.operations_adapter_registry_admin import router as operations_adapter_registry_admin_router
+from app.api.operations_adapter_promotion_admin import router as operations_adapter_promotion_admin_router
+from app.api.operations_attestation_admin import router as operations_attestation_admin_router
+from app.api.operations_federation_sync_admin import router as operations_federation_sync_admin_router
+from app.api.operations_compatibility_admin import router as operations_compatibility_admin_router
+from app.api.operations_plugin_runtime_admin import router as operations_plugin_runtime_admin_router
+from app.api.operations_plugin_supply_chain_admin import router as operations_plugin_supply_chain_admin_router
+from app.api.operations_reproducible_builds_admin import router as operations_reproducible_builds_admin_router
+from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
 from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
 from app.api.payments import router as payments_router
 from app.core.config import get_settings
@@ -254,6 +269,21 @@ app.include_router(commercial_ops_center_router)
 app.include_router(commercial_rag_admin_router)
 app.include_router(commercial_model_lifecycle_admin_router)
 app.include_router(commercial_model_lifecycle_portal_router)
+app.include_router(operations_admin_router)
+app.include_router(operations_correlation_admin_router, prefix="/admin/operations/correlations", tags=["operations-correlation"])
+app.include_router(operations_correlation_portal_router)
+app.include_router(operations_remediation_admin_router, prefix="/admin/operations/remediation-plans", tags=["operations-remediation"])
+app.include_router(operations_remediation_execution_admin_router, prefix="/admin/operations/remediation-executions", tags=["operations-remediation-execution"])
+app.include_router(operations_adapter_sandbox_admin_router, prefix="/admin/operations/adapter-sandbox", tags=["operations-adapter-sandbox"])
+app.include_router(operations_adapter_registry_admin_router, prefix="/admin/operations/adapter-registry", tags=["operations-adapter-registry"])
+app.include_router(operations_adapter_promotion_admin_router, prefix="/admin/operations/adapter-promotion", tags=["operations-adapter-promotion"])
+app.include_router(operations_attestation_admin_router, prefix="/admin/operations", tags=["operations-attestation"])
+app.include_router(operations_federation_sync_admin_router, tags=["operations-federation-sync"])
+app.include_router(operations_compatibility_admin_router, tags=["operations-compatibility"])
+app.include_router(operations_plugin_runtime_admin_router, tags=["operations-plugin-runtime"])
+app.include_router(operations_plugin_supply_chain_admin_router, tags=["operations-plugin-supply-chain"])
+app.include_router(operations_reproducible_builds_admin_router, tags=["operations-reproducible-builds"])
+app.include_router(governance_policy_engine_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 

@@ -10,6 +10,12 @@ Run the full suite with:
 make validate-local-production
 ```
 
+For architecture-only validation without external services, use:
+
+```bash
+make validate-platform-architecture
+```
+
 The Makefile target runs:
 
 ```bash

@@ -1515,6 +1515,156 @@
         </div>
       </section>
 
+      <!-- Phase 69: Predictive Failure Signals -->
+      <section class="wide" id="predictiveFailureSection">
+        <h2>Predictive Failure Signals (Phase 69) <span class="pill pill-warning" style="font-size:0.7rem;">ADVISORY ONLY</span></h2>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="status-card">
+            <span class="label">Total Failure Signals</span>
+            <span class="value" id="pfSignalCount">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Latest Risk Score</span>
+            <span class="value" id="pfRiskScore">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Risk Level</span>
+            <span class="value" id="pfRiskLevel">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Total Forecasts</span>
+            <span class="value" id="pfForecastCount">-</span>
+          </div>
+        </div>
+        <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;">
+          <span class="pill pill-muted" style="font-size:0.8rem;">🔒 advisory_only</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">🧪 dry_run: true</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">⚙️ deterministic v1</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">📡 offline-first</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">🚫 no auto-remediation</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <h3>Failure Signals</h3>
+            <div style="overflow-x:auto;">
+              <table id="pfSignalTable">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Domain</th>
+                    <th>Severity</th>
+                    <th>Confidence</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3>Risk Assessments</h3>
+            <div style="overflow-x:auto;">
+              <table id="pfAssessmentTable">
+                <thead>
+                  <tr>
+                    <th>Level</th>
+                    <th>Score</th>
+                    <th>Requires Approval</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="action-row" style="margin-top:1rem;">
+          <button onclick="runPredictiveForecast()">Run Forecast</button>
+          <button class="secondary" onclick="loadPredictiveFailureSignals()">Refresh</button>
+        </div>
+        <div class="stat-details" style="margin-top:0.75rem;font-size:0.8rem;">
+          ⚠️ All signals and forecasts are advisory-only. No automatic remediation is performed.
+          Results are deterministic and reproducible. Compatible with offline/local deployments.
+        </div>
+        <pre id="pfDebug" class="debug"></pre>
+      </section>
+
+      <!-- Phase 70: Operational Correlation Engine -->
+      <section class="wide" id="operationalCorrelationSection">
+        <h2>Operational Correlation Engine (Phase 70) <span class="pill pill-warning" style="font-size:0.7rem;">ADVISORY ONLY</span></h2>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="status-card">
+            <span class="label">Total Correlations</span>
+            <span class="value" id="ocTotalCount">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Avg Correlation Score</span>
+            <span class="value" id="ocAvgScore">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Confidence Level</span>
+            <span class="value" id="ocConfidence">-</span>
+          </div>
+          <div class="status-card">
+            <span class="label">Active Trust Links</span>
+            <span class="value" id="ocTrustLinks">-</span>
+          </div>
+        </div>
+        <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;">
+          <span class="pill pill-muted" style="font-size:0.8rem;">🔒 advisory_only</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">🧪 dry_run: true</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">🕸️ trust-graph v1</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">📡 offline-first</span>
+          <span class="pill pill-muted" style="font-size:0.8rem;">🚫 no auto-enforcement</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <h3>Recent Correlations</h3>
+            <div style="overflow-x:auto;">
+              <table id="ocCorrelationTable">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Score</th>
+                    <th>Domains</th>
+                    <th>Confidence</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3>Operational Trust Graph Summary</h3>
+            <div style="overflow-x:auto;">
+              <table id="ocGraphTable">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="action-row" style="margin-top:1rem;">
+          <button onclick="runOperationalCorrelation()">Run Correlation</button>
+          <button class="secondary" onclick="loadOperationalCorrelations()">Refresh</button>
+          <button class="secondary" onclick="buildOperationalTrustGraph()">Rebuild Trust Graph</button>
+        </div>
+        <div class="stat-details" style="margin-top:0.75rem;font-size:0.8rem;">
+          ⚠️ The Operational Correlation Engine identifies patterns across infrastructure domains.
+          All findings are advisory-only and do not trigger automatic enforcement.
+          Uses deterministic logic compatible with offline/air-gapped deployments.
+        </div>
+        <pre id="ocDebug" class="debug" style="display:none;"></pre>
+      </section>
+
       <section class="wide">
         <h2>Runtime & Hardening Status</h2>
         <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
@@ -1970,6 +2120,117 @@
              </div>
           </div>
 
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Deterministic Remediation Planning</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Total Plans</div><div class="stat-value" id="remediationPlanCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Critical Risks</div><div class="stat-value" id="remediationCriticalCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value" id="remediationPendingApprovals">-</div></div>
+                <div class="stat-card"><div class="stat-label">Receipts</div><div class="stat-value" id="remediationReceiptCount">-</div></div>
+             </div>
+             <div id="remediationPlansList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.8125rem;"></div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 0.375rem; font-size: 0.8125rem; color: #9a3412;">
+                ⚠️ <strong>Aviso:</strong> Planning only — no automatic remediation. All plans are advisory-only and dry-run by default.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Approval-Gated Remediation Execution</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Executions</div><div class="stat-value" id="remediationExecCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Dry Runs</div><div class="stat-value" id="remediationDryRunCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Kill-Switch</div><div class="stat-value" id="remediationKillSwitchStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Rollbacks</div><div class="stat-value" id="remediationRollbackCount">-</div></div>
+             </div>
+             <div id="remediationExecutionsList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.8125rem;"></div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 0.375rem; font-size: 0.8125rem; color: #166534;">
+                ✅ <strong>Status:</strong> Simulation-only in Phase 72. All execution gates (approval, blast radius, rollback) are enforced.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Controlled Adapter Sandbox</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Manifests</div><div class="stat-value" id="adapterManifestCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" id="adapterBlockedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Sandbox Runs</div><div class="stat-value" id="adapterSandboxCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Violations</div><div class="stat-value" id="adapterViolationCount">-</div></div>
+             </div>
+             <div id="adapterSandboxRunsList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.8125rem;"></div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #eff6ff; border: 1px solid #dbeafe; border-radius: 0.375rem; font-size: 0.8125rem; color: #1e40af;">
+                🛡️ <strong>Sandbox:</strong> All adapter activities are restricted. Network, subprocess, and external system access are disabled. sandbox simulation only mode enforced.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Signed Adapter Registry</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Registry Entries</div><div class="stat-value" id="adapterRegistryCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" id="adapterRegistryApprovedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" id="adapterRegistryBlockedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Policies</div><div class="stat-value" id="adapterRegistryPolicyCount">-</div></div>
+             </div>
+             <div id="adapterRegistryEntriesList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.8125rem;"></div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #fefce8; border: 1px solid #fef08a; border-radius: 0.375rem; font-size: 0.8125rem; color: #854d0e;">
+                📜 <strong>Registry:</strong> Deterministic governance for adapter manifests. Status: <strong>signature placeholder only</strong>. No real adapter execution.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Adapter Promotion Workflow</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Active Workflows</div><div class="stat-value" id="adapterPromotionCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Promoted</div><div class="stat-value" id="adapterPromotionPromotedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" id="adapterPromotionBlockedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Production Eligible</div><div class="stat-value" id="adapterPromotionProductionEligibleCount">-</div></div>
+             </div>
+             <div id="adapterPromotionWorkflowsList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.8125rem;"></div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 0.375rem; font-size: 0.8125rem; color: #065f46;">
+                🚀 <strong>Promotion:</strong> Gated lifecycle for adapter stages. Status: <strong>promotion controls eligibility only</strong>. No real adapter execution implemented.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Sovereign Execution Attestation Framework</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Total Attestations</div><div class="stat-value" id="attestationFrameworkCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Verified</div><div class="stat-value" id="attestationFrameworkVerifiedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Revoked</div><div class="stat-value" id="attestationFrameworkRevokedCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Federation Bundles</div><div class="stat-value" id="attestationFrameworkBundleCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Receipts</div><div class="stat-value" id="attestationFrameworkReceiptCount">-</div></div>
+             </div>
+             <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.75rem;">
+                <div class="stat-card"><div class="stat-label">Replay Verification Status</div><div class="stat-value" id="attestationReplayVerificationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Chain Integrity Status</div><div class="stat-value" id="attestationChainIntegrityStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Offline Verification Status</div><div class="stat-value" id="attestationOfflineVerificationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Signature Placeholder Status</div><div class="stat-value" id="attestationSignaturePlaceholderStatus">-</div></div>
+             </div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.375rem; font-size: 0.8125rem; color: #9a3412;">
+                <strong>Notice:</strong> placeholder attestation only. no hardware-backed trust implemented. chain integrity status, replay verification status, and offline verification status are deterministic placeholders only.
+             </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;" class="stat-card">
+             <h3>Sovereign Federation Synchronization Protocol</h3>
+             <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="stat-card"><div class="stat-label">Total Federation Environments</div><div class="stat-value" id="federationEnvironmentCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Sync Sessions</div><div class="stat-value" id="federationSyncSessionCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Verified Bundles</div><div class="stat-value" id="federationVerifiedBundleCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Conflict Count</div><div class="stat-value" id="federationConflictCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">Receipts Disponiveis</div><div class="stat-value" id="federationReceiptCount">-</div></div>
+             </div>
+             <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.75rem;">
+                <div class="stat-card"><div class="stat-label">Lineage Verification Status</div><div class="stat-value" id="federationLineageVerificationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Replay Verification Status</div><div class="stat-value" id="federationReplayVerificationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Trust Negotiation Status</div><div class="stat-value" id="federationTrustNegotiationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Offline Verification Status</div><div class="stat-value" id="federationOfflineVerificationStatus">-</div></div>
+                <div class="stat-card"><div class="stat-label">Offline Federation Mode</div><div class="stat-value" id="federationOfflineOnlyStatus">-</div></div>
+             </div>
+             <div style="margin-top: 1rem; padding: 0.75rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.375rem; font-size: 0.8125rem; color: #1d4ed8;">
+                <strong>Notice:</strong> offline federation only. placeholder trust only. no real hardware-backed federation trust. no real-time synchronization.
+             </div>
+          </div>
+
           <div id="opsVisualizer" style="margin-top: 1.5rem; background: #0f172a; color: #38bdf8; padding: 2rem; border-radius: 0.5rem; min-height: 300px; display: flex; align-items: center; justify-content: center; font-family: monospace;">
              [ OPS CENTER VISUALIZER: Select a view to render topology, DAGs, or trust chains ]
           </div>
@@ -2049,6 +2310,13 @@
       function toggleDebug(id) {
         const el = document.getElementById(id);
         el.style.display = el.style.display === 'block' ? 'none' : 'block';
+      }
+
+      function escHtml(str) {
+        if (str == null) return '';
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(String(str)));
+        return d.innerHTML;
       }
 
       function escapeHtml(value) {
@@ -6301,6 +6569,182 @@
       }
 
       setTimeout(loadAIOps, 1500);
+
+      async function loadPredictiveFailureSignals() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const signalRes = await fetch('/admin/operations/failure-signals?client_id=system&limit=20', { headers: { 'X-Admin-Token': token } });
+          const signals = signalRes.ok ? await signalRes.json() : [];
+          document.getElementById('pfSignalCount').textContent = signals.length;
+
+          const sTable = document.getElementById('pfSignalTable').querySelector('tbody');
+          sTable.innerHTML = signals.slice(0, 10).map(s => `
+            <tr>
+              <td>${escHtml(s.signal_type)}</td>
+              <td>${escHtml(s.source_domain)}</td>
+              <td><span class="pill ${s.severity === 'critical' ? 'pill-danger' : s.severity === 'warning' ? 'pill-warning' : 'pill-muted'}">${escHtml(s.severity)}</span></td>
+              <td>${s.confidence != null ? (s.confidence * 100).toFixed(1) + '%' : '-'}</td>
+              <td>${s.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(s.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No signals recorded</td></tr>';
+
+          const foreRes = await fetch('/admin/operations/failure-forecasts?client_id=system&limit=10', { headers: { 'X-Admin-Token': token } });
+          const forecasts = foreRes.ok ? await foreRes.json() : [];
+          document.getElementById('pfForecastCount').textContent = forecasts.length;
+
+          if (forecasts.length > 0) {
+            const latest = forecasts[0];
+            document.getElementById('pfRiskScore').textContent = latest.risk_score != null ? (latest.risk_score * 100).toFixed(1) + '%' : '-';
+          }
+
+          const assessRes = await fetch('/admin/operations/failure-risk-assessments?client_id=system&limit=10', { headers: { 'X-Admin-Token': token } });
+          const assessments = assessRes.ok ? await assessRes.json() : [];
+
+          if (assessments.length > 0) {
+            const latest = assessments[0];
+            document.getElementById('pfRiskLevel').textContent = latest.risk_level || '-';
+            const levelPill = document.getElementById('pfRiskLevel');
+            levelPill.className = 'value';
+            if (latest.risk_level === 'critical') levelPill.style.color = '#dc2626';
+            else if (latest.risk_level === 'high') levelPill.style.color = '#ea580c';
+            else if (latest.risk_level === 'medium') levelPill.style.color = '#d97706';
+            else levelPill.style.color = 'var(--text)';
+          }
+
+          const aTable = document.getElementById('pfAssessmentTable').querySelector('tbody');
+          aTable.innerHTML = assessments.slice(0, 10).map(a => `
+            <tr>
+              <td><span class="pill ${a.risk_level === 'critical' ? 'pill-danger' : a.risk_level === 'high' ? 'pill-warning' : a.risk_level === 'medium' ? 'pill-warning' : 'pill-muted'}">${escHtml(a.risk_level)}</span></td>
+              <td>${a.risk_score != null ? (a.risk_score * 100).toFixed(1) + '%' : '-'}</td>
+              <td>${a.requires_approval ? '<span class="pill pill-danger">yes</span>' : '<span class="pill pill-muted">no</span>'}</td>
+              <td>${a.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(a.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No assessments yet</td></tr>';
+
+          document.getElementById('pfDebug').textContent = JSON.stringify({ signals: signals.length, forecasts: forecasts.length, assessments: assessments.length }, null, 2);
+        } catch (e) {
+          console.error('PredictiveFailureSignals load error:', e);
+        }
+      }
+
+      async function runPredictiveForecast() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/failure-forecasts/run?client_id=system&window_minutes=60', { method: 'POST', headers: { 'X-Admin-Token': token } });
+          if (!res.ok) { alert('Forecast run failed: ' + res.status); return; }
+          alert('Forecast completed successfully');
+          loadPredictiveFailureSignals();
+        } catch (e) {
+          alert('Forecast run error: ' + e.message);
+        }
+      }
+
+      async function loadOperationalCorrelations() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const client_id = '00000000-0000-0000-0000-000000000000'; // system
+          const res = await fetch(`/admin/operations/correlations/?client_id=${client_id}`, { headers: { 'X-Admin-Token': token } });
+          const correlations = res.ok ? await res.json() : [];
+          document.getElementById('ocTotalCount').textContent = correlations.length;
+
+          if (correlations.length > 0) {
+            const avgScore = correlations.reduce((acc, c) => acc + (c.correlation_score || 0), 0) / correlations.length;
+            document.getElementById('ocAvgScore').textContent = (avgScore * 100).toFixed(1) + '%';
+            
+            const avgConf = correlations.reduce((acc, c) => acc + (c.confidence || 0), 0) / correlations.length;
+            document.getElementById('ocConfidence').textContent = (avgConf * 100).toFixed(1) + '%';
+          }
+
+          const cTable = document.getElementById('ocCorrelationTable').querySelector('tbody');
+          cTable.innerHTML = correlations.slice(0, 10).map(c => `
+            <tr>
+              <td>${escHtml(c.correlation_type)}</td>
+              <td>${(c.correlation_score * 100).toFixed(1)}%</td>
+              <td>${escHtml((c.source_domains_json || []).join(', '))}</td>
+              <td>${(c.confidence * 100).toFixed(1)}%</td>
+              <td>${c.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(c.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No correlations found</td></tr>';
+
+          const graphRes = await fetch(`/admin/operations/correlations/trust-graph?client_id=${client_id}`, { headers: { 'X-Admin-Token': token } });
+          const graph = graphRes.ok ? await graphRes.json() : {};
+          
+          document.getElementById('ocTrustLinks').textContent = graph.total_links || graph.edge_count || 0;
+
+          const gTable = document.getElementById('ocGraphTable').querySelector('tbody');
+          const metrics = [
+            { name: 'Total Nodes', value: graph.total_nodes || graph.node_count || 0, status: 'OK' },
+            { name: 'Total Links', value: graph.total_links || graph.edge_count || 0, status: 'OK' },
+            { name: 'Avg Trust Score', value: graph.avg_trust_score != null ? (graph.avg_trust_score * 100).toFixed(1) + '%' : '-', status: 'OK' },
+            { name: 'Graph Density', value: graph.density != null ? graph.density.toFixed(3) : '-', status: 'OK' }
+          ];
+          
+          gTable.innerHTML = metrics.map(m => `
+            <tr>
+              <td>${escHtml(m.name)}</td>
+              <td>${m.value}</td>
+              <td><span class="pill pill-success">${m.status}</span></td>
+              <td><span class="pill pill-success">✓ receipt</span></td>
+            </tr>
+          `).join('');
+
+          document.getElementById('ocDebug').textContent = JSON.stringify({ correlations: correlations.length, graph }, null, 2);
+        } catch (e) {
+          console.error('OperationalCorrelation load error:', e);
+        }
+      }
+
+      async function runOperationalCorrelation() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/correlations/run', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              client_id: '00000000-0000-0000-0000-000000000000', // system
+              events: [
+                { type: 'infra_latency', domain: 'compute', value: 0.5, timestamp: new Date().toISOString() },
+                { type: 'auth_failure', domain: 'iam', value: 0.1, timestamp: new Date().toISOString() }
+              ]
+            })
+          });
+          if (!res.ok) { alert('Correlation run failed'); return; }
+          alert('Correlation run completed');
+          loadOperationalCorrelations();
+        } catch (e) {
+          alert('Correlation run error: ' + e.message);
+        }
+      }
+
+      async function buildOperationalTrustGraph() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/correlations/trust-graph/build?client_id=00000000-0000-0000-0000-000000000000', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              events: [
+                 { source_domain: "compute" },
+                 { source_domain: "storage" },
+                 { source_domain: "network" }
+              ]
+            })
+          });
+          if (!res.ok) { alert('Trust graph build failed'); return; }
+          alert('Trust graph built successfully');
+          loadOperationalCorrelations();
+        } catch (e) {
+          alert('Trust graph build error: ' + e.message);
+        }
+      }
+
+      setTimeout(loadPredictiveFailureSignals, 1600);
+      setTimeout(loadOperationalCorrelations, 1700);
       setTimeout(loadRAG, 5500);
       setTimeout(loadAppliance, 5000);
       setTimeout(loadFederatedWorkflows, 4750);
@@ -6323,5 +6767,117 @@
       // retrieval proofs / lineage nodes / replay records / verified proofs / drift events
 
     </script>
+    <section id="compatibility-contracts-phase-78" style="display:none">
+      <h2>Compatibility Contracts & Version Negotiation</h2>
+      <div id="compatibilityContractCount">0</div>
+      <div id="compatibilityActiveContractCount">0</div>
+      <div id="compatibilityDeprecatedContractCount">0</div>
+      <div id="compatibilityBlockedContractCount">0</div>
+      <div id="compatibilityMatrixStatus">compatible</div>
+      <div id="compatibilityNegotiationStatus">accepted</div>
+      <div id="compatibilityReplaySafeStatus">replay_safe</div>
+      <div id="compatibilityCapabilityNegotiationResults">approved subset only</div>
+      <div id="compatibilityDeprecationLifecycleStatus">announced</div>
+      <div id="compatibilityReceiptsAvailable">contract_receipt</div>
+      <p>deterministic compatibility only</p>
+      <p>no real hardware-backed compatibility trust</p>
+    </section>
+    <section id="plugin-runtime-phase-79" style="display:none">
+      <h2>Formal Plugin ABI &amp; Extension Runtime</h2>
+      <div id="pluginAbiContractCount">0</div>
+      <div id="pluginActiveContractCount">0</div>
+      <div id="pluginDeprecatedContractCount">0</div>
+      <div id="pluginBlockedContractCount">0</div>
+      <div id="pluginRevokedContractCount">0</div>
+      <div id="pluginCompatibilityCheckCount">0</div>
+      <div id="pluginLoadPlanCount">0</div>
+      <div id="pluginReplayVerificationStatus">passed</div>
+      <div id="pluginFederationCompatibilityStatus">compatible</div>
+      <div id="pluginIsolationPolicyStatus">strict</div>
+      <div id="pluginPlaceholderCertifiedCount">0</div>
+      <div id="pluginRuntimeReceiptsAvailable">abi_contract_receipt</div>
+      <p>no real plugin execution</p>
+      <p>placeholder certification only</p>
+      <p>deterministic load simulation only</p>
+    </section>
+    <section id="plugin-supply-chain-phase-80" style="display:none">
+      <h2>Plugin Supply-Chain Provenance &amp; SBOM Placeholder Framework</h2>
+      <div id="pluginSupplyChainProvenanceRecordCount">0</div>
+      <div id="pluginSupplyChainSbomPlaceholderCount">0</div>
+      <div id="pluginSupplyChainDependencyVerificationCount">0</div>
+      <div id="pluginSupplyChainReplaySafeStatus">replay_safe</div>
+      <div id="pluginSupplyChainReproducibleBuildStatus">reproducible_build</div>
+      <div id="pluginSupplyChainLineageVerificationStatus">verified</div>
+      <div id="pluginSupplyChainPlaceholderSignatureCount">0</div>
+      <div id="pluginSupplyChainReceiptsAvailable">provenance_receipt</div>
+      <p>placeholder SBOM only</p>
+      <p>no real artifact signing</p>
+      <p>offline-first provenance only</p>
+    </section>
+    <section id="reproducible-builds-phase-81" style="display:none">
+      <h2>Reproducible Build &amp; Artifact Verification Framework</h2>
+      <div id="reproducibleBuildManifestCount">0</div>
+      <div id="reproducibleBuildReproducibleCount">0</div>
+      <div id="reproducibleBuildWarningCount">0</div>
+      <div id="reproducibleBuildBlockedCount">0</div>
+      <div id="reproducibleBuildArtifactVerificationStatus">passed</div>
+      <div id="reproducibleBuildReplayVerificationStatus">passed</div>
+      <div id="reproducibleBuildLineageVerificationStatus">passed</div>
+      <div id="reproducibleBuildEnvironmentValidation">offline_only</div>
+      <div id="reproducibleBuildReplaySafeStatus">replay_safe</div>
+      <div id="reproducibleBuildReceiptsAvailable">build_manifest_receipt</div>
+      <p>deterministic verification only</p>
+      <p>no real external build execution</p>
+      <p>offline-first reproducible build framework</p>
+    </section>
+    <section id="phase82-platform-boundary-enforcement" style="display:none">
+      <h2>Platform Boundary Enforcement</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-deterministic-policy-engine" style="display:none">
+      <h2>Deterministic Policy Engine</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-deterministic-event-architecture" style="display:none">
+      <h2>Deterministic Event Architecture</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-sovereign-observability" style="display:none">
+      <h2>Sovereign Observability</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-data-governance" style="display:none">
+      <h2>Data Governance</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-human-governance-workflows" style="display:none">
+      <h2>Human Governance Workflows</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
+    <section id="phase82-sovereign-disaster-recovery" style="display:none">
+      <h2>Sovereign Disaster Recovery</h2>
+      <p>offline-first</p>
+      <p>deterministic and advisory where applicable</p>
+      <p>no real external execution</p>
+      <p>no formal certification claims</p>
+    </section>
   </body>
 </html>

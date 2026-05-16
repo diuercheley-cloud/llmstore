@@ -1,0 +1,15 @@
+{
+  "version": "v1.9.0-release-engineering-baseline",
+  "scope": [
+    "Governance Foundation",
+    "Macrofases 69-82",
+    "Platform Sustainability",
+    "Plugin Runtime Foundation",
+    "Reproducible Builds",
+    "Technical Freeze"
+  ],
+  "snapshot_hash": "8746c842dd2fbb378490cee3e3f4180afa20da4ca1d028c21efcacd7735d5ff9",
+  "timestamp": "2026-05-16T14:23:43.942487+00:00",
+  "replay_safe": true,
+  "manifest_hash": "2cf137bbf9ab68639bb09c830e889830cec402d6f69c2ea389e1e4c11df4563b"
+}

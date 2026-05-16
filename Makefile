@@ -3,7 +3,123 @@ SHELL := /bin/bash
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help first-run up down restart status health validate validate-control-center demo security readiness release backup restore upgrade rollback benchmark smoke clean-safe logs check-secrets fix-permissions install install-git-hooks clean-compose-local reset-demo-pack validate-reset-demo-pack validate-fake-data meeting-ready validate-meeting-ready client-ready-report validate-client-ready-report validate-v1.7-checklist v1.7-checklist-status demo-screenshot-plan validate-demo-visual-guide customer-demo customer-demo-full validate-customer-demo fresh-machine-check validate-fresh-machine-docs validate-providers validate-smart-routing validate-billing-brl validate-prepaid-wallet validate-enterprise-rag validate-hybrid-admin validate-hybrid-abuse validate-hybrid-e2e validate-margin-dashboard validate-commercial-guardrails validate-real-provider-env validate-openai-real-dry validate-openai-real validate-deepseek-real-dry validate-deepseek-real validate-anthropic-real-dry validate-anthropic-real validate-real-fallback-dry validate-real-fallback measure-provider-costs-dry measure-provider-costs validate-commercial-distributed-analytics validate-commercial-ha validate-commercial-federation validate-commercial-global-router validate-operational-controls validate-tenant-encryption validate-sovereign-airgap-governance validate-model-supply-chain validate-model-integrity-monitor validate-inference-reproducibility validate-cryptographic-receipts validate-rag-vault validate-retrieval-proofs validate-runtime-attestation validate-federated-workflows
+VALIDATE_PHASE_TARGETS := \
+	validate-phase-66-readiness \
+	validate-phase-69-failure-forecasting \
+	validate-phase-70-correlation-engine \
+	validate-phase-71-remediation-planning \
+	validate-phase-72-remediation-execution \
+	validate-phase-73-adapter-sandbox \
+	validate-phase-74-adapter-registry \
+	validate-phase-75-adapter-promotion \
+	validate-phase-76-attestation-framework \
+	validate-phase-77-federation-sync \
+	validate-phase-78-compatibility-contracts \
+	validate-phase-79-plugin-runtime \
+	validate-phase-80-plugin-supply-chain \
+	validate-phase-81-reproducible-builds \
+	validate-phase-82-platform-sustainability
+
+# Official deterministic validation groups. These lists are the source of truth
+# for aggregate targets and for Makefile governance checks.
+CORE_VALIDATION_TARGETS := \
+	validate-architecture-boundaries \
+	validate-phase-82-platform-sustainability \
+	validate-runtime-contracts \
+	validate-domain-contracts \
+	validate-adrs \
+	validate-invariants \
+	validate-claims \
+	validate-platform-architecture \
+	validate-governance-documentation-foundation \
+	validate-makefile-governance \
+	validate-phase-66-readiness
+
+GOVERNANCE_VALIDATION_TARGETS := \
+	validate-governance-documentation-foundation \
+	validate-policy-governance \
+	validate-operational-controls \
+	validate-tenant-encryption \
+	validate-sovereign-airgap-governance \
+	validate-governance-federation \
+	validate-workflow-governance
+
+RUNTIME_VALIDATION_TARGETS := \
+	validate-model-supply-chain \
+	validate-model-integrity-monitor \
+	validate-inference-reproducibility \
+	validate-phase-69-failure-forecasting \
+	validate-phase-70-correlation-engine \
+	validate-phase-71-remediation-planning \
+	validate-phase-72-remediation-execution \
+	validate-phase-76-attestation-framework \
+	validate-runtime-attestation
+
+FEDERATION_VALIDATION_TARGETS := \
+	validate-commercial-federation \
+	validate-governance-federation \
+	validate-federated-workflows \
+	validate-phase-77-federation-sync \
+	validate-control-plane-mesh
+
+PLUGIN_VALIDATION_TARGETS := \
+	validate-phase-73-adapter-sandbox \
+	validate-phase-74-adapter-registry \
+	validate-phase-75-adapter-promotion \
+	validate-phase-79-plugin-runtime \
+	validate-phase-80-plugin-supply-chain \
+	validate-phase-81-reproducible-builds
+
+COMPATIBILITY_VALIDATION_TARGETS := \
+	validate-phase-78-compatibility-contracts \
+	validate-commercial-local-infra-adapters
+
+DOCUMENTATION_VALIDATION_TARGETS := \
+	validate-platform-documentation \
+	validate-adrs \
+	validate-claims \
+	validate-governance-documentation-foundation \
+	validate-makefile-governance
+
+SECURITY_VALIDATION_TARGETS := \
+	validate-policy-governance \
+	validate-tenant-encryption \
+	validate-model-supply-chain \
+	validate-model-integrity-monitor \
+	validate-cryptographic-receipts \
+	validate-rag-vault \
+	validate-retrieval-proofs \
+	validate-runtime-attestation
+
+ARCHITECTURE_VALIDATION_TARGETS := \
+	$(CORE_VALIDATION_TARGETS) \
+	validate-phase-69-failure-forecasting \
+	validate-phase-70-correlation-engine \
+	validate-phase-71-remediation-planning \
+	validate-phase-72-remediation-execution \
+	validate-phase-73-adapter-sandbox \
+	validate-phase-74-adapter-registry \
+	validate-phase-75-adapter-promotion \
+	validate-phase-76-attestation-framework \
+	validate-phase-77-federation-sync \
+	validate-phase-78-compatibility-contracts \
+	validate-phase-79-plugin-runtime \
+	validate-phase-80-plugin-supply-chain \
+	validate-phase-81-reproducible-builds \
+	validate-release-engineering \
+	validate-framework-warnings \
+	validate-dependency-graph \
+	validate-internal-security-review \
+	validate-naming-consistency \
+	validate-v1-readiness
+
+PLATFORM_VALIDATION_TARGETS := \
+	validate-architecture \
+	validate-governance \
+	validate-security
+
+ALL_VALIDATION_TARGETS := \
+	validate-platform
 
 customer-ready: ## Validate final client installation (Ready/Not Ready)
 	./scripts/validate-customer-ready.sh
@@ -89,6 +205,462 @@ validate-retrieval-proofs: ## Validate retrieval proofs + context lineage (Phase
 	chmod +x scripts/validate-retrieval-proofs.sh
 	./scripts/validate-retrieval-proofs.sh
 
+validate-architecture-boundaries: ## Validate architecture boundaries for the stabilization cycle
+	python3 ./scripts/validate_architecture_boundaries.py
+
+validate-runtime-contracts: ## Validate core runtime contract documentation
+	python3 ./scripts/validate_runtime_contracts.py
+
+validate-domain-contracts: ## Validate lightweight domain contracts for modularization
+	python3 ./scripts/validate_domain_contracts.py
+
+validate-invariants: ## Validate lightweight advisory invariants
+	python3 ./scripts/validate_invariants.py
+
+validate-adrs: ## Validate Architectural Decision Records
+	python3 ./scripts/validate_adrs.py
+
+validate-platform-architecture: ## Run unified platform architecture validation suite
+	python3 ./scripts/validate_platform_architecture.py
+
+validate-phase-82-platform-sustainability: ## Validate Phase 82 platform sustainability, governance core and dry-run recovery
+	python3 ./scripts/validate_phase_82_platform_sustainability.py
+	python3 ./scripts/validate_platform_boundaries.py
+	.venv/bin/python -m pytest \
+		tests/architecture/test_platform_boundaries.py \
+		tests/architecture/test_phase_82_platform_sustainability.py \
+		tests/architecture/test_domain_dependency_graph.py \
+		tests/governance/test_policy_dsl.py \
+		tests/governance/test_phase_82_policy_engine.py \
+		tests/governance/test_policy_conflicts.py \
+		tests/governance/test_data_governance.py \
+		tests/governance/test_human_governance_workflows.py \
+		tests/governance/test_phase_82_governance_core.py \
+		tests/operations/test_deterministic_events.py \
+		tests/operations/test_sovereign_observability.py \
+		tests/operations/test_disaster_recovery.py \
+		tests/operations/test_phase_82_operations_core.py \
+		tests/test_router_presence.py \
+		-q --tb=short
+
+validate-claims: ## Validate documentation and scripts for prohibited claims
+	python3 ./scripts/validate_claims.py
+
+validate-governance-documentation-foundation: ## Validate Governance Documentation Foundation before Phase 79
+	python3 ./scripts/validate_governance_documentation_foundation.py
+	.venv/bin/python -m pytest tests/docs/test_governance_documentation_foundation.py -q --tb=short
+
+validate-release-engineering: ## Validate release engineering and operational stability baseline
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_release_engineering.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/releases/ -q --tb=short
+
+generate-release-baseline: ## Generate deterministic platform release baseline
+	PYTHONPATH=control_plane .venv/bin/python scripts/generate_release_baseline.py
+
+validate-framework-warnings: ## Validate framework warnings and deprecations
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_framework_warnings.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/quality/test_framework_warnings.py -q --tb=short
+
+coverage-baseline: ## Generate coverage baseline
+	PYTHONPATH=control_plane .venv/bin/python scripts/generate_coverage_baseline.py
+
+validate-dependency-graph: ## Validate architectural dependency graph
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_dependency_graph.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/architecture/test_dependency_graph_hardening.py -q --tb=short
+
+performance-baseline: ## Generate performance baseline
+	PYTHONPATH=control_plane .venv/bin/python scripts/generate_performance_baseline.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/performance/test_performance_baseline_tools.py -q --tb=short
+
+validate-internal-security-review: ## Validate internal security review
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_internal_security_review.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/security/test_internal_security_review.py -q --tb=short
+
+validate-naming-consistency: ## Validate naming and API consistency
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_naming_consistency.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/architecture/test_naming_consistency.py -q --tb=short
+
+validate-v1-readiness: ## Validate v1 readiness criteria
+	PYTHONPATH=control_plane .venv/bin/python scripts/validate_v1_readiness.py
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/releases/test_v1_readiness.py -q --tb=short
+
+validate-pre-v1-hardening: ## Run all pre-v1 platform hardening & stabilization validators
+	$(MAKE) validate-framework-warnings
+	$(MAKE) coverage-baseline
+	$(MAKE) validate-dependency-graph
+	$(MAKE) performance-baseline
+	$(MAKE) validate-internal-security-review
+	$(MAKE) validate-naming-consistency
+	$(MAKE) validate-v1-readiness
+
+# --- Core Validation ---
+# `validate-architecture` is the legacy-compatible deterministic runner for the
+# Phase 66 and Phase 69-79 validation chain.
+validate-architecture: ## Run the full architectural validation group in deterministic order
+	@echo "Running architectural validation group"
+	@set -e; for target in $(ARCHITECTURE_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Architectural validation group passed"
+
+# Smoke validation targets — static checks and short tests only.
+# These exclude long integration suites and are suitable for daily use.
+SMOKE_VALIDATION_TARGETS := \
+	validate-platform-documentation \
+	validate-makefile-governance \
+	validate-governance-documentation-foundation \
+	validate-domain-contracts \
+	validate-claims \
+	validate-platform-architecture \
+	validate-architecture-boundaries \
+	validate-runtime-contracts \
+	validate-invariants \
+	validate-adrs \
+	validate-release-engineering \
+	validate-framework-warnings \
+	validate-dependency-graph \
+	validate-internal-security-review \
+	validate-naming-consistency \
+	validate-v1-readiness
+
+validate-architecture-smoke: ## Run smoke validation (static checks + short tests, no slow integration)
+	@echo "Running smoke validation (fast path, no integration tests)"
+	@set -e; for target in $(SMOKE_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "--- Phase validator scripts (static checks, no slow pytest) ---"
+	python3 ./scripts/validate_phase_69_failure_forecasting.py --smoke
+	python3 ./scripts/validate_phase_70_correlation_engine.py
+	python3 ./scripts/validate_phase_71_remediation_planning.py
+	python3 ./scripts/validate_phase_72_remediation_execution.py
+	python3 ./scripts/validate_phase_73_adapter_sandbox.py
+	python3 ./scripts/validate_phase_74_adapter_registry.py
+	python3 ./scripts/validate_phase_75_adapter_promotion.py
+	./.venv/bin/python scripts/validate_phase_76_attestation_framework.py
+	./.venv/bin/python scripts/validate_phase_77_federation_sync.py
+	python3 ./scripts/validate_phase_78_compatibility_contracts.py
+	python3 ./scripts/validate_phase_79_plugin_runtime.py
+	python3 ./scripts/validate_phase_80_plugin_supply_chain.py
+	python3 ./scripts/validate_phase_81_reproducible_builds.py
+	@echo "--- Phase 82 smoke ---"
+	$(MAKE) --no-print-directory validate-phase-82-platform-sustainability
+	$(MAKE) --no-print-directory validate-release-engineering
+	$(MAKE) --no-print-directory validate-framework-warnings
+	$(MAKE) --no-print-directory validate-dependency-graph
+	$(MAKE) --no-print-directory validate-internal-security-review
+	$(MAKE) --no-print-directory validate-naming-consistency
+	$(MAKE) --no-print-directory validate-v1-readiness
+	@echo "Smoke validation passed"
+
+# `validate-architecture-full` preserves full coverage (same as legacy validate-architecture).
+validate-architecture-full: ## Run full architecture validation (complete, may include slow tests)
+	$(MAKE) --no-print-directory validate-architecture
+
+measure-validation-targets: ## Measure duration and exit code of validation targets
+	python3 ./scripts/measure_validation_targets.py
+
+list-slow-tests: ## Identify slow pytest tests
+	python3 ./scripts/list_slow_tests.py --test-dir tests/build --timeout 120
+
+# `validate-platform` and `validate-all` are the official top-level aggregates.
+# They intentionally compose other aggregates instead of redefining recipes.
+validate-platform: ## Run the official platform validation aggregates in deterministic order
+	@echo "Running platform validation group"
+	@set -e; for target in $(PLATFORM_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Platform validation group passed"
+
+validate-all: ## Run the full deterministic validation stack
+	@echo "Running complete validation group"
+	@set -e; for target in $(ALL_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Complete validation group passed"
+
+# --- Governance Validation ---
+# Legacy governance targets remain callable directly; this aggregate defines the
+# official deterministic order for governance-only checks.
+validate-governance: ## Run governance validation targets in deterministic order
+	@echo "Running governance validation group"
+	@set -e; for target in $(GOVERNANCE_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Governance validation group passed"
+
+# --- Runtime Validation ---
+validate-runtime: ## Run runtime validation targets in deterministic order
+	@echo "Running runtime validation group"
+	@set -e; for target in $(RUNTIME_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Runtime validation group passed"
+
+# --- Federation Validation ---
+validate-federation: ## Run federation validation targets in deterministic order
+	@echo "Running federation validation group"
+	@set -e; for target in $(FEDERATION_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Federation validation group passed"
+
+# --- Plugin Validation ---
+validate-plugin: ## Run plugin validation targets in deterministic order
+	@echo "Running plugin validation group"
+	@set -e; for target in $(PLUGIN_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Plugin validation group passed"
+
+# --- Compatibility Validation ---
+validate-compatibility: ## Run compatibility validation targets in deterministic order
+	@echo "Running compatibility validation group"
+	@set -e; for target in $(COMPATIBILITY_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Compatibility validation group passed"
+
+# --- Documentation Validation ---
+validate-platform-documentation: ## Validate platform documentation completeness and consistency
+	python3 ./scripts/validate_platform_documentation.py
+	.venv/bin/python -m pytest tests/docs/test_platform_documentation.py -q --tb=short
+
+validate-documentation: ## Run documentation validation targets in deterministic order
+	@echo "Running documentation validation group"
+	@set -e; for target in $(DOCUMENTATION_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Documentation validation group passed"
+
+# --- Security Validation ---
+validate-security: ## Run security validation targets in deterministic order
+	@echo "Running security validation group"
+	@set -e; for target in $(SECURITY_VALIDATION_TARGETS); do \
+		echo "==> $$target"; \
+		$(MAKE) --no-print-directory $$target; \
+	done
+	@echo "Security validation group passed"
+
+# Compatibility alias for older automation that expects a single Makefile
+# governance checker target instead of the documentation/runtime split.
+validate-makefile-governance: ## Validate Makefile governance structure, docs and tests
+	python3 ./scripts/validate_makefile_governance.py
+	.venv/bin/python -m pytest tests/build/test_makefile_governance.py -q --tb=short
+
+validate-phase-66-readiness: ## Validate readiness gate before Phase 66 implementation
+	python3 ./scripts/validate_phase_66_readiness.py
+
+validate-phase-69-failure-forecasting: ## Validate Phase 69 Predictive Failure Signals + Deterministic Forecasting
+	python3 ./scripts/validate_phase_69_failure_forecasting.py
+	# Targeted test list — do NOT run tests/operations/ broadly to avoid
+	# excessive execution in the validate-architecture aggregate.
+	.venv/bin/python -m pytest \
+		tests/operations/test_failure_signal_models.py \
+		tests/operations/test_deterministic_forecasting_engine.py \
+		tests/operations/test_failure_risk_scoring.py \
+		tests/operations/test_failure_forecasting_receipts.py \
+		tests/operations/test_failure_forecasting_audit_events.py \
+		tests/operations/test_failure_forecasting_api.py \
+		-q --tb=short
+
+validate-phase-70-correlation-engine: ## Validate Phase 70 Deterministic Operations Correlation Engine
+	python3 ./scripts/validate_phase_70_correlation_engine.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_correlation_models.py \
+		tests/operations/test_deterministic_correlation_engine.py \
+		tests/operations/test_operational_trust_graph.py \
+		tests/operations/test_correlation_api.py \
+		tests/operations/test_correlation_receipts.py \
+		tests/operations/test_correlation_audit_events.py \
+		tests/operations/test_correlation_risk_analysis.py \
+		tests/operations/test_correlation_dashboard.py \
+		tests/operations/test_phase_70_validation.py \
+		-q --tb=short
+
+validate-phase-71-remediation-planning: ## Validate Phase 71 Deterministic Remediation Planning
+	python3 ./scripts/validate_phase_71_remediation_planning.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_remediation_planning_models.py \
+		tests/operations/test_deterministic_remediation_planner.py \
+		tests/operations/test_remediation_blast_radius.py \
+		tests/operations/test_remediation_approval_requirements.py \
+		tests/operations/test_remediation_receipts.py \
+		tests/operations/test_remediation_audit_events.py \
+		tests/operations/test_remediation_planning_api.py \
+		tests/operations/test_remediation_planning_dashboard.py \
+		tests/operations/test_phase_71_validation.py \
+		-q --tb=short
+
+validate-phase-72-remediation-execution: ## Validate Phase 72 Approval-Gated Remediation Execution
+	python3 ./scripts/validate_phase_72_remediation_execution.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_remediation_execution_models.py \
+		tests/operations/test_remediation_execution_gate.py \
+		tests/operations/test_remediation_simulation_adapter.py \
+		tests/operations/test_approval_gated_remediation_executor.py \
+		tests/operations/test_remediation_execution_rollback.py \
+		tests/operations/test_remediation_execution_receipts.py \
+		tests/operations/test_remediation_execution_audit_events.py \
+		tests/operations/test_remediation_execution_api.py \
+		tests/operations/test_remediation_execution_dashboard.py \
+		tests/operations/test_phase_72_validation.py \
+		-q --tb=short
+
+validate-phase-73-adapter-sandbox: ## Validate Phase 73 Controlled Adapter Sandbox
+	python3 ./scripts/validate_phase_73_adapter_sandbox.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_adapter_sandbox_models.py \
+		tests/operations/test_adapter_contracts.py \
+		tests/operations/test_adapter_manifest_validator.py \
+		tests/operations/test_adapter_sandbox_context.py \
+		tests/operations/test_adapter_simulation_runner.py \
+		tests/operations/test_adapter_policy_guard.py \
+		tests/operations/test_adapter_sandbox_receipts.py \
+		tests/operations/test_adapter_sandbox_audit_events.py \
+		tests/operations/test_adapter_sandbox_api.py \
+		tests/operations/test_adapter_sandbox_dashboard.py \
+		tests/operations/test_phase_73_validation.py \
+		-q --tb=short
+
+validate-phase-74-adapter-registry: ## Validate Phase 74 Signed Adapter Registry
+	python3 ./scripts/validate_phase_74_adapter_registry.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_adapter_registry_models.py \
+		tests/operations/test_adapter_registry_hash_utils.py \
+		tests/operations/test_signed_adapter_registry_service.py \
+		tests/operations/test_adapter_registry_policy_engine.py \
+		tests/operations/test_adapter_registry_allowlist_blocklist.py \
+		tests/operations/test_adapter_registry_receipts.py \
+		tests/operations/test_adapter_registry_audit_events.py \
+		tests/operations/test_adapter_registry_api.py \
+		tests/operations/test_adapter_registry_dashboard.py \
+		tests/operations/test_phase_74_validation.py \
+		-q --tb=short
+
+validate-phase-75-adapter-promotion: ## Validate Phase 75 Adapter Promotion Workflow
+	python3 ./scripts/validate_phase_75_adapter_promotion.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_adapter_promotion_models.py \
+		tests/operations/test_adapter_promotion_hash_utils.py \
+		tests/operations/test_adapter_promotion_gates.py \
+		tests/operations/test_adapter_promotion_workflow_service.py \
+		tests/operations/test_adapter_promotion_staging_simulation.py \
+		tests/operations/test_adapter_promotion_receipts.py \
+		tests/operations/test_adapter_promotion_audit_events.py \
+		tests/operations/test_adapter_promotion_api.py \
+		tests/operations/test_adapter_promotion_dashboard.py \
+		tests/operations/test_phase_75_validation.py \
+		-q --tb=short
+
+validate-phase-78-compatibility-contracts: ## Validate Phase 78 Compatibility Contracts & Version Negotiation
+	python3 ./scripts/validate_phase_78_compatibility_contracts.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_compatibility_models.py \
+		tests/operations/test_compatibility_hash_utils.py \
+		tests/operations/test_semantic_versioning.py \
+		tests/operations/test_compatibility_matrix.py \
+		tests/operations/test_version_negotiation.py \
+		tests/operations/test_capability_negotiation.py \
+		tests/operations/test_deprecation_lifecycle.py \
+		tests/operations/test_compatibility_verification.py \
+		tests/operations/test_compatibility_receipts.py \
+		tests/operations/test_compatibility_audit_events.py \
+		tests/operations/test_compatibility_api.py \
+		tests/operations/test_compatibility_dashboard.py \
+		tests/operations/test_phase_78_validation.py \
+		-q --tb=short
+
+validate-phase-79-plugin-runtime: ## Validate Phase 79 Formal Plugin ABI & Extension Runtime
+	python3 ./scripts/validate_phase_79_plugin_runtime.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_plugin_runtime_models.py \
+		tests/operations/test_plugin_runtime_hash_utils.py \
+		tests/operations/test_plugin_abi_contracts.py \
+		tests/operations/test_plugin_capability_boundaries.py \
+		tests/operations/test_plugin_runtime_compatibility_enforcer.py \
+		tests/operations/test_plugin_extension_loader.py \
+		tests/operations/test_plugin_isolation_policy.py \
+		tests/operations/test_plugin_lifecycle.py \
+		tests/operations/test_plugin_replay_verifier.py \
+		tests/operations/test_plugin_federation_compatibility.py \
+		tests/operations/test_plugin_runtime_receipts.py \
+		tests/operations/test_plugin_runtime_audit_events.py \
+		tests/operations/test_plugin_runtime_api.py \
+		tests/operations/test_plugin_runtime_dashboard.py \
+		tests/operations/test_phase_79_validation.py \
+		-q --tb=short
+
+validate-phase-80-plugin-supply-chain: ## Validate Phase 80 Plugin Supply-Chain Provenance & SBOM Placeholder Framework
+	python3 ./scripts/validate_phase_80_plugin_supply_chain.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_plugin_supply_chain_models.py \
+		tests/operations/test_plugin_supply_chain_hash_utils.py \
+		tests/operations/test_plugin_supply_chain_services.py \
+		tests/operations/test_plugin_supply_chain_api.py \
+		tests/operations/test_plugin_supply_chain_dashboard.py \
+		tests/operations/test_phase_80_validation.py \
+		-q --tb=short
+
+validate-phase-81-reproducible-builds: ## Validate Phase 81 Reproducible Build & Artifact Verification Framework
+	python3 ./scripts/validate_phase_81_reproducible_builds.py
+	.venv/bin/python -m pytest \
+		tests/operations/test_reproducible_build_models.py \
+		tests/operations/test_reproducible_build_hash_utils.py \
+		tests/operations/test_reproducible_build_service.py \
+		tests/operations/test_artifact_verification.py \
+		tests/operations/test_source_artifact_lineage.py \
+		tests/operations/test_build_environment_policy.py \
+		tests/operations/test_artifact_replay_verifier.py \
+		tests/operations/test_reproducible_build_provenance_integration.py \
+		tests/operations/test_reproducible_build_receipts.py \
+		tests/operations/test_reproducible_build_audit_events.py \
+		tests/operations/test_reproducible_build_api.py \
+		tests/operations/test_reproducible_build_dashboard.py \
+		tests/operations/test_phase_81_validation.py \
+		-q --tb=short
+
+validate-phase-76-attestation-framework: ## Validate Sovereign Execution Attestation Framework (Phase 76)
+	./.venv/bin/python scripts/validate_phase_76_attestation_framework.py
+	./.venv/bin/python -m pytest \
+		tests/operations/test_attestation_framework_models.py \
+		tests/operations/test_attestation_hash_utils.py \
+		tests/operations/test_attestation_service.py \
+		tests/operations/test_attestation_federation_bundle.py \
+		tests/operations/test_attestation_trust_policy_engine.py \
+		tests/operations/test_attestation_replay_verifier.py \
+		tests/operations/test_attestation_receipts.py \
+		tests/operations/test_attestation_audit_events.py \
+		tests/operations/test_attestation_api.py \
+		tests/operations/test_attestation_dashboard.py \
+		tests/operations/test_phase_76_validation.py \
+		-q --tb=short
+
+validate-phase-77-federation-sync: ## Validate Sovereign Federation Synchronization Protocol (Phase 77)
+	./.venv/bin/python scripts/validate_phase_77_federation_sync.py
+	./.venv/bin/python -m pytest \
+		tests/operations/test_federation_sync_models.py \
+		tests/operations/test_federation_hash_utils.py \
+		tests/operations/test_federation_environment_registry.py \
+		tests/operations/test_federation_synchronization_protocol.py \
+		tests/operations/test_federation_trust_negotiation.py \
+		tests/operations/test_federation_conflict_resolution.py \
+		tests/operations/test_federation_replay_verifier.py \
+		tests/operations/test_federation_receipts.py \
+		tests/operations/test_federation_audit_events.py \
+		tests/operations/test_federation_api.py \
+		tests/operations/test_federation_dashboard.py \
+		tests/operations/test_phase_77_validation.py \
+		-q --tb=short
 validate-execution-proofs: ## Validate verifiable AI execution proofs + Merkle audit timelines (Phase 60)
 	chmod +x scripts/validate-execution-proofs.sh
 	./scripts/validate-execution-proofs.sh
@@ -222,13 +794,16 @@ validate-reset-demo-pack: ## Validate reset safety (dry-run mode, no data harmed
 	./scripts/validate-reset-commercial-demo-pack.sh
 
 validate-fake-data: ## Validate fake demo data integrity and safety
+	chmod +x ./scripts/validate-fake-demo-data.sh
+	./scripts/validate-fake-demo-data.sh
+
+# Legacy sales seed remains separate from fake-data validation; previous
+# adjacency caused recipe shadowing and non-deterministic target resolution.
 sales-seed: ## Seed commercial demo leads
 	./scripts/seed-sales-demo-leads.sh
 
 validate-sales-crm: ## Validate Sales CRM (API + UI)
 	./scripts/validate-sales-crm-local.sh
-	chmod +x ./scripts/validate-fake-demo-data.sh
-	./scripts/validate-fake-demo-data.sh
 
 clean-compose-local: ## Clean up docker-compose resources
 	./scripts/clean-compose-local.sh
@@ -520,12 +1095,8 @@ cleanup-branches: ## List safe-to-delete local branches (dry-run)
 	./scripts/cleanup-local-branches.sh --dry-run --merged-only
 
 # --- Provider Cost Validation ---
-
-measure-provider-costs-dry:
-	./scripts/measure-real-provider-costs.sh --dry-run
-
-measure-provider-costs:
-	./scripts/measure-real-provider-costs.sh --real
+# Compatibility note: keep the original `measure-provider-costs*` targets above
+# as the canonical definitions. Do not redefine them below.
 
 # --- Real Billing Margin Validation ---
 
@@ -586,13 +1157,12 @@ validate-commercial-revenue-forecasting:
 validate-commercial-revenue-protection:
 	bash scripts/validate-commercial-revenue-protection.sh
 
-validate-commercial-compliance-controls:
-validate-policy-governance: ## Validate Enterprise Policy Governance (Phase 34) 
-	chmod +x scripts/validate-policy-governance.sh 
-	./scripts/validate-policy-governance.sh
+validate-commercial-compliance-controls: ## Validate compliance controls without shadowing governance policy checks
 	bash scripts/validate-commercial-compliance-controls.sh
-validate-policy-governance: ## Validate Enterprise Policy Governance (Phase 34) 
-	chmod +x scripts/validate-policy-governance.sh 
+
+# Legacy governance policy target preserved as a first-class validation entry.
+validate-policy-governance: ## Validate Enterprise Policy Governance (Phase 34)
+	chmod +x scripts/validate-policy-governance.sh
 	./scripts/validate-policy-governance.sh
 
 validate-governance-federation: ## Validate Enterprise Multi-Region Governance Federation (Phase 35)

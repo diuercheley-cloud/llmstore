@@ -1,12 +1,143 @@
-# Hybrid AI Platform (formerly Local AI Appliance)
+# LLM Inference Stack
 
-**OpenAI-compatible hybrid AI infrastructure — local + cloud, multi-provider, multi-tenant, white-label ready.**
+**Sovereign, offline-first, deterministic AI inference platform — multi-tenant, multi-provider, white-label ready.**
 
 > Current build: `v1.8.1-real-provider-validation`  
 > Previous stable: [`v1.8.0-hybrid-ai-platform`](releases/v1.8.0-hybrid-ai-platform)  
 > Release notes: [`docs/V1_8_1_RELEASE_NOTES.md`](docs/V1_8_1_RELEASE_NOTES.md)  
 > Hybrid AI docs: [`docs/HYBRID_AI_PLATFORM.md`](docs/HYBRID_AI_PLATFORM.md)  
-> Real Provider Validation: [`docs/REAL_PROVIDER_VALIDATION.md`](docs/REAL_PROVIDER_VALIDATION.md)
+> Real Provider Validation: [`docs/REAL_PROVIDER_VALIDATION.md`](docs/REAL_PROVIDER_VALIDATION.md)  
+> Documentation Index: [`docs/index.md`](docs/index.md)
+
+---
+
+## Platform Architecture
+
+### Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **Deterministic** | Every operation produces replayable, verifiable outputs. Event logs, receipts, and governance decisions are reproducible offline. |
+| **Replay-Safe** | All state transitions can be replayed from event logs without side effects. No external dependencies required for verification. |
+| **Offline-First** | The platform operates fully without internet connectivity. Cloud providers are optional additions, never requirements. |
+| **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
+| **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
+
+### Architecture Summary
+
+```mermaid
+graph TB
+    subgraph "Control Plane"
+        API[OpenAI-Compatible API]
+        Auth[Auth & Tenant Isolation]
+        Routing[Routing Engine]
+        QoS[QoS & Priority]
+        Gov[Governance Engine]
+    end
+    subgraph "Federation"
+        FedSync[Federation Sync]
+        Compat[Compatibility Contracts]
+    end
+    subgraph "Plugin Runtime"
+        PluginABI[Plugin ABI Sandbox]
+        PluginRegistry[Plugin Registry]
+    end
+    subgraph "Supply Chain"
+        SBOM[SBOM / Provenance]
+        RepoBuild[Reproducible Builds]
+    end
+    subgraph "Operations"
+        Events[Deterministic Events]
+        Remediation[Remediation Engine]
+        DR[Disaster Recovery]
+    end
+    API --> Auth
+    Auth --> Routing
+    Routing --> QoS
+    QoS --> Gov
+    Gov --> Events
+    Events --> Remediation
+    Events --> DR
+    FedSync --> Compat
+    PluginABI --> PluginRegistry
+    RepoBuild --> SBOM
+```
+
+### Bounded Contexts
+
+The platform is organized into 12 bounded contexts with explicit contracts:
+
+| Context | Role |
+|---------|------|
+| `core_runtime` | Deterministic runtime abstractions, local execution readiness |
+| `governance` | Policy engine, approvals, compliance decisions |
+| `federation` | Offline-first federation contracts and sync |
+| `plugin_runtime` | Placeholder plugin loading, ABI sandbox |
+| `supply_chain` | Provenance, artifact lineage, reproducibility |
+| `operations` | Deterministic workflows, events, recovery |
+| `security` | Trust boundaries, crypto readiness, isolation |
+| `financial` | Billing, finance governance |
+| `sovereign` | Airgap, locality, tenant sovereignty |
+| `observability` | Local metrics, traces, sanitized visibility |
+| `data_governance` | Data zoning, lineage, retention |
+| `disaster_recovery` | Backup manifests, replay verification |
+
+See [Platform Domain Map](docs/architecture/platform_domain_map.md) for full context details and Mermaid diagram.
+
+### Phases 69-82 Flow
+
+```mermaid
+graph LR
+    P69[Phase 69<br/>Failure Forecasting] --> P70[Phase 70<br/>Correlation Engine]
+    P70 --> P71[Phase 71<br/>Remediation Planning]
+    P71 --> P72[Phase 72<br/>Remediation Execution]
+    P72 --> P73[Phase 73<br/>Adapter Sandbox]
+    P73 --> P74[Phase 74<br/>Signed Registry]
+    P74 --> P75[Phase 75<br/>Adapter Promotion]
+    P75 --> P76[Phase 76<br/>Attestation Framework]
+    P76 --> P77[Phase 77<br/>Federation Sync]
+    P77 --> P78[Phase 78<br/>Compatibility Contracts]
+    P78 --> P79[Phase 79<br/>Plugin ABI]
+    P79 --> P80[Phase 80<br/>Plugin Supply Chain]
+    P80 --> P81[Phase 81<br/>Reproducible Builds]
+    P81 --> P82[Phase 82<br/>Platform Sustainability]
+```
+
+### Validation
+
+```bash
+# Smoke validation (static checks, fast)
+make validate-architecture-smoke
+
+# Full validation (complete suite)
+make validate-architecture-full
+
+# Platform documentation validation
+make validate-platform-documentation
+```
+
+### Navigating the Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Documentation Index](docs/index.md) | Full index of all documentation |
+| [Platform Overview](docs/architecture/platform_overview.md) | Architecture, principles, bounded contexts |
+| [Platform Domain Map](docs/architecture/platform_domain_map.md) | Bounded context map with diagrams |
+| [Guarantees & Limitations](docs/architecture/platform_guarantees_and_limitations.md) | Formal guarantees, explicit limitations |
+| [Operational Model](docs/architecture/platform_operational_model.md) | Offline-first operations |
+| [Validation Workflows](docs/architecture/platform_validation_workflows.md) | Smoke, full, doc validation |
+| [Module Relationships](docs/architecture/platform_module_relationships.md) | Module dependency graph |
+| [Glossary](docs/architecture/platform_glossary.md) | Terminology reference |
+| [Phase Timeline](docs/architecture/platform_phase_timeline.md) | Phase 69–82 evolution |
+| [Runbook](docs/operations/platform_runbook.md) | Operations guide |
+
+### Explicit Limitations
+
+- **No real plugin execution.** Plugin ABI defines contracts but does not execute plugins. Adapter sandbox validates manifests, not runtime behavior.
+- **No real PKI.** Certificate operations are simulated. No CA integration or real certificate issuance.
+- **No hardware-backed trust.** Attestation framework is policy-only. No TPM, SEV, or SGX integration.
+- **No real runtime execution.** Runtime abstractions are advisory placeholders. All phase implementations are validation-only.
+- **No formal certification.** Validation is advisory and self-attested. No external audit body.
 
 ---
 

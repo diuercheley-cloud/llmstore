@@ -3,6 +3,119 @@ from app.models.commercial_merkle_timelines import (
     CommercialMerkleLeaf,
     CommercialExecutionProof,
 )
+from app.models.operations.correlation import (
+    OperationalCorrelation,
+    CorrelatedOperationalEvent,
+    OperationalTrustLink,
+)
+from app.models.operations.remediation_planning import (
+    RemediationPlan,
+    RemediationStep,
+    RemediationPlanReceipt,
+    RemediationApprovalRequirement,
+)
+from app.models.operations.remediation_execution import (
+    RemediationExecution,
+    RemediationExecutionStep,
+    RemediationRollbackPlan,
+    RemediationExecutionReceipt,
+    RemediationKillSwitchState,
+)
+from app.models.operations.attestation_framework import (
+    SovereignExecutionAttestation,
+    AttestationTrustPolicy,
+    AttestationFederationBundle,
+    AttestationVerificationResult,
+    AttestationReceipt,
+    AttestationChainLink,
+)
+from app.models.operations.federation_sync import (
+    SovereignFederationEnvironment,
+    FederationSynchronizationSession,
+    FederationSynchronizationBundle,
+    FederationTrustNegotiation,
+    FederationConflictResolution,
+    FederationSynchronizationReceipt,
+    FederationLineageLink,
+)
+from app.models.operations.compatibility_contracts import (
+    CompatibilityContract,
+    CompatibilityMatrix,
+    VersionNegotiationSession,
+    CapabilityNegotiation,
+    FeatureCompatibilityFlag,
+    DeprecationLifecycle,
+    CompatibilityVerificationResult,
+    CompatibilityReceipt,
+)
+from app.models.operations.plugin_runtime import (
+    PluginABIContract,
+    PluginCapabilityBoundary,
+    PluginRuntimeCompatibilityCheck,
+    DeterministicExtensionLoadPlan,
+    PluginIsolationPolicy,
+    PluginLifecycleEvent,
+    PluginReplayVerificationResult,
+    PluginFederationCompatibility,
+    PluginRuntimeReceipt,
+)
+from app.models.operations.plugin_supply_chain import (
+    DependencyGovernancePolicy,
+    PluginArtifactLineage,
+    PluginDependencyVerification,
+    PluginProvenanceRecord,
+    PluginSBOMPlaceholder,
+    PluginSignedArtifactPlaceholder,
+    PluginSupplyChainReceipt,
+)
+from app.models.operations.reproducible_builds import (
+    ReproducibleBuildManifest,
+    ArtifactVerificationRecord,
+    SourceArtifactLineage,
+    BuildEnvironmentConstraint,
+    ReproducibilityVerificationResult,
+    ArtifactReplayVerification,
+    ReproducibleBuildReceipt,
+)
+from app.models.operations.deterministic_events import (
+    DeterministicEventContract,
+    DeterministicEventRecord,
+    EventSchemaCompatibility,
+)
+from app.models.operations.sovereign_observability import (
+    SovereignMetricRecord,
+    SovereignTraceRecord,
+    OperationalTimeline,
+)
+from app.models.operations.disaster_recovery import (
+    SovereignBackupManifest,
+    RecoveryPlan,
+    RecoveryVerificationResult,
+)
+from app.models.governance.policy_engine import (
+    DeterministicPolicy,
+    PolicyEvaluationResult,
+    PolicyBundle,
+    PolicyConflict,
+)
+from app.models.governance.data_governance import (
+    SovereignDataZone,
+    DataLineageRecord,
+    DataRetentionRule,
+    DataExportGovernanceRecord,
+)
+from app.models.governance.human_governance import (
+    GovernanceReviewWorkflow,
+    GovernanceApprovalQuorum,
+    GovernanceEscalation,
+)
+from app.models.operations.adapter_sandbox import (
+    AdapterManifest,
+    AdapterSandboxRun,
+    AdapterSandboxStepResult,
+    AdapterSandboxPolicyViolation,
+    AdapterSandboxReceipt,
+)
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
 from app.models.billing_invoice import BillingInvoice
@@ -371,7 +484,19 @@ __all__ = [
     "CommercialSigningProfile",
     "CommercialCryptoOperation",
     "CommercialKeyRotationSchedule",
+    "FailureSignal",
+    "FailureForecast",
+    "FailureRiskAssessment",
+    "OperationalCorrelation",
+    "CorrelatedOperationalEvent",
+    "OperationalTrustLink",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 
 from app.models.commercial_control_plane_mesh import CommercialMeshNode, CommercialMeshConsensusEvent, CommercialMeshReplicationLog, CommercialMeshHealthState, CommercialMeshPartitionEvent
+
+from app.models.operations.failure_signals import (
+    FailureSignal,
+    FailureForecast,
+    FailureRiskAssessment,
+)

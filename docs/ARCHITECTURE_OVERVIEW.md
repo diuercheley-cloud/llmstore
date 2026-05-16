@@ -93,6 +93,16 @@ sequenceDiagram
 - **Scalability**: Stateless Control Plane with distributed worker pools.
 - **High Availability**: Leader election and automated failover for critical services.
 
+## Architecture Validation
+
+Run the unified architecture validation suite with:
+
+```bash
+make validate-platform-architecture
+```
+
+See [validation/platform_architecture_validation.md](validation/platform_architecture_validation.md) for details.
+
 ---
 
 **Next Steps**: See [SYSTEM_MAP.md](SYSTEM_MAP.md) for a detailed directory of all modules.
