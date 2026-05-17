@@ -116,7 +116,7 @@ async def test_provider_settings_round_trip(admin_client: AsyncClient, admin_tok
         "providers": {
             "openai": {
                 "enabled": True,
-                "api_key": "sk-proj-test-openai-1234",
+                "api_key": "TEST_API_KEY",
                 "clear_api_key": False,
                 "base_url": "https://api.openai.com/v1",
                 "chat_model": "gpt-4o-mini",
@@ -149,12 +149,12 @@ async def test_provider_settings_round_trip(admin_client: AsyncClient, admin_tok
     body = response.json()
     assert body["message"] == "provider configuration updated"
     assert body["configuration"]["global"]["cloud_providers_enabled"] is True
-    assert body["configuration"]["providers"]["openai"]["masked_api_key"].startswith("sk-p")
+    assert body["configuration"]["providers"]["openai"]["masked_api_key"].startswith("TEST_API_KEY")
     assert body["configuration"]["providers"]["deepseek"]["configured"] is True
     assert body["configuration"]["providers"]["anthropic"]["configured"] is True
 
     updated_env = env_file.read_text(encoding="utf-8")
-    assert "OPENAI_API_KEY=sk-proj-test-openai-1234" in updated_env
+    assert "OPENAI_API_KEY=TEST_API_KEY" in updated_env
     assert "DEEPSEEK_CHAT_MODEL=deepseek-chat" in updated_env
     assert "OPENROUTER_API_KEY=sk-or-test-1234" in updated_env
     assert os.environ["CLOUD_PROVIDERS_ENABLED"] == "true"
