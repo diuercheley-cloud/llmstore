@@ -21,6 +21,7 @@ from app.core.metrics import (
 from app.models.inference_backend import InferenceBackend
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
+from app.services.context_manager import get_context_manager
 from app.utils.anti_loop import detect_repetition, truncate_at_repetition
 from app.utils.model_prompting import apply_prompt_template_settings
 from app.utils.openai_response import normalize_chat_completion, normalize_chat_stream_line
@@ -160,8 +161,21 @@ class InferenceProxy:
         backend: str,
         prompt_template: str | None = None,
     ) -> dict:
+        updated = dict(payload)
+        messages = updated.get("messages")
+        if isinstance(messages, list) and messages:
+            context_manager = get_context_manager()
+            trimmed_messages, capped_max_tokens, metrics = context_manager.manage(
+                messages=[m for m in messages if isinstance(m, dict)],
+                requested_max_tokens=updated.get("max_tokens"),
+                model_id=str(updated.get("model") or ""),
+            )
+            if metrics.get("truncated") or trimmed_messages != messages:
+                updated["messages"] = trimmed_messages
+                if updated.get("max_tokens") != capped_max_tokens:
+                    updated["max_tokens"] = capped_max_tokens
         return apply_prompt_template_settings(
-            payload,
+            updated,
             prompt_template=prompt_template,
             include_reasoning=include_reasoning,
             backend=backend,

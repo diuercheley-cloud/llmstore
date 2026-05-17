@@ -15,7 +15,6 @@ DISALLOWED_SCHEMA_KEYS = {
     "$defs",
     "definitions",
     "allOf",
-    "anyOf",
     "oneOf",
     "not",
     "if",
@@ -31,15 +30,40 @@ DISALLOWED_SCHEMA_KEYS = {
 
 def provider_tool_capability(provider: str | None) -> str:
     normalized = (provider or "").strip().lower()
-    if normalized == "openai_compatible":
+    if normalized in {"openai_compatible", "llama.cpp"}:
         return "supported"
-    if normalized in {"llama.cpp", "ollama", "vllm"}:
+    if normalized in {"ollama", "vllm"}:
         return "unsupported"
     return "unsupported"
 
 
 def provider_supports_native_tools(provider: str | None) -> bool:
     return provider_tool_capability(provider) == "supported"
+
+
+def tooling_requested(
+    *,
+    tools: list[Any] | None,
+    tool_choice: str | dict[str, Any] | None,
+) -> bool:
+    if tools:
+        return True
+    if tool_choice is None:
+        return False
+    if isinstance(tool_choice, str):
+        return tool_choice == "required"
+    return True
+
+
+def sanitize_inert_tooling_fields(
+    *,
+    tools: list[Any] | None,
+    tool_choice: str | dict[str, Any] | None,
+    parallel_tool_calls: bool | None,
+) -> tuple[list[Any] | None, str | dict[str, Any] | None, bool | None]:
+    if tools:
+        return tools, tool_choice, parallel_tool_calls
+    return None, None, None
 
 
 def validate_tooling_request(
@@ -200,17 +224,38 @@ def _schema_stats(schema: Any, *, depth: int = 1) -> dict[str, int]:
     property_count = 0
     max_depth = depth
     if isinstance(schema, dict):
-        for key, value in schema.items():
+        for key in schema:
             if key in DISALLOWED_SCHEMA_KEYS:
                 raise _tool_request_error("tool_schema_not_allowed", f"schema keyword '{key}' is not allowed")
-            if key == "properties" and isinstance(value, dict):
-                property_count += len(value)
-            child = _schema_stats(value, depth=depth + 1)
+
+        properties = schema.get("properties")
+        if isinstance(properties, dict):
+            property_count += len(properties)
+            for child_schema in properties.values():
+                child = _schema_stats(child_schema, depth=depth + 1)
+                property_count += child["property_count"]
+                max_depth = max(max_depth, child["max_depth"])
+
+        items = schema.get("items")
+        if isinstance(items, dict):
+            child = _schema_stats(items, depth=depth + 1)
+            property_count += child["property_count"]
+            max_depth = max(max_depth, child["max_depth"])
+        elif isinstance(items, list):
+            for child_schema in items:
+                child = _schema_stats(child_schema, depth=depth + 1)
+                property_count += child["property_count"]
+                max_depth = max(max_depth, child["max_depth"])
+
+        for key, value in schema.items():
+            if key in {"properties", "items"}:
+                continue
+            child = _schema_stats(value, depth=depth)
             property_count += child["property_count"]
             max_depth = max(max_depth, child["max_depth"])
     elif isinstance(schema, list):
         for value in schema:
-            child = _schema_stats(value, depth=depth + 1)
+            child = _schema_stats(value, depth=depth)
             property_count += child["property_count"]
             max_depth = max(max_depth, child["max_depth"])
     return {"property_count": property_count, "max_depth": max_depth}

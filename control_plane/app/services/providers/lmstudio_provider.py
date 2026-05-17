@@ -75,6 +75,7 @@ class LMStudioProvider(ProviderAdapter):
         return 0.0
 
     def capabilities(self) -> ProviderCapabilities:
+        settings = get_settings()
         return ProviderCapabilities(
             chat=True,
             streaming=True,
@@ -83,6 +84,6 @@ class LMStudioProvider(ProviderAdapter):
             tools=self.enabled,
             vision=False,
             json_mode=True,
-            max_context_tokens=4096,
+            max_context_tokens=settings.max_context_tokens,
             pricing_configured=False,
         )

@@ -77,6 +77,51 @@ async def test_reproducibility_capture_creates_record_and_snapshot(session, sett
 
 
 @pytest.mark.asyncio
+async def test_reproducibility_seed_is_clamped_to_int32(session, settings):
+    settings.commercial_reproducibility_enabled = True
+    client = Client(name="seed-client", billing_status="active", is_blocked=False)
+    session.add(client)
+    await session.flush()
+
+    request_payload = {
+        "model": "demo/model",
+        "messages": [{"role": "user", "content": "seed overflow"}],
+        "temperature": 0.2,
+        "seed": 4145874907,
+    }
+
+    await log_request(
+        session,
+        client_id=client.id,
+        model="demo/model",
+        endpoint="/v1/chat/completions",
+        prompt_tokens=2,
+        completion_tokens=2,
+        latency_ms=7,
+        status_code=200,
+        is_stream=False,
+        estimated_cost_usd=0.0,
+        backend_name="local-backend",
+        attempts=1,
+        fallback_used=False,
+        cache_hit=False,
+        request_summary="seed overflow",
+        request_payload=request_payload,
+        response_payload={"choices": [{"message": {"content": "ok"}}]},
+        reproducibility_context={
+            "provider": "llama.cpp",
+            "prompt_template": "chatml",
+            "runtime_engine": "llama.cpp",
+        },
+    )
+    await session.commit()
+
+    record = (await session.execute(select(CommercialInferenceReproducibilityRecord))).scalar_one()
+    assert record.seed == (4145874907 & 0x7FFFFFFF)
+    assert 0 <= record.seed <= 0x7FFFFFFF
+
+
+@pytest.mark.asyncio
 async def test_reproducibility_payloads_are_sanitized(session, settings):
     settings.commercial_reproducibility_enabled = True
     client = Client(name="sanitized-client", billing_status="active", is_blocked=False)

@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from app.core.config import get_settings
 from app.services.billing import resolve_effective_plan
 from app.models.client import Client
+from app.utils.tool_calling import tooling_requested
 
 settings = get_settings()
 
@@ -47,9 +48,6 @@ def validate_params(client: Client, payload):
     # Feature Gates
     if not effective_plan.responses_enabled and getattr(payload, "_endpoint", "") == "/v1/responses":
         raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
-    
-    if not effective_plan.tools_enabled and (getattr(payload, "tools", None) or getattr(payload, "tool_choice", None)):
-        raise HTTPException(status_code=403, detail="tools feature is not enabled for your plan")
 
     if temperature > settings.max_temperature:
         raise HTTPException(status_code=422, detail="temperature exceeds configured maximum")

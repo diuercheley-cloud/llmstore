@@ -701,6 +701,14 @@ async def admin_lab():
     return FileResponse(static_file)
 
 
+@router.get("/provider-settings", include_in_schema=False)
+async def provider_settings_page():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "provider-settings" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/monitoring", include_in_schema=False)
 async def monitoring_dashboard():
     if settings.public_exposure:

@@ -217,7 +217,7 @@ async def get_capabilities():
         {
             "feature": "tools/function calling",
             "status": "Partial",
-            "backend_support": "openai_compatible=native, llama.cpp/ollama/vllm=capability_not_supported",
+            "backend_support": "openai_compatible=native, llama.cpp=native, ollama/vllm=capability_not_supported",
             "production_ready": True,
             "limitations": "Schemas passam por validação e argumentos sensíveis são sanitizados nos logs",
             "validator_script": None
@@ -3064,7 +3064,8 @@ async def reload_models(
 
 @router.post("/test/clients/{client_id}/reset-usage")
 async def reset_client_usage(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
-    if not settings.test_tools_enabled or settings.public_exposure:
+    current_settings = get_settings()
+    if not current_settings.test_tools_enabled or current_settings.public_exposure:
         raise HTTPException(status_code=403, detail="test tools disabled")
     client = await session.get(Client, client_id)
     if client is None:
@@ -3083,7 +3084,8 @@ async def reset_client_usage(client_id: uuid.UUID, session: AsyncSession = Depen
 
 @router.get("/test/commands", response_model=list[TestCommand])
 async def list_test_commands():
-    if not settings.test_tools_enabled or settings.public_exposure:
+    current_settings = get_settings()
+    if not current_settings.test_tools_enabled or current_settings.public_exposure:
         raise HTTPException(status_code=403, detail="test tools disabled")
     return [
         TestCommand(id=k, name=v["name"], description=v["description"], command=v["command"])
@@ -3093,7 +3095,8 @@ async def list_test_commands():
 
 @router.post("/test/run", response_model=TestRunResponse)
 async def run_test_command(payload: TestRunRequest):
-    if not settings.test_tools_enabled or settings.public_exposure:
+    current_settings = get_settings()
+    if not current_settings.test_tools_enabled or current_settings.public_exposure:
         raise HTTPException(status_code=403, detail="test tools disabled")
     
     cmd_info = WHITELISTED_COMMANDS.get(payload.command_id)

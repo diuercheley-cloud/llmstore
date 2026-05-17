@@ -15,7 +15,8 @@ Campos aceitos:
 ## Comportamento
 
 - Modelos `openai_compatible` recebem o payload de tools em formato OpenAI nativo.
-- Modelos locais sem suporte nativo (`llama.cpp`, `ollama`, `vllm`) retornam `501` com `error.code=capability_not_supported`.
+- Modelos `llama.cpp` e `openai_compatible` recebem o payload de tools em formato OpenAI nativo.
+- Providers sem suporte nativo (`ollama`, `vllm`) retornam `501` com `error.code=capability_not_supported`.
 - `/v1/responses` continua sem streaming; quando há tool call, o output inclui item `type=function_call`.
 
 ## Validacao
@@ -27,7 +28,7 @@ Validacoes locais aplicadas antes de encaminhar ao provider:
 - Schema maximo por tool: `24 KiB`
 - Profundidade maxima de schema: `8`
 - Maximo de `256` propriedades por schema
-- Keywords bloqueadas por seguranca: `$ref`, `$defs`, `definitions`, `allOf`, `anyOf`, `oneOf`, `not`, `if`, `then`, `else`, `dependentSchemas`, `patternProperties`, `unevaluatedProperties`, `contentEncoding`, `contentMediaType`
+- Keywords bloqueadas por seguranca: `$ref`, `$defs`, `definitions`, `allOf`, `oneOf`, `not`, `if`, `then`, `else`, `dependentSchemas`, `patternProperties`, `unevaluatedProperties`, `contentEncoding`, `contentMediaType`
 - Argumentos de tool retornados pelo provider: maximo de `16 KiB`
 
 ## Logs e Billing

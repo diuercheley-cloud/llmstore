@@ -52,6 +52,7 @@ from app.services.model_policy import (
     resolve_requested_model,
     serialize_model_card,
 )
+from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
 from app.services.quota import QuotaExceeded, ensure_quota, ensure_embeddings_quota, record_usage, record_embedding_usage
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit, enforce_ip_rate_limit
 from app.services.response_cache import (
@@ -73,6 +74,7 @@ from app.utils.tool_calling import (
     enforce_tool_argument_limits,
     extract_tool_calls_from_chat_payload,
     provider_supports_native_tools,
+    sanitize_inert_tooling_fields,
     sanitize_tool_calls,
     validate_tooling_request,
 )
@@ -768,6 +770,11 @@ async def _process_chat_completion(
     endpoint: str = "/v1/chat/completions",
 ):
     cloud_blocked_by_guardrail = False
+    payload.tools, payload.tool_choice, payload.parallel_tool_calls = sanitize_inert_tooling_fields(
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        parallel_tool_calls=payload.parallel_tool_calls,
+    )
 
     validate_tooling_request(
         tools=payload.tools,

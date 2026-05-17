@@ -54,6 +54,15 @@ def _normalize_text(value: str | None) -> str:
     return " ".join(value.lower().split())
 
 
+def _normalize_seed(seed: Any) -> int | None:
+    if seed is None:
+        return None
+    try:
+        return int(seed) & 0x7FFFFFFF
+    except (TypeError, ValueError):
+        return None
+
+
 def _extract_prompt_text(request_payload: dict[str, Any] | None) -> str:
     if not request_payload:
         return ""
@@ -305,8 +314,9 @@ def determine_seed_capture(
     )
     backend_supports_seed = provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "local"}
     if explicit_seed is not None:
+        normalized_seed = _normalize_seed(explicit_seed)
         return {
-            "seed": int(explicit_seed),
+            "seed": normalized_seed,
             "seed_source": "explicit",
             "replay_supported": backend_supports_seed or not stochastic,
             "backend_supports_seed": backend_supports_seed,
@@ -314,7 +324,7 @@ def determine_seed_capture(
     if backend_supports_seed:
         implicit_seed = int(hash_prompt(payload)[:8], 16)
         return {
-            "seed": implicit_seed,
+            "seed": _normalize_seed(implicit_seed),
             "seed_source": "implicit",
             "replay_supported": True,
             "backend_supports_seed": True,

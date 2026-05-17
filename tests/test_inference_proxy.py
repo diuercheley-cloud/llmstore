@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
+from app.utils.token_estimator import estimate_prompt_tokens
 
 
 class DummyQueueManager:
@@ -88,3 +89,29 @@ def test_prepare_chat_payload_uses_gemma_template_and_disables_reasoning():
     assert prepared["repeat_penalty"] == 1.2
     assert prepared["reasoning_format"] == "none"
     assert prepared["chat_template_kwargs"]["enable_thinking"] is False
+
+
+def test_prepare_chat_payload_trims_openai_compatible_context():
+    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+    payload = {
+        "model": "nvidia/nemotron-3-nano-4b",
+        "messages": [
+            {"role": "system", "content": "system " + ("instructions " * 400)},
+            {"role": "user", "content": "turn 1 " + ("context " * 400)},
+            {"role": "assistant", "content": "turn 2 " + ("context " * 400)},
+            {"role": "user", "content": "turn 3 " + ("context " * 400)},
+            {"role": "assistant", "content": "turn 4 " + ("context " * 400)},
+            {"role": "user", "content": "final question"},
+        ],
+        "max_tokens": 512,
+    }
+
+    prepared = proxy._prepare_chat_payload(
+        payload,
+        include_reasoning=False,
+        backend="openai_compatible",
+        prompt_template=None,
+    )
+
+    assert len(prepared["messages"]) < len(payload["messages"])
+    assert estimate_prompt_tokens(messages=prepared["messages"]) <= 2048

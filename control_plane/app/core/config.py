@@ -228,7 +228,7 @@ class Settings(BaseSettings):
     max_request_body_size_bytes: int = Field(default=1024 * 1024 * 5, alias="MAX_REQUEST_BODY_SIZE_BYTES") # 5MB
     max_tools_per_request: int = Field(default=16, alias="MAX_TOOLS_PER_REQUEST")
     max_tool_schema_bytes: int = Field(default=24 * 1024, alias="MAX_TOOL_SCHEMA_BYTES")
-    max_tool_schema_depth: int = Field(default=8, alias="MAX_TOOL_SCHEMA_DEPTH")
+    max_tool_schema_depth: int = Field(default=16, alias="MAX_TOOL_SCHEMA_DEPTH")
     max_tool_schema_properties: int = Field(default=256, alias="MAX_TOOL_SCHEMA_PROPERTIES")
     max_tool_arguments_bytes: int = Field(default=16 * 1024, alias="MAX_TOOL_ARGUMENTS_BYTES")
     tool_argument_preview_chars: int = Field(default=160, alias="TOOL_ARGUMENT_PREVIEW_CHARS")
@@ -573,11 +573,16 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
     openai_base_url: str = Field(default="", alias="OPENAI_BASE_URL")
     openai_chat_model: str = Field(default="", alias="OPENAI_CHAT_MODEL")
+    openai_embeddings_model: str = Field(default="", alias="OPENAI_EMBEDDINGS_MODEL")
     anthropic_base_url: str = Field(default="", alias="ANTHROPIC_BASE_URL")
     anthropic_model: str = Field(default="", alias="ANTHROPIC_MODEL")
     deepseek_base_url: str = Field(default="", alias="DEEPSEEK_BASE_URL")
+    deepseek_chat_model: str = Field(default="", alias="DEEPSEEK_CHAT_MODEL")
     openrouter_base_url: str = Field(default="", alias="OPENROUTER_BASE_URL")
-    provider_timeout_seconds: int = Field(default=30, alias="PROVIDER_TIMEOUT_SECONDS")
+    provider_timeout_seconds: int = Field(
+        default=30,
+        validation_alias=AliasChoices("PROVIDER_TIMEOUT_SECONDS", "REAL_PROVIDER_TIMEOUT_SECONDS"),
+    )
     provider_max_retries: int = Field(default=2, alias="PROVIDER_MAX_RETRIES")
     provider_fail_closed: bool = Field(default=True, alias="PROVIDER_FAIL_CLOSED")
     routing_test_force_local_failure: bool = Field(default=False, alias="ROUTING_TEST_FORCE_LOCAL_FAILURE")

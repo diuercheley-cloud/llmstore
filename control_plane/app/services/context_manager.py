@@ -8,10 +8,10 @@ settings = get_settings()
 
 class ContextManager:
     def __init__(self):
-        self.max_context_tokens = 2048
-        self.max_completion_tokens = 512
-        self.max_system_chars = 1000
-        self.max_history_messages = 4
+        self.max_context_tokens = settings.inference_max_context_tokens
+        self.max_completion_tokens = settings.inference_max_completion_tokens
+        self.max_system_chars = settings.inference_max_system_chars
+        self.max_history_messages = settings.inference_max_history_messages
 
     def manage(
         self,
@@ -68,11 +68,6 @@ class ContextManager:
         
         if system_messages:
             system_content = "\n\n".join([str(m["content"]) for m in system_messages])
-            if len(system_content) > self.max_system_chars:
-                logger.warning(f"System prompt too large ({len(system_content)} chars), truncating to {self.max_system_chars}")
-                system_content = system_content[:self.max_system_chars]
-                metrics["truncated"] = True
-            
             processed_messages = [{"role": "system", "content": system_content}] + other_messages
         else:
             processed_messages = other_messages
@@ -99,14 +94,10 @@ class ContextManager:
         metrics["final_tokens_estimate"] = estimate_prompt_tokens(messages=processed_messages)
         metrics["final_message_count"] = len(processed_messages)
 
-        # 6. Cap max_tokens (If > 1024 force 512, if None use 256)
+        # 6. Use requested max_tokens or default
         final_max_tokens = requested_max_tokens
         if final_max_tokens is None or final_max_tokens <= 0:
             final_max_tokens = 256
-        elif final_max_tokens > 1024:
-            logger.info(f"requested max_tokens={requested_max_tokens} capped_to=512")
-            final_max_tokens = 512
-            metrics["truncated"] = True
         
         return processed_messages, final_max_tokens, metrics
 

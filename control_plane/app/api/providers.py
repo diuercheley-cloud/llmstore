@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from app.services.auth import require_admin
 from app.services.providers.registry import (
@@ -14,12 +15,48 @@ from app.services.providers.registry import (
     get_provider,
     get_providers,
 )
+from app.services.provider_settings import (
+    apply_runtime_updates,
+    build_provider_configuration,
+    env_updates_from_payload,
+    write_env_updates,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/providers", tags=["admin"], dependencies=[Depends(require_admin)])
 
 COSTS_ARTIFACTS_DIR = Path(__file__).resolve().parents[3] / "artifacts" / "real-provider-validation" / "costs"
+
+
+class ProviderGlobalConfig(BaseModel):
+    cloud_providers_enabled: bool = False
+    real_provider_validation_enabled: bool = False
+    real_provider_max_cost_brl: float = Field(default=2.0, ge=0)
+    real_provider_timeout_seconds: int = Field(default=30, ge=1, le=300)
+
+
+class EditableProviderConfig(BaseModel):
+    enabled: bool = False
+    base_url: str = ""
+    api_key: str | None = None
+    clear_api_key: bool = False
+    chat_model: str = ""
+    embeddings_model: str = ""
+    model: str = ""
+
+
+class OpenRouterConfig(BaseModel):
+    base_url: str = ""
+    api_key: str | None = None
+    clear_api_key: bool = False
+
+
+class ProviderConfigurationPayload(BaseModel):
+    global_: ProviderGlobalConfig = Field(alias="global")
+    providers: dict[str, EditableProviderConfig | OpenRouterConfig]
+
+    model_config = {"populate_by_name": True}
 
 
 def _load_latest_cost_report():
@@ -72,6 +109,25 @@ async def list_providers():
         }
         for s in statuses
     ]
+
+
+@router.get("/configuration")
+async def get_provider_configuration():
+    return build_provider_configuration()
+
+
+@router.put("/configuration")
+async def update_provider_configuration(payload: ProviderConfigurationPayload):
+    serialized = payload.model_dump(by_alias=True)
+    updates = env_updates_from_payload(serialized)
+    env_path = write_env_updates(updates)
+    apply_runtime_updates(updates)
+    current = build_provider_configuration()
+    return {
+        "message": "provider configuration updated",
+        "env_file": str(env_path),
+        "configuration": current,
+    }
 
 
 @router.get("/{provider_id}")

@@ -9,7 +9,7 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 | `/v1/models` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui provider_info | `curl /v1/models` |
 | `/v1/embeddings` | ✅ (Deterministic) | ❌ | ⚠️ (Mock) | ✅ | ❌ | ✅ | Partial | Mock por padrão | `scripts/test-embeddings.sh` |
 | `/v1/responses` | ✅ | ✅ | ✅ | ✅ | ⚠️ (via chat) | ✅ | Beta | Sem streaming; tools seguem capability do provider/modelo | `scripts/test-responses.sh` |
-| tools/function calling | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | Partial | `openai_compatible` nativo; `llama.cpp`/`ollama`/`vllm` retornam `capability_not_supported`; logs persistem preview sanitizado | - |
+| tools/function calling | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | Partial | `llama.cpp` e `openai_compatible` recebem payload OpenAI nativo; `ollama`/`vllm` retornam `capability_not_supported`; logs persistem preview sanitizado | - |
 | Smart Routing | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-smart-routing-local.sh` |
 | Multi-Provider | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
 | Provider Registry | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
@@ -57,7 +57,7 @@ Resumo rapido por provider/modelo:
 | Provider/modelo registrado | `/v1/chat/completions` | `/v1/responses` | Observacoes |
 |---|---|---|---|
 | `openai_compatible` | Supported | Supported | Payload OpenAI encaminhado nativamente, com validacao local e logs sanitizados |
-| `llama.cpp` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
+| `llama.cpp` | Supported | Supported | Payload OpenAI encaminhado ao backend com validacao local e logs sanitizados |
 | `ollama` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
 | `vllm` | Not Supported | Not Supported | Retorna erro `capability_not_supported` quando `tools` e enviado |
 

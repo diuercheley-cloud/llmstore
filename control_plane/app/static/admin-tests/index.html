@@ -658,7 +658,13 @@
                     headers: getClientHeaders(),
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
+                const rawText = await res.text();
+                let data = null;
+                try {
+                    data = rawText ? JSON.parse(rawText) : null;
+                } catch (_) {
+                    data = { raw_body: rawText };
+                }
                 const duration = Math.round(performance.now() - start);
                 
                 if (res.ok && data.choices && data.choices.length > 0) {
@@ -667,7 +673,8 @@
                     addToHistory('API Test', 'PASS', duration, `Tokens: ${data.usage?.total_tokens}`);
                     return { ok: true, data };
                 } else {
-                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    const rendered = data && data.raw_body ? data.raw_body : JSON.stringify(data, null, 2);
+                    box.innerHTML = `<span class="status-err">HTTP ${res.status}</span>\n\n<pre>${rendered}</pre>`;
                     addToHistory('API Test', 'FAIL', duration, `HTTP ${res.status}`);
                     return { ok: false, data };
                 }

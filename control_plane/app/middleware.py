@@ -60,11 +60,16 @@ async def request_context_middleware(request: Request, call_next):
             logger.error(f"Global rate limit check failed: {e}")
 
     elif settings.public_exposure and (
-        request.url.path in {"/admin-dashboard", "/admin-lab"}
+        request.url.path in {"/admin-dashboard", "/admin-lab", "/provider-settings"}
         or request.url.path.startswith("/static/admin/")
         or request.url.path.startswith("/static/admin-lab/")
+        or request.url.path.startswith("/static/provider-settings/")
     ):
-        detail = "admin lab disabled in public exposure mode" if "admin-lab" in request.url.path else "admin dashboard disabled in public exposure mode"
+        detail = "provider settings disabled in public exposure mode"
+        if "admin-lab" in request.url.path:
+            detail = "admin lab disabled in public exposure mode"
+        elif "admin-dashboard" in request.url.path or request.url.path.startswith("/static/admin/"):
+            detail = "admin dashboard disabled in public exposure mode"
         return JSONResponse({"detail": detail}, status_code=404)
     correlation_id = request.headers.get("x-correlation-id", "").strip() or str(uuid.uuid4())
     source_ip = resolve_source_ip(request)
