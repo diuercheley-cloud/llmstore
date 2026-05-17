@@ -47,6 +47,7 @@ class EditableProviderConfig(BaseModel):
 
 
 class OpenRouterConfig(BaseModel):
+    enabled: bool = False
     base_url: str = ""
     api_key: str | None = None
     clear_api_key: bool = False

@@ -145,6 +145,11 @@
       }
       .provider-card {
         padding: 22px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .provider-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(60, 41, 24, 0.08);
       }
       .provider-head {
         display: flex;
@@ -239,6 +244,18 @@
         font: inherit;
         font-weight: 700;
         cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(180, 83, 9, 0.15);
+      }
+      button:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
       .primary {
         background: linear-gradient(135deg, #c2410c 0%, #7c2d12 100%);
@@ -248,6 +265,16 @@
         background: rgba(255, 255, 255, 0.84);
         color: var(--ink);
         border: 1px solid var(--line);
+      }
+      .card-actions {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+      .card-actions button {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px 16px;
       }
       .message {
         min-height: 24px;
@@ -394,6 +421,9 @@
                 Embeddings model
                 <input id="openaiEmbeddingsModel" type="text" />
               </label>
+              <div class="card-actions">
+                <button class="primary" onclick="saveProvider('openai', this)" type="button">Aplicar Alterações</button>
+              </div>
             </div>
           </article>
 
@@ -430,6 +460,9 @@
                 Model
                 <input id="anthropicModel" type="text" />
               </label>
+              <div class="card-actions">
+                <button class="primary" onclick="saveProvider('anthropic', this)" type="button">Aplicar Alterações</button>
+              </div>
             </div>
           </article>
 
@@ -466,6 +499,9 @@
                 Chat model
                 <input id="deepseekChatModel" type="text" />
               </label>
+              <div class="card-actions">
+                <button class="primary" onclick="saveProvider('deepseek', this)" type="button">Aplicar Alterações</button>
+              </div>
             </div>
           </article>
 
@@ -475,7 +511,13 @@
                 <h2>OpenRouter</h2>
                 <p>Segue o gate global de cloud providers.</p>
               </div>
-              <span class="pill off" id="openrouterState">-</span>
+              <div class="head-actions">
+                <label class="switch">
+                  <input id="openrouterEnabled" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+                <span class="pill off" id="openrouterState">-</span>
+              </div>
             </div>
             <div class="form-block">
               <label>
@@ -494,7 +536,9 @@
                 Base URL
                 <input id="openrouterBaseUrl" type="text" />
               </label>
-              <p class="hint">OpenRouter não possui toggle individual neste runtime. Ele acompanha `CLOUD_PROVIDERS_ENABLED`.</p>
+              <div class="card-actions">
+                <button class="primary" onclick="saveProvider('openrouter', this)" type="button">Aplicar Alterações</button>
+              </div>
             </div>
           </article>
         </section>
@@ -517,6 +561,27 @@
         const el = $('message');
         el.textContent = text || '';
         el.className = kind ? `message ${kind}` : 'message';
+      }
+
+      async function parseErrorResponse(res) {
+        let payload = null;
+        try {
+          payload = await res.json();
+        } catch (_) {
+          try {
+            const text = await res.text();
+            return text || `Falha HTTP ${res.status}`;
+          } catch (_) {
+            return `Falha HTTP ${res.status}`;
+          }
+        }
+        if (payload && typeof payload.detail === 'string' && payload.detail.trim()) {
+          return payload.detail.trim();
+        }
+        if (payload && typeof payload.message === 'string' && payload.message.trim()) {
+          return payload.message.trim();
+        }
+        return `Falha HTTP ${res.status}`;
       }
 
       function tokenHeaders() {
@@ -588,8 +653,7 @@
         setMessage('Carregando configuracao...', 'warn');
         const res = await fetch('/admin/providers/configuration', { headers: tokenHeaders() });
         if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || `Falha HTTP ${res.status}`);
+          throw new Error(await parseErrorResponse(res));
         }
         const data = await res.json();
         renderConfig(data);
@@ -609,7 +673,7 @@
             openai: providerPayload('openai'),
             anthropic: providerPayload('anthropic'),
             deepseek: providerPayload('deepseek'),
-            openrouter: providerPayload('openrouter', { readOnlyEnabled: true })
+            openrouter: providerPayload('openrouter')
           }
         };
         const res = await fetch('/admin/providers/configuration', {
@@ -618,12 +682,66 @@
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || `Falha HTTP ${res.status}`);
+          throw new Error(await parseErrorResponse(res));
         }
         const data = await res.json();
         renderConfig(data.configuration);
         setMessage('Configuracao salva e runtime recarregado.', 'ok');
+      }
+
+      async function saveProvider(providerName, btn) {
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Aplicando...';
+        
+        const card = btn.closest('.provider-card');
+        if (card) {
+          card.style.transition = 'all 0.3s ease';
+          card.style.boxShadow = '0 0 20px rgba(180, 83, 9, 0.3)';
+          card.style.borderColor = 'var(--accent)';
+        }
+
+        try {
+          await saveConfig();
+          
+          btn.innerHTML = 'Sucesso! ✓';
+          btn.style.background = 'linear-gradient(135deg, #15803d 0%, #166534 100%)';
+          
+          if (card) {
+            card.style.boxShadow = '0 0 20px rgba(22, 101, 52, 0.3)';
+            card.style.borderColor = 'var(--ok)';
+          }
+
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.style.background = '';
+            if (card) {
+              card.style.boxShadow = '';
+              card.style.borderColor = '';
+            }
+          }, 2000);
+
+        } catch (err) {
+          btn.innerHTML = 'Erro ✗';
+          btn.style.background = 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)';
+          setMessage(err.message || `Falha ao salvar ${providerName}.`, 'error');
+          
+          if (card) {
+            card.style.boxShadow = '0 0 20px rgba(153, 27, 27, 0.3)';
+            card.style.borderColor = 'var(--danger)';
+          }
+
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.style.background = '';
+            if (card) {
+              card.style.boxShadow = '';
+              card.style.borderColor = '';
+            }
+          }, 3000);
+        }
       }
 
       $('loadBtn').addEventListener('click', async () => {
@@ -643,7 +761,12 @@
       });
 
       const remembered = localStorage.getItem(STORAGE_KEY);
-      if (remembered) $('adminToken').value = remembered;
+      if (remembered) {
+        $('adminToken').value = remembered;
+        loadConfig().catch((err) => {
+          setMessage(err.message || 'Falha ao carregar configuracao.', 'error');
+        });
+      }
     </script>
   </body>
 </html>

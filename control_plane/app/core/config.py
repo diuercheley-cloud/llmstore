@@ -571,7 +571,12 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
     deepseek_api_key: str = Field(default="", alias="DEEPSEEK_API_KEY")
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
+    openai_provider_enabled: bool = Field(default=True, alias="OPENAI_PROVIDER_ENABLED")
+    anthropic_provider_enabled: bool = Field(default=True, alias="ANTHROPIC_PROVIDER_ENABLED")
+    deepseek_provider_enabled: bool = Field(default=True, alias="DEEPSEEK_PROVIDER_ENABLED")
+    openrouter_provider_enabled: bool = Field(default=True, alias="OPENROUTER_PROVIDER_ENABLED")
     openai_base_url: str = Field(default="", alias="OPENAI_BASE_URL")
+
     openai_chat_model: str = Field(default="", alias="OPENAI_CHAT_MODEL")
     openai_embeddings_model: str = Field(default="", alias="OPENAI_EMBEDDINGS_MODEL")
     anthropic_base_url: str = Field(default="", alias="ANTHROPIC_BASE_URL")

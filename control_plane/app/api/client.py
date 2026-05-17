@@ -976,53 +976,60 @@ async def _process_chat_completion(
                 plan_code=effective_plan.code,
             )
             if cached.hit and cached.payload is not None:
-                latency_ms = int((perf_counter() - started) * 1000)
-                cached_tool_calls = sanitize_tool_calls(extract_tool_calls_from_chat_payload(cached.payload))
-                await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
-                await log_request(
-                    session,
-                    client_id=client.id,
-                    model=selected_model.model_id,
-                    endpoint=endpoint,
-                    prompt_tokens=prompt_tokens,
-                    completion_tokens=cached.completion_tokens,
-                    latency_ms=latency_ms,
-                    status_code=200,
-                    is_stream=False,
-                    estimated_cost_usd=estimated_request_cost,
-                    backend_name="cache:exact",
-                    attempts=0,
-                    fallback_used=False,
-                    cache_hit=True,
-                    tool_call_count=len(cached_tool_calls),
-                    tool_calls=cached_tool_calls,
-                    backend_errors=[],
-                    error_message=None,
-                    request_summary=request_summary,
-                    plan_code=effective_plan.code,
-                    safety_profile=getattr(payload, "safety_profile", "default"),
-                    request_payload=body,
-                    response_payload=cached.payload,
-                    reproducibility_context={
-                        "model_alias": selected_model.model_alias,
-                        "provider": selected_model.provider,
-                        "prompt_template": selected_model.prompt_template,
-                        "runtime_engine": selected_model.provider,
-                        "model_metadata_json": selected_model.metadata_json,
-                        "metadata_json": {"cache_hit": True},
-                    },
-                )
-                await session.commit()
-                cached_response = JSONResponse(status_code=200, content=cached.payload)
-                return _apply_compat_headers(
-                    cached_response,
-                    _response_compat_headers(
-                        requested_model=payload.model,
-                        resolved_model=selected_model.model_id,
+                if not proxy._chat_response_has_visible_output(
+                    cached.payload,
+                    include_reasoning=getattr(payload, "include_reasoning", False),
+                ):
+                    cached.hit = False
+                    cached.payload = None
+                else:
+                    latency_ms = int((perf_counter() - started) * 1000)
+                    cached_tool_calls = sanitize_tool_calls(extract_tool_calls_from_chat_payload(cached.payload))
+                    await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
+                    await log_request(
+                        session,
+                        client_id=client.id,
+                        model=selected_model.model_id,
+                        endpoint=endpoint,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=cached.completion_tokens,
+                        latency_ms=latency_ms,
+                        status_code=200,
+                        is_stream=False,
+                        estimated_cost_usd=estimated_request_cost,
                         backend_name="cache:exact",
+                        attempts=0,
                         fallback_used=False,
-                    ),
-                )
+                        cache_hit=True,
+                        tool_call_count=len(cached_tool_calls),
+                        tool_calls=cached_tool_calls,
+                        backend_errors=[],
+                        error_message=None,
+                        request_summary=request_summary,
+                        plan_code=effective_plan.code,
+                        safety_profile=getattr(payload, "safety_profile", "default"),
+                        request_payload=body,
+                        response_payload=cached.payload,
+                        reproducibility_context={
+                            "model_alias": selected_model.model_alias,
+                            "provider": selected_model.provider,
+                            "prompt_template": selected_model.prompt_template,
+                            "runtime_engine": selected_model.provider,
+                            "model_metadata_json": selected_model.metadata_json,
+                            "metadata_json": {"cache_hit": True},
+                        },
+                    )
+                    await session.commit()
+                    cached_response = JSONResponse(status_code=200, content=cached.payload)
+                    return _apply_compat_headers(
+                        cached_response,
+                        _response_compat_headers(
+                            requested_model=payload.model,
+                            resolved_model=selected_model.model_id,
+                            backend_name="cache:exact",
+                            fallback_used=False,
+                        ),
+                    )
 
         result = await _chat_with_fallback(
             proxy,
@@ -1098,6 +1105,11 @@ async def _process_chat_completion(
             await session.commit()
             return _apply_compat_headers(result.response, compat_headers)
         response_payload = json.loads(result.response.body.decode("utf-8"))
+        proxy._validate_chat_response_payload(
+            response_payload,
+            include_reasoning=getattr(payload, "include_reasoning", False),
+            backend_name=result.backend_name,
+        )
         tool_calls = extract_tool_calls_from_chat_payload(response_payload)
         sanitized_tool_calls = enforce_tool_argument_limits(tool_calls)
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))

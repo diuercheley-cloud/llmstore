@@ -6,6 +6,7 @@ import os
 import time
 import json
 import asyncio
+import httpx
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -24,6 +25,9 @@ from app.models.admin_action_log import AdminActionLog
 from app.models.user_quota_override import UserQuotaOverride
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.inference_backend import InferenceBackend
+from app.models.model_registry import ModelRegistry
+from app.models.model_backend_route import ModelBackendRoute
 from app.services.embeddings import get_embedding_service
 from app.core.time import utc_now
 from app.core.config import get_settings
@@ -553,3 +557,220 @@ async def get_system_resources():
         },
         "gpu": gpu_info
     }
+
+@router.get("/openrouter/models", dependencies=[Depends(require_admin_role(AdminRole.READ))])
+async def list_openrouter_models():
+    """Fetch available models from OpenRouter."""
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get("https://openrouter.ai/api/v1/models", timeout=10.0)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch OpenRouter models: {str(e)}")
+
+@router.get("/openrouter/backend", dependencies=[Depends(require_admin_role(AdminRole.READ))])
+async def get_openrouter_backend(session: AsyncSession = Depends(get_db_session)):
+    """Check if OpenRouter backend is configured."""
+    result = await session.execute(
+        select(InferenceBackend).where(
+            InferenceBackend.provider == "openrouter",
+            InferenceBackend.is_active.is_(True)
+        )
+    )
+    backend = result.scalars().first()
+    if not backend:
+        return {"configured": False}
+    return {
+        "configured": True,
+        "id": str(backend.id),
+        "name": backend.name,
+        "base_url": backend.base_url
+    }
+
+class OpenRouterConfigureRequest(BaseModel):
+    model_id: str
+    model_alias: str
+
+
+class OpenRouterApiRequest(BaseModel):
+    api_key: str | None = None
+    base_url: str | None = None
+
+
+class OpenRouterDirectChatRequest(OpenRouterApiRequest):
+    model_id: str
+    prompt: str
+    temperature: float = 0.2
+
+
+def _openrouter_request_config(payload: OpenRouterApiRequest | None = None) -> tuple[str, str]:
+    settings = get_settings()
+    base_url = (payload.base_url if payload and payload.base_url else settings.openrouter_base_url) or "https://openrouter.ai/api/v1"
+    api_key = (payload.api_key if payload and payload.api_key else settings.openrouter_api_key) or ""
+    return base_url.rstrip("/"), api_key
+
+
+@router.post("/openrouter/connection", dependencies=[Depends(require_admin_role(AdminRole.READ))])
+async def test_openrouter_connection(payload: OpenRouterApiRequest):
+    """Validate OpenRouter API connectivity using configured or provided credentials."""
+    base_url, api_key = _openrouter_request_config(payload)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="OpenRouter API key not configured.")
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": "http://localhost:18080/static/openrouter-test/index.html",
+        "X-Title": "LLM Inference Stack OpenRouter Test Lab",
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.get(f"{base_url}/models", headers=headers)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text[:500] if exc.response is not None else str(exc)
+            raise HTTPException(status_code=502, detail=f"OpenRouter API error: {detail}")
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"Failed to connect to OpenRouter: {str(exc)}")
+
+    return {
+        "ok": True,
+        "base_url": base_url,
+        "using_configured_key": not bool(payload.api_key),
+        "model_count": len(data.get("data", [])),
+    }
+
+
+@router.post("/openrouter/models", dependencies=[Depends(require_admin_role(AdminRole.READ))])
+async def list_openrouter_models_authenticated(payload: OpenRouterApiRequest):
+    """Fetch available models from OpenRouter using configured or provided credentials."""
+    base_url, api_key = _openrouter_request_config(payload)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="OpenRouter API key not configured.")
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": "http://localhost:18080/static/openrouter-test/index.html",
+        "X-Title": "LLM Inference Stack OpenRouter Test Lab",
+    }
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        try:
+            response = await client.get(f"{base_url}/models", headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text[:500] if exc.response is not None else str(exc)
+            raise HTTPException(status_code=502, detail=f"Failed to fetch OpenRouter models: {detail}")
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch OpenRouter models: {str(exc)}")
+
+
+@router.post("/openrouter/chat", dependencies=[Depends(require_admin_role(AdminRole.READ))])
+async def test_openrouter_chat(payload: OpenRouterDirectChatRequest):
+    """Send a direct chat completion request to OpenRouter."""
+    base_url, api_key = _openrouter_request_config(payload)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="OpenRouter API key not configured.")
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:18080/static/openrouter-test/index.html",
+        "X-Title": "LLM Inference Stack OpenRouter Test Lab",
+    }
+    body = {
+        "model": payload.model_id,
+        "messages": [{"role": "user", "content": payload.prompt}],
+        "temperature": payload.temperature,
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(f"{base_url}/chat/completions", headers=headers, json=body)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text[:1000] if exc.response is not None else str(exc)
+            raise HTTPException(status_code=502, detail=f"OpenRouter chat failed: {detail}")
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"OpenRouter chat failed: {str(exc)}")
+
+@router.post("/openrouter/configure", dependencies=[Depends(require_admin_role(AdminRole.WRITE))])
+async def configure_openrouter_model(
+    payload: OpenRouterConfigureRequest,
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Register/Update an OpenRouter model mapping."""
+    # 1. Ensure backend exists
+    result = await session.execute(
+        select(InferenceBackend).where(
+            InferenceBackend.provider == "openrouter",
+            InferenceBackend.is_active.is_(True)
+        )
+    )
+    backend = result.scalars().first()
+    if not backend:
+        raise HTTPException(status_code=400, detail="OpenRouter backend not found or inactive. Please configure it in Provider Settings first.")
+
+    # 2. Check if model already exists in registry
+    res_model = await session.execute(
+        select(ModelRegistry).where(ModelRegistry.model_alias == payload.model_alias)
+    )
+    model = res_model.scalars().first()
+    
+    metadata = json.dumps({
+        "backend": "openrouter",
+        "backend_name": backend.name,
+    })
+    
+    if not model:
+        model = ModelRegistry(
+            model_id=payload.model_id,
+            model_alias=payload.model_alias,
+            inference_backend_id=backend.id,
+            provider="openrouter",
+            model_file="",
+            context_length=131072,
+            is_active=True,
+            is_default=False,
+            status="configured",
+            prompt_template="qwen", # default
+            metadata_json=metadata,
+        )
+        session.add(model)
+        await session.flush()
+    else:
+        model.model_id = payload.model_id
+        model.inference_backend_id = backend.id
+        model.provider = "openrouter"
+        model.metadata_json = metadata
+        model.is_active = True
+        model.status = "configured"
+
+    # 3. Ensure route exists
+    res_route = await session.execute(
+        select(ModelBackendRoute).where(
+            ModelBackendRoute.model_registry_id == model.id,
+            ModelBackendRoute.inference_backend_id == backend.id,
+        )
+    )
+    route = res_route.scalars().first()
+    if not route:
+        route = ModelBackendRoute(
+            model_registry_id=model.id,
+            inference_backend_id=backend.id,
+            priority=1,
+            weight=100,
+            state="healthy",
+        )
+        session.add(route)
+    else:
+        route.priority = 1
+        route.weight = 100
+        route.state = "healthy"
+        
+    await session.commit()
+    return {"status": "success", "model_alias": payload.model_alias, "model_id": payload.model_id}

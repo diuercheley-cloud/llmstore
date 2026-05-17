@@ -823,6 +823,11 @@
             <h2>Receita por Cliente</h2>
             <div style="overflow-x: auto;"><div id="marginClientsTable">Carregando...</div></div>
           </section>
+
+          <section>
+            <h2>Disputes & Reconciliation</h2>
+            <div style="overflow-x: auto;"><div id="marginFinancialSummary">Carregando...</div></div>
+          </section>
         </div>
       </div>
 
@@ -3009,6 +3014,18 @@
             });
             cliHtml += '</tbody></table>';
             document.getElementById('marginClientsTable').innerHTML = cliHtml;
+            
+            if (data.financial_summary) {
+              let finHtml = '<table><tbody>';
+              finHtml += `<tr><td>Disputas Abertas</td><td style="font-weight: bold; color: ${data.financial_summary.open_disputes_count > 0 ? '#991b1b' : 'inherit'}">${data.financial_summary.open_disputes_count}</td></tr>`;
+              finHtml += `<tr><td>Valor em Disputa (BRL)</td><td style="font-weight: bold; color: ${data.financial_summary.total_disputed_amount_brl > 0 ? '#991b1b' : 'inherit'}">R$ ${data.financial_summary.total_disputed_amount_brl.toFixed(2)}</td></tr>`;
+              finHtml += `<tr><td>Divergências de Conciliação</td><td style="font-weight: bold; color: ${data.financial_summary.mismatches_count > 0 ? '#991b1b' : 'inherit'}">${data.financial_summary.mismatches_count}</td></tr>`;
+              finHtml += `<tr><td>Cadeia de Auditoria Válida</td><td style="font-weight: bold; color: ${data.financial_summary.audit_chain_valid ? '#065f46' : '#991b1b'}">${data.financial_summary.audit_chain_valid ? 'Sim ✓' : 'Não ✗'}</td></tr>`;
+              finHtml += '</tbody></table>';
+              document.getElementById('marginFinancialSummary').innerHTML = finHtml;
+            } else {
+              document.getElementById('marginFinancialSummary').innerHTML = '<div style="color: var(--muted);">Sem dados financeiros.</div>';
+            }
             
         } catch (e) {
             document.getElementById('marginAlerts').innerHTML = `<div style="color: #991b1b; background: #fee2e2; padding: 0.5rem; border-radius: 0.25rem;">Erro ao carregar dados de margem: ${e.message}</div>`;

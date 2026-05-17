@@ -39,7 +39,12 @@ class DockerCommandResult:
 
 
 def project_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    """Find project root by looking for markers like VERSION or docker-compose.yml."""
+    curr = Path(__file__).resolve()
+    for parent in curr.parents:
+        if (parent / "VERSION").exists() or (parent / "docker-compose.yml").exists():
+            return parent
+    return curr.parents[3]
 
 
 def compose_file_path() -> Path | None:

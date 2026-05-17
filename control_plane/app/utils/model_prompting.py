@@ -62,6 +62,10 @@ def apply_prompt_template_settings(
     backend: str,
 ) -> dict[str, Any]:
     updated = dict(request_payload)
+    if backend == "openrouter" and not include_reasoning:
+        reasoning = dict(updated.get("reasoning") or {})
+        reasoning["exclude"] = True
+        updated["reasoning"] = reasoning
     if backend != "llama.cpp":
         return updated
     if prompt_template == "qwen":

@@ -115,3 +115,52 @@ def test_prepare_chat_payload_trims_openai_compatible_context():
 
     assert len(prepared["messages"]) < len(payload["messages"])
     assert estimate_prompt_tokens(messages=prepared["messages"]) <= 2048
+
+
+def test_prepare_chat_payload_disables_openrouter_reasoning_by_default():
+    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+
+    prepared = proxy._prepare_chat_payload(
+        {"model": "openrouter-model", "messages": [{"role": "user", "content": "oi"}]},
+        include_reasoning=False,
+        backend="openrouter",
+        prompt_template=None,
+    )
+
+    assert prepared["reasoning"]["exclude"] is True
+
+
+@pytest.mark.asyncio
+async def test_json_forward_rejects_chat_response_without_visible_output():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "chatcmpl-1",
+                "object": "chat.completion",
+                "choices": [
+                    {
+                        "index": 0,
+                        "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": None},
+                    }
+                ],
+            },
+        )
+
+    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="http://backend")
+    try:
+        proxy._client_for_backend = lambda backend, backend_url: client
+        with pytest.raises(HTTPException) as exc:
+            await proxy._json_forward(
+                "/v1/chat/completions",
+                {"model": "gemma", "messages": [{"role": "user", "content": "x"}]},
+                backend="openrouter",
+                backend_url="http://backend",
+                backend_name="openrouter-test",
+            )
+
+        assert exc.value.status_code == 502
+    finally:
+        await client.aclose()

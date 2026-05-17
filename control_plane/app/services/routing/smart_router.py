@@ -14,6 +14,7 @@ from app.schemas.routing import (
     RoutingStrategy,
     SmartRouterInput,
 )
+from app.services.provider_settings import is_real_api_key_configured
 from app.services.provider_classification import CLOUD_PROVIDER_IDS, LOCAL_PROVIDER_IDS, is_cloud_provider, is_local_provider
 
 logger = logging.getLogger(__name__)
@@ -76,19 +77,19 @@ def _get_provider_config(provider_id: str) -> dict[str, Any]:
         },
         "openai": {
             "enabled": "openai" in settings.providers_enabled,
-            "configured": bool(settings.openai_api_key),
+            "configured": is_real_api_key_configured(settings.openai_api_key),
         },
         "anthropic": {
             "enabled": "anthropic" in settings.providers_enabled,
-            "configured": bool(settings.anthropic_api_key),
+            "configured": is_real_api_key_configured(settings.anthropic_api_key),
         },
         "deepseek": {
             "enabled": "deepseek" in settings.providers_enabled,
-            "configured": bool(settings.deepseek_api_key),
+            "configured": is_real_api_key_configured(settings.deepseek_api_key),
         },
         "openrouter": {
             "enabled": "openrouter" in settings.providers_enabled,
-            "configured": bool(settings.openrouter_api_key),
+            "configured": is_real_api_key_configured(settings.openrouter_api_key),
         },
         "mock": {"enabled": True, "configured": True},
     }

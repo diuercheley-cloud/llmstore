@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter Test Lab - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #7c3aed; /* Violet for OpenRouter theme */
+            --accent-light: #a78bfa;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .auth-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], select, textarea {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            width: 100%;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-light); }
+        .btn-secondary { background: white; border-color: var(--border); color: var(--text); }
+        .btn-secondary:hover:not(:disabled) { background: var(--bg); }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr 350px;
+            }
+            .full-width { grid-column: 1 / -1; }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-box {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+        
+        .status-ok { color: var(--success); font-weight: bold; }
+        .status-warn { color: var(--warning); font-weight: bold; }
+        .status-err { color: var(--danger); font-weight: bold; }
+        
+        .flex-row { display: flex; gap: 0.5rem; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: var(--bg); font-weight: 600; position: sticky; top: 0; }
+        
+        tr:hover { background: #f1f5f9; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .model-list-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .search-box {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .stack {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .status-panel {
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--bg);
+            font-size: 0.875rem;
+        }
+
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .mini-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+            OpenRouter Test Lab
+        </a>
+        <div class="auth-bar">
+            <div>
+                <label style="font-size: 0.75rem; display:block;">Admin Token</label>
+                <div class="flex-row">
+                    <input type="password" id="adminToken" placeholder="X-Admin-Token">
+                    <button class="btn-secondary" onclick="checkAuth()">Verificar</button>
+                </div>
+            </div>
+            <div>
+                <label style="font-size: 0.75rem; display:block;">Client API Key</label>
+                <div class="flex-row">
+                    <input type="password" id="clientToken" placeholder="sk-local-...">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>Conexão com a API OpenRouter</h2>
+                <div class="stack">
+                    <div class="flex-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Base URL da API</label>
+                            <input type="text" id="openrouterBaseUrl" value="https://openrouter.ai/api/v1">
+                        </div>
+                        <div class="form-group" style="flex: 3;">
+                            <label>OpenRouter API Key</label>
+                            <input type="password" id="openrouterApiKey" placeholder="Opcional: usa a chave configurada no backend se vazio">
+                        </div>
+                    </div>
+                    <div class="mini-actions">
+                        <button class="btn-primary" onclick="testOpenRouterConnection()" id="btnConnect">Testar Conexão</button>
+                        <button class="btn-secondary" onclick="fetchModels()" id="btnFetch">Listar Modelos</button>
+                    </div>
+                    <div id="connectionResult" class="status-panel">
+                        Informe o token admin e teste a conexão com o OpenRouter.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Models List -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <h2>
+                    Disponíveis no OpenRouter
+                    <span class="muted" id="modelCounter">Nenhum modelo carregado</span>
+                </h2>
+                
+                <div class="search-box">
+                    <input type="text" id="modelSearch" placeholder="Filtrar modelos (ex: qwen, llama, flash)..." oninput="filterModels()">
+                </div>
+
+                <div class="model-list-container">
+                    <table id="modelsTable">
+                        <thead>
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Contexto</th>
+                                <th>Preço (1M)</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modelsBody">
+                            <tr><td colspan="4" style="text-align:center; padding: 2rem;">Clique em "Listar Modelos" para começar.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Testing Box -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <h2>Testar Modelo Selecionado</h2>
+                <div class="flex-row" style="margin-bottom: 1rem;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Modelo Selecionado (ID OpenRouter)</label>
+                        <input type="text" id="selectedModelId" readonly placeholder="Selecione na tabela acima">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label>Selecionar pelo combo</label>
+                        <select id="selectedModelPicker" onchange="selectModel(this.value)">
+                            <option value="">Escolha um modelo listado</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Alias Local</label>
+                        <input type="text" id="localAlias" value="openrouter-test">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Prompt</label>
+                    <textarea id="testPrompt" rows="3">Responda apenas: "OpenRouter OK".</textarea>
+                </div>
+                
+                <div class="flex-row">
+                    <button class="btn-secondary" onclick="runDirectApiTest()" id="btnRunDirect">Testar Direto na API</button>
+                    <button class="btn-primary" onclick="runIntegrationTest()" id="btnRunTest">Configurar Alias e Testar no Gateway</button>
+                </div>
+
+                <div id="directApiResult" class="result-box" style="display:none;"></div>
+                <div id="testResult" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h2>Configuração</h2>
+                <div id="backendStatus" style="margin-bottom: 1rem;">
+                    Verificando backend...
+                </div>
+                <hr style="margin-bottom: 1rem; border:0; border-top: 1px solid var(--border);">
+                <p style="font-size: 0.875rem; color: var(--text-muted);">
+                    Este laboratório permite validar a conexão com a API OpenRouter, listar modelos autenticados e mapear qualquer modelo para um alias local no gateway.
+                </p>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <h2>Dicas</h2>
+                <ul style="font-size: 0.875rem; color: var(--text-muted); padding-left: 1.25rem;">
+                    <li style="margin-bottom: 0.5rem;">O backend "openrouter" deve estar ativo em Configurações de Provedores.</li>
+                    <li style="margin-bottom: 0.5rem;">Se a chave OpenRouter ficar vazia, os testes usam a chave configurada no backend.</li>
+                    <li style="margin-bottom: 0.5rem;">O teste configura automaticamente o Model Registry e o Model Backend Route.</li>
+                    <li>As requisições passam pelo seu gateway local (18080) e são encaminhadas ao OpenRouter.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let allModels = [];
+        const OPENROUTER_STORAGE_KEY = 'openrouterTestConfig';
+
+        const getAdminHeaders = () => {
+            const token = document.getElementById('adminToken').value;
+            return { 'X-Admin-Token': token, 'Content-Type': 'application/json' };
+        };
+
+        const getClientHeaders = () => {
+            const token = document.getElementById('clientToken').value;
+            return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+        };
+
+        const getOpenRouterConfig = () => ({
+            api_key: document.getElementById('openrouterApiKey').value.trim() || null,
+            base_url: document.getElementById('openrouterBaseUrl').value.trim() || null,
+        });
+
+        const escapeHtml = (value) => String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+
+        const persistOpenRouterConfig = () => {
+            localStorage.setItem(OPENROUTER_STORAGE_KEY, JSON.stringify({
+                baseUrl: document.getElementById('openrouterBaseUrl').value,
+                apiKey: document.getElementById('openrouterApiKey').value,
+            }));
+        };
+
+        const renderModelPicker = (models) => {
+            const picker = document.getElementById('selectedModelPicker');
+            const current = document.getElementById('selectedModelId').value;
+            picker.innerHTML = '<option value="">Escolha um modelo listado</option>' + models.map((m) => (
+                `<option value="${escapeHtml(m.id)}"${m.id === current ? ' selected' : ''}>${escapeHtml(m.name || m.id)} (${escapeHtml(m.id)})</option>`
+            )).join('');
+        };
+
+        const setConnectionResult = (html) => {
+            document.getElementById('connectionResult').innerHTML = html;
+        };
+
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/admin/tests/auth/whoami', { headers: getAdminHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`Autenticado como: ${data.role}`);
+                    // Save to local storage on success
+                    const token = document.getElementById('adminToken').value.trim();
+                    if (token) {
+                        localStorage.setItem('adminToken', token);
+                    }
+                    checkBackend();
+                } else {
+                    alert("Token inválido ou sem permissão.");
+                }
+            } catch (e) {
+                alert("Erro ao verificar autenticação.");
+            }
+        };
+
+        const checkBackend = async () => {
+            const statusDiv = document.getElementById('backendStatus');
+            try {
+                const res = await fetch('/admin/tests/openrouter/backend', { headers: getAdminHeaders() });
+                const data = await res.json();
+                if (data.configured) {
+                    statusDiv.innerHTML = `<span class="status-ok">● Backend OpenRouter Ativo</span><br><small>${data.name} (${data.id})</small>`;
+                } else {
+                    statusDiv.innerHTML = `<span class="status-err">● Backend OpenRouter Não Encontrado</span><br><small>Ative o provedor 'openrouter' primeiro.</small>`;
+                }
+            } catch (e) {
+                statusDiv.innerHTML = `<span class="status-err">Erro ao verificar backend</span>`;
+            }
+        };
+
+        const testOpenRouterConnection = async () => {
+            const btn = document.getElementById('btnConnect');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Testando...';
+            persistOpenRouterConfig();
+
+            try {
+                const res = await fetch('/admin/tests/openrouter/connection', {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify(getOpenRouterConfig())
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Falha ao conectar');
+                }
+
+                setConnectionResult(`
+                    <span class="status-ok">● Conexão com OpenRouter OK</span><br>
+                    <small>Base URL: ${escapeHtml(data.base_url)}</small><br>
+                    <small>Modelos visíveis: ${escapeHtml(data.model_count)}</small><br>
+                    <small>${data.using_configured_key ? 'Usando chave configurada no backend.' : 'Usando chave informada nesta tela.'}</small>
+                `);
+            } catch (e) {
+                setConnectionResult(`<span class="status-err">● Falha na conexão</span><br><small>${escapeHtml(e.message)}</small>`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
+
+        const fetchModels = async () => {
+            const btn = document.getElementById('btnFetch');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Carregando...';
+            persistOpenRouterConfig();
+            
+            try {
+                const res = await fetch('/admin/tests/openrouter/models', {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify(getOpenRouterConfig())
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    allModels = Array.isArray(data.data) ? data.data : [];
+                    renderModels(allModels);
+                    renderModelPicker(allModels);
+                    document.getElementById('modelCounter').textContent = `${allModels.length} modelo(s) carregado(s)`;
+                    setConnectionResult(`
+                        <span class="status-ok">● Modelos carregados com sucesso</span><br>
+                        <small>Base URL: ${escapeHtml((getOpenRouterConfig().base_url || 'https://openrouter.ai/api/v1'))}</small><br>
+                        <small>Total: ${escapeHtml(allModels.length)}</small>
+                    `);
+                } else {
+                    alert(`Erro ao buscar modelos: ${data.detail || 'Erro desconhecido'}`);
+                }
+            } catch (e) {
+                alert(`Erro: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
+
+        const renderModels = (models) => {
+            const body = document.getElementById('modelsBody');
+            body.innerHTML = '';
+            
+            if (models.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;">Nenhum modelo encontrado.</td></tr>';
+                return;
+            }
+
+            models.forEach(m => {
+                const tr = document.createElement('tr');
+                const promptPrice = Number(m.pricing?.prompt || 0);
+                const completionPrice = Number(m.pricing?.completion || 0);
+                const pricePrompt = (promptPrice * 1000000).toFixed(2);
+                const priceComp = (completionPrice * 1000000).toFixed(2);
+                const contextLength = Number(m.context_length || 0);
+                
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: bold;">${escapeHtml(m.name || m.id)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(m.id)}</div>
+                    </td>
+                    <td><span class="badge">${contextLength ? `${Math.round(contextLength / 1024)}k` : '-'}</span></td>
+                    <td>
+                        <div style="font-size: 0.75rem;">In: $${pricePrompt}</div>
+                        <div style="font-size: 0.75rem;">Out: $${priceComp}</div>
+                    </td>
+                    <td>
+                        <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="selectModel(${JSON.stringify(m.id)})">Selecionar</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        };
+
+        const filterModels = () => {
+            const q = document.getElementById('modelSearch').value.toLowerCase();
+            const filtered = allModels.filter(m => 
+                (m.name || '').toLowerCase().includes(q) || 
+                (m.id || '').toLowerCase().includes(q)
+            );
+            renderModels(filtered);
+        };
+
+        const selectModel = (id) => {
+            document.getElementById('selectedModelId').value = id;
+            document.getElementById('selectedModelPicker').value = id;
+            // Scroll to test box
+            document.getElementById('selectedModelId').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        const runDirectApiTest = async () => {
+            const modelId = document.getElementById('selectedModelId').value;
+            const promptText = document.getElementById('testPrompt').value;
+
+            if (!modelId) return alert("Selecione um modelo na tabela ou no combo primeiro.");
+
+            const btn = document.getElementById('btnRunDirect');
+            const resultBox = document.getElementById('directApiResult');
+            resultBox.style.display = 'block';
+            resultBox.textContent = '> Enviando teste direto para a API OpenRouter...';
+            btn.disabled = true;
+            persistOpenRouterConfig();
+
+            try {
+                const start = performance.now();
+                const res = await fetch('/admin/tests/openrouter/chat', {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({
+                        ...getOpenRouterConfig(),
+                        model_id: modelId,
+                        prompt: promptText,
+                        temperature: 0.2,
+                    })
+                });
+                const data = await res.json();
+                const duration = Math.round(performance.now() - start);
+
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Falha no teste direto');
+                }
+
+                const content = data.choices?.[0]?.message?.content || '(sem conteúdo textual)';
+                resultBox.innerHTML = `<span class="status-ok">API OpenRouter respondeu em ${duration}ms</span>\n\n${escapeHtml(content)}\n\n${escapeHtml(JSON.stringify(data, null, 2))}`;
+            } catch (e) {
+                resultBox.innerHTML = `<span class="status-err">Erro no teste direto</span>\n\n${escapeHtml(e.message)}`;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        const runIntegrationTest = async () => {
+            const modelId = document.getElementById('selectedModelId').value;
+            const alias = document.getElementById('localAlias').value;
+            const promptText = document.getElementById('testPrompt').value;
+            
+            if (!modelId) return alert("Selecione um modelo na tabela primeiro.");
+            
+            const btn = document.getElementById('btnRunTest');
+            const resultBox = document.getElementById('testResult');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '> Iniciando configuração...';
+            btn.disabled = true;
+
+            try {
+                // 1. Configurar
+                resultBox.innerHTML += `\n> Mapeando ${alias} para ${modelId}...`;
+                const configRes = await fetch('/admin/tests/openrouter/configure', {
+                    method: 'POST',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ model_id: modelId, model_alias: alias })
+                });
+                
+                if (!configRes.ok) {
+                    const err = await configRes.json();
+                    throw new Error(`Configuração falhou: ${err.detail || JSON.stringify(err)}`);
+                }
+                resultBox.innerHTML += ` <span class="status-ok">OK</span>`;
+
+                // 2. Chamar a API local
+                resultBox.innerHTML += `\n> Enviando requisição para o Gateway (localhost:18080)...`;
+                const start = performance.now();
+                const apiRes = await fetch('http://localhost:18080/v1/chat/completions', {
+                    method: 'POST',
+                    headers: getClientHeaders(),
+                    body: JSON.stringify({
+                        model: alias,
+                        messages: [{ role: 'user', content: promptText }],
+                        temperature: 0.7
+                    })
+                });
+
+                const duration = Math.round(performance.now() - start);
+                const data = await apiRes.json();
+
+                if (apiRes.ok) {
+                    resultBox.innerHTML += ` <span class="status-ok">RECEBIDO (${duration}ms)</span>\n\n`;
+                    resultBox.innerHTML += `<b>Resposta do Modelo:</b>\n${data.choices[0].message.content}\n\n`;
+                    resultBox.innerHTML += `<details><summary>Ver JSON da Resposta</summary>${JSON.stringify(data, null, 2)}</details>`;
+                } else {
+                    resultBox.innerHTML += ` <span class="status-err">ERRO (HTTP ${apiRes.status})</span>\n\n`;
+                    resultBox.innerHTML += JSON.stringify(data, null, 2);
+                }
+
+            } catch (e) {
+                resultBox.innerHTML += `\n\n<span class="status-err">ERRO: ${escapeHtml(e.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        // Auto-load token from URL parameters or local storage
+        const urlParams = new URLSearchParams(window.location.search);
+        let token = urlParams.get('admin_token') || urlParams.get('adminToken');
+        if (!token) {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            token = hashParams.get('admin_token') || hashParams.get('adminToken');
+        }
+        if (!token) {
+            token = localStorage.getItem('adminToken') || localStorage.getItem('provider-settings-admin-token');
+        }
+        if (token) {
+            document.getElementById('adminToken').value = token;
+            localStorage.setItem('adminToken', token);
+        }
+
+        // Init - must run after token is auto-loaded
+        checkBackend();
+        
+        if (localStorage.getItem(OPENROUTER_STORAGE_KEY)) {
+            try {
+                const saved = JSON.parse(localStorage.getItem(OPENROUTER_STORAGE_KEY));
+                document.getElementById('openrouterBaseUrl').value = saved.baseUrl || 'https://openrouter.ai/api/v1';
+                document.getElementById('openrouterApiKey').value = saved.apiKey || '';
+            } catch (e) {
+                console.warn('Failed to restore OpenRouter config', e);
+            }
+        }
+    </script>
+</body>
+</html>

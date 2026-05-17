@@ -4,6 +4,7 @@ from typing import Any
 import httpx
 
 from app.core.config import get_settings
+from app.services.provider_settings import is_real_api_key_configured
 from app.services.providers.base import ProviderAdapter, ProviderType
 from app.services.providers.errors import ProviderNotConfiguredError
 from app.services.providers.schemas import ProviderCapabilities
@@ -17,7 +18,7 @@ class DeepSeekProvider(ProviderAdapter):
         self._api_key = settings.deepseek_api_key
         self._base_url = settings.deepseek_base_url or "https://api.deepseek.com"
         self._timeout = settings.provider_timeout_seconds
-        configured = bool(self._api_key)
+        configured = is_real_api_key_configured(self._api_key)
         enabled = (
             settings.cloud_providers_enabled
             and settings.deepseek_provider_enabled

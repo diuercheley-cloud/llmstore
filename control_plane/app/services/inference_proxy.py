@@ -129,7 +129,7 @@ class InferenceProxy:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="backend unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
-        if backend not in {"llama.cpp", "ollama", "vllm", "openai_compatible"}:
+        if backend not in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter"}:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="unsupported model backend")
         return self._get_client(backend_url)
 
@@ -179,6 +179,42 @@ class InferenceProxy:
             prompt_template=prompt_template,
             include_reasoning=include_reasoning,
             backend=backend,
+        )
+
+    def _chat_response_has_visible_output(self, payload: dict, *, include_reasoning: bool) -> bool:
+        for choice in payload.get("choices", []):
+            if not isinstance(choice, dict):
+                continue
+            message = choice.get("message") or {}
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                return True
+            tool_calls = message.get("tool_calls")
+            if isinstance(tool_calls, list) and tool_calls:
+                return True
+            if include_reasoning:
+                reasoning = message.get("reasoning_content") or message.get("reasoning")
+                if isinstance(reasoning, str) and reasoning.strip():
+                    return True
+        return False
+
+    def _validate_chat_response_payload(
+        self,
+        payload: dict,
+        *,
+        include_reasoning: bool,
+        backend_name: str,
+    ) -> None:
+        if self._chat_response_has_visible_output(payload, include_reasoning=include_reasoning):
+            return
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "message": "backend returned chat completion without visible assistant output",
+                "backend_name": backend_name,
+            },
         )
 
     def _sanitize_logged_payload(self, payload: dict) -> dict:
@@ -431,6 +467,8 @@ class InferenceProxy:
         last_error: Exception | None = None
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
+        if backend == "openrouter" and target_endpoint.startswith("/v1/"):
+            target_endpoint = "/api" + target_endpoint
         request_payload = self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,
@@ -462,12 +500,16 @@ class InferenceProxy:
 
         for attempt in range(1, self.settings.retry_attempts + 2):
             try:
-                headers = {}
+                headers = {
+                    "HTTP-Referer": "https://github.com/google/gemini-cli",
+                    "X-Title": "Gemini CLI",
+                }
                 if api_key:
                     headers["Authorization"] = f"Bearer {api_key}"
                 elif backend_name == "lmstudio-local" and self.settings.lmstudio_api_key:
                     headers["Authorization"] = f"Bearer {self.settings.lmstudio_api_key}"
                 
+                logger.info(f"Forwarding to {client.base_url}{target_endpoint} with headers keys: {list(headers.keys())}")
                 response = await client.post(target_endpoint, json=request_payload, headers=headers, timeout=self.attempt_timeout)
                 response.raise_for_status()
                 await self.circuit_breaker.record_success()
@@ -518,6 +560,12 @@ class InferenceProxy:
                                 ),
                             }
                         },
+                    )
+                if endpoint == "/v1/chat/completions":
+                    self._validate_chat_response_payload(
+                        response_payload,
+                        include_reasoning=include_reasoning,
+                        backend_name=backend_name or backend,
                     )
 
                 return ForwardResult(
@@ -587,6 +635,8 @@ class InferenceProxy:
         started = perf_counter()
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
+        if backend == "openrouter" and target_endpoint.startswith("/v1/"):
+            target_endpoint = "/api" + target_endpoint
         request_payload = self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,

@@ -84,8 +84,11 @@ def _normalize_message(message: dict[str, Any], *, include_reasoning: bool, prom
             prompt_template=prompt_template,
             include_reasoning=include_reasoning,
         )
-    if include_reasoning and "reasoning_content" in message:
-        normalized["reasoning_content"] = message.get("reasoning_content")
+    if include_reasoning:
+        if "reasoning_content" in message:
+            normalized["reasoning_content"] = message.get("reasoning_content")
+        elif "reasoning" in message:
+            normalized["reasoning_content"] = message.get("reasoning")
     if "tool_calls" in message:
         normalized["tool_calls"] = message.get("tool_calls")
     return normalized

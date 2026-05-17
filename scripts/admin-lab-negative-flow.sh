@@ -56,7 +56,7 @@ HTTP_CODE="$(curl -sS -o /dev/null -w "%{http_code}" "${BASE_URL}/v1/chat/comple
   -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{\"model\":\"unsloth/gemma-4-E4B-it-GGUF\",\"messages\":[{\"role\":\"user\",\"content\":\"teste\"}],\"max_tokens\":${TOO_MUCH},\"stream\":false}" || true)"
-[[ "${HTTP_CODE}" == "400" ]] || { echo "FAIL: expected 400 for max_tokens, got ${HTTP_CODE}"; exit 1; }
+[[ "${HTTP_CODE}" == "429" ]] || { echo "FAIL: expected 429 for max_tokens, got ${HTTP_CODE}"; exit 1; }
 echo "OK: max_tokens limit enforced"
 
 echo "7. Suspending client..."
