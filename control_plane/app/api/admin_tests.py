@@ -1,3 +1,4 @@
+import logging
 import uuid
 import psutil
 import subprocess
@@ -7,11 +8,13 @@ import time
 import json
 import asyncio
 import httpx
+logger = logging.getLogger(__name__)
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 import sqlalchemy as sa
 from sqlalchemy import select, update, desc, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
@@ -725,75 +728,127 @@ async def configure_openrouter_model(
     session: AsyncSession = Depends(get_db_session)
 ):
     """Register/Update an OpenRouter model mapping."""
-    # 1. Ensure backend exists
-    result = await session.execute(
-        select(InferenceBackend).where(
-            InferenceBackend.provider == "openrouter",
-            InferenceBackend.is_active.is_(True)
+    logger.info(f"Configuring OpenRouter model: {payload.model_id} as {payload.model_alias}")
+    try:
+        # 1. Ensure backend exists
+        result = await session.execute(
+            select(InferenceBackend).where(
+                InferenceBackend.provider == "openrouter",
+                InferenceBackend.is_active.is_(True)
+            )
         )
-    )
-    backend = result.scalars().first()
-    if not backend:
-        raise HTTPException(status_code=400, detail="OpenRouter backend not found or inactive. Please configure it in Provider Settings first.")
+        backend = result.scalars().first()
+        if not backend:
+            logger.warning("OpenRouter backend not found or inactive")
+            raise HTTPException(status_code=400, detail="OpenRouter backend not found or inactive. Please configure it in Provider Settings first.")
 
-    # 2. Check if model already exists in registry
-    res_model = await session.execute(
-        select(ModelRegistry).where(ModelRegistry.model_alias == payload.model_alias)
-    )
-    model = res_model.scalars().first()
-    
-    openrouter_metadata = await _fetch_openrouter_model_metadata(payload.model_id)
-    metadata = json.dumps({
-        "backend": "openrouter",
-        "backend_name": backend.name,
-        **openrouter_metadata,
-    })
-    
-    if not model:
-        model = ModelRegistry(
-            model_id=payload.model_id,
-            model_alias=payload.model_alias,
-            inference_backend_id=backend.id,
-            provider="openrouter",
-            model_file="",
-            context_length=131072,
-            is_active=True,
-            is_default=False,
-            status="configured",
-            prompt_template="qwen", # default
-            metadata_json=metadata,
+        # 2. Resolve existing registry rows by alias and by exact model id separately.
+        # They can point to different rows if the alias was previously used for another model.
+        logger.debug(f"Checking for existing model in registry with id={payload.model_id} and alias={payload.model_alias}")
+        res_model_by_alias = await session.execute(
+            select(ModelRegistry).where(ModelRegistry.model_alias == payload.model_alias)
         )
-        session.add(model)
-        await session.flush()
-    else:
-        model.model_id = payload.model_id
-        model.inference_backend_id = backend.id
-        model.provider = "openrouter"
-        model.metadata_json = metadata
-        model.is_active = True
-        model.status = "configured"
+        model_by_alias = res_model_by_alias.scalars().first()
 
-    # 3. Ensure route exists
-    res_route = await session.execute(
-        select(ModelBackendRoute).where(
-            ModelBackendRoute.model_registry_id == model.id,
-            ModelBackendRoute.inference_backend_id == backend.id,
+        res_model_by_id = await session.execute(
+            select(ModelRegistry).where(ModelRegistry.model_id == payload.model_id)
         )
-    )
-    route = res_route.scalars().first()
-    if not route:
-        route = ModelBackendRoute(
-            model_registry_id=model.id,
-            inference_backend_id=backend.id,
-            priority=1,
-            weight=100,
-            state="healthy",
-        )
-        session.add(route)
-    else:
-        route.priority = 1
-        route.weight = 100
-        route.state = "healthy"
+        model_by_id = res_model_by_id.scalars().first()
+
+        model = model_by_id or model_by_alias
+
+        if model_by_alias and model_by_id and model_by_alias.id != model_by_id.id:
+            logger.info(
+                "Reassigning alias %s from model %s to existing registry row %s",
+                payload.model_alias,
+                model_by_alias.model_id,
+                payload.model_id,
+            )
+            model_by_alias.model_alias = None
+            await session.flush()
+            model = model_by_id
         
-    await session.commit()
-    return {"status": "success", "model_alias": payload.model_alias, "model_id": payload.model_id}
+        # Handle metadata fetch gracefully
+        openrouter_metadata = {}
+        try:
+            logger.debug(f"Fetching metadata from OpenRouter for {payload.model_id}")
+            openrouter_metadata = await _fetch_openrouter_model_metadata(payload.model_id)
+        except Exception as e:
+            # Non-critical failure, log but continue
+            logger.warning(f"Failed to fetch metadata for {payload.model_id}: {e}")
+            
+        metadata = json.dumps({
+            "backend": "openrouter",
+            "backend_name": backend.name,
+            **openrouter_metadata,
+        })
+        
+        if not model:
+            logger.info(f"Creating new ModelRegistry entry for {payload.model_id}")
+            model = ModelRegistry(
+                model_id=payload.model_id,
+                model_alias=payload.model_alias,
+                inference_backend_id=backend.id,
+                provider="openrouter",
+                model_file="",
+                context_length=131072,
+                is_active=True,
+                is_default=False,
+                status="configured",
+                prompt_template="qwen", # default
+                metadata_json=metadata,
+            )
+            session.add(model)
+            await session.flush()
+        else:
+            # Update existing model
+            logger.info(f"Updating existing ModelRegistry entry {model.id} for {payload.model_id}")
+            model.model_id = payload.model_id
+            model.model_alias = payload.model_alias
+            model.inference_backend_id = backend.id
+            model.provider = "openrouter"
+            model.metadata_json = metadata
+            model.is_active = True
+            model.status = "configured"
+
+        # 3. Ensure route exists
+        logger.debug(f"Ensuring ModelBackendRoute exists for model_id={model.id} and backend_id={backend.id}")
+        res_route = await session.execute(
+            select(ModelBackendRoute).where(
+                ModelBackendRoute.model_registry_id == model.id,
+                ModelBackendRoute.inference_backend_id == backend.id,
+            )
+        )
+        route = res_route.scalars().first()
+        if not route:
+            logger.info(f"Creating new ModelBackendRoute for model_id={model.id}")
+            route = ModelBackendRoute(
+                model_registry_id=model.id,
+                inference_backend_id=backend.id,
+                priority=1,
+                weight=100,
+                state="healthy",
+            )
+            session.add(route)
+        else:
+            logger.info(f"Updating existing ModelBackendRoute {route.id}")
+            route.priority = 1
+            route.weight = 100
+            route.state = "healthy"
+            
+        await session.commit()
+        logger.info(f"Successfully configured OpenRouter model: {payload.model_alias}")
+        return {"status": "success", "model_alias": payload.model_alias, "model_id": payload.model_id}
+    except IntegrityError as e:
+        logger.exception(f"Integrity error configuring OpenRouter model: {e}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Model registry conflict while configuring alias '{payload.model_alias}' for '{payload.model_id}'.",
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Unexpected error configuring OpenRouter model: {e}")
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to configure model: {str(e)}")

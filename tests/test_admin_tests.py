@@ -2,11 +2,14 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 import uuid
+from sqlalchemy import select
 from app.main import app
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.models.inference_backend import InferenceBackend
+from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_registry import ModelRegistry
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 @pytest_asyncio.fixture
@@ -114,3 +117,92 @@ async def test_openrouter_backend_status_returns_backend_url(client, admin_heade
     assert data["configured"] is True
     assert data["name"] == "openrouter-test-backend"
     assert data["base_url"] == "https://openrouter.ai/api/v1"
+
+
+@pytest.mark.asyncio
+async def test_openrouter_configure_reassigns_alias_when_model_id_already_exists(client, admin_headers, monkeypatch):
+    async def fake_fetch_metadata(model_id: str):
+        return {}
+
+    monkeypatch.setattr("app.api.admin_tests._fetch_openrouter_model_metadata", fake_fetch_metadata)
+
+    async for session in app.dependency_overrides[get_db_session]():
+        backend = InferenceBackend(
+            name="openrouter-test-backend",
+            provider="openrouter",
+            backend_url="https://openrouter.ai/api/v1",
+            healthcheck_path="/health",
+            is_active=True,
+        )
+        existing_target = ModelRegistry(
+            model_id="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+            model_alias="nemotron-reasoning",
+            provider="openrouter",
+            model_file="",
+            context_length=131072,
+            is_active=True,
+            is_default=False,
+            status="configured",
+            prompt_template="qwen",
+        )
+        existing_alias = ModelRegistry(
+            model_id="nvidia/nemotron-3-nano-30b-a3b:free",
+            model_alias="openrouter-test",
+            provider="openrouter",
+            model_file="",
+            context_length=131072,
+            is_active=True,
+            is_default=False,
+            status="configured",
+            prompt_template="qwen",
+        )
+        session.add_all([backend, existing_target, existing_alias])
+        await session.commit()
+        await session.refresh(backend)
+        await session.refresh(existing_target)
+        await session.refresh(existing_alias)
+
+        session.add(
+            ModelBackendRoute(
+                model_registry_id=existing_alias.id,
+                inference_backend_id=backend.id,
+                priority=1,
+                weight=100,
+                state="healthy",
+            )
+        )
+        await session.commit()
+
+    response = await client.post(
+        "/admin/tests/openrouter/configure",
+        headers=admin_headers,
+        json={
+            "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+            "model_alias": "openrouter-test",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+
+    async for session in app.dependency_overrides[get_db_session]():
+        target = await session.get(ModelRegistry, existing_target.id)
+        stale_alias = await session.get(ModelRegistry, existing_alias.id)
+
+        assert target is not None
+        assert target.model_alias == "openrouter-test"
+        assert target.inference_backend_id == backend.id
+
+        assert stale_alias is not None
+        assert stale_alias.model_alias is None
+
+        route = (
+            await session.execute(
+                select(ModelBackendRoute).where(
+                    ModelBackendRoute.model_registry_id == target.id,
+                    ModelBackendRoute.inference_backend_id == backend.id,
+                )
+            )
+        )
+        assert route.scalars().first() is not None

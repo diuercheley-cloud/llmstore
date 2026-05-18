@@ -381,6 +381,29 @@
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#39;');
 
+        const extractErrorMessage = async (response) => {
+            let raw = '';
+            try {
+                raw = await response.text();
+            } catch (e) {
+                return `HTTP ${response.status}`;
+            }
+
+            if (!raw) return `HTTP ${response.status}`;
+
+            try {
+                const parsed = JSON.parse(raw);
+                const detail = parsed?.detail;
+                if (typeof detail === 'string' && detail.trim()) return detail;
+                if (detail && typeof detail === 'object') return JSON.stringify(detail, null, 2);
+                if (parsed && typeof parsed === 'object') return JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                // Fall through to return plain text body.
+            }
+
+            return raw;
+        };
+
         const persistOpenRouterConfig = () => {
             localStorage.setItem(OPENROUTER_STORAGE_KEY, JSON.stringify({
                 baseUrl: document.getElementById('openrouterBaseUrl').value,
@@ -626,8 +649,8 @@
                 });
                 
                 if (!configRes.ok) {
-                    const err = await configRes.json();
-                    throw new Error(`Configuração falhou: ${err.detail || JSON.stringify(err)}`);
+                    const errorMessage = await extractErrorMessage(configRes);
+                    throw new Error(`Configuração falhou: ${errorMessage}`);
                 }
                 resultBox.innerHTML += ` <span class="status-ok">OK</span>`;
 
