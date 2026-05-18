@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Client Portal - Uso</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/portal/portal.css" />
+  </head>
+  <body data-page="usage">
+    <div id="loginOverlay"><div class="login-box"><h1>Client Portal</h1><p>Acesse seu painel com sua chave de API</p><div style="text-align:left;margin-bottom:1.5rem;"><div class="field-label">API Key</div><input id="loginKey" type="password" placeholder="sk-..." /><div style="margin-top:1rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="rememberMe" checked /><label for="rememberMe" style="font-size:0.875rem;color:var(--muted);">Lembrar neste navegador</label></div></div><button id="doLogin" style="width:100%;">Conectar</button></div></div>
+    <aside>
+      <div class="sidebar-header"><h1>Client Portal</h1><p data-brand="company_name">LLM Inference Stack</p></div>
+      <nav>
+        <a class="nav-item" data-page-link="home" href="index.html">Hub</a>
+        <a class="nav-item" data-page-link="keys" href="keys.html">API Keys</a>
+        <a class="nav-item" data-page-link="usage" href="usage.html">Uso</a>
+        <a class="nav-item" data-page-link="invoices" href="invoices.html">Faturas</a>
+        <a class="nav-item" data-page-link="wallet" href="wallet.html">Wallet</a>
+        <a class="nav-item" data-page-link="rag" href="rag.html">RAG</a>
+        <a class="nav-item" data-page-link="playground" href="playground.html">Playground</a>
+      </nav>
+      <div class="sidebar-footer"><div style="display:flex;align-items:center;justify-content:space-between;"><span id="sidebarClientName">-</span><button id="logout" class="secondary" style="padding:2px 8px;font-size:0.7rem;">Sair</button></div></div>
+    </aside>
+    <main>
+      <header>
+        <div class="header-copy"><h1>Uso</h1><p>Consumo detalhado e QoS billing na mesma página.</p></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;"><span class="badge badge-active" id="headerStatusBadge">Ativo</span><span id="headerPlanName">-</span></div>
+      </header>
+      <div class="content-area">
+        <div class="page">
+          <h2>Uso Detalhado</h2>
+          <div class="card-grid" style="margin-bottom:1.5rem;">
+            <div class="usage-box"><h3>Requests Hoje / Mês</h3><div id="usageRequestsTodayMonth" class="usage-num">-</div><div class="usage-limit">requisições processadas</div></div>
+            <div class="usage-box"><h3>Tokens Hoje / Mês</h3><div id="usageTokensTodayMonth" class="usage-num">-</div><div class="usage-limit">tokens consumidos</div></div>
+            <div class="usage-box"><h3>Tokens no Mês</h3><div id="usageMonthlyTokens" class="usage-num">-</div><div id="usageMonthlyLimit" class="usage-limit">limite: -</div><div class="progress-bar"><div id="usageMonthlyProgress" class="progress-fill" style="width:0%"></div></div></div>
+            <div class="usage-box"><h3>Quota Restante</h3><div id="usageQuotaRemaining" class="usage-num">-</div><div class="usage-limit">tokens do mês restantes</div></div>
+          </div>
+          <div class="card-grid">
+            <section><h3>Preço ao Cliente</h3><div id="usagePricingSummary"></div></section>
+            <section><h3>Rate Limit Atual</h3><div id="usageRateLimit"></div></section>
+          </div>
+          <section><h3>Uso Diário (Tokens) - Últimos 30 dias</h3><div id="dailyUsageChart" class="chart-container"></div></section>
+          <section><h3>Uso por Modelo</h3><div class="table-wrapper"><table><thead><tr><th>Modelo</th><th>Requisições</th><th>Tokens Consumidos</th></tr></thead><tbody id="modelUsageList"></tbody></table></div></section>
+          <section><h3>QoS Priority Usage</h3><p class="page-lead" style="margin-bottom:0;">Acompanhamento de consumo de alta prioridade e custos associados.</p><div class="table-wrapper"><table><thead><tr><th>Período</th><th>Tier</th><th>Compute (s)</th><th>Slots</th><th>Valor (BRL)</th><th>Status</th></tr></thead><tbody id="qosUsageTableBody"></tbody></table></div></section>
+        </div>
+      </div>
+    </main>
+    <div id="toast" class="toast">Copiado!</div>
+    <script src="/static/portal/portal.js"></script>
+  </body>
+</html>

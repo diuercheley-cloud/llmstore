@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Backends - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/shared/theme.css" />
+    <link rel="stylesheet" href="/static/shared/layout.css" />
+    <link rel="stylesheet" href="/static/shared/components.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: var(--color-ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 22%),
+          linear-gradient(180deg, #f8fbfc 0%, #eef5f7 100%);
+      }
+      a { color: inherit; text-decoration: none; }
+      .brand-line {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-ink-soft);
+        font-weight: 800;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+      }
+      .hero h1 {
+        margin: 14px 0 12px;
+        font-size: clamp(30px, 4.6vw, 52px);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 12px;
+        border-radius: var(--radius-pill);
+        background: rgba(15, 118, 110, 0.12);
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .lead {
+        margin: 0;
+        color: var(--color-ink-soft);
+        font-size: 16px;
+        line-height: 1.65;
+        max-width: 64ch;
+      }
+      .hero-actions, .toolbar, .table-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+      }
+      .hero-actions { margin-top: var(--space-6); }
+      .stat-grid {
+        display: grid;
+        gap: var(--space-4);
+        align-content: start;
+      }
+      .stat {
+        padding: var(--space-5);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-line);
+        background: rgba(255, 255, 255, 0.8);
+      }
+      .stat strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--color-ink-soft);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .stat span {
+        display: block;
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .token-row, .backend-layout {
+        display: grid;
+        gap: var(--space-3);
+      }
+      .token-row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: end;
+      }
+      .backend-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+      .form-grid .full { grid-column: 1 / -1; }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+      }
+      .panel-header > * { margin: 0; }
+      .hidden { display: none !important; }
+      .table-actions .button { min-height: 34px; padding: 0 12px; font-size: 12px; }
+      .empty-state {
+        padding: var(--space-8);
+        text-align: center;
+        color: var(--color-ink-soft);
+      }
+      .subtle { color: var(--color-ink-soft); font-size: 13px; }
+      .mono-block {
+        white-space: pre-wrap;
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      @media (max-width: 1100px) {
+        .hero, .backend-layout, .form-grid, .token-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="container-lg page">
+        <header id="backends-topbar"></header>
+
+        <section class="hero">
+          <div class="panel">
+            <div class="eyebrow">Backends</div>
+            <h1>Inference backends e providers</h1>
+            <p class="lead">
+              Página dedicada à manutenção de <code>InferenceBackend</code>, saúde operacional,
+              providers híbridos, roteamento por backend e testes de conexão, sem alterar o backend existente.
+            </p>
+            <div class="hero-actions">
+              <a class="button secondary" href="/admin-dashboard">Voltar para Admin Hub</a>
+              <a class="button secondary" href="/static/admin/index.legacy.html">Abrir legacy</a>
+            </div>
+          </div>
+          <aside class="panel stat-grid">
+            <div class="stat"><strong>Total de backends</strong><span id="statTotal">-</span></div>
+            <div class="stat"><strong>Healthy</strong><span id="statHealthy">-</span></div>
+            <div class="stat"><strong>Providers híbridos</strong><span id="statProviders">-</span></div>
+            <div class="stat"><strong>Circuit breaker</strong><span id="statCircuit">ready</span></div>
+          </aside>
+        </section>
+
+        <section class="page-section">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="brand-line">Autenticação</div>
+                <h2>Admin Token</h2>
+              </div>
+              <span id="authStatus" class="badge warning">Desconectado</span>
+            </div>
+            <div class="token-row">
+              <div class="field">
+                <label for="adminToken">X-Admin-Token</label>
+                <input id="adminToken" class="ui-input" type="password" placeholder="Informe o token administrativo" autocomplete="off" />
+              </div>
+              <button id="connectButton" class="button" type="button">Conectar</button>
+              <button id="reloadButton" class="button secondary" type="button">Recarregar</button>
+            </div>
+          </div>
+        </section>
+
+        <main id="backendsApp" class="hidden stack">
+          <section class="backend-layout">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="brand-line">Configuração</div>
+                  <h2 id="editorTitle">Criar backend</h2>
+                </div>
+                <div class="toolbar">
+                  <button id="newBackendButton" class="button secondary" type="button">Novo backend</button>
+                  <button id="cancelEditButton" class="button secondary hidden" type="button">Cancelar edição</button>
+                </div>
+              </div>
+              <form id="backendForm" class="form-grid">
+                <div class="field">
+                  <label for="name">Nome</label>
+                  <input id="name" class="ui-input" type="text" maxlength="120" required />
+                </div>
+                <div class="field">
+                  <label for="provider">Provider</label>
+                  <select id="provider" class="ui-input">
+                    <option value="llama.cpp">llama.cpp</option>
+                    <option value="ollama">ollama</option>
+                    <option value="vllm">vllm</option>
+                    <option value="openai_compatible">openai_compatible</option>
+                    <option value="openrouter">openrouter</option>
+                    <option value="openai">openai</option>
+                    <option value="anthropic">anthropic</option>
+                    <option value="deepseek">deepseek</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="backend_url">Backend URL</label>
+                  <input id="backend_url" class="ui-input" type="url" required />
+                </div>
+                <div class="field">
+                  <label for="healthcheck_path">Healthcheck path</label>
+                  <input id="healthcheck_path" class="ui-input" type="text" />
+                </div>
+                <div class="field">
+                  <label for="status">Status</label>
+                  <input id="status" class="ui-input" type="text" maxlength="32" />
+                </div>
+                <div class="field">
+                  <label for="max_parallel_requests">Max parallel requests</label>
+                  <input id="max_parallel_requests" class="ui-input" type="number" min="1" max="64" />
+                </div>
+                <div class="field">
+                  <label for="is_active">Ativo</label>
+                  <select id="is_active" class="ui-input">
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="is_default">Default</label>
+                  <select id="is_default" class="ui-input">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <label for="metadata_json">Metadata JSON</label>
+                  <textarea id="metadata_json" class="ui-input" placeholder='{"api_key":"...", "test_backend":true}'></textarea>
+                </div>
+                <div class="field full">
+                  <div class="toolbar">
+                    <button id="submitButton" class="button" type="submit">Criar backend</button>
+                    <button id="testConnectionButton" class="button secondary" type="button">Testar conexão</button>
+                    <button id="listModelsButton" class="button secondary" type="button">Listar modelos</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div class="stack">
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="brand-line">Saúde</div>
+                    <h2>Resumo operacional</h2>
+                  </div>
+                  <div class="toolbar">
+                    <button id="resetCircuitButton" class="button secondary" type="button">Reset circuit breaker</button>
+                  </div>
+                </div>
+                <div id="healthSummary" class="subtle">Carregando...</div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="brand-line">Providers</div>
+                    <h2>Providers híbridos</h2>
+                  </div>
+                </div>
+                <div id="providersSummary" class="subtle">Carregando...</div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="brand-line">Debug</div>
+                    <h2>Saída de testes</h2>
+                  </div>
+                </div>
+                <pre id="debugOutput" class="mono-block">{}</pre>
+              </section>
+            </div>
+          </section>
+
+          <section class="page-section panel">
+            <div class="panel-header">
+              <div>
+                <div class="brand-line">InferenceBackend</div>
+                <h2>Backends cadastrados</h2>
+              </div>
+              <div class="toolbar">
+                <input id="searchInput" class="ui-input" type="search" placeholder="Buscar por nome, provider, URL ou service" />
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="ui-table">
+                <thead>
+                  <tr>
+                    <th>Backend</th>
+                    <th>Status</th>
+                    <th>Health</th>
+                    <th>Service</th>
+                    <th>Capacidade</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="backendsTableBody">
+                  <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="page-section panel">
+            <div class="panel-header">
+              <div>
+                <div class="brand-line">Providers</div>
+                <h2>Configuração híbrida</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="ui-table">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th>Tipo</th>
+                    <th>Enabled</th>
+                    <th>Configured</th>
+                    <th>Healthy</th>
+                    <th>Capabilities</th>
+                  </tr>
+                </thead>
+                <tbody id="providersTableBody">
+                  <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="page-section panel">
+            <div class="panel-header">
+              <div>
+                <div class="brand-line">Routing</div>
+                <h2>Rotas por backend</h2>
+              </div>
+            </div>
+            <div id="routingSummary" class="subtle" style="margin-bottom:16px;">Carregando...</div>
+            <div class="table-wrap">
+              <table class="ui-table">
+                <thead>
+                  <tr>
+                    <th>Modelo</th>
+                    <th>Backend</th>
+                    <th>Provider</th>
+                    <th>Priority</th>
+                    <th>Weight</th>
+                    <th>State</th>
+                  </tr>
+                </thead>
+                <tbody id="routingTableBody">
+                  <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+
+        <section id="loginPrompt" class="panel">
+          <div class="empty-state">
+            <h2 style="margin-top:0;">Conecte-se para gerenciar backends</h2>
+            <p>Informe um <code>X-Admin-Token</code> válido para carregar os backends e providers.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="/static/shared/api.js"></script>
+    <script src="/static/shared/auth.js"></script>
+    <script src="/static/shared/navigation.js"></script>
+    <script src="/static/shared/notifications.js"></script>
+    <script>
+      const STORAGE_KEY = "adminToken";
+      const DEFAULT_FORM = {
+        name: "",
+        provider: "llama.cpp",
+        backend_url: "",
+        healthcheck_path: "/health",
+        is_active: "true",
+        is_default: "false",
+        status: "configured",
+        max_parallel_requests: 1,
+        metadata_json: ""
+      };
+
+      const state = {
+        token: "",
+        backends: [],
+        hybridProviders: [],
+        routing: null,
+        editingBackendId: null
+      };
+
+      const els = {
+        adminToken: document.getElementById("adminToken"),
+        connectButton: document.getElementById("connectButton"),
+        reloadButton: document.getElementById("reloadButton"),
+        authStatus: document.getElementById("authStatus"),
+        backendsApp: document.getElementById("backendsApp"),
+        loginPrompt: document.getElementById("loginPrompt"),
+        statTotal: document.getElementById("statTotal"),
+        statHealthy: document.getElementById("statHealthy"),
+        statProviders: document.getElementById("statProviders"),
+        statCircuit: document.getElementById("statCircuit"),
+        editorTitle: document.getElementById("editorTitle"),
+        submitButton: document.getElementById("submitButton"),
+        cancelEditButton: document.getElementById("cancelEditButton"),
+        backendForm: document.getElementById("backendForm"),
+        newBackendButton: document.getElementById("newBackendButton"),
+        testConnectionButton: document.getElementById("testConnectionButton"),
+        listModelsButton: document.getElementById("listModelsButton"),
+        resetCircuitButton: document.getElementById("resetCircuitButton"),
+        healthSummary: document.getElementById("healthSummary"),
+        providersSummary: document.getElementById("providersSummary"),
+        debugOutput: document.getElementById("debugOutput"),
+        searchInput: document.getElementById("searchInput"),
+        backendsTableBody: document.getElementById("backendsTableBody"),
+        providersTableBody: document.getElementById("providersTableBody"),
+        routingSummary: document.getElementById("routingSummary"),
+        routingTableBody: document.getElementById("routingTableBody")
+      };
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function readAdminTokenFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        return (
+          searchParams.get("admin_token") ||
+          searchParams.get("adminToken") ||
+          searchParams.get("api_key") ||
+          searchParams.get("apiKey") ||
+          hashParams.get("admin_token") ||
+          hashParams.get("adminToken") ||
+          hashParams.get("api_key") ||
+          hashParams.get("apiKey") ||
+          ""
+        ).trim();
+      }
+
+      function clearAdminTokenFromUrl() {
+        const url = new URL(window.location.href);
+        ["admin_token", "adminToken", "api_key", "apiKey"].forEach((key) => url.searchParams.delete(key));
+        if (url.hash) {
+          const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+          const hashParams = new URLSearchParams(hash);
+          ["admin_token", "adminToken", "api_key", "apiKey"].forEach((key) => hashParams.delete(key));
+          url.hash = hashParams.toString() ? "#" + hashParams.toString() : "";
+        }
+        window.history.replaceState({}, document.title, url.toString());
+      }
+
+      function setConnected(connected) {
+        els.backendsApp.classList.toggle("hidden", !connected);
+        els.loginPrompt.classList.toggle("hidden", connected);
+        els.authStatus.textContent = connected ? "Conectado" : "Desconectado";
+        els.authStatus.className = connected ? "badge success" : "badge warning";
+      }
+
+      function adminHeaders() {
+        const token = state.token || els.adminToken.value.trim();
+        if (!token) throw new Error("Informe o X-Admin-Token.");
+        return SharedAuth.headerForAdminToken(token);
+      }
+
+      function adminFetch(path, options) {
+        const init = Object.assign({}, options || {});
+        init.headers = Object.assign({}, adminHeaders(), init.headers || {});
+        return SharedAPI.request(path, init);
+      }
+
+      function resetForm() {
+        state.editingBackendId = null;
+        els.editorTitle.textContent = "Criar backend";
+        els.submitButton.textContent = "Criar backend";
+        els.cancelEditButton.classList.add("hidden");
+        Object.entries(DEFAULT_FORM).forEach(([key, value]) => {
+          document.getElementById(key).value = value;
+        });
+      }
+
+      function populateForm(backend) {
+        state.editingBackendId = backend.id;
+        els.editorTitle.textContent = "Editar backend";
+        els.submitButton.textContent = "Salvar alterações";
+        els.cancelEditButton.classList.remove("hidden");
+        document.getElementById("name").value = backend.name || "";
+        document.getElementById("provider").value = backend.provider || "llama.cpp";
+        document.getElementById("backend_url").value = backend.backend_url || "";
+        document.getElementById("healthcheck_path").value = backend.healthcheck_path || "/health";
+        document.getElementById("is_active").value = backend.is_active ? "true" : "false";
+        document.getElementById("is_default").value = backend.is_default ? "true" : "false";
+        document.getElementById("status").value = backend.status || "configured";
+        document.getElementById("max_parallel_requests").value = backend.max_parallel_requests || 1;
+        document.getElementById("metadata_json").value = backend.metadata_json || "";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function filteredBackends() {
+        const query = els.searchInput.value.trim().toLowerCase();
+        if (!query) return state.backends;
+        return state.backends.filter((backend) => {
+          const haystack = [
+            backend.name,
+            backend.provider,
+            backend.backend_url,
+            backend.service_name,
+            backend.status
+          ].join(" ").toLowerCase();
+          return haystack.includes(query);
+        });
+      }
+
+      function updateStats() {
+        const healthy = state.backends.filter((item) => item.health && item.health.ok).length;
+        els.statTotal.textContent = String(state.backends.length);
+        els.statHealthy.textContent = String(healthy);
+        els.statProviders.textContent = String(state.hybridProviders.length);
+      }
+
+      function renderBackendsTable() {
+        const backends = filteredBackends();
+        if (!backends.length) {
+          els.backendsTableBody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum backend encontrado.</div></td></tr>';
+          return;
+        }
+        els.backendsTableBody.innerHTML = backends.map((backend) => {
+          const health = backend.health || {};
+          return `
+            <tr>
+              <td>
+                <strong>${escapeHtml(backend.name)}</strong>${backend.is_default ? ' <span class="badge info">default</span>' : ''}<br />
+                <span class="subtle">${escapeHtml(backend.provider)}</span><br />
+                <span class="subtle">${escapeHtml(backend.backend_url)}</span>
+              </td>
+              <td>
+                <span class="badge ${backend.is_active ? 'success' : 'warning'}">${backend.is_active ? 'active' : 'inactive'}</span>
+                <div class="subtle" style="margin-top:6px;">${escapeHtml(backend.status || '-')}</div>
+              </td>
+              <td>
+                <span class="badge ${health.ok ? 'success' : 'danger'}">${health.ok ? 'healthy' : 'down'}</span>
+                <div class="subtle" style="margin-top:6px;">lat=${health.latency_ms == null ? '-' : health.latency_ms + 'ms'}</div>
+              </td>
+              <td>
+                <div>${escapeHtml(backend.service_name || '-')}</div>
+                <div class="subtle">docker=${backend.docker && backend.docker.compose_available ? 'yes' : 'no'}</div>
+              </td>
+              <td>${backend.current_running || 0} / ${backend.max_parallel_requests || 0}</td>
+              <td>
+                <div class="table-actions">
+                  <button class="button secondary" type="button" data-action="edit" data-backend-id="${escapeHtml(backend.id)}">Editar</button>
+                  <button class="button secondary" type="button" data-action="health" data-backend-id="${escapeHtml(backend.id)}">Health</button>
+                  <button class="button secondary" type="button" data-action="logs" data-backend-id="${escapeHtml(backend.id)}">Logs</button>
+                  <button class="button secondary" type="button" data-action="start" data-backend-id="${escapeHtml(backend.id)}">Start</button>
+                  <button class="button secondary" type="button" data-action="stop" data-backend-id="${escapeHtml(backend.id)}">Stop</button>
+                  <button class="button secondary" type="button" data-action="restart" data-backend-id="${escapeHtml(backend.id)}">Restart</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      function renderProvidersTable() {
+        const providers = state.hybridProviders;
+        if (!providers.length) {
+          els.providersTableBody.innerHTML = '<tr><td colspan="6">Sem providers disponíveis.</td></tr>';
+          els.providersSummary.textContent = "Sem dados de providers.";
+          return;
+        }
+        els.providersSummary.innerHTML = providers.some((p) => p.enabled && !p.configured)
+          ? "Há providers habilitados sem configuração completa."
+          : "Providers híbridos carregados.";
+        els.providersTableBody.innerHTML = providers.map((provider) => {
+          const caps = Object.entries(provider.capabilities || {}).filter(([, value]) => value === true).map(([key]) => key).join(", ") || "none";
+          return `
+            <tr>
+              <td><strong>${escapeHtml(provider.provider_id)}</strong></td>
+              <td>${escapeHtml(provider.provider_type || "-")}</td>
+              <td><span class="badge ${provider.enabled ? 'success' : 'warning'}">${provider.enabled ? 'YES' : 'NO'}</span></td>
+              <td><span class="badge ${provider.configured ? 'success' : 'danger'}">${provider.configured ? 'YES' : 'NO'}</span></td>
+              <td><span class="badge ${provider.healthy === true ? 'success' : provider.healthy === false ? 'danger' : 'warning'}">${provider.healthy === true ? 'HEALTHY' : provider.healthy === false ? 'DOWN' : 'UNKNOWN'}</span></td>
+              <td>${escapeHtml(caps)}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      function renderRoutingTable() {
+        const routing = state.routing || { summary: {}, models: [] };
+        const summary = routing.summary || {};
+        els.routingSummary.textContent = `healthy=${summary.healthy || 0} degraded=${summary.degraded || 0} unhealthy=${summary.unhealthy || 0} disabled=${summary.disabled || 0}`;
+        const rows = [];
+        (routing.models || []).forEach((model) => {
+          (model.routes || []).forEach((route) => rows.push({
+            model: model.model_alias || model.model_id,
+            backend_name: route.backend_name,
+            provider: route.provider,
+            priority: route.priority,
+            weight: route.weight,
+            state: route.state
+          }));
+        });
+        if (!rows.length) {
+          els.routingTableBody.innerHTML = '<tr><td colspan="6">Sem rotas disponíveis.</td></tr>';
+          return;
+        }
+        els.routingTableBody.innerHTML = rows.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.model || "-")}</td>
+            <td>${escapeHtml(row.backend_name || "-")}</td>
+            <td>${escapeHtml(row.provider || "-")}</td>
+            <td>${row.priority}</td>
+            <td>${row.weight}</td>
+            <td><span class="badge ${row.state === 'healthy' ? 'success' : row.state === 'disabled' ? 'warning' : 'info'}">${escapeHtml(row.state)}</span></td>
+          </tr>
+        `).join("");
+      }
+
+      function buildPayloadFromForm() {
+        return {
+          name: document.getElementById("name").value.trim(),
+          provider: document.getElementById("provider").value,
+          backend_url: document.getElementById("backend_url").value.trim(),
+          healthcheck_path: document.getElementById("healthcheck_path").value.trim() || "/health",
+          is_active: document.getElementById("is_active").value === "true",
+          is_default: document.getElementById("is_default").value === "true",
+          status: document.getElementById("status").value.trim() || "configured",
+          max_parallel_requests: Number(document.getElementById("max_parallel_requests").value),
+          metadata_json: document.getElementById("metadata_json").value.trim() || null
+        };
+      }
+
+      async function loadData() {
+        const [backends, providers, routing, health] = await Promise.all([
+          adminFetch("/admin/backends"),
+          adminFetch("/admin/hybrid/providers"),
+          adminFetch("/admin/backends/routing"),
+          adminFetch("/admin/backends/health")
+        ]);
+        state.backends = Array.isArray(backends) ? backends : [];
+        state.hybridProviders = Array.isArray(providers) ? providers : [];
+        state.routing = routing || {};
+        updateStats();
+        renderBackendsTable();
+        renderProvidersTable();
+        renderRoutingTable();
+        const healthRows = Array.isArray(health.backends) ? health.backends : [];
+        els.healthSummary.textContent = `generated_at=${health.generated_at || '-'} · healthy=${healthRows.filter((item) => item.ok).length}/${healthRows.length}`;
+        if (state.editingBackendId) {
+          const current = state.backends.find((item) => item.id === state.editingBackendId);
+          if (current) populateForm(current);
+        }
+      }
+
+      async function connect() {
+        const token = els.adminToken.value.trim();
+        if (!token) {
+          SharedNotifications.warning("Informe o X-Admin-Token.");
+          return;
+        }
+        state.token = token;
+        SharedAuth.setToken(STORAGE_KEY, token);
+        try {
+          await loadData();
+          setConnected(true);
+          clearAdminTokenFromUrl();
+          SharedNotifications.success("Backends carregados com sucesso.");
+        } catch (error) {
+          setConnected(false);
+          SharedNotifications.error(error.message || "Falha ao autenticar.");
+        }
+      }
+
+      async function submitBackend(event) {
+        event.preventDefault();
+        try {
+          const payload = buildPayloadFromForm();
+          if (state.editingBackendId) {
+            await adminFetch("/admin/backends/" + state.editingBackendId, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            SharedNotifications.success("Backend atualizado.");
+          } else {
+            await adminFetch("/admin/backends", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            SharedNotifications.success("Backend criado.");
+          }
+          resetForm();
+          await loadData();
+        } catch (error) {
+          SharedNotifications.error(error.message || "Falha ao salvar backend.");
+        }
+      }
+
+      async function testConnection() {
+        try {
+          const payload = buildPayloadFromForm();
+          const response = await adminFetch("/admin/backends/test-connection", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          els.debugOutput.textContent = JSON.stringify(response, null, 2);
+          SharedNotifications.info("Teste de conexão concluído.");
+        } catch (error) {
+          SharedNotifications.error(error.message || "Teste de conexão falhou.");
+        }
+      }
+
+      async function listModels() {
+        try {
+          const payload = buildPayloadFromForm();
+          const response = await adminFetch("/admin/backends/list-models", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          els.debugOutput.textContent = JSON.stringify(response, null, 2);
+          SharedNotifications.info("Listagem de modelos concluída.");
+        } catch (error) {
+          SharedNotifications.error(error.message || "Falha ao listar modelos.");
+        }
+      }
+
+      async function handleBackendAction(action, backendId) {
+        const backend = state.backends.find((item) => item.id === backendId);
+        if (!backend) return;
+        try {
+          if (action === "edit") {
+            populateForm(backend);
+            return;
+          }
+          if (action === "health") {
+            const response = await adminFetch("/admin/backends/" + backendId + "/health");
+            els.debugOutput.textContent = JSON.stringify(response, null, 2);
+            SharedNotifications.info("Health carregado.");
+          }
+          if (action === "logs") {
+            const response = await adminFetch("/admin/backends/" + backendId + "/logs?tail=100");
+            els.debugOutput.textContent = JSON.stringify(response, null, 2);
+            SharedNotifications.info("Logs carregados.");
+          }
+          if (action === "start" || action === "stop" || action === "restart") {
+            const response = await adminFetch("/admin/backends/" + backendId + "/" + action, { method: "POST" });
+            els.debugOutput.textContent = JSON.stringify(response, null, 2);
+            SharedNotifications.success("Ação executada: " + action);
+            await loadData();
+          }
+        } catch (error) {
+          SharedNotifications.error(error.message || "Falha na ação do backend.");
+        }
+      }
+
+      async function resetCircuitBreaker() {
+        try {
+          const response = await adminFetch("/admin/backends/circuit-breaker/reset", { method: "POST" });
+          els.debugOutput.textContent = JSON.stringify(response, null, 2);
+          els.statCircuit.textContent = "reset";
+          SharedNotifications.success("Circuit breaker resetado.");
+        } catch (error) {
+          SharedNotifications.error(error.message || "Falha ao resetar circuit breaker.");
+        }
+      }
+
+      SharedNavigation.mountTopbar("#backends-topbar", {
+        brand: "Admin / Backends",
+        title: "Backends",
+        actions: [
+          { label: "Admin Hub", href: "/admin-dashboard" },
+          { label: "Models", href: "/static/admin/models.html" },
+          { label: "Legacy", href: "/static/admin/index.legacy.html" }
+        ]
+      });
+
+      els.connectButton.addEventListener("click", connect);
+      els.reloadButton.addEventListener("click", connect);
+      els.backendForm.addEventListener("submit", submitBackend);
+      els.newBackendButton.addEventListener("click", resetForm);
+      els.cancelEditButton.addEventListener("click", resetForm);
+      els.testConnectionButton.addEventListener("click", testConnection);
+      els.listModelsButton.addEventListener("click", listModels);
+      els.resetCircuitButton.addEventListener("click", resetCircuitBreaker);
+      els.searchInput.addEventListener("input", renderBackendsTable);
+      els.backendsTableBody.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        handleBackendAction(button.dataset.action, button.dataset.backendId);
+      });
+
+      resetForm();
+      const urlToken = readAdminTokenFromUrl();
+      const savedToken = urlToken || SharedAuth.getToken(STORAGE_KEY) || SharedAuth.getToken("provider-settings-admin-token");
+      if (savedToken) {
+        els.adminToken.value = savedToken;
+        state.token = savedToken;
+        connect().catch(() => {});
+      }
+    </script>
+  </body>
+</html>

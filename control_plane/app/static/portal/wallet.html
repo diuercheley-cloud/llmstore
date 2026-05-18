@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Client Portal - Wallet</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/portal/portal.css" />
+  </head>
+  <body data-page="wallet">
+    <div id="loginOverlay"><div class="login-box"><h1>Client Portal</h1><p>Acesse seu painel com sua chave de API</p><div style="text-align:left;margin-bottom:1.5rem;"><div class="field-label">API Key</div><input id="loginKey" type="password" placeholder="sk-..." /><div style="margin-top:1rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="rememberMe" checked /><label for="rememberMe" style="font-size:0.875rem;color:var(--muted);">Lembrar neste navegador</label></div></div><button id="doLogin" style="width:100%;">Conectar</button></div></div>
+    <aside>
+      <div class="sidebar-header"><h1>Client Portal</h1><p data-brand="company_name">LLM Inference Stack</p></div>
+      <nav>
+        <a class="nav-item" data-page-link="home" href="index.html">Hub</a>
+        <a class="nav-item" data-page-link="keys" href="keys.html">API Keys</a>
+        <a class="nav-item" data-page-link="usage" href="usage.html">Uso</a>
+        <a class="nav-item" data-page-link="invoices" href="invoices.html">Faturas</a>
+        <a class="nav-item" data-page-link="wallet" href="wallet.html">Wallet</a>
+        <a class="nav-item" data-page-link="rag" href="rag.html">RAG</a>
+        <a class="nav-item" data-page-link="playground" href="playground.html">Playground</a>
+      </nav>
+      <div class="sidebar-footer"><div style="display:flex;align-items:center;justify-content:space-between;"><span id="sidebarClientName">-</span><button id="logout" class="secondary" style="padding:2px 8px;font-size:0.7rem;">Sair</button></div></div>
+    </aside>
+    <main>
+      <header>
+        <div class="header-copy"><h1>Wallet</h1><p>Saldo, reserva, recarga manual e histórico em uma página dedicada.</p></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;"><span class="badge badge-active" id="headerStatusBadge">Ativo</span><span id="headerPlanName">-</span></div>
+      </header>
+      <div class="content-area">
+        <div class="page">
+          <h2>Wallet</h2>
+          <div id="walletWarning" style="display:none;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:0.75rem;padding:1rem;margin-bottom:1rem;"></div>
+          <div class="card-grid" style="margin-bottom:1.5rem;">
+            <div class="usage-box"><h3>Saldo Atual</h3><div id="walletBalance" class="usage-num">-</div><div id="walletAvailable" class="usage-limit">disponível: -</div></div>
+            <div class="usage-box"><h3>Reserva</h3><div id="walletReserved" class="usage-num">-</div><div id="walletConsumptionEstimate" class="usage-limit">consumo estimado: -</div></div>
+          </div>
+          <section>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <div>
+                <h3 style="margin-bottom:0.25rem;">Recarga Manual</h3>
+                <div class="muted" style="font-size:0.875rem;">Sem PSP real nesta versão. A solicitação gera um lead interno.</div>
+              </div>
+              <div style="display:flex;gap:0.75rem;align-items:center;">
+                <input id="walletRechargeAmount" type="number" min="0" step="10" placeholder="Valor em BRL" style="width:180px;" />
+                <button id="walletRequestRecharge">Solicitar Recarga</button>
+              </div>
+            </div>
+          </section>
+          <section>
+            <h3>Histórico de Transações</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Quando</th><th>Tipo</th><th>Valor</th><th>Saldo Após</th><th>Referência</th></tr></thead>
+                <tbody id="walletTransactions"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <div id="toast" class="toast">Copiado!</div>
+    <script src="/static/portal/portal.js"></script>
+  </body>
+</html>

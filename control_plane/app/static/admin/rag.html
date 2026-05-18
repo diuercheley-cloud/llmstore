@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin RAG - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/shared/theme.css" />
+    <link rel="stylesheet" href="/static/shared/layout.css" />
+    <link rel="stylesheet" href="/static/shared/components.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: var(--color-ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 22%),
+          linear-gradient(180deg, #f8fbfc 0%, #eef5f7 100%);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 12px;
+        border-radius: var(--radius-pill);
+        background: rgba(15, 118, 110, 0.12);
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .brand-line {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-ink-soft);
+        font-weight: 800;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+      }
+
+      .hero h1 {
+        margin: 14px 0 12px;
+        font-size: clamp(30px, 4.6vw, 52px);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--color-ink-soft);
+        font-size: 16px;
+        line-height: 1.65;
+        max-width: 64ch;
+      }
+
+      .hero-actions,
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+      }
+
+      .hero-actions {
+        margin-top: var(--space-6);
+      }
+
+      .stat-grid {
+        display: grid;
+        gap: var(--space-4);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .stat {
+        padding: var(--space-5);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-line);
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .stat strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--color-ink-soft);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .stat span {
+        display: block;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+      }
+
+      .panel-header > * {
+        margin: 0;
+      }
+
+      .token-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: var(--space-3);
+        align-items: end;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .stack {
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .debug {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      .subtle {
+        color: var(--color-ink-soft);
+        font-size: 13px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: var(--radius-pill);
+        background: rgba(15, 23, 42, 0.08);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .pill-success {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+      }
+
+      .pill-danger {
+        background: rgba(220, 38, 38, 0.12);
+        color: #991b1b;
+      }
+
+      .notice {
+        padding: var(--space-5);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(15, 118, 110, 0.16);
+        background: rgba(255, 255, 255, 0.76);
+      }
+
+      .notice p {
+        margin: 0;
+        color: var(--color-ink-soft);
+      }
+
+      .empty-state {
+        padding: var(--space-8);
+        text-align: center;
+        color: var(--color-ink-soft);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--space-4);
+      }
+
+      @media (max-width: 1024px) {
+        .hero,
+        .token-grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="container-lg page">
+        <header id="rag-topbar"></header>
+
+        <section class="hero">
+          <div class="panel">
+            <div class="eyebrow">RAG</div>
+            <h1>Operacao e manutencao RAG</h1>
+            <p class="lead">
+              Pagina dedicada a vaults, colecoes, chunks, receipts, violacoes e uso por cliente,
+              reaproveitando os endpoints ja existentes do admin. A manutencao de documentos do
+              cliente continua no portal para evitar duplicacao de fluxo.
+            </p>
+            <div class="hero-actions">
+              <a class="button secondary" href="/admin-dashboard">Voltar para Admin Hub</a>
+              <a class="button secondary" href="/static/admin/index.legacy.html">Abrir legacy</a>
+              <a class="button secondary" href="/static/portal/index.html">Abrir portal</a>
+            </div>
+          </div>
+
+          <aside class="panel stack">
+            <div class="stat">
+              <strong>Documents</strong>
+              <span id="statDocuments">-</span>
+            </div>
+            <div class="stat">
+              <strong>Chunks</strong>
+              <span id="statChunks">-</span>
+            </div>
+            <div class="stat">
+              <strong>Collections</strong>
+              <span id="statCollections">-</span>
+            </div>
+            <div class="stat">
+              <strong>Violations</strong>
+              <span id="statViolations">-</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="page-section">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="brand-line">Autenticacao</div>
+                <h2>Admin Token</h2>
+              </div>
+              <span id="authStatus" class="badge warning">Desconectado</span>
+            </div>
+            <div class="token-grid">
+              <div class="field">
+                <label for="adminToken">X-Admin-Token</label>
+                <input id="adminToken" class="ui-input" type="password" placeholder="Informe o token administrativo" autocomplete="off" />
+              </div>
+              <button id="connectButton" class="button" type="button">Conectar</button>
+              <button id="reloadButton" class="button secondary" type="button">Recarregar</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="loginPrompt" class="panel">
+          <h2>Carregar dados RAG</h2>
+          <p class="muted">Informe o token administrativo para carregar as visoes operacionais de RAG.</p>
+        </section>
+
+        <main id="ragApp" class="hidden stack">
+          <section class="page-section">
+            <div class="notice">
+              <p>
+                <strong>Documentos:</strong> upload, listagem e exclusao continuam no portal do cliente.
+                Esta pagina referencia esse fluxo e concentra apenas visoes e controles administrativos
+                ja existentes no legacy.
+              </p>
+              <div class="toolbar" style="margin-top:12px;">
+                <a class="button secondary" href="/static/portal/index.html">Ir para Portal</a>
+              </div>
+            </div>
+          </section>
+
+          <section class="page-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="brand-line">Enterprise</div>
+                  <h2>Enterprise RAG</h2>
+                </div>
+                <button id="hybridRagDebugToggle" class="button secondary" type="button">JSON</button>
+              </div>
+              <div id="hybridRagStats" class="stat-grid"></div>
+              <div id="ragDocStatus" class="subtle" style="margin-top:12px;"></div>
+              <pre id="hybridRagDebug" class="debug hidden"></pre>
+            </div>
+          </section>
+
+          <section class="page-section">
+            <div class="two-col">
+              <div class="panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="brand-line">Vaults</div>
+                    <h2>Tenant Vaults</h2>
+                  </div>
+                  <button id="vaultsDebugToggle" class="button secondary" type="button">JSON</button>
+                </div>
+                <div class="table-wrap">
+                  <div id="vaultsTable"></div>
+                </div>
+                <pre id="vaultsDebug" class="debug hidden"></pre>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="brand-line">Receipts</div>
+                    <h2>Retrieval Receipts</h2>
+                  </div>
+                  <button id="receiptsDebugToggle" class="button secondary" type="button">JSON</button>
+                </div>
+                <div class="table-wrap">
+                  <div id="receiptsTable"></div>
+                </div>
+                <pre id="receiptsDebug" class="debug hidden"></pre>
+              </div>
+            </div>
+          </section>
+
+          <section class="page-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="brand-line">Events</div>
+                  <h2>Policy Violations</h2>
+                </div>
+                <button id="violationsDebugToggle" class="button secondary" type="button">JSON</button>
+              </div>
+              <div class="table-wrap">
+                <div id="violationsTable"></div>
+              </div>
+              <pre id="violationsDebug" class="debug hidden"></pre>
+            </div>
+          </section>
+
+          <section class="page-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <div class="brand-line">Usage</div>
+                  <h2>Uso de RAG por cliente</h2>
+                </div>
+                <button id="usageDebugToggle" class="button secondary" type="button">JSON</button>
+              </div>
+              <div class="table-wrap">
+                <div id="usageTable"></div>
+              </div>
+              <pre id="usageDebug" class="debug hidden"></pre>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="/static/shared/api.js"></script>
+    <script src="/static/shared/auth.js"></script>
+    <script src="/static/shared/navigation.js"></script>
+    <script src="/static/shared/notifications.js"></script>
+    <script>
+      const STORAGE_KEY = "adminToken";
+      const state = {
+        token: "",
+        hybridRag: null,
+        vaults: [],
+        receipts: [],
+        violations: [],
+        usage: []
+      };
+
+      const els = {
+        adminToken: document.getElementById("adminToken"),
+        authStatus: document.getElementById("authStatus"),
+        ragApp: document.getElementById("ragApp"),
+        loginPrompt: document.getElementById("loginPrompt"),
+        statDocuments: document.getElementById("statDocuments"),
+        statChunks: document.getElementById("statChunks"),
+        statCollections: document.getElementById("statCollections"),
+        statViolations: document.getElementById("statViolations"),
+        hybridRagStats: document.getElementById("hybridRagStats"),
+        ragDocStatus: document.getElementById("ragDocStatus"),
+        hybridRagDebug: document.getElementById("hybridRagDebug"),
+        vaultsTable: document.getElementById("vaultsTable"),
+        vaultsDebug: document.getElementById("vaultsDebug"),
+        receiptsTable: document.getElementById("receiptsTable"),
+        receiptsDebug: document.getElementById("receiptsDebug"),
+        violationsTable: document.getElementById("violationsTable"),
+        violationsDebug: document.getElementById("violationsDebug"),
+        usageTable: document.getElementById("usageTable"),
+        usageDebug: document.getElementById("usageDebug")
+      };
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function shortId(value) {
+        return typeof value === "string" ? value.substring(0, 8) : "N/A";
+      }
+
+      function num(value, fallback = 0) {
+        return typeof value === "number" ? value : fallback;
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return "indisponivel";
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return "indisponivel";
+        return parsed.toLocaleString("pt-BR");
+      }
+
+      function setConnected(connected) {
+        els.ragApp.classList.toggle("hidden", !connected);
+        els.loginPrompt.classList.toggle("hidden", connected);
+        els.authStatus.textContent = connected ? "Conectado" : "Desconectado";
+        els.authStatus.className = connected ? "badge success" : "badge warning";
+      }
+
+      function readAdminTokenFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        return (
+          searchParams.get("admin_token") ||
+          searchParams.get("adminToken") ||
+          searchParams.get("api_key") ||
+          searchParams.get("apiKey") ||
+          hashParams.get("admin_token") ||
+          hashParams.get("adminToken") ||
+          hashParams.get("api_key") ||
+          hashParams.get("apiKey") ||
+          ""
+        ).trim();
+      }
+
+      function clearAdminTokenFromUrl() {
+        const url = new URL(window.location.href);
+        ["admin_token", "adminToken", "api_key", "apiKey"].forEach((key) => url.searchParams.delete(key));
+        if (url.hash) {
+          const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+          const hashParams = new URLSearchParams(hash);
+          ["admin_token", "adminToken", "api_key", "apiKey"].forEach((key) => hashParams.delete(key));
+          url.hash = hashParams.toString() ? "#" + hashParams.toString() : "";
+        }
+        window.history.replaceState({}, document.title, url.toString());
+      }
+
+      function adminHeaders() {
+        const token = state.token || els.adminToken.value.trim();
+        if (!token) throw new Error("Informe o X-Admin-Token.");
+        return SharedAuth.headerForAdminToken(token);
+      }
+
+      function adminFetch(path, options) {
+        const init = Object.assign({}, options || {});
+        init.headers = Object.assign({}, adminHeaders(), init.headers || {});
+        return SharedAPI.request(path, init);
+      }
+
+      function toggleDebug(id) {
+        document.getElementById(id).classList.toggle("hidden");
+      }
+
+      function updateStats() {
+        const data = state.hybridRag || {};
+        els.statDocuments.textContent = num(data.total_documents).toLocaleString("pt-BR");
+        els.statChunks.textContent = num(data.total_chunks).toLocaleString("pt-BR");
+        els.statCollections.textContent = num(data.total_collections).toLocaleString("pt-BR");
+        els.statViolations.textContent = String(state.violations.length);
+      }
+
+      function renderHybridRag() {
+        const data = state.hybridRag;
+        if (!data) {
+          els.hybridRagStats.innerHTML = '<div class="empty-state">Sem dados de Enterprise RAG.</div>';
+          els.ragDocStatus.textContent = "";
+          return;
+        }
+
+        const storageMb = data.total_storage_bytes ? (data.total_storage_bytes / (1024 * 1024)).toFixed(2) : "0";
+        els.hybridRagStats.innerHTML = `
+          <div class="stat">
+            <strong>RAG Enabled</strong>
+            <span>${data.rag_enabled ? "YES" : "NO"}</span>
+          </div>
+          <div class="stat">
+            <strong>Embedding Provider</strong>
+            <span>${escapeHtml(data.embedding_provider || "N/A")}</span>
+          </div>
+          <div class="stat">
+            <strong>Documents</strong>
+            <span>${num(data.total_documents).toLocaleString("pt-BR")}</span>
+          </div>
+          <div class="stat">
+            <strong>Chunks</strong>
+            <span>${num(data.total_chunks).toLocaleString("pt-BR")}</span>
+          </div>
+          <div class="stat">
+            <strong>Collections</strong>
+            <span>${num(data.total_collections).toLocaleString("pt-BR")}</span>
+          </div>
+          <div class="stat">
+            <strong>Clients with RAG</strong>
+            <span>${num(data.clients_with_rag).toLocaleString("pt-BR")}</span>
+          </div>
+          <div class="stat">
+            <strong>Storage</strong>
+            <span>${storageMb} MB</span>
+          </div>
+        `;
+
+        const status = data.documents_by_status || {};
+        const statusHtml = Object.entries(status).map(([key, count]) => (
+          `<span class="pill" style="margin-right: 6px;">${escapeHtml(key)}: ${escapeHtml(String(count))}</span>`
+        )).join("");
+        els.ragDocStatus.innerHTML = statusHtml ? "<strong>Docs by status:</strong> " + statusHtml : "";
+      }
+
+      function renderVaults() {
+        const rows = Array.isArray(state.vaults) ? state.vaults : [];
+        if (!rows.length) {
+          els.vaultsTable.innerHTML = '<div class="empty-state">No vaults found.</div>';
+          return;
+        }
+
+        let html = "<table><thead><tr><th>Vault Name</th><th>Tenant</th><th>Retention</th></tr></thead><tbody>";
+        rows.forEach((row) => {
+          html += `
+            <tr>
+              <td>${escapeHtml(row.vault_name || "-")}</td>
+              <td><code>${escapeHtml(row.tenant_id || "-")}</code></td>
+              <td>${escapeHtml(String(row.retention_policy_days || 0))} days</td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        els.vaultsTable.innerHTML = html;
+      }
+
+      function renderReceipts() {
+        const rows = Array.isArray(state.receipts) ? state.receipts : [];
+        if (!rows.length) {
+          els.receiptsTable.innerHTML = '<div class="empty-state">No receipts found.</div>';
+          return;
+        }
+
+        let html = "<table><thead><tr><th>Session ID</th><th>Receipt Hash</th><th>Time</th></tr></thead><tbody>";
+        rows.forEach((row) => {
+          html += `
+            <tr>
+              <td><code>${escapeHtml(shortId(row.session_id))}</code></td>
+              <td><code>${escapeHtml(String(row.receipt_hash || "").substring(0, 12))}...</code></td>
+              <td>${formatTimestamp(row.created_at)}</td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        els.receiptsTable.innerHTML = html;
+      }
+
+      function renderViolations() {
+        const rows = Array.isArray(state.violations) ? state.violations : [];
+        if (!rows.length) {
+          els.violationsTable.innerHTML = '<div class="empty-state">No violations found.</div>';
+          return;
+        }
+
+        let html = "<table><thead><tr><th>Session ID</th><th>Violation</th><th>Action</th><th>Time</th></tr></thead><tbody>";
+        rows.forEach((row) => {
+          html += `
+            <tr>
+              <td><code>${escapeHtml(shortId(row.session_id))}</code></td>
+              <td><span class="pill pill-danger">${escapeHtml(row.violation_type || "-")}</span></td>
+              <td>${escapeHtml(row.action_taken || "-")}</td>
+              <td>${formatTimestamp(row.created_at)}</td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        els.violationsTable.innerHTML = html;
+      }
+
+      function renderUsage() {
+        const rows = Array.isArray(state.usage) ? state.usage : [];
+        if (!rows.length) {
+          els.usageTable.innerHTML = '<div class="empty-state">Nenhum uso de RAG encontrado.</div>';
+          return;
+        }
+
+        let html = "<table><thead><tr><th>Cliente</th><th>ID</th><th>Docs</th><th>Storage (MB)</th><th>Consultas (Mes)</th><th>Paginas (Mes)</th></tr></thead><tbody>";
+        rows.forEach((row) => {
+          html += `
+            <tr>
+              <td><strong>${escapeHtml(row.client_name || "-")}</strong></td>
+              <td><code>${escapeHtml(shortId(row.client_id))}</code></td>
+              <td>${num(row.documents_count)}</td>
+              <td>${num(row.storage_mb).toFixed(2)}</td>
+              <td>${num(row.queries_month)}</td>
+              <td>${num(row.pages_month)}</td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        els.usageTable.innerHTML = html;
+      }
+
+      async function loadData() {
+        const [hybridRag, vaults, receipts, violations, usage] = await Promise.all([
+          adminFetch("/admin/hybrid/rag"),
+          adminFetch("/admin/rag/vaults"),
+          adminFetch("/admin/rag/receipts"),
+          adminFetch("/admin/rag/violations"),
+          adminFetch("/admin/rag/usage")
+        ]);
+
+        state.hybridRag = hybridRag || null;
+        state.vaults = Array.isArray(vaults) ? vaults : [];
+        state.receipts = Array.isArray(receipts) ? receipts : [];
+        state.violations = Array.isArray(violations) ? violations : [];
+        state.usage = Array.isArray(usage) ? usage : [];
+
+        updateStats();
+        renderHybridRag();
+        renderVaults();
+        renderReceipts();
+        renderViolations();
+        renderUsage();
+
+        els.hybridRagDebug.textContent = JSON.stringify(state.hybridRag, null, 2);
+        els.vaultsDebug.textContent = JSON.stringify(state.vaults, null, 2);
+        els.receiptsDebug.textContent = JSON.stringify(state.receipts, null, 2);
+        els.violationsDebug.textContent = JSON.stringify(state.violations, null, 2);
+        els.usageDebug.textContent = JSON.stringify(state.usage, null, 2);
+      }
+
+      async function connect() {
+        const token = els.adminToken.value.trim();
+        if (!token) {
+          SharedNotifications.warning("Informe o X-Admin-Token.");
+          return;
+        }
+        state.token = token;
+        SharedAuth.setToken(STORAGE_KEY, token);
+        try {
+          await loadData();
+          setConnected(true);
+          clearAdminTokenFromUrl();
+          SharedNotifications.success("RAG carregado com sucesso.");
+        } catch (error) {
+          setConnected(false);
+          SharedNotifications.error(error.message || "Falha ao autenticar.");
+        }
+      }
+
+      SharedNavigation.mountTopbar("#rag-topbar", {
+        brand: "Admin",
+        title: "RAG",
+        actions: [
+          { label: "Admin Hub", href: "/admin-dashboard" },
+          { label: "Portal", href: "/static/portal/index.html" },
+          { label: "Legacy", href: "/static/admin/index.legacy.html" }
+        ]
+      });
+
+      document.getElementById("connectButton").addEventListener("click", connect);
+      document.getElementById("reloadButton").addEventListener("click", () => loadData().catch((error) => SharedNotifications.error(error.message || "Falha ao recarregar.")));
+      document.getElementById("hybridRagDebugToggle").addEventListener("click", () => toggleDebug("hybridRagDebug"));
+      document.getElementById("vaultsDebugToggle").addEventListener("click", () => toggleDebug("vaultsDebug"));
+      document.getElementById("receiptsDebugToggle").addEventListener("click", () => toggleDebug("receiptsDebug"));
+      document.getElementById("violationsDebugToggle").addEventListener("click", () => toggleDebug("violationsDebug"));
+      document.getElementById("usageDebugToggle").addEventListener("click", () => toggleDebug("usageDebug"));
+
+      (function bootstrap() {
+        const token = readAdminTokenFromUrl() || SharedAuth.getToken(STORAGE_KEY) || "";
+        if (!token) return;
+        els.adminToken.value = token;
+        state.token = token;
+        connect();
+      })();
+    </script>
+  </body>
+</html>
