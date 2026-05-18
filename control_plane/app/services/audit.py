@@ -40,6 +40,8 @@ async def log_request(
     request_payload: dict | None = None,
     response_payload: dict | None = None,
     reproducibility_context: dict | None = None,
+    token_count_method: str | None = None,
+    tokens_estimated: bool = True,
 ) -> RequestLog:
     resolved_correlation_id = correlation_id or get_correlation_id() or None
     resolved_source_ip = source_ip or get_source_ip() or None
@@ -49,6 +51,8 @@ async def log_request(
         endpoint=endpoint,
         prompt_tokens_estimated=prompt_tokens,
         completion_tokens_estimated=completion_tokens,
+        # TODO: Add token_count_method and tokens_estimated to RequestLog model if needed
+        # but for now we follow instructions and they were only requested for usage_record and request_financials.
         latency_ms=latency_ms,
         http_status=status_code,
         is_stream=is_stream,

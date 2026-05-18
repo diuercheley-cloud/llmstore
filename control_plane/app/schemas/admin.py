@@ -428,3 +428,26 @@ class CapabilityRead(BaseModel):
     production_ready: bool
     limitations: str | None = None
     validator_script: str | None = None
+
+
+class ModelRuntimeLoadRequest(BaseModel):
+    model_id: UUID
+    backend_id: UUID
+    model_path: str
+    runtime_config: dict | None = None
+
+
+class ModelRuntimeInstanceSchema(BaseModel):
+    id: UUID
+    model_id: UUID
+    backend_id: UUID
+    model_path: str
+    port: int
+    status: str
+    is_active: bool
+    health_status: str
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

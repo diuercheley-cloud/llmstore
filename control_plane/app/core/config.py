@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     admin_read_token: str | None = Field(default=None, alias="ADMIN_READ_TOKEN")
     admin_write_token: str | None = Field(default=None, alias="ADMIN_WRITE_TOKEN")
     admin_super_token: str | None = Field(default=None, alias="ADMIN_SUPER_TOKEN")
+    rbac_admin_enabled: bool = Field(default=False, alias="RBAC_ADMIN_ENABLED")
     admin_tests_rate_limit_enabled: bool = Field(default=True, alias="ADMIN_TESTS_RATE_LIMIT_ENABLED")
     cors_allow_origins: str = Field(default="", alias="CORS_ALLOW_ORIGINS")
     public_exposure: bool = Field(default=False, alias="PUBLIC_EXPOSURE")
@@ -235,6 +236,12 @@ class Settings(BaseSettings):
     abuse_detection_enabled: bool = Field(default=True, alias="ABUSE_DETECTION_ENABLED")
     abuse_auto_suspend_enabled: bool = Field(default=False, alias="ABUSE_AUTO_SUSPEND_ENABLED")
     abuse_dry_run: bool = Field(default=True, alias="ABUSE_DRY_RUN")
+
+    # Tokenizer Settings
+    tokenizer_mode: str = Field(default="auto", alias="TOKENIZER_MODE")
+    tokenizer_model_path: str | None = Field(default=None, alias="TOKENIZER_MODEL_PATH")
+    tokenizer_strict: bool = Field(default=False, alias="TOKENIZER_STRICT")
+    tokenizer_cache_enabled: bool = Field(default=True, alias="TOKENIZER_CACHE_ENABLED")
 
     # Commercial QoS Phase 24
     commercial_qos_priority_queue_enabled: bool = Field(default=False, alias="COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED")
@@ -512,6 +519,22 @@ class Settings(BaseSettings):
     commercial_offline_crl_enabled: bool = Field(default=True, alias="COMMERCIAL_OFFLINE_CRL_ENABLED")
     commercial_hardware_attestation_enabled: bool = Field(default=False, alias="COMMERCIAL_HARDWARE_ATTESTATION_ENABLED")
     commercial_hardware_attestation_mode: str = Field(default="report_only", alias="COMMERCIAL_HARDWARE_ATTESTATION_MODE")
+
+    pki_enabled: bool = Field(default=False, alias="PKI_ENABLED")
+    pki_storage_path: str = Field(default="./data/pki", alias="PKI_STORAGE_PATH")
+    pki_ca_rotation_days: int = Field(default=365, alias="PKI_CA_ROTATION_DAYS")
+    pki_cert_rotation_days: int = Field(default=90, alias="PKI_CERT_ROTATION_DAYS")
+
+    hardware_trust_enabled: bool = Field(default=False, alias="HARDWARE_TRUST_ENABLED")
+    hardware_trust_provider: str = Field(default="mock", alias="HARDWARE_TRUST_PROVIDER")
+    attestation_mode: str = Field(default="advisory", alias="ATTESTATION_MODE")
+    plugin_signature_required: bool = Field(default=False, alias="PLUGIN_SIGNATURE_REQUIRED")
+
+    model_hot_swap_enabled: bool = Field(default=False, alias="MODEL_HOT_SWAP_ENABLED")
+    model_runtime_port_start: int = Field(default=18081, alias="MODEL_RUNTIME_PORT_START")
+    model_runtime_port_end: int = Field(default=18120, alias="MODEL_RUNTIME_PORT_END")
+    model_load_timeout_seconds: int = Field(default=120, alias="MODEL_LOAD_TIMEOUT_SECONDS")
+    model_rollback_on_failure: bool = Field(default=True, alias="MODEL_ROLLBACK_ON_FAILURE")
 
     # Phase 58: Hardware-backed Attestation Runtime
     commercial_runtime_attestation_enabled: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_ENABLED")

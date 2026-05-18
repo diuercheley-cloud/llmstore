@@ -163,7 +163,7 @@ class InferenceProxy:
             return endpoint
         return "/api" + endpoint
 
-    def _prepare_chat_payload(
+    async def _prepare_chat_payload(
         self,
         payload: dict,
         *,
@@ -174,11 +174,14 @@ class InferenceProxy:
         updated = dict(payload)
         messages = updated.get("messages")
         if isinstance(messages, list) and messages:
+            from app.services.tokenizer_service import get_tokenizer_service
+            tokenizer = get_tokenizer_service()
             context_manager = get_context_manager()
-            trimmed_messages, capped_max_tokens, metrics = context_manager.manage(
+            trimmed_messages, capped_max_tokens, metrics = await context_manager.manage(
                 messages=[m for m in messages if isinstance(m, dict)],
                 requested_max_tokens=updated.get("max_tokens"),
                 model_id=str(updated.get("model") or ""),
+                tokenizer=tokenizer,
             )
             if metrics.get("truncated") or trimmed_messages != messages:
                 updated["messages"] = trimmed_messages
@@ -479,7 +482,7 @@ class InferenceProxy:
         target_endpoint = endpoint
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
             target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
-        request_payload = self._prepare_chat_payload(
+        request_payload = await self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,
             backend=backend,
@@ -647,7 +650,7 @@ class InferenceProxy:
         target_endpoint = endpoint
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
             target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
-        request_payload = self._prepare_chat_payload(
+        request_payload = await self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,
             backend=backend,

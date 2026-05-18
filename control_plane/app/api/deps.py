@@ -5,7 +5,14 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
-from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin_role
+from app.services.auth import (
+    AdminRole,
+    admin_key_scheme,
+    get_admin_role,
+    require_admin_permission,
+    require_admin_role,
+    require_superadmin,
+)
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
@@ -39,7 +46,7 @@ async def get_db() -> AsyncSession:
 
 
 async def get_admin_db(
-    _role: AdminRole = Depends(require_admin_role(AdminRole.READ)),
+    _role=Depends(require_admin_permission("system:read")),
 ) -> AsyncSession:
     async for session in get_db_session():
         return session
@@ -47,7 +54,7 @@ async def get_admin_db(
 
 
 async def get_super_admin_db(
-    _role: AdminRole = Depends(require_admin_role(AdminRole.SUPER)),
+    _role=Depends(require_superadmin),
 ) -> AsyncSession:
     async for session in get_db_session():
         return session
@@ -62,6 +69,8 @@ async def get_admin_token(x_admin_token: str = Depends(admin_key_scheme)) -> str
 
 
 async def get_admin_user(
-    _role: AdminRole = Depends(require_admin_role(AdminRole.SUPER)),
+    admin=Depends(require_superadmin),
 ) -> dict[str, str]:
-    return {"role": _role.value}
+    if isinstance(admin, dict):
+        return admin
+    return {"role": "superadmin"}

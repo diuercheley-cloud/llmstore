@@ -47,7 +47,14 @@ async def ensure_embeddings_quota(session: AsyncSession, client_id, monthly_requ
         raise QuotaExceeded("monthly embeddings tokens quota exceeded")
 
 
-async def record_usage(session: AsyncSession, client_id, prompt_tokens: int, completion_tokens: int) -> None:
+async def record_usage(
+    session: AsyncSession, 
+    client_id, 
+    prompt_tokens: int, 
+    completion_tokens: int,
+    token_count_method: str | None = None,
+    tokens_estimated: bool = True
+) -> None:
     total = prompt_tokens + completion_tokens
     today = date.today()
     for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
@@ -58,9 +65,18 @@ async def record_usage(session: AsyncSession, client_id, prompt_tokens: int, com
         usage_record.request_count += 1
         usage_record.prompt_tokens += prompt_tokens
         usage_record.completion_tokens += completion_tokens
+        usage_record.token_count_method = token_count_method
+        usage_record.tokens_estimated = tokens_estimated
 
 
-async def record_embedding_usage(session: AsyncSession, client_id, input_count: int, tokens: int) -> None:
+async def record_embedding_usage(
+    session: AsyncSession, 
+    client_id, 
+    input_count: int, 
+    tokens: int,
+    token_count_method: str | None = None,
+    tokens_estimated: bool = True
+) -> None:
     today = date.today()
     for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
         counter = await _get_or_create_counter(session, client_id, period_start, period_type)
@@ -69,6 +85,8 @@ async def record_embedding_usage(session: AsyncSession, client_id, input_count: 
         usage_record = await _get_or_create_usage_record(session, client_id, period_start, period_type)
         usage_record.embeddings_requests += 1
         usage_record.embeddings_tokens += tokens
+        usage_record.token_count_method = token_count_method
+        usage_record.tokens_estimated = tokens_estimated
 
 
 async def _get_or_create_counter(session: AsyncSession, client_id, period_start: date, period_type: str) -> QuotaCounter:

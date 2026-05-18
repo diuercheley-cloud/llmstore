@@ -1140,7 +1140,13 @@ validate-commercial-qos-billing:
 validate-commercial-capacity-planning:
 	bash scripts/validate-commercial-capacity-planning.sh
 
-test:
+test: ## Run focused regression suite for admin RBAC, tokenization, PKI/attestation/plugins, and GGUF hot swap
+	PYTHONPATH=control_plane .venv/bin/python -m pytest \
+		tests/test_admin_rbac.py \
+		tests/test_tokenizer_service.py \
+		control_plane/tests/test_pki_attestation_plugins.py \
+		control_plane/tests/test_model_hot_swap.py \
+		-q --tb=short
 
 validate-commercial-live-balancing:
 	bash scripts/validate-commercial-live-balancing.sh

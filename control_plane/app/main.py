@@ -10,6 +10,7 @@ import app.models  # noqa: F401
 
 from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
+from app.api.admin_rbac import router as admin_rbac_router
 from app.api.saas_admin import router as saas_admin_router
 from app.api.sales import router as sales_router
 from app.api.admin_tests import router as admin_tests_router
@@ -17,9 +18,11 @@ from app.api.client import router as client_router
 from app.api.rag import router as rag_router, client_rag_router
 from app.api.rag_enterprise import router as rag_enterprise_router, admin_router as admin_rag_router
 from app.api.portal import router as portal_router
+from app.api.admin_models_runtime import router as admin_models_runtime_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
 from app.api.pocket_tts import router as pocket_tts_router
+from app.api.pki_attestation_admin import router as pki_attestation_admin_router
 from app.api.developer_docs import router as developer_docs_router
 from app.api.billing_admin import router as billing_admin_router
 from app.api.wallet_admin import router as wallet_admin_router
@@ -196,6 +199,8 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(admin_models_runtime_router)
+app.include_router(admin_rbac_router)
 app.include_router(saas_admin_router)
 app.include_router(sales_router)
 app.include_router(admin_tests_router)
@@ -286,6 +291,7 @@ app.include_router(operations_reproducible_builds_admin_router, tags=["operation
 app.include_router(governance_policy_engine_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
+app.include_router(pki_attestation_admin_router)
 
 
 async def commercial_federation_loop(stop_event) -> None:

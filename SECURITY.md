@@ -7,11 +7,14 @@
 ## Defaults
 
 - Admin endpoints require `X-Admin-Token`.
+- `RBAC_ADMIN_ENABLED=false` preserves the legacy admin-token flow; `RBAC_ADMIN_ENABLED=true` switches admin APIs to RBAC permission enforcement.
 - Client inference and portal endpoints require `Authorization: Bearer <api_key>`.
 - Demo API keys are stored hashed and are not emitted in application logs.
 - The data plane is only exposed on the internal Docker network by default.
 - Correlation IDs are propagated through request handling and responses.
 - Security headers are added by the API/proxy layer.
+- `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
+- Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
 
 ## Secrets Handling
 
@@ -26,6 +29,11 @@
 - The plaintext of a client API key is returned only on creation or rotation. Listing endpoints expose `key_prefix` only.
 - Rotate `ADMIN_TOKEN` by editing `.env.local`, replacing the old token with a new strong value, confirming the file remains `chmod 600`, and restarting the stack with `docker compose up -d`.
 - For public-facing deployments, use a token with at least 24 characters and mixed character classes.
+
+## Trust Controls
+
+- PKI is local-only and operator-managed. Do not commit files from `PKI_STORAGE_PATH`, especially `*.key`, `*.pem`, `*.crt`, or CRLs generated during tests.
+- Hardware trust and attestation should be treated as non-enforcing unless the corresponding config gates are enabled and validated in the target environment.
 
 ## Logging Policy
 

@@ -2,6 +2,7 @@ import logging
 from typing import List, Dict, Any, Tuple
 from app.core.config import get_settings
 from app.utils.token_estimator import estimate_prompt_tokens
+from app.services.tokenizer_service import TokenizerService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -13,26 +14,49 @@ class ContextManager:
         self.max_system_chars = settings.inference_max_system_chars
         self.max_history_messages = settings.inference_max_history_messages
 
-    def manage(
+    async def manage(
         self,
         messages: List[Dict[str, Any]],
         requested_max_tokens: int | None = None,
         model_id: str | None = None,
+        tokenizer: TokenizerService | None = None,
     ) -> Tuple[List[Dict[str, Any]], int, Dict[str, Any]]:
         """
         Manage chat context to optimize inference quality and performance.
         Returns (processed_messages, final_max_tokens, metrics).
         """
+        if tokenizer:
+            token_res = await tokenizer.count_chat_tokens(messages, model=model_id)
+            original_tokens_estimate = token_res.input_tokens
+            method = token_res.method
+            is_estimated = token_res.is_estimated
+        else:
+            original_tokens_estimate = estimate_prompt_tokens(messages=messages)
+            method = "estimated"
+            is_estimated = True
+
         metrics = {
             "model": model_id,
             "original_message_count": len(messages),
             "final_message_count": 0,
-            "original_tokens_estimate": estimate_prompt_tokens(messages=messages),
+            "original_tokens_estimate": original_tokens_estimate,
             "final_tokens_estimate": 0,
+            "token_count_method": method,
+            "tokens_estimated": is_estimated,
             "truncated": False,
             "simple_input_mode": False,
         }
-
+        
+        # ... rest of the method logic should use tokenizer if available ...
+        # For simplicity in this step, I'll keep using estimate_prompt_tokens inside the loop
+        # but I should ideally use the tokenizer if provided.
+        
+        async def _count(msgs):
+            if tokenizer:
+                res = await tokenizer.count_chat_tokens(msgs, model=model_id)
+                return res.input_tokens
+            return estimate_prompt_tokens(messages=msgs)
+        
         # 1. Clean messages (remove empty, duplicates, and very short repeated content)
         seen_content = set()
         processed_messages = []
@@ -84,14 +108,15 @@ class ContextManager:
             processed_messages = system_msg + non_system
 
         # 5. Limit by tokens (MAX_CONTEXT_TOKENS = 2048)
-        while estimate_prompt_tokens(messages=processed_messages) > self.max_context_tokens and len(processed_messages) > 2:
+        while await _count(processed_messages) > self.max_context_tokens and len(processed_messages) > 2:
             if processed_messages[0]["role"] == "system":
                 processed_messages.pop(1) # Remove oldest history
             else:
                 processed_messages.pop(0)
             metrics["truncated"] = True
 
-        metrics["final_tokens_estimate"] = estimate_prompt_tokens(messages=processed_messages)
+        final_count = await _count(processed_messages)
+        metrics["final_tokens_estimate"] = final_count
         metrics["final_message_count"] = len(processed_messages)
 
         # 6. Use requested max_tokens or default

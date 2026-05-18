@@ -31,6 +31,8 @@ class GenerationJob(Base):
     backend_errors_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     prompt_tokens_estimated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens_estimated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    token_count_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tokens_estimated: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     estimated_cost_usd: Mapped[float] = mapped_column(Numeric(12, 6), default=0, nullable=False)
     max_tokens_requested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False) # QoS Priority

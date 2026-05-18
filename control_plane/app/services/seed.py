@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.models.api_key import ApiKey
 from app.models.client import Client
+from app.services.admin_rbac import ensure_admin_rbac_seed
 from app.services.billing import ensure_default_billing_plans, ensure_default_pricing_rules
 from app.services.model_registry import ensure_default_model
 from app.services.routing.commercial_safety_policies import ensure_default_safety_policies
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 async def seed_defaults(session: AsyncSession) -> None:
     settings = get_settings()
+    await ensure_admin_rbac_seed(session)
     await ensure_default_model(session)
     plans = await ensure_default_billing_plans(session)
     await ensure_default_pricing_rules(session, plans)

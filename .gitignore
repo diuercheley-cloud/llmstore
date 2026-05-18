@@ -59,6 +59,8 @@ Thumbs.db
 # Local Data
 data/rag_uploads/
 data/rag_uploads-drtest-*/
+data/pki/
+control_plane/data/
 .local/
 
 # Releases

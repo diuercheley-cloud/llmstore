@@ -49,6 +49,7 @@ from app.services.model_policy import (
     get_effective_allowed_models,
     list_active_registry_models,
     plan_routing_order,
+    resolve_effective_backend_url,
     resolve_requested_model,
     serialize_model_card,
 )
@@ -68,6 +69,7 @@ from app.services.security_monitor import (
     prompt_fingerprint,
 )
 from app.utils.request_summary import summarize_chat_request, summarize_completion_request
+from app.services.tokenizer_service import get_tokenizer_service, TokenizerService
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 from app.utils.tool_calling import (
     chat_response_has_tool_calls,
@@ -341,12 +343,16 @@ async def _chat_with_fallback(
                 pass
                 
         try:
+            backend_url = backend.backend_url
+            if session:
+                backend_url = await resolve_effective_backend_url(session, route)
+
             result = await proxy.chat(
                 body,
                 stream,
                 include_reasoning,
                 backend=backend.provider,
-                backend_url=backend.backend_url,
+                backend_url=backend_url,
                 backend_name=backend.name,
                 backend_id=backend.id,
                 prompt_template=selected_model.prompt_template,
@@ -505,11 +511,15 @@ async def _completion_with_fallback(
                 pass
 
         try:
+            backend_url = backend.backend_url
+            if session:
+                backend_url = await resolve_effective_backend_url(session, route)
+
             result = await proxy.complete(
                 body,
                 stream,
                 backend=backend.provider,
-                backend_url=backend.backend_url,
+                backend_url=backend_url,
                 backend_name=backend.name,
                 backend_id=backend.id,
                 api_key=api_key,
@@ -608,6 +618,7 @@ async def embeddings(
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
+    tokenizer: TokenizerService = Depends(get_tokenizer_service),
 ):
     """
     Gera embeddings para o input fornecido.
@@ -630,8 +641,9 @@ async def embeddings(
     else:
         inputs = [inputs]
 
-    # Estima tokens (4 chars por token)
-    total_tokens = sum(max(1, len(text) // 4) for text in inputs)
+    # Contagem real de tokens
+    token_res = await tokenizer.count_embedding_tokens(inputs, model=payload.model)
+    total_tokens = token_res.input_tokens
     
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
@@ -671,7 +683,14 @@ async def embeddings(
         latency_ms = int((perf_counter() - started) * 1000)
         backend_name = settings.embeddings_backend
 
-    await record_embedding_usage(session, client.id, len(inputs), total_tokens)
+    await record_embedding_usage(
+        session, 
+        client.id, 
+        len(inputs), 
+        total_tokens,
+        token_count_method=token_res.method,
+        tokens_estimated=token_res.is_estimated
+    )
     
     # Log request (reusando log_request se possível, ou criando um específico)
     # log_request espera prompt_tokens e completion_tokens
@@ -709,6 +728,7 @@ async def chat_completions(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
     context_manager: ContextManager = Depends(get_context_manager),
+    tokenizer: TokenizerService = Depends(get_tokenizer_service),
 ):
     """
     Executa uma inferência de chat compatível com OpenAI.
@@ -722,6 +742,7 @@ async def chat_completions(
         redis=redis,
         proxy=proxy,
         context_manager=context_manager,
+        tokenizer=tokenizer,
         endpoint="/v1/chat/completions",
     )
 
@@ -735,6 +756,7 @@ async def responses(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
     context_manager: ContextManager = Depends(get_context_manager),
+    tokenizer: TokenizerService = Depends(get_tokenizer_service),
 ):
     """
     Endpoint de compatibilidade simplificado /v1/responses.
@@ -773,6 +795,7 @@ async def responses(
         redis=redis,
         proxy=proxy,
         context_manager=context_manager,
+        tokenizer=tokenizer,
         endpoint="/v1/responses",
     )
 
@@ -819,6 +842,7 @@ async def _process_chat_completion(
     redis,
     proxy: InferenceProxy,
     context_manager: ContextManager,
+    tokenizer: TokenizerService,
     endpoint: str = "/v1/chat/completions",
 ):
     cloud_blocked_by_guardrail = False
@@ -900,13 +924,16 @@ async def _process_chat_completion(
             messages.insert(0, {"role": "system", "content": client.system_prompt})
 
     # Manage Context (limiting system, history, tokens)
-    messages, max_tokens_capped, context_metrics = context_manager.manage(
+    messages, max_tokens_capped, context_metrics = await context_manager.manage(
         messages=messages,
         requested_max_tokens=payload.max_tokens,
         model_id=selected_model.model_id,
+        tokenizer=tokenizer,
     )
 
     prompt_tokens = context_metrics["final_tokens_estimate"]
+    token_count_method = context_metrics.get("token_count_method", "estimated")
+    tokens_estimated = context_metrics.get("tokens_estimated", True)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
     
@@ -1042,7 +1069,14 @@ async def _process_chat_completion(
                 else:
                     latency_ms = int((perf_counter() - started) * 1000)
                     cached_tool_calls = sanitize_tool_calls(extract_tool_calls_from_chat_payload(cached.payload))
-                    await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
+                    await record_usage(
+                        session, 
+                        client.id, 
+                        prompt_tokens, 
+                        cached.completion_tokens,
+                        token_count_method=token_count_method,
+                        tokens_estimated=tokens_estimated
+                    )
                     await log_request(
                         session,
                         client_id=client.id,
@@ -1108,7 +1142,14 @@ async def _process_chat_completion(
         )
         if payload.stream:
             estimated_stream_tokens = max_tokens
-            await record_usage(session, client.id, prompt_tokens, estimated_stream_tokens)
+            await record_usage(
+                session, 
+                client.id, 
+                prompt_tokens, 
+                estimated_stream_tokens,
+                token_count_method=token_count_method,
+                tokens_estimated=tokens_estimated
+            )
             await log_request(
                 session,
                 client_id=client.id,
@@ -1180,7 +1221,14 @@ async def _process_chat_completion(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
-        await record_usage(session, client.id, prompt_tokens, completion_tokens)
+        await record_usage(
+            session, 
+            client.id, 
+            prompt_tokens, 
+            completion_tokens,
+            token_count_method=token_count_method,
+            tokens_estimated=tokens_estimated
+        )
         await log_request(
             session,
             client_id=client.id,
@@ -1374,6 +1422,7 @@ async def completions(
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
+    tokenizer: TokenizerService = Depends(get_tokenizer_service),
 ):
     cloud_blocked_by_guardrail = False
 
@@ -1395,8 +1444,8 @@ async def completions(
         },
     )
     
-    prompt_tokens = estimate_prompt_tokens(prompt=payload.prompt)
-    if prompt_tokens > client.max_context_tokens:
+    token_res_early = await tokenizer.count_text_tokens(payload.prompt, model=selected_model.model_id)
+    if token_res_early.input_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
     
     # Using validate_params instead of _validated_params
@@ -1414,7 +1463,11 @@ async def completions(
         else:
             prompt = f"{selected_model.prompt_template}\n{prompt}"
 
-    prompt_tokens = estimate_prompt_tokens(prompt=prompt)
+    token_res = await tokenizer.count_text_tokens(prompt, model=selected_model.model_id)
+    prompt_tokens = token_res.input_tokens
+    token_count_method = token_res.method
+    tokens_estimated = token_res.is_estimated
+    
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
     
@@ -1510,7 +1563,14 @@ async def completions(
             )
             if cached.hit and cached.payload is not None:
                 latency_ms = int((perf_counter() - started) * 1000)
-                await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
+                await record_usage(
+                    session, 
+                    client.id, 
+                    prompt_tokens, 
+                    cached.completion_tokens,
+                    token_count_method=token_count_method,
+                    tokens_estimated=tokens_estimated
+                )
                 await log_request(
                     session,
                     client_id=client.id,
@@ -1548,7 +1608,14 @@ async def completions(
         latency_ms = int((perf_counter() - started) * 1000)
         if payload.stream:
             estimated_stream_tokens = max_tokens
-            await record_usage(session, client.id, prompt_tokens, estimated_stream_tokens)
+            await record_usage(
+                session, 
+                client.id, 
+                prompt_tokens, 
+                estimated_stream_tokens,
+                token_count_method=token_count_method,
+                tokens_estimated=tokens_estimated
+            )
             await log_request(
                 session,
                 client_id=client.id,
@@ -1584,7 +1651,14 @@ async def completions(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
-        await record_usage(session, client.id, prompt_tokens, completion_tokens)
+        await record_usage(
+            session, 
+            client.id, 
+            prompt_tokens, 
+            completion_tokens,
+            token_count_method=token_count_method,
+            tokens_estimated=tokens_estimated
+        )
         await log_request(
             session,
             client_id=client.id,

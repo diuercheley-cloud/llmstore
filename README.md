@@ -134,8 +134,8 @@ make validate-platform-documentation
 ### Explicit Limitations
 
 - **No real plugin execution.** Plugin ABI defines contracts but does not execute plugins. Adapter sandbox validates manifests, not runtime behavior.
-- **No real PKI.** Certificate operations are simulated. No CA integration or real certificate issuance.
-- **No hardware-backed trust.** Attestation framework is policy-only. No TPM, SEV, or SGX integration.
+- **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior.
+- **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **No real runtime execution.** Runtime abstractions are advisory placeholders. All phase implementations are validation-only.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.
 
@@ -336,8 +336,9 @@ make validate-real-provider-env
 - **Cloud gerenciada está fora do escopo.** O appliance é on-premise; não oferecemos versão SaaS gerenciada neste repositório.
 - **Modelos dependem do hardware local.** Desempenho varia conforme GPU, RAM e quantização. Consulte [docs/MODEL_BENCHMARK_LOCAL.md](docs/MODEL_BENCHMARK_LOCAL.md).
 - **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade, cache e providers cloud requerem ativação explícita em `.env.local`.
-- **Troca de modelo GGUF exige reinício do container data plane.**
-- **Cálculo de tokens é estimado**, não usa tokenizer oficial.
+- **RBAC administrativo permanece em legado por padrão.** `RBAC_ADMIN_ENABLED=false` mantém o fluxo atual baseado em `X-Admin-Token`.
+- **Troca de modelo GGUF é opt-in.** Com `MODEL_HOT_SWAP_ENABLED=false`, o comportamento continua sendo o fluxo antigo sem supervisor de runtimes.
+- **Cálculo de tokens pode usar fallback estimado.** `TOKENIZER_MODE=auto` tenta tokenizer real e recua para estimativa quando necessário.
 - **Cancelamento de geração** depende do encerramento da conexão HTTP do stream.
 
 ## Documentação

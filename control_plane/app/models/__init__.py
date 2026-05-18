@@ -77,6 +77,7 @@ from app.models.operations.reproducible_builds import (
     ArtifactReplayVerification,
     ReproducibleBuildReceipt,
 )
+from app.models.operations.model_runtime import ModelRuntimeInstance
 from app.models.operations.deterministic_events import (
     DeterministicEventContract,
     DeterministicEventRecord,
@@ -324,6 +325,7 @@ __all__ = [
     "InferenceBackend",
     "ModelBackendRoute",
     "ModelRegistry",
+    "ModelRuntimeInstance",
     "PricingRule",
     "QuotaCounter",
     "RAGDocument",
@@ -490,6 +492,12 @@ __all__ = [
     "OperationalCorrelation",
     "CorrelatedOperationalEvent",
     "OperationalTrustLink",
+    "AdminUser",
+    "AdminRoleModel",
+    "AdminPermission",
+    "AdminUserRole",
+    "AdminRolePermission",
+    "AdminAuditEvent",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 
@@ -500,3 +508,12 @@ from app.models.operations.failure_signals import (
     FailureForecast,
     FailureRiskAssessment,
 )
+from app.models.admin_rbac import (
+    AdminUser,
+    AdminRoleModel,
+    AdminPermission,
+    AdminUserRole,
+    AdminRolePermission,
+    AdminAuditEvent,
+)
+from app.models.security_pki import CertificateInventory, AttestationReport, PluginRegistry

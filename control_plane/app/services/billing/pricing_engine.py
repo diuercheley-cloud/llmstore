@@ -279,6 +279,8 @@ async def record_request_financials(
     api_key_prefix: str | None = None,
     request_log_id: str | None = None,
     pricing_rule_id: str | None = None,
+    token_count_method: str | None = None,
+    tokens_estimated: bool = True,
 ) -> RequestFinancial:
     total_tokens = prompt_tokens + completion_tokens
     prov_cost = estimate_provider_cost(provider, prompt_tokens, completion_tokens)
@@ -286,7 +288,7 @@ async def record_request_financials(
     margin = calculate_margin(prov_cost.cost_brl, cust_price.price_brl)
 
     record = RequestFinancial(
-        id=str(uuid4()),
+        id=uuid4(),
         client_id=client_id,
         request_log_id=request_log_id,
         api_key_prefix=api_key_prefix,
@@ -298,6 +300,8 @@ async def record_request_financials(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
         total_tokens=total_tokens,
+        token_count_method=token_count_method,
+        tokens_estimated=tokens_estimated,
         cache_hit=cache_hit,
         latency_ms=latency_ms,
         provider_cost_usd=prov_cost.cost_usd,

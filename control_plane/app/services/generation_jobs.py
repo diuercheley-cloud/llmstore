@@ -51,6 +51,8 @@ class PreparedAsyncChatJob:
     max_tokens: int
     estimated_request_cost: float
     request_summary: str
+    token_count_method: str | None = None
+    tokens_estimated: bool = True
 
 
 def _parse_json(raw: str | None):
@@ -117,14 +119,19 @@ async def prepare_async_chat_job(
             messages.insert(0, {"role": "system", "content": client.system_prompt})
 
     # Manage Context
+    from app.services.tokenizer_service import get_tokenizer_service
+    tokenizer = get_tokenizer_service()
     cm = get_context_manager()
-    messages, max_tokens_capped, context_metrics = cm.manage(
+    messages, max_tokens_capped, context_metrics = await cm.manage(
         messages=messages,
         requested_max_tokens=payload.max_tokens,
         model_id=selected_model.model_id,
+        tokenizer=tokenizer,
     )
 
     prompt_tokens = context_metrics["final_tokens_estimate"]
+    token_count_method = context_metrics.get("token_count_method", "estimated")
+    tokens_estimated = context_metrics.get("tokens_estimated", True)
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
 
@@ -203,6 +210,8 @@ async def prepare_async_chat_job(
         max_tokens=max_tokens,
         estimated_request_cost=estimated_request_cost,
         request_summary=request_summary,
+        token_count_method=token_count_method,
+        tokens_estimated=tokens_estimated,
     )
 
 
@@ -245,6 +254,8 @@ async def create_chat_generation_job(
         include_reasoning=payload.include_reasoning,
         request_json=json.dumps(prepared.request_body),
         prompt_tokens_estimated=prepared.prompt_tokens,
+        token_count_method=prepared.token_count_method,
+        tokens_estimated=prepared.tokens_estimated,
         estimated_cost_usd=prepared.estimated_request_cost,
         max_tokens_requested=prepared.max_tokens,
         priority=qos_tier.queue_priority,
@@ -405,7 +416,14 @@ async def process_generation_job(
     )
     if cached.hit and cached.payload is not None:
         now = utc_now()
-        await record_usage(session, job.client_id, job.prompt_tokens_estimated, cached.completion_tokens)
+        await record_usage(
+            session, 
+            job.client_id, 
+            job.prompt_tokens_estimated, 
+            cached.completion_tokens,
+            token_count_method=job.token_count_method,
+            tokens_estimated=job.tokens_estimated
+        )
         await log_request(
             session,
             client_id=job.client_id,
@@ -518,7 +536,14 @@ async def process_generation_job(
             prompt_tokens=job.prompt_tokens_estimated,
             completion_tokens=completion_tokens,
         )
-        await record_usage(session, job.client_id, job.prompt_tokens_estimated, completion_tokens)
+        await record_usage(
+            session, 
+            job.client_id, 
+            job.prompt_tokens_estimated, 
+            completion_tokens,
+            token_count_method=job.token_count_method,
+            tokens_estimated=job.tokens_estimated
+        )
         await log_request(
             session,
             client_id=job.client_id,

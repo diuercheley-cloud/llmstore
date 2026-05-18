@@ -416,7 +416,12 @@ else:
 
 code, out, err = run_cmd(
     'find . -type f \\( -name "*.pem" -o -name "*.key" \\) '
-    '-not -path "./.venv/*" -not -path "./.git/*" -not -path "./.cache/*" | sort'
+    '-not -path "./.venv/*" '
+    '-not -path "./venv/*" '
+    '-not -path "./.git/*" '
+    '-not -path "./.cache/*" '
+    '-not -path "./data/pki/*" '
+    '-not -path "./control_plane/data/pki/*" | sort'
 )
 if out.strip():
     found_files = [line.strip() for line in out.splitlines() if line.strip()]

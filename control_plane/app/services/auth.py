@@ -1,15 +1,13 @@
 import json
-from datetime import datetime
 from enum import Enum
 from functools import total_ordering
-from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPBearer, APIKeyHeader
+from fastapi.security import APIKeyHeader, HTTPBearer
 from redis.asyncio import Redis
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.core.security import verify_secret
@@ -18,6 +16,14 @@ from app.db.session import get_db_session, get_redis
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
 from app.models.client import Client
+from app.services.admin_rbac import (
+    RBAC_ADMIN_PERMISSIONS,
+    authenticate_admin_request,
+    is_rbac_admin_enabled,
+    record_admin_audit_event,
+    require_permissions,
+    resolve_admin_permission_from_request,
+)
 from app.services.security_monitor import enforce_client_ip_policy, record_invalid_api_key_attempt
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -55,26 +61,143 @@ def get_admin_role(token: str) -> AdminRole | None:
         
     return None
 
-async def require_admin(x_admin_token: str = Depends(admin_key_scheme)) -> None:
-    role = get_admin_role(x_admin_token)
-    if not role or role < AdminRole.SUPER:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+def _write_like_permissions() -> list[str]:
+    permissions = []
+    for code in RBAC_ADMIN_PERMISSIONS:
+        if code == "superadmin:all" or code.endswith(":write") or code.endswith(":delete"):
+            permissions.append(code)
+    return permissions
+
+
+def _role_from_permissions(permission_codes: set[str]) -> AdminRole:
+    if "superadmin:all" in permission_codes:
+        return AdminRole.SUPER
+    if any(code.endswith(":write") or code.endswith(":delete") for code in permission_codes):
+        return AdminRole.WRITE
+    return AdminRole.READ
+
+
+async def require_admin(
+    request: Request,
+    x_admin_token: str = Depends(admin_key_scheme),
+    session: AsyncSession = Depends(get_db_session),
+):
+    if not is_rbac_admin_enabled():
+        role = get_admin_role(x_admin_token or "")
+        if not role or role < AdminRole.SUPER:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+        request.state.admin_role_names = [role.value]
+        request.state.admin_permission_codes = []
+        return {"role": role.value, "legacy": True}
+
+    admin = await authenticate_admin_request(session=session, request=request, token=x_admin_token or "")
+    required_permission = resolve_admin_permission_from_request(request)
+    if required_permission and not admin.has_permission(required_permission):
+        await record_admin_audit_event(
+            session,
+            event_type="admin.permission.denied",
+            status="denied",
+            request=request,
+            admin=admin,
+            metadata={
+                "required_permissions": [required_permission],
+                "granted_permissions": sorted(admin.permission_codes),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "required_permissions": [required_permission]},
+        )
+    return admin
+
+
+def require_admin_permission(permission: str):
+    async def permission_checker(
+        request: Request,
+        x_admin_token: str = Depends(admin_key_scheme),
+        session: AsyncSession = Depends(get_db_session),
+    ):
+        if not is_rbac_admin_enabled():
+            await require_admin(request=request, x_admin_token=x_admin_token, session=session)
+            return {"role": AdminRole.SUPER.value, "legacy": True}
+        return await require_permissions(
+            session=session,
+            request=request,
+            token=x_admin_token or "",
+            permissions=[permission],
+        )
+
+    return permission_checker
+
+
+def require_any_admin_permission(permissions: list[str]):
+    async def permission_checker(
+        request: Request,
+        x_admin_token: str = Depends(admin_key_scheme),
+        session: AsyncSession = Depends(get_db_session),
+    ):
+        if not is_rbac_admin_enabled():
+            await require_admin(request=request, x_admin_token=x_admin_token, session=session)
+            return {"role": AdminRole.SUPER.value, "legacy": True}
+        return await require_permissions(
+            session=session,
+            request=request,
+            token=x_admin_token or "",
+            permissions=permissions,
+        )
+
+    return permission_checker
+
+
+async def require_superadmin(
+    request: Request,
+    x_admin_token: str = Depends(admin_key_scheme),
+    session: AsyncSession = Depends(get_db_session),
+):
+    if not is_rbac_admin_enabled():
+        await require_admin(request=request, x_admin_token=x_admin_token, session=session)
+        return {"role": AdminRole.SUPER.value, "legacy": True}
+    return await require_permissions(
+        session=session,
+        request=request,
+        token=x_admin_token or "",
+        permissions=["superadmin:all"],
+    )
 
 def require_admin_role(required_role: AdminRole):
-    async def role_checker(x_admin_token: str = Depends(admin_key_scheme)) -> AdminRole:
-        role = get_admin_role(x_admin_token)
-        if not role:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
-        if role < required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
-                detail={
-                    "error": "forbidden",
-                    "requiredRole": required_role.value,
-                    "currentRole": role.value
-                }
+    async def role_checker(
+        request: Request,
+        x_admin_token: str = Depends(admin_key_scheme),
+        session: AsyncSession = Depends(get_db_session),
+    ) -> AdminRole:
+        if not is_rbac_admin_enabled():
+            role = get_admin_role(x_admin_token or "")
+            if not role:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+            if role < required_role:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "error": "forbidden",
+                        "requiredRole": required_role.value,
+                        "currentRole": role.value,
+                    },
+                )
+            return role
+
+        if required_role == AdminRole.SUPER:
+            admin = await require_superadmin(request=request, x_admin_token=x_admin_token, session=session)
+        elif required_role == AdminRole.WRITE:
+            admin = await require_permissions(
+                session=session,
+                request=request,
+                token=x_admin_token or "",
+                permissions=_write_like_permissions(),
             )
-        return role
+        else:
+            admin = await authenticate_admin_request(session=session, request=request, token=x_admin_token or "")
+        return _role_from_permissions(admin.permission_codes)
+
     return role_checker
 
 

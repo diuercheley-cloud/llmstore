@@ -140,6 +140,23 @@ async def ready(
         dependencies["migrations"] = "error"
         status = "not_ready"
 
+    settings = get_settings()
+    if settings.attestation_mode == "enforcing":
+        from app.services.security.attestation_service import NodeAttestationService
+        try:
+            att_svc = NodeAttestationService(session)
+            report = await att_svc.generate_report()
+            if not await att_svc.verify_report(report):
+                dependencies["attestation"] = "failed"
+                status = "not_ready"
+            else:
+                dependencies["attestation"] = "ok"
+        except Exception as e:
+            import logging
+            logging.error(f"Readiness attestation failed: {e}")
+            dependencies["attestation"] = "error"
+            status = "not_ready"
+
     if status != "ready":
         return Response(
             content=f'{{"status":"{status}","dependencies":{json.dumps(dependencies)}}}',
@@ -297,13 +314,14 @@ async def health_deep(
     proxy: InferenceProxy = Depends(get_inference_proxy),
     admin=Depends(require_admin),
 ):
+    current_settings = get_settings()
     start_total = perf_counter()
     await observe_billing_status_metrics(session)
 
     # API and System
-    uptime_seconds = round(time() - settings.start_time, 2)
+    uptime_seconds = round(time() - current_settings.start_time, 2)
     git_commit = get_git_commit()
-    appliance_mode = settings.local_appliance_mode
+    appliance_mode = current_settings.local_appliance_mode
 
     # Database
     db_detail = {"status": "offline", "latency_ms": 0, "migrations_status": "unknown", "ok": False}
@@ -377,7 +395,7 @@ async def health_deep(
         try:
             model_rows = (await session.execute(select(ModelRegistry))).scalars().all()
             for m in model_rows:
-                file_path = Path(settings.models_dir) / m.model_file
+                file_path = Path(current_settings.models_dir) / m.model_file
                 exists = file_path.exists()
                 size = file_path.stat().st_size if exists else 0
                 
@@ -401,11 +419,11 @@ async def health_deep(
 
     # RAG
     rag_status = {
-        "enabled": settings.rag_enabled,
+        "enabled": current_settings.rag_enabled,
         "worker_status": "disabled",
-        "storage_status": "ok" if os.path.exists(settings.rag_storage_dir) else "error"
+        "storage_status": "ok" if os.path.exists(current_settings.rag_storage_dir) else "error"
     }
-    if settings.rag_enabled and db_detail["status"] == "online":
+    if current_settings.rag_enabled and db_detail["status"] == "online":
         try:
             res = await session.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
             rag_status["worker_status"] = "ready" if res.scalar() else "degraded (no pgvector)"
@@ -413,8 +431,8 @@ async def health_deep(
             rag_status["worker_status"] = "error"
 
     # TTS
-    tts_status = {"enabled": settings.tts_enabled, "service_status": "disabled", "latency_ms": 0}
-    if settings.tts_enabled:
+    tts_status = {"enabled": current_settings.tts_enabled, "service_status": "disabled", "latency_ms": 0}
+    if current_settings.tts_enabled:
         POCKET_TTS_URL = "http://pocket-tts:8000"
         t_start = perf_counter()
         try:
@@ -428,7 +446,7 @@ async def health_deep(
 
     # Billing
     billing_status = {
-        "mode": settings.local_billing_mode,
+        "mode": current_settings.local_billing_mode,
         "overdue_count": 0,
         "suspended_clients_count": 0
     }
@@ -457,10 +475,10 @@ async def health_deep(
     security_info = {
         "last_security_report_score": sec_report.get("score") if sec_report else "N/A",
         "check_secrets_available": os.path.exists("scripts/check-secrets.sh"),
-        "local_appliance_mode": settings.local_appliance_mode,
-        "cors_configured": bool(settings.cors_allow_origins or settings.localhost_mode or settings.local_appliance_mode),
-        "cors_origins_count": len(settings.cors_origins),
-        "cors_warnings": settings.cors_warnings
+        "local_appliance_mode": current_settings.local_appliance_mode,
+        "cors_configured": bool(current_settings.cors_allow_origins or current_settings.localhost_mode or current_settings.local_appliance_mode),
+        "cors_origins_count": len(current_settings.cors_origins),
+        "cors_warnings": current_settings.cors_warnings
     }
 
     # Providers
@@ -488,18 +506,18 @@ async def health_deep(
     critical_failures = []
     warnings = []
 
-    for w in settings.cors_warnings:
+    for w in current_settings.cors_warnings:
         if w["severity"] == "high":
             readiness_score = "READY_WITH_WARNINGS"
         warnings.append(f"CORS: {w['message']}")
 
     # Security check for admin token
-    if settings.admin_token == "default-admin-token":
+    if current_settings.admin_token == "default-admin-token":
         warnings.append("Insecure default ADMIN_TOKEN in use")
-    elif len(settings.admin_token) < 32:
+    elif len(current_settings.admin_token) < 32:
         warnings.append("ADMIN_TOKEN is weak (less than 32 characters)")
 
-    if appliance_mode and settings.localhost_mode is False:
+    if appliance_mode and current_settings.localhost_mode is False:
         warnings.append("Appliance mode enabled but localhost_mode is false")
 
     if db_detail["status"] != "online":
@@ -532,13 +550,13 @@ async def health_deep(
             readiness_score = "DEGRADED"
         warnings.append("No inference backends configured")
 
-    if settings.tts_enabled and tts_status["service_status"] != "online":
+    if current_settings.tts_enabled and tts_status["service_status"] != "online":
         warnings.append(f"TTS service is {tts_status['service_status']}")
 
     response = {
         "api": {
             "status": "online",
-            "version": settings.project_version,
+            "version": current_settings.project_version,
             "git_commit": git_commit,
             "uptime_seconds": uptime_seconds,
             "appliance_mode": appliance_mode,

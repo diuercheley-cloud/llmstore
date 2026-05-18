@@ -42,6 +42,7 @@ from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
 from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
 from app.utils.request_summary import summarize_chat_request
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.services.tokenizer_service import get_tokenizer_service, TokenizerService
 
 from app.models.billing_plan import BillingPlan
 from app.models.pricing_rule import PricingRule
@@ -1328,7 +1329,10 @@ async def portal_test_chat(
         client=client,
         requested_model=chat_payload.model,
     )
-    prompt_tokens = estimate_prompt_tokens(messages=[item.model_dump() for item in chat_payload.messages])
+    token_res = await tokenizer.count_chat_tokens([item.model_dump() for item in chat_payload.messages], model=selected_model.model_id)
+    prompt_tokens = token_res.input_tokens
+    token_count_method = token_res.method
+    tokens_estimated = token_res.is_estimated
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
     max_tokens, temperature, top_p, effective_plan = validate_params(client, chat_payload)
@@ -1376,7 +1380,14 @@ async def portal_test_chat(
         )
         if cached.hit and cached.payload is not None:
             latency_ms = int((perf_counter() - started) * 1000)
-            await record_usage(session, client.id, prompt_tokens, cached.completion_tokens)
+            await record_usage(
+                session, 
+                client.id, 
+                prompt_tokens, 
+                cached.completion_tokens,
+                token_count_method=token_count_method,
+                tokens_estimated=tokens_estimated
+            )
             await log_request(
                 session,
                 client_id=client.id,
@@ -1420,7 +1431,14 @@ async def portal_test_chat(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
-        await record_usage(session, client.id, prompt_tokens, completion_tokens)
+        await record_usage(
+            session, 
+            client.id, 
+            prompt_tokens, 
+            completion_tokens,
+            token_count_method=token_count_method,
+            tokens_estimated=tokens_estimated
+        )
         await log_request(
             session,
             client_id=client.id,

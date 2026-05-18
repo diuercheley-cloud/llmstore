@@ -1,5 +1,49 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Real PKI implementation with local CA, certificate inventory, and CRL management.
+- Verifiable Node Attestation service based on binary hash, config hash, and hardware trust.
+- Secure Plugin Loader with manifest validation, checksum verification, and signature enforcement.
+- Pluggable Hardware Trust Provider interface with Mock and File-based implementations.
+- Enforcing mode for Attestation and Plugin security.
+- New admin endpoints for PKI initialization and Attestation report/verify.
+- Database models for Certificate Inventory, Attestation Reports, and Plugin Registry.
+- GGUF Model Hot Swap support: load, unload, and switch models without restarting the data plane.
+- Local supervisor for managing multiple `llama-server` processes.
+- Admin endpoints and CLI scripts for model runtime management.
+- Dynamic routing to active model runtime instances.
+- Zero-downtime model switching and rollback support.
+
+### Changed
+- Integration hardening for administrative RBAC, tokenization, PKI/attestation, plugin trust, and GGUF hot swap.
+- `make test` now exercises the feature-focused regression suite instead of succeeding as a no-op.
+- Default-safe behavior is preserved when `RBAC_ADMIN_ENABLED=false`, `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false`, `MODEL_HOT_SWAP_ENABLED=false`, and `TOKENIZER_MODE=auto`.
+
+## [1.9.0] - 2026-05-18
+
+### Added
+- Real tokenization support via `TokenizerService`.
+- Support for `tiktoken` (OpenAI models) and local HuggingFace tokenizers.
+- New environment variables: `TOKENIZER_MODE`, `TOKENIZER_MODEL_PATH`, `TOKENIZER_STRICT`, `TOKENIZER_CACHE_ENABLED`.
+- Tracking of tokenization method and estimation status in `usage_record` and `request_financial`.
+
+### Changed
+- Centralized token counting in `chat_completions`, `completions`, and `embeddings`.
+- Updated billing and quota systems to use real token counts when available.
+
+### Added
+- Full administrative RBAC foundation with `admin_users`, `admin_roles`, `admin_permissions`, `admin_user_roles`, `admin_role_permissions` and `admin_audit_events`.
+- Idempotent RBAC seed for the initial permission and role catalog plus legacy bootstrap admin user support.
+- Administrative RBAC management API under `/admin/rbac/*`.
+- Documentation for the admin RBAC rollout in `docs/security/admin-rbac.md`.
+
+### Changed
+- `X-Admin-Token` remains supported in legacy mode and becomes the RBAC credential header when `RBAC_ADMIN_ENABLED=true`.
+- Existing admin endpoints now enforce domain permissions when RBAC is enabled, while preserving legacy behavior when disabled.
+- `.env.example` now documents `RBAC_ADMIN_ENABLED`.
+
 ## [v1.9.0-release-engineering-baseline] - 2026-05-16
 
 ### Added

@@ -460,7 +460,12 @@ Resposta:"""
     selected_model, _ = await resolve_requested_model(session, client=client, requested_model=payload.model)
     effective_plan = resolve_effective_plan(client)
     
-    prompt_tokens = estimate_prompt_tokens(prompt=prompt)
+    from app.services.tokenizer_service import get_tokenizer_service
+    tokenizer = get_tokenizer_service()
+    token_res = await tokenizer.count_text_tokens(prompt, model=selected_model.model_id)
+    prompt_tokens = token_res.input_tokens
+    token_count_method = token_res.method
+    tokens_estimated = token_res.is_estimated
     incoming_tokens = prompt_tokens + payload.max_tokens
     
     try:
@@ -490,7 +495,14 @@ Resposta:"""
     completion_tokens = estimate_tokens_from_text(answer)
     
     # 6. Record usage
-    await record_usage(session, client.id, prompt_tokens, completion_tokens)
+    await record_usage(
+        session, 
+        client.id, 
+        prompt_tokens, 
+        completion_tokens,
+        token_count_method=token_count_method,
+        tokens_estimated=tokens_estimated
+    )
     
     # Record RAG specific usage
     await record_rag_event(session, client.id, "rag_query", quantity=1)

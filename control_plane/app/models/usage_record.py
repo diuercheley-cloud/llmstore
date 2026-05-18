@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,5 +22,7 @@ class UsageRecord(Base):
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     embeddings_requests: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     embeddings_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    token_count_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tokens_estimated: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
