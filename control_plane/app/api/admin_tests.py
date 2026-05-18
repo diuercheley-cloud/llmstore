@@ -585,7 +585,7 @@ async def get_openrouter_backend(session: AsyncSession = Depends(get_db_session)
         "configured": True,
         "id": str(backend.id),
         "name": backend.name,
-        "base_url": backend.base_url
+        "base_url": backend.backend_url,
     }
 
 class OpenRouterConfigureRequest(BaseModel):

@@ -424,14 +424,23 @@
             const statusDiv = document.getElementById('backendStatus');
             try {
                 const res = await fetch('/admin/tests/openrouter/backend', { headers: getAdminHeaders() });
+                if (res.status === 401) {
+                    statusDiv.innerHTML = `<span class="status-warn">● Token admin necessário</span><br><small>Informe um token válido para verificar o backend OpenRouter.</small>`;
+                    return;
+                }
+
                 const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || `HTTP ${res.status}`);
+                }
+
                 if (data.configured) {
                     statusDiv.innerHTML = `<span class="status-ok">● Backend OpenRouter Ativo</span><br><small>${data.name} (${data.id})</small>`;
                 } else {
                     statusDiv.innerHTML = `<span class="status-err">● Backend OpenRouter Não Encontrado</span><br><small>Ative o provedor 'openrouter' primeiro.</small>`;
                 }
             } catch (e) {
-                statusDiv.innerHTML = `<span class="status-err">Erro ao verificar backend</span>`;
+                statusDiv.innerHTML = `<span class="status-err">Erro ao verificar backend</span><br><small>${escapeHtml(e.message)}</small>`;
             }
         };
 

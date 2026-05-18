@@ -317,7 +317,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
 
     # Derive capabilities
     is_embedding = "embedding" in item.model_id.lower() or metadata.get("type") == "embedding"
-    is_chat = not is_embedding and item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    is_chat = not is_embedding and item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}
     
     capabilities = {
         "chat": is_chat,

@@ -374,7 +374,7 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
     reasoning = reasoning_defaults_for_model(model)
     backend_health = health_map.get(str(model.inference_backend_id)) if health_map and model.inference_backend_id else None
     # Derive capabilities
-    is_chat = model.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible"}
+    is_chat = model.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}
     capabilities = {
         "supports_chat": is_chat,
         "supports_streaming": is_chat,
@@ -1200,7 +1200,7 @@ async def get_runtime_summary(
 async def get_usage_summary(
     session: AsyncSession = Depends(get_db_session),
     proxy: InferenceProxy = Depends(get_inference_proxy),
-    compact: bool = Query(default=False),
+    compact: bool = False,
 ):
     await observe_billing_status_metrics(session)
     queue_snapshot = proxy.queue_manager.get_snapshot()

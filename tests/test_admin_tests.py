@@ -6,6 +6,7 @@ from app.main import app
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
+from app.models.inference_backend import InferenceBackend
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 @pytest_asyncio.fixture
@@ -91,3 +92,25 @@ async def test_auth_whoami(client, admin_headers):
     data = response.json()
     assert data["authenticated"] is True
     assert "role" in data
+
+@pytest.mark.asyncio
+async def test_openrouter_backend_status_returns_backend_url(client, admin_headers):
+    async for session in app.dependency_overrides[get_db_session]():
+        backend = InferenceBackend(
+            name="openrouter-test-backend",
+            provider="openrouter",
+            backend_url="https://openrouter.ai/api/v1",
+            healthcheck_path="/health",
+            is_active=True,
+        )
+        session.add(backend)
+        await session.commit()
+        await session.refresh(backend)
+
+    response = await client.get("/admin/tests/openrouter/backend", headers=admin_headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["configured"] is True
+    assert data["name"] == "openrouter-test-backend"
+    assert data["base_url"] == "https://openrouter.ai/api/v1"
