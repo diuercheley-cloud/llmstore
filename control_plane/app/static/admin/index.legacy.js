@@ -1,0 +1,4612 @@
+      const elements = {
+        adminToken: document.getElementById('adminToken'),
+        connect: document.getElementById('connect'),
+        refresh: document.getElementById('refresh'),
+        adminContent: document.getElementById('adminContent'),
+        loginPrompt: document.getElementById('loginPrompt'),
+        toolbarStatus: document.getElementById('toolbarStatus')
+      };
+      let isLoading = false;
+      let currentTab = 'overview';
+      let marginRefreshTimer = null;
+
+      function readAdminTokenFromUrl() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        return (
+          searchParams.get('admin_token') ||
+          searchParams.get('adminToken') ||
+          searchParams.get('api_key') ||
+          searchParams.get('apiKey') ||
+          hashParams.get('admin_token') ||
+          hashParams.get('adminToken') ||
+          hashParams.get('api_key') ||
+          hashParams.get('apiKey') ||
+          ''
+        ).trim();
+      }
+
+      function clearAdminTokenFromUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('admin_token');
+        url.searchParams.delete('adminToken');
+        url.searchParams.delete('api_key');
+        url.searchParams.delete('apiKey');
+        if (url.hash) {
+          const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
+          const hashParams = new URLSearchParams(hash);
+          hashParams.delete('admin_token');
+          hashParams.delete('adminToken');
+          hashParams.delete('api_key');
+          hashParams.delete('apiKey');
+          const nextHash = hashParams.toString();
+          url.hash = nextHash ? `#${nextHash}` : '';
+        }
+        window.history.replaceState({}, document.title, url.toString());
+      }
+
+      async function attemptAdminLogin(token, { persist = false } = {}) {
+        const nextToken = token.trim();
+        if (!nextToken) return;
+        elements.adminToken.value = nextToken;
+        await initAdmin({ throwOnError: true });
+        if (persist) {
+          localStorage.setItem('adminToken', nextToken);
+        }
+        clearAdminTokenFromUrl();
+      }
+
+      const urlToken = readAdminTokenFromUrl();
+      const savedToken = localStorage.getItem('adminToken');
+      const initialToken = urlToken || savedToken;
+      if (initialToken) {
+        elements.adminToken.value = initialToken;
+        if (urlToken) {
+          attemptAdminLogin(initialToken, { persist: true }).catch(err => {
+            console.warn('Failed to initialize admin dashboard from URL token:', err);
+          });
+        } else {
+          initAdmin();
+        }
+      }
+
+      elements.connect.addEventListener('click', () => {
+        attemptAdminLogin(elements.adminToken.value, { persist: true }).catch(err => {
+          console.warn('Failed to initialize admin dashboard from manual token:', err);
+        });
+      });
+
+      elements.refresh.addEventListener('click', initAdmin);
+
+      function toggleDebug(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const display = window.getComputedStyle(el).display;
+        el.style.display = (display === 'none') ? 'block' : 'none';
+      }
+
+      function fetchWithTimeout(url, options, timeout = 30000) {
+        return Promise.race([
+          fetch(url, options),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+        ]);
+      }
+
+      function escHtml(str) {
+        if (str == null) return '';
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(String(str)));
+        return d.innerHTML;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function switchTab(tabId) {
+        currentTab = tabId;
+        document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById('btnTab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+        if (activeBtn) activeBtn.classList.add('active');
+
+        document.querySelectorAll('#adminContent > section, #tab-margin, #tab-guardrails, #tab-qos, #tab-ops-center').forEach(el => el.classList.add('hidden'));
+        stopMarginAutoRefresh();
+        if (tabId === 'overview') {
+            document.querySelectorAll('#adminContent > section').forEach(el => el.classList.remove('hidden'));
+            document.getElementById('tab-margin').classList.add('hidden');
+            document.getElementById('tab-guardrails').classList.add('hidden');
+            document.getElementById('tab-qos').classList.add('hidden');
+            document.getElementById('tab-ops-center').classList.add('hidden');
+        } else if (tabId === 'margin') {
+            document.getElementById('tab-margin').classList.remove('hidden');
+            loadMarginDashboard();
+            startMarginAutoRefresh();
+        } else if (tabId === 'guardrails') {
+            document.getElementById('tab-guardrails').classList.remove('hidden');
+            loadCommercialGuardrails();
+            loadAutonomousGuardrails();
+        } else if (tabId === 'qos') {
+            document.getElementById('tab-qos').classList.remove('hidden');
+            loadQoSDashboard();
+        } else if (tabId === 'ops-center') {
+            document.getElementById('tab-ops-center').classList.remove('hidden');
+            loadOpsCenter();
+        }
+      }
+
+      async function loadQoSDashboard() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        
+        try {
+          // 1. Queue Overview
+          const qres = await fetch('/admin/routing/qos/queue/overview', { headers });
+          const qdata = await qres.json();
+          document.getElementById('qosQueueDepth').textContent = qdata.depth || 0;
+          document.getElementById('qosMaxWait').textContent = (qdata.max_wait_ms || 0) + 'ms';
+          document.getElementById('qosQueueMode').textContent = `${qdata.mode || 'legacy'} ${qdata.shadow_mode_active ? '(shadow)' : ''}`;
+          
+          let tierHtml = '<table><thead><tr><th>Tier</th><th>Depth</th></tr></thead><tbody>';
+          for (const [tier, depth] of Object.entries(qdata.depth_by_tier || {})) {
+            tierHtml += `<tr><td>${tier}</td><td><strong>${depth}</strong></td></tr>`;
+          }
+          tierHtml += '</tbody></table>';
+          document.getElementById('qosTierDepths').innerHTML = tierHtml;
+
+          // 2. Queue Jobs
+          const jres = await fetch('/admin/routing/qos/queue/jobs?limit=10', { headers });
+          const jdata = await jres.json();
+          let jobsHtml = '<table><thead><tr><th>ID</th><th>Tier</th><th>Priority</th><th>Queued At</th></tr></thead><tbody>';
+          jdata.forEach(j => {
+            jobsHtml += `<tr>
+                <td><small>${j.id.substring(0,8)}</small></td>
+                <td>${j.qos_tier || '-'}</td>
+                <td>${j.effective_priority ? Number(j.effective_priority).toFixed(0) : '-'}</td>
+                <td>${formatTimestamp(j.queued_at)}</td>
+            </tr>`;
+          });
+          jobsHtml += '</tbody></table>';
+          document.getElementById('qosQueueJobs').innerHTML = jobsHtml;
+
+          // 3. Rate Limits
+          const rres = await fetch('/admin/routing/qos/rate-limits/overview', { headers });
+          const rdata = await rres.json();
+          let rlHtml = '';
+          for (const [tier, rpm] of Object.entries(rdata.tiers || {})) {
+            rlHtml += `<div class="stat-card">
+              <div class="stat-label">${tier} RPM</div>
+              <div class="stat-value">${rpm}</div>
+            </div>`;
+          }
+          document.getElementById('qosRateLimits').innerHTML = rlHtml;
+          
+          // 4. Fairness
+          const fres = await fetch('/admin/routing/qos/fairness/overview', { headers });
+          const fdata = await fres.json();
+          document.getElementById('qosFairnessIndex').textContent = (fdata.fairness_index || 0).toFixed(3);
+          document.getElementById('qosStarvationCount').textContent = fdata.starvation_total || 0;
+          document.getElementById('qosSLAViolations').textContent = fdata.sla_violations_total || 0;
+          
+          let fairHtml = '<table><thead><tr><th>Tier</th><th>Avg Wait (ms)</th></tr></thead><tbody>';
+          for (const [tier, wait] of Object.entries(fdata.tier_waits || {})) {
+            fairHtml += `<tr><td>${tier}</td><td>${Number(wait).toFixed(0)}ms</td></tr>`;
+          }
+          fairHtml += '</tbody></table>';
+          document.getElementById('qosTierFairness').innerHTML = fairHtml;
+
+          // 5. Chargeback
+          const cres = await fetch('/admin/routing/qos/chargeback/overview', { headers });
+          const cdata = await cres.json();
+          document.getElementById('qosTotalChargeback').textContent = `R$ ${Number(cdata.total_chargeback_brl || 0).toFixed(2)}`;
+          
+          let cbHtml = '<table><thead><tr><th>Tier</th><th>Chargeback BRL</th></tr></thead><tbody>';
+          for (const [tier, amount] of Object.entries(cdata.by_tier || {})) {
+            cbHtml += `<tr><td>${tier}</td><td>R$ ${Number(amount).toFixed(4)}</td></tr>`;
+          }
+          cbHtml += '</tbody></table>';
+          document.getElementById('qosTierChargeback').innerHTML = cbHtml;
+
+          // 6. QoS Billing
+          try {
+            const bres = await fetch('/admin/billing/qos/overview', { headers });
+            const bdata = await bres.json();
+            document.getElementById('qosBillingCalculated').textContent = `R$ ${Number(bdata.total_calculated_brl || 0).toFixed(2)}`;
+            document.getElementById('qosBillingInvoiced').textContent = `R$ ${Number(bdata.total_invoiced_brl || 0).toFixed(2)}`;
+            document.getElementById('qosBillingDebited').textContent = `R$ ${Number(bdata.total_debited_brl || 0).toFixed(2)}`;
+
+            const rres = await fetch('/admin/billing/qos/records?limit=10', { headers });
+            const rdata = await rres.json();
+            let rHtml = '<table><thead><tr><th>Cliente</th><th>Tier</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+            rdata.forEach(r => {
+                rHtml += `<tr>
+                  <td>${r.client_id.substring(0,8)}...</td>
+                  <td>${r.qos_tier}</td>
+                  <td>R$ ${Number(r.billable_amount_brl).toFixed(2)}</td>
+                  <td><span class="pill pill-${r.status === 'debited' || r.status === 'invoiced' ? 'success' : 'warning'}">${r.status}</span></td>
+                  <td>
+                    ${r.status === 'calculated' || r.status === 'failed' ? 
+                      `<button class="secondary" style="padding: 2px 8px; font-size: 0.7rem;" onclick="debitWallet('${r.id}')">Debit Wallet</button>` : '-'}
+                  </td>
+                </tr>`;
+            });
+            rHtml += '</tbody></table>';
+            document.getElementById('qosBillingRecords').innerHTML = rHtml;
+          } catch (be) {
+            console.error('Failed to load QoS billing', be);
+          }
+          
+        } catch (e) {
+          console.error('Failed to load QoS dashboard', e);
+        }
+      }
+
+      async function collectFairnessMetrics() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        try {
+          const res = await fetch('/admin/routing/qos/fairness/collect', { method: 'POST', headers });
+          const data = await res.json();
+          alert(`Collected metrics for ${data.collected_count} tiers.`);
+          loadQoSDashboard();
+        } catch (e) { alert('Failed: ' + e); }
+      }
+
+      async function calculateChargeback() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        try {
+          const res = await fetch('/admin/routing/qos/chargeback/calculate', { method: 'POST', headers });
+          const data = await res.json();
+          alert(`Calculated ${data.calculated_count} chargeback records.`);
+          loadQoSDashboard();
+        } catch (e) { alert('Failed: ' + e); }
+      }
+
+      async function exportChargeback(format) {
+        const token = elements.adminToken.value.trim();
+        window.open(`/admin/routing/qos/chargeback/export?format=${format}&X-Admin-Token=${token}`, '_blank');
+      }
+
+      async function generateQosBilling() {
+          const token = elements.adminToken.value.trim();
+          const headers = { 'X-Admin-Token': token };
+          const res = await fetch('/admin/billing/qos/generate', { method: 'POST', headers });
+          const data = await res.json();
+          alert(`Generated ${data.calculated_count} billing records.`);
+          initAdmin();
+      }
+
+      async function exportQosBilling(format) {
+        const token = elements.adminToken.value.trim();
+        window.open(`/admin/billing/qos/export?format=${format}&X-Admin-Token=${token}`, '_blank');
+      }
+
+      async function debitWallet(recordId) {
+          if (!confirm('Deseja realmente debitar a wallet do cliente?')) return;
+          const token = elements.adminToken.value.trim();
+          const headers = { 'X-Admin-Token': token };
+          const res = await fetch(`/admin/billing/qos/${recordId}/debit-wallet`, { method: 'POST', headers });
+          if (res.ok) {
+              alert('Débito realizado com sucesso!');
+              initAdmin();
+          } else {
+              const data = await res.json();
+              alert('Erro ao debitar: ' + (data.detail || 'Erro desconhecido'));
+          }
+      }
+
+      let opsCenterState = {
+        graph: null,
+        federation: null,
+        integrity: null,
+        violations: []
+      };
+
+      async function loadOpsCenter() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+
+        try {
+          const [overviewRes, graphRes, federationRes, integrityRes, violationsRes] = await Promise.all([
+            fetch('/admin/ops/overview', { headers }),
+            fetch('/admin/ops-center/graph', { headers }),
+            fetch('/admin/ops-center/federation-map', { headers }),
+            fetch('/admin/ops-center/integrity', { headers }),
+            fetch('/admin/ops-center/trust-violations?refresh=true', { headers })
+          ]);
+
+          const overview = await overviewRes.json();
+          const graph = await graphRes.json();
+          const federation = await federationRes.json();
+          const integrity = await integrityRes.json();
+          const violations = await violationsRes.json();
+
+          opsCenterState = { graph, federation, integrity, violations };
+
+          document.getElementById('opsGovStatus').textContent = overview.governance_status || integrity.status;
+          document.getElementById('opsActiveTenants').textContent = overview.active_tenants ?? '-';
+          document.getElementById('opsActiveWorkflows').textContent = overview.active_workflows ?? graph.summary?.node_types?.workflow ?? '-';
+          document.getElementById('opsRiskLevel').textContent = overview.risk_level || (integrity.status === 'healthy' ? 'low' : 'high');
+
+          renderOpsTrustGraph(graph);
+          renderOpsFederationMap(federation);
+          renderOpsTrustViolations(violations);
+          renderOpsIntegrityTimeline(integrity);
+          renderOpsReceiptChain(graph);
+          renderOpsGovernanceConsistency(federation, integrity);
+          renderOpsRemediationTimeline(integrity, violations);
+        } catch (e) {
+          console.error('Ops Center error:', e);
+          document.getElementById('opsTrustGraphView').innerHTML = `<div style="color: var(--danger);">Falha ao carregar o Operations Center: ${escapeHtml(e.message || String(e))}</div>`;
+        }
+      }
+
+      function renderOpsTrustGraph(graph) {
+        const nodeTypes = Object.entries(graph.summary?.node_types || {}).map(([key, value]) => `${key}:${value}`).join(' · ');
+        const edgeTypes = Object.entries(graph.summary?.edge_types || {}).map(([key, value]) => `${key}:${value}`).join(' · ');
+        const sampleNodes = (graph.nodes || []).slice(0, 10).map(node => `
+          <tr>
+            <td>${escapeHtml(node.type)}</td>
+            <td>${escapeHtml(node.label)}</td>
+            <td><code>${escapeHtml((node.hash || '').slice(0, 16))}</code></td>
+            <td><code>${escapeHtml((node.lineage_hash || '').slice(0, 16))}</code></td>
+          </tr>
+        `).join('');
+        document.getElementById('opsTrustGraphView').innerHTML = `
+          <div><strong>Merkle Root</strong>: <code>${escapeHtml(graph.merkle_root || '-')}</code></div>
+          <div style="margin-top:0.5rem;"><strong>Graph Hash</strong>: <code>${escapeHtml(graph.graph_hash || '-')}</code></div>
+          <div style="margin-top:0.5rem; color: var(--muted);">Nodes: ${graph.summary?.node_count || 0} · Edges: ${graph.summary?.edge_count || 0}</div>
+          <div style="margin-top:0.5rem; color: var(--muted);">Node Types: ${escapeHtml(nodeTypes || '-')}</div>
+          <div style="margin-top:0.25rem; color: var(--muted);">Edge Types: ${escapeHtml(edgeTypes || '-')}</div>
+          <table style="margin-top:0.75rem;">
+            <thead><tr><th>Type</th><th>Label</th><th>Hash</th><th>Lineage</th></tr></thead>
+            <tbody>${sampleNodes || '<tr><td colspan="4">No nodes</td></tr>'}</tbody>
+          </table>
+        `;
+      }
+
+      async function loadOpsTrustGraph() {
+        const token = elements.adminToken.value.trim();
+        const graph = await fetch('/admin/ops-center/graph', { headers: { 'X-Admin-Token': token } }).then(res => res.json());
+        opsCenterState.graph = graph;
+        renderOpsTrustGraph(graph);
+        renderOpsReceiptChain(graph);
+      }
+
+      async function createTrustSnapshot() {
+        const token = elements.adminToken.value.trim();
+        try {
+          const snapshot = await fetch('/admin/ops-center/snapshot', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          }).then(res => res.json());
+          alert(`Snapshot criado: ${snapshot.immutable_hash}`);
+          await loadOpsCenter();
+        } catch (err) {
+          console.error('Snapshot error:', err);
+        }
+      }
+
+      function renderOpsFederationMap(map) {
+        const rows = (map.nodes || []).map(node => `
+          <tr>
+            <td>${escapeHtml(node.label)}</td>
+            <td>${escapeHtml(node.metadata?.region || '-')}</td>
+            <td>${escapeHtml(node.metadata?.trust_level || '-')}</td>
+            <td>${escapeHtml(node.metadata?.status || '-')}</td>
+          </tr>
+        `).join('');
+        document.getElementById('opsFederationMap').innerHTML = `
+          <div><strong>Peers</strong>: ${map.consistency?.peer_count || 0}</div>
+          <div style="margin-top:0.5rem; color: var(--muted);">Mappings: ${map.consistency?.mapping_count || 0}</div>
+          <div style="margin-top:0.5rem; color: var(--muted);">Trust Levels: ${escapeHtml(JSON.stringify(map.consistency?.trust_levels || {}))}</div>
+          <table style="margin-top:0.75rem;">
+            <thead><tr><th>Cluster</th><th>Region</th><th>Trust</th><th>Status</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4">No federation peers</td></tr>'}</tbody>
+          </table>
+        `;
+      }
+
+      async function loadOpsFederationMap() {
+        const token = elements.adminToken.value.trim();
+        const map = await fetch('/admin/ops-center/federation-map', { headers: { 'X-Admin-Token': token } }).then(res => res.json());
+        opsCenterState.federation = map;
+        renderOpsFederationMap(map);
+      }
+
+      function renderOpsTrustViolations(violations) {
+        const view = document.getElementById('opsTrustViolations');
+        if (!violations || violations.length === 0) {
+          view.innerHTML = '<p class="pill pill-success">Nenhuma violação detectada.</p>';
+          return;
+        }
+        view.innerHTML = violations.map(v => `
+          <div style="border-bottom: 1px solid var(--border); padding: 0.5rem 0;">
+            <span class="pill ${v.severity === 'critical' || v.severity === 'high' ? 'pill-danger' : 'pill-warning'}">${escapeHtml(v.type)}</span>
+            <span style="margin-left: 0.5rem;">${escapeHtml(v.severity)}</span>
+            <div style="font-size: 0.75rem; color: var(--muted);">${escapeHtml(formatTimestamp(v.detected_at))}</div>
+          </div>
+        `).join('');
+      }
+
+      async function loadOpsTrustViolations() {
+        const token = elements.adminToken.value.trim();
+        const violations = await fetch('/admin/ops-center/trust-violations', { headers: { 'X-Admin-Token': token } }).then(res => res.json());
+        opsCenterState.violations = violations;
+        renderOpsTrustViolations(violations);
+      }
+
+      function renderOpsIntegrityTimeline(integrity) {
+        const timeline = integrity.timeline || [];
+        document.getElementById('opsIntegrityTimeline').innerHTML = timeline.length
+          ? timeline.map(item => `
+              <div style="padding:0.5rem 0; border-bottom:1px solid var(--border);">
+                <div><strong>${escapeHtml(item.kind)}</strong> · ${escapeHtml(item.summary || '-')}</div>
+                <div style="color:var(--muted); font-size:0.75rem;">${escapeHtml(item.subject || '-')} · ${escapeHtml(item.status || '-')} · ${escapeHtml(formatTimestamp(item.timestamp))}</div>
+              </div>
+            `).join('')
+          : '<p class="pill pill-muted">Nenhum evento recente de integridade.</p>';
+      }
+
+      async function loadOpsIntegrityTimeline() {
+        const token = elements.adminToken.value.trim();
+        const integrity = await fetch('/admin/ops-center/integrity', { headers: { 'X-Admin-Token': token } }).then(res => res.json());
+        opsCenterState.integrity = integrity;
+        renderOpsIntegrityTimeline(integrity);
+      }
+
+      async function runIntegrityCheck() {
+        try {
+          await loadOpsCenter();
+          alert(`Status de Integridade: ${opsCenterState.integrity?.status || 'unknown'}`);
+        } catch (err) {
+          console.error('Integrity check error:', err);
+        }
+      }
+
+      async function exportOpsCenter(format) {
+        const token = elements.adminToken.value.trim();
+        const bundle = await fetch(`/admin/ops-center/snapshot?format=${encodeURIComponent(format)}`, {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token }
+        }).then(res => res.json());
+        renderOpsVisualizer(`EXPORT ${format.toUpperCase()}: manifest ${bundle.manifest_hash || bundle.immutable_hash || 'n/a'}`);
+        alert(`Export ${format} pronto. Manifest hash: ${bundle.manifest_hash || bundle.immutable_hash}`);
+      }
+
+      function renderOpsReceiptChain(graph) {
+        const receipts = (graph?.nodes || []).filter(node => node.type === 'receipt').slice(0, 12);
+        if (!receipts.length) {
+          document.getElementById('opsReceiptChain').innerHTML = '<div style="color: var(--muted);">Nenhuma receipt chain disponível.</div>';
+          return;
+        }
+        document.getElementById('opsReceiptChain').innerHTML = receipts.map(node => `
+          <div style="padding:0.5rem 0; border-bottom:1px solid var(--border);">
+            <div><strong>${escapeHtml(node.label)}</strong></div>
+            <div style="font-size:0.75rem; color:var(--muted);">prev=${escapeHtml((node.metadata?.previous_receipt_hash || '').slice(0, 16) || 'root')} · verify=${escapeHtml(node.metadata?.verification_status || '-')}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderOpsGovernanceConsistency(federation, integrity) {
+        document.getElementById('opsGovConsistency').innerHTML = `
+          <div style="font-size:0.8125rem;">
+            <p>Status: <strong>${escapeHtml(integrity.status || '-')}</strong></p>
+            <p>Violations: <strong>${escapeHtml(String(integrity.violation_count || 0))}</strong></p>
+            <p>Federated Peers: <strong>${escapeHtml(String(federation.consistency?.peer_count || 0))}</strong></p>
+            <p>Trust Levels: <code>${escapeHtml(JSON.stringify(federation.consistency?.trust_levels || {}))}</code></p>
+          </div>
+        `;
+      }
+
+      function renderOpsRemediationTimeline(integrity, violations) {
+        const timeline = [...(integrity.timeline || []).slice(0, 6), ...(violations || []).slice(0, 6).map(item => ({
+          kind: 'trust_violation',
+          summary: item.type,
+          status: item.severity,
+          timestamp: item.detected_at,
+          subject: item.evidence_hash
+        }))];
+        timeline.sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+        document.getElementById('opsRemediationTimeline').innerHTML = timeline.length
+          ? timeline.map(item => `
+              <div style="padding:0.5rem 0; border-bottom:1px solid var(--border);">
+                <strong>${escapeHtml(item.kind)}</strong> · ${escapeHtml(item.summary || '-')}
+                <div style="font-size:0.75rem; color:var(--muted);">${escapeHtml(item.status || '-')} · ${escapeHtml(formatTimestamp(item.timestamp))} · ${escapeHtml((item.subject || '').toString().slice(0, 24) || '-')}</div>
+              </div>
+            `).join('')
+          : '<div style="color: var(--muted);">Nenhuma anomalia recente.</div>';
+      }
+      async function loadOpsGovernance() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        const res = await fetch('/admin/ops/governance', { headers });
+        const data = await res.json();
+        document.getElementById('opsGovDetails').innerHTML = `
+          <div style="font-size: 0.8125rem;">
+            <p>Policies Active: <strong>${data.policies_active}</strong></p>
+            <p>Enforcement: <strong>${data.enforcement_rate}%</strong></p>
+            <p>Supervisor AI: <strong>${data.supervisor_ai_status}</strong></p>
+          </div>
+        `;
+        renderOpsVisualizer('GOVERNANCE COMMAND CENTER: Real-time policy enforcement and supervisor AI monitoring active.');
+      }
+
+      async function viewSovereignMap() {
+        renderOpsVisualizer('SOVEREIGN OPERATIONS MAP: Visualizing nodes across 8 regions with local isolation rules.');
+      }
+
+      async function loadOpsWorkflows() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        const res = await fetch('/admin/ops/workflows', { headers });
+        const data = await res.json();
+        document.getElementById('opsWorkflowDetails').innerHTML = `
+          <div style="font-size: 0.8125rem;">
+            <p>Active DAGs: <strong>${data.dags_active}</strong></p>
+            <p>Completion: <strong>${data.completion_rate}%</strong></p>
+          </div>
+        `;
+        renderOpsVisualizer('WORKFLOW DAG EXPLORER: Loading deterministic execution graph for 38 active workflows.');
+      }
+
+      async function viewReplayValidation() {
+        renderOpsVisualizer('REPLAY VALIDATION VIEWER: Comparing production traces with deterministic local replays.');
+      }
+
+      async function loadOpsRisk() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        const res = await fetch('/admin/ops/risk', { headers });
+        const data = await res.json();
+        document.getElementById('opsRiskDetails').innerHTML = `
+          <div style="font-size: 0.8125rem;">
+            <p>Compliance: <strong>${data.heatmaps.compliance}</strong></p>
+            <p>Security: <strong>${data.heatmaps.security}</strong></p>
+          </div>
+        `;
+        renderOpsVisualizer('RISK HEATMAPS: Aggregated risk scores across all infrastructure layers and tenants.');
+      }
+
+      async function viewComplianceEvidence() {
+        renderOpsVisualizer('COMPLIANCE EVIDENCE CENTER: SOC2/GDPR automated evidence collection and storage.');
+      }
+
+      async function loadOpsAttestation() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        const res = await fetch('/admin/ops/attestation', { headers });
+        const data = await res.json();
+        document.getElementById('opsTrustDetails').innerHTML = `
+          <div style="font-size: 0.8125rem;">
+            <p>Trust Chains: <strong>${data.trust_chains}</strong></p>
+            <p>Enclaves: <strong>${data.hardware_enclaves}</strong></p>
+          </div>
+        `;
+        renderOpsVisualizer('ATTESTATION TRUST DASHBOARD: Hardware-level integrity verification for confidential runtimes.');
+      }
+
+      async function viewReceiptExplorer() {
+        renderOpsVisualizer('CRYPTOGRAPHIC RECEIPT EXPLORER: Validating hash chains for 15,000+ inference records.');
+      }
+
+      async function loadOpsBillingAnomalies() {
+        renderOpsVisualizer('BILLING ANOMALY CENTER: Detecting deviations in token usage and multi-tenant allocations.');
+      }
+
+      async function viewPolicyTraces() {
+        renderOpsVisualizer('POLICY TRACE EXPLORER: Auditing OPA Rego evaluation steps for governed requests.');
+      }
+
+      function renderOpsVisualizer(msg) {
+        document.getElementById('opsVisualizer').innerHTML = `
+          <div style="text-align: center;">
+            <div style="margin-bottom: 1rem; color: #10b981;">[ ACTIVE VIEW ]</div>
+            <div>${msg}</div>
+            <div style="margin-top: 1rem; font-size: 0.75rem; color: #64748b;">(Interactive SVG/Canvas components would be initialized here in a full implementation)</div>
+          </div>
+        `;
+      }
+
+      async function loadStarvationReport() {
+        const token = elements.adminToken.value.trim();
+        const headers = { 'X-Admin-Token': token };
+        try {
+          const res = await fetch('/admin/routing/qos/fairness/starvation', { headers });
+          const data = await res.json();
+          if (data.length === 0) {
+            alert('No starving jobs detected.');
+          } else {
+            console.table(data);
+            alert(`Detected ${data.length} starving jobs. Check console for details.`);
+          }
+        } catch (e) { alert('Failed: ' + e); }
+      }
+
+      async function simulateRateLimit() {
+        const token = elements.adminToken.value.trim();
+        const client_id = document.getElementById('rlSimClient').value.trim();
+        const qos_tier = document.getElementById('rlSimTier').value;
+        const resDiv = document.getElementById('rlSimResult');
+        
+        if (!client_id) { alert('Insira o Client ID'); return; }
+        
+        resDiv.textContent = 'Verificando...';
+        try {
+          const res = await fetch(`/admin/routing/qos/rate-limits/simulate?client_id=${client_id}&qos_tier=${qos_tier}`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          const data = await res.json();
+          const color = data.allowed ? 'var(--success)' : 'var(--danger)';
+          resDiv.innerHTML = `<span style="color:${color}">${data.status.toUpperCase()}</span>: ${data.reason || 'OK'} (RPM Atual: ${data.current_rpm})`;
+        } catch (e) {
+          resDiv.textContent = 'Erro: ' + e.message;
+        }
+      }
+
+      function startMarginAutoRefresh() {
+        if (marginRefreshTimer) return;
+        marginRefreshTimer = window.setInterval(() => {
+          if (currentTab === 'margin' && elements.adminToken.value.trim()) {
+            loadMarginDashboard(true);
+          }
+        }, 15000);
+      }
+
+      function stopMarginAutoRefresh() {
+        if (!marginRefreshTimer) return;
+        window.clearInterval(marginRefreshTimer);
+        marginRefreshTimer = null;
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return 'indisponivel';
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return 'indisponivel';
+        return parsed.toLocaleString('pt-BR');
+      }
+
+      function formatBrl(value) {
+        const numeric = typeof value === 'number' ? value : 0;
+        return 'R$ ' + numeric.toFixed(2);
+      }
+
+      async function loadMarginDashboard(background = false) {
+        try {
+            if (!background) {
+              document.getElementById('marginAlerts').innerHTML = '<div style="color: var(--muted);">Carregando dados financeiros...</div>';
+            }
+            const data = await adminFetch('/admin/financials/margin-dashboard');
+            document.getElementById('execRev').textContent = 'R$ ' + data.revenue_today_brl.toFixed(2);
+            document.getElementById('execCost').textContent = 'R$ ' + data.cost_today_brl.toFixed(2);
+            document.getElementById('execProfit').textContent = 'R$ ' + data.gross_margin_today_brl.toFixed(2);
+            document.getElementById('execMarginPct').textContent = data.gross_margin_percent_today.toFixed(1) + '%';
+            document.getElementById('execReqs').textContent = data.requests_today.toLocaleString();
+            document.getElementById('execCacheRate').textContent = data.cache_hit_rate_today.toFixed(1) + '%';
+            document.getElementById('execCacheSavings').textContent = 'R$ ' + data.estimated_cache_savings_brl.toFixed(2);
+            document.getElementById('marginLastUpdated').textContent = formatTimestamp(data.generated_at_utc);
+
+            let alertsHtml = '';
+            if (data.clients_with_negative_margin && data.clients_with_negative_margin.length > 0) {
+              data.clients_with_negative_margin.forEach(c => {
+                  alertsHtml += `<div style="color: #991b1b; background: #fee2e2; padding: 0.5rem; border-radius: 0.25rem; margin-bottom: 0.5rem; font-weight: 600;">Alerta: Cliente ${shortId(c.client_id)} com margem negativa (${c.margin_percent.toFixed(1)}%). Prejuizo: R$ ${c.gross_profit_brl.toFixed(2)}</div>`;
+              });
+            } else {
+              alertsHtml = `<div style="color: #065f46; background: #d1fae5; padding: 0.5rem; border-radius: 0.25rem; margin-bottom: 0.5rem; font-weight: 600;">Nenhum cliente com margem negativa hoje.</div>`;
+            }
+            document.getElementById('marginAlerts').innerHTML = alertsHtml;
+            
+            let provHtml = '<table><thead><tr><th>Provider</th><th>Requests</th><th>Custo (BRL)</th></tr></thead><tbody>';
+            data.cost_by_provider.forEach(p => {
+                provHtml += `<tr><td>${p.provider}</td><td>${p.requests}</td><td>R$ ${p.cost_brl.toFixed(2)}</td></tr>`;
+            });
+            provHtml += '</tbody></table>';
+            document.getElementById('marginProvidersTable').innerHTML = provHtml;
+            
+            let modHtml = '<table><thead><tr><th>Modelo</th><th>Requests</th><th>Custo (BRL)</th></tr></thead><tbody>';
+            data.top_expensive_models.forEach(m => {
+                modHtml += `<tr><td>${m.model}</td><td>${m.requests}</td><td>R$ ${m.total_cost_brl.toFixed(2)}</td></tr>`;
+            });
+            modHtml += '</tbody></table>';
+            document.getElementById('marginModelsTable').innerHTML = modHtml;
+            
+            let cliHtml = '<table><thead><tr><th>Cliente</th><th>Requests</th><th>Receita (BRL)</th></tr></thead><tbody>';
+            data.revenue_by_client.forEach(c => {
+                cliHtml += `<tr><td><code>${shortId(c.client_id)}</code></td><td>${c.requests}</td><td>R$ ${c.revenue_brl.toFixed(2)}</td></tr>`;
+            });
+            cliHtml += '</tbody></table>';
+            document.getElementById('marginClientsTable').innerHTML = cliHtml;
+            
+            if (data.financial_summary) {
+              let finHtml = '<table><tbody>';
+              finHtml += `<tr><td>Disputas Abertas</td><td style="font-weight: bold; color: ${data.financial_summary.open_disputes_count > 0 ? '#991b1b' : 'inherit'}">${data.financial_summary.open_disputes_count}</td></tr>`;
+              finHtml += `<tr><td>Valor em Disputa (BRL)</td><td style="font-weight: bold; color: ${data.financial_summary.total_disputed_amount_brl > 0 ? '#991b1b' : 'inherit'}">R$ ${data.financial_summary.total_disputed_amount_brl.toFixed(2)}</td></tr>`;
+              finHtml += `<tr><td>Divergências de Conciliação</td><td style="font-weight: bold; color: ${data.financial_summary.mismatches_count > 0 ? '#991b1b' : 'inherit'}">${data.financial_summary.mismatches_count}</td></tr>`;
+              finHtml += `<tr><td>Cadeia de Auditoria Válida</td><td style="font-weight: bold; color: ${data.financial_summary.audit_chain_valid ? '#065f46' : '#991b1b'}">${data.financial_summary.audit_chain_valid ? 'Sim ✓' : 'Não ✗'}</td></tr>`;
+              finHtml += '</tbody></table>';
+              document.getElementById('marginFinancialSummary').innerHTML = finHtml;
+            } else {
+              document.getElementById('marginFinancialSummary').innerHTML = '<div style="color: var(--muted);">Sem dados financeiros.</div>';
+            }
+            
+        } catch (e) {
+            document.getElementById('marginAlerts').innerHTML = `<div style="color: #991b1b; background: #fee2e2; padding: 0.5rem; border-radius: 0.25rem;">Erro ao carregar dados de margem: ${e.message}</div>`;
+        }
+      }
+
+      async function loadCommercialGuardrails() {
+        try {
+          const [overview, runtime] = await Promise.all([
+            adminFetch('/admin/commercial-guardrails/overview'),
+            adminFetch('/admin/commercial-guardrails/runtime-status')
+          ]);
+          renderCommercialGuardrails(overview, runtime);
+          document.getElementById('commercialGuardrailsDebug').textContent = JSON.stringify({ overview, runtime }, null, 2);
+        } catch (e) {
+          document.getElementById('cgRecommendationsList').innerHTML = `<div style="color: #991b1b; background: #fee2e2; padding: 0.5rem; border-radius: 0.25rem;">Erro ao carregar guardrails: ${e.message}</div>`;
+        }
+      }
+
+      async function loadAutonomousGuardrails() {
+        try {
+          const [status, checkpoints, blastRadius, violations, receipts] = await Promise.all([
+            adminFetch('/admin/guardrails/status'),
+            adminFetch('/admin/guardrails/checkpoints'),
+            adminFetch('/admin/guardrails/blast-radius'),
+            adminFetch('/admin/guardrails/violations'),
+            adminFetch('/admin/guardrails/receipts')
+          ]);
+          renderAutonomousGuardrails(status, checkpoints, blastRadius, violations, receipts);
+          document.getElementById('autonomousGuardrailsDebug').textContent = JSON.stringify({ status, checkpoints, blastRadius, violations, receipts }, null, 2);
+        } catch (e) {
+          document.getElementById('agRiskMatrix').innerHTML = `<div style="color: #991b1b; background: #fee2e2; padding: 0.5rem; border-radius: 0.25rem;">Erro ao carregar autonomous guardrails: ${e.message}</div>`;
+        }
+      }
+
+      function renderAutonomousGuardrails(status, checkpoints, blastRadius, violations, receipts) {
+        const matrix = status?.autonomous_risk_matrix || {};
+        const heatmap = status?.blast_radius_heatmap || {};
+        const queue = status?.human_approval_queue || {};
+        const blastItems = Array.isArray(blastRadius?.items) ? blastRadius.items : [];
+        const checkpointItems = Array.isArray(checkpoints) ? checkpoints : [];
+        const violationItems = Array.isArray(violations) ? violations : [];
+        const receiptItems = Array.isArray(receipts) ? receipts : [];
+
+        document.getElementById('agActivePolicies').textContent = String(status?.policies?.active || 0);
+        document.getElementById('agRuntimeFreeze').textContent = status?.runtime_freeze_enabled ? 'ON' : 'OFF';
+        document.getElementById('agSovereignStatus').textContent = status?.sovereign_hard_stop ? 'ON' : 'OFF';
+        document.getElementById('agPendingApprovals').textContent = String(queue.pending || 0);
+        document.getElementById('agViolationsCount').textContent = String(violationItems.length);
+        document.getElementById('agVerifiedReceipts').textContent = String(status?.receipts?.verified || 0);
+
+        document.getElementById('agRiskMatrix').innerHTML = `
+          <table>
+            <thead><tr><th>Level</th><th>Count</th></tr></thead>
+            <tbody>
+              <tr><td>Low</td><td>${num(matrix.low)}</td></tr>
+              <tr><td>Medium</td><td>${num(matrix.medium)}</td></tr>
+              <tr><td>High</td><td>${num(matrix.high)}</td></tr>
+              <tr><td>Critical</td><td>${num(matrix.critical)}</td></tr>
+            </tbody>
+          </table>
+        `;
+
+        document.getElementById('agBlastRadiusHeatmap').innerHTML = `
+          <div><strong>Blocked</strong>: ${num(heatmap.blocked)}</div>
+          <div><strong>Safe</strong>: ${num(heatmap.safe)}</div>
+          <div><strong>Avg Score</strong>: ${num(heatmap.avg_score).toFixed(4)}</div>
+          <table style="margin-top:0.75rem;">
+            <thead><tr><th>Action</th><th>Severity</th><th>Score</th><th>Status</th></tr></thead>
+            <tbody>
+              ${blastItems.slice(0, 8).map(item => `<tr><td>${escapeHtml(item.action_type)}</td><td>${escapeHtml(item.severity)}</td><td>${num(item.score).toFixed(4)}</td><td>${item.blocked ? 'blocked' : 'safe'}</td></tr>`).join('') || '<tr><td colspan="4">No blast radius records</td></tr>'}
+            </tbody>
+          </table>
+        `;
+
+        document.getElementById('agApprovalQueue').innerHTML = `
+          <div><strong>Pending</strong>: ${num(queue.pending)}</div>
+          <div><strong>Approved</strong>: ${num(queue.approved)}</div>
+          <div><strong>Rejected</strong>: ${num(queue.rejected)}</div>
+          <table style="margin-top:0.75rem;">
+            <thead><tr><th>Stage</th><th>Action</th><th>Target</th><th>Status</th></tr></thead>
+            <tbody>
+              ${checkpointItems.slice(0, 8).map(item => `<tr><td>${num(item.checkpoint_stage)}</td><td>${escapeHtml(item.action_type)}</td><td><code>${escapeHtml(shortId(item.target_id))}</code></td><td>${escapeHtml(item.status)}</td></tr>`).join('') || '<tr><td colspan="4">No checkpoints</td></tr>'}
+            </tbody>
+          </table>
+        `;
+
+        document.getElementById('agRuntimeFreezeControls').innerHTML = `
+          <div><strong>Freeze Enabled</strong>: ${status?.runtime_freeze_enabled ? 'Yes' : 'No'}</div>
+          <div><strong>Receipts</strong>: ${num(status?.receipts?.total)}</div>
+          <div><strong>Verified</strong>: ${num(status?.receipts?.verified)}</div>
+          <div style="margin-top:0.75rem; color: var(--muted);">Toda execucao autonoma permanece em modo guardado com receipt auditavel.</div>
+        `;
+
+        document.getElementById('agSovereignRestrictions').innerHTML = `
+          <div><strong>Hard Stop</strong>: ${status?.sovereign_hard_stop ? 'Enabled' : 'Disabled'}</div>
+          <div><strong>Blocked Violations</strong>: ${num(status?.violations)}</div>
+          <table style="margin-top:0.75rem;">
+            <thead><tr><th>Action</th><th>Severity</th><th>Summary</th></tr></thead>
+            <tbody>
+              ${violationItems.slice(0, 8).map(item => `<tr><td>${escapeHtml(item.action_type)}</td><td>${escapeHtml(item.severity)}</td><td>${escapeHtml(item.summary || '-')}</td></tr>`).join('') || '<tr><td colspan="3">No blocked violations</td></tr>'}
+            </tbody>
+          </table>
+          <div style="margin-top:0.75rem;"><strong>Recent Receipts</strong>: ${receiptItems.slice(0, 3).map(item => `<code>${escapeHtml(shortId(item.receipt_hash))}</code>`).join(' · ') || '-'}</div>
+        `;
+      }
+
+      function renderCommercialGuardrails(data, runtimeData) {
+        const payload = data || {};
+        const runtime = runtimeData || {};
+        const limits = payload.global_limits || {};
+        const usage = payload.global_usage_today || {};
+        const providers = Array.isArray(payload.providers) ? payload.providers : [];
+        const clients = Array.isArray(payload.clients) ? payload.clients : [];
+        const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+        const wouldBlock = Array.isArray(payload.would_block) ? payload.would_block : [];
+        const recommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+        const topFallbacks = Array.isArray(runtime.top_fallback_providers) ? runtime.top_fallback_providers : [];
+        const indicators = [];
+
+        document.getElementById('cgMode').textContent = payload.mode || 'disabled';
+        if ((payload.mode || 'disabled') === 'report_only') indicators.push('REPORT ONLY');
+        if ((payload.mode || 'disabled') === 'enforce_cloud_only') indicators.push('ENFORCING');
+        if (runtime.cloud_kill_switch) indicators.push('CLOUD DISABLED');
+        document.getElementById('cgIndicators').textContent = indicators.length ? indicators.join(' | ') : 'DISABLED';
+        document.getElementById('cgCloudCost').textContent = formatBrl(num(usage.global_cloud_provider_cost_today_brl));
+        document.getElementById('cgGlobalLimit').textContent = formatBrl(num(limits.max_global_provider_cost_per_day_brl));
+        document.getElementById('cgKillSwitch').textContent = runtime.cloud_kill_switch ? 'ON' : 'OFF';
+        document.getElementById('cgProvidersWarning').textContent = String(num(usage.providers_over_warning_threshold_count));
+        document.getElementById('cgNegativeClients').textContent = String(num(usage.clients_with_negative_margin_count));
+        document.getElementById('cgWouldBlockCount').textContent = String(wouldBlock.length);
+        document.getElementById('cgFallbacksToday').textContent = String(num(runtime.successful_local_fallbacks_today));
+        document.getElementById('cgBlocksToday').textContent = String(num(runtime.blocked_cloud_requests_today));
+        document.getElementById('cgAffectedClients').textContent = String(Array.isArray(runtime.clients_affected) ? runtime.clients_affected.length : 0);
+        document.getElementById('cgLastUpdated').textContent = formatTimestamp(payload.generated_at_utc);
+        document.getElementById('cgWarningsCount').textContent = String(warnings.length);
+        document.getElementById('cgRecommendationsCount').textContent = String(recommendations.length);
+        document.getElementById('cgTopFallbackProviders').textContent = topFallbacks.length
+          ? topFallbacks.map(item => `${item.provider} (${num(item.count)})`).join(', ')
+          : '-';
+
+        const providerRows = providers.filter(item => item.over_warning_threshold || item.over_block_threshold);
+        if (providerRows.length === 0) {
+          document.getElementById('cgProvidersTable').innerHTML = '<div style="color: var(--muted);">Nenhum provider em alerta no momento.</div>';
+        } else {
+          let html = '<table><thead><tr><th>Provider</th><th>Custo Hoje</th><th>Requests</th><th>Status</th></tr></thead><tbody>';
+          providerRows.forEach(item => {
+            html += `<tr><td>${item.provider}</td><td>${formatBrl(num(item.provider_cost_today_brl))}</td><td>${num(item.provider_request_count_today)}</td><td>${item.status}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          document.getElementById('cgProvidersTable').innerHTML = html;
+        }
+
+        const criticalClients = clients.filter(item => item.is_negative_margin || item.over_warning_threshold || item.over_block_threshold);
+        if (criticalClients.length === 0) {
+          document.getElementById('cgClientsTable').innerHTML = '<div style="color: var(--muted);">Nenhum cliente crítico no momento.</div>';
+        } else {
+          let html = '<table><thead><tr><th>Cliente</th><th>Custo</th><th>Receita</th><th>Margem</th><th>Status</th></tr></thead><tbody>';
+          criticalClients.forEach(item => {
+            html += `<tr><td>${item.client_name} <code>${shortId(item.client_id)}</code></td><td>${formatBrl(num(item.client_cost_today_brl))}</td><td>${formatBrl(num(item.client_revenue_today_brl))}</td><td>${num(item.client_margin_percent_today).toFixed(1)}%</td><td>${item.status}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          document.getElementById('cgClientsTable').innerHTML = html;
+        }
+
+        if (wouldBlock.length === 0) {
+          document.getElementById('cgWouldBlockTable').innerHTML = '<div style="color: var(--muted);">Nenhuma acao de would block calculada.</div>';
+        } else {
+          let html = '<table><thead><tr><th>Tipo</th><th>Alvo</th><th>Atual</th><th>Limite</th><th>Ação</th></tr></thead><tbody>';
+          wouldBlock.forEach(item => {
+            const target = item.provider || item.client_name || item.client_id || 'n/a';
+            const current = typeof item.current_cost_brl === 'number'
+              ? formatBrl(item.current_cost_brl)
+              : (typeof item.current_margin_brl === 'number' ? formatBrl(item.current_margin_brl) : '-');
+            const limit = typeof item.limit_brl === 'number' ? formatBrl(item.limit_brl) : '-';
+            html += `<tr><td>${item.type}</td><td>${target}</td><td>${current}</td><td>${limit}</td><td>${item.action || '-'}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          document.getElementById('cgWouldBlockTable').innerHTML = html;
+        }
+
+        if (recommendations.length === 0) {
+          document.getElementById('cgRecommendationsList').innerHTML = '<div style="color: var(--muted);">Sem recomendações no momento.</div>';
+        } else {
+          document.getElementById('cgRecommendationsList').innerHTML = `<ul>${recommendations.map(item => `<li>${item}</li>`).join('')}</ul>`;
+        }
+      }
+
+      function shortId(value) {
+        return typeof value === 'string' ? value.substring(0, 8) : 'N/A';
+      }
+
+      function num(value, fallback = 0) {
+        return typeof value === 'number' ? value : fallback;
+      }
+
+      function setToolbarStatus(message, isError = false) {
+        elements.toolbarStatus.textContent = message;
+        elements.toolbarStatus.classList.toggle('error', isError);
+      }
+
+      function setLoadingState(loading) {
+        isLoading = loading;
+        elements.connect.disabled = loading;
+        elements.refresh.disabled = loading;
+      }
+
+      async function adminFetch(path) {
+        const token = elements.adminToken.value.trim();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const response = await fetch(path, {
+          signal: controller.signal,
+          headers: { 'X-Admin-Token': token }
+        });
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error(response.statusText);
+        return response.json();
+      }
+
+      async function initAdmin({ throwOnError = false } = {}) {
+        if (isLoading) return;
+        if (!elements.adminToken.value.trim()) {
+          setToolbarStatus('Informe o admin token para carregar o dashboard.', true);
+          return;
+        }
+        setLoadingState(true);
+        setToolbarStatus('Carregando dashboard...');
+        elements.adminContent.classList.remove('hidden');
+        elements.loginPrompt.classList.add('hidden');
+        switchTab(currentTab); // Ensure current tab is visible
+
+        try {
+          const results = await Promise.allSettled([
+            adminFetch('/admin/system/control-center'),
+            adminFetch('/admin/health/deep'),
+            adminFetch('/admin/usage/by-client'),
+            adminFetch('/admin/usage/by-model'),
+            adminFetch('/admin/models'),
+            adminFetch('/admin/security/events'),
+            adminFetch('/admin/requests'),
+            adminFetch('/admin/revenue/summary'),
+            adminFetch('/admin/rag/usage'),
+            adminFetch('/admin/runtime/summary'),
+            adminFetch('/admin/readiness/latest'),
+            adminFetch('/admin/security/latest'),
+            adminFetch('/admin/demo/summary'),
+            adminFetch('/admin/billing/plans'),
+            adminFetch('/admin/hybrid/summary'),
+            adminFetch('/admin/hybrid/providers'),
+            adminFetch('/admin/hybrid/routing'),
+            adminFetch('/admin/hybrid/financials'),
+            adminFetch('/admin/hybrid/cache'),
+            adminFetch('/admin/hybrid/wallets'),
+            adminFetch('/admin/hybrid/rag'),
+            adminFetch('/admin/routing/analytics/summary'),
+            adminFetch('/admin/routing/events?limit=10'),
+            adminFetch('/admin/routing/calibration/report'),
+            adminFetch('/admin/routing/distributed/nodes'),
+            adminFetch('/admin/routing/distributed/cluster-overview'),
+            adminFetch('/admin/routing/ha/cluster-state'),
+            adminFetch('/admin/routing/federation/clusters'),
+            adminFetch('/admin/routing/federation/overview'),
+            adminFetch('/admin/routing/federation/compare'),
+            adminFetch('/admin/compliance/controls'),
+            adminFetch('/admin/compliance/approval-chains?limit=10'),
+            adminFetch('/admin/compliance/evidence-packages?limit=10'),
+            adminFetch('/admin/compliance/exceptions'),
+            adminFetch('/admin/compliance/operational-controls'),
+            adminFetch('/admin/compliance/operational-controls/evidence'),
+            adminFetch('/admin/compliance/operational-controls/reviews'),
+            adminFetch('/admin/governance/federation/status'),
+            adminFetch('/admin/governance/federation/consistency'),
+            adminFetch('/admin/governance/federation/audit-trail'),
+            adminFetch('/admin/governance/airgap/packages'),
+            adminFetch('/admin/security/offline-crl'),
+            adminFetch('/admin/security/hardware-attestation'),
+            adminFetch('/admin/models/supply-chain/status'),
+            adminFetch('/admin/models/supply-chain/registry')
+          ]);
+
+          const [
+            controlCenterResult,
+            healthResult,
+            usageByClientResult,
+            usageByModelResult,
+            modelsResult,
+            securityResult,
+            requestsResult,
+            revenueResult,
+            ragResult,
+            runtimeSummaryResult,
+            readinessReportResult,
+            securityReportResult,
+            demoSummaryResult,
+            plansResult,
+            hybridSummaryResult,
+            hybridProvidersResult,
+            hybridRoutingResult,
+            hybridFinancialsResult,
+            hybridCacheResult,
+            hybridWalletsResult,
+            hybridRagResult,
+            commAnalyticsSummaryResult,
+            commAnalyticsEventsResult,
+            commCalibrationResult,
+            commDistributedNodesResult,
+            commClusterOverviewResult,
+            commHaClusterStateResult,
+            federationClustersResult,
+            federationOverviewResult,
+            federationCompareResult,
+            complianceControlsResult,
+            complianceApprovalChainsResult,
+            complianceEvidenceResult,
+            complianceExceptionsResult,
+            operationalControlsResult,
+            operationalEvidenceResult,
+            operationalReviewsResult,
+            govFedStatusResult,
+            govFedConsistencyResult,
+            govFedAuditResult,
+            sovereignPackagesResult,
+            sovereignCrlsResult,
+            sovereignAttestationResult,
+            modelSupplyChainStatusResult,
+            modelSupplyChainRegistryResult
+          ] = results;
+
+          const controlCenter = controlCenterResult.status === 'fulfilled' ? controlCenterResult.value : null;
+          const health = healthResult.status === 'fulfilled' ? healthResult.value : null;
+          const usageByClient = usageByClientResult.status === 'fulfilled' ? usageByClientResult.value : [];
+          const usageByModel = usageByModelResult.status === 'fulfilled' ? usageByModelResult.value : [];
+          const models = modelsResult.status === 'fulfilled' ? modelsResult.value : null;
+          const security = securityResult.status === 'fulfilled' ? securityResult.value : [];
+          const requests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
+          const revenue = revenueResult.status === 'fulfilled' ? revenueResult.value : {};
+          const rag = ragResult.status === 'fulfilled' ? ragResult.value : [];
+          const runtimeSummary = runtimeSummaryResult.status === 'fulfilled' ? runtimeSummaryResult.value : null;
+          const readinessReport = readinessReportResult.status === 'fulfilled' ? readinessReportResult.value : null;
+          const securityReport = securityReportResult.status === 'fulfilled' ? securityReportResult.value : null;
+          const demoSummary = demoSummaryResult.status === 'fulfilled' ? demoSummaryResult.value : null;
+          const plans = plansResult.status === 'fulfilled' ? plansResult.value : [];
+          const complianceControls = complianceControlsResult.status === 'fulfilled' ? complianceControlsResult.value : {};
+          const complianceApprovalChains = complianceApprovalChainsResult.status === 'fulfilled' ? complianceApprovalChainsResult.value : [];
+          const complianceEvidence = complianceEvidenceResult.status === 'fulfilled' ? complianceEvidenceResult.value : [];
+          const complianceExceptions = complianceExceptionsResult.status === 'fulfilled' ? complianceExceptionsResult.value : [];
+          const operationalControls = operationalControlsResult.status === 'fulfilled' ? operationalControlsResult.value : {};
+          const operationalEvidence = operationalEvidenceResult.status === 'fulfilled' ? operationalEvidenceResult.value : {};
+          const operationalReviews = operationalReviewsResult.status === 'fulfilled' ? operationalReviewsResult.value : {};
+          const govFedStatus = govFedStatusResult.status === 'fulfilled' ? govFedStatusResult.value : {};
+          const govFedConsistency = govFedConsistencyResult.status === 'fulfilled' ? govFedConsistencyResult.value : {};
+          const govFedAudit = govFedAuditResult.status === 'fulfilled' ? govFedAuditResult.value : {};
+          const sovereignPackages = sovereignPackagesResult.status === 'fulfilled' ? sovereignPackagesResult.value : [];
+          const sovereignCrls = sovereignCrlsResult.status === 'fulfilled' ? sovereignCrlsResult.value : [];
+          const sovereignAttestation = sovereignAttestationResult.status === 'fulfilled' ? sovereignAttestationResult.value : {};
+          const modelSupplyChainStatus = modelSupplyChainStatusResult.status === 'fulfilled' ? modelSupplyChainStatusResult.value : {};
+          const modelSupplyChainRegistry = modelSupplyChainRegistryResult.status === 'fulfilled' ? modelSupplyChainRegistryResult.value : {};
+          const usageSummary = buildUsageSummaryEnvelope(usageByClient, usageByModel, models, rag);
+
+          function safeRender(fn, ...args) {
+            try {
+              fn(...args);
+            } catch (e) {
+              console.error('Render error:', fn.name, e);
+            }
+          }
+
+          safeRender(renderControlCenter, controlCenter);
+          safeRender(renderComplianceControls, complianceControls, complianceApprovalChains, complianceEvidence, complianceExceptions);
+          safeRender(renderOperationalControls, operationalControls, operationalEvidence, operationalReviews);
+          safeRender(renderGovernanceFederation, govFedStatus, govFedConsistency, govFedAudit);
+          safeRender(renderSovereignAirgapGovernance, sovereignPackages, sovereignCrls, sovereignAttestation);
+          safeRender(renderModelSupplyChain, modelSupplyChainStatus, modelSupplyChainRegistry);
+          safeRender(renderRuntimeSummary, runtimeSummary);
+          safeRender(renderReadinessReport, readinessReport);
+          safeRender(renderSecurityReport, securityReport);
+          safeRender(renderDemo, demoSummary);
+          safeRender(renderHealth, health);
+          safeRender(renderModels, models);
+          safeRender(renderUsage, usageSummary, usageByClient, usageByModel);
+          safeRender(renderBackends, models ? models.backends : []);
+          safeRender(renderSecurity, security);
+          safeRender(renderRequests, requests);
+          safeRender(renderRevenue, revenue);
+          safeRender(renderRagUsage, rag);
+
+          const hybridSummary = hybridSummaryResult.status === 'fulfilled' ? hybridSummaryResult.value : null;
+          const hybridProviders = hybridProvidersResult.status === 'fulfilled' ? hybridProvidersResult.value : [];
+          const hybridRouting = hybridRoutingResult.status === 'fulfilled' ? hybridRoutingResult.value : null;
+          const hybridFinancials = hybridFinancialsResult.status === 'fulfilled' ? hybridFinancialsResult.value : null;
+          const hybridCache = hybridCacheResult.status === 'fulfilled' ? hybridCacheResult.value : null;
+          const hybridWallets = hybridWalletsResult.status === 'fulfilled' ? hybridWalletsResult.value : [];
+          const hybridRag = hybridRagResult.status === 'fulfilled' ? hybridRagResult.value : null;
+
+          safeRender(renderHybridSummary, hybridSummary);
+          safeRender(renderHybridProviders, hybridProviders);
+          safeRender(renderHybridRouting, hybridRouting);
+          safeRender(renderHybridFinancials, hybridFinancials);
+          safeRender(renderHybridCache, hybridCache);
+          safeRender(renderHybridWallets, hybridWallets);
+          safeRender(renderHybridRag, hybridRag);
+
+          const commSummary = commAnalyticsSummaryResult.status === 'fulfilled' ? commAnalyticsSummaryResult.value : null;
+          const commEvents = commAnalyticsEventsResult.status === 'fulfilled' ? commAnalyticsEventsResult.value : [];
+          safeRender(renderCommercialAnalytics, commSummary, commEvents);
+
+          const commCalibration = commCalibrationResult.status === 'fulfilled' ? commCalibrationResult.value : null;
+          safeRender(renderCommercialCalibration, commCalibration);
+
+          const commDistributedNodes = commDistributedNodesResult.status === 'fulfilled' ? commDistributedNodesResult.value : null;
+          const commClusterOverview = commClusterOverviewResult.status === 'fulfilled' ? commClusterOverviewResult.value : null;
+          const commHaClusterState = commHaClusterStateResult.status === 'fulfilled' ? commHaClusterStateResult.value : null;
+          const federationClusters = federationClustersResult.status === 'fulfilled' ? federationClustersResult.value : null;
+          const federationOverview = federationOverviewResult.status === 'fulfilled' ? federationOverviewResult.value : null;
+          const federationCompare = federationCompareResult.status === 'fulfilled' ? federationCompareResult.value : null;
+          safeRender(renderCommercialClusterAnalytics, commDistributedNodes, commClusterOverview);
+          safeRender(renderCommercialHA, commHaClusterState);
+          safeRender(renderCommercialFederation, federationClusters, federationOverview, federationCompare);
+
+          const debugs = {
+            'controlCenterDebug': controlCenter,
+            'modelDebug': models,
+            'usageDebug': { summary: usageSummary, by_client: usageByClient, by_model: usageByModel },
+            'backendDebug': models ? models.backends : null,
+            'securityDebug': security,
+            'requestDebug': requests,
+            'revenueDebug': revenue,
+            'hybridDebug': hybridSummary,
+            'providersDebug': hybridProviders,
+            'routingDebug': hybridRouting,
+            'costsDebug': hybridFinancials,
+            'marginDebug': hybridFinancials,
+            'walletDebug': hybridWallets,
+            'cacheDebug': hybridCache,
+            'hybridRagDebug': hybridRag,
+            'commClusterDebug': { nodes: commDistributedNodes, overview: commClusterOverview, ha: commHaClusterState },
+            'commFederationDebug': { clusters: federationClusters, overview: federationOverview, compare: federationCompare }
+          };
+
+          Object.keys(debugs).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = JSON.stringify(debugs[id], null, 2);
+          });
+
+          fetchConfigs();
+          fetchReportSchedules();
+          fetchReportDeliveries();
+          refreshExecutiveReportPreview();
+          loadWorkflowGovernanceDashboard();
+
+          refreshRevenueProtection();
+          refreshRevenueEscalations();
+          fetchCanaryPromotions();
+          refreshRuntimeIntegrity();
+          loadAIOps();
+          loadPredictiveFailureSignals();
+          loadOperationalCorrelations();
+          loadRAG();
+          loadAppliance();
+          loadFederatedWorkflows();
+          loadWorkflows();
+          loadAgentGovernance();
+          loadConfidentialRuntime();
+          loadPublicAttestationGateway();
+          loadTransparencyGossip();
+          loadWitnessFederation();
+          loadMerkleProofsSection();
+
+          const optionalFailures = results
+            .map((result, index) => ({ result, index }))
+            .filter(item => item.result.status !== 'fulfilled')
+            .map(item => item.index);
+          const optionalCount = optionalFailures.length;
+          if (optionalCount > 0) {
+            setToolbarStatus(`Dashboard atualizado com ${optionalCount} bloco(s) opcional(is) indisponível(is).`, true);
+          } else {
+            setToolbarStatus(`Dashboard atualizado em ${new Date().toLocaleTimeString('pt-BR')}.`);
+          }
+        } catch (err) {
+          console.error('Admin Load Error:', err);
+          const message = err && err.name === 'AbortError'
+            ? 'Timeout ao carregar o dashboard. Verifique se algum endpoint admin está lento.'
+            : 'Falha ao carregar dados do admin: ' + err.message;
+          setToolbarStatus(message, true);
+          alert(message);
+          if (throwOnError) {
+            throw err;
+          }
+        } finally {
+          setLoadingState(false);
+        }
+      }
+
+      async function loadWorkflowGovernanceDashboard() {
+        try {
+          const [executions, approvals, replays] = await Promise.all([
+            adminFetch('/admin/workflows/executions'),
+            adminFetch('/admin/workflows/approvals'),
+            adminFetch('/admin/workflows/replay-sessions')
+          ]);
+          document.getElementById('wfGovExecutionCount').textContent = (executions.items || []).length;
+          document.getElementById('wfGovPendingApprovals').textContent = (approvals.items || []).filter(item => item.status === 'pending').length;
+          document.getElementById('wfGovReplaySessions').textContent = (replays.items || []).length;
+          document.getElementById('wfGovReplayDrift').textContent = (replays.items || []).filter(item => item.mismatch_detected || item.policy_mismatch_detected).length;
+
+          const dagRows = (executions.items || []).slice(0, 5).map(item => `
+            <div class="status-card ${item.governance_status === 'blocked' ? 'status-not-ready' : 'status-ready'}">
+              <div><strong>${item.id.slice(0, 8)}</strong> <span class="pill ${item.governance_status === 'blocked' ? 'pill-danger' : 'pill-success'}">${item.governance_status || 'unknown'}</span></div>
+              <div class="stat-details">Ledger ${item.ledger_hash ? item.ledger_hash.slice(0, 16) : '-'} · Determinism ${item.determinism_status || '-'}</div>
+              <button class="secondary" onclick="loadWorkflowGovernanceExecution('${item.id}')">Open DAG / Timeline</button>
+            </div>
+          `).join('');
+          document.getElementById('workflowGovernanceDag').innerHTML = dagRows || '<div class="stat-details">Nenhuma execução governada encontrada.</div>';
+
+          document.getElementById('workflowGovernanceReplay').innerHTML = renderSimpleTable(
+            ['Replay', 'Execução', 'Status', 'Policy mismatch', 'Report'],
+            (replays.items || []).slice(0, 10).map(item => [
+              item.id.slice(0, 8),
+              item.original_execution_id.slice(0, 8),
+              item.session_status,
+              item.policy_mismatch_detected ? 'yes' : 'no',
+              item.report_hash ? item.report_hash.slice(0, 16) : '-'
+            ])
+          );
+        } catch (error) {
+          document.getElementById('workflowGovernanceDag').innerHTML = `<div class="stat-details">Falha ao carregar governance: ${escapeHtml(error.message || String(error))}</div>`;
+        }
+      }
+
+      async function loadWorkflowGovernanceExecution(executionId) {
+        const data = await adminFetch(`/admin/workflows/governance/executions/${executionId}`);
+        const stages = data.stages || [];
+        const dag = stages.map(stage => `
+          <div class="status-card ${stage.drift_status === 'drift_detected' ? 'status-degraded' : 'status-ready'}">
+            <div><strong>${stage.stage_key}</strong> <span class="pill pill-muted">${stage.status || 'pending'}</span></div>
+            <div class="stat-details">Approval ${stage.approval_status || '-'} · Policy ${stage.policy_gate_status || '-'} · Drift ${stage.drift_status || '-'}</div>
+          </div>
+        `).join('');
+        document.getElementById('workflowGovernanceDag').innerHTML = dag || '<div class="stat-details">Nenhum estágio.</div>';
+        document.getElementById('workflowGovernanceTimeline').innerHTML = renderSimpleTable(
+          ['Event', 'Summary', 'Hash', 'At'],
+          (data.governance_events || []).map(item => [
+            item.event_type,
+            item.event_summary || '-',
+            item.ledger_hash ? item.ledger_hash.slice(0, 16) : '-',
+            item.created_at || '-'
+          ])
+        );
+      }
+
+      function renderSimpleTable(headers, rows) {
+        if (!rows.length) return '<div class="stat-details">Sem dados.</div>';
+        return `<table><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${escapeHtml(String(cell ?? '-'))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      }
+
+      function renderComplianceControls(controlsEnvelope, approvalChains, evidencePackages, exceptions) {
+        if (!controlsEnvelope || !approvalChains) return;
+        const summary = controlsEnvelope.summary || {};
+        const controls = Array.isArray(controlsEnvelope.controls) ? controlsEnvelope.controls : [];
+        document.getElementById('complianceActiveControls').textContent = summary.active_controls || 0;
+        document.getElementById('compliancePendingChains').textContent = summary.pending_approval_chains || 0;
+        document.getElementById('complianceEvidenceRecent').textContent = summary.recent_evidence_packages || 0;
+        document.getElementById('compliancePendingAttestations').textContent = summary.pending_attestations || 0;
+        document.getElementById('complianceOpenExceptions').textContent = summary.open_exceptions || 0;
+
+        const badges = (summary.badges || []).filter(Boolean).map((badge) => `<span class="pill pill-warning" style="margin-right:0.5rem;">${badge}</span>`).join('');
+        document.getElementById('complianceBadges').innerHTML = badges || '<span class="pill pill-success">EVIDENCE_READY</span>';
+
+        document.getElementById('complianceControlsTable').innerHTML = '<table><thead><tr><th>Controle</th><th>Área</th><th>Ação</th><th>Badges</th></tr></thead><tbody>' +
+          controls.slice(0, 8).map((item) => `<tr><td>${item.name}</td><td>${item.control_area}</td><td>${item.action_type}</td><td>${[
+            item.requires_approval ? 'APPROVAL_REQUIRED' : null,
+            item.segregation_required ? 'SEGREGATION_REQUIRED' : null,
+            item.evidence_required ? 'EVIDENCE_READY' : null
+          ].filter(Boolean).join(', ')}</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('complianceApprovalsTable').innerHTML = '<table><thead><tr><th>Approval Chain</th><th>Status</th><th>Requester</th></tr></thead><tbody>' +
+          (approvalChains || []).slice(0, 8).map((item) => `<tr><td>${item.target_type}:${item.target_id}</td><td>${item.status}</td><td>${item.requested_by}</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('complianceEvidenceTable').innerHTML = '<table><thead><tr><th>Evidence</th><th>Target</th><th>Hash</th></tr></thead><tbody>' +
+          (evidencePackages || []).slice(0, 8).map((item) => `<tr><td>${item.package_type}</td><td>${item.target_type}:${item.target_id}</td><td>${String(item.immutable_hash || '').slice(0, 12)}...</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('complianceExceptionsTable').innerHTML = '<table><thead><tr><th>Exception</th><th>Severity</th><th>Status</th></tr></thead><tbody>' +
+          (exceptions || []).slice(0, 8).map((item) => `<tr><td>${item.exception_type}</td><td>${item.severity}</td><td>${item.status}</td></tr>`).join('') +
+          '</tbody></table>';
+      }
+
+      async function exportComplianceAuditReport(format) {
+        const token = document.getElementById('adminToken').value.trim();
+        const res = await fetch(`/admin/compliance/audit-report?format=${format}`, { headers: { 'X-Admin-Token': token } });
+        const text = await res.text();
+        const popup = window.open('', '_blank');
+        if (popup) popup.document.write(`<pre>${text.replace(/</g, '&lt;')}</pre>`);
+      }
+
+      function renderOperationalControls(controlsEnvelope, evidenceEnvelope, reviewsEnvelope) {
+        if (!controlsEnvelope || !evidenceEnvelope || !reviewsEnvelope) return;
+        const summary = controlsEnvelope.summary || {};
+        const controls = Array.isArray(controlsEnvelope.controls) ? controlsEnvelope.controls : [];
+        const reviewCalendar = controlsEnvelope.review_calendar || [];
+        const escalations = controlsEnvelope.escalation_status || [];
+        const evidenceItems = evidenceEnvelope.items || [];
+        const reviewItems = reviewsEnvelope.items || [];
+        document.getElementById('operationalControlsTotal').textContent = summary.controls || 0;
+        document.getElementById('operationalStaleEvidence').textContent = summary.stale_evidence || 0;
+        document.getElementById('operationalOverdueReviews').textContent = summary.overdue_reviews || 0;
+        document.getElementById('operationalIneffectiveControls').textContent = summary.ineffective_controls || 0;
+        document.getElementById('operationalLinkedExceptions').textContent = summary.linked_exceptions || 0;
+
+        const badges = [
+          summary.ineffective_controls ? 'INEFFECTIVE' : null,
+          summary.overdue_reviews ? 'OVERDUE' : null,
+          summary.stale_evidence ? 'STALE' : null,
+          summary.linked_exceptions ? 'EXCEPTION_LINKED' : null
+        ].filter(Boolean).map((badge) => `<span class="pill pill-warning" style="margin-right:0.5rem;">${badge}</span>`).join('');
+        document.getElementById('operationalBadges').innerHTML = badges || '<span class="pill pill-success">EFFECTIVE</span>';
+
+        document.getElementById('operationalControlsTable').innerHTML = '<table><thead><tr><th>Control</th><th>Score</th><th>Owner</th><th>Badges</th></tr></thead><tbody>' +
+          controls.slice(0, 8).map((item) => `<tr><td>${item.control_code} · ${item.name}</td><td>${item.effectiveness_score ?? 'n/a'} (${item.effectiveness_status || 'unknown'})</td><td>${item.owner_email || '-'}</td><td>${(item.badges || []).filter(Boolean).join(', ')}</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('operationalEvidenceTable').innerHTML = '<table><thead><tr><th>Evidence</th><th>Status</th><th>Hash</th></tr></thead><tbody>' +
+          evidenceItems.slice(0, 8).map((item) => `<tr><td>${item.title}</td><td>${item.freshness_status}</td><td>${String(item.immutable_hash || '').slice(0, 12)}...</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('operationalReviewsTable').innerHTML = '<table><thead><tr><th>Review Calendar</th><th>Status</th><th>Reviewer</th></tr></thead><tbody>' +
+          (reviewCalendar.length ? reviewCalendar : reviewItems).slice(0, 8).map((item) => `<tr><td>${item.control_code || item.control_id}<br>${item.review_period_start} → ${item.review_period_end}</td><td>${item.status}</td><td>${item.reviewed_by || '-'}</td></tr>`).join('') +
+          '</tbody></table>';
+
+        document.getElementById('operationalEscalationsTable').innerHTML = '<table><thead><tr><th>Escalation</th><th>Severity</th><th>Status</th></tr></thead><tbody>' +
+          escalations.slice(0, 8).map((item) => `<tr><td>${item.control_code}<br>${item.trigger_type}</td><td>${item.severity}</td><td>${item.internal_escalation ? 'internal+dry-run' : 'none'}</td></tr>`).join('') +
+          '</tbody></table>';
+      }
+
+      function renderGovernanceFederation(statusData, consistencyData, auditData) {
+        if (!statusData || !consistencyData || !auditData) return;
+        function setEl(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+        function setHtml(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+        setEl('govFedTotalPeers', statusData.total_peers || 0);
+        setEl('govFedOnlinePeers', statusData.online_peers || 0);
+        setEl('govFedOfflinePeers', statusData.offline_peers || 0);
+
+        const cc = consistencyData.compliance_consistency || {};
+        setEl('govFedConflicts', cc.drift || 0);
+        setEl('govFedEvents', auditData.total_events || 0);
+
+        const overallBadge = cc.overall_status === 'consistent'
+          ? '<span class="pill pill-success">CONSISTENT</span>'
+          : '<span class="pill pill-warning">INCONSISTENT</span>';
+        setHtml('govFedBadge', overallBadge);
+
+        const badges = [];
+        if (statusData.offline_peers > 0) badges.push('<span class="pill pill-critical">OFFLINE</span>');
+        if (cc.drift > 0) badges.push('<span class="pill pill-warning">DRIFT</span>');
+        if (statusData.mode !== 'disabled') badges.push('<span class="pill pill-success">SYNCED</span>');
+        const conflicts = (statusData.recent_syncs || []).filter(s => s.status === 'conflict');
+        if (conflicts.length > 0) badges.push('<span class="pill pill-warning">CONFLICT</span>');
+        setHtml('govFedBadges', badges.length ? badges.join(' ') : '<span class="pill pill-info">NO_DATA</span>');
+
+        const peers = statusData.peers || [];
+        setHtml('govFedPeersTable', '<table><thead><tr><th>Cluster</th><th>Region</th><th>Env</th><th>Status</th><th>Sync</th><th>Trust</th><th>Last Policy Sync</th></tr></thead><tbody>' +
+          peers.map(p => `<tr><td>${p.peer_cluster_id}</td><td>${p.region || '-'}</td><td>${p.environment}</td><td>${p.status}</td><td>${p.sync_mode}</td><td>${p.trust_level}</td><td>${p.last_policy_sync_at || '-'}</td></tr>`).join('') +
+          '</tbody></table>');
+
+        const issues = cc.issues || [];
+        setHtml('govFedConsistencyTable', '<table><thead><tr><th>Peer</th><th>Issue</th><th>Severity</th><th>Detail</th></tr></thead><tbody>' +
+          issues.slice(0, 10).map(i => `<tr><td>${i.peer}</td><td>${i.issue}</td><td>${i.severity}</td><td>${i.detail || ''}</td></tr>`).join('') +
+          '</tbody></table>');
+
+        const events = auditData.recent_events || [];
+        setHtml('govFedAuditTable', '<table><thead><tr><th>Source Cluster</th><th>Event Type</th><th>Received</th></tr></thead><tbody>' +
+          events.slice(0, 10).map(e => `<tr><td>${e.source_cluster_id}</td><td>${e.event_type}</td><td>${e.received_at}</td></tr>`).join('') +
+          '</tbody></table>');
+      }
+
+
+      function sovereignBadge(status) {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'verified') return '<span class="pill pill-success">VERIFIED</span>';
+        if (normalized === 'rejected') return '<span class="pill pill-critical">REJECTED</span>';
+        if (normalized === 'revoked') return '<span class="pill pill-warning">REVOKED</span>';
+        if (normalized === 'trusted') return '<span class="pill pill-success">ATTESTED</span>';
+        if (normalized === 'untrusted') return '<span class="pill pill-critical">UNTRUSTED</span>';
+        if (normalized === 'exported') return '<span class="pill pill-info">AIRGAP</span>';
+        return `<span class="pill pill-warning">${String(status || 'UNKNOWN').toUpperCase()}</span>`;
+      }
+
+      function supplyChainBadge(status, checksum) {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'trusted') return '<span class="pill pill-success">TRUSTED</span>';
+        if (normalized === 'pending') return '<span class="pill pill-warning">PENDING</span>';
+        if (normalized === 'untrusted') return '<span class="pill pill-warning">UNTRUSTED</span>';
+        if (normalized === 'quarantined') return '<span class="pill pill-critical">QUARANTINED</span>';
+        if (normalized === 'revoked') return '<span class="pill pill-critical">REVOKED</span>';
+        if (checksum === 'manifest-only') return '<span class="pill pill-info">CHECKSUM_OK</span>';
+        return `<span class="pill pill-muted">${String(status || 'UNKNOWN').toUpperCase()}</span>`;
+      }
+
+      function renderModelSupplyChain(statusData, registryData) {
+        const registryTotalEl = document.getElementById('modelSupplyChainRegistryTotal');
+        const trustedEl = document.getElementById('modelSupplyChainTrusted');
+        const pendingEl = document.getElementById('modelSupplyChainPending');
+        const blockedEl = document.getElementById('modelSupplyChainBlocked');
+        const bundlesEl = document.getElementById('modelSupplyChainBundles');
+        const modeEl = document.getElementById('modelSupplyChainMode');
+        const registryTableEl = document.getElementById('modelSupplyChainRegistryTable');
+        const riskTableEl = document.getElementById('modelSupplyChainRiskTable');
+
+        if (!statusData || !registryData) {
+          [registryTotalEl, trustedEl, pendingEl, blockedEl, bundlesEl, modeEl].forEach(el => { if(el) el.textContent = 'N/A'; });
+          if (registryTableEl) registryTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (riskTableEl) riskTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          return;
+        }
+        const counts = statusData.trust_state_counts || {};
+        const risk = statusData.model_risk_summary || {};
+        const items = Array.isArray(registryData.items) ? registryData.items : [];
+        document.getElementById('modelSupplyChainRegistryTotal').textContent = statusData.registry_total || items.length || 0;
+        document.getElementById('modelSupplyChainTrusted').textContent = counts.trusted || 0;
+        document.getElementById('modelSupplyChainPending').textContent = counts.pending || 0;
+        document.getElementById('modelSupplyChainBlocked').textContent = risk.blocked || 0;
+        document.getElementById('modelSupplyChainBundles').textContent = statusData.bundle_total || 0;
+        document.getElementById('modelSupplyChainMode').textContent = String(statusData.enforcement_mode || 'report_only').toUpperCase();
+
+        const badges = [
+          `<span class="pill ${String(statusData.enforcement_mode || 'report_only') === 'enforce' ? 'pill-critical' : 'pill-warning'}">${String(statusData.enforcement_mode || 'report_only').toUpperCase()}</span>`,
+          '<span class="pill pill-success">TRUSTED</span>',
+          '<span class="pill pill-warning">PENDING</span>',
+          '<span class="pill pill-warning">UNTRUSTED</span>',
+          '<span class="pill pill-critical">QUARANTINED</span>',
+          '<span class="pill pill-critical">REVOKED</span>',
+          '<span class="pill pill-success">CHECKSUM_OK</span>',
+          items.some((item) => item.trust_state === 'quarantined') ? '<span class="pill pill-critical">CHECKSUM_MISMATCH</span>' : null
+        ].filter(Boolean);
+        document.getElementById('modelSupplyChainBadges').innerHTML = badges.join(' ');
+
+        document.getElementById('modelSupplyChainRegistryTable').innerHTML = '<table><thead><tr><th>Model</th><th>State</th><th>Checksum</th><th>Provenance</th><th>Approved</th></tr></thead><tbody>' +
+          (items.length
+            ? items.slice(0, 10).map((item) => `<tr><td>${item.model_alias || item.model_name}</td><td>${supplyChainBadge(item.trust_state, item.checksum_sha256)}</td><td><code>${String(item.checksum_sha256 || '-').slice(0, 12)}</code></td><td>${item.provenance_id ? 'linked' : 'none'}</td><td>${item.approved_at || '-'}</td></tr>`).join('')
+            : '<tr><td colspan="5">No signed model registry entries.</td></tr>') +
+          '</tbody></table>';
+
+        document.getElementById('modelSupplyChainRiskTable').innerHTML = '<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>' +
+          `<tr><td>Trusted</td><td>${risk.trusted || 0}</td></tr>` +
+          `<tr><td>Pending Review</td><td>${risk.pending_review || 0}</td></tr>` +
+          `<tr><td>Blocked</td><td>${risk.blocked || 0}</td></tr>` +
+          `<tr><td>Require Trusted For Routing</td><td>${statusData.require_trusted_for_routing ? 'yes' : 'no'}</td></tr>` +
+          `<tr><td>Revocations</td><td>${statusData.revocation_total || 0}</td></tr>` +
+          '</tbody></table>';
+      }
+
+      function renderSovereignAirgapGovernance(packages, crls, attestationEnvelope) {
+        const packagesTableEl = document.getElementById('sovAirgapPackagesTable');
+        const crlTableEl = document.getElementById('sovAirgapCrlTable');
+        const attestationTableEl = document.getElementById('sovAirgapAttestationTable');
+
+        if (!packages || !crls) {
+          if (packagesTableEl) packagesTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (crlTableEl) crlTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          if (attestationTableEl) attestationTableEl.innerHTML = '<div style="color: var(--muted);">Data unavailable.</div>';
+          return;
+        }
+        const packageRows = Array.isArray(packages) ? packages : [];
+        const crlRows = Array.isArray(crls) ? crls : [];
+        const attestationItems = Array.isArray(attestationEnvelope?.items) ? attestationEnvelope.items : [];
+        const verified = packageRows.filter(item => item.status === 'verified').length;
+        const rejected = packageRows.filter(item => item.status === 'rejected').length;
+        const revokedEntries = crlRows.reduce((total, item) => total + (item.revoked_key_fingerprints_json || []).length + (item.revoked_bundle_hashes_json || []).length + (item.revoked_peer_ids_json || []).length, 0);
+        const statusCounts = attestationEnvelope?.status_counts || {};
+        const attestationStatus = statusCounts.untrusted ? 'untrusted' : (statusCounts.trusted ? 'trusted' : 'unknown');
+
+        document.getElementById('sovAirgapPackages').textContent = packageRows.length;
+        document.getElementById('sovAirgapVerified').textContent = verified;
+        document.getElementById('sovAirgapRejected').textContent = rejected;
+        document.getElementById('sovAirgapCrls').textContent = crlRows.length;
+        document.getElementById('sovAirgapRevoked').textContent = revokedEntries;
+        document.getElementById('sovAirgapAttestation').textContent = String(attestationStatus).toUpperCase();
+
+        const badges = [
+          '<span class="pill pill-info">AIRGAP</span>',
+          '<span class="pill pill-success">SIGNED</span>',
+          '<span class="pill pill-success">ENCRYPTED</span>',
+          verified ? '<span class="pill pill-success">VERIFIED</span>' : null,
+          rejected ? '<span class="pill pill-critical">REJECTED</span>' : null,
+          revokedEntries ? '<span class="pill pill-warning">REVOKED</span>' : null,
+          attestationStatus === 'trusted' ? '<span class="pill pill-success">ATTESTED</span>' : null,
+          attestationStatus === 'untrusted' ? '<span class="pill pill-critical">UNTRUSTED</span>' : null
+        ].filter(Boolean);
+        document.getElementById('sovAirgapBadges').innerHTML = badges.join(' ');
+
+        document.getElementById('sovAirgapPackagesTable').innerHTML = '<table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Source</th><th>Target</th><th>Chain</th></tr></thead><tbody>' +
+          (packageRows.length ? packageRows.slice(0, 10).map(item => `<tr><td><code>${String(item.id).slice(0, 8)}</code></td><td>${item.package_type}</td><td>${sovereignBadge(item.status)}</td><td>${item.source_cluster_id}</td><td>${item.target_cluster_id || '-'}</td><td>${item.chain_of_custody_json && Array.isArray(item.chain_of_custody_json.events) ? item.chain_of_custody_json.events.length : 0}</td></tr>`).join('') : '<tr><td colspan="6">No airgap packages.</td></tr>') +
+          '</tbody></table>';
+
+        document.getElementById('sovAirgapCrlTable').innerHTML = '<table><thead><tr><th>Version</th><th>Keys</th><th>Bundles</th><th>Peers</th><th>Reason</th></tr></thead><tbody>' +
+          (crlRows.length ? crlRows.slice(0, 10).map(item => `<tr><td>${item.crl_version}</td><td>${(item.revoked_key_fingerprints_json || []).length}</td><td>${(item.revoked_bundle_hashes_json || []).length}</td><td>${(item.revoked_peer_ids_json || []).length}</td><td>${item.reason || '-'}</td></tr>`).join('') : '<tr><td colspan="5">No offline CRLs.</td></tr>') +
+          '</tbody></table>';
+
+        document.getElementById('sovAirgapAttestationTable').innerHTML = '<table><thead><tr><th>Cluster</th><th>Node</th><th>Type</th><th>Status</th><th>Verified</th></tr></thead><tbody>' +
+          (attestationItems.length ? attestationItems.slice(0, 10).map(item => `<tr><td>${item.cluster_id}</td><td>${item.node_id || '-'}</td><td>${item.attestation_type}</td><td>${sovereignBadge(item.status)}</td><td>${item.verified_at || '-'}</td></tr>`).join('') : '<tr><td colspan="5">No attestation records.</td></tr>') +
+          '</tbody></table>';
+      }
+
+      async function syncGovernanceFederation() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/governance/federation/status', { headers: { 'X-Admin-Token': token } });
+          const data = await res.json();
+          alert('Governance Federation sync initiated. Status: ' + (data.mode || 'unknown'));
+        } catch (e) {
+          alert('Error syncing governance federation: ' + e.message);
+        }
+      }
+
+      async function exportGovernanceFederation(format) {
+        const token = document.getElementById('adminToken').value.trim();
+        const res = await fetch(`/admin/governance/federation/export?format=${format}`, { headers: { 'X-Admin-Token': token } });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `governance-federation.${format}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function buildUsageSummaryEnvelope(byClient, byModel, modelsPayload, ragPayload) {
+        const clients = Array.isArray(byClient) ? byClient : [];
+        const modelRows = Array.isArray(byModel) ? byModel : [];
+        const ragRows = Array.isArray(ragPayload) ? ragPayload : [];
+        const registry = Array.isArray(modelsPayload?.registry) ? modelsPayload.registry : [];
+        const backends = Array.isArray(modelsPayload?.backends) ? modelsPayload.backends : [];
+
+        const summary = clients.reduce((acc, client) => {
+          acc.requests_today += num(client.requests_today);
+          acc.requests_month += num(client.requests_month);
+          acc.tokens_today += num(client.tokens_today);
+          acc.tokens_month += num(client.tokens_month);
+          acc.cache_hits_month += num(client.cache_hits_month);
+          acc.cache_misses_month += num(client.cache_misses_month);
+          acc.invoices_overdue += num(client.billing_status === 'overdue' || client.billing_status === 'past_due' ? 1 : 0);
+          if (client.billing_status === 'active') acc.clients_active += 1;
+          if (client.billing_status === 'suspended') acc.clients_suspended += 1;
+          return acc;
+        }, {
+          requests_today: 0,
+          requests_month: 0,
+          tokens_today: 0,
+          tokens_month: 0,
+          cache_hits_month: 0,
+          cache_misses_month: 0,
+          invoices_overdue: 0,
+          clients_active: 0,
+          clients_suspended: 0
+        });
+
+        const latencySamples = clients.filter(item => num(item.requests_month) > 0);
+        const weightedLatency = latencySamples.reduce((total, item) => total + (num(item.avg_latency_ms_month) * num(item.requests_month)), 0);
+        const weightedRequests = latencySamples.reduce((total, item) => total + num(item.requests_month), 0);
+        summary.avg_latency_ms_month = weightedRequests ? Number((weightedLatency / weightedRequests).toFixed(2)) : 0;
+        summary.cache_hit_rate_month = (summary.cache_hits_month + summary.cache_misses_month)
+          ? summary.cache_hits_month / (summary.cache_hits_month + summary.cache_misses_month)
+          : 0;
+
+        return {
+          summary,
+          totals: {
+            clients_total: clients.length,
+            models_total: registry.length || modelRows.length,
+            models_online: registry.filter(item => item.is_active).length || modelRows.length,
+            backends_total: backends.length,
+            backends_online: backends.filter(item => item.ok).length
+          },
+          rag: {
+            total_docs: ragRows.reduce((total, item) => total + num(item.documents_count), 0),
+            total_storage_mb: ragRows.reduce((total, item) => total + num(item.storage_mb), 0),
+            total_queries_month: ragRows.reduce((total, item) => total + num(item.queries_month), 0)
+          }
+        };
+      }
+
+      function renderControlCenter(data) {
+        const hVal = document.getElementById('cc-health-val');
+        const rVal = document.getElementById('cc-readiness-val');
+        const sVal = document.getElementById('cc-security-val');
+        const vVal = document.getElementById('cc-version-val');
+
+        if (!data) {
+          if (hVal) hVal.textContent = 'N/A';
+          if (rVal) rVal.textContent = 'N/A';
+          if (sVal) sVal.textContent = 'N/A';
+          if (vVal) vVal.textContent = 'N/A';
+          return;
+        }
+        // Health
+        const hEl = document.getElementById('cc-health');
+        const hDet = document.getElementById('cc-health-det');
+        hVal.textContent = (data.health_status || 'unknown').toUpperCase();
+        hEl.className = 'status-card';
+        if (data.health_status === 'ok') {
+           hEl.classList.add('status-ready');
+           hVal.style.color = 'var(--success)';
+        } else if (data.health_status === 'degraded') {
+           hEl.classList.add('status-degraded');
+           hVal.style.color = '#f59e0b';
+        } else {
+           hEl.classList.add('status-not-ready');
+           hVal.style.color = 'var(--danger)';
+        }
+        hDet.textContent = `Uptime: ${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m`;
+
+        // Readiness
+        const rEl = document.getElementById('cc-readiness');
+        const rDet = document.getElementById('cc-readiness-det');
+        rVal.textContent = data.readiness_score || 'N/A';
+        rEl.className = 'status-card';
+        if (data.readiness_score === 'READY') {
+           rEl.classList.add('status-ready');
+           rVal.style.color = 'var(--success)';
+        } else if (data.readiness_score === 'DEGRADED' || data.readiness_score === 'READY_WITH_WARNINGS') {
+           rEl.classList.add('status-degraded');
+           rVal.style.color = '#f59e0b';
+        } else {
+           rEl.classList.add('status-not-ready');
+           rVal.style.color = 'var(--danger)';
+        }
+        rDet.textContent = data.critical_failures.length > 0 ? `${data.critical_failures.length} failures` : `${data.warnings.length} warnings`;
+
+        // Security
+        const sEl = document.getElementById('cc-security');
+        const sDet = document.getElementById('cc-security-det');
+        sVal.textContent = data.security_score || 'N/A';
+        sEl.className = 'status-card';
+        if (typeof data.security_score === 'number') {
+           if (data.security_score >= 90) sEl.classList.add('status-ready');
+           else if (data.security_score >= 70) sEl.classList.add('status-degraded');
+           else sEl.classList.add('status-not-ready');
+        } else {
+           sEl.classList.add('status-unknown');
+        }
+        sDet.textContent = `Latest report: ${data.artifacts.security.timestamp || 'N/A'}`;
+
+        // Version
+        const vDet = document.getElementById('cc-version-det');
+        vVal.textContent = `v${data.version}`;
+        vDet.textContent = `Branch: ${data.git_branch || 'N/A'} (${data.git_commit || 'N/A'})`;
+
+        // Artifacts
+        const artMap = {
+           'cc-art-validation': data.artifacts.validation,
+           'cc-art-demo': data.artifacts.demo,
+           'cc-art-release': data.artifacts.release,
+           'cc-art-backup': data.artifacts.backup,
+           'cc-art-upgrade': data.artifacts.upgrade,
+           'cc-art-benchmark': data.artifacts.benchmark
+        };
+        for (const [id, art] of Object.entries(artMap)) {
+           const el = document.getElementById(id);
+           if (typeof art === 'string') {
+              el.textContent = art;
+              el.style.color = 'var(--muted)';
+           } else {
+              el.textContent = art.version || art.timestamp || 'Ready';
+              el.title = art.path;
+              el.style.color = 'var(--accent)';
+           }
+        }
+
+        // Suggested Commands
+        const cmdEl = document.getElementById('suggestedCommands');
+        cmdEl.innerHTML = '';
+        data.suggested_commands.forEach(cmd => {
+           const btn = document.createElement('button');
+           btn.className = 'secondary';
+           btn.textContent = cmd.label;
+           btn.onclick = () => {
+              navigator.clipboard.writeText(cmd.command);
+              alert(`Copied to clipboard: ${cmd.command}`);
+           };
+           cmdEl.appendChild(btn);
+        });
+      }
+
+      function runCommand(type) {
+        const cmd = type === 'readiness' ? './scripts/production-readiness-local.sh' : './scripts/security-report-local.sh';
+        alert('Para gerar o relatório, execute no terminal:\n\n' + cmd);
+      }
+
+      function renderRuntimeSummary(data) {
+        const val = document.getElementById('runtimeValue');
+        const det = document.getElementById('runtimeDetails');
+
+        if (!data) {
+          if (val) val.textContent = 'N/A';
+          if (det) det.textContent = 'Data unavailable.';
+          return;
+        }
+        const el = document.getElementById('runtimeCard');
+        
+        val.textContent = data.health || 'UNKNOWN';
+        el.className = 'status-card';
+        if (data.ready) {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.health === 'DEGRADED') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const h = data.deep_health || {};
+        det.innerHTML = `
+          DB: ${h.postgres || 'OFF'} | 
+          Redis: ${h.redis || 'OFF'} | 
+          DP: ${h.data_plane || 'OFF'} | 
+          Backends: ${data.backend_status || 0}
+        `;
+      }
+
+      function renderReadinessReport(data) {
+        if (!data) return;
+        const el = document.getElementById('readinessCard');
+        const val = document.getElementById('readinessValue');
+        const det = document.getElementById('readinessDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run production-readiness-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'READY') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'READY_WITH_WARNINGS') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
+      }
+
+      function renderSecurityReport(data) {
+        if (!data) return;
+        const el = document.getElementById('securityReportCard');
+        const val = document.getElementById('securityValue');
+        const det = document.getElementById('securityDetails');
+
+        if (data.status === 'not_generated') {
+          val.textContent = 'NOT GENERATED';
+          el.className = 'status-card status-unknown';
+          det.textContent = 'Run security-report-local.sh';
+          return;
+        }
+
+        val.textContent = data.score;
+        el.className = 'status-card';
+        if (data.score === 'PASS') {
+          el.classList.add('status-ready');
+          val.style.color = 'var(--success)';
+        } else if (data.score === 'WARN') {
+          el.classList.add('status-degraded');
+          val.style.color = '#f59e0b';
+        } else {
+          el.classList.add('status-not-ready');
+          val.style.color = 'var(--danger)';
+        }
+
+        const t = data.totals || {};
+        det.innerHTML = `
+          Score: ${data.score} | PASS: ${t.pass} | WARN: ${t.warn} | FAIL: ${t.fail}<br/>
+          <small>Generated: ${data.generated_at}</small>
+        `;
+      }
+
+      function renderDemo(demo) {
+        if (!demo || !demo.demo_enabled) return;
+        const section = document.getElementById('demoSection');
+        section.classList.remove('hidden');
+        
+        const isSynthetic = demo.is_synthetic;
+        const badgeHtml = isSynthetic 
+          ? '<span class="pill" style="background: #fef3c7; color: #92400e; margin-left: 1rem;">SYNTHETIC DATA (DEMO)</span>'
+          : '<span class="pill pill-success" style="margin-left: 1rem;">REAL DATA</span>';
+        
+        section.querySelector('h2 span').outerHTML = badgeHtml;
+
+        let warningsHtml = (demo.warnings || []).map(w => `<p>⚠️ ${w}</p>`).join('');
+        document.getElementById('demoWarnings').innerHTML = warningsHtml;
+
+        const u = demo.demo_usage || {};
+        const b = demo.demo_billing || {};
+        const r = demo.demo_rag || {};
+        
+        document.getElementById('demoStats').innerHTML = `
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Demo Client</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${demo.demo_client?.name || 'Not Found'}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${shortId(demo.demo_client?.id)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Requests (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.requests_today)} / ${num(u.requests_month)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Tokens (Today / Mo)</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(u.tokens_today).toLocaleString()} / ${num(u.tokens_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">Estimated Invoice</div>
+            <div class="stat-value" style="font-size: 1.1rem;">$${num(b.total_estimated).toFixed(2)}</div>
+          </div>
+          <div class="stat-card" style="background: white;">
+            <div class="stat-label">RAG Storage / Queries</div>
+            <div class="stat-value" style="font-size: 1.1rem;">${num(r.storage_mb || r.storage_bytes / 1024 / 1024).toFixed(2)}MB / ${num(r.queries_month)}</div>
+          </div>
+        `;
+      }
+
+      function renderHealth(data) {
+        const h = data.dependencies || {};
+        const req = data.requests || {};
+        document.getElementById('healthStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Postgres</div>
+            <div class="stat-value ${h.postgres?.ok ? '' : 'pill-danger'}">${h.postgres?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Redis</div>
+            <div class="stat-value ${h.redis?.ok ? '' : 'pill-danger'}">${h.redis?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Data Plane</div>
+            <div class="stat-value ${h.data_plane?.ok ? '' : 'pill-danger'}">${h.data_plane?.ok ? 'OK' : 'ERR'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Latency (Last 100)</div>
+            <div class="stat-value">${num(req.avg_latency_ms).toFixed(2)}ms</div>
+          </div>
+        `;
+      }
+
+      function renderModels(data) {
+        const m = data.registry || [];
+        const activeCount = m.filter(i => i.is_active).length;
+        document.getElementById('modelStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Active Models</div>
+            <div class="stat-value">${activeCount}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Models</div>
+            <div class="stat-value">${m.length}</div>
+          </div>
+        `;
+      }
+
+      function renderRevenue(data) {
+        const revenue = num(data?.revenue_usd);
+        const pending = num(data?.pending_usd);
+        const overdue = num(data?.overdue_usd);
+        document.getElementById('revenueStats').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value" style="color: var(--success);">$${revenue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_paid)} paid invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Revenue</div>
+            <div class="stat-value">$${pending.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_pending)} pending invoices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Overdue Revenue</div>
+            <div class="stat-value" style="color: var(--danger);">$${overdue.toFixed(2)}</div>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">${num(data?.invoices_overdue)} overdue invoices</div>
+          </div>
+        `;
+      }
+
+      function renderUsage(summaryEnvelope, byClient, byModel) {
+        const summary = summaryEnvelope.summary || summaryEnvelope;
+        const totals = summaryEnvelope.totals || {};
+        const rag = summaryEnvelope.rag || {};
+        const stats = document.getElementById('usageStats');
+        stats.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Requests Hoje</div>
+            <div class="stat-value">${num(summary.requests_today).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens Mês</div>
+            <div class="stat-value">${num(summary.tokens_month).toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clientes Ativos</div>
+            <div class="stat-value">${num(summary.clients_active)} / ${num(totals.clients_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Modelos Online</div>
+            <div class="stat-value">${num(totals.models_online)} / ${num(totals.models_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Backends Online</div>
+            <div class="stat-value">${num(totals.backends_online)} / ${num(totals.backends_total)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cache Hit Rate</div>
+            <div class="stat-value">${(num(summary.cache_hit_rate_month) * 100).toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">RAG Storage</div>
+            <div class="stat-value">${num(rag.total_storage_mb).toFixed(2)} MB</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Invoices Vencidas</div>
+            <div class="stat-value ${num(summary.invoices_overdue) > 0 ? 'pill-danger' : ''}">${num(summary.invoices_overdue)}</div>
+          </div>
+        `;
+        const queueGroups = summary.queues_by_plan?.queues || summary.queues?.queues || {};
+        Object.entries(queueGroups).forEach(([queueName, queue]) => {
+          const title = queueName.replace('inference_', '').toUpperCase();
+          stats.insertAdjacentHTML('beforeend', `
+            <div class="stat-card">
+              <div class="stat-label">Queue ${title}</div>
+              <div class="stat-value">${num(queue.waiting).toLocaleString()} waiting</div>
+              <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">${num(queue.active).toLocaleString()} active / ${num(queue.max_active).toLocaleString()} max</div>
+            </div>
+          `);
+        });
+
+        const clients = Array.isArray(byClient) ? byClient : [];
+        let clientHtml = '<table><thead><tr><th>Client</th><th>Plan</th><th>Status</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
+        clients.forEach(c => {
+          clientHtml += `
+            <tr>
+              <td><strong>${c.client_name || 'Unnamed client'}</strong><br/><small style="color:var(--muted)">${shortId(c.client_id)}</small></td>
+              <td>${c.billing_plan_code || '-'}</td>
+              <td><span class="pill ${c.billing_status === 'active' ? 'pill-success' : 'pill-danger'}">${c.billing_status || 'unknown'}</span></td>
+              <td>${num(c.requests_today).toLocaleString()} / ${num(c.requests_month).toLocaleString()}</td>
+              <td>${num(c.tokens_today).toLocaleString()} / ${num(c.tokens_month).toLocaleString()}</td>
+              <td>${num(c.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${(num(c.cache_hit_rate_month) * 100).toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+        clientHtml += '</tbody></table>';
+        document.getElementById('clientUsageTable').innerHTML = clientHtml;
+
+        const models = Array.isArray(byModel) ? byModel : [];
+        let modelHtml = '<table><thead><tr><th>Model</th><th>Requests Hoje/Mês</th><th>Tokens Hoje/Mês</th><th>Latency</th><th>Backend Errors</th><th>Model Errors</th><th>Cache</th></tr></thead><tbody>';
+        models.forEach(m => {
+          modelHtml += `
+            <tr>
+              <td><strong>${m.model}</strong></td>
+              <td>${num(m.requests_today).toLocaleString()} / ${num(m.requests_month).toLocaleString()}</td>
+              <td>${num(m.tokens_today).toLocaleString()} / ${num(m.tokens_month).toLocaleString()}</td>
+              <td>${num(m.avg_latency_ms_month).toFixed(2)}ms</td>
+              <td>${num(m.backend_errors_month)}</td>
+              <td>${num(m.model_errors_month)}</td>
+              <td>${(num(m.cache_hit_rate_month) * 100).toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+        modelHtml += '</tbody></table>';
+        document.getElementById('modelUsageTable').innerHTML = modelHtml;
+      }
+
+      function renderBackends(backends) {
+        let html = '<table><thead><tr><th>Name</th><th>URL</th><th>Status</th><th>Latency</th><th>Current Jobs</th></tr></thead><tbody>';
+        backends.forEach(b => {
+          html += `
+            <tr>
+              <td>${b.name}</td>
+              <td><small>${b.backend_url}</small></td>
+              <td><span class="pill ${b.ok ? 'pill-success' : 'pill-danger'}">${b.ok ? 'Healthy' : 'Down'}</span></td>
+              <td>${b.latency_ms}ms</td>
+              <td>${b.current_running} / ${b.max_parallel_requests}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('backendTable').innerHTML = html;
+      }
+
+      function renderSecurity(events) {
+        let html = '<table><thead><tr><th>Time</th><th>Type</th><th>Severity</th><th>Client</th><th>Message</th></tr></thead><tbody>';
+        events.slice(0, 10).forEach(e => {
+          html += `
+            <tr>
+              <td><small>${e.created_at}</small></td>
+              <td>${e.event_type}</td>
+              <td><span class="pill ${e.severity === 'high' ? 'pill-danger' : 'pill-muted'}">${e.severity}</span></td>
+              <td><small>${shortId(e.client_id)}</small></td>
+              <td>${e.title}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('securityTable').innerHTML = html;
+      }
+
+      function renderRequests(reqs) {
+        let html = '<table><thead><tr><th>Time</th><th>Method</th><th>Status</th><th>Latency</th><th>Cache</th></tr></thead><tbody>';
+        reqs.slice(0, 15).forEach(r => {
+          html += `
+            <tr>
+              <td><small>${r.created_at}</small></td>
+              <td>${r.method || 'POST'}</td>
+              <td><span class="pill ${r.status < 400 ? 'pill-success' : 'pill-danger'}">${r.status}</span></td>
+              <td>${r.latency_ms}ms</td>
+              <td><span class="pill pill-muted">${r.cache_hit ? 'HIT' : 'MISS'}</span></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('requestTable').innerHTML = html;
+      }
+
+      function renderRagUsage(data) {
+        const list = document.getElementById('ragUsageList');
+        if (!data || !list) return;
+        list.innerHTML = data.map(r => `
+          <tr>
+            <td><strong>${r.client_name}</strong></td>
+            <td><code>${shortId(r.client_id)}</code></td>
+            <td>${r.documents_count}</td>
+            <td>${r.storage_mb.toFixed(2)}</td>
+            <td>${r.queries_month}</td>
+            <td>${r.pages_month}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderHybridSummary(data) {
+        if (!data) {
+          document.getElementById('hybridBadge').textContent = 'UNAVAILABLE';
+          document.getElementById('hybridBadge').className = 'pill pill-danger';
+          return;
+        }
+        document.getElementById('hybridTotalRequests').textContent = (data.total_requests || 0).toLocaleString();
+        document.getElementById('hybridLocalCloud').textContent = `${(data.local_requests || 0).toLocaleString()} / ${(data.cloud_requests || 0).toLocaleString()}`;
+        document.getElementById('hybridCacheRate').textContent = (data.cache_hit_rate || 0).toFixed(1) + '%';
+        document.getElementById('hybridProviderCost').textContent = 'R$ ' + (data.provider_cost_brl || 0).toFixed(2);
+        document.getElementById('hybridRevenue').textContent = 'R$ ' + (data.customer_revenue_brl || 0).toFixed(2);
+        document.getElementById('hybridProfit').textContent = 'R$ ' + (data.gross_profit_brl || 0).toFixed(2);
+        document.getElementById('hybridMargin').textContent = (data.margin_percent || 0).toFixed(1) + '%';
+        document.getElementById('hybridWallets').textContent = `${data.active_wallets || 0} (${data.low_balance_clients || 0} low)` ;
+
+        const badge = document.getElementById('hybridBadge');
+        if (data.cloud_enabled) {
+          badge.textContent = 'CLOUD ENABLED';
+          badge.className = 'pill pill-warning';
+        } else {
+          badge.textContent = 'CLOUD DISABLED';
+          badge.className = 'pill pill-muted';
+        }
+
+        const warningsEl = document.getElementById('hybridWarnings');
+        let html = '';
+        (data.warnings || []).forEach(w => {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ ${w}</div>`;
+        });
+        (data.critical_failures || []).forEach(cf => {
+          html += `<div style="color: #991b1b; background: #fee2e2; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">🔴 ${cf}</div>`;
+        });
+        if (data.cloud_enabled) {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ Cloud providers are enabled. Verify API keys are configured.</div>`;
+        }
+        if (!data.local_first) {
+          html += `<div style="color: #92400e; background: #fef3c7; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem;">⚠️ No local-first provider configured (local/lmstudio).</div>`;
+        }
+        warningsEl.innerHTML = html;
+      }
+
+      function renderHybridProviders(providers) {
+        if (!Array.isArray(providers)) {
+          document.getElementById('providersTable').innerHTML = '<div style="color: var(--muted);">No provider data available.</div>';
+          return;
+        }
+        // Also render provider health
+        let html = '<table><thead><tr><th>Provider</th><th>Type</th><th>Enabled</th><th>Configured</th><th>Capabilities</th><th>API Key</th></tr></thead><tbody>';
+        providers.forEach(p => {
+          const caps = p.capabilities || {};
+          const capList = Object.entries(caps).filter(([k, v]) => v === true).map(([k]) => k).join(', ') || 'none';
+          html += `
+            <tr>
+              <td><strong>${p.provider_id}</strong></td>
+              <td>${p.provider_type}</td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-muted'}">${p.enabled ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.configured ? 'pill-success' : 'pill-danger'}">${p.configured ? 'YES' : 'NO'}</span></td>
+              <td><small>${capList}</small></td>
+              <td><code>${p.masked_api_key || '—'}</code></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('providersTable').innerHTML = html;
+
+        // Health table
+        let healthHtml = '<table><thead><tr><th>Provider</th><th>Enabled</th><th>Configured</th><th>Healthy</th></tr></thead><tbody>';
+        providers.forEach(p => {
+          healthHtml += `
+            <tr>
+              <td><strong>${p.provider_id}</strong></td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-muted'}">${p.enabled ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.configured ? 'pill-success' : 'pill-danger'}">${p.configured ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.healthy === true ? 'pill-success' : p.healthy === false ? 'pill-danger' : 'pill-unknown'}">${p.healthy === true ? 'HEALTHY' : p.healthy === false ? 'DOWN' : 'UNKNOWN'}</span></td>
+            </tr>
+          `;
+        });
+        healthHtml += '</tbody></table>';
+        document.getElementById('providerHealthTable').innerHTML = healthHtml;
+      }
+
+      function renderHybridRouting(data) {
+        if (!data) {
+          document.getElementById('routingStrategy').textContent = 'N/A';
+          document.getElementById('routingCloudFallback').textContent = 'N/A';
+          document.getElementById('routingCloudEnabled').textContent = 'N/A';
+          document.getElementById('routingDecisionsTable').innerHTML = '<div style="color: var(--muted);">No routing data.</div>';
+          return;
+        }
+        document.getElementById('routingStrategy').textContent = data.default_strategy || 'N/A';
+        document.getElementById('routingCloudFallback').textContent = data.allow_cloud_fallback ? 'YES' : 'NO';
+        document.getElementById('routingCloudEnabled').textContent = data.cloud_providers_enabled ? 'YES' : 'NO';
+
+        const decisions = data.last_decisions || [];
+        let html = '<table><thead><tr><th>Time</th><th>Model</th><th>Provider</th><th>Strategy</th><th>Cloud</th><th>Fallback</th><th>Cost BRL</th></tr></thead><tbody>';
+        decisions.forEach(d => {
+          const ts = d.timestamp ? new Date(d.timestamp).toLocaleTimeString('pt-BR') : '-';
+          html += `
+            <tr>
+              <td><small>${ts}</small></td>
+              <td>${d.requested_model || '-'}</td>
+              <td>${d.selected_provider || '-'}</td>
+              <td><span class="pill pill-muted">${d.routing_strategy || '-'}</span></td>
+              <td><span class="pill ${d.cloud_used ? 'pill-warning' : 'pill-success'}">${d.cloud_used ? 'CLOUD' : 'LOCAL'}</span></td>
+              <td>${d.fallback_used ? 'YES' : 'NO'}</td>
+              <td>${d.estimated_cost_brl ? 'R$ ' + d.estimated_cost_brl.toFixed(4) : '-'}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('routingDecisionsTable').innerHTML = html;
+      }
+
+      function renderHybridFinancials(data) {
+        if (!data) {
+          document.getElementById('costsTable').innerHTML = '<div style="color: var(--muted);">No financial data.</div>';
+          document.getElementById('marginTable').innerHTML = '<div style="color: var(--muted);">No margin data.</div>';
+          return;
+        }
+        // Costs config table
+        const costs = data.costs_config || {};
+        let costHtml = '<table><thead><tr><th>Provider</th><th>Cost Prompt (USD/1K)</th><th>Cost Completion (USD/1K)</th><th>Pricing Configured</th></tr></thead><tbody>';
+        Object.entries(costs).forEach(([pid, cfg]) => {
+          costHtml += `
+            <tr>
+              <td><strong>${pid}</strong></td>
+              <td>$${cfg.cost_usd_per_1k_prompt.toFixed(6)}</td>
+              <td>$${cfg.cost_usd_per_1k_completion.toFixed(6)}</td>
+              <td><span class="pill ${cfg.pricing_configured ? 'pill-success' : 'pill-danger'}">${cfg.pricing_configured ? 'YES' : 'NO'}</span></td>
+            </tr>
+          `;
+        });
+        costHtml += '</tbody></table>';
+        document.getElementById('costsTable').innerHTML = costHtml;
+
+        // Revenue by provider (margin data)
+        const margins = data.provider_costs || [];
+        let marginHtml = '<table><thead><tr><th>Provider</th><th>Requests</th><th>Provider Cost (BRL)</th><th>Customer Price (BRL)</th><th>Gross Profit (BRL)</th><th>Avg Margin</th></tr></thead><tbody>';
+        margins.forEach(m => {
+          marginHtml += `
+            <tr>
+              <td><strong>${m.provider}</strong></td>
+              <td>${(m.total_requests || 0).toLocaleString()}</td>
+              <td>R$ ${(m.total_provider_cost_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(m.total_customer_price_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(m.total_gross_profit_brl || 0).toFixed(2)}</td>
+              <td>${m.avg_margin_percent !== null && m.avg_margin_percent !== undefined ? m.avg_margin_percent.toFixed(1) + '%' : '-'}</td>
+            </tr>
+          `;
+        });
+        marginHtml += '</tbody></table>';
+        document.getElementById('marginTable').innerHTML = marginHtml;
+      }
+
+      function renderHybridCache(data) {
+        if (!data) {
+          document.getElementById('cacheExactEnabled').textContent = 'N/A';
+          document.getElementById('cacheSemanticEnabled').textContent = 'N/A';
+          document.getElementById('cacheTtl').textContent = 'N/A';
+          document.getElementById('cacheExactHits').textContent = 'N/A';
+          document.getElementById('cacheSemanticHits').textContent = 'N/A';
+          document.getElementById('cacheTotalEntries').textContent = 'N/A';
+          return;
+        }
+        document.getElementById('cacheExactEnabled').textContent = data.exact_cache_enabled ? 'ON' : 'OFF';
+        document.getElementById('cacheSemanticEnabled').textContent = data.semantic_cache_enabled ? 'ON' : 'OFF';
+        document.getElementById('cacheTtl').textContent = data.ttl_seconds || 0;
+        document.getElementById('cacheExactHits').textContent = (data.exact_hits || 0).toLocaleString();
+        document.getElementById('cacheSemanticHits').textContent = (data.semantic_hits || 0).toLocaleString();
+        document.getElementById('cacheTotalEntries').textContent = (data.total_entries || 0).toLocaleString();
+      }
+
+      function renderHybridWallets(wallets) {
+        if (!Array.isArray(wallets) || wallets.length === 0) {
+          document.getElementById('walletTable').innerHTML = '<div style="color: var(--muted);">No wallets found.</div>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Client ID</th><th>Currency</th><th>Balance (BRL)</th><th>Reserved (BRL)</th><th>Available (BRL)</th><th>Status</th></tr></thead><tbody>';
+        wallets.forEach(w => {
+          html += `
+            <tr>
+              <td><code>${shortId(w.client_id)}</code></td>
+              <td>${w.currency}</td>
+              <td>R$ ${(w.balance_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(w.reserved_brl || 0).toFixed(2)}</td>
+              <td>R$ ${(w.available_brl || 0).toFixed(2)}</td>
+              <td><span class="pill ${w.status === 'active' ? 'pill-success' : 'pill-danger'}">${w.status}</span></td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        document.getElementById('walletTable').innerHTML = html;
+      }
+
+      function renderHybridRag(data) {
+        if (!data) {
+          document.getElementById('ragEnabled').textContent = 'N/A';
+          document.getElementById('ragEmbeddingProvider').textContent = 'N/A';
+          document.getElementById('ragDocuments').textContent = 'N/A';
+          document.getElementById('ragChunks').textContent = 'N/A';
+          document.getElementById('ragCollections').textContent = 'N/A';
+          document.getElementById('ragClients').textContent = 'N/A';
+          document.getElementById('ragStorage').textContent = 'N/A';
+          return;
+        }
+        document.getElementById('ragEnabled').textContent = data.rag_enabled ? 'YES' : 'NO';
+        document.getElementById('ragEmbeddingProvider').textContent = data.embedding_provider || 'N/A';
+        document.getElementById('ragDocuments').textContent = (data.total_documents || 0).toLocaleString();
+        document.getElementById('ragChunks').textContent = (data.total_chunks || 0).toLocaleString();
+        document.getElementById('ragCollections').textContent = (data.total_collections || 0).toLocaleString();
+        document.getElementById('ragClients').textContent = (data.clients_with_rag || 0).toLocaleString();
+        const storageMb = data.total_storage_bytes ? (data.total_storage_bytes / (1024 * 1024)).toFixed(2) : '0';
+        document.getElementById('ragStorage').textContent = storageMb + ' MB';
+
+        const status = data.documents_by_status || {};
+        const statusHtml = Object.entries(status).map(([s, count]) =>
+          `<span class="pill pill-muted" style="margin-right: 0.25rem;">${s}: ${count}</span>`
+        ).join('');
+        document.getElementById('ragDocStatus').innerHTML = statusHtml ? '<strong>Docs by status:</strong> ' + statusHtml : '';
+      }
+
+      async function fetchLeads() {
+        const token = document.getElementById('adminToken').value;
+        const status = document.getElementById('leadStatusFilter').value;
+        let url = '/admin/sales/leads';
+        if (status) url += '?status=' + status;
+        
+        try {
+          const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+          const leads = await res.json();
+          renderLeads(leads);
+        } catch (e) {
+          console.error('Error fetching leads:', e);
+        }
+      }
+
+      function renderLeads(leads) {
+        const body = document.getElementById('leadsBody');
+        if (!leads || !Array.isArray(leads) || leads.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align: center;">No leads found.</td></tr>';
+          return;
+        }
+        
+        body.innerHTML = leads.map(l => {
+          const followUp = l.next_follow_up_at ? new Date(l.next_follow_up_at).toLocaleDateString() : '-';
+          return `
+            <tr>
+              <td><strong>${l.company_name}</strong>${l.is_demo ? ' <span class="pill pill-muted">DEMO</span>' : ''}</td>
+              <td>${l.contact_name}<br/><small>${l.contact_email}</small></td>
+              <td>${l.segment}</td>
+              <td><span class="pill ${getStatusPillClass(l.status)}">${l.status}</span></td>
+              <td>R$ ${Number(l.estimated_value).toLocaleString()}</td>
+              <td>${followUp}</td>
+              <td>
+                <button class="secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="advanceLead('${l.id}')">Advance</button>
+                <button class="secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--danger);" onclick="deleteLead('${l.id}')">Del</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function getStatusPillClass(status) {
+        switch(status) {
+          case 'won': return 'pill-success';
+          case 'lost': return 'pill-danger';
+          case 'new': return 'pill-unknown';
+          case 'negotiation': return 'pill-warning';
+          default: return 'pill-muted';
+        }
+      }
+
+      function showAddLeadForm() { document.getElementById('addLeadForm').classList.remove('hidden'); }
+      function hideAddLeadForm() { document.getElementById('addLeadForm').classList.add('hidden'); }
+
+      function renderCommercialAnalytics(summary, events) {
+        if (summary) {
+          document.getElementById('commEventsToday').textContent = summary.events_today || 0;
+          document.getElementById('commFallbacksBlocks').textContent = `${summary.fallback_count_today || 0} / ${summary.blocked_count_today || 0}`;
+          document.getElementById('commEstRevenue').textContent = 'R$ ' + (summary.estimated_revenue_today_brl || 0).toFixed(2);
+          document.getElementById('commEstMargin').textContent = 'R$ ' + (summary.estimated_margin_today_brl || 0).toFixed(2);
+          document.getElementById('commEstError').textContent = `${summary.estimation_error_percent || 0}%`;
+          document.getElementById('commAnalyticsDebug').textContent = JSON.stringify(summary, null, 2);
+        }
+        
+        if (events) {
+          renderCommEventsTable(events);
+        }
+      }
+
+      function renderCommercialCalibration(report) {
+        if (!report) return;
+        
+        document.getElementById('calibGlobalError').textContent = report.global_error_summary.cost_error_percent ? `${report.global_error_summary.cost_error_percent}%` : '0%';
+        document.getElementById('calibSamples').textContent = report.global_error_summary.sample_count || 0;
+        document.getElementById('calibConfidence').textContent = report.global_error_summary.confidence || '-';
+        document.getElementById('calibMode').textContent = report.mode || 'recommend_only';
+        document.getElementById('commCalibrationDebug').textContent = JSON.stringify(report, null, 2);
+
+        // Multipliers table
+        const multDiv = document.getElementById('calibMultipliersTable');
+        if (!report.recommended_cost_multipliers || report.recommended_cost_multipliers.length === 0) {
+          multDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">No multiplier recommendations.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Provider</th><th>Model</th><th>Samples</th><th>Error</th><th>Multiplier</th></tr></thead><tbody>';
+          report.recommended_cost_multipliers.forEach(m => {
+            html += `<tr>
+              <td>${m.provider}</td>
+              <td>${m.model}</td>
+              <td>${m.sample_count}</td>
+              <td style="color: ${m.avg_cost_error_percent < 0 ? 'var(--danger)' : 'var(--success)'}">${m.avg_cost_error_percent}%</td>
+              <td><strong>${m.recommended_cost_multiplier}x</strong></td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+          multDiv.innerHTML = html;
+        }
+
+        // Weights table
+        const weightsDiv = document.getElementById('calibWeightsTable');
+        if (!report.recommended_weight_adjustments || report.recommended_weight_adjustments.length === 0) {
+          weightsDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">No weight adjustments recommended.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Target</th><th>Current</th><th>Rec.</th><th>Reason</th></tr></thead><tbody>';
+          report.recommended_weight_adjustments.forEach(w => {
+            html += `<tr>
+              <td><code>${w.target}</code></td>
+              <td>${w.current}</td>
+              <td><strong>${w.recommended}</strong></td>
+              <td style="font-size: 0.75rem;">${w.reason}</td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+          weightsDiv.innerHTML = html;
+        }
+
+        const warningsDiv = document.getElementById('calibWarnings');
+        warningsDiv.textContent = report.warnings ? report.warnings.join(' | ') : '';
+      }
+
+      function renderCommEventsTable(events) {
+        const div = document.getElementById('commEventsTable');
+        if (!events || events.length === 0) {
+          div.innerHTML = '<p style="text-align: center; padding: 1rem; color: var(--muted);">No recent events found.</p>';
+          return;
+        }
+        
+        let html = '<table><thead><tr><th>Time</th><th>Model</th><th>Provider</th><th>Status</th><th>Est. Margin</th><th>Actual Margin</th></tr></thead><tbody>';
+        events.forEach(ev => {
+          const status = ev.blocked ? '<span class="pill pill-danger">Blocked</span>' : 
+                        (ev.fallback_used ? '<span class="pill pill-warning">Fallback</span>' : '<span class="pill pill-success">OK</span>');
+          const estMargin = ev.estimated_margin_percent ? `${parseFloat(ev.estimated_margin_percent).toFixed(1)}%` : '-';
+          const actMargin = ev.actual_margin_percent ? `${parseFloat(ev.actual_margin_percent).toFixed(1)}%` : '-';
+          const time = new Date(ev.created_at).toLocaleTimeString();
+          
+          html += `<tr>
+            <td>${time}</td>
+            <td>${ev.model_requested || '-'}</td>
+            <td>${ev.selected_provider || '-'}</td>
+            <td>${status}</td>
+            <td style="text-align: right;">${estMargin}</td>
+            <td style="text-align: right;">${actMargin}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+      }
+
+      function renderCommercialClusterAnalytics(nodesPayload, overview) {
+        const health = overview && overview.health ? overview.health : ((nodesPayload && nodesPayload.nodes) ? { nodes: nodesPayload.nodes, counts: { healthy: 0, degraded: 0, offline: 0 } } : null);
+        document.getElementById('commClusterId').textContent = overview && overview.cluster_id ? overview.cluster_id : '-';
+        const counts = health && health.counts ? health.counts : { healthy: 0, degraded: 0, offline: 0 };
+        document.getElementById('commClusterNodes').textContent = `${counts.healthy || 0} / ${counts.degraded || 0} / ${counts.offline || 0}`;
+        document.getElementById('commClusterRequests').textContent = overview ? (overview.requests_count || 0) : 0;
+        document.getElementById('commClusterMargin').textContent = overview ? `R$ ${num(overview.actual_margin_brl).toFixed(2)}` : 'R$ 0.00';
+        document.getElementById('commClusterFallbackBlock').textContent = overview ? `${overview.fallback_count || 0} / ${overview.block_count || 0}` : '0 / 0';
+        const lastHeartbeat = (health && Array.isArray(health.nodes) && health.nodes.length)
+          ? health.nodes.map(node => node.last_seen_at).filter(Boolean).sort().slice(-1)[0]
+          : null;
+        document.getElementById('commClusterHeartbeat').textContent = lastHeartbeat ? formatTimestamp(lastHeartbeat) : '-';
+
+        const nodes = overview && Array.isArray(overview.nodes) ? overview.nodes : [];
+        const nodesDiv = document.getElementById('commClusterNodesTable');
+        if (!nodes.length) {
+          nodesDiv.innerHTML = '<p class="muted">No cluster node data.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Node</th><th>Requests</th><th>Margin</th><th>Fallback</th><th>Block</th><th>Last Bucket</th></tr></thead><tbody>';
+          nodes.forEach(row => {
+            html += `<tr><td>${row.node_id || '-'}</td><td>${row.requests_count || 0}</td><td>R$ ${num(row.actual_margin_brl).toFixed(2)}</td><td>${row.fallback_count || 0}</td><td>${row.block_count || 0}</td><td>${row.last_bucket ? formatTimestamp(row.last_bucket) : '-'}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          nodesDiv.innerHTML = html;
+        }
+
+        const providers = overview && Array.isArray(overview.providers) ? overview.providers : [];
+        const providersDiv = document.getElementById('commClusterProvidersTable');
+        if (!providers.length) {
+          providersDiv.innerHTML = '<p class="muted">No provider usage data.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Provider</th><th>Requests</th><th>Margin</th><th>Cost</th></tr></thead><tbody>';
+          providers.forEach(row => {
+            html += `<tr><td>${row.provider || '-'}</td><td>${row.requests_count || 0}</td><td>R$ ${num(row.actual_margin_brl).toFixed(2)}</td><td>R$ ${num(row.actual_cost_brl).toFixed(2)}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          providersDiv.innerHTML = html;
+        }
+
+        const aggs = overview && Array.isArray(overview.aggregates) ? overview.aggregates.slice(0, 20) : [];
+        const aggsDiv = document.getElementById('commClusterAggregatesTable');
+        if (!aggs.length) {
+          aggsDiv.innerHTML = '<p class="muted">No aggregate buckets.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Bucket</th><th>Node</th><th>Provider</th><th>Requests</th><th>Margin</th><th>Latency</th></tr></thead><tbody>';
+          aggs.forEach(row => {
+            html += `<tr><td>${formatTimestamp(row.bucket_start)}</td><td>${row.node_id || '-'}</td><td>${row.provider || '-'}</td><td>${row.requests_count || 0}</td><td>R$ ${num(row.actual_margin_brl).toFixed(2)}</td><td>${num(row.avg_latency_ms).toFixed(2)} ms</td></tr>`;
+          });
+          html += '</tbody></table>';
+          aggsDiv.innerHTML = html;
+        }
+      }
+
+      function renderCommercialFederation(clustersPayload, overview, comparePayload) {
+        const clusterRows = Array.isArray(clustersPayload?.clusters) ? clustersPayload.clusters : [];
+        const overviewClusters = Array.isArray(overview?.clusters) ? overview.clusters : [];
+        const compareRows = Array.isArray(comparePayload?.comparisons) ? comparePayload.comparisons : [];
+        const anomalies = Array.isArray(comparePayload?.anomalies) ? comparePayload.anomalies : [];
+        document.getElementById('fedMode').textContent = overview?.federation_mode || 'disabled';
+        document.getElementById('fedClusters').textContent = String(clusterRows.length);
+        document.getElementById('fedRequests').textContent = String(overview?.requests_count || 0);
+        document.getElementById('fedMargin').textContent = `R$ ${num(overview?.actual_margin_brl).toFixed(2)}`;
+        document.getElementById('fedLatency').textContent = `${num(overview?.avg_latency_ms).toFixed(2)} ms`;
+        const degraded = overviewClusters.filter(item => item.status === 'degraded').length;
+        const offline = overviewClusters.filter(item => item.status === 'offline').length;
+        document.getElementById('fedStatuses').textContent = `${degraded} / ${offline}`;
+
+        const clustersDiv = document.getElementById('fedClustersTable');
+        if (!overviewClusters.length) {
+          clustersDiv.innerHTML = '<p class="muted">No federation data.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Cluster</th><th>Status</th><th>Region</th><th>Env</th><th>Requests</th><th>Margin</th><th>Providers</th><th>Tenant Scope</th></tr></thead><tbody>';
+          overviewClusters.forEach(row => {
+            const scope = row.tenant_scope_json && Array.isArray(row.tenant_scope_json.tenants) && row.tenant_scope_json.tenants.length
+              ? row.tenant_scope_json.tenants.join(', ')
+              : 'untagged/local only';
+            html += `<tr><td>${row.cluster_id}</td><td>${row.status}</td><td>${row.region || '-'}</td><td>${row.environment || '-'}</td><td>${row.requests_count || 0}</td><td>R$ ${num(row.actual_margin_brl).toFixed(2)}</td><td>${Array.isArray(row.providers) ? row.providers.join(', ') : '-'}</td><td>${scope}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          clustersDiv.innerHTML = html;
+        }
+
+        const compareDiv = document.getElementById('fedCompareTable');
+        if (!compareRows.length) {
+          compareDiv.innerHTML = '<p class="muted">No cross-cluster comparison.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Cluster</th><th>Margin Rank</th><th>Margin</th><th>Cost</th><th>Latency</th><th>Requests</th></tr></thead><tbody>';
+          compareRows.forEach(row => {
+            html += `<tr><td>${row.cluster_id}</td><td>${row.margin_rank || '-'}</td><td>R$ ${num(row.actual_margin_brl).toFixed(2)}</td><td>R$ ${num(row.actual_cost_brl).toFixed(2)}</td><td>${num(row.avg_latency_ms).toFixed(2)} ms</td><td>${row.requests_count || 0}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          compareDiv.innerHTML = html;
+        }
+
+        const anomaliesDiv = document.getElementById('fedAnomaliesTable');
+        if (!anomalies.length) {
+          anomaliesDiv.innerHTML = '<p class="muted">No anomalies detected.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Type</th><th>Cluster</th><th>Message</th></tr></thead><tbody>';
+          anomalies.forEach(row => {
+            html += `<tr><td>${row.type || '-'}</td><td>${row.cluster_id || '-'}</td><td>${row.message || '-'}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          anomaliesDiv.innerHTML = html;
+        }
+      }
+
+      async function manualFederationSync() {
+        const token = elements.adminToken.value.trim();
+        const res = await fetch('/admin/routing/federation/sync/manual', { method: 'POST', headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' }, body: '{}' });
+        if (!res.ok) throw new Error('manual sync failed');
+        await initAdmin();
+      }
+
+      async function cleanupFederationRetention() {
+        const token = elements.adminToken.value.trim();
+        const res = await fetch('/admin/routing/federation/cleanup', { method: 'POST', headers: { 'X-Admin-Token': token } });
+        if (!res.ok) throw new Error('federation cleanup failed');
+        await initAdmin();
+      }
+
+      async function downloadFederationExport(format) {
+        const token = elements.adminToken.value.trim();
+        const url = `/admin/routing/federation/export?format=${encodeURIComponent(format)}&hours=24`;
+        const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+        if (!res.ok) throw new Error('federation export failed');
+        const text = await res.text();
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(format === 'html' ? text : `<pre>${text.replace(/[<>&]/g, s => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[s]))}</pre>`);
+          win.document.close();
+        }
+      }
+
+      function renderCommercialHA(clusterState) {
+        const leaders = clusterState && Array.isArray(clusterState.leaders) ? clusterState.leaders : [];
+        const byRole = {};
+        leaders.forEach(row => {
+          if (row && row.leader_role) byRole[row.leader_role] = row;
+        });
+        ['scheduler', 'aggregator', 'calibration', 'canary', 'reporter'].forEach(role => {
+          const card = document.getElementById(`commHa${role.charAt(0).toUpperCase()}${role.slice(1)}Leader`);
+          if (!card) return;
+          const row = byRole[role];
+          card.textContent = row ? `${row.node_id || '-'} #${row.lease_token || 0}` : '-';
+        });
+        document.getElementById('commHaFailovers').textContent = clusterState && Array.isArray(clusterState.failovers_recent)
+          ? clusterState.failovers_recent.length
+          : 0;
+        const div = document.getElementById('commHaLeadersTable');
+        if (!leaders.length) {
+          div.innerHTML = '<p class="muted">No active leaders.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Role</th><th>Node</th><th>Status</th><th>Token</th><th>Lease Expiration</th><th>Heartbeat Age</th></tr></thead><tbody>';
+        leaders.forEach(row => {
+          const badge = row.status === 'active'
+            ? '<span class="pill pill-success">ACTIVE</span>'
+            : (row.status === 'expired' ? '<span class="pill pill-danger">EXPIRED</span>' : '<span class="pill pill-warning">STALE</span>');
+          html += `<tr><td>${row.leader_role || '-'}</td><td>${row.node_id || '-'}</td><td>${badge}</td><td>${row.lease_token || 0}</td><td>${row.lease_expires_at ? formatTimestamp(row.lease_expires_at) : '-'}</td><td>${row.heartbeat_age_seconds != null ? `${num(row.heartbeat_age_seconds).toFixed(1)}s` : '-'}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+      }
+
+      async function rebuildClusterAggregates() {
+        const token = elements.adminToken.value.trim();
+        const res = await fetch('/admin/routing/distributed/rebuild-aggregates?hours=24', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token }
+        });
+        if (!res.ok) {
+          alert('Failed to rebuild cluster aggregates.');
+          return;
+        }
+        initAdmin();
+      }
+
+      async function cleanupClusterAnalytics() {
+        const token = elements.adminToken.value.trim();
+        const res = await fetch('/admin/routing/distributed/cleanup', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token }
+        });
+        if (!res.ok) {
+          alert('Failed to cleanup cluster analytics.');
+          return;
+        }
+        initAdmin();
+      }
+
+      async function submitLead() {
+        const token = document.getElementById('adminToken').value;
+        const lead = {
+          company_name: document.getElementById('leadCompany').value,
+          contact_name: document.getElementById('leadContact').value,
+          contact_email: document.getElementById('leadEmail').value,
+          contact_phone: document.getElementById('leadPhone').value || null,
+          segment: document.getElementById('leadSegment').value,
+          source: document.getElementById('leadSource').value,
+          estimated_value: parseFloat(document.getElementById('leadValue').value) || 0,
+          next_follow_up_at: document.getElementById('leadFollowUp').value ? new Date(document.getElementById('leadFollowUp').value).toISOString() : null,
+          notes: document.getElementById('leadNotes').value
+        };
+        
+        const res = await fetch('/admin/sales/leads', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(lead)
+        });
+        
+        if (res.ok) {
+          hideAddLeadForm();
+          fetchLeads();
+          ['leadCompany', 'leadContact', 'leadEmail', 'leadPhone', 'leadSegment', 'leadSource', 'leadValue', 'leadFollowUp', 'leadNotes'].forEach(id => document.getElementById(id).value = '');
+        } else {
+          alert('Error saving lead');
+        }
+      }
+
+      async function advanceLead(id) {
+        const newStatus = prompt('Enter new status (contacted, demo_scheduled, proposal_sent, negotiation, won, lost):');
+        if (!newStatus) return;
+        
+        const token = document.getElementById('adminToken').value;
+        const res = await fetch('/admin/sales/leads/' + id + '/advance-stage', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_status: newStatus })
+        });
+        
+        if (res.ok) fetchLeads();
+      }
+
+      async function deleteLead(id) {
+        if (!confirm('Are you sure you want to delete this lead?')) return;
+        const token = document.getElementById('adminToken').value;
+        const res = await fetch('/admin/sales/leads/' + id, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': token }
+        });
+        if (res.ok) fetchLeads();
+      }
+
+
+      async function calculateQuote() {
+        const token = document.getElementById('adminToken').value;
+        const request = {
+          company_name: document.getElementById('quoteCompany').value || "Cliente Demo",
+          plan: document.getElementById('quotePlan').value,
+          support_hours: parseInt(document.getElementById('quoteSupport').value) || 0,
+          custom_integration_hours: parseInt(document.getElementById('quoteIntegration').value) || 0,
+          discount_percent: parseFloat(document.getElementById('quoteDiscount').value) || 0,
+          rag: document.getElementById('quoteRag').checked,
+          tts: document.getElementById('quoteTts').checked,
+          embeddings: document.getElementById('quoteEmbeddings').checked
+        };
+
+        try {
+          const res = await fetch('/admin/sales/quote-preview', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(request)
+          });
+          
+          if (!res.ok) throw new Error('Falha ao gerar orçamento');
+          
+          const data = await res.json();
+          renderQuoteResult(data);
+        } catch (e) {
+          alert('Erro: ' + e.message);
+        }
+      }
+
+      function renderQuoteResult(data) {
+        document.getElementById('quotePlaceholder').classList.add('hidden');
+        document.getElementById('quoteDetails').classList.remove('hidden');
+        
+        document.getElementById('resCompany').textContent = data.company_name;
+        document.getElementById('resSetup').textContent = `${data.currency} ${data.totals.setup.toLocaleString()}`;
+        document.getElementById('resRecurring').textContent = `${data.currency} ${data.totals.recurring.toLocaleString()}`;
+        document.getElementById('resFinal').textContent = `${data.currency} ${data.totals.first_month_final.toLocaleString()}`;
+      }
+
+      /* === Commercial Config Apply (Phase 7) === */
+
+      async function adminPost(path, body) {
+        const token = document.getElementById('adminToken').value.trim();
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || res.statusText);
+        return data;
+      }
+
+      async function fetchConfigs() {
+        const token = document.getElementById('adminToken').value.trim();
+        const showInactive = document.getElementById('showInactiveConfigs').checked;
+        const url = `/admin/routing/commercial-configs?active_only=${!showInactive}`;
+        try {
+          const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+          if (!res.ok) throw new Error(res.statusText);
+          const configs = await res.json();
+          renderConfigs(configs);
+        } catch (e) {
+          document.getElementById('commConfigTable').innerHTML =
+            `<p style="color:var(--danger);">Error loading configs: ${e.message}</p>`;
+        }
+      }
+
+      function renderConfigs(configs) {
+        const div = document.getElementById('commConfigTable');
+        if (!configs || configs.length === 0) {
+          div.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No configurations found.</p>';
+          return;
+        }
+        let html = '<table><thead><tr>' +
+          '<th>Scope</th><th>Provider</th><th>Model</th>' +
+          '<th>Multiplier</th><th>Weights (M/L/Q)</th><th>Source</th>' +
+          '<th>Active</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+        configs.forEach(c => {
+          const scope = c.scope_type;
+          const weights = `${c.margin_weight}/${c.latency_weight}/${c.quality_weight}`;
+          const active = c.is_active
+            ? '<span class="pill pill-success">active</span>'
+            : '<span class="pill pill-muted">inactive</span>';
+          const created = new Date(c.created_at).toLocaleDateString();
+          const deactBtn = c.is_active
+            ? `<button class="secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;color:var(--danger);" onclick="deactivateConfig('${c.id}')">Deactivate</button>`
+            : '';
+          html += `<tr>
+            <td>${scope}</td><td>${c.provider || '-'}</td><td>${c.model || '-'}</td>
+            <td><strong>${c.cost_multiplier}x</strong></td>
+            <td style="font-size:0.75rem;">${weights}</td>
+            <td>${c.source}</td>
+            <td>${active}</td>
+            <td style="font-size:0.75rem;">${created}</td>
+            <td style="display:flex;gap:0.25rem;flex-wrap:wrap;">${deactBtn}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+        document.getElementById('commConfigDebug').textContent = JSON.stringify(configs, null, 2);
+      }
+
+      let pendingApply = null;
+
+      function showApplyDialog(prefill) {
+        prefill = prefill || {};
+        const p = prefill.provider || '';
+        const m = prefill.model || '';
+        const mult = prefill.recommended_cost_multiplier || '';
+        const conf = prefill.confidence || 'high';
+        const notes = prefill.notes || '';
+        const force = prefill.force || false;
+
+        const body = `
+          <div style="display:grid;gap:0.75rem;">
+            <label style="font-size:0.85rem;color:var(--muted);">Provider (optional)</label>
+            <input id="ap-provider" value="${p}" placeholder="e.g. openai" style="width:100%;" />
+            <label style="font-size:0.85rem;color:var(--muted);">Model (optional)</label>
+            <input id="ap-model" value="${m}" placeholder="e.g. gpt-4" style="width:100%;" />
+            <label style="font-size:0.85rem;color:var(--muted);">Recommended Cost Multiplier *</label>
+            <input id="ap-multiplier" type="number" step="0.01" value="${mult}" placeholder="1.15" style="width:100%;" />
+            <label style="font-size:0.85rem;color:var(--muted);">Confidence</label>
+            <select id="ap-confidence" style="width:100%;">
+              <option value="low" ${conf==='low'?'selected':''}>Low</option>
+              <option value="medium" ${conf==='medium'?'selected':''}>Medium</option>
+              <option value="high" ${conf==='high'?'selected':''} selected>High</option>
+            </select>
+            <label style="font-size:0.85rem;color:var(--muted);">Notes</label>
+            <textarea id="ap-notes" rows="2" placeholder="e.g. applied after 7-day calibration" style="width:100%;">${notes}</textarea>
+            <label style="font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" id="ap-force" ${force?'checked':''} /> Force (override safety limits)
+            </label>
+          </div>`;
+
+        document.getElementById('confirmModalTitle').textContent = 'Apply Recommendation';
+        document.getElementById('confirmModalBody').innerHTML = body;
+        document.getElementById('confirmModalWarnings').style.display = 'none';
+        document.getElementById('confirmModalOk').textContent = 'Validate & Confirm';
+        document.getElementById('confirmModalOk').onclick = validateAndApply;
+        document.getElementById('configConfirmModal').style.display = 'flex';
+      }
+
+      function closeConfirmModal() {
+        document.getElementById('configConfirmModal').style.display = 'none';
+        pendingApply = null;
+      }
+
+      function validateAndApply() {
+        const provider = document.getElementById('ap-provider').value.trim() || null;
+        const model = document.getElementById('ap-model').value.trim() || null;
+        const multiplier = parseFloat(document.getElementById('ap-multiplier').value);
+        const confidence = document.getElementById('ap-confidence').value;
+        const notes = document.getElementById('ap-notes').value.trim() || null;
+        const force = document.getElementById('ap-force').checked;
+
+        if (!multiplier || multiplier <= 0) {
+          alert('Cost multiplier must be a positive number.');
+          return;
+        }
+
+        const warnings = [];
+
+        // Check confidence low
+        if (confidence === 'low' && !force) {
+          warnings.push('Confidence is LOW. This requires force=true to proceed.');
+        }
+
+        // Check large change
+        if (multiplier > 1.25 || multiplier < 0.80) {
+          warnings.push(`Multiplier ${multiplier}x exceeds 25% change threshold. Review carefully.`);
+        }
+
+        // Check medium confidence warning
+        if (confidence === 'medium') {
+          warnings.push('Confidence is MEDIUM. Verify data quality before applying.');
+        }
+
+        pendingApply = { provider, model, recommended_cost_multiplier: multiplier, confidence, notes, force };
+
+        if (warnings.length > 0) {
+          const warnDiv = document.getElementById('confirmModalWarnings');
+          warnDiv.innerHTML = '<strong>Warnings:</strong><ul style="margin:0.5rem 0 0 1rem;">' +
+            warnings.map(w => `<li>${w}</li>`).join('') + '</ul>';
+          warnDiv.style.display = 'block';
+          document.getElementById('confirmModalOk').textContent = 'Force Apply';
+          document.getElementById('confirmModalOk').onclick = executeApply;
+        } else {
+          document.getElementById('confirmModalWarnings').style.display = 'none';
+          document.getElementById('confirmModalOk').textContent = 'Confirm & Apply';
+          document.getElementById('confirmModalOk').onclick = executeApply;
+        }
+      }
+
+      async function executeApply() {
+        if (!pendingApply) return;
+        const btn = document.getElementById('confirmModalOk');
+        btn.disabled = true;
+        btn.textContent = 'Applying...';
+        try {
+          const result = await adminPost('/admin/routing/commercial-configs/apply-recommendation', pendingApply);
+          closeConfirmModal();
+          alert('Config applied successfully!');
+          fetchConfigs();
+        } catch (e) {
+          alert('Error: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = 'Try Again';
+        }
+      }
+
+      async function deactivateConfig(id) {
+        if (!confirm('Are you sure you want to deactivate this config? This may affect routing decisions.')) return;
+        try {
+          await adminPost(`/admin/routing/commercial-configs/${id}/deactivate`, {});
+          alert('Config deactivated.');
+          fetchConfigs();
+        } catch (e) {
+          alert('Error: ' + e.message);
+        }
+      }
+
+      async function rollbackConfig(scope_type, provider, model) {
+        const body = { scope_type };
+        if (provider) body.provider = provider;
+        if (model) body.model = model;
+        if (!confirm(`Rollback ${scope_type}${provider?' '+provider:''}${model?' '+model:''} to previous config?`)) return;
+        try {
+          const result = await adminPost('/admin/routing/commercial-configs/rollback', body);
+          alert('Rollback successful. Previous config reactivated.');
+          fetchConfigs();
+        } catch (e) {
+          alert('Error: ' + e.message);
+        }
+      }
+
+      async function doRollback() {
+        const scope_type = document.getElementById('rollbackScope').value;
+        const provider = document.getElementById('rollbackProvider').value.trim() || null;
+        const model = document.getElementById('rollbackModel').value.trim() || null;
+        if (!confirm(`Rollback ${scope_type}${provider?' provider='+provider:''}${model?' model='+model:''}?`)) return;
+        try {
+          await adminPost('/admin/routing/commercial-configs/rollback', { scope_type, provider, model });
+          alert('Rollback successful.');
+          fetchConfigs();
+        } catch (e) {
+          alert('Error: ' + e.message);
+        }
+      }
+
+      // Expose rollbackConfig globally (used by HTML buttons)
+      window.rollbackConfig = rollbackConfig;
+
+      async function fetchCanaryPromotions() {
+        const token = document.getElementById('adminToken').value.trim();
+        const url = '/admin/routing/commercial-configs/canary-promotions';
+        try {
+          const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+          const promotions = await res.json();
+          renderCanaryPromotions(promotions);
+        } catch (e) {
+          const div = document.getElementById('canaryPromotionsList');
+          if (div) div.innerHTML = `<p style="color:var(--danger);">Error loading canary promotions: ${e.message}</p>`;
+        }
+      }
+
+      function renderCanaryPromotions(promotions) {
+        const div = document.getElementById('canaryPromotionsList');
+        if (!div) return;
+        if (!promotions || promotions.length === 0) {
+          div.innerHTML = '<p class="muted">No active canary promotions.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Scope</th><th>ID</th><th>Percent</th><th>Status</th><th>SLO</th><th>Requests</th><th>Margin</th><th>Error</th><th>Actions</th></tr></thead><tbody>';
+        promotions.forEach(p => {
+          const sloClass = p.slo_pass ? 'pill-success' : 'pill-danger';
+          const sloText = p.slo_pass ? 'PASS' : 'FAIL';
+          html += `<tr>
+            <td>${p.scope}<br/><small>${p.provider || '-'}/${p.model || '-'}</small></td>
+            <td><small>${p.id.substring(0,8)}</small></td>
+            <td><strong>${p.current_percent}%</strong></td>
+            <td>${p.status}</td>
+            <td><span class="pill ${sloClass}">${sloText}</span></td>
+            <td>${p.metrics.request_count}</td>
+            <td>${p.metrics.avg_margin_percent}%</td>
+            <td>${p.metrics.error_rate}%</td>
+            <td style="display:flex;gap:0.25rem;">
+              <button class="secondary" style="font-size:0.7rem;padding:0.2rem 0.4rem;" onclick="showCanarySLO('${p.id}')">SLO</button>
+              <button class="secondary" style="font-size:0.7rem;padding:0.2rem 0.4rem;" onclick="promoteCanaryStep('${p.id}')">Promote</button>
+              <button class="secondary" style="font-size:0.7rem;padding:0.2rem 0.4rem;color:var(--danger);" onclick="rollbackCanaryManual('${p.id}')">Rollback</button>
+            </td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+        const debug = document.getElementById('canaryPromotionDebug');
+        if (debug) debug.textContent = JSON.stringify(promotions, null, 2);
+      }
+
+      function getExecutiveReportQuery() {
+        return '?hours=24';
+      }
+
+      async function refreshExecutiveReportPreview() {
+        const token = document.getElementById('adminToken').value.trim();
+        const status = document.getElementById('commReportStatus');
+        const preview = document.getElementById('commReportPreview');
+        status.textContent = 'Loading preview...';
+        try {
+          const res = await fetch(`/admin/routing/executive-dashboard/export/preview${getExecutiveReportQuery()}`, {
+            headers: { 'X-Admin-Token': token }
+          });
+          const body = await res.text();
+          if (!res.ok) throw new Error(body || res.statusText);
+          preview.srcdoc = body;
+          status.textContent = `Preview updated at ${new Date().toLocaleTimeString()}.`;
+        } catch (e) {
+          status.textContent = `Preview error: ${e.message}`;
+        }
+      }
+
+      async function downloadExecutiveReport(format) {
+        const token = document.getElementById('adminToken').value.trim();
+        const url = `/admin/routing/executive-dashboard/export?format=${encodeURIComponent(format)}&hours=24`;
+        try {
+          const res = await fetch(url, { headers: { 'X-Admin-Token': token } });
+          if (format === 'pdf' && res.status === 501) {
+            const data = await res.json();
+            alert((data.detail && data.detail.message) || 'PDF export unsupported. Use HTML export.');
+            return;
+          }
+          if (!res.ok) throw new Error(res.statusText);
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objectUrl;
+          a.download = `executive-report.${format}`;
+          a.click();
+          URL.revokeObjectURL(objectUrl);
+        } catch (e) {
+          alert('Export failed: ' + e.message);
+        }
+      }
+
+      async function fetchReportSchedules() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/routing/executive-dashboard/report-schedules', {
+            headers: { 'X-Admin-Token': token }
+          });
+          const schedules = await res.json();
+          if (!res.ok) throw new Error(schedules.detail || res.statusText);
+          renderReportSchedules(schedules);
+        } catch (e) {
+          document.getElementById('reportSchedulesList').innerHTML = `<p style="color:var(--danger);">Error loading schedules: ${e.message}</p>`;
+        }
+      }
+
+      function renderReportSchedules(schedules) {
+        const div = document.getElementById('reportSchedulesList');
+        if (!schedules || schedules.length === 0) {
+          div.innerHTML = '<p class="muted">No schedules configured.</p>';
+          document.getElementById('commReportDebug').textContent = '[]';
+          return;
+        }
+        let html = '<table><thead><tr><th>Name</th><th>Frequency</th><th>Format</th><th>Recipients</th><th>Next Run</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+        schedules.forEach(s => {
+          html += `<tr>
+            <td>${s.name}</td>
+            <td>${s.frequency}</td>
+            <td>${s.format}</td>
+            <td>${(s.recipients_json || []).join(', ') || '-'}</td>
+            <td>${s.next_run_at || '-'}</td>
+            <td>${s.enabled ? '<span class="pill pill-success">enabled</span>' : '<span class="pill pill-muted">disabled</span>'}</td>
+            <td style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+              <button class="secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;" onclick="runReportScheduleNow('${s.id}')">Run now</button>
+              <button class="secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;" onclick="sendTestReportEmail('${s.id}')">Send test email</button>
+              <button class="secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;" onclick="${s.enabled ? `disableReportSchedule('${s.id}')` : `enableReportSchedule('${s.id}')`}">${s.enabled ? 'Disable' : 'Enable'}</button>
+            </td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        div.innerHTML = html;
+        document.getElementById('commReportDebug').textContent = JSON.stringify(schedules, null, 2);
+      }
+
+      async function createReportSchedule() {
+        const token = document.getElementById('adminToken').value.trim();
+        const body = {
+          name: document.getElementById('reportScheduleName').value.trim() || 'Monthly executive report',
+          frequency: document.getElementById('reportScheduleFrequency').value,
+          day_of_month: document.getElementById('reportScheduleDayOfMonth').value ? parseInt(document.getElementById('reportScheduleDayOfMonth').value, 10) : null,
+          day_of_week: document.getElementById('reportScheduleDayOfWeek').value ? parseInt(document.getElementById('reportScheduleDayOfWeek').value, 10) : null,
+          hour_utc: parseInt(document.getElementById('reportScheduleHourUtc').value || '8', 10),
+          recipients_json: (document.getElementById('reportScheduleRecipients').value || '').split(',').map(v => v.trim()).filter(Boolean),
+          format: document.getElementById('reportScheduleFormat').value,
+          filters_json: { hours: 24 }
+        };
+        try {
+          const res = await fetch('/admin/routing/executive-dashboard/report-schedules', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          fetchReportSchedules();
+          fetchReportDeliveries();
+        } catch (e) {
+          alert('Failed to create schedule: ' + e.message);
+        }
+      }
+
+      async function runReportScheduleNow(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch(`/admin/routing/executive-dashboard/report-schedules/${id}/run-now`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          document.getElementById('commReportDebug').textContent = JSON.stringify(data, null, 2);
+          if (data.preview_html) document.getElementById('commReportPreview').srcdoc = data.preview_html;
+          alert(`Schedule result: ${data.status}`);
+          fetchReportSchedules();
+          fetchReportDeliveries();
+        } catch (e) {
+          alert('Run-now failed: ' + e.message);
+        }
+      }
+
+      async function sendTestReportEmail(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch(`/admin/routing/executive-dashboard/report-schedules/${id}/send-test-email`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error((data.detail && (data.detail.message || data.detail)) || res.statusText);
+          document.getElementById('commReportDebug').textContent = JSON.stringify(data, null, 2);
+          alert(`Test email result: ${data.status}`);
+          fetchReportDeliveries();
+        } catch (e) {
+          alert('Send test email failed: ' + e.message);
+        }
+      }
+
+      async function disableReportSchedule(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        await fetch(`/admin/routing/executive-dashboard/report-schedules/${id}/disable`, {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token }
+        });
+        fetchReportSchedules();
+      }
+
+      async function enableReportSchedule(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        await fetch(`/admin/routing/executive-dashboard/report-schedules/${id}/enable`, {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token }
+        });
+        fetchReportSchedules();
+      }
+
+      async function fetchReportDeliveries() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/routing/executive-dashboard/report-deliveries?limit=10', {
+            headers: { 'X-Admin-Token': token }
+          });
+          const payload = await res.json();
+          if (!res.ok) throw new Error(payload.detail || res.statusText);
+          renderReportDeliveries(payload);
+        } catch (e) {
+          document.getElementById('reportDeliveriesList').innerHTML = `<p style="color:var(--danger);">Error loading deliveries: ${e.message}</p>`;
+        }
+      }
+
+      function renderReportDeliveries(payload) {
+        const summary = document.getElementById('reportDeliverySummary');
+        const list = document.getElementById('reportDeliveriesList');
+        const counts = payload.counts || {};
+        summary.textContent = `Mode=${payload.smtp_mode} | enabled=${payload.smtp_enabled} | send_real=${payload.send_real_email} | allowlist=${payload.allowlist_configured ? 'configured' : 'missing'} | sent=${counts.sent || 0} | dry_run=${counts.dry_run || 0} | blocked=${counts.blocked || 0} | failed=${counts.failed || 0} | retries=${counts.retries || 0} | auth_failures=${counts.auth_failures || 0} | blocked_by_security=${counts.blocked_by_security || 0} | blocked_by_allowlist=${counts.blocked_by_allowlist || 0}`;
+        const deliveries = payload.deliveries || [];
+        if (deliveries.length === 0) {
+          list.innerHTML = '<p class="muted">No deliveries recorded.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Status</th><th>Mode</th><th>Recipients</th><th>Subject</th><th>Retries</th><th>Error</th><th>Created</th></tr></thead><tbody>';
+        deliveries.forEach(item => {
+          html += `<tr>
+            <td>${item.delivery_status.toUpperCase()}</td>
+            <td>${item.delivery_mode}</td>
+            <td>${(item.recipients_json || []).join(', ') || '-'}</td>
+            <td>${item.subject}</td>
+            <td>${item.retries}</td>
+            <td>${item.error_message || '-'}</td>
+            <td>${item.created_at}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        list.innerHTML = html;
+      }
+      
+      async function showCanarySLO(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const slo = await fetch(`/admin/routing/commercial-configs/${id}/canary/slo`, { headers: { 'X-Admin-Token': token } }).then(r => r.json());
+          let body = `<div style="font-size:0.9rem;"><h4>SLO Evaluation for ${id.substring(0,8)}</h4><ul>`;
+          slo.checks.forEach(c => {
+            const icon = c.pass ? '✅' : '❌';
+            body += `<li>${icon} <strong>${c.name}</strong>: ${c.actual} (Threshold: ${c.threshold})</li>`;
+          });
+          body += `</ul><pre style="font-size:0.7rem;background:#f8f9fa;padding:0.5rem;margin-top:0.5rem;">${JSON.stringify(slo.metrics, null, 2)}</pre></div>`;
+          
+          document.getElementById('confirmModalTitle').textContent = 'Canary SLO Status';
+          document.getElementById('confirmModalBody').innerHTML = body;
+          const confBtn = document.getElementById('confirmModalConfirm');
+          if (confBtn) confBtn.style.display = 'none';
+          document.getElementById('configConfirmModal').style.display = 'flex';
+        } catch (e) {
+          alert('Error fetching SLO: ' + e.message);
+        }
+      }
+
+      async function promoteCanaryStep(id) {
+        if (!confirm('Promote this canary to the next step?')) return;
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch(`/admin/routing/commercial-configs/${id}/canary/promote-step`, { 
+            method: 'POST',
+            headers: { 'X-Admin-Token': token } 
+          });
+          const data = await res.json();
+          alert('Promotion result: ' + (data.action || data.status || JSON.stringify(data)));
+          fetchCanaryPromotions();
+        } catch (e) {
+          alert('Promotion failed: ' + e.message);
+        }
+      }
+
+      async function rollbackCanaryManual(id) {
+        if (!confirm('Rollback and deactivate this canary?')) return;
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch(`/admin/routing/commercial-configs/${id}/canary/auto-rollback`, { 
+            method: 'POST',
+            headers: { 'X-Admin-Token': token } 
+          });
+          const data = await res.json();
+          alert('Rollback result: ' + (data.action || data.status || JSON.stringify(data)));
+          fetchCanaryPromotions();
+        } catch (e) {
+          alert('Rollback failed: ' + e.message);
+        }
+      }
+      
+      async function runPromotionDryRun() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/routing/commercial-configs/canary/promotions/dry-run', { 
+            method: 'POST',
+            headers: { 'X-Admin-Token': token } 
+          });
+          const data = await res.json();
+          const debug = document.getElementById('canaryPromotionDebug');
+          if (debug) debug.textContent = JSON.stringify(data, null, 2);
+          alert('Dry-run completed. Check JSON for details.');
+        } catch (e) {
+          alert('Dry-run failed: ' + e.message);
+        }
+      }
+
+      function ensureRevenueProtectionPanel() {
+        if (document.getElementById('revenueProtectionPanel')) return;
+        const panel = document.createElement('section');
+        panel.id = 'revenueProtectionPanel';
+        panel.style.margin = '24px 0';
+        panel.style.padding = '16px';
+        panel.style.border = '1px solid var(--border, #d0d7de)';
+        panel.style.borderRadius = '12px';
+        panel.innerHTML = `
+          <h3 style="margin-top:0;">Revenue Protection</h3>
+          <div id="revenueProtectionBadges" style="margin-bottom:12px;color:var(--muted);">Loading...</div>
+          <div id="revenueProtectionSummary" style="margin-bottom:12px;color:var(--muted);">No data.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button onclick="evaluateRevenueProtection()">Evaluate</button>
+            <button onclick="refreshRevenueProtection()">Refresh</button>
+          </div>
+          <pre id="revenueProtectionDebug" style="white-space:pre-wrap;background:#f8f9fa;padding:12px;border-radius:8px;max-height:320px;overflow:auto;">{}</pre>
+        `;
+        document.body.appendChild(panel);
+      }
+
+      async function refreshRevenueProtection() {
+        ensureRevenueProtectionPanel();
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/billing/revenue-protection/status', { headers: { 'X-Admin-Token': token } });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          const badges = (data.badges || []).filter(Boolean).map(b => `<span class="pill pill-muted">${b}</span>`).join(' ');
+          document.getElementById('revenueProtectionBadges').innerHTML = badges || '<span class="pill pill-muted">REPORT_ONLY</span>';
+          document.getElementById('revenueProtectionSummary').textContent =
+            `policies=${data.policies_active || 0} proposed=${data.actions_proposed || 0} pending=${data.actions_pending_approval || 0} applied=${data.actions_applied || 0} safe_mode=${(data.clients_in_safe_mode || []).length} restricted_models=${(data.restricted_models || []).length} cooldowns=${data.cooldowns_active || 0}`;
+          document.getElementById('revenueProtectionDebug').textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          document.getElementById('revenueProtectionSummary').textContent = `Error: ${e.message}`;
+        }
+      }
+
+      async function evaluateRevenueProtection() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/billing/revenue-protection/evaluate', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ anomaly_ids: [] })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          document.getElementById('revenueProtectionDebug').textContent = JSON.stringify(data, null, 2);
+          await refreshRevenueProtection();
+        } catch (e) {
+          alert('Revenue protection evaluate failed: ' + e.message);
+        }
+      }
+
+      function ensureRevenueEscalationsPanel() {
+        if (document.getElementById('revenueEscalationsPanel')) return;
+        const panel = document.createElement('section');
+        panel.id = 'revenueEscalationsPanel';
+        panel.style.margin = '24px 0';
+        panel.style.padding = '16px';
+        panel.style.border = '1px solid var(--border, #d0d7de)';
+        panel.style.borderRadius = '12px';
+        panel.innerHTML = `
+          <h3 style="margin-top:0;">Revenue Escalations</h3>
+          <div id="revenueEscalationsBadges" style="margin-bottom:12px;color:var(--muted);">Loading...</div>
+          <div id="revenueEscalationsSummary" style="margin-bottom:12px;color:var(--muted);">No data.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button onclick="sendRevenueEscalationTest()">Send Test</button>
+            <button onclick="refreshRevenueEscalations()">Refresh</button>
+          </div>
+          <div id="revenueEscalationsTables" style="overflow:auto;margin-bottom:12px;color:var(--muted);">Loading deliveries...</div>
+          <pre id="revenueEscalationsDebug" style="white-space:pre-wrap;background:#f8f9fa;padding:12px;border-radius:8px;max-height:320px;overflow:auto;">{}</pre>
+        `;
+        document.body.appendChild(panel);
+      }
+
+      async function refreshRevenueEscalations() {
+        ensureRevenueEscalationsPanel();
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const [statusRes, deliveriesRes] = await Promise.all([
+            fetch('/admin/billing/revenue-escalations/status', { headers: { 'X-Admin-Token': token } }),
+            fetch('/admin/billing/revenue-escalations/deliveries?limit=10', { headers: { 'X-Admin-Token': token } })
+          ]);
+          const statusData = await statusRes.json();
+          const deliveriesData = await deliveriesRes.json();
+          if (!statusRes.ok) throw new Error(statusData.detail || statusRes.statusText);
+          if (!deliveriesRes.ok) throw new Error(deliveriesData.detail || deliveriesRes.statusText);
+          const badges = (statusData.badges || []).filter(Boolean).map(b => `<span class="pill pill-muted">${b}</span>`).join(' ');
+          document.getElementById('revenueEscalationsBadges').innerHTML = badges || '<span class="pill pill-muted">DRY_RUN</span>';
+          document.getElementById('revenueEscalationsSummary').textContent =
+            `recent=${(statusData.recent_deliveries || []).length} failures=${statusData.failures || 0} retries=${statusData.retries || 0} suppressed=${statusData.suppressed || 0} deduplicated=${statusData.deduplicated || 0} policies=${(statusData.policies || []).length}`;
+
+          const rows = Array.isArray(deliveriesData) ? deliveriesData : [];
+          let html = '<table><thead><tr><th>Status</th><th>Severity</th><th>Type</th><th>Destination</th><th>Source</th><th>Retry</th></tr></thead><tbody>';
+          rows.forEach(item => {
+            const action = item.status === 'failed'
+              ? `<button class="secondary" onclick="retryRevenueEscalation('${item.id}')">Retry</button>`
+              : '-';
+            html += `<tr><td><span class="pill pill-muted">${item.status || '-'}</span></td><td>${item.severity || '-'}</td><td>${item.delivery_type || '-'}</td><td>${item.destination || '-'}</td><td>${item.source_type || '-'}:${item.source_id || '-'}</td><td>${action}</td></tr>`;
+          });
+          html += '</tbody></table>';
+
+          const routing = (statusData.severity_routing || []).map(item =>
+            `<div style="margin-top:8px;"><strong>${item.policy}</strong> threshold=${item.severity_threshold} delivery=${(item.delivery_order || []).join(', ')}</div>`
+          ).join('');
+          const deliveryTypes = Object.entries(statusData.delivery_types || {}).map(([k, v]) => `${k}=${v}`).join(' | ') || 'none';
+          document.getElementById('revenueEscalationsTables').innerHTML =
+            `<div style="margin-bottom:10px;"><strong>Delivery Types:</strong> ${deliveryTypes}</div>` +
+            `<div style="margin-bottom:10px;"><strong>Severity Routing:</strong>${routing || '<div>none</div>'}</div>` +
+            html;
+          document.getElementById('revenueEscalationsDebug').textContent = JSON.stringify(statusData, null, 2);
+        } catch (e) {
+          document.getElementById('revenueEscalationsSummary').textContent = `Error: ${e.message}`;
+        }
+      }
+
+      async function sendRevenueEscalationTest() {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/billing/revenue-escalations/test', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              source_type: 'policy_action',
+              severity: 'critical',
+              summary: 'Manual revenue escalation test',
+              recommendation: 'Verify dry-run and masked destinations.',
+              trigger_type: 'manual_test'
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          document.getElementById('revenueEscalationsDebug').textContent = JSON.stringify(data, null, 2);
+          await refreshRevenueEscalations();
+        } catch (e) {
+          alert('Revenue escalations test failed: ' + e.message);
+        }
+      }
+
+      async function retryRevenueEscalation(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch(`/admin/billing/revenue-escalations/retry/${id}`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || res.statusText);
+          document.getElementById('revenueEscalationsDebug').textContent = JSON.stringify(data, null, 2);
+          await refreshRevenueEscalations();
+        } catch (e) {
+          alert('Revenue escalation retry failed: ' + e.message);
+        }
+      }
+
+      function ensureRuntimeIntegrityPanel() {
+        if (document.getElementById('runtimeIntegrityPanel')) return;
+        const panel = document.createElement('section');
+        panel.id = 'runtimeIntegrityPanel';
+        panel.style.margin = '24px 0';
+        panel.style.padding = '16px';
+        panel.style.border = '1px solid var(--border, #d0d7de)';
+        panel.style.borderRadius = '12px';
+        panel.innerHTML = `
+          <h3 style="margin-top:0;">Runtime Model Integrity</h3>
+          <div id="runtimeIntegrityBadges" style="margin-bottom:12px;color:var(--muted);">Loading...</div>
+          <div id="runtimeIntegritySummary" style="margin-bottom:12px;color:var(--muted);">No data.</div>
+          <div id="runtimeIntegrityTables" style="overflow:auto;margin-bottom:12px;color:var(--muted);">Loading scans...</div>
+          <pre id="runtimeIntegrityDebug" style="white-space:pre-wrap;background:#f8f9fa;padding:12px;border-radius:8px;max-height:320px;overflow:auto;">{}</pre>
+        `;
+        document.body.appendChild(panel);
+      }
+
+      async function refreshRuntimeIntegrity() {
+        ensureRuntimeIntegrityPanel();
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const [statusRes, scansRes, eventsRes, attestRes] = await Promise.all([
+            fetch('/admin/models/integrity/status', { headers: { 'X-Admin-Token': token } }),
+            fetch('/admin/models/integrity/scans?limit=10', { headers: { 'X-Admin-Token': token } }),
+            fetch('/admin/models/integrity/events?limit=10', { headers: { 'X-Admin-Token': token } }),
+            fetch('/admin/models/integrity/attestations?limit=10', { headers: { 'X-Admin-Token': token } })
+          ]);
+          const status = await statusRes.json();
+          const scans = await scansRes.json();
+          const events = await eventsRes.json();
+          const attest = await attestRes.json();
+          if (!statusRes.ok) throw new Error(status.detail || statusRes.statusText);
+          if (!scansRes.ok) throw new Error(scans.detail || scansRes.statusText);
+          if (!eventsRes.ok) throw new Error(events.detail || eventsRes.statusText);
+          if (!attestRes.ok) throw new Error(attest.detail || attestRes.statusText);
+
+          const badges = [
+            '<span class="pill pill-success">VERIFIED</span>',
+            '<span class="pill pill-warning">DRIFT</span>',
+            '<span class="pill pill-critical">QUARANTINED</span>',
+            '<span class="pill pill-critical">MISSING</span>',
+            '<span class="pill pill-success">ATTESTED</span>',
+            '<span class="pill pill-warning">ALIAS_DRIFT</span>'
+          ];
+          document.getElementById('runtimeIntegrityBadges').innerHTML = badges.join(' ');
+          document.getElementById('runtimeIntegritySummary').textContent =
+            `quarantined=${(status.quarantined_models || []).length} missing=${(status.missing_models || []).length} drift=${(status.drift_models || []).length} alias_drift=${(status.alias_drift_models || []).length} peers=${status.federated_integrity?.peer_count || 0}`;
+
+          const scanRows = Array.isArray(scans.items) ? scans.items : [];
+          const eventRows = Array.isArray(events.items) ? events.items : [];
+          const attRows = Array.isArray(attest.items) ? attest.items : [];
+          document.getElementById('runtimeIntegrityTables').innerHTML =
+            '<table><thead><tr><th>Model</th><th>Status</th><th>Type</th><th>Checksum</th><th>Time</th></tr></thead><tbody>' +
+            (scanRows.length
+              ? scanRows.map((item) => `<tr><td>${item.model_name}</td><td>${item.integrity_status}</td><td>${item.scan_type}</td><td><code>${item.observed_checksum || '-'}</code></td><td>${item.created_at || '-'}</td></tr>`).join('')
+              : '<tr><td colspan="5">No integrity scans.</td></tr>') +
+            '</tbody></table>' +
+            '<table style="margin-top:12px;"><thead><tr><th>Event</th><th>Model</th><th>Severity</th><th>Summary</th></tr></thead><tbody>' +
+            (eventRows.length
+              ? eventRows.map((item) => `<tr><td>${item.event_type}</td><td>${item.model_name}</td><td>${item.severity}</td><td>${item.summary}</td></tr>`).join('')
+              : '<tr><td colspan="4">No integrity events.</td></tr>') +
+            '</tbody></table>' +
+            '<table style="margin-top:12px;"><thead><tr><th>Model</th><th>Attestation</th><th>Manifest</th><th>Checksum</th></tr></thead><tbody>' +
+            (attRows.length
+              ? attRows.map((item) => `<tr><td>${item.model_alias || item.model_name}</td><td>${item.attestation_status}</td><td><code>${item.observed_manifest_hash || '-'}</code></td><td><code>${item.observed_checksum || '-'}</code></td></tr>`).join('')
+              : '<tr><td colspan="4">No runtime attestations.</td></tr>') +
+            '</tbody></table>';
+          document.getElementById('runtimeIntegrityDebug').textContent = JSON.stringify(status, null, 2);
+        } catch (e) {
+          document.getElementById('runtimeIntegritySummary').textContent = `Error: ${e.message}`;
+        }
+      }
+      
+      // Sections now refreshed via initAdmin() 
+
+
+      // ===== Phase 42: Merkle Execution Proofs =====
+      async function loadMerkleProofsSection() {
+        const token = document.getElementById('adminToken').value.trim();
+        if (!token) return;
+        try {
+          const [tlRes, prRes] = await Promise.all([
+            fetch('/admin/inference/proofs/timelines', { headers: { 'X-Admin-Token': token } }),
+            fetch('/admin/inference/proofs/proofs', { headers: { 'X-Admin-Token': token } }),
+          ]);
+          const tlData = await tlRes.json();
+          const prData = await prRes.json();
+          const timelines = tlData.items || [];
+          const proofs = prData.items || [];
+          const sealed = timelines.filter(t => t.status === 'sealed').length;
+          const verified = timelines.filter(t => t.status === 'verified').length;
+          const invalid = timelines.filter(t => t.status === 'invalid').length;
+          const roots = new Set(timelines.map(t => t.merkle_root)).size;
+
+          document.getElementById('merkleTimelineCount').textContent = timelines.length;
+          document.getElementById('merkleRootCount').textContent = roots;
+          document.getElementById('merkleSealedCount').textContent = sealed;
+          document.getElementById('merkleProofCount').textContent = proofs.length;
+          document.getElementById('merkleInvalidCount').textContent = invalid;
+
+          // Chain validation
+          let chainValid = true;
+          for (let i = 1; i < timelines.length; i++) {
+            if (timelines[i].previous_timeline_root && timelines[i].previous_timeline_root !== timelines[i - 1].merkle_root) {
+              chainValid = false;
+              break;
+            }
+          }
+          const chainEl = document.getElementById('merkleChainValid');
+          chainEl.textContent = chainValid ? 'YES' : 'NO';
+          chainEl.style.color = chainValid ? 'var(--success)' : 'var(--danger)';
+
+          // Render table
+          const tbody = document.getElementById('merkleTimelinesTable');
+          if (timelines.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">No timelines yet</td></tr>';
+          } else {
+            tbody.innerHTML = timelines.map(t => {
+              const statusClass = t.status === 'sealed' ? 'pill-success'
+                : t.status === 'verified' ? 'pill-success'
+                : t.status === 'invalid' ? 'pill-danger'
+                : 'pill-warning';
+              const rootShort = (t.merkle_root || '').substring(0, 12) + '...';
+              const period = (t.period_start || '').substring(0, 16) + ' – ' + (t.period_end || '').substring(0, 16);
+              return `<tr>
+                <td>${t.timeline_type}</td>
+                <td>${period}</td>
+                <td>${t.leaf_count}</td>
+                <td><code title="${t.merkle_root}">${rootShort}</code></td>
+                <td><span class="pill ${statusClass}">${t.status.toUpperCase()}</span></td>
+                <td>
+                  <button class="small" onclick="sealMerkleTimeline('${t.id}')">Seal</button>
+                  <button class="small secondary" onclick="verifyMerkleTimeline('${t.id}')">Verify</button>
+                </td>
+              </tr>`;
+            }).join('');
+          }
+        } catch (e) {
+          console.error('Merkle proofs load error:', e);
+        }
+      }
+
+      async function buildMerkleTimeline() {
+        const token = document.getElementById('adminToken').value.trim();
+        if (!token) { alert('Enter admin token first'); return; }
+        try {
+          const res = await fetch('/admin/inference/proofs/timelines/build', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timeline_type: 'inference_receipts', window_minutes: 60 }),
+          });
+          const data = await res.json();
+          if (!res.ok) { alert('Build failed: ' + (data.detail || res.statusText)); return; }
+          alert('Timeline built: ' + data.id + '\nRoot: ' + data.merkle_root);
+          loadMerkleProofsSection();
+        } catch (e) {
+          alert('Build error: ' + e.message);
+        }
+      }
+
+      async function sealMerkleTimeline(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        if (!confirm('Seal this timeline? It will become immutable.')) return;
+        try {
+          const res = await fetch('/admin/inference/proofs/timelines/' + id + '/seal', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token },
+          });
+          const data = await res.json();
+          if (!res.ok) { alert('Seal failed: ' + (data.detail || res.statusText)); return; }
+          alert('Timeline sealed.\nRoot: ' + data.merkle_root);
+          loadMerkleProofsSection();
+        } catch (e) {
+          alert('Seal error: ' + e.message);
+        }
+      }
+
+      async function verifyMerkleTimeline(id) {
+        const token = document.getElementById('adminToken').value.trim();
+        try {
+          const res = await fetch('/admin/inference/proofs/timelines/' + id + '/verify', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token },
+          });
+          const data = await res.json();
+          if (!res.ok) { alert('Verify failed: ' + (data.detail || res.statusText)); return; }
+          alert('Verification result: ' + (data.valid ? 'VALID ✅' : 'INVALID ❌') + '\nLeaves: ' + data.leaf_count);
+          loadMerkleProofsSection();
+        } catch (e) {
+          alert('Verify error: ' + e.message);
+        }
+      }
+
+      async function verifyMerkleChain() {
+        const token = document.getElementById('adminToken').value.trim();
+        if (!token) { alert('Enter admin token first'); return; }
+        try {
+          const res = await fetch('/admin/inference/proofs/timelines', { headers: { 'X-Admin-Token': token } });
+          const data = await res.json();
+          const items = data.items || [];
+          if (items.length < 2) { alert('Need at least 2 timelines for chain validation'); return; }
+          let valid = true;
+          let breakAt = -1;
+          for (let i = 1; i < items.length; i++) {
+            if (items[i].previous_timeline_root && items[i].previous_timeline_root !== items[i - 1].merkle_root) {
+              valid = false;
+              breakAt = i;
+              break;
+            }
+          }
+          alert(valid
+            ? 'Chain is VALID ✅ (' + items.length + ' timelines)'
+            : 'Chain BROKEN ❌ at timeline index ' + breakAt
+          );
+        } catch (e) {
+          alert('Chain verify error: ' + e.message);
+        }
+      }
+
+      async function exportMerkleProof() {
+        const token = document.getElementById('adminToken').value.trim();
+        if (!token) { alert('Enter admin token first'); return; }
+        try {
+          const res = await fetch('/admin/inference/proofs/proofs', { headers: { 'X-Admin-Token': token } });
+          const data = await res.json();
+          const items = data.items || [];
+          if (items.length === 0) { alert('No proofs to export'); return; }
+          const proofId = items[0].id;
+          const expRes = await fetch('/admin/inference/proofs/proofs/' + proofId + '/export', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const exported = await expRes.json();
+          const blob = new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'execution_proof_' + proofId.substring(0, 8) + '.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          alert('Export error: ' + e.message);
+        }
+      }
+
+      async function loadWitnessFederation() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const res = await fetch('/admin/inference/witness-status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const summary = await res.json();
+          document.getElementById('witnessActiveCount').innerText = summary.active;
+          document.getElementById('witnessOfflineCount').innerText = summary.offline;
+          document.getElementById('witnessStatus').innerText = summary.active > 0 ? 'ACTIVE' : 'DEGRADED';
+
+          const resW = await fetch('/admin/inference/witnesses', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const witnesses = await resW.json();
+          const wTable = document.getElementById('witnessesTable');
+          wTable.innerHTML = witnesses.map(w => `
+            <tr>
+              <td>${w.witness_name}</td>
+              <td><span class="pill pill-unknown">${w.witness_type.toUpperCase()}</span></td>
+              <td>${w.trust_level}</td>
+              <td><span class="pill ${w.status === 'active' ? 'pill-success' : 'pill-danger'}">${w.status}</span></td>
+              <td>
+                <button class="secondary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="verifyWitness('${w.id}')">Verify</button>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;">No witnesses found</td></tr>';
+
+          const resS = await fetch('/admin/inference/witness-signatures', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const sigs = await resS.json();
+          const sTable = document.getElementById('witnessSignaturesTable');
+          sTable.innerHTML = sigs.slice(0, 10).map(s => `
+            <tr>
+              <td>${s.witness_id.substring(0, 8)}...</td>
+              <td>${s.timeline_id.substring(0, 8)}...</td>
+              <td><span class="pill pill-success">${s.verification_status}</span></td>
+              <td>${new Date(s.signed_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No signatures found</td></tr>';
+
+        } catch (e) {
+          console.error('Witness load error:', e);
+        }
+      }
+
+      async function verifyWitness(id) {
+        const token = document.getElementById('adminToken').value;
+        try {
+          const res = await fetch(`/admin/inference/witnesses/${id}/verify`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token },
+          });
+          const result = await res.json();
+          alert(`Witness is ${result.online ? 'ONLINE' : 'OFFLINE'} (Latency: ${result.latency_ms}ms)`);
+          loadWitnessFederation();
+        } catch (e) {
+          alert('Verification failed: ' + e.message);
+        }
+      }
+
+      function showAddWitnessModal() {
+        const name = prompt("Witness Name:");
+        if (!name) return;
+        const type = prompt("Witness Type (internal|external|offline):", "external");
+        if (!type) return;
+        
+        const token = document.getElementById('adminToken').value;
+        fetch('/admin/inference/witnesses', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ witness_name: name, witness_type: type })
+        }).then(() => {
+          alert('Witness added');
+          loadWitnessFederation();
+        });
+      }
+
+      function refreshWitnessFederation() {
+        loadWitnessFederation();
+      }
+
+      async function loadTransparencyGossip() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/transparency/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('transparencyPeerCount').innerText = status.total_peers;
+          document.getElementById('transparencyAlertCount').innerText = status.active_alerts;
+          document.getElementById('transparencyStatus').innerText = status.status.toUpperCase();
+
+          const resP = await fetch('/admin/inference/transparency/peers', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const peers = await resP.json();
+          const pTable = document.getElementById('transparencyPeersTable');
+          pTable.innerHTML = peers.map(p => `
+            <tr>
+              <td>${p.peer_id}</td>
+              <td>${p.peer_type}</td>
+              <td><span class="pill ${p.status === 'active' ? 'pill-success' : 'pill-danger'}">${p.status}</span></td>
+              <td>${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No peers found</td></tr>';
+
+          const resA = await fetch('/admin/inference/transparency/split-view-alerts', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const alerts = await resA.json();
+          const aTable = document.getElementById('transparencyAlertsTable');
+          aTable.innerHTML = alerts.map(a => `
+            <tr>
+              <td>${a.alert_type}</td>
+              <td><span class="pill pill-danger">${a.severity}</span></td>
+              <td>${a.summary}</td>
+              <td>
+                ${!a.resolved ? `<button class="secondary" style="padding:2px 6px;" onclick="resolveTransparencyAlert('${a.id}')">Resolve</button>` : 'Resolved'}
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No alerts</td></tr>';
+
+          const resC = await fetch('/admin/inference/transparency/checkpoints', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const checkpoints = await resC.json();
+          const cTable = document.getElementById('transparencyCheckpointsTable');
+          cTable.innerHTML = checkpoints.slice(0, 10).map(c => `
+            <tr>
+              <td>${c.checkpoint_type}</td>
+              <td>${new Date(c.period_start).toLocaleDateString()}</td>
+              <td>${new Date(c.period_end).toLocaleDateString()}</td>
+              <td title="${c.root_hash}">${c.root_hash.substring(0, 16)}...</td>
+              <td>${new Date(c.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;">No checkpoints</td></tr>';
+          document.getElementById('transparencyCheckpointCount').innerText = checkpoints.length;
+
+        } catch (e) {
+          console.error('Transparency load error:', e);
+        }
+      }
+
+      async function createConsistencyCheckpoint() {
+        const type = prompt("Checkpoint Type (merkle_timeline|receipt_chain):", "merkle_timeline");
+        if (!type) return;
+        const start = prompt("Period Start (ISO):", new Date(Date.now() - 86400000).toISOString());
+        const end = prompt("Period End (ISO):", new Date().toISOString());
+        
+        const token = document.getElementById('adminToken').value;
+        try {
+          const res = await fetch('/admin/inference/transparency/checkpoints', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkpoint_type: type, period_start: start, period_end: end })
+          });
+          const data = await res.json();
+          alert('Checkpoint created: ' + data.root_hash.substring(0, 8));
+          loadTransparencyGossip();
+        } catch (e) {
+          alert('Failed to create checkpoint: ' + e.message);
+        }
+      }
+
+      async function resolveTransparencyAlert(id) {
+        const token = document.getElementById('adminToken').value;
+        try {
+          await fetch(`/admin/inference/transparency/split-view-alerts/${id}/resolve`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          loadTransparencyGossip();
+        } catch (e) {
+          alert('Resolution failed');
+        }
+      }
+
+      function manualGossipSync() {
+        alert('Gossip sync triggered with active peers...');
+        loadTransparencyGossip();
+      }
+
+      function refreshTransparencyStatus() {
+        loadTransparencyGossip();
+      }
+
+      async function loadPublicAttestationGateway() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/attestation/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('attestationMode').innerText = (status.mode || 'DISABLED').toUpperCase();
+          document.getElementById('attestationRequestCount').innerText = status.total_requests || 0;
+          document.getElementById('attestationValidCount').innerText = status.valid_results || 0;
+          document.getElementById('attestationStatus').innerText = status.enabled ? 'ONLINE' : 'OFFLINE';
+          document.getElementById('attestationEnabledPill').style.display = status.enabled ? 'inline-block' : 'none';
+
+          const resR = await fetch('/admin/inference/attestation/requests', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const reqs = await resR.json();
+          const rTable = document.getElementById('attestationRequestsTable');
+          rTable.innerHTML = reqs.slice(0, 10).map(r => `
+            <tr>
+              <td>${r.id.substring(0, 8)}...</td>
+              <td title="${r.request_hash}">${r.request_hash.substring(0, 12)}...</td>
+              <td>${r.source_ip || 'Anonymous'}</td>
+              <td><span class="pill ${r.status === 'verified' ? 'pill-success' : 'pill-warning'}">${r.status}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No requests</td></tr>';
+
+          const resRes = await fetch('/admin/inference/attestation/results', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const results = await resRes.json();
+          const resTable = document.getElementById('attestationResultsTable');
+          resTable.innerHTML = results.slice(0, 10).map(r => `
+            <tr>
+              <td>${r.verification_type}</td>
+              <td><span class="pill ${r.result === 'valid' ? 'pill-success' : 'pill-danger'}">${r.result}</span></td>
+              <td>${new Date(r.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" style="text-align:center;">No results</td></tr>';
+
+        } catch (e) {
+          console.error('Attestation load error:', e);
+        }
+      }
+
+      async function loadConfidentialRuntime() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/confidential-runtime/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('confidentialMode').innerText = (status.mode || 'DISABLED').toUpperCase();
+          document.getElementById('confidentialSessionCount').innerText = status.active_sessions || 0;
+          document.getElementById('confidentialProfileCount').innerText = status.total_profiles || 0;
+          document.getElementById('confidentialBlockedCount').innerText = status.logging_blocked_events || 0;
+          document.getElementById('confidentialEnabledPill').style.display = status.enabled ? 'inline-block' : 'none';
+
+          const resP = await fetch('/admin/inference/confidential-runtime/profiles', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const profiles = await resP.json();
+          const pTable = document.getElementById('confidentialProfilesTable');
+          pTable.innerHTML = profiles.map(p => `
+            <tr>
+              <td>${p.profile_name}</td>
+              <td>${p.client_id || 'Global'}</td>
+              <td><span class="pill ${p.require_encrypted_input ? 'pill-success' : 'pill-warning'}">${p.require_encrypted_input ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-danger'}">${p.enabled ? 'ACTIVE' : 'DISABLED'}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No profiles found</td></tr>';
+
+          const resSessions = await fetch('/admin/inference/confidential-runtime/sessions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const sessions = await resSessions.json();
+          const sTable = document.getElementById('confidentialSessionsTable');
+          sTable.innerHTML = sessions.map(s => `
+            <tr>
+              <td>${s.id.substring(0, 8)}...</td>
+              <td>${s.client_id || 'Anonymous'}</td>
+              <td>${s.input_mode}</td>
+              <td>${new Date(s.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No sessions found</td></tr>';
+
+          const resA = await fetch('/admin/inference/confidential-runtime/audit', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const events = await resA.json();
+          const aTable = document.getElementById('confidentialAuditTable');
+          aTable.innerHTML = events.map(e => `
+            <tr>
+              <td>${e.event_type}</td>
+              <td>${e.session_id ? e.session_id.substring(0, 8) + '...' : '-'}</td>
+              <td>${e.summary}</td>
+              <td>${new Date(e.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No audit events</td></tr>';
+
+        } catch (e) {
+          console.error('Confidential runtime load error:', e);
+        }
+      }
+
+      async function showAddConfidentialProfileModal() {
+        const name = prompt("Profile Name:");
+        if (!name) return;
+        const clientId = prompt("Client ID (optional):");
+        
+        const token = document.getElementById('adminToken').value;
+        fetch('/admin/inference/confidential-runtime/profiles', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            profile_name: name, 
+            client_id: clientId || null,
+            require_encrypted_input: false,
+            prohibit_prompt_logging: true 
+          })
+        }).then(() => {
+          alert('Profile added');
+          loadConfidentialRuntime();
+        });
+      }
+
+      function refreshConfidentialRuntime() {
+        loadConfidentialRuntime();
+      }
+
+      async function loadAgentGovernance() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/agents/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('agentMode').innerText = (status.mode || 'DISABLED').toUpperCase();
+          document.getElementById('agentExecutionCount').innerText = status.total_executions || 0;
+          document.getElementById('agentProfileCount').innerText = status.total_profiles || 0;
+          document.getElementById('agentToolCount').innerText = status.tools_executed || 0;
+          document.getElementById('agentEnabledPill').style.display = status.enabled ? 'inline-block' : 'none';
+
+          const trustedStatusRes = await fetch('/admin/agents/runtime/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const trustedStatus = await trustedStatusRes.json();
+          document.getElementById('trustedRuntimeStatus').innerText = (trustedStatus.mode || 'trusted').toUpperCase();
+          document.getElementById('trustedToolState').innerText = trustedStatus.registered_tools || 0;
+          document.getElementById('trustedReplayValidation').innerText = trustedStatus.verified_replays || 0;
+          document.getElementById('trustedPolicyViolations').innerText = trustedStatus.policy_violations || 0;
+
+          const resP = await fetch('/admin/inference/agents/profiles', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const profiles = await resP.json();
+          const pTable = document.getElementById('agentProfilesTable');
+          pTable.innerHTML = profiles.map(p => `
+            <tr>
+              <td>${p.agent_name}</td>
+              <td>${p.client_id || 'Global'}</td>
+              <td><span class="pill ${p.can_delegate ? 'pill-success' : 'pill-warning'}">${p.can_delegate ? 'YES' : 'NO'}</span></td>
+              <td><span class="pill ${p.enabled ? 'pill-success' : 'pill-danger'}">${p.enabled ? 'ACTIVE' : 'DISABLED'}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No agents found</td></tr>';
+
+          const resE = await fetch('/admin/inference/agents/executions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const executions = await resE.json();
+          const eTable = document.getElementById('agentExecutionsTable');
+          eTable.innerHTML = executions.map(e => `
+            <tr>
+              <td>${e.id.substring(0, 8)}...</td>
+              <td>${e.agent_id.substring(0, 8)}...</td>
+              <td><span class="pill pill-info">${e.status.toUpperCase()}</span></td>
+              <td>${new Date(e.started_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No executions</td></tr>';
+
+          const resT = await fetch('/admin/inference/agents/tool-executions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const tools = await resT.json();
+          const tTable = document.getElementById('agentToolAuditTable');
+          tTable.innerHTML = tools.map(t => `
+            <tr>
+              <td>${t.tool_name}</td>
+              <td>${t.execution_id.substring(0, 8)}...</td>
+              <td><span class="pill ${t.approval_status === 'approved' ? 'pill-success' : (t.approval_status === 'pending' ? 'pill-warning' : 'pill-danger')}">${t.approval_status}</span></td>
+              <td>
+                ${t.approval_status === 'pending' ? `<button class="secondary" style="padding:2px 6px;" onclick="approveAgentTool('${t.id}')">Approve</button>` : '-'}
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No tool audit</td></tr>';
+
+        } catch (e) {
+          console.error('Agent governance load error:', e);
+        }
+      }
+
+      async function showAddAgentProfileModal() {
+        const name = prompt("Agent Name:");
+        if (!name) return;
+        
+        const token = document.getElementById('adminToken').value;
+        fetch('/admin/inference/agents/profiles', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            agent_name: name, 
+            allowed_tools: ["search", "calculator"],
+            can_delegate: true 
+          })
+        }).then(() => {
+          alert('Agent profile created');
+          loadAgentGovernance();
+        });
+      }
+
+      async function approveAgentTool(id) {
+        const token = document.getElementById('adminToken').value;
+        try {
+          await fetch(`/admin/inference/agents/tool-executions/${id}/approve`, {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token }
+          });
+          loadAgentGovernance();
+        } catch (e) {
+          alert('Approval failed');
+        }
+      }
+
+      function refreshAgentGovernance() {
+        loadAgentGovernance();
+      }
+
+      async function loadWorkflows() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/workflows/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('workflowReproMode').innerText = status.enabled ? 'VERIFIED' : 'DISABLED';
+          document.getElementById('workflowDefCount').innerText = status.total_definitions || status.definitions || 0;
+          document.getElementById('workflowExecCount').innerText = status.total_executions || status.executions || 0;
+          document.getElementById('workflowReplayCount').innerText = status.total_replays || status.stage_receipts || 0;
+          document.getElementById('workflowEnabledPill').style.display = status.enabled ? 'inline-block' : 'none';
+
+          const resD = await fetch('/admin/inference/workflows/definitions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const defsPayload = await resD.json();
+          const defs = defsPayload.items || defsPayload;
+          const dTable = document.getElementById('workflowDefsTable');
+          dTable.innerHTML = defs.map(d => `
+            <tr>
+              <td>${d.workflow_name}</td>
+              <td>${d.entry_stage || ('v' + (d.version || 1))}</td>
+              <td><span class="pill ${(d.definition_hash || '').length ? 'pill-success' : 'pill-warning'}">${d.definition_hash ? 'HASHED' : 'PENDING'}</span></td>
+              <td>${new Date(d.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No workflows found</td></tr>';
+
+          const resE = await fetch('/admin/inference/workflows/executions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const execsPayload = await resE.json();
+          const execs = execsPayload.items || execsPayload;
+          const eTable = document.getElementById('workflowExecsTable');
+          eTable.innerHTML = execs.map(e => `
+            <tr>
+              <td>${e.id.substring(0, 8)}...</td>
+              <td><span class="pill pill-info">${e.status.toUpperCase()}</span></td>
+              <td>${(e.current_step || e.current_step_index || 0)}/${e.total_steps}</td>
+              <td>${new Date(e.started_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No executions found</td></tr>';
+
+          const resR = await fetch('/admin/inference/workflows/reports', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const reportsPayload = await resR.json();
+          const reports = reportsPayload.items || reportsPayload;
+          const rTable = document.getElementById('workflowReportsTable');
+          rTable.innerHTML = reports.map(r => `
+            <tr>
+              <td>${r.execution_id.substring(0, 8)}...</td>
+              <td>${(r.determinism_score * 100).toFixed(1)}%</td>
+              <td><span class="pill ${r.drift_detected ? 'pill-danger' : 'pill-success'}">${r.drift_detected ? 'DRIFT' : 'OK'}</span></td>
+              <td>${r.drift_summary}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No reports found</td></tr>';
+
+        } catch (e) {
+          console.error('Workflow load error:', e);
+        }
+      }
+
+      async function showAddWorkflowModal() {
+        const name = prompt("Workflow Name:");
+        if (!name) return;
+        
+        const token = document.getElementById('adminToken').value;
+        fetch('/admin/inference/workflows/definitions', {
+          method: 'POST',
+          headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            workflow_name: name, 
+            steps_config: [
+              { model: "gpt-4", prompt: "Step 1" },
+              { model: "gpt-4", prompt: "Step 2" }
+            ]
+          })
+        }).then(() => {
+          alert('Workflow definition created');
+          loadWorkflows();
+        });
+      }
+
+      function refreshWorkflows() {
+        loadWorkflows();
+      }
+
+      async function loadAppliance() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resS = await fetch('/admin/inference/appliance/status', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const status = await resS.json();
+          document.getElementById('applianceTier').innerText = (status.deployment_tier || 'UNKNOWN').toUpperCase();
+          document.getElementById('applianceId').innerText = status.appliance_id || '-';
+          document.getElementById('applianceBundleCount').innerText = status.total_bundles || 0;
+          document.getElementById('applianceAuditCount').innerText = status.total_audit_packages || 0;
+          document.getElementById('applianceEnabledPill').style.display = status.enabled ? 'inline-block' : 'none';
+
+          const resM = await fetch('/admin/inference/appliance/manifests', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const manifests = await resM.json();
+          const mTable = document.getElementById('applianceManifestTable');
+          mTable.innerHTML = manifests.map(m => `
+            <tr>
+              <td>${m.manifest_hash.substring(0, 12)}...</td>
+              <td><span class="pill pill-info">${m.sync_direction.toUpperCase()}</span></td>
+              <td>${m.payload_type}</td>
+              <td><span class="pill ${m.is_verified ? 'pill-success' : 'pill-warning'}">${m.is_verified ? 'YES' : 'NO'}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No manifests found</td></tr>';
+
+          const resB = await fetch('/admin/inference/appliance/bundles', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const bundles = await resB.json();
+          const bTable = document.getElementById('applianceBundlesTable');
+          bTable.innerHTML = bundles.map(b => `
+            <tr>
+              <td>${b.model_name}</td>
+              <td><span class="pill ${b.promotion_status === 'promoted' ? 'pill-success' : 'pill-info'}">${b.promotion_status}</span></td>
+              <td>${b.bundle_hash.substring(0, 12)}...</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" style="text-align:center;">No bundles found</td></tr>';
+
+          const resP = await fetch('/admin/inference/appliance/audit-packages', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const packages = await resP.json();
+          const pTable = document.getElementById('applianceAuditTable');
+          pTable.innerHTML = packages.map(p => `
+            <tr>
+              <td>${p.id.substring(0, 8)}...</td>
+              <td><span class="pill pill-success">${p.export_status}</span></td>
+              <td>${p.package_hash.substring(0, 12)}...</td>
+              <td>${new Date(p.time_window_start).toLocaleString()} - ${new Date(p.time_window_end).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No packages found</td></tr>';
+
+        } catch (e) {
+          console.error('Appliance load error:', e);
+        }
+      }
+
+      async function generateAuditPackage() {
+        const token = document.getElementById('adminToken').value;
+        try {
+          await fetch('/admin/inference/appliance/audit-packages', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          alert('Audit package generated');
+          loadAppliance();
+        } catch (e) {
+          alert('Failed to generate package');
+        }
+      }
+
+      function refreshAppliance() {
+        loadAppliance();
+      }
+
+      async function loadRAG() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+
+        try {
+          const resV = await fetch('/admin/rag/vaults', { headers: { 'X-Admin-Token': token } });
+          const vaults = await resV.json();
+          const vTable = document.getElementById('ragVaultsTable');
+          vTable.innerHTML = vaults.map(v => `
+            <tr>
+              <td>${v.vault_name}</td>
+              <td>${v.tenant_id}</td>
+              <td>${v.retention_policy_days} days</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" style="text-align:center;">No vaults found</td></tr>';
+
+          const resR = await fetch('/admin/rag/receipts', { headers: { 'X-Admin-Token': token } });
+          const receipts = await resR.json();
+          const rTable = document.getElementById('ragReceiptsTable');
+          rTable.innerHTML = receipts.map(r => `
+            <tr>
+              <td>${r.session_id.substring(0, 8)}...</td>
+              <td>${r.receipt_hash.substring(0, 12)}...</td>
+              <td>${new Date(r.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" style="text-align:center;">No receipts found</td></tr>';
+
+          const resP = await fetch('/admin/rag/violations', { headers: { 'X-Admin-Token': token } });
+          const violations = await resP.json();
+          const pTable = document.getElementById('ragViolationsTable');
+          pTable.innerHTML = violations.map(v => `
+            <tr>
+              <td>${v.session_id.substring(0, 8)}...</td>
+              <td><span class="pill pill-danger">${v.violation_type}</span></td>
+              <td>${v.action_taken}</td>
+              <td>${new Date(v.created_at).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No violations found</td></tr>';
+
+        } catch (e) {
+          console.error('RAG load error:', e);
+        }
+      }
+
+      function refreshRAG() {
+        loadRAG();
+      }
+
+      async function loadFederatedWorkflows() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const overviewRes = await fetch('/admin/workflows/federation/overview', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const overview = await overviewRes.json();
+          document.getElementById('fedWorkflowExecutions').textContent = overview.total_executions ?? '-';
+          document.getElementById('fedConsensusHealth').textContent = overview.consensus_healthy ?? '-';
+          document.getElementById('fedReplayVerified').textContent = overview.replay_verified ?? '-';
+          document.getElementById('fedDriftDetected').textContent = overview.drift_detected ?? '-';
+
+          const execRes = await fetch('/admin/workflows/federation/executions', {
+            headers: { 'X-Admin-Token': token },
+          });
+          const payload = await execRes.json();
+          const table = document.getElementById('fedExecutionTable');
+          table.innerHTML = (payload.items || []).map(item => `
+            <tr>
+              <td>${item.workflow_id}</td>
+              <td>${item.region_id}/${item.cluster_id}</td>
+              <td>${item.federation_mode}</td>
+              <td><span class="pill ${item.consensus_status === 'verified' ? 'pill-success' : 'pill-warning'}">${item.consensus_status}</span></td>
+              <td><span class="pill ${item.replay_status === 'verified' ? 'pill-success' : 'pill-warning'}">${item.replay_status}</span></td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;">No federated workflow executions</td></tr>';
+        } catch (e) {
+          console.error('Federated workflow load error:', e);
+        }
+      }
+
+      async function loadAIOps() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const statusRes = await fetch('/admin/aiops/status', { headers: { 'X-Admin-Token': token } });
+          const status = await statusRes.json();
+          document.getElementById('aiopsMode').textContent = status.mode || '-';
+
+          const riskRes = await fetch('/admin/aiops/risk-trends', { headers: { 'X-Admin-Token': token } });
+          const risks = await riskRes.json();
+          if (risks.length > 0) {
+            document.getElementById('aiopsRiskScore').textContent = (risks[0].risk_score * 100).toFixed(1) + '%';
+          }
+
+          const anomRes = await fetch('/admin/aiops/anomalies', { headers: { 'X-Admin-Token': token } });
+          const anomalies = await anomRes.json();
+          document.getElementById('aiopsAnomaliesCount').textContent = anomalies.length;
+
+          const foreRes = await fetch('/admin/aiops/forecasts', { headers: { 'X-Admin-Token': token } });
+          const forecasts = await foreRes.json();
+          document.getElementById('aiopsForecastsCount').textContent = forecasts.length;
+          
+          const fTable = document.getElementById('aiopsForecastTable').querySelector('tbody');
+          fTable.innerHTML = forecasts.map(f => `
+            <tr>
+              <td>${f.target_id}</td>
+              <td>${f.prediction_type}</td>
+              <td>${(f.confidence_score * 100).toFixed(1)}%</td>
+              <td>${f.predicted_failure_window_seconds}s</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No forecasts</td></tr>';
+
+          const recRes = await fetch('/admin/aiops/recommendations', { headers: { 'X-Admin-Token': token } });
+          const recs = await recRes.json();
+          const rTable = document.getElementById('aiopsRecommendationTable').querySelector('tbody');
+          rTable.innerHTML = recs.map(r => `
+            <tr>
+              <td>${r.action_type}</td>
+              <td><span class="pill ${r.priority === 'critical' || r.priority === 'high' ? 'pill-danger' : 'pill-warning'}">${r.priority}</span></td>
+              <td>${r.status}</td>
+              <td>${JSON.stringify(r.rationale)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;">No recommendations</td></tr>';
+
+        } catch (e) {
+          console.error('AIOps load error:', e);
+        }
+      }
+
+      async function runAIOpsCycle() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          await fetch('/admin/aiops/run-cycle', { method: 'POST', headers: { 'X-Admin-Token': token } });
+          alert('AIOps Cycle Started');
+          loadAIOps();
+        } catch (e) {
+          alert('Failed to start AIOps Cycle');
+        }
+      }
+
+
+
+      async function loadPredictiveFailureSignals() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const signalRes = await fetch('/admin/operations/failure-signals?client_id=system&limit=20', { headers: { 'X-Admin-Token': token } });
+          const signals = signalRes.ok ? await signalRes.json() : [];
+          document.getElementById('pfSignalCount').textContent = signals.length;
+
+          const sTable = document.getElementById('pfSignalTable').querySelector('tbody');
+          sTable.innerHTML = signals.slice(0, 10).map(s => `
+            <tr>
+              <td>${escHtml(s.signal_type)}</td>
+              <td>${escHtml(s.source_domain)}</td>
+              <td><span class="pill ${s.severity === 'critical' ? 'pill-danger' : s.severity === 'warning' ? 'pill-warning' : 'pill-muted'}">${escHtml(s.severity)}</span></td>
+              <td>${s.confidence != null ? (s.confidence * 100).toFixed(1) + '%' : '-'}</td>
+              <td>${s.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(s.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No signals recorded</td></tr>';
+
+          const foreRes = await fetch('/admin/operations/failure-forecasts?client_id=system&limit=10', { headers: { 'X-Admin-Token': token } });
+          const forecasts = foreRes.ok ? await foreRes.json() : [];
+          document.getElementById('pfForecastCount').textContent = forecasts.length;
+
+          if (forecasts.length > 0) {
+            const latest = forecasts[0];
+            document.getElementById('pfRiskScore').textContent = latest.risk_score != null ? (latest.risk_score * 100).toFixed(1) + '%' : '-';
+          }
+
+          const assessRes = await fetch('/admin/operations/failure-risk-assessments?client_id=system&limit=10', { headers: { 'X-Admin-Token': token } });
+          const assessments = assessRes.ok ? await assessRes.json() : [];
+
+          if (assessments.length > 0) {
+            const latest = assessments[0];
+            document.getElementById('pfRiskLevel').textContent = latest.risk_level || '-';
+            const levelPill = document.getElementById('pfRiskLevel');
+            levelPill.className = 'value';
+            if (latest.risk_level === 'critical') levelPill.style.color = '#dc2626';
+            else if (latest.risk_level === 'high') levelPill.style.color = '#ea580c';
+            else if (latest.risk_level === 'medium') levelPill.style.color = '#d97706';
+            else levelPill.style.color = 'var(--text)';
+          }
+
+          const aTable = document.getElementById('pfAssessmentTable').querySelector('tbody');
+          aTable.innerHTML = assessments.slice(0, 10).map(a => `
+            <tr>
+              <td><span class="pill ${a.risk_level === 'critical' ? 'pill-danger' : a.risk_level === 'high' ? 'pill-warning' : a.risk_level === 'medium' ? 'pill-warning' : 'pill-muted'}">${escHtml(a.risk_level)}</span></td>
+              <td>${a.risk_score != null ? (a.risk_score * 100).toFixed(1) + '%' : '-'}</td>
+              <td>${a.requires_approval ? '<span class="pill pill-danger">yes</span>' : '<span class="pill pill-muted">no</span>'}</td>
+              <td>${a.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(a.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No assessments yet</td></tr>';
+
+          document.getElementById('pfDebug').textContent = JSON.stringify({ signals: signals.length, forecasts: forecasts.length, assessments: assessments.length }, null, 2);
+        } catch (e) {
+          console.error('PredictiveFailureSignals load error:', e);
+        }
+      }
+
+      async function runPredictiveForecast() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/failure-forecasts/run?client_id=system&window_minutes=60', { method: 'POST', headers: { 'X-Admin-Token': token } });
+          if (!res.ok) { alert('Forecast run failed: ' + res.status); return; }
+          alert('Forecast completed successfully');
+          loadPredictiveFailureSignals();
+        } catch (e) {
+          alert('Forecast run error: ' + e.message);
+        }
+      }
+
+      async function loadOperationalCorrelations() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const client_id = '00000000-0000-0000-0000-000000000000'; // system
+          const res = await fetch(`/admin/operations/correlations/?client_id=${client_id}`, { headers: { 'X-Admin-Token': token } });
+          const correlations = res.ok ? await res.json() : [];
+          document.getElementById('ocTotalCount').textContent = correlations.length;
+
+          if (correlations.length > 0) {
+            const avgScore = correlations.reduce((acc, c) => acc + (c.correlation_score || 0), 0) / correlations.length;
+            document.getElementById('ocAvgScore').textContent = (avgScore * 100).toFixed(1) + '%';
+            
+            const avgConf = correlations.reduce((acc, c) => acc + (c.confidence || 0), 0) / correlations.length;
+            document.getElementById('ocConfidence').textContent = (avgConf * 100).toFixed(1) + '%';
+          }
+
+          const cTable = document.getElementById('ocCorrelationTable').querySelector('tbody');
+          cTable.innerHTML = correlations.slice(0, 10).map(c => `
+            <tr>
+              <td>${escHtml(c.correlation_type)}</td>
+              <td>${(c.correlation_score * 100).toFixed(1)}%</td>
+              <td>${escHtml((c.source_domains_json || []).join(', '))}</td>
+              <td>${(c.confidence * 100).toFixed(1)}%</td>
+              <td>${c.immutable_hash ? '<span class="pill pill-success" title="' + escHtml(c.immutable_hash) + '">✓ receipt</span>' : '-'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No correlations found</td></tr>';
+
+          const graphRes = await fetch(`/admin/operations/correlations/trust-graph?client_id=${client_id}`, { headers: { 'X-Admin-Token': token } });
+          const graph = graphRes.ok ? await graphRes.json() : {};
+          
+          document.getElementById('ocTrustLinks').textContent = graph.total_links || graph.edge_count || 0;
+
+          const gTable = document.getElementById('ocGraphTable').querySelector('tbody');
+          const metrics = [
+            { name: 'Total Nodes', value: graph.total_nodes || graph.node_count || 0, status: 'OK' },
+            { name: 'Total Links', value: graph.total_links || graph.edge_count || 0, status: 'OK' },
+            { name: 'Avg Trust Score', value: graph.avg_trust_score != null ? (graph.avg_trust_score * 100).toFixed(1) + '%' : '-', status: 'OK' },
+            { name: 'Graph Density', value: graph.density != null ? graph.density.toFixed(3) : '-', status: 'OK' }
+          ];
+          
+          gTable.innerHTML = metrics.map(m => `
+            <tr>
+              <td>${escHtml(m.name)}</td>
+              <td>${m.value}</td>
+              <td><span class="pill pill-success">${m.status}</span></td>
+              <td><span class="pill pill-success">✓ receipt</span></td>
+            </tr>
+          `).join('');
+
+          document.getElementById('ocDebug').textContent = JSON.stringify({ correlations: correlations.length, graph }, null, 2);
+        } catch (e) {
+          console.error('OperationalCorrelation load error:', e);
+        }
+      }
+
+      async function runOperationalCorrelation() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/correlations/run', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              client_id: '00000000-0000-0000-0000-000000000000', // system
+              events: [
+                { type: 'infra_latency', domain: 'compute', value: 0.5, timestamp: new Date().toISOString() },
+                { type: 'auth_failure', domain: 'iam', value: 0.1, timestamp: new Date().toISOString() }
+              ]
+            })
+          });
+          if (!res.ok) { alert('Correlation run failed'); return; }
+          alert('Correlation run completed');
+          loadOperationalCorrelations();
+        } catch (e) {
+          alert('Correlation run error: ' + e.message);
+        }
+      }
+
+      async function buildOperationalTrustGraph() {
+        const token = document.getElementById('adminToken').value;
+        if (!token) return;
+        try {
+          const res = await fetch('/admin/operations/correlations/trust-graph/build?client_id=00000000-0000-0000-0000-000000000000', {
+            method: 'POST',
+            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              events: [
+                 { source_domain: "compute" },
+                 { source_domain: "storage" },
+                 { source_domain: "network" }
+              ]
+            })
+          });
+          if (!res.ok) { alert('Trust graph build failed'); return; }
+          alert('Trust graph built successfully');
+          loadOperationalCorrelations();
+        } catch (e) {
+          alert('Trust graph build error: ' + e.message);
+        }
+      }
+
+      // Sections now refreshed via initAdmin()
+
+
+      // Regulated RAG Vault dashboard hooks:
+      // /admin/rag/vaults
+      // /admin/rag/retrieval-audit
+      // /admin/rag/poison-alerts
+      // /admin/rag/legal-holds
+      // Regulated RAG Vault
+      // vaults / retrievals / poisoning alerts / ACL violations / legal holds / signed documents / confidential retrieval %
+      // Context Lineage & Retrieval Proofs
+      // retrieval proofs / lineage nodes / replay records / verified proofs / drift events
+

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Settings - LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/shared/theme.css" />
+    <link rel="stylesheet" href="/static/shared/layout.css" />
+    <link rel="stylesheet" href="/static/shared/components.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: var(--color-ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 22%),
+          linear-gradient(180deg, #f8fbfc 0%, #eef5f7 100%);
+      }
+      a { color: inherit; text-decoration: none; }
+      .brand-line { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-soft); font-weight: 800; }
+      .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr); gap: var(--space-6); margin-bottom: var(--space-8); }
+      .hero h1 { margin: 14px 0 12px; font-size: clamp(30px, 4.6vw, 52px); line-height: 1.05; letter-spacing: -0.03em; }
+      .eyebrow { display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: var(--radius-pill); background: rgba(15, 118, 110, 0.12); color: #0f766e; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+      .lead { margin: 0; color: var(--color-ink-soft); font-size: 16px; line-height: 1.65; max-width: 64ch; }
+      .token-panel { display: grid; gap: var(--space-4); }
+      .token-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-3); align-items: end; }
+      .panel-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+      .hidden { display: none !important; }
+      .empty-state { padding: var(--space-8); text-align: center; color: var(--color-ink-soft); }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="container-lg page">
+        <header id="settings-topbar"></header>
+        <section class="hero">
+          <div class="panel">
+            <div class="eyebrow">Settings</div>
+            <h1>Configurações do Sistema</h1>
+            <p class="lead">Configurações globais, parâmetros operacionais e estado do sistema.</p>
+            <div class="hero-actions">
+              <a class="button secondary" href="/admin-dashboard">Voltar para Admin Hub</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="page-section">
+          <div class="panel token-panel">
+            <div class="panel-header">
+              <div><div class="brand-line">Autenticação</div><h2>Admin Token</h2></div>
+              <span id="authStatus" class="badge warning">Desconectado</span>
+            </div>
+            <div class="token-row">
+              <div class="field">
+                <label for="adminToken">X-Admin-Token</label>
+                <input id="adminToken" class="ui-input" type="password" placeholder="Informe o token administrativo" autocomplete="off" />
+              </div>
+              <button id="connectButton" class="button" type="button">Conectar</button>
+            </div>
+          </div>
+        </section>
+
+        <main id="settingsApp" class="hidden">
+          <section class="page-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div><div class="brand-line">Sistema</div><h2>Informações Gerais</h2></div>
+              </div>
+              <div id="systemInfo" class="empty-state">Carregando informações do sistema...</div>
+            </div>
+          </section>
+        </main>
+
+        <section id="loginPrompt" class="panel">
+          <div class="empty-state">
+            <h2 style="margin-top:0;">Conecte-se para ver configurações</h2>
+            <p>Informe um <code>X-Admin-Token</code> válido.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script src="/static/shared/api.js"></script>
+    <script src="/static/shared/auth.js"></script>
+    <script src="/static/shared/navigation.js"></script>
+    <script src="/static/shared/notifications.js"></script>
+    <script src="/static/admin/settings.js"></script>
+  </body>
+</html>

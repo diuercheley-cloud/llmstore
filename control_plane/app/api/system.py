@@ -693,6 +693,14 @@ async def admin_dashboard():
     return FileResponse(static_file)
 
 
+@router.get("/admin-v2", include_in_schema=False)
+async def admin_v2():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-v2" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/admin-lab", include_in_schema=False)
 async def admin_lab():
     if settings.public_exposure:

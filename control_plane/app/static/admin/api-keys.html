@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Clients - LLM Inference Stack</title>
+    <title>Admin API Keys - LLM Inference Stack</title>
     <script src="/static/www/branding-init.js"></script>
     <link rel="stylesheet" href="/static/shared/theme.css" />
     <link rel="stylesheet" href="/static/shared/layout.css" />
@@ -163,30 +163,35 @@
         font-size: 12px;
       }
 
-      .pill-muted {
-        display: inline-flex;
-        align-items: center;
-        min-height: 24px;
-        padding: 0 8px;
-        border-radius: var(--radius-pill);
-        background: rgba(15, 23, 42, 0.06);
-        color: var(--color-ink-soft);
-        font-size: 11px;
-        font-weight: 700;
-      }
-
       .empty-state {
         padding: var(--space-8);
         text-align: center;
         color: var(--color-ink-soft);
       }
 
-      .split-note {
+      .new-key-display {
+        background: #f1f5f9;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 20px;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--space-4);
-        margin-top: var(--space-4);
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .new-key-display .key-value {
+        font-family: var(--font-mono);
+        font-size: 18px;
+        font-weight: bold;
+        color: #0f766e;
+        word-break: break-all;
+      }
+
+      .new-key-display .warning-text {
+        font-size: 13px;
+        color: #991b1b;
+        font-weight: bold;
       }
 
       @media (max-width: 1024px) {
@@ -201,34 +206,29 @@
   <body>
     <div class="app-shell">
       <div class="container-lg page">
-        <header id="clients-topbar"></header>
+        <header id="api-keys-topbar"></header>
 
         <section class="hero">
           <div class="panel">
-            <div class="eyebrow">Clientes</div>
-            <h1>Gestão de clientes administrativos</h1>
+            <div class="eyebrow">API Keys</div>
+            <h1>Gestão de credenciais</h1>
             <p class="lead">
-              Página dedicada para listar, criar, editar, bloquear, suspender e remover clientes,
-              mantendo os mesmos endpoints backend já disponíveis no Admin.
+              Emissão e governança de chaves de API vinculadas a clientes.
+              As chaves são armazenadas com hash e nunca podem ser recuperadas após a criação.
             </p>
             <div class="hero-actions">
               <a class="button secondary" href="/admin-dashboard">Voltar para Admin Hub</a>
-              <a class="button secondary" href="/static/admin/index.legacy.html">Abrir legacy</a>
             </div>
           </div>
 
           <aside class="panel stat-grid">
             <div class="stat">
-              <strong>Total de clientes</strong>
-              <span id="statTotalClients">-</span>
+              <strong>Total de chaves</strong>
+              <span id="statTotalKeys">-</span>
             </div>
             <div class="stat">
-              <strong>Bloqueados</strong>
-              <span id="statBlockedClients">-</span>
-            </div>
-            <div class="stat">
-              <strong>Suspendidos / Past Due</strong>
-              <span id="statSuspendedClients">-</span>
+              <strong>Ativas</strong>
+              <span id="statActiveKeys">-</span>
             </div>
           </aside>
         </section>
@@ -253,97 +253,41 @@
           </div>
         </section>
 
-        <main id="clientsApp" class="hidden">
+        <main id="apiKeysApp" class="hidden">
+          <section id="newKeyPanel" class="page-section hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h2>Nova Chave Gerada</h2>
+              </div>
+              <div class="new-key-display">
+                <div class="warning-text">⚠️ ATENÇÃO: Esta chave só será exibida ESTA VEZ. Salve-a agora!</div>
+                <div id="newKeyValue" class="key-value">sk-local-preview...</div>
+                <button class="button secondary" onclick="navigator.clipboard.writeText(document.getElementById('newKeyValue').textContent); SharedNotifications.success('Copiado!')">Copiar chave</button>
+              </div>
+              <button class="button" onclick="document.getElementById('newKeyPanel').classList.add('hidden')">Entendido</button>
+            </div>
+          </section>
+
           <section class="page-section">
             <div class="panel">
               <div class="panel-header">
                 <div>
-                  <div class="brand-line">Cadastro</div>
-                  <h2 id="editorTitle">Criar cliente</h2>
-                </div>
-                <div class="toolbar">
-                  <button id="newClientButton" class="button secondary" type="button">Novo cliente</button>
-                  <button id="cancelEditButton" class="button secondary hidden" type="button">Cancelar edição</button>
+                  <div class="brand-line">Emissão</div>
+                  <h2>Gerar nova chave</h2>
                 </div>
               </div>
 
-              <form id="clientForm" class="form-grid">
+              <form id="keyForm" class="form-grid">
                 <div class="field">
-                  <label for="name">Nome</label>
-                  <input id="name" name="name" class="ui-input" type="text" minlength="3" maxlength="120" required />
+                  <label for="client_id">Cliente</label>
+                  <select id="client_id" name="client_id" class="ui-input" required></select>
                 </div>
                 <div class="field">
-                  <label for="billing_plan_id">Plano</label>
-                  <select id="billing_plan_id" name="billing_plan_id" class="ui-input"></select>
+                  <label for="name">Nome / Descrição (opcional)</label>
+                  <input id="name" name="name" class="ui-input" type="text" placeholder="Ex: Chave para produção" />
                 </div>
                 <div class="field full">
-                  <label for="description">Descrição</label>
-                  <textarea id="description" name="description" class="ui-input"></textarea>
-                </div>
-                <div class="field">
-                  <label for="rate_limit_per_minute">Rate limit por minuto</label>
-                  <input id="rate_limit_per_minute" name="rate_limit_per_minute" class="ui-input" type="number" min="1" />
-                </div>
-                <div class="field">
-                  <label for="billing_status">Billing status</label>
-                  <select id="billing_status" name="billing_status" class="ui-input">
-                    <option value="active">active</option>
-                    <option value="past_due">past_due</option>
-                    <option value="suspended">suspended</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="daily_token_quota">Quota diária</label>
-                  <input id="daily_token_quota" name="daily_token_quota" class="ui-input" type="number" min="1000" />
-                </div>
-                <div class="field">
-                  <label for="weekly_token_quota">Quota semanal</label>
-                  <input id="weekly_token_quota" name="weekly_token_quota" class="ui-input" type="number" min="1000" />
-                </div>
-                <div class="field">
-                  <label for="monthly_token_quota">Quota mensal</label>
-                  <input id="monthly_token_quota" name="monthly_token_quota" class="ui-input" type="number" min="1000" />
-                </div>
-                <div class="field">
-                  <label for="max_context_tokens">Max context tokens</label>
-                  <input id="max_context_tokens" name="max_context_tokens" class="ui-input" type="number" min="512" />
-                </div>
-                <div class="field">
-                  <label for="max_output_tokens">Max output tokens</label>
-                  <input id="max_output_tokens" name="max_output_tokens" class="ui-input" type="number" min="128" />
-                </div>
-                <div class="field full">
-                  <label for="allowed_models">Allowed models</label>
-                  <textarea id="allowed_models" name="allowed_models" class="ui-input" placeholder="Um por linha ou separados por vírgula"></textarea>
-                </div>
-                <div class="field">
-                  <label for="ip_allowlist">IP allowlist</label>
-                  <textarea id="ip_allowlist" name="ip_allowlist" class="ui-input" placeholder="Um por linha ou separados por vírgula"></textarea>
-                </div>
-                <div class="field">
-                  <label for="ip_blocklist">IP blocklist</label>
-                  <textarea id="ip_blocklist" name="ip_blocklist" class="ui-input" placeholder="Um por linha ou separados por vírgula"></textarea>
-                </div>
-                <div class="field full">
-                  <label for="system_prompt">System prompt</label>
-                  <textarea id="system_prompt" name="system_prompt" class="ui-input"></textarea>
-                </div>
-                <div class="field full">
-                  <label for="metadata_json">Metadata JSON</label>
-                  <textarea id="metadata_json" name="metadata_json" class="ui-input" placeholder='{"email":"admin@cliente.com"}'></textarea>
-                </div>
-                <div class="field">
-                  <label for="is_blocked">Bloqueado</label>
-                  <select id="is_blocked" name="is_blocked" class="ui-input">
-                    <option value="false">false</option>
-                    <option value="true">true</option>
-                  </select>
-                </div>
-                <div class="field split-note full">
-                  <div class="muted">Os nomes de campos e endpoints permanecem os mesmos da API administrativa.</div>
-                  <div class="toolbar">
-                    <button id="submitButton" class="button" type="submit">Criar cliente</button>
-                  </div>
+                  <button id="submitButton" class="button" type="submit">Gerar API Key</button>
                 </div>
               </form>
             </div>
@@ -354,26 +298,22 @@
               <div class="panel-header">
                 <div>
                   <div class="brand-line">Listagem</div>
-                  <h2>Clientes cadastrados</h2>
-                </div>
-                <div class="toolbar">
-                  <input id="searchInput" class="ui-input" type="search" placeholder="Buscar por nome, id ou plano" />
+                  <h2>Chaves existentes</h2>
                 </div>
               </div>
               <div class="table-wrap">
                 <table class="ui-table">
                   <thead>
                     <tr>
+                      <th>Nome / Prefixo</th>
                       <th>Cliente</th>
-                      <th>Plano</th>
-                      <th>Status</th>
-                      <th>Quotas</th>
                       <th>Criado</th>
+                      <th>Último Uso</th>
                       <th>Ações</th>
                     </tr>
                   </thead>
-                  <tbody id="clientsTableBody">
-                    <tr><td colspan="6">Carregando...</td></tr>
+                  <tbody id="keysTableBody">
+                    <tr><td colspan="5">Carregando...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -383,8 +323,8 @@
 
         <section id="loginPrompt" class="panel">
           <div class="empty-state">
-            <h2 style="margin-top:0;">Conecte-se para gerenciar clientes</h2>
-            <p>Informe um <code>X-Admin-Token</code> válido para carregar a página de clientes.</p>
+            <h2 style="margin-top:0;">Conecte-se para gerenciar API keys</h2>
+            <p>Informe um <code>X-Admin-Token</code> válido para carregar esta página.</p>
           </div>
         </section>
       </div>
@@ -394,6 +334,6 @@
     <script src="/static/shared/auth.js"></script>
     <script src="/static/shared/navigation.js"></script>
     <script src="/static/shared/notifications.js"></script>
-    <script src="/static/admin/clients.js"></script>
+    <script src="/static/admin/api-keys.js"></script>
   </body>
 </html>

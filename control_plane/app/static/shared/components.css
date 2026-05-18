@@ -158,6 +158,26 @@ form.ui-form {
   gap: var(--space-2);
 }
 
+.token-row > .field,
+.token-row > .form-group {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.token-row > .field .ui-input,
+.token-row > .form-group .ui-input,
+.token-row > .field .input,
+.token-row > .form-group .input {
+  min-width: 0;
+}
+
+.token-row > .button,
+.token-row > button.ui-button,
+.token-row > .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .field label,
 .form-group label {
   color: var(--color-ink-soft);
@@ -171,6 +191,7 @@ form.ui-form {
 input.ui-input,
 textarea.ui-input,
 select.ui-input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
