@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import re
 from typing import Any
 
@@ -7,6 +8,7 @@ from fastapi import HTTPException
 
 from app.core.config import get_settings
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 TOOL_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -26,11 +28,12 @@ DISALLOWED_SCHEMA_KEYS = {
     "contentEncoding",
     "contentMediaType",
 }
+OPENROUTER_TOOL_PARAMETERS = {"tools", "tool_choice", "parallel_tool_calls"}
 
 
 def provider_tool_capability(provider: str | None) -> str:
     normalized = (provider or "").strip().lower()
-    if normalized in {"openai_compatible", "llama.cpp"}:
+    if normalized in {"openai_compatible", "llama.cpp", "openrouter", "openai", "deepseek"}:
         return "supported"
     if normalized in {"ollama", "vllm"}:
         return "unsupported"
@@ -39,6 +42,71 @@ def provider_tool_capability(provider: str | None) -> str:
 
 def provider_supports_native_tools(provider: str | None) -> bool:
     return provider_tool_capability(provider) == "supported"
+
+
+def model_supports_native_tools(
+    provider: str | None,
+    metadata_json: str | dict[str, Any] | None = None,
+) -> bool:
+    normalized = (provider or "").strip().lower()
+    if not provider_supports_native_tools(normalized):
+        return False
+    if normalized != "openrouter":
+        return True
+
+    metadata = _coerce_metadata(metadata_json)
+    supported_parameters = metadata.get("supported_parameters")
+    if isinstance(supported_parameters, list):
+        normalized_parameters = {str(item).strip() for item in supported_parameters if str(item).strip()}
+        # For OpenRouter, 'tools' is the minimum required to support native tool calling
+        return "tools" in normalized_parameters
+
+    capabilities = metadata.get("capabilities")
+    if isinstance(capabilities, dict) and "tools" in capabilities:
+        return bool(capabilities.get("tools"))
+
+    # If OpenRouter and no metadata, we are permissive about 'tools' existence
+    # but filter_unsupported_tooling_parameters will clean up 'tool_choice' and 'parallel_tool_calls'
+    return True
+
+
+def filter_unsupported_tooling_parameters(
+    provider: str | None,
+    payload: dict[str, Any],
+    metadata_json: str | dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    normalized = (provider or "").strip().lower()
+    if normalized != "openrouter":
+        return payload
+
+    metadata = _coerce_metadata(metadata_json)
+    supported_parameters = metadata.get("supported_parameters")
+    
+    updated = dict(payload)
+    removed = []
+
+    if isinstance(supported_parameters, list):
+        supported_set = {str(item).strip() for item in supported_parameters if str(item).strip()}
+        # We only filter parameters that are in OPENROUTER_TOOL_PARAMETERS
+        for param in OPENROUTER_TOOL_PARAMETERS:
+            if param in updated and param not in supported_set:
+                del updated[param]
+                removed.append(param)
+    else:
+        # Fallback: If supported_parameters is missing for OpenRouter,
+        # we are extremely conservative and remove tool_choice/parallel_tool_calls
+        # because they are the most likely to cause 404 routing errors.
+        for param in ["tool_choice", "parallel_tool_calls"]:
+            if param in updated:
+                del updated[param]
+                removed.append(param)
+
+    if removed:
+        logger.warning(
+            f"Removed unsupported or risky OpenRouter tooling parameters from request: {', '.join(removed)}"
+        )
+        
+    return updated
 
 
 def tooling_requested(
@@ -167,6 +235,18 @@ def validate_tool_schema(schema: Any, *, tool_name: str) -> None:
             "tool_schema_too_large",
             f"tool '{tool_name}' schema exceeds max property count {settings.max_tool_schema_properties}",
         )
+
+
+def _coerce_metadata(raw: str | dict[str, Any] | None) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return raw
+    if not isinstance(raw, str) or not raw.strip():
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def extract_tool_calls_from_chat_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:

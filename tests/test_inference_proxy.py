@@ -60,6 +60,40 @@ async def test_stream_forward_400_does_not_open_circuit_breaker(monkeypatch):
         await client.aclose()
 
 
+@pytest.mark.asyncio
+async def test_stream_forward_returns_backend_error_for_openrouter_404(monkeypatch):
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"error": {"message": "No endpoints found that support tool use."}}, request=request)
+
+    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="https://openrouter.ai")
+    monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: client)
+
+    try:
+        with pytest.raises(HTTPException) as exc:
+            await proxy._streaming_forward(
+                "/v1/chat/completions",
+                {"model": "openrouter-model", "messages": [{"role": "user", "content": "x"}]},
+                backend="openrouter",
+                backend_url="https://openrouter.ai",
+                backend_name="openrouter-cloud",
+            )
+
+        assert exc.value.status_code == 404
+        assert exc.value.detail["backend_status_code"] == 404
+        assert exc.value.detail["backend_response"]["error"]["message"] == "No endpoints found that support tool use."
+    finally:
+        await client.aclose()
+
+
+def test_normalize_openrouter_endpoint_handles_root_and_api_v1_base_urls():
+    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+
+    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai", "/v1/chat/completions") == "/api/v1/chat/completions"
+    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai/api/v1", "/v1/chat/completions") == "/chat/completions"
+    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai/api", "/v1/chat/completions") == "/v1/chat/completions"
+
+
 def test_prepare_chat_payload_uses_qwen_template_and_disables_reasoning():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
 

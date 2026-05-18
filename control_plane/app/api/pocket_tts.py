@@ -24,9 +24,7 @@ ui_file = Path(__file__).resolve().parents[1] / "static" / "pocket-tts" / "index
 
 @router.get("", include_in_schema=False)
 @router.get("/", include_in_schema=False)
-async def pocket_tts_ui(
-    client: Client = Depends(require_client),
-):
+async def pocket_tts_ui():
     return FileResponse(ui_file)
 
 

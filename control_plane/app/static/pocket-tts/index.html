@@ -249,6 +249,28 @@
             margin-bottom: 18px;
         }
 
+        .auth-card {
+            margin-bottom: 24px;
+            padding: 18px 20px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: var(--shadow);
+        }
+
+        .auth-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .auth-message {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
         .label-row {
             display: flex;
             align-items: center;
@@ -625,7 +647,8 @@
             }
 
             .actions,
-            .result-actions {
+            .result-actions,
+            .auth-grid {
                 align-items: stretch;
             }
 
@@ -639,6 +662,18 @@
 </head>
 <body>
     <main class="page">
+        <section class="auth-card">
+            <div class="label-row">
+                <label for="api-key-input">API key do cliente</label>
+                <span class="hint">Necessária para `GET /health` e `POST /tts`</span>
+            </div>
+            <div class="auth-grid">
+                <input id="api-key-input" type="text" placeholder="sk-local-...">
+                <button id="save-api-key-btn" class="ghost-btn" type="button">Usar chave</button>
+            </div>
+            <div class="auth-message" id="auth-message">Abra a página com `?api_key=...`, `#api_key=...` ou cole a chave acima.</div>
+        </section>
+
         <section class="hero">
             <article class="hero-card">
                 <div class="eyebrow">
@@ -1018,8 +1053,60 @@
         const healthDetail = document.getElementById("health-detail");
         const statFirstAudio = document.getElementById("stat-first-audio");
         const statTotalTime = document.getElementById("stat-total-time");
+        const apiKeyInput = document.getElementById("api-key-input");
+        const saveApiKeyBtn = document.getElementById("save-api-key-btn");
+        const authMessage = document.getElementById("auth-message");
 
         let streamingPlayer = null;
+
+        function readApiKeyFromUrl() {
+            const searchParams = new URLSearchParams(window.location.search);
+            const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+            const hashParams = new URLSearchParams(hash);
+            return (
+                searchParams.get("api_key") ||
+                searchParams.get("apiKey") ||
+                hashParams.get("api_key") ||
+                hashParams.get("apiKey") ||
+                ""
+            ).trim();
+        }
+
+        function clearApiKeyFromUrl() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("api_key");
+            url.searchParams.delete("apiKey");
+            if (url.hash) {
+                const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+                const hashParams = new URLSearchParams(hash);
+                hashParams.delete("api_key");
+                hashParams.delete("apiKey");
+                const nextHash = hashParams.toString();
+                url.hash = nextHash ? `#${nextHash}` : "";
+            }
+            window.history.replaceState({}, document.title, url.toString());
+        }
+
+        function getApiKey() {
+            return apiKeyInput.value.trim();
+        }
+
+        function buildAuthHeaders() {
+            const apiKey = getApiKey();
+            return apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
+        }
+
+        function persistApiKey() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                authMessage.textContent = "Informe uma API key válida para autenticar o proxy.";
+                return false;
+            }
+            localStorage.setItem("pocketTtsApiKey", apiKey);
+            authMessage.textContent = "API key pronta. As próximas chamadas usarão autenticação Bearer.";
+            clearApiKeyFromUrl();
+            return true;
+        }
 
         function updateCharCount() {
             const count = textInput.value.trim().length;
@@ -1048,8 +1135,19 @@
         }
 
         async function fetchHealth() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                healthBadge.textContent = "Autenticação pendente";
+                healthBadge.className = "health-badge error";
+                healthDetail.textContent = "Informe uma API key para consultar a saúde do serviço.";
+                heroHealth.textContent = "Bloqueado";
+                return;
+            }
+
             try {
-                const response = await fetch(`${window.location.pathname.replace(/\/+$/, "")}/health`);
+                const response = await fetch(`${window.location.pathname.replace(/\/+$/, "")}/health`, {
+                    headers: buildAuthHeaders()
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
@@ -1112,6 +1210,7 @@
                 const ttsEndpoint = `${window.location.pathname.replace(/\/+$/, "")}/tts`;
                 const response = await fetch(ttsEndpoint, {
                     method: "POST",
+                    headers: buildAuthHeaders(),
                     body: formData
                 });
 
@@ -1212,11 +1311,30 @@
         textInput.addEventListener("input", updateCharCount);
         voiceWavInput.addEventListener("change", setFileLabel);
         generateBtn.addEventListener("click", generateAudio);
+        saveApiKeyBtn.addEventListener("click", () => {
+            if (persistApiKey()) {
+                fetchHealth();
+            }
+        });
+        apiKeyInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (persistApiKey()) {
+                    fetchHealth();
+                }
+            }
+        });
         resetBtn.addEventListener("click", () => {
             voiceUrlInput.value = "";
             voiceWavInput.value = "";
             setFileLabel();
         });
+
+        const initialApiKey = readApiKeyFromUrl() || localStorage.getItem("pocketTtsApiKey") || "";
+        if (initialApiKey) {
+            apiKeyInput.value = initialApiKey;
+            persistApiKey();
+        }
 
         updateCharCount();
         setFileLabel();

@@ -76,3 +76,23 @@ async def test_tts_isolation_headers(mock_verify, tts_setup):
     
     # Usage recording and quota check should happen for the AUTHENTICATED client.
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_pocket_tts_ui_is_public(tts_setup):
+    ac = tts_setup["ac"]
+
+    response = await ac.get("/pocket-tts/")
+
+    assert response.status_code == 200
+    assert "Pocket TTS Studio" in response.text
+
+
+@pytest.mark.asyncio
+async def test_pocket_tts_health_still_requires_auth(tts_setup):
+    ac = tts_setup["ac"]
+
+    response = await ac.get("/pocket-tts/health")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "missing bearer token"

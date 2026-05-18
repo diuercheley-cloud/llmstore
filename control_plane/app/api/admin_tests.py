@@ -611,6 +611,27 @@ def _openrouter_request_config(payload: OpenRouterApiRequest | None = None) -> t
     return base_url.rstrip("/"), api_key
 
 
+async def _fetch_openrouter_model_metadata(model_id: str) -> dict:
+    base_url, api_key = _openrouter_request_config()
+    if not api_key:
+        return {}
+    headers = {"Authorization": f"Bearer {api_key}"}
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.get(f"{base_url}/models", headers=headers)
+        response.raise_for_status()
+        for item in response.json().get("data", []):
+            if item.get("id") == model_id:
+                return {
+                    "canonical_slug": item.get("canonical_slug"),
+                    "name": item.get("name"),
+                    "context_length": item.get("context_length"),
+                    "architecture": item.get("architecture"),
+                    "supported_parameters": item.get("supported_parameters") or [],
+                    "top_provider": item.get("top_provider"),
+                }
+    return {}
+
+
 @router.post("/openrouter/connection", dependencies=[Depends(require_admin_role(AdminRole.READ))])
 async def test_openrouter_connection(payload: OpenRouterApiRequest):
     """Validate OpenRouter API connectivity using configured or provided credentials."""
@@ -721,9 +742,11 @@ async def configure_openrouter_model(
     )
     model = res_model.scalars().first()
     
+    openrouter_metadata = await _fetch_openrouter_model_metadata(payload.model_id)
     metadata = json.dumps({
         "backend": "openrouter",
         "backend_name": backend.name,
+        **openrouter_metadata,
     })
     
     if not model:

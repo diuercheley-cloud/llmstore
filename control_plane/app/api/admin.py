@@ -163,7 +163,7 @@ from app.services.security_monitor import (
     suspend_client_for_security,
     unsuspend_client_for_security,
 )
-from app.utils.tool_calling import provider_supports_native_tools
+from app.utils.tool_calling import model_supports_native_tools
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -380,7 +380,7 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
         "supports_streaming": is_chat,
         "supports_embeddings": "embedding" in model.model_id.lower() or metadata.get("type") == "embedding",
         "supports_responses": is_chat,
-        "supports_tools": is_chat and provider_supports_native_tools(model.provider),
+        "supports_tools": is_chat and model_supports_native_tools(model.provider, model.metadata_json),
     }
 
     return {

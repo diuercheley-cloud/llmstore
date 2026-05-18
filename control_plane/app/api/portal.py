@@ -35,6 +35,7 @@ from app.services.billing import (
 )
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import resolve_requested_model, get_effective_allowed_models
+from app.services.providers.registry import get_provider
 from app.services.quota import month_start, ensure_quota, record_usage, QuotaExceeded
 from app.services.tts_usage import get_tts_usage_and_limits
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
@@ -269,6 +270,32 @@ async def _portal_usage_request_totals(session: AsyncSession, client_id: UUID) -
         "requests_month": int(month_row[0] or 0),
         "tokens_month": int(month_row[1] or 0),
     }
+
+
+_PROVIDER_REGISTRY_IDS = {
+    "openrouter": "openrouter",
+    "openai": "openai",
+    "anthropic": "anthropic",
+    "deepseek": "deepseek",
+    "openai_compatible": "lmstudio",
+    "lmstudio": "lmstudio",
+}
+
+
+async def _provider_exposed_models(provider_name: str) -> set[str] | None:
+    provider_id = _PROVIDER_REGISTRY_IDS.get(provider_name)
+    if not provider_id:
+        return None
+    provider = get_provider(provider_id)
+    if provider is None:
+        return None
+    try:
+        models = await provider.list_models()
+    except Exception:
+        return None
+    if not models:
+        return None
+    return {str(item).strip() for item in models if str(item).strip()}
 
 
 async def _portal_usage_customer_pricing(
@@ -608,12 +635,18 @@ async def portal_list_models(
     # This should return models allowed for the client
     query = select(ModelRegistry).where(ModelRegistry.is_active.is_(True))
     all_models = (await session.execute(query)).scalars().all()
-    
+
     allowed = get_effective_allowed_models(client)
-    
+    provider_model_catalogs: dict[str, set[str] | None] = {}
+
     allowed_models = []
     for m in all_models:
         if allowed and m.model_id not in allowed and (m.model_alias or "") not in allowed:
+            continue
+        if m.provider not in provider_model_catalogs:
+            provider_model_catalogs[m.provider] = await _provider_exposed_models(m.provider)
+        exposed_models = provider_model_catalogs[m.provider]
+        if exposed_models is not None and m.model_id not in exposed_models:
             continue
         trust = await get_model_trust_state(session, m.model_alias or m.model_id, client=client)
         latest_scan = (
@@ -1373,7 +1406,7 @@ async def portal_test_chat(
                 "text": (((payload_json.get("choices") or [{}])[0].get("message") or {}).get("content")) or "",
             }
 
-        result = await _chat_with_fallback(proxy, selected_model, body, False, False, client=client)
+        result = await _chat_with_fallback(proxy, selected_model, body, False, False, client=client, session=session)
         latency_ms = int((perf_counter() - started) * 1000)
         response_payload = json.loads(result.response.body.decode("utf-8"))
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))

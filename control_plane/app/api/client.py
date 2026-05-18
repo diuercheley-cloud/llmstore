@@ -73,7 +73,8 @@ from app.utils.tool_calling import (
     chat_response_has_tool_calls,
     enforce_tool_argument_limits,
     extract_tool_calls_from_chat_payload,
-    provider_supports_native_tools,
+    filter_unsupported_tooling_parameters,
+    model_supports_native_tools,
     sanitize_inert_tooling_fields,
     sanitize_tool_calls,
     validate_tooling_request,
@@ -205,6 +206,25 @@ def _is_retryable_backend_error(exc: HTTPException) -> bool:
     return exc.status_code >= 500 or exc.status_code in {503, 504}
 
 
+def _should_fallback_to_default_model(exc: HTTPException) -> bool:
+    if exc.status_code != 404:
+        return False
+    detail = exc.detail
+    if not isinstance(detail, dict):
+        return False
+    message = str(detail.get("message", "")).lower()
+    if "data plane rejected request" not in message:
+        return False
+    backend_response = detail.get("backend_response")
+    if not isinstance(backend_response, dict):
+        return False
+    error_payload = backend_response.get("error")
+    if not isinstance(error_payload, dict):
+        return False
+    backend_message = str(error_payload.get("message", "")).lower()
+    return "no endpoints found for" in backend_message
+
+
 def _serialize_backend_error(route: ModelBackendRoute, exc: HTTPException) -> dict:
     return {
         "backend_id": str(route.inference_backend_id),
@@ -229,6 +249,7 @@ async def _chat_with_fallback(
     cloud_blocked_by_guardrail: bool = False,
     commercial_guardrail_context: dict | None = None,
     session: AsyncSession | None = None,
+    allow_default_model_fallback: bool = True,
 ):
     from app.services.routing.commercial_qos import CommercialQoSService
     qos_tier = None
@@ -343,6 +364,37 @@ async def _chat_with_fallback(
             backend_errors.append(_serialize_backend_error(route, exc))
             if not _is_retryable_backend_error(exc) or attempt == len(routes):
                 break
+
+    if (
+        allow_default_model_fallback
+        and last_exc is not None
+        and session is not None
+        and client is not None
+        and _should_fallback_to_default_model(last_exc)
+    ):
+        default_model, _ = await resolve_requested_model(
+            session,
+            client=client,
+            requested_model="default",
+        )
+        if default_model.id != selected_model.id:
+            fallback_body = dict(body)
+            fallback_body["model"] = default_model.model_id
+            result = await _chat_with_fallback(
+                proxy,
+                default_model,
+                fallback_body,
+                stream,
+                include_reasoning,
+                client=client,
+                cloud_blocked_by_guardrail=cloud_blocked_by_guardrail,
+                commercial_guardrail_context=commercial_guardrail_context,
+                session=session,
+                allow_default_model_fallback=False,
+            )
+            result.fallback_used = True
+            result.backend_errors = backend_errors + result.backend_errors
+            return result
 
     if last_exc is None:
         raise HTTPException(status_code=503, detail="model backend is not active")
@@ -819,7 +871,7 @@ async def _process_chat_completion(
     # But resolve_requested_model doesn't know about guardrails yet.
     # For now, plan_routing_order will return an empty list if ONLY cloud routes exist and are blocked.
     
-    if payload.tools and not provider_supports_native_tools(selected_model.provider):
+    if payload.tools and not model_supports_native_tools(selected_model.provider, selected_model.metadata_json):
         return _capability_not_supported_response(provider=selected_model.provider, endpoint=endpoint)
     
     logger.debug(
@@ -895,6 +947,11 @@ async def _process_chat_completion(
         raise HTTPException(status_code=429, detail=str(exc)) from exc
 
     body = payload.model_dump(exclude={"include_reasoning", "safety_profile"}, exclude_none=True)
+    body = filter_unsupported_tooling_parameters(
+        selected_model.provider,
+        body,
+        selected_model.metadata_json
+    )
     body["messages"] = messages
     body["model"] = selected_model.model_id
     body["max_tokens"] = max_tokens

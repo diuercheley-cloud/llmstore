@@ -1,5 +1,7 @@
 import json
+import uuid
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 from httpx import AsyncClient
@@ -9,13 +11,16 @@ from app.api.deps import get_inference_proxy
 from app.main import app
 from app.services.billing.core import EffectivePlan
 from app.services.inference_proxy import ForwardResult
-from app.utils.tool_calling import validate_tool_schema
+from app.utils.tool_calling import model_supports_native_tools, provider_supports_native_tools, validate_tool_schema
 
 
 class FakeToolProxy:
     def __init__(self, payload: dict):
         self.payload = payload
         self.calls: list[dict] = []
+
+    def _validate_chat_response_payload(self, payload: dict, *, include_reasoning: bool, backend_name: str) -> None:
+        _ = payload, include_reasoning, backend_name
 
     async def chat(self, *args, **kwargs):
         self.calls.append({"args": args, "kwargs": kwargs})
@@ -347,6 +352,83 @@ async def test_chat_completions_tools_specific_choice_forwarded(
 
 
 @pytest.mark.asyncio
+async def test_chat_completions_tools_supported_for_openrouter(
+    admin_client: AsyncClient,
+    admin_token_headers,
+    proxy_factory,
+    tools_enabled_plan,
+    monkeypatch,
+):
+    proxy = proxy_factory(
+        {
+            "id": "chatcmpl-openrouter-tools-1",
+            "object": "chat.completion",
+            "created": 1710000007,
+            "model": "openrouter-tools-model",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [],
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 7, "completion_tokens": 2, "total_tokens": 9},
+        }
+    )
+    api_key = await _create_backend_model_and_key(
+        admin_client,
+        admin_token_headers,
+        provider="openrouter",
+        backend_name="openrouter-tools-backend",
+        model_id="openrouter-tools-model",
+    )
+    monkeypatch.setattr(
+        "app.api.client.plan_routing_order",
+        lambda *args, **kwargs: [
+            SimpleNamespace(
+                inference_backend=SimpleNamespace(
+                    id=uuid.uuid4(),
+                    provider="openrouter",
+                    name="openrouter-tools-backend",
+                    backend_url="https://openrouter.ai/api/v1",
+                    metadata_json=None,
+                ),
+                inference_backend_id=uuid.uuid4(),
+                priority=1,
+                weight=100,
+                state="healthy",
+            )
+        ],
+    )
+
+    resp = await admin_client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "openrouter-tools-model",
+            "messages": [{"role": "user", "content": "Use weather_mock"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "weather_mock",
+                        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}},
+                    },
+                }
+            ],
+            "tool_choice": "auto",
+        },
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    assert resp.status_code == 200
+    forwarded = proxy.calls[-1]["args"][0]
+    assert forwarded["tools"][0]["function"]["name"] == "weather_mock"
+
+
+@pytest.mark.asyncio
 async def test_chat_completions_invalid_tool_schema_rejected(
     admin_client: AsyncClient,
     admin_token_headers,
@@ -539,6 +621,21 @@ def test_validate_tool_schema_rejects_true_structural_depth_over_limit(monkeypat
         validate_tool_schema(schema, tool_name="question")
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail["code"] == "tool_schema_too_deep"
+
+
+def test_provider_supports_native_tools_includes_openrouter():
+    assert provider_supports_native_tools("openrouter") is True
+
+
+def test_model_supports_native_tools_uses_openrouter_supported_parameters():
+    assert model_supports_native_tools(
+        "openrouter",
+        {"supported_parameters": ["max_tokens", "tools", "tool_choice"]},
+    ) is True
+    assert model_supports_native_tools(
+        "openrouter",
+        {"supported_parameters": ["max_tokens", "temperature"]},
+    ) is False
 
 
 @pytest.mark.asyncio

@@ -144,14 +144,24 @@ class InferenceProxy:
         if isinstance(exc, httpx.HTTPStatusError):
             try:
                 backend_response = exc.response.json()
-            except ValueError:
-                backend_response = exc.response.text[:500] or exc.response.reason_phrase
+            except Exception:
+                backend_response = exc.response.reason_phrase
             return {
                 "message": "data plane rejected request",
                 "backend_status_code": exc.response.status_code,
                 "backend_response": backend_response,
             }
         return "data plane unavailable"
+
+    def _normalize_openrouter_endpoint(self, backend_url: str, endpoint: str) -> str:
+        normalized_url = (backend_url or "").rstrip("/")
+        if not endpoint.startswith("/v1/"):
+            return endpoint
+        if normalized_url.endswith("/api/v1"):
+            return endpoint.removeprefix("/v1")
+        if normalized_url.endswith("/api"):
+            return endpoint
+        return "/api" + endpoint
 
     def _prepare_chat_payload(
         self,
@@ -468,7 +478,7 @@ class InferenceProxy:
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
-            target_endpoint = "/api" + target_endpoint
+            target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
         request_payload = self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,
@@ -636,7 +646,7 @@ class InferenceProxy:
         client = self._client_for_backend(backend, backend_url)
         target_endpoint = endpoint
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
-            target_endpoint = "/api" + target_endpoint
+            target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
         request_payload = self._prepare_chat_payload(
             payload,
             include_reasoning=include_reasoning,
@@ -682,6 +692,11 @@ class InferenceProxy:
             BACKEND_LATENCY.labels(backend_name=backend_name or backend, endpoint=endpoint).observe(perf_counter() - started)
         except (httpx.HTTPStatusError, httpx.TransportError) as exc:
             await stream_client.aclose()
+            if isinstance(exc, httpx.HTTPStatusError):
+                try:
+                    await exc.response.aread()
+                except Exception:
+                    pass
             if self._should_trip_circuit_breaker(exc):
                 await self.circuit_breaker.record_failure()
             REQUEST_COUNTER.labels(endpoint=endpoint, status="error").inc()

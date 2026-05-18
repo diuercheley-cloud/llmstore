@@ -15,7 +15,7 @@ from app.services.billing.revenue_protection import get_active_revenue_protectio
 from app.services.commercial_guardrails import filter_routes_by_commercial_guardrails
 from app.services.models.signed_model_registry import enforce_model_trust_or_warn
 from app.services.provider_classification import is_cloud_provider
-from app.utils.tool_calling import provider_supports_native_tools
+from app.utils.tool_calling import model_supports_native_tools
 
 
 SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm"}
@@ -324,7 +324,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
         "streaming": is_chat,
         "embeddings": is_embedding,
         "responses": is_chat,
-        "tools": is_chat and provider_supports_native_tools(item.provider),
+        "tools": is_chat and model_supports_native_tools(item.provider, item.metadata_json),
     }
 
     # Backend status and routing
