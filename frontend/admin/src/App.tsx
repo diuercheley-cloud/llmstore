@@ -5,6 +5,8 @@ import Hub from './pages/Hub'
 import Clients from './pages/Clients'
 import Models from './pages/Models'
 import Backends from './pages/Backends'
+import Plugins from './pages/Plugins'
+import ManagedControlPlane from './pages/ManagedControlPlane'
 import { useAuthStore } from './store/useAuthStore'
 import { ShieldAlert, LogIn } from 'lucide-react'
 
@@ -74,6 +76,8 @@ function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/clients" className="hover:text-teal-600 transition-colors">Clientes</Link>
               <Link to="/models" className="hover:text-teal-600 transition-colors">Modelos</Link>
               <Link to="/backends" className="hover:text-teal-600 transition-colors">Backends</Link>
+              <Link to="/plugins" className="hover:text-teal-600 transition-colors">Plugins</Link>
+              <Link to="/saas" className="hover:text-teal-600 transition-colors">SaaS</Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -134,6 +138,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout><Backends /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/plugins" 
+            element={
+              <ProtectedRoute>
+                <Layout><Plugins /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/saas" 
+            element={
+              <ProtectedRoute>
+                <Layout><ManagedControlPlane /></Layout>
               </ProtectedRoute>
             } 
           />

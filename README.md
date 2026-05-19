@@ -143,6 +143,8 @@ make validate-platform-documentation
 - **No real plugin execution.** Plugin ABI defines contracts but does not execute plugins. Adapter sandbox validates manifests, not runtime behavior.
 - **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior.
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
+- **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
+- **Managed control-plane metadata is restricted.** Heartbeats accept operational metadata only; prompt/document payloads are rejected by schema validation.
 - **No real runtime execution.** Runtime abstractions are advisory placeholders. All phase implementations are validation-only.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.
 
@@ -191,6 +193,12 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 # 2. Configure o ambiente
 cp .env.example .env.local
 # Edite ADMIN_TOKEN, POSTGRES_PASSWORD, MODEL_FILE
+# Mantenha os gates enterprise em false a menos que queira habilitar explicitamente:
+# KUBERNETES_MODE=false
+# DISTRIBUTED_RUNTIME_ENABLED=false
+# GPU_AUTOSCALING_ENABLED=false
+# PLUGIN_MARKETPLACE_ENABLED=false
+# MANAGED_CONTROL_PLANE_ENABLED=false
 
 # 3. Instale o appliance com dados de demonstração
 make install-local
@@ -347,13 +355,38 @@ make validate-real-provider-env
 
 - **PSP real está fora do escopo.** O sistema simula faturamento com invoices e ciclos, mas não processa pagamentos reais.
 - **PIX real está fora do escopo.** Não há integração com gateways de pagamento brasileiros.
-- **Cloud gerenciada está fora do escopo.** O appliance é on-premise; não oferecemos versão SaaS gerenciada neste repositório.
+- **Cloud gerenciada é opcional e desabilitada por padrão.** O modo local/offline continua sendo o baseline; `MANAGED_CONTROL_PLANE_ENABLED=false` e `DEPLOYMENT_MODE=appliance` preservam o comportamento de appliance.
 - **Modelos dependem do hardware local.** Desempenho varia conforme GPU, RAM e quantização. Consulte [docs/MODEL_BENCHMARK_LOCAL.md](docs/MODEL_BENCHMARK_LOCAL.md).
 - **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade, cache e providers cloud requerem ativação explícita em `.env.local`.
 - **RBAC administrativo permanece em legado por padrão.** `RBAC_ADMIN_ENABLED=false` mantém o fluxo atual baseado em `X-Admin-Token`.
 - **Troca de modelo GGUF é opt-in.** Com `MODEL_HOT_SWAP_ENABLED=false`, o comportamento continua sendo o fluxo antigo sem supervisor de runtimes.
+- **Marketplace permanece offline-first.** O fluxo de marketplace usa artefatos locais importados pelo operador; não depende de catálogo remoto para funcionar.
+- **Autoscaling de GPU é advisory por padrão.** Mesmo quando habilitado, a política inicial opera em `mode=recommendation` até que o operador promova para ação ativa.
 - **Cálculo de tokens pode usar fallback estimado.** `TOKENIZER_MODE=auto` tenta tokenizer real e recua para estimativa quando necessário.
 - **Cancelamento de geração** depende do encerramento da conexão HTTP do stream.
+
+## Enterprise Packaging
+
+O LLM Inference Stack está pronto para pilotos enterprise e implantações em produção com um fluxo estruturado de onboarding e entrega.
+
+### Pacotes Comerciais
+- **Pilot Pack**: Avaliação de curta duração (30-90 dias) em ambientes de sandbox.
+- **On-Prem Enterprise Pack**: Implantação completa em produção na infraestrutura gerenciada pelo cliente.
+- **Sovereign AI Appliance Pack**: Solução hardware+software air-gapped para máxima soberania.
+- **Managed Control Plane Pack**: Control Plane gerenciado (SaaS) com execução local do Data Plane.
+- **Support & Maintenance**: Suporte técnico 24/7 e ajuste de performance contínuo.
+
+### Ferramentas Enterprise
+Scripts automatizados para gerar artefatos de entrega:
+- `./scripts/generate-enterprise-pack.sh`: Script mestre para gerar todos os relatórios.
+- `./scripts/generate-customer-readiness-report.sh`: Valida ambiente e inventário.
+- `./scripts/generate-acceptance-report.sh`: Cria template para aceite formal (sign-off).
+
+### Documentação e Compliance
+Recursos abrangentes disponíveis em:
+- `docs/enterprise/`: Guias de onboarding, questionários de segurança e planos de teste.
+- `commercial/templates/`: SOW, Termos de Suporte e Fronteiras de Processamento de Dados.
+- `commercial/checklists/`: Checklists rigorosos para cada fase da entrega.
 
 ## Documentação
 

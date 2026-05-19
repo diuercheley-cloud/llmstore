@@ -1,7 +1,8 @@
 # Slow Tests Report — tests/build
 
-Top 1 slowest durations (min 1.0s):
+Top 2 slowest durations (min 1.0s):
 
 ```
-0.04s setup    tests/build/test_makefile_governance.py::test_duplicate_detection
+0.62s call     tests/build/test_alembic_integrity.py::test_alembic_integrity_script
+0.15s setup    tests/build/test_alembic_integrity.py::test_alembic_integrity_script
 ```

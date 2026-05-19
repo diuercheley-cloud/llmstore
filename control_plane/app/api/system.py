@@ -164,27 +164,32 @@ async def ready(
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),
 ):
+    import logging
     status = "ready"
     dependencies = {"postgres": "ok", "redis": "ok", "migrations": "ok"}
     
     try:
         await session.execute(text("SELECT 1"))
-    except Exception:
+    except Exception as e:
+        logging.error(f"Readiness check failed: postgres dependency not ready. Error: {e}")
         dependencies["postgres"] = "error"
         status = "not_ready"
 
     try:
         await redis.ping()
-    except Exception:
+    except Exception as e:
+        logging.error(f"Readiness check failed: redis dependency not ready. Error: {e}")
         dependencies["redis"] = "error"
         status = "not_ready"
         
     try:
         res = await session.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
         if not res.scalar():
+            logging.error("Readiness check failed: migrations dependency not ready (missing version)")
             dependencies["migrations"] = "missing"
             status = "not_ready"
-    except Exception:
+    except Exception as e:
+        logging.error(f"Readiness check failed: migrations dependency not ready. Error: {e}")
         dependencies["migrations"] = "error"
         status = "not_ready"
 
@@ -200,19 +205,46 @@ async def ready(
             else:
                 dependencies["attestation"] = "ok"
         except Exception as e:
-            import logging
             logging.error(f"Readiness attestation failed: {e}")
             dependencies["attestation"] = "error"
             status = "not_ready"
 
-    if status != "ready":
+    # Check for opt-in components
+    # 1. RAG
+    if not settings.rag_enabled:
+        dependencies["rag"] = "disabled"
+        logging.warning("Readiness degraded reason: RAG component is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["rag"] = "ok"
+
+    # 2. TTS
+    if not settings.tts_enabled:
+        dependencies["tts"] = "disabled"
+        logging.warning("Readiness degraded reason: TTS component is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["tts"] = "ok"
+
+    # 3. LM Studio
+    if not settings.lmstudio_enabled:
+        dependencies["lmstudio"] = "disabled"
+        logging.warning("Readiness degraded reason: LM Studio provider is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["lmstudio"] = "ok"
+
+    if status == "not_ready":
         return Response(
             content=f'{{"status":"{status}","dependencies":{json.dumps(dependencies)}}}',
             media_type="application/json",
             status_code=503
         )
         
-    return {"status": "ready", "dependencies": dependencies}
+    return {"status": status, "dependencies": dependencies}
 
 
 @router.get("/status", tags=["system"])
@@ -741,7 +773,17 @@ async def get_latest_benchmark(admin=Depends(require_admin)):
 
 @router.get("/metrics", tags=["system"])
 async def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    import logging
+    current_settings = get_settings()
+    if not getattr(current_settings, "observability_enabled", True):
+        logging.warning("Metrics unavailable: observability is disabled in settings")
+        return Response(content="metrics unavailable", status_code=503)
+    try:
+        data = generate_latest()
+        return Response(data, media_type=CONTENT_TYPE_LATEST)
+    except Exception as e:
+        logging.error(f"Metrics unavailable: failed to generate prometheus metrics. Error: {e}")
+        return Response(content="metrics unavailable", status_code=503)
 
 
 @router.get("/admin-tests", include_in_schema=False)

@@ -1,0 +1,23 @@
+{
+  "manifest_version": "1",
+  "name": "sample-provider-adapter",
+  "version": "1.0.0",
+  "description": "Example provider adapter plugin for the LLM Inference Stack marketplace",
+  "author": "LLM Inference Stack Team",
+  "license": "MIT",
+  "entrypoint": "adapter.py",
+  "plugin_type": "provider_adapter",
+  "permissions": [
+    "network_out",
+    "read_data",
+    "write_data"
+  ],
+  "checksums": {
+    "archive": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "minimum_platform_version": "1.9.0",
+  "compatibility": {
+    "python": [">=3.11"],
+    "platform": [">=linux-x86_64"]
+  }
+}

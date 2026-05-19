@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-control-plane
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+    app: control-plane
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "llm-inference-stack.selectorLabels" . | nindent 6 }}
+      app: control-plane
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "llm-inference-stack.selectorLabels" . | nindent 8 }}
+        app: control-plane
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "llm-inference-stack.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.config.databaseUrl | default (printf "postgresql://llmuser:%s@%s-postgres:5432/llmstack" .Values.postgres.password (include "llm-inference-stack.fullname" .)) | quote }}
+            - name: REDIS_URL
+              value: {{ .Values.config.redisUrl | default (printf "redis://%s-redis:6379/0" (include "llm-inference-stack.fullname" .)) | quote }}
+            - name: DATA_PLANE_BASE_URL
+              value: {{ .Values.config.dataPlaneBaseUrl | default (printf "http://%s-data-plane:8081" (include "llm-inference-stack.fullname" .)) | quote }}
+            - name: DEMO_MODE
+              value: {{ .Values.config.demoMode | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

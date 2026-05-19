@@ -119,6 +119,25 @@ settings = get_settings()
 validate_runtime_security(settings)
 
 
+def include_optional_routers(app: FastAPI, settings) -> None:
+    if settings.distributed_runtime_enabled:
+        from app.api.distributed_runtime import router as distributed_runtime_router
+
+        app.include_router(distributed_runtime_router)
+    if settings.gpu_autoscaling_enabled:
+        from app.api.gpu_autoscaling_admin import router as gpu_autoscaling_admin_router
+
+        app.include_router(gpu_autoscaling_admin_router)
+    if settings.plugin_marketplace_enabled:
+        from app.api.plugin_marketplace_admin import router as plugin_marketplace_admin_router
+
+        app.include_router(plugin_marketplace_admin_router)
+    if settings.managed_control_plane_enabled and settings.deployment_mode == "managed_control_plane":
+        from app.api.managed_control_plane import router as managed_control_plane_router
+
+        app.include_router(managed_control_plane_router)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     async with SessionLocal() as session:
@@ -200,6 +219,7 @@ app.add_middleware(
 )
 app.include_router(public_router)
 app.include_router(system_router)
+include_optional_routers(app, settings)
 app.include_router(admin_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)

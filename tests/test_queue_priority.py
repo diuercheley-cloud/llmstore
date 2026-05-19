@@ -39,11 +39,17 @@ async def test_priority_jumping():
 
     # 1. Start a Free request that will wait
     t1 = asyncio.create_task(run_task("free", "free"))
-    await asyncio.sleep(0.1)
+    for _ in range(100):
+        if qm.waiting_counts["inference_free"] == 1:
+            break
+        await asyncio.sleep(0.005)
     
     # 2. Start an Admin request that will also wait
     t2 = asyncio.create_task(run_task("admin", "any", is_admin=True))
-    await asyncio.sleep(0.1)
+    for _ in range(100):
+        if qm.waiting_counts["inference_admin"] == 1:
+            break
+        await asyncio.sleep(0.005)
     
     # Now make slot available
     slot_available = True

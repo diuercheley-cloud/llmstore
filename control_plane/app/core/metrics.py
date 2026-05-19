@@ -189,6 +189,80 @@ LLM_ATTESTATION_FAILURES_TOTAL = Counter(
     ["node_id", "reason"],
 )
 
+# Distributed Runtime Metrics
+LLM_RUNTIME_NODES_TOTAL = Counter(
+    "llm_runtime_nodes_total",
+    "Total runtime nodes registered",
+    ["node_type"]
+)
+LLM_RUNTIME_NODE_HEARTBEATS_TOTAL = Counter(
+    "llm_runtime_node_heartbeats_total",
+    "Total heartbeats received from nodes",
+    ["node_id"]
+)
+LLM_RUNTIME_NODE_FAILURES_TOTAL = Counter(
+    "llm_runtime_node_failures_total",
+    "Total node failures detected",
+    ["node_id", "reason"]
+)
+LLM_RUNTIME_FAILOVERS_TOTAL = Counter(
+    "llm_runtime_failovers_total",
+    "Total failovers triggered",
+    ["model_id", "reason"]
+)
+LLM_RUNTIME_NODE_LOAD_RATIO = Gauge(
+    "llm_runtime_node_load_ratio",
+    "Current load ratio of the node (0-1)",
+    ["node_id"]
+)
+LLM_RUNTIME_MODEL_PLACEMENTS_TOTAL = Gauge(
+    "llm_runtime_model_placements_total",
+    "Total model placements on nodes",
+    ["node_id", "status"]
+)
+
+# GPU & Autoscaling Metrics
+LLM_GPU_DEVICES_TOTAL = Gauge(
+    "llm_gpu_devices_total",
+    "Total GPU devices detected",
+    ["node_id", "status"]
+)
+LLM_GPU_MEMORY_USED_BYTES = Gauge(
+    "llm_gpu_memory_used_bytes",
+    "Current GPU memory used in bytes",
+    ["node_id", "gpu_index"]
+)
+LLM_GPU_MEMORY_TOTAL_BYTES = Gauge(
+    "llm_gpu_memory_total_bytes",
+    "Total GPU memory in bytes",
+    ["node_id", "gpu_index"]
+)
+LLM_GPU_UTILIZATION_RATIO = Gauge(
+    "llm_gpu_utilization_ratio",
+    "GPU utilization ratio (0-1)",
+    ["node_id", "gpu_index"]
+)
+LLM_GPU_TEMPERATURE_CELSIUS = Gauge(
+    "llm_gpu_temperature_celsius",
+    "GPU temperature in Celsius",
+    ["node_id", "gpu_index"]
+)
+LLM_AUTOSCALING_DECISIONS_TOTAL = Counter(
+    "llm_autoscaling_decisions_total",
+    "Total autoscaling decisions made",
+    ["policy_id", "action"]
+)
+LLM_AUTOSCALING_REPLICAS_DESIRED = Gauge(
+    "llm_autoscaling_replicas_desired",
+    "Desired number of replicas by autoscaler",
+    ["policy_id"]
+)
+LLM_AUTOSCALING_REPLICAS_CURRENT = Gauge(
+    "llm_autoscaling_replicas_current",
+    "Current number of replicas reported by autoscaler",
+    ["policy_id"]
+)
+
 # Keep legacy metrics for internal compatibility where needed, or alias them
 REQUESTS_TOTAL = LLM_REQUESTS_TOTAL
 REQUEST_LATENCY_SECONDS = LLM_REQUEST_LATENCY_SECONDS

@@ -1,3 +1,28 @@
+from app.models.plugins.marketplace import (
+    PluginMarketplaceEntry,
+    PluginVersion,
+    PluginInstall,
+    PluginPermission,
+    PluginTrustReport,
+    PluginReview,
+)
+
+from app.models.runtime.gpu_orchestration import (
+    GpuDevice,
+    GpuAllocation,
+    GpuCapacitySnapshot,
+    AutoscalingPolicy,
+    AutoscalingEvent,
+)
+
+from app.models.runtime.distributed_runtime import (
+    RuntimeNode,
+    RuntimeNodeHeartbeat,
+    RuntimeModelPlacement,
+    RuntimeRoutingEvent,
+    RuntimeFailoverEvent,
+)
+
 from app.models.commercial_merkle_timelines import (
     CommercialMerkleTimeline,
     CommercialMerkleLeaf,
@@ -179,6 +204,15 @@ from app.models.commercial_financial_audit_event import CommercialFinancialAudit
 from app.models.commercial_revenue_forecast import CommercialRevenueForecast
 from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
 from app.models.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.managed_control_plane import (
+    ManagedOrganization,
+    ManagedWorkspace,
+    ManagedAppliance,
+    ApplianceEnrollment,
+    ApplianceHeartbeat,
+    ManagedBillingAccount,
+    ManagedSupportCase,
+)
 from app.models.commercial_revenue_protection_action import CommercialRevenueProtectionAction
 from app.models.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
 from app.models.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
@@ -498,6 +532,22 @@ __all__ = [
     "AdminUserRole",
     "AdminRolePermission",
     "AdminAuditEvent",
+    "RuntimeNode",
+    "RuntimeNodeHeartbeat",
+    "RuntimeModelPlacement",
+    "RuntimeRoutingEvent",
+    "RuntimeFailoverEvent",
+    "GpuDevice",
+    "GpuAllocation",
+    "GpuCapacitySnapshot",
+    "AutoscalingPolicy",
+    "AutoscalingEvent",
+    "PluginMarketplaceEntry",
+    "PluginVersion",
+    "PluginInstall",
+    "PluginPermission",
+    "PluginTrustReport",
+    "PluginReview",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 

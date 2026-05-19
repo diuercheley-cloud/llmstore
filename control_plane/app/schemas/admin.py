@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class ClientCreate(BaseModel):
     name: str = Field(min_length=3, max_length=120)
     description: str | None = Field(default=None, max_length=500)
+    organization_id: UUID | None = None
     billing_plan_id: UUID | None = None
     rate_limit_per_minute: int = Field(default=1000, ge=1, le=10000)
     daily_token_quota: int = Field(default=100_000_000, ge=1000, le=1_000_000_000)
@@ -47,6 +48,7 @@ class ClientRead(BaseModel):
     description: str | None
     is_blocked: bool
     billing_status: str
+    organization_id: UUID | None
     billing_plan_id: UUID | None
     rate_limit_per_minute: int
     daily_token_quota: int

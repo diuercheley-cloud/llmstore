@@ -106,11 +106,20 @@ async def test_exact_cache_different_requests_different_keys(isolated_db_url: st
 
 
 @pytest.mark.asyncio
-async def test_exact_cache_ttl_expiry(isolated_db_url: str):
+async def test_exact_cache_ttl_expiry(isolated_db_url: str, monkeypatch: pytest.MonkeyPatch):
     engine = create_async_engine(isolated_db_url)
     testing_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    from datetime import datetime, timezone
+    current_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+    def fake_utc_now():
+        return current_time
+
+    import app.services.cache.intelligent_cache as cache_module
+    monkeypatch.setattr(cache_module, "utc_now", fake_utc_now)
 
     async with testing_session() as session:
         request_hash, prefix, fingerprint = build_cache_key(
@@ -135,7 +144,7 @@ async def test_exact_cache_ttl_expiry(isolated_db_url: str):
         )
         assert result.hit
 
-        time.sleep(1.1)
+        current_time = datetime(2026, 1, 1, 12, 0, 2, tzinfo=timezone.utc)
 
         result = await get_exact(
             session, endpoint_type="/v1/chat/completions", model="gemma",

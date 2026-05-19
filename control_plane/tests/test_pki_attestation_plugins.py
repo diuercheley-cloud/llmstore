@@ -13,6 +13,9 @@ def mock_settings(monkeypatch):
     monkeypatch.setattr(settings, "pki_enabled", True)
     monkeypatch.setattr(settings, "attestation_mode", "enforcing")
     monkeypatch.setattr(settings, "plugin_signature_required", True)
+    monkeypatch.setattr(settings, "rag_enabled", True)
+    monkeypatch.setattr(settings, "tts_enabled", True)
+    monkeypatch.setattr(settings, "lmstudio_enabled", True)
     return settings
 
 class MockResult:

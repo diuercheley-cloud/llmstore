@@ -33,7 +33,11 @@ async def test_queue_overloaded():
         ctx = qm.slot(plan_code="free", backend_id=backend_id)
         tasks.append(asyncio.create_task(ctx.__aenter__()))
     
-    await asyncio.sleep(0.2) # Give them time to enter and wait
+    # Wait until all tasks have entered the queue
+    for _ in range(200):
+        if qm.waiting_counts["inference_free"] == limit:
+            break
+        await asyncio.sleep(0.005)
     
     # Next one should fail immediately because max_waiting is reached
     with pytest.raises(QueueOverloaded) as exc:

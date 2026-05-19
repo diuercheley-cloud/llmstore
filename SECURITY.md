@@ -15,6 +15,8 @@
 - Security headers are added by the API/proxy layer.
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
 - Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
+- `DEPLOYMENT_MODE=appliance`, `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false`, and `MANAGED_CONTROL_PLANE_ENABLED=false` keep enterprise runtime surfaces disabled by default.
+- Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=managed_control_plane`.
 
 ## Secrets Handling
 
@@ -41,6 +43,14 @@
 - Admin tokens must not be returned by public or client-facing endpoints.
 - Correlation IDs are safe to log and are intended for troubleshooting.
 - If debug logging is enabled in production-like environments, review logs for prompt content and metadata retention before release.
+- Managed control-plane heartbeats are limited to operational metadata. Prompt bodies, document content, and similar payload fields are rejected before persistence.
+
+## Managed Data Boundaries
+
+- Local/offline Docker Compose remains the baseline deployment and does not require Kubernetes, operator mode, or managed SaaS services.
+- Kubernetes/operator mode is optional and must be explicitly enabled out-of-band; no local/offline path depends on it.
+- The plugin marketplace works offline with operator-supplied archives. No remote marketplace sync is required by default.
+- GPU autoscaling defaults to advisory recommendations and is automatically disabled when distributed runtime is disabled.
 
 ## Network Exposure
 

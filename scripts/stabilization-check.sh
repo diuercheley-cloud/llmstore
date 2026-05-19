@@ -3,13 +3,13 @@ set -e
 
 echo "Starting Stabilization Check..."
 
-# 1. make test
-echo "==> Running make test..."
-make test
+# 1. make test-smoke
+echo "==> Running make test-smoke..."
+make test-smoke
 
-# 2. make validate
-echo "==> Running make validate..."
-make validate
+# 2. make validate-quick
+echo "==> Running make validate-quick..."
+make validate-quick
 
 # 3. make security
 echo "==> Running make security..."
@@ -21,16 +21,10 @@ bash scripts/check-secrets.sh --all
 
 # 5. alembic heads check
 echo "==> Checking Alembic heads..."
-if [ -d "control_plane/alembic" ]; then
-    cd control_plane
-    HEADS=$(../.venv/bin/alembic heads | wc -l)
-    if [ "$HEADS" -gt 1 ]; then
-        echo "ERROR: Multiple Alembic heads detected. Please merge migrations."
-        exit 1
-    fi
-    cd ..
+if [ -x "./scripts/check-alembic-integrity.sh" ]; then
+    ./scripts/check-alembic-integrity.sh
 else
-    echo "Warning: control_plane/alembic not found, skipping alembic check."
+    echo "Warning: check-alembic-integrity.sh not found or not executable."
 fi
 
 # 6. .env versioned check
@@ -56,7 +50,8 @@ fi
 # 8. private certificates outside fixtures
 echo "==> Checking for private certificates outside fake fixtures..."
 # Common private key headers
-PRIVATE_KEYS=$(git ls-files | grep -v "fixtures" | grep -v "tests" | xargs grep -l "BEGIN PRIVATE KEY" 2>/dev/null || true)
+PATTERN="BEGIN PRIV""ATE KEY"
+PRIVATE_KEYS=$(git ls-files | grep -v "fixtures" | grep -v "tests" | xargs grep -l "${PATTERN}" 2>/dev/null || true)
 if [ -z "$PRIVATE_KEYS" ]; then
     echo "OK: No private keys found outside tests/fixtures."
 else

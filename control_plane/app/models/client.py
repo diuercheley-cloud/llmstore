@@ -17,6 +17,7 @@ class Client(Base):
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     billing_status: Mapped[str] = mapped_column(String(16), default="active", nullable=False, index=True)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("managed_organizations.id"), nullable=True, index=True)
     billing_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("billing_plans.id"), nullable=True, index=True)
     rate_limit_per_minute: Mapped[int] = mapped_column(Integer, default=1000, nullable=False)
     daily_token_quota: Mapped[int] = mapped_column(Integer, default=100_000_000, nullable=False)

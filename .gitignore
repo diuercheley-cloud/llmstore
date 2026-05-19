@@ -24,16 +24,35 @@ redis-data/
 
 # Artifacts & Backups
 artifacts/
+!artifacts/.gitkeep
 exports/
 artifacts/demo-screenshots/
 backups/
 *.log
 *.wav
+*.docx
 tts_audio/
 control_plane/*.db
 control_plane/*.sqlite
+control_plane/*.backup
 tmp_client.txt
 tmp_key.txt
+down_revisions.txt
+revisions.txt
+els_props.txt
+els_usages.txt
+
+# Release artifacts
+llm-inference-stack-*.tgz
+tmp_release_bundle_*/
+releases/v-test-*/
+releases/v-security-*/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/
 
 # Generated proposals
 proposals/generated/
@@ -55,13 +74,24 @@ models/
 # OS
 .DS_Store
 Thumbs.db
-
-# Local Data
+.agents/
+.openclaude/
+.codex/
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
 data/rag_uploads/
 data/rag_uploads-drtest-*/
 data/pki/
+data/plugins/test-*/
 control_plane/data/
 .local/
+logs/
+downloads/
+model_cache/
 
 # Releases
 releases/**/*.tar.gz

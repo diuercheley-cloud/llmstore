@@ -95,6 +95,11 @@ async def test_deep_health_admin(async_client: AsyncClient):
 async def test_client_portal_page_supports_api_key_bootstrap(async_client: AsyncClient):
     response = await async_client.get("/client-portal")
     assert response.status_code == 200
-    assert "readApiKeyFromUrl" in response.text
-    assert "searchParams.get('api_key')" in response.text
-    assert "window.history.replaceState" in response.text
+    # The client portal links to portal.js
+    assert "portal.js" in response.text
+    
+    js_response = await async_client.get("/static/portal/portal.js")
+    assert js_response.status_code == 200
+    assert "readApiKeyFromUrl" in js_response.text
+    assert "searchParams.get('api_key')" in js_response.text
+    assert "window.history.replaceState" in js_response.text

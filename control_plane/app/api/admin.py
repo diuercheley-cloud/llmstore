@@ -8,7 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from redis.asyncio import Redis
 from pydantic import Field
 from sqlalchemy import case, delete, desc, func, or_, select
@@ -475,6 +475,11 @@ async def _sync_model_backend_routes(session: AsyncSession, model: ModelRegistry
 
 @router.post("/clients", response_model=ClientRead, status_code=201)
 async def create_client(payload: ClientCreate, session: AsyncSession = Depends(get_db_session)):
+    if settings.deployment_mode == "managed_control_plane" and not payload.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="organization_id is required in managed_control_plane mode"
+        )
     plans = await ensure_default_billing_plans(session)
     client_data = payload.model_dump()
     billing_plan_id = client_data.get("billing_plan_id") or plans["free"].id

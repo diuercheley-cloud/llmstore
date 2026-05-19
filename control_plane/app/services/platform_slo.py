@@ -99,6 +99,9 @@ class PlatformSLOService:
         rbac_denials = self._get_counter_sum("llm_rbac_denials_total")
         attestation_failures = self._get_counter_sum("llm_attestation_failures_total")
         hot_swap_failures = self._get_counter_sum("llm_model_hot_swap_failures_total")
+        runtime_node_failures = self._get_counter_sum("llm_runtime_node_failures_total")
+        runtime_failovers = self._get_counter_sum("llm_runtime_failovers_total")
+        gpu_utilization_avg = self._get_gauge_avg("llm_gpu_utilization_ratio")
         
         overall_status = "ok"
         critical_issues = []
@@ -114,6 +117,14 @@ class PlatformSLOService:
         if hot_swap_failures > 0:
             overall_status = "warning"
             critical_issues.append(f"Model hot swap failures: {int(hot_swap_failures)}")
+            
+        if runtime_node_failures > 0:
+            overall_status = "warning"
+            critical_issues.append(f"Distributed runtime node failures: {int(runtime_node_failures)}")
+            
+        if gpu_utilization_avg > 0.95:
+            overall_status = "warning"
+            critical_issues.append(f"Extreme GPU utilization: {int(gpu_utilization_avg * 100)}%")
 
         return {
             "status": overall_status,
@@ -121,13 +132,22 @@ class PlatformSLOService:
             "metrics": {
                 "rbac_denials": int(rbac_denials),
                 "attestation_failures": int(attestation_failures),
-                "hot_swap_failures": int(hot_swap_failures)
+                "hot_swap_failures": int(hot_swap_failures),
+                "runtime_node_failures": int(runtime_node_failures),
+                "runtime_failovers": int(runtime_failovers),
+                "avg_gpu_utilization": float(gpu_utilization_avg)
             }
         }
 
     def _get_counter_sum(self, name: str) -> float:
         metric = REGISTRY.get_sample_value(f"{name}_total")
         return float(metric) if metric is not None else 0.0
+
+    def _get_gauge_avg(self, name: str) -> float:
+        # Simplified: gets the first sample value if available
+        # In a real setup, we would average across labels
+        val = REGISTRY.get_sample_value(name)
+        return float(val) if val is not None else 0.0
 
     def _get_histogram_avg(self, name: str) -> float:
         sum_val = REGISTRY.get_sample_value(f"{name}_sum")

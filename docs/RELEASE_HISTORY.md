@@ -2,7 +2,7 @@
 
 Historico consolidado das versoes estaveis do LLM Inference Stack.
 
-**Gerado em:** 2026-05-12 12:09:54
+**Gerado em:** 2026-05-19 16:27:18
 
 ## Visao Geral
 
@@ -54,9 +54,24 @@ timeline
     2026-05-11 : 1.6.2-installer-polish : Installer Polish
     2026-05-11 : 1.6.3-readiness-cleanup : Readiness Cleanup
     2026-05-11 : 1.6.4-customer-demo-pack : Customer Demo Pack
-     2026-05-12 : 1.6.5-sales-ops : Sales Ops
-     2026-05-12 : 1.6.6-repo-cleanup : Repo Cleanup
-     2026-05-12 : 1.6.7-final-qa : Final QA
+    2026-05-12 : 1.6.5-sales-ops : Sales Ops
+    2026-05-12 : 1.6.6-repo-cleanup : Legacy
+    2026-05-12 : 1.6.7-final-qa : Legacy
+    2026-05-12 : 1.7.0-local-ai-appliance : Legacy
+    2026-05-13 : 1.7.1-post-release-polish : Legacy
+    2026-05-13 : 1.8.0-hybrid-ai-platform : Legacy
+    2026-05-13 : 1.8.1-real-provider-validation : Legacy
+    2026-05-17 : 1.8.2-openrouter-integration : Legacy
+    2026-05-18 : 1.8.3-admin-policy-controls : Legacy
+    2026-05-18 : 1.8.4-portal-tts-transparency : Legacy
+    2026-05-15 : 1.9.0-sovereign-platform : Legacy
+    2026-05-18 : 1.9.1-frontend-modularization : Legacy
+    2026-05-18 : 1.9.2-admin-v2-modular-ui : Legacy
+    2026-05-18 : 1.9.2-platform-hardening : Legacy
+    2026-05-18 : 1.9.3-platform-hardening : Legacy
+    2026-05-19 : 1.9.3-stabilization-hardening : Legacy
+    2026-05-19 : 1.9.4-platform-hardening : Legacy
+    2026-05-16 : 1.10.0-v1-rc1 : Legacy
 ```
 
 ## Releases
@@ -102,18 +117,29 @@ timeline
 | 1.6.3-readiness-cleanup | `v1.6.3-readiness-cleanup` | stable/v1.6.3-readiness-cleanup | `473b07f` | 2026-05-11 | Readiness Cleanup | archived | 2026-05-11; Correção de warnings do Production Readiness rep |
 | 1.6.4-customer-demo-pack | `v1.6.4-customer-demo-pack` | stable/v1.6.4-customer-demo-pack | `874e0dc` | 2026-05-11 | Customer Demo Pack | active | 2026-05-11; Demo pack comercial com 5 cenarios (clinica, jur |
 | 1.6.5-sales-ops | `v1.6.5-sales-ops` | stable/v1.6.5-sales-ops | `8db6be3` | 2026-05-12 | Sales Ops | active | 2026-05-12; CRM local simples para leads com fluxo comercial |
-| 1.6.6-repo-cleanup | `v1.6.6-repo-cleanup` | stable/v1.6.6-repo-cleanup | `1c89b0c` | 2026-05-12 | Repo Cleanup | active | 2026-05-12; Consolidacao do layout, padronizacao shell, historico de releases |
-| 1.6.7-final-qa | `v1.6.7-final-qa` | — | `1c89b0c` | 2026-05-12 | Final QA | active | 2026-05-12; Client ready report consolidado, checklist v1.7.0, documentacao final, preparacao para v1.7.0 |
-| 1.7.0-local-ai-appliance | `v1.7.0-local-ai-appliance` | — | — | 2026-05-12 | Local AI Appliance | current | 2026-05-12; Consolidacao final da linha v1.6.x, release bundle, Go/No-Go formal, documentacao de producao |
+| 1.6.6-repo-cleanup | `v1.6.6-repo-cleanup` | stable/v1.6.6-repo-cleanup | `1c89b0c` | 2026-05-12 | Legacy | archived | 2026-05-12; Consolidacao do layout do repositorio com arquiv |
+| 1.6.7-final-qa | `v1.6.7-final-qa` | stable/v1.6.7-final-qa | `7814bf0` | 2026-05-12 | Legacy | archived | 2026-05-12; Client Ready Report consolidado com artifacts JS |
+| 1.7.0-local-ai-appliance | `v1.7.0-local-ai-appliance` | stable/v1.7.0-local-ai-appliance | `1645718` | 2026-05-12 | Legacy | archived | 2026-05-12; Consolidação da linha v1.6.x (v1.6.0 a v1.6.7).; |
+| 1.7.1-post-release-polish | `v1.7.1-post-release-polish` | stable/v1.7.1-post-release-polish | `f73fbe7` | 2026-05-13 | Legacy | archived | 2026-05-13; Diagnóstico e limpeza de warnings não bloqueante |
+| 1.8.0-hybrid-ai-platform | `v1.8.0-hybrid-ai-platform` | stable/v1.8.0-hybrid-ai-platform | `bb09499` | 2026-05-13 | Legacy | archived | 2026-05-13; Suporte híbrido multi-provider para inferência l |
+| 1.8.1-real-provider-validation | `v1.8.1-real-provider-validation` | stable/v1.8.1-real-provider-validation | `28ccb53` | 2026-05-13 | Legacy | archived | 2026-05-13; Validação real opt-in para OpenAI, DeepSeek e An |
+| 1.8.2-openrouter-integration | `v1.8.2-openrouter-integration` | — | `b706936` | 2026-05-17 | Legacy | archived | — |
+| 1.8.3-admin-policy-controls | `v1.8.3-admin-policy-controls` | — | `1af3356` | 2026-05-18 | Legacy | archived | — |
+| 1.8.4-portal-tts-transparency | `v1.8.4-portal-tts-transparency` | — | `2ff7302` | 2026-05-18 | Legacy | archived | — |
+| 1.9.0-sovereign-platform | `v1.9.0-sovereign-platform` | — | `31912b9` | 2026-05-15 | Legacy | archived | — |
+| 1.9.1-frontend-modularization | `v1.9.1-frontend-modularization` | — | `31fbacb` | 2026-05-18 | Legacy | archived | — |
+| 1.9.2-admin-v2-modular-ui | `v1.9.2-admin-v2-modular-ui` | — | `6a024f2` | 2026-05-18 | Legacy | archived | — |
+| 1.9.2-platform-hardening | `v1.9.2-platform-hardening` | — | `4b53b5d` | 2026-05-18 | Legacy | archived | — |
+| 1.9.3-platform-hardening | `v1.9.3-platform-hardening` | — | `51d6f3b` | 2026-05-18 | Legacy | archived | — |
+| 1.9.3-stabilization-hardening | `v1.9.3-stabilization-hardening` | — | `259ba7a` | 2026-05-19 | Legacy | current | — |
+| 1.9.4-platform-hardening | `v1.9.4-platform-hardening` | — | `acb4f86` | 2026-05-19 | Legacy | archived | — |
+| 1.10.0-v1-rc1 | `v1.10.0-v1-rc1` | — | `4fe31f7` | 2026-05-16 | Legacy | archived | — |
 
 ## Releases Recomendadas
 
 | Versao | Motivo |
 |--------|--------|
-| `v1.7.0-local-ai-appliance` | **Atual.** Release consolidada do Local AI Appliance. |
-| `v1.6.7-final-qa` | Ultima versao estavel da linha v1.6.x antes da transicao. |
-| `v1.6.6-repo-cleanup` | Ultima versao estavel da linha v1.6.x antes do QA final. |
-| `v1.6.5-sales-ops` | Fluxos comerciais: CRM, propostas, orcamentos, contratos, white-label. |
+| `v1.6.5-sales-ops` | **Atual.** Fluxos comerciais: CRM, propostas, orcamentos, contratos, white-label. |
 | `v1.6.4-customer-demo-pack` | Demo pack comercial com 5 cenarios, meeting ready check, capabilities page. |
 | `v1.6.3-readiness-cleanup` | Readiness final com correcao de warnings, probe chat/SSE/TTS/CORS. |
 
@@ -130,11 +156,6 @@ timeline
 | v1.6.0 | v1.6.0-openai-compat | OpenAI-compatible responses e embeddings APIs. |
 | v1.6.1 | v1.6.1-product-hardening | Makefile, system control center, migrations hardening, multi-tenant, abuse protection. |
 | v1.6.2 | v1.6.2-installer-polish | Instalador local, wizard, checklist, backup/upgrade, validacao pos-instalacao. |
-| v1.6.3 | v1.6.3-readiness-cleanup | Readiness cleanup: correcao de warnings, probe chat/SSE/TTS/CORS, production readiness final. |
-| v1.6.4 | v1.6.4-customer-demo-pack | Demo pack comercial: 5 cenarios, meeting ready check, capabilities page, propostas. |
-| v1.6.5 | v1.6.5-sales-ops | Sales ops: CRM, propostas, orcamentos, contratos, white-label, relatorio mensal. |
-| v1.6.6 | v1.6.6-repo-cleanup | Repo cleanup: consolidacao do layout, padronizacao shell, historico de releases, validacoes. |
-| v1.6.7 | v1.6.7-final-qa | Final QA: client ready report consolidado, documentacao final, preparacao para v1.7.0-local-ai-appliance. |
 
 ## Como Restaurar uma Versao
 

@@ -226,9 +226,16 @@ log_info "Timestamp: ${TIMESTAMP}"
 log_info "Output: ${OUTPUT_DIR}"
 
 if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
+  run_validation "check-alembic-integrity.sh" "true"
   run_validation "validate-localhost-mode.sh" "true"
   run_validation "validate-status-local.sh" "true"
-  run_validation "validate-admin-lab-local.sh" "true"
+  
+  if [[ "${VALIDATION_MODE:-}" != "quick" ]]; then
+    run_validation "validate-admin-lab-local.sh" "true"
+  else
+    skip_validation "validate-admin-lab-local.sh" "false" "Skipped in quick validation mode"
+  fi
+  
   run_validation "validate-usable-chat-model-local.sh" "true"
 
   if curl -fsS --connect-timeout 2 --max-time 5 "${LM_STUDIO_BASE_URL}/models" >/dev/null 2>&1; then
@@ -240,19 +247,38 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
   fi
 
   run_validation "validate-routing-local.sh" "true"
-  run_validation "validate-plan-queues.sh" "true"
-  run_validation "validate-client-portal-local.sh" "true"
+  
+  if [[ "${VALIDATION_MODE:-}" != "quick" ]]; then
+    run_validation "validate-plan-queues.sh" "true"
+    run_validation "validate-client-portal-local.sh" "true"
+  else
+    skip_validation "validate-plan-queues.sh" "false" "Skipped in quick validation mode"
+    skip_validation "validate-client-portal-local.sh" "false" "Skipped in quick validation mode"
+  fi
+  
   run_validation "validate-api-keys-local.sh" "true"
 
-  if [[ "${RAG_ENABLED_FLAG}" == "true" ]]; then
+  if [[ "${RAG_ENABLED_FLAG}" == "true" && "${VALIDATION_MODE:-}" != "quick" ]]; then
     run_validation "validate-rag-local-multiclient.sh" "true"
+  elif [[ "${VALIDATION_MODE:-}" == "quick" ]]; then
+    skip_validation "validate-rag-local-multiclient.sh" "false" "Skipped in quick validation mode"
   else
     skip_validation "validate-rag-local-multiclient.sh" "false" "RAG_ENABLED=${RAG_ENABLED_FLAG}"
   fi
 
-  run_validation "validate-local-billing.sh" "true" "Manual billing validation only"
+  if [[ "${VALIDATION_MODE:-}" != "quick" ]]; then
+    run_validation "validate-local-billing.sh" "true" "Manual billing validation only"
+  else
+    skip_validation "validate-local-billing.sh" "false" "Skipped in quick validation mode"
+  fi
+  
   run_validation "validate-local-docs.sh" "true"
-  run_validation "validate-observability-local.sh" "true"
+  
+  if [[ "${VALIDATION_MODE:-}" != "quick" ]]; then
+    run_validation "validate-observability-local.sh" "true"
+  else
+    skip_validation "validate-observability-local.sh" "false" "Skipped in quick validation mode"
+  fi
 else
   log_info "VALIDATION_METADATA_ONLY=true; skipping service validations"
 fi
@@ -295,10 +321,27 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
     tests/test_integration_examples_no_secrets.py
     -q
   )
+
+  # Choose pytest arguments based on validation mode
+  PYTEST_RUN_ARGS=()
+  if [[ "${VALIDATION_MODE:-}" == "quick" ]]; then
+    # Fast parallel run for quick marked tests
+    PYTEST_RUN_ARGS=("-m" "quick" "-n" "auto" "--timeout=60" "-q")
+  elif [[ "${VALIDATION_MODE:-}" == "release" ]]; then
+    # Full parallel run including all tests: release, chaos, k8s
+    PYTEST_RUN_ARGS=("tests/" "control_plane/tests/" "-m" "release" "-n" "auto" "--timeout=300" "-q")
+  elif [[ "${VALIDATION_MODE:-}" == "nightly" ]]; then
+    # Comprehensive parallel run for nightly checks
+    PYTEST_RUN_ARGS=("tests/" "control_plane/tests/" "-n" "auto" "--timeout=600" "-q")
+  else
+    # Default / Full mode: Run standard suite in parallel
+    PYTEST_RUN_ARGS=("${RELEASE_PYTEST_ARGS[@]}" "-n" "auto" "--timeout=180")
+  fi
+
   if [[ -x "${ROOT_DIR}/.venv/bin/python" ]]; then
     if (
       cd "${ROOT_DIR}" || exit 1
-      .venv/bin/python -m pytest "${RELEASE_PYTEST_ARGS[@]}"
+      PYTHONPATH=control_plane .venv/bin/python -m pytest "${PYTEST_RUN_ARGS[@]}"
     ) >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
       log_ok "pytest OK"
     else
@@ -307,7 +350,7 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
     fi
   else
     log_warn "Local virtualenv not found; falling back to control-plane container pytest"
-    if dc exec -T control-plane sh -lc "cd /app && python -m pytest ${RELEASE_PYTEST_ARGS[*]}" >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
+    if dc exec -T control-plane sh -lc "cd /app && PYTHONPATH=control_plane python -m pytest ${PYTEST_RUN_ARGS[*]}" >"${PYTEST_FULL_LOG_PATH}" 2>&1; then
       log_ok "pytest OK"
     else
       PYTEST_EXIT_CODE=$?

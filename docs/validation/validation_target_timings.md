@@ -2,8 +2,8 @@
 
 | Target | Status | Time (s) |
 |---|---|---|
-| validate-makefile-governance | PASS | 0.95 |
+| validate-makefile-governance | PASS | 3.99 |
 
-**Total elapsed: 0.9s**
+**Total elapsed: 4.0s**
 
 **Passed: 1 | Failed: 0 | Timed out: 0**

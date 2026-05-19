@@ -45,12 +45,17 @@ async def test_qos_priority_queue_fifo_within_tier(redis_client):
     assert await pq.dequeue() == job2
 
 @pytest.mark.asyncio
-async def test_qos_priority_queue_aging(redis_client, settings):
+async def test_qos_priority_queue_aging(redis_client, settings, monkeypatch):
     pq = QoSPriorityQueue(redis_client)
     await redis_client.delete(pq.QUEUE_KEY)
     await redis_client.delete("qos_queue:last_aging_ts")
     
     settings.commercial_qos_queue_aging_seconds = 1 # 1 second for test
+    
+    current_time = 1000.0
+    def fake_time():
+        return current_time
+    monkeypatch.setattr(time, "time", fake_time)
     
     job_low = uuid.uuid4()
     job_high = uuid.uuid4()
@@ -60,17 +65,13 @@ async def test_qos_priority_queue_aging(redis_client, settings):
     await pq.enqueue(job_high, priority_weight=500, created_at_ms=2000)
     
     # Before aging: High -> Low
-    # (Checking peek/dequeue without actually dequeuing if possible, or just re-enqueue)
     assert await pq.peek() == job_high
     
-    # Wait for aging interval
-    time.sleep(1.1)
+    # Set the initial last_aging_ts in redis
+    await redis_client.set("qos_queue:last_aging_ts", str(current_time))
     
-    # Apply aging multiple times to make Low cross High
-    # High score = -500M + 2000 = -499,998,000
-    # Low score = -100M + 1000 = -99,999,000
-    # Each aging step is -100k. Needs ~4000 steps to cross? 
-    # That's too many for a test. Let's just verify score changes.
+    # Advance time by 1.1s
+    current_time = 1001.1
     
     score_before = await redis_client.zscore(pq.QUEUE_KEY, str(job_low))
     await pq.apply_aging()

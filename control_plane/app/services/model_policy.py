@@ -439,25 +439,32 @@ async def find_model_by_public_name(session: AsyncSession, public_name: str) -> 
 
 async def resolve_effective_backend_url(session: AsyncSession, route: ModelBackendRoute) -> str:
     """
-    Resolves the effective backend URL for a route, considering active hot-swap runtimes.
+    Resolves the effective backend URL for a route, considering active hot-swap runtimes
+    and distributed runtime nodes.
     """
     from app.models.operations.model_runtime import ModelRuntimeInstance
+    from app.services.runtime.distributed_runtime import DistributedRuntimeService
     
     settings = get_settings()
-    if not settings.model_hot_swap_enabled:
-        return route.inference_backend.backend_url
-        
-    result = await session.execute(
-        select(ModelRuntimeInstance)
-        .where(ModelRuntimeInstance.model_id == route.model_registry_id)
-        .where(ModelRuntimeInstance.backend_id == route.inference_backend_id)
-        .where(ModelRuntimeInstance.is_active == True)
-        .where(ModelRuntimeInstance.status == "ready")
-    )
-    instance = result.scalars().first()
-    if instance:
-        # Assuming runtimes are local or accessible via localhost for now
-        # In a multi-node setup, this might need more logic
-        return f"http://localhost:{instance.port}"
+    
+    # 1. Check for distributed nodes first only when the feature is explicitly enabled.
+    if settings.distributed_runtime_enabled:
+        distributed_service = DistributedRuntimeService(session)
+        node = await distributed_service.select_node_for_model(route.model_registry_id)
+        if node:
+            return node.base_url
+
+    # 2. Check for hot-swap instances (legacy/local mode)
+    if settings.model_hot_swap_enabled:
+        result = await session.execute(
+            select(ModelRuntimeInstance)
+            .where(ModelRuntimeInstance.model_id == route.model_registry_id)
+            .where(ModelRuntimeInstance.backend_id == route.inference_backend_id)
+            .where(ModelRuntimeInstance.is_active == True)
+            .where(ModelRuntimeInstance.status == "ready")
+        )
+        instance = result.scalars().first()
+        if instance:
+            return f"http://localhost:{instance.port}"
         
     return route.inference_backend.backend_url

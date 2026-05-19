@@ -300,7 +300,9 @@ def global_reset(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def isolated_db_url(tmp_path: Path) -> str:
-    return f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
+    import uuid
+    db_id = uuid.uuid4().hex
+    return f"sqlite+aiosqlite:///file:{db_id}?mode=memory&cache=shared&uri=true"
 
 
 @pytest_asyncio.fixture
@@ -387,3 +389,50 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
 
     app.dependency_overrides.clear()
     await engine.dispose()
+
+
+def pytest_collection_modifyitems(config, items):
+    quick_files = {
+        "test_intelligent_cache_exact.py",
+        "test_commercial_qos_priority_queue.py",
+        "test_queue_limits.py",
+        "test_queue_priority.py",
+        "test_tokenizer_service.py",
+        "test_api_key_authentication.py",
+        "test_alembic_heads.py",
+        "test_check_secrets.py",
+        "test_status_endpoints.py",
+        "test_admin_readiness_security_sanitization.py",
+        "test_admin_readiness_security_api.py",
+        "test_admin_dashboard_readiness_security.py",
+        "test_migrations_validation.py",
+        "test_smoke.py",
+        "test_crypto_trust_chain.py",
+        "test_key_rotation.py",
+        "test_policy_evaluator.py",
+        "test_rego_runtime.py",
+        "test_signing_service.py"
+    }
+
+    for item in items:
+        path = str(item.fspath)
+        filename = Path(path).name
+        
+        # All tests are included in release
+        item.add_marker(pytest.mark.release)
+        
+        # 1. Chaos marker
+        if "/chaos/" in path or "chaos" in item.name.lower():
+            item.add_marker(pytest.mark.chaos)
+        
+        # 2. K8s marker
+        elif "/kubernetes/" in path or "/k8s/" in path or "k8s" in item.name.lower():
+            item.add_marker(pytest.mark.k8s)
+            
+        # 3. Quick marker
+        elif filename in quick_files or "/smoke/" in path:
+            item.add_marker(pytest.mark.quick)
+            
+        # 4. Slow marker
+        else:
+            item.add_marker(pytest.mark.slow)

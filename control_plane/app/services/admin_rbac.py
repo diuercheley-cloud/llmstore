@@ -367,7 +367,7 @@ async def require_permissions(
 
     from app.core.metrics import record_rbac_denial
     record_rbac_denial(
-        client_id=str(getattr(admin, "client_id", admin.id)),
+        client_id=str(getattr(admin, "client_id", admin.user.id)),
         resource=request.url.path,
         action=",".join(permission_list)
     )

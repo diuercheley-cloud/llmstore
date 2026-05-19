@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.9.4-enterprise-runtime] - 2026-05-19
+
+### Added
+- Explicit enterprise runtime feature gates for Kubernetes/operator mode, distributed runtime, GPU autoscaling, plugin marketplace, and managed control-plane.
+- Managed control-plane heartbeat schema guardrails that reject prompt/document-style payload fields and accept operational metadata only.
+- Targeted regression coverage for safe enterprise defaults and optional router exposure.
+- Release notes draft in `docs/releases/V1_9_4_ENTERPRISE_RUNTIME.md`.
+
+### Changed
+- `DEPLOYMENT_MODE` remains `appliance` by default, with all new enterprise capabilities opt-in.
+- Optional routers are mounted only when their corresponding feature flags are enabled.
+- Distributed runtime resolution no longer interferes with local GGUF hot-swap routing when the feature is disabled.
+- Marketplace and GPU orchestration models now keep SQLite-compatible JSON columns for the local/offline test path while preserving PostgreSQL JSONB on PostgreSQL.
+
+### Security
+- Managed control-plane payload boundaries are now enforced in code, not only documented.
+- Secret scanning and offline marketplace behavior were revalidated for the release candidate.
+
 ## [1.9.3-stabilization-hardening] - 2026-05-19
 
 ### Added

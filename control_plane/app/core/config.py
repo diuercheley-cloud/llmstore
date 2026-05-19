@@ -213,8 +213,14 @@ class Settings(BaseSettings):
     model_id: str = Field(default="unsloth/gemma-4-E4B-it-GGUF", alias="MODEL_ID")
     model_file: str = Field(default="gemma-4-E4B-it-Q4_K_M.gguf", alias="MODEL_FILE")
     models_dir: str = Field(default="/models", alias="MODELS_DIR")
+    observability_enabled: bool = Field(default=True, alias="OBSERVABILITY_ENABLED")
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
     deployment_mode: str = Field(default="appliance", alias="DEPLOYMENT_MODE")
+    kubernetes_mode: bool = Field(default=False, alias="KUBERNETES_MODE")
+    distributed_runtime_enabled: bool = Field(default=False, alias="DISTRIBUTED_RUNTIME_ENABLED")
+    gpu_autoscaling_enabled: bool = Field(default=False, alias="GPU_AUTOSCALING_ENABLED")
+    plugin_marketplace_enabled: bool = Field(default=False, alias="PLUGIN_MARKETPLACE_ENABLED")
+    managed_control_plane_enabled: bool = Field(default=False, alias="MANAGED_CONTROL_PLANE_ENABLED")
     app_env: str = Field(default="local", alias="APP_ENV")
     localhost_mode: bool = Field(default=False, alias="LOCALHOST_MODE")
     local_appliance_mode: bool = Field(default=False, alias="LOCAL_APPLIANCE_MODE")
@@ -819,6 +825,14 @@ class Settings(BaseSettings):
             self.negative_margin_block_mode = "enforce_cloud_only"
         elif self.negative_margin_block_mode not in valid_negative_margin_modes:
             self.negative_margin_block_mode = "report_only"
+
+        valid_deployment_modes = {"appliance", "saas", "managed_control_plane", "hybrid"}
+        if self.deployment_mode not in valid_deployment_modes:
+            self.deployment_mode = "appliance"
+        if not self.distributed_runtime_enabled:
+            self.gpu_autoscaling_enabled = False
+        if self.deployment_mode == "appliance":
+            self.managed_control_plane_enabled = False
 
         if self.local_appliance_mode:
             self.localhost_mode = True

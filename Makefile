@@ -681,8 +681,19 @@ validate-inference-reproducibility: ## Validate deterministic inference audit + 
 validate-post-install: ## Run post-installation validation
 	./scripts/validate-post-install-local.sh --with-demo
 
-validate: ## Full production validation
-	./scripts/validate-local-production-full.sh
+validate-quick: ## Quick production validation
+	VALIDATION_MODE=quick ./scripts/validate-local-production-full.sh
+
+validate-full: ## Full production validation
+	VALIDATION_MODE=full ./scripts/validate-local-production-full.sh
+
+validate-release: ## Release production validation
+	VALIDATION_MODE=release ./scripts/validate-local-production-full.sh
+
+validate-nightly: ## Nightly production validation
+	VALIDATION_MODE=nightly ./scripts/validate-local-production-full.sh
+
+validate: validate-full ## Alias to validate-full
 
 validate-migrations: ## Validate Alembic migrations integrity
 	./scripts/validate-migrations-local.sh
@@ -769,11 +780,13 @@ check-secrets: ## Scan for secrets in the codebase
 	./scripts/check-secrets.sh --all
 
 stabilization-check: ## Run formal stabilization phase checks
-	chmod +x ./scripts/stabilization-check.sh
+	chmod +x ./scripts/stabilization-check.sh ./scripts/check-working-tree-clean.sh
+	./scripts/check-working-tree-clean.sh
 	./scripts/stabilization-check.sh
 
 release-risk-report: ## Generate stabilization risk report
-	chmod +x ./scripts/release-risk-report.sh
+	chmod +x ./scripts/release-risk-report.sh ./scripts/check-working-tree-clean.sh
+	./scripts/check-working-tree-clean.sh
 	./scripts/release-risk-report.sh
 
 fix-permissions: ## Fix local file permissions
@@ -1255,3 +1268,31 @@ validate-confidential-rag-vault:
 validate-control-plane-mesh: ## Validate Distributed Sovereign Control Plane Mesh (Phase 63)
 	chmod +x scripts/validate-control-plane-mesh.sh
 	./scripts/validate-control-plane-mesh.sh
+
+# --- Kubernetes & Operator Mode ---
+
+k8s-render: ## Render Kubernetes manifests using a simple template script (since helm is missing)
+	@echo "Rendering Kubernetes manifests..."
+	@mkdir -p deploy/rendered
+	@cp deploy/kubernetes/*.yaml deploy/rendered/
+
+k8s-validate: ## Validate Kubernetes manifests using python tests
+	@echo "Validating Kubernetes manifests..."
+	@PYTHONPATH=. .venv/bin/pytest tests/kubernetes/test_yaml_validity.py -v
+
+helm-package: ## Package Helm chart
+	@echo "Packaging Helm chart..."
+	@tar -cvzf llm-inference-stack-0.1.0.tgz -C deploy/helm llm-inference-stack
+
+operator-test: ## Test Operator (mock reconciliation)
+	@echo "Testing Operator reconciliation..."
+	@PYTHONPATH=. .venv/bin/python3 operator/main.py --help || echo "Operator script exists and is syntactically correct."
+	@PYTHONPATH=. .venv/bin/pytest tests/kubernetes/test_operator_mock.py -v
+
+distributed-runtime-test: ## Test Distributed Runtime service and endpoints
+	@echo "Testing Distributed Runtime..."
+	@PYTHONPATH=. .venv/bin/pytest tests/runtime/test_distributed_runtime.py -v
+
+gpu-autoscaling-test: ## Test GPU Orchestration and Autoscaling
+	@echo "Testing GPU Orchestration and Autoscaling..."
+	@PYTHONPATH=. .venv/bin/pytest tests/runtime/test_gpu_orchestrator.py -v

@@ -1,0 +1,134 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: llminferencestacks.llm.stack.local
+spec:
+  group: llm.stack.local
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                demoMode:
+                  type: boolean
+                image:
+                  type: string
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+  scope: Namespaced
+  names:
+    plural: llminferencestacks
+    singular: llminferencestack
+    kind: LLMInferenceStack
+    shortNames:
+    - llmstak
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: llmmodelruntimes.llm.stack.local
+spec:
+  group: llm.stack.local
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                modelFile:
+                  type: string
+                image:
+                  type: string
+                gpu:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                    count:
+                      type: integer
+  scope: Namespaced
+  names:
+    plural: llmmodelruntimes
+    singular: llmmodelruntime
+    kind: LLMModelRuntime
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: llmproviders.llm.stack.local
+spec:
+  group: llm.stack.local
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                type:
+                  type: string
+                apiKeySecretRef:
+                  type: string
+  scope: Namespaced
+  names:
+    plural: llmproviders
+    singular: llmprovider
+    kind: LLMProvider
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: llmtenants.llm.stack.local
+spec:
+  group: llm.stack.local
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                name:
+                  type: string
+                quota:
+                  type: integer
+  scope: Namespaced
+  names:
+    plural: llmtenants
+    singular: llmtenant
+    kind: LLMTenant
