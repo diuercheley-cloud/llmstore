@@ -1,0 +1,7 @@
+{
+  "forbid_new_domains": true,
+  "forbid_new_top_level_services": true,
+  "require_tests_for_api_changes": true,
+  "require_docs_for_config_changes": true,
+  "require_migration_for_model_changes": true
+}

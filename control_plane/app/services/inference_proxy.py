@@ -2,6 +2,7 @@ import asyncio
 from dataclasses import dataclass
 import json
 import logging
+import uuid
 from time import perf_counter
 
 import httpx
@@ -40,8 +41,10 @@ class ForwardResult:
     backend_errors: list[dict]
 
 
+from app.contracts.queue import QueueContract
+
 class InferenceProxy:
-    def __init__(self, queue_manager: QueueManager, circuit_breaker: CircuitBreaker) -> None:
+    def __init__(self, queue_manager: QueueContract, circuit_breaker: CircuitBreaker) -> None:
         settings = get_settings()
         self.settings = settings
         self.timeout = httpx.Timeout(settings.data_plane_timeout_seconds)
@@ -174,8 +177,9 @@ class InferenceProxy:
         updated = dict(payload)
         messages = updated.get("messages")
         if isinstance(messages, list) and messages:
+            from app.contracts.token_accounting import TokenAccountingContract
             from app.services.tokenizer_service import get_tokenizer_service
-            tokenizer = get_tokenizer_service()
+            tokenizer: TokenAccountingContract = get_tokenizer_service()
             context_manager = get_context_manager()
             trimmed_messages, capped_max_tokens, metrics = await context_manager.manage(
                 messages=[m for m in messages if isinstance(m, dict)],

@@ -27,7 +27,9 @@ class QueueTimeout(Exception):
         self.queue_name = queue_name
 
 
-class QueueManager:
+from app.contracts.queue import QueueContract, QueueSnapshot, QueueCapabilities
+
+class QueueManager(QueueContract):
     def __init__(self, backend_slot_manager) -> None:
         settings = get_settings()
         self.backend_slot_manager = backend_slot_manager
@@ -68,6 +70,16 @@ class QueueManager:
         # Compatibility with old metrics
         self.pending = 0 
         self.max_queue_size = settings.max_queue_size
+
+    def capabilities(self) -> QueueCapabilities:
+        return QueueCapabilities(
+            priority_queues=True,
+            per_backend_limits=True,
+            fairness_scheduling=False
+        )
+
+    def validate_contract(self) -> bool:
+        return True
 
     def _resolve_queue_name(self, plan_code: str, is_admin: bool = False) -> str:
         if is_admin:

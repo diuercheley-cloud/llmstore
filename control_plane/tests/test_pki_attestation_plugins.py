@@ -4,6 +4,7 @@ import hashlib
 from app.services.security.pki_service import PKIService
 from app.services.security.attestation_service import NodeAttestationService
 from app.services.plugins.plugin_loader import PluginLoader
+from app.contracts.plugin import PluginManifest
 from app.core.config import get_settings
 
 @pytest.fixture
@@ -99,10 +100,10 @@ async def test_attestation_report_enforcing(db_session, mock_settings):
     att_service = NodeAttestationService(db_session)
     report = await att_service.generate_report()
     
-    assert report["subject"] == "node-attestation"
-    assert report["policy_result"] == "passed"
-    assert "binary_hash" in report["measurements"]
-    assert "signature" in report
+    assert report.subject == "node-attestation"
+    assert report.policy_result == "passed"
+    assert "binary_hash" in report.measurements
+    assert report.signature is not None
     
     is_valid = await att_service.verify_report(report)
     assert is_valid is True
@@ -126,14 +127,14 @@ async def test_plugin_invalid_checksum(db_session, mock_settings):
     await pki_service.initialize_ca()
     
     loader = PluginLoader(db_session)
-    manifest = {
-        "name": "bad-checksum-plugin",
-        "version": "1.0",
-        "entrypoint": "main.py",
-        "permissions": ["read_data"],
-        "sha256": "fakehash",
-        "signature": "fakesig"
-    }
+    manifest = PluginManifest(
+        name="bad-checksum-plugin",
+        version="1.0",
+        entrypoint="main.py",
+        permissions=["read_data"],
+        sha256="fakehash",
+        signature="fakesig"
+    )
     
     with pytest.raises(ValueError, match="Checksum mismatch"):
         await loader.load_plugin(manifest, b"actual binary content")
@@ -144,13 +145,13 @@ async def test_plugin_missing_signature_enforcing(db_session, mock_settings):
     binary = b"actual binary content"
     actual_hash = hashlib.sha256(binary).hexdigest()
     
-    manifest = {
-        "name": "no-sig-plugin",
-        "version": "1.0",
-        "entrypoint": "main.py",
-        "permissions": ["read_data"],
-        "sha256": actual_hash
-    }
+    manifest = PluginManifest(
+        name="no-sig-plugin",
+        version="1.0",
+        entrypoint="main.py",
+        permissions=["read_data"],
+        sha256=actual_hash
+    )
     
     with pytest.raises(ValueError, match="Signature required but not provided"):
         await loader.load_plugin(manifest, binary)
@@ -163,13 +164,13 @@ async def test_plugin_missing_signature_advisory(db_session, mock_settings, monk
     binary = b"actual binary content"
     actual_hash = hashlib.sha256(binary).hexdigest()
     
-    manifest = {
-        "name": "no-sig-plugin-advisory",
-        "version": "1.0",
-        "entrypoint": "main.py",
-        "permissions": ["read_data"],
-        "sha256": actual_hash
-    }
+    manifest = PluginManifest(
+        name="no-sig-plugin-advisory",
+        version="1.0",
+        entrypoint="main.py",
+        permissions=["read_data"],
+        sha256=actual_hash
+    )
     
     # Should not raise exception, logs advisory warning instead
     plugin = await loader.load_plugin(manifest, binary)

@@ -19,10 +19,10 @@ async def get_attestation_report(
     """
     Generate an attestation report for this node.
     """
-    service = NodeAttestationService(db)
     try:
+        service = NodeAttestationService(db)
         report = await service.generate_report()
-        return report
+        return report.model_dump()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -3,9 +3,9 @@ import functools
 import httpx
 import importlib
 from typing import List, Dict, Any, Optional, Union
-from pydantic import BaseModel
 from app.utils.token_estimator import estimate_tokens_from_text, estimate_prompt_tokens
 from app.core.config import get_settings
+from app.contracts.token_accounting import TokenAccountingContract, TokenCountResult, TokenAccountingCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +23,7 @@ def _load_hf_tokenizer_cls():
     except (ImportError, AttributeError):
         return None
 
-class TokenCountResult(BaseModel):
-    input_tokens: int
-    output_tokens: Optional[int] = None
-    total_tokens: int
-    method: str  # "tiktoken" | "llama_tokenizer" | "hf_tokenizer" | "estimated"
-    model: Optional[str] = None
-    is_estimated: bool
-
-class TokenizerService:
+class TokenizerService(TokenAccountingContract):
     def __init__(self):
         self.settings = get_settings()
         self._tiktoken_cache = {}
@@ -46,6 +38,15 @@ class TokenizerService:
                     logger.info(f"Loaded HuggingFace tokenizer from {self.settings.tokenizer_model_path}")
                 except Exception as e:
                     logger.error(f"Failed to load HF tokenizer from {self.settings.tokenizer_model_path}: {e}")
+
+    def capabilities(self) -> TokenAccountingCapabilities:
+        return TokenAccountingCapabilities(
+            native_tiktoken=_load_tiktoken() is not None,
+            hf_tokenizers=self._hf_tokenizer is not None
+        )
+
+    def validate_contract(self) -> bool:
+        return True
 
     def _get_tiktoken_encoding(self, model: str):
         tiktoken = _load_tiktoken()
@@ -101,9 +102,6 @@ class TokenizerService:
                 logger.warning(f"Tiktoken failed for model {model}: {e}")
                 if self.settings.tokenizer_strict:
                     raise
-
-        # llama.cpp tokenizer if available (placeholder for now as it needs a backend URL)
-        # In a real scenario, we might want to pass backend_url to this service or have it discoverable
 
         # Fallback to estimation
         if self.settings.tokenizer_strict:

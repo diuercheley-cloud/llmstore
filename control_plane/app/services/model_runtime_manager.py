@@ -19,12 +19,24 @@ from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
-class ModelRuntimeManager:
+from app.contracts.model_runtime import ModelRuntimeContract, ModelInstance, ModelRuntimeCapabilities
+
+class ModelRuntimeManager(ModelRuntimeContract):
     _processes: Dict[uuid.UUID, subprocess.Popen] = {}
 
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
+
+    def capabilities(self) -> ModelRuntimeCapabilities:
+        return ModelRuntimeCapabilities(
+            hot_swap=self.settings.model_hot_swap_enabled,
+            multi_instance=True,
+            automatic_health_checks=True
+        )
+
+    def validate_contract(self) -> bool:
+        return True
 
     async def list_loaded_models(self) -> List[ModelRuntimeInstance]:
         result = await self.db.execute(select(ModelRuntimeInstance))
@@ -131,6 +143,13 @@ class ModelRuntimeManager:
         await self._update_instance_status(instance_id, "failed", "unhealthy", "Timed out waiting for health check")
 
     async def _update_instance_status(self, instance_id: uuid.UUID, status: str, health: str, error: str = None):
+        if status == "failed":
+            try:
+                from app.core.metrics import record_hot_swap_failure
+                record_hot_swap_failure(model_id=str(instance_id), reason=error or "unknown")
+            except Exception:
+                pass
+
         # We need a new session here as this is a background task
         from app.db.session import SessionLocal
         async with SessionLocal() as session:

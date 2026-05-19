@@ -10,19 +10,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import get_settings
-from app.models.security_pki import AttestationReport, PluginRegistry
+from app.models.security_pki import AttestationReport as AttestationReportDB, PluginRegistry
 from app.services.security.hardware_trust import get_hardware_trust_provider
 from app.services.security.pki_service import PKIService
 from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
-class NodeAttestationService:
+from app.contracts.attestation import AttestationContract, AttestationReport, AttestationCapabilities
+
+class NodeAttestationService(AttestationContract):
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
         self.hardware_provider = get_hardware_trust_provider()
         self.pki_service = PKIService(db)
+
+    def capabilities(self) -> AttestationCapabilities:
+        return AttestationCapabilities(
+            hardware_trust=self.settings.attestation_mode == "enforcing",
+            pki_integration=self.settings.pki_enabled,
+            enforcement_mode=self.settings.attestation_mode == "enforcing"
+        )
+
+    def validate_contract(self) -> bool:
+        return True
 
     def _get_config_hash(self) -> str:
         # Sanitize config to avoid hashing secrets
@@ -48,7 +60,7 @@ class NodeAttestationService:
         # Placeholder for alembic migrations
         return "head"
 
-    async def generate_report(self) -> Dict[str, Any]:
+    async def generate_report(self) -> AttestationReport:
         plugin_checksums = await self._get_plugin_checksums()
         
         measurements = {
@@ -87,17 +99,8 @@ class NodeAttestationService:
             except Exception as e:
                 logger.error(f"Failed to sign attestation report: {e}")
                 
-        report = {
-            "subject": "node-attestation",
-            "timestamp": utc_now().isoformat(),
-            "measurements": measurements,
-            "policy_result": policy_result,
-            "signature": signature_b64,
-            "certificate_chain": cert_pem
-        }
-        
         # Store in DB
-        db_report = AttestationReport(
+        db_report = AttestationReportDB(
             measurements_json=json.dumps(measurements),
             policy_result=policy_result,
             signature=signature_b64,
@@ -106,22 +109,31 @@ class NodeAttestationService:
         self.db.add(db_report)
         await self.db.commit()
         
-        return report
+        return AttestationReport(
+            subject="node-attestation",
+            timestamp=utc_now().isoformat(),
+            measurements=measurements,
+            policy_result=policy_result,
+            signature=signature_b64,
+            certificate_chain=cert_pem
+        )
 
-    async def verify_report(self, report: Dict[str, Any]) -> bool:
+    async def verify_report(self, report: AttestationReport) -> bool:
         if self.settings.attestation_mode == "advisory":
             logger.warning("Attestation is in advisory mode, accepting report.")
             return True
             
-        policy_result = report.get("policy_result")
+        policy_result = report.policy_result
         if policy_result != "passed":
             logger.warning("Attestation report policy check failed.")
+            from app.core.metrics import record_attestation_failure
+            record_attestation_failure(node_id="unknown", reason="policy_check_failed")
             return False
             
         if self.settings.pki_enabled:
-            cert_chain = report.get("certificate_chain", "")
-            signature_b64 = report.get("signature", "")
-            measurements = report.get("measurements", {})
+            cert_chain = report.certificate_chain
+            signature_b64 = report.signature
+            measurements = report.measurements
             
             if not cert_chain or not signature_b64:
                 return False

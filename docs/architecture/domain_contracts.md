@@ -26,6 +26,10 @@ Os contratos sao classes Python simples, declarativas e sem logica pesada. Cada 
 - `forbidden_dependencies`
 - `deterministic_requirements`
 
+## Relacao com Platform Core Contracts
+
+Os dominios definidos aqui utilizam os **Platform Core Contracts** (veja [platform-core-contracts.md](platform-core-contracts.md)) para garantir interfaces estritas e testaveis entre componentes core como providers, plugins, routing e attestation.
+
 ## Dominios
 
 ### Runtime

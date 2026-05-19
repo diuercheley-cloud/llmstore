@@ -5,6 +5,8 @@ from typing import Any
 from app.services.providers.schemas import ProviderCapabilities
 
 
+from app.contracts.provider import ProviderContract, ProviderRequest, ProviderResponse, ProviderCapabilities
+
 class ProviderType(str, enum.Enum):
     LOCAL = "local"
     LMSTUDIO = "lmstudio"
@@ -14,12 +16,15 @@ class ProviderType(str, enum.Enum):
     OPENROUTER = "openrouter"
 
 
-class ProviderAdapter(ABC):
+class ProviderAdapter(ProviderContract, ABC):
     def __init__(self, provider_id: str, provider_type: ProviderType, enabled: bool, configured: bool):
         self._provider_id = provider_id
         self._provider_type = provider_type
         self._enabled = enabled
         self._configured = configured
+
+    def validate_contract(self) -> bool:
+        return True
 
     @property
     def provider_id(self) -> str:

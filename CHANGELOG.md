@@ -1,8 +1,29 @@
 # Changelog
 
-## [Unreleased]
+## [1.9.3-stabilization-hardening] - 2026-05-19
 
 ### Added
+- Standardized SLO and operational metrics layer with Prometheus integration (`llm_*` metrics).
+- New administrative endpoints: `/admin/observability/slo` and `/admin/observability/platform-health`.
+- `PlatformSLOService` for real-time reliability and platform health assessment.
+- Operational Readiness Pack (`make operational-readiness`) for automated deployment validation.
+- Architecture Duplication Audit Report and automated cleanup roadmap.
+- `deprecation_middleware` with `X-Deprecated-Endpoint` header for legacy route identification.
+- Resilience test suite: Smoke tests and Chaos tests (`make test-smoke-resilience`, `make test-chaos-resilience`).
+- Instrumented RBAC, Hot Swap, and Attestation services with operational health metrics.
+
+### Changed
+- Improved `core/metrics.py` with standardized naming conventions and legacy compatibility aliases.
+- Enhanced `system/operational-readiness` endpoint with database and redis connectivity checks.
+- Refactored smoke tests to use robust asynchronous dependency overrides for deterministic results.
+- Updated documentation suite with metrics catalog, SLO definitions, and simplification plan.
+
+### Added
+- Fase formal de estabilização com novos mecanismos de controle e auditoria.
+- Target `make stabilization-check` para validação rigorosa pré-release.
+- Target `make release-risk-report` para análise de impacto e riscos.
+- Configuração centralizada em `config/stabilization-rules.json`.
+- Documentação formal em `docs/releases/STABILIZATION_PHASE.md`.
 - Real PKI implementation with local CA, certificate inventory, and CRL management.
 - Verifiable Node Attestation service based on binary hash, config hash, and hardware trust.
 - Secure Plugin Loader with manifest validation, checksum verification, and signature enforcement.

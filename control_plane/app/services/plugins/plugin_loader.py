@@ -14,12 +14,34 @@ from app.models.security_event import SecurityEvent
 
 logger = logging.getLogger(__name__)
 
-class PluginLoader:
+from app.contracts.plugin import PluginContract, PluginManifest, PluginCapabilities
+
+class PluginLoader(PluginContract):
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
         self.pki_service = PKIService(db)
         self.allowed_permissions = {"read_data", "write_data", "network_out", "execute_sandbox"}
+
+    def capabilities(self) -> PluginCapabilities:
+        return PluginCapabilities(
+            sandbox_execution=True,
+            network_access=True,
+            data_access=True
+        )
+
+    def validate_contract(self) -> bool:
+        return True
+
+    async def validate_manifest(self, manifest: PluginManifest) -> bool:
+        """Performs deep validation of the plugin manifest."""
+        required_fields = ["name", "version", "entrypoint", "permissions", "sha256"]
+        # Pydantic already validated presence, but we can check values here
+        permissions = set(manifest.permissions)
+        invalid_perms = permissions - self.allowed_permissions
+        if invalid_perms:
+            return False
+        return True
 
     async def _log_security_event(self, event_type: str, title: str, detail: dict):
         event = SecurityEvent(
@@ -31,19 +53,14 @@ class PluginLoader:
         self.db.add(event)
         await self.db.commit()
 
-    async def load_plugin(self, manifest: Dict[str, Any], plugin_binary: bytes) -> PluginRegistry:
+    async def load_plugin(self, manifest: PluginManifest, plugin_binary: bytes) -> PluginRegistry:
         """
         Loads a plugin by validating its manifest, checksum, and signature.
         """
-        required_fields = ["name", "version", "entrypoint", "permissions", "sha256"]
-        for field in required_fields:
-            if field not in manifest:
-                raise ValueError(f"Manifest missing required field: {field}")
-
-        name = manifest["name"]
+        name = manifest.name
         
         # Validate permissions
-        permissions = set(manifest["permissions"])
+        permissions = set(manifest.permissions)
         invalid_perms = permissions - self.allowed_permissions
         if invalid_perms:
             error_msg = f"Invalid permissions requested: {invalid_perms}"
@@ -52,13 +69,13 @@ class PluginLoader:
 
         # Validate checksum
         actual_sha256 = hashlib.sha256(plugin_binary).hexdigest()
-        if actual_sha256 != manifest["sha256"]:
+        if actual_sha256 != manifest.sha256:
             error_msg = f"Checksum mismatch for plugin {name}"
-            await self._log_security_event("plugin_load_error", error_msg, {"expected": manifest["sha256"], "actual": actual_sha256})
+            await self._log_security_event("plugin_load_error", error_msg, {"expected": manifest.sha256, "actual": actual_sha256})
             raise ValueError(error_msg)
 
         # Validate signature
-        signature = manifest.get("signature")
+        signature = manifest.signature
         if self.settings.plugin_signature_required:
             if not signature:
                 error_msg = f"Signature required but not provided for plugin {name}"
@@ -70,7 +87,7 @@ class PluginLoader:
             else:
                 # Assuming signature is verifiable by PKIService root CA (or similar logic)
                 # In a real scenario, the signature covers the binary + manifest hash
-                is_valid = await self.pki_service.verify_certificate(manifest.get("certificate_chain", ""))
+                is_valid = await self.pki_service.verify_certificate(manifest.certificate_chain or "")
                 if not is_valid:
                     error_msg = f"Invalid certificate chain for plugin {name}"
                     await self._log_security_event("plugin_load_error", error_msg, {})
@@ -87,9 +104,9 @@ class PluginLoader:
         existing_plugin = result.scalars().first()
         
         if existing_plugin:
-            existing_plugin.version = manifest["version"]
-            existing_plugin.entrypoint = manifest["entrypoint"]
-            existing_plugin.permissions_json = json.dumps(manifest["permissions"])
+            existing_plugin.version = manifest.version
+            existing_plugin.entrypoint = manifest.entrypoint
+            existing_plugin.permissions_json = json.dumps(manifest.permissions)
             existing_plugin.sha256 = actual_sha256
             existing_plugin.signature = signature
             existing_plugin.is_active = True
@@ -98,9 +115,9 @@ class PluginLoader:
         else:
             plugin_record = PluginRegistry(
                 name=name,
-                version=manifest["version"],
-                entrypoint=manifest["entrypoint"],
-                permissions_json=json.dumps(manifest["permissions"]),
+                version=manifest.version,
+                entrypoint=manifest.entrypoint,
+                permissions_json=json.dumps(manifest.permissions),
                 sha256=actual_sha256,
                 signature=signature,
                 is_active=True

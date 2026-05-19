@@ -99,12 +99,13 @@ from app.api.operations_plugin_supply_chain_admin import router as operations_pl
 from app.api.operations_reproducible_builds_admin import router as operations_reproducible_builds_admin_router
 from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
 from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
+from app.api.observability_admin import router as observability_admin_router
 from app.api.payments import router as payments_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
 from app.db.session import SessionLocal, engine, redis_client
-from app.middleware import request_context_middleware
+from app.middleware import request_context_middleware, deprecation_middleware
 from app.services.billing_scheduler import billing_scheduler_loop
 from app.services.routing.commercial_node_heartbeat import commercial_distributed_analytics_loop
 from app.services.routing.commercial_federation import sync_federation_clusters
@@ -188,6 +189,7 @@ Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteam
     ]
 )
 app.middleware("http")(request_context_middleware)
+app.middleware("http")(deprecation_middleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -289,6 +291,7 @@ app.include_router(operations_plugin_runtime_admin_router, tags=["operations-plu
 app.include_router(operations_plugin_supply_chain_admin_router, tags=["operations-plugin-supply-chain"])
 app.include_router(operations_reproducible_builds_admin_router, tags=["operations-reproducible-builds"])
 app.include_router(governance_policy_engine_admin_router)
+app.include_router(observability_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 app.include_router(pki_attestation_admin_router)

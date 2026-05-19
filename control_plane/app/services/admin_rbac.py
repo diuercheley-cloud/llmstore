@@ -365,6 +365,13 @@ async def require_permissions(
     if allowed:
         return admin
 
+    from app.core.metrics import record_rbac_denial
+    record_rbac_denial(
+        client_id=str(getattr(admin, "client_id", admin.id)),
+        resource=request.url.path,
+        action=",".join(permission_list)
+    )
+
     await record_admin_audit_event(
         session,
         event_type="admin.permission.denied",

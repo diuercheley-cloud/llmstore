@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Response, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db_session
-from app.models.admin_rbac import AdminPermission, AdminRoleModel, AdminUser, AdminUserRole
+from app.models.admin_rbac import AdminPermission, AdminRoleModel, AdminUser, AdminUserRole, AdminAuditEvent
 from app.schemas.admin_rbac import (
     AdminPermissionCreate,
     AdminPermissionRead,
@@ -88,7 +90,7 @@ async def create_admin_user(
 
 @router.patch("/users/{user_id}", response_model=AdminUserPatchResponse)
 async def update_admin_user(
-    user_id: str,
+    user_id: uuid.UUID,
     payload: AdminUserPatch,
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
@@ -135,7 +137,7 @@ async def update_admin_user(
 
 @router.delete("/users/{user_id}", status_code=204)
 async def delete_admin_user(
-    user_id: str,
+    user_id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
 ):
@@ -153,7 +155,7 @@ async def delete_admin_user(
         status="success",
         admin=admin,
         target_type="admin_user",
-        target_id=user_id,
+        target_id=str(user_id),
         metadata={"username": username},
     )
     return Response(status_code=204)
@@ -201,7 +203,7 @@ async def create_admin_role(
 
 @router.patch("/roles/{role_id}", response_model=AdminRoleRead)
 async def update_admin_role(
-    role_id: str,
+    role_id: uuid.UUID,
     payload: AdminRolePatch,
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
@@ -259,9 +261,36 @@ async def create_admin_permission(
     return AdminPermissionRead.model_validate(permission)
 
 
+@router.get("/audit")
+async def list_admin_audit_events(
+    session: AsyncSession = Depends(get_db_session),
+    admin=Depends(require_superadmin),
+    limit: int = Query(default=100, ge=1, le=1000),
+):
+    result = await session.execute(
+        select(AdminAuditEvent)
+        .order_by(AdminAuditEvent.created_at.desc())
+        .limit(limit)
+    )
+    events = result.scalars().all()
+    return [
+        {
+            "id": str(e.id),
+            "event_type": e.event_type,
+            "status": e.status,
+            "actor_identifier": e.actor_identifier,
+            "request_path": e.request_path,
+            "request_method": e.request_method,
+            "status_code": e.metadata_json.get("status_code") if e.metadata_json else None,
+            "created_at": e.created_at.isoformat(),
+        }
+        for e in events
+    ]
+
+
 @router.post("/users/{user_id}/roles", response_model=AdminUserRead)
 async def assign_admin_user_roles(
-    user_id: str,
+    user_id: uuid.UUID,
     payload: AdminUserRoleAssignRequest,
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
@@ -277,7 +306,7 @@ async def assign_admin_user_roles(
         status="success",
         admin=admin,
         target_type="admin_user",
-        target_id=user_id,
+        target_id=str(user_id),
         metadata={"role_ids": [str(role_id) for role_id in payload.role_ids], "role_names": payload.role_names},
     )
     return AdminUserRead(**await serialize_admin_user(session, user))
@@ -285,8 +314,8 @@ async def assign_admin_user_roles(
 
 @router.delete("/users/{user_id}/roles/{role_id}", response_model=AdminUserRead)
 async def remove_admin_user_role(
-    user_id: str,
-    role_id: str,
+    user_id: uuid.UUID,
+    role_id: uuid.UUID,
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
 ):
@@ -298,7 +327,7 @@ async def remove_admin_user_role(
     await assign_roles_to_user(
         session,
         user=user,
-        role_ids=[link.role_id for link in existing_links.scalars().all() if str(link.role_id) != role_id],
+        role_ids=[link.role_id for link in existing_links.scalars().all() if link.role_id != role_id],
         role_names=[],
     )
     await session.commit()
@@ -308,7 +337,7 @@ async def remove_admin_user_role(
         status="success",
         admin=admin,
         target_type="admin_user",
-        target_id=user_id,
-        metadata={"role_id": role_id},
+        target_id=str(user_id),
+        metadata={"role_id": str(role_id)},
     )
     return AdminUserRead(**await serialize_admin_user(session, user))

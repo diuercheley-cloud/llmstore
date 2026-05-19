@@ -5,6 +5,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter, time
+from typing import Annotated, Any, Dict
 
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from fastapi import APIRouter, Depends
@@ -15,8 +16,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_inference_proxy
-from app.core.config import get_settings
-from app.db.session import get_db_session, get_redis
+from app.core.config import get_settings, Settings
+from app.db.session import get_db_session, get_redis, get_db
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_registry import ModelRegistry
@@ -104,6 +105,53 @@ def get_latest_security_report():
     except Exception:
         pass
     return None
+
+
+@router.get("/operational-readiness", tags=["system"])
+async def get_operational_readiness(
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> Dict[str, Any]:
+    """
+    Check operational readiness of the system.
+    """
+    from sqlalchemy import text
+    
+    checks = {}
+    
+    # 1. Database check
+    try:
+        await db.execute(text("SELECT 1"))
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"failed: {str(e)}"
+        
+    # 2. Redis check
+    try:
+        from app.db.session import redis_client
+        await redis_client.ping()
+        checks["redis"] = "ok"
+    except Exception as e:
+        checks["redis"] = f"failed: {str(e)}"
+        
+    # 3. Modes
+    checks["modes"] = {
+        "rbac": "enabled" if settings.rbac_admin_enabled else "disabled",
+        "pki": "enabled" if settings.pki_enabled else "disabled",
+        "attestation": settings.attestation_mode,
+        "tokenizer": settings.tokenizer_mode,
+        "hot_swap": "enabled" if settings.model_hot_swap_enabled else "disabled",
+    }
+    
+    # 4. Overall status
+    all_ok = all(v == "ok" for k, v in checks.items() if k != "modes")
+    status = "pilot_ready" if all_ok else "production_blocked"
+    
+    return {
+        "status": status,
+        "checks": checks,
+        "timestamp": utc_now().isoformat(),
+    }
 
 
 @router.get("/health", tags=["system"])

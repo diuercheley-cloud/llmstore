@@ -147,10 +147,22 @@ def _provider_health(provider_id: str) -> str:
         return "error"
 
 
-class SmartRouter:
+from app.contracts.routing import RoutingContract, RoutingInput, RoutingDecision, RoutingCapabilities
+
+class SmartRouter(RoutingContract):
     def __init__(self) -> None:
         self.policy = _load_policy()
         self.decision_log: list[dict[str, Any]] = []
+
+    def capabilities(self) -> RoutingCapabilities:
+        return RoutingCapabilities(
+            dynamic_strategies=True,
+            cost_aware_routing=True,
+            multi_region=False
+        )
+
+    def validate_contract(self) -> bool:
+        return True
 
     @property
     def default_strategy(self) -> str:

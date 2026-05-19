@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from prometheus_client import Counter, Gauge, Histogram
+from prometheus_client import Counter, Gauge, Histogram, REGISTRY
 
 
 def _label(value: object | None, fallback: str = "unknown") -> str:
@@ -9,6 +9,7 @@ def _label(value: object | None, fallback: str = "unknown") -> str:
     text = str(value).strip()
     return text if text else fallback
 
+# Legacy Metrics (Maintain for compatibility)
 REQUEST_COUNTER = Counter(
     "control_plane_requests_total",
     "Total requests handled by the control plane",
@@ -91,61 +92,112 @@ BILLING_STATUS_GAUGE = Gauge(
     ["billing_status"],
 )
 
-REQUESTS_TOTAL = Counter(
-    "requests",
-    "Total requests handled by the control plane",
+# Standardized SLO Metrics
+LLM_REQUESTS_TOTAL = Counter(
+    "llm_requests_total",
+    "Total requests handled by the platform",
     ["model", "backend", "plan", "endpoint", "status_code"],
 )
-REQUEST_LATENCY_SECONDS = Histogram(
-    "request_latency_seconds",
+LLM_REQUEST_ERRORS_TOTAL = Counter(
+    "llm_request_errors_total",
+    "Total request errors",
+    ["model", "backend", "plan", "endpoint", "error_type"],
+)
+LLM_REQUEST_LATENCY_SECONDS = Histogram(
+    "llm_request_latency_seconds",
     "End-to-end request latency",
-    ["model", "backend", "plan", "endpoint", "status_code"],
-)
-TOKENS_PROMPT_TOTAL = Counter(
-    "tokens_prompt",
-    "Prompt tokens processed by the control plane",
     ["model", "backend", "plan", "endpoint"],
 )
-TOKENS_COMPLETION_TOTAL = Counter(
-    "tokens_completion",
-    "Completion tokens processed by the control plane",
-    ["model", "backend", "plan", "endpoint"],
+LLM_TOKENS_INPUT_TOTAL = Counter(
+    "llm_tokens_input_total",
+    "Total input tokens processed",
+    ["model", "backend", "plan"],
 )
-TOKENS_TOTAL = Counter(
-    "tokens",
-    "Total tokens processed by the control plane",
-    ["model", "backend", "plan", "endpoint"],
+LLM_TOKENS_OUTPUT_TOTAL = Counter(
+    "llm_tokens_output_total",
+    "Total output tokens generated",
+    ["model", "backend", "plan"],
 )
-INFERENCE_LATENCY_SECONDS = Histogram(
-    "inference_latency_seconds",
-    "Latency spent talking to the inference backend",
-    ["model", "backend", "plan", "endpoint", "status_code"],
-)
-QUEUE_WAIT_SECONDS = Histogram(
-    "queue_wait_seconds",
-    "Time spent waiting for a request slot",
+LLM_QUEUE_WAIT_SECONDS = Histogram(
+    "llm_queue_wait_seconds",
+    "Time spent waiting in queue",
     ["plan"],
 )
-CACHE_HITS_TOTAL = Counter(
-    "cache_hits",
-    "Cache hits observed by the control plane",
-    ["model", "backend", "plan", "endpoint"],
+LLM_QUEUE_DEPTH = Gauge(
+    "llm_queue_depth",
+    "Current number of requests in queue",
+    ["plan"],
 )
-CACHE_MISSES_TOTAL = Counter(
-    "cache_misses",
-    "Cache misses observed by the control plane",
-    ["model", "backend", "plan", "endpoint"],
+LLM_PROVIDER_HEALTH_SCORE = Gauge(
+    "llm_provider_health_score",
+    "Health score of a provider (0-1)",
+    ["provider_name"],
 )
-BACKEND_ERRORS_TOTAL = Counter(
-    "backend_errors",
-    "Backend errors observed by the control plane",
-    ["model", "backend", "plan", "endpoint", "status_code"],
+LLM_PROVIDER_FAILURES_TOTAL = Counter(
+    "llm_provider_failures_total",
+    "Total failures per provider",
+    ["provider_name", "error_code"],
 )
-MODEL_ERRORS_TOTAL = Counter(
-    "model_errors",
-    "Model errors observed by the control plane",
-    ["model", "backend", "plan", "endpoint", "status_code"],
+LLM_ROUTING_DECISIONS_TOTAL = Counter(
+    "llm_routing_decisions_total",
+    "Total routing decisions made",
+    ["strategy", "model"],
 )
+LLM_ROUTING_FALLBACKS_TOTAL = Counter(
+    "llm_routing_fallbacks_total",
+    "Total routing fallbacks triggered",
+    ["reason", "model"],
+)
+LLM_CACHE_HITS_TOTAL = Counter(
+    "llm_cache_hits_total",
+    "Total cache hits",
+    ["model", "endpoint"],
+)
+LLM_CACHE_MISSES_TOTAL = Counter(
+    "llm_cache_misses_total",
+    "Total cache misses",
+    ["model", "endpoint"],
+)
+LLM_COST_ESTIMATED_BRL_TOTAL = Counter(
+    "llm_cost_estimated_brl_total",
+    "Estimated cost in BRL",
+    ["model", "client_id"],
+)
+LLM_GPU_MEMORY_PRESSURE_RATIO = Gauge(
+    "llm_gpu_memory_pressure_ratio",
+    "GPU memory pressure ratio (0-1)",
+    ["node_id", "gpu_id"],
+)
+LLM_MODEL_RUNTIME_ACTIVE = Gauge(
+    "llm_model_runtime_active",
+    "Indicates if a model runtime is active (1) or not (0)",
+    ["model_id"],
+)
+LLM_MODEL_HOT_SWAP_FAILURES_TOTAL = Counter(
+    "llm_model_hot_swap_failures_total",
+    "Total model hot swap failures",
+    ["model_id", "reason"],
+)
+LLM_RBAC_DENIALS_TOTAL = Counter(
+    "llm_rbac_denials_total",
+    "Total RBAC access denials",
+    ["client_id", "resource", "action"],
+)
+LLM_ATTESTATION_FAILURES_TOTAL = Counter(
+    "llm_attestation_failures_total",
+    "Total hardware attestation failures",
+    ["node_id", "reason"],
+)
+
+# Keep legacy metrics for internal compatibility where needed, or alias them
+REQUESTS_TOTAL = LLM_REQUESTS_TOTAL
+REQUEST_LATENCY_SECONDS = LLM_REQUEST_LATENCY_SECONDS
+TOKENS_PROMPT_TOTAL = LLM_TOKENS_INPUT_TOTAL
+TOKENS_COMPLETION_TOTAL = LLM_TOKENS_OUTPUT_TOTAL
+QUEUE_WAIT_SECONDS = LLM_QUEUE_WAIT_SECONDS
+CACHE_HITS_TOTAL = LLM_CACHE_HITS_TOTAL
+CACHE_MISSES_TOTAL = LLM_CACHE_MISSES_TOTAL
+BACKEND_ERRORS_TOTAL = LLM_PROVIDER_FAILURES_TOTAL
 
 
 def record_request_metrics(
@@ -166,12 +218,20 @@ def record_request_metrics(
         "endpoint": _label(endpoint),
         "status_code": str(int(status_code)),
     }
-    REQUESTS_TOTAL.labels(**labels).inc()
-    REQUEST_LATENCY_SECONDS.labels(**labels).observe(max(latency_seconds, 0.0))
-    token_labels = {key: labels[key] for key in ("model", "backend", "plan", "endpoint")}
-    TOKENS_PROMPT_TOTAL.labels(**token_labels).inc(max(int(prompt_tokens), 0))
-    TOKENS_COMPLETION_TOTAL.labels(**token_labels).inc(max(int(completion_tokens), 0))
-    TOKENS_TOTAL.labels(**token_labels).inc(max(int(prompt_tokens) + int(completion_tokens), 0))
+    LLM_REQUESTS_TOTAL.labels(**labels).inc()
+    
+    latency_labels = {k: v for k, v in labels.items() if k != "status_code"}
+    LLM_REQUEST_LATENCY_SECONDS.labels(**latency_labels).observe(max(latency_seconds, 0.0))
+    
+    token_labels = {key: labels[key] for key in ("model", "backend", "plan")}
+    LLM_TOKENS_INPUT_TOTAL.labels(**token_labels).inc(max(int(prompt_tokens), 0))
+    LLM_TOKENS_OUTPUT_TOTAL.labels(**token_labels).inc(max(int(completion_tokens), 0))
+    
+    if status_code >= 400:
+        error_labels = labels.copy()
+        error_labels.pop("status_code")
+        error_labels["error_type"] = "client_error" if status_code < 500 else "server_error"
+        LLM_REQUEST_ERRORS_TOTAL.labels(**error_labels).inc()
 
 
 def record_inference_latency(
@@ -183,17 +243,18 @@ def record_inference_latency(
     status_code: int,
     latency_seconds: float,
 ) -> None:
-    INFERENCE_LATENCY_SECONDS.labels(
+    # This was originally INFERENCE_LATENCY_SECONDS, using LLM_REQUEST_LATENCY_SECONDS for now or keep it separate if needed.
+    # The requirement specifically asked for llm_request_latency_seconds.
+    LLM_REQUEST_LATENCY_SECONDS.labels(
         model=_label(model),
         backend=_label(backend),
         plan=_label(plan),
         endpoint=_label(endpoint),
-        status_code=str(int(status_code)),
     ).observe(max(latency_seconds, 0.0))
 
 
 def record_queue_wait(*, plan: str | None, wait_seconds: float) -> None:
-    QUEUE_WAIT_SECONDS.labels(plan=_label(plan)).observe(max(wait_seconds, 0.0))
+    LLM_QUEUE_WAIT_SECONDS.labels(plan=_label(plan)).observe(max(wait_seconds, 0.0))
 
 
 def record_cache_result(
@@ -206,14 +267,12 @@ def record_cache_result(
 ) -> None:
     labels = {
         "model": _label(model),
-        "backend": _label(backend),
-        "plan": _label(plan),
         "endpoint": _label(endpoint),
     }
     if hit:
-        CACHE_HITS_TOTAL.labels(**labels).inc()
+        LLM_CACHE_HITS_TOTAL.labels(**labels).inc()
     else:
-        CACHE_MISSES_TOTAL.labels(**labels).inc()
+        LLM_CACHE_MISSES_TOTAL.labels(**labels).inc()
 
 
 def record_backend_error(
@@ -224,12 +283,9 @@ def record_backend_error(
     endpoint: str | None,
     status_code: int,
 ) -> None:
-    BACKEND_ERRORS_TOTAL.labels(
-        model=_label(model),
-        backend=_label(backend),
-        plan=_label(plan),
-        endpoint=_label(endpoint),
-        status_code=str(int(status_code)),
+    LLM_PROVIDER_FAILURES_TOTAL.labels(
+        provider_name=_label(backend),
+        error_code=str(int(status_code)),
     ).inc()
 
 
@@ -241,10 +297,32 @@ def record_model_error(
     endpoint: str | None,
     status_code: int,
 ) -> None:
-    MODEL_ERRORS_TOTAL.labels(
-        model=_label(model),
-        backend=_label(backend),
-        plan=_label(plan),
-        endpoint=_label(endpoint),
-        status_code=str(int(status_code)),
-    ).inc()
+    # Map to request errors
+    error_labels = {
+        "model": _label(model),
+        "backend": _label(backend),
+        "plan": _label(plan),
+        "endpoint": _label(endpoint),
+        "error_type": "model_error",
+    }
+    LLM_REQUEST_ERRORS_TOTAL.labels(**error_labels).inc()
+
+
+def record_routing_decision(strategy: str, model: str) -> None:
+    LLM_ROUTING_DECISIONS_TOTAL.labels(strategy=strategy, model=_label(model)).inc()
+
+
+def record_routing_fallback(reason: str, model: str) -> None:
+    LLM_ROUTING_FALLBACKS_TOTAL.labels(reason=reason, model=_label(model)).inc()
+
+
+def record_rbac_denial(client_id: str, resource: str, action: str) -> None:
+    LLM_RBAC_DENIALS_TOTAL.labels(client_id=client_id, resource=resource, action=action).inc()
+
+
+def record_hot_swap_failure(model_id: str, reason: str) -> None:
+    LLM_MODEL_HOT_SWAP_FAILURES_TOTAL.labels(model_id=model_id, reason=reason).inc()
+
+
+def record_attestation_failure(node_id: str, reason: str) -> None:
+    LLM_ATTESTATION_FAILURES_TOTAL.labels(node_id=node_id, reason=reason).inc()

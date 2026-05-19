@@ -99,3 +99,34 @@ async def request_context_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     return response
+
+
+async def deprecation_middleware(request: Request, call_next):
+    # List of legacy/deprecated path prefixes
+    deprecated_paths = {
+        "/admin/models/runtime", # admin_models_runtime.py
+        "/admin/billing",        # billing_admin.py (if not using commercial)
+        "/admin/legacy",         # placeholder for any future legacy routes
+    }
+    
+    # Specific files considered legacy but not yet fully prefix-isolated
+    # We can check specific paths or just rely on the documentation phase.
+    
+    path = request.url.path
+    is_deprecated = any(path.startswith(p) for p in deprecated_paths)
+    
+    # admin.py has many routes, some might be legacy. 
+    # For now we mark the specific modules mentioned in the plan.
+    if path == "/admin" or path.startswith("/admin/"):
+        # Exception: don't mark commercial or observability as deprecated
+        if not any(path.startswith(p) for p in ["/admin/observability", "/admin/commercial", "/admin/operations"]):
+            # This is a bit aggressive, but admin.py is the main target.
+            is_deprecated = True
+
+    response = await call_next(request)
+    
+    if is_deprecated:
+        response.headers["X-Deprecated-Endpoint"] = "true"
+        logger.warning(f"Deprecated endpoint accessed: {path}")
+        
+    return response

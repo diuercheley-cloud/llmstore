@@ -145,6 +145,15 @@ help: ## Show this help message
 	@echo ""
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
+operational-readiness: ## Run the Operational Readiness Pack validation
+	@bash scripts/operational-readiness-pack.sh
+
+test-smoke-resilience: ## Run smoke tests for resilience
+	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/smoke/test_smoke.py
+
+test-chaos-resilience: ## Run chaos tests for resilience
+	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/chaos/test_chaos.py
+
 first-run: ## First run setup with demo data
 	./scripts/first-run-local.sh --with-demo
 
@@ -759,6 +768,14 @@ logs: ## Show logs (use SERVICE=name for specific service)
 check-secrets: ## Scan for secrets in the codebase
 	./scripts/check-secrets.sh --all
 
+stabilization-check: ## Run formal stabilization phase checks
+	chmod +x ./scripts/stabilization-check.sh
+	./scripts/stabilization-check.sh
+
+release-risk-report: ## Generate stabilization risk report
+	chmod +x ./scripts/release-risk-report.sh
+	./scripts/release-risk-report.sh
+
 fix-permissions: ## Fix local file permissions
 	./scripts/fix-local-permissions.sh --yes
 
@@ -1147,6 +1164,22 @@ test: ## Run focused regression suite for admin RBAC, tokenization, PKI/attestat
 		control_plane/tests/test_pki_attestation_plugins.py \
 		control_plane/tests/test_model_hot_swap.py \
 		-q --tb=short
+
+test-e2e: ## Run the full End-to-End test suite
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/e2e/ -v --tb=short
+
+test-smoke: ## Run essential smoke tests (subset of E2E + health checks)
+	$(MAKE) health
+	PYTHONPATH=control_plane .venv/bin/python -m pytest \
+		tests/e2e/test_admin_rbac_flow.py \
+		tests/e2e/test_client_api_key_flow.py \
+		-v --tb=short
+
+test-release: ## Run all tests required for a release (Core + E2E + Security)
+	$(MAKE) test
+	$(MAKE) test-e2e
+	$(MAKE) security
+	$(MAKE) check-secrets
 
 validate-commercial-live-balancing:
 	bash scripts/validate-commercial-live-balancing.sh

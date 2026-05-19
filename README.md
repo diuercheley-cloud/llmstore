@@ -84,6 +84,13 @@ The platform is organized into 12 bounded contexts with explicit contracts:
 
 See [Platform Domain Map](docs/architecture/platform_domain_map.md) for full context details and Mermaid diagram.
 
+### Architecture & Observability
+- [Standardized SLOs](docs/operations/slo.md)
+- [Metrics Catalog](docs/observability/metrics-catalog.md)
+- [Simplification Plan](docs/architecture/simplification-plan.md)
+- [Deprecation Policy](docs/architecture/deprecation-policy.md)
+- [Architecture Duplication Report](artifacts/architecture-duplication-report/summary.md)
+
 ### Phases 69-82 Flow
 
 ```mermaid
@@ -320,10 +327,17 @@ make fresh-machine-check
 # Escanear secrets no código
 ./scripts/check-secrets.sh --all
 
+# Fase de Estabilização (Checks formais)
+make stabilization-check
+
+# Relatório de risco de release
+make release-risk-report
+
 # Validar ambiente de providers reais
 make validate-real-provider-env
 ```
 
+- [Stabilization Phase](docs/releases/STABILIZATION_PHASE.md)
 - [Security Report](docs/SECURITY_LOCAL.md)
 - [Production Readiness](docs/PRODUCTION_READINESS_LOCAL.md)
 - [Disaster Recovery](docs/DISASTER_RECOVERY_LOCAL.md)
