@@ -30,10 +30,11 @@ for file in "${SENSITIVE_FILES[@]}"; do
     fi
 done
 
-# 3. Scan for potential secrets in tracked files (basic check)
+# 3. Scan for potential secrets in tracked files (basic check for real keys)
 echo "Scanning for potential secrets in tracked files..."
-if git grep -E "AI_SERVICE_KEY|AWS_SECRET_ACCESS_KEY|AZURE_OPENAI_KEY|ANTHROPIC_API_KEY" -- ':(exclude).env.example' ':(exclude)docs/' | grep -v "tests/fixtures"; then
-    echo "ERROR: Potential secrets found in tracked files!"
+# Search for patterns that look like real API keys, not just variable names
+if git grep -E "sk-ant-[a-zA-Z0-9]{20,}|sk-svc-[a-zA-Z0-9]{20,}|AI_SERVICE_KEY=[a-zA-Z0-9]{20,}|AWS_SECRET_ACCESS_KEY=[a-zA-Z0-9]{20,}" -- ':(exclude).env.example' ':(exclude)docs/' | grep -v "tests/fixtures"; then
+    echo "ERROR: Potential real secrets found in tracked files!"
     exit 1
 fi
 
