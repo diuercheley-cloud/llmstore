@@ -23,7 +23,7 @@ postgres-data/
 redis-data/
 
 # Artifacts & Backups
-artifacts/
+artifacts/*
 !artifacts/.gitkeep
 exports/
 artifacts/demo-screenshots/
