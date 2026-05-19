@@ -100,6 +100,10 @@ from app.api.operations_reproducible_builds_admin import router as operations_re
 from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
 from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
 from app.api.observability_admin import router as observability_admin_router
+from app.api.operations_ux_admin import router as operations_ux_admin_router
+from app.api.performance_admin import router as performance_admin_router
+from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
+from app.api.multi_cluster_admin import router as multi_cluster_admin_router
 from app.api.payments import router as payments_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -312,6 +316,10 @@ app.include_router(operations_plugin_supply_chain_admin_router, tags=["operation
 app.include_router(operations_reproducible_builds_admin_router, tags=["operations-reproducible-builds"])
 app.include_router(governance_policy_engine_admin_router)
 app.include_router(observability_admin_router)
+app.include_router(operations_ux_admin_router)
+app.include_router(performance_admin_router)
+app.include_router(enterprise_onboarding_admin_router)
+app.include_router(multi_cluster_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 app.include_router(pki_attestation_admin_router)

@@ -139,6 +139,24 @@ enterprise-rag: ## Install optimized for RAG
 dev-lab: ## Install for development and testing
 	./scripts/install-customer.sh dev-lab
 
+preflight: ## Run preflight checks for deployment
+	@bash scripts/preflight-check.sh
+
+deploy-appliance: ## Deploy as a local appliance
+	@bash scripts/deploy-appliance.sh
+
+deploy-k8s: ## Deploy to Kubernetes using Helm
+	@bash scripts/deploy-kubernetes.sh
+
+upgrade-release: ## Upgrade the current release with backup and validation
+	@bash scripts/upgrade-release.sh
+
+rollback-release: ## Rollback to the previous release
+	@bash scripts/rollback-release.sh
+
+post-deploy-validate: ## Validate system after deployment
+	@bash scripts/post-deploy-validate.sh
+
 help: ## Show this help message
 	@echo "LLM Inference Stack - Operator Commands"
 	@echo "Usage: make <target> [BACKUP_DIR=/path/to/backup]"

@@ -21,6 +21,11 @@
 | **Offline-First** | The platform operates fully without internet connectivity. Cloud providers are optional additions, never requirements. |
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
+- **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
+- **Enterprise-Grade Observability**: Full Grafana dashboards for GPU, Nodes, SLO, and Error Budgets.
+- **Multi-Cluster Orchestration**: Secure management of multiple appliances from a single Control Plane.
+- **Deterministic Governance**: Audit receipts for every inference, configuration change, and administrative action.
 
 ### Architecture Summary
 

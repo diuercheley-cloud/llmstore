@@ -186,6 +186,29 @@ from app.models.commercial_capacity import CommercialCapacitySnapshot, Commercia
 from app.models.commercial_trust_graph import CommercialTrustGraphNode, CommercialTrustGraphEdge
 from app.models.commercial_operations_center import CommercialOperationsCenterEvent, CommercialCryptographicTrustSnapshot
 from app.models.commercial_trust_violation import CommercialTrustViolation
+from app.models.operations.runtime_tuning import (
+    RuntimeBenchmarkRun,
+    RuntimeTuningProfile,
+    RuntimeTuningRecommendation,
+    RuntimeTuningEvent,
+)
+from app.models.operations.multi_cluster import (
+    Cluster,
+    ClusterMembership,
+    ClusterHealthSnapshot,
+    ClusterRoutingPolicy,
+    ClusterFailoverEvent,
+    ClusterMaintenanceWindow,
+    ClusterSyncEvent,
+)
+from app.models.commercial_enterprise_onboarding import (
+    EnterpriseCustomer,
+    EnterpriseOnboardingProject,
+    EnterpriseOnboardingTask,
+    EnterpriseAcceptanceCheck,
+    EnterpriseHandoverReport,
+    EnterpriseTrainingSession,
+)
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
     CommercialExecutionBlastRadius,

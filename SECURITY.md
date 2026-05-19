@@ -70,6 +70,12 @@
 - Suspend compromised or abusive clients through the admin security endpoints.
 - Keep per-client rate limits and token quotas aligned with each billing plan.
 
-## Reporting A Vulnerability
+## Multi-Cluster Data Boundaries
+No cross-cluster operations exfiltrate user prompts or RAG documents by default. Synchronizations are limited to configuration metadata and health status.
+
+## Observability Privacy
+Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.
+
+## Reporting a Vulnerability
 
 This project is local-first and does not have a public disclosure program yet. For internal use, document the issue, affected version, reproduction steps, and proposed mitigation in the release checklist before shipping changes.

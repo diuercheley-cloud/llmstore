@@ -7,8 +7,23 @@ import Models from './pages/Models'
 import Backends from './pages/Backends'
 import Plugins from './pages/Plugins'
 import ManagedControlPlane from './pages/ManagedControlPlane'
+import OperationsOverview from './pages/operations/OperationsOverview'
+import RuntimeNodes from './pages/operations/RuntimeNodes'
+import ModelRuntime from './pages/operations/ModelRuntime'
+import QueueQoS from './pages/operations/QueueQoS'
+import Readiness from './pages/operations/Readiness'
+import SecurityPosture from './pages/operations/SecurityPosture'
+import ReleaseStatus from './pages/operations/ReleaseStatus'
+import IncidentTimeline from './pages/operations/IncidentTimeline'
+import PerformanceDashboard from './pages/performance/PerformanceDashboard'
+import BenchmarkHistory from './pages/performance/BenchmarkHistory'
+import TuningProfiles from './pages/performance/TuningProfiles'
+import EnterpriseOnboardingDashboard from './pages/enterprise/EnterpriseOnboardingDashboard'
+import OnboardingChecklist from './pages/enterprise/OnboardingChecklist'
+import ObservabilityDashboard from './pages/observability/ObservabilityDashboard'
+import MultiClusterOverview from './pages/multicluster/MultiClusterOverview'
 import { useAuthStore } from './store/useAuthStore'
-import { ShieldAlert, LogIn } from 'lucide-react'
+import { ShieldAlert, LogIn, Activity } from 'lucide-react'
 
 const queryClient = new QueryClient()
 
@@ -77,6 +92,10 @@ function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/models" className="hover:text-teal-600 transition-colors">Modelos</Link>
               <Link to="/backends" className="hover:text-teal-600 transition-colors">Backends</Link>
               <Link to="/plugins" className="hover:text-teal-600 transition-colors">Plugins</Link>
+              <Link to="/operations" className="hover:text-teal-600 transition-colors flex items-center gap-1">
+                <Activity className="w-3.5 h-3.5" />
+                Operações
+              </Link>
               <Link to="/saas" className="hover:text-teal-600 transition-colors">SaaS</Link>
             </div>
           </div>
@@ -154,6 +173,126 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout><ManagedControlPlane /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations" 
+            element={
+              <ProtectedRoute>
+                <Layout><OperationsOverview /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/nodes" 
+            element={
+              <ProtectedRoute>
+                <Layout><RuntimeNodes /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/runtime" 
+            element={
+              <ProtectedRoute>
+                <Layout><ModelRuntime /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/qos" 
+            element={
+              <ProtectedRoute>
+                <Layout><QueueQoS /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/readiness" 
+            element={
+              <ProtectedRoute>
+                <Layout><Readiness /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/security" 
+            element={
+              <ProtectedRoute>
+                <Layout><SecurityPosture /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/release" 
+            element={
+              <ProtectedRoute>
+                <Layout><ReleaseStatus /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/operations/incidents" 
+            element={
+              <ProtectedRoute>
+                <Layout><IncidentTimeline /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/performance" 
+            element={
+              <ProtectedRoute>
+                <Layout><PerformanceDashboard /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/performance/history" 
+            element={
+              <ProtectedRoute>
+                <Layout><BenchmarkHistory /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/performance/profiles" 
+            element={
+              <ProtectedRoute>
+                <Layout><TuningProfiles /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/enterprise/onboarding" 
+            element={
+              <ProtectedRoute>
+                <Layout><EnterpriseOnboardingDashboard /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/enterprise/onboarding/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout><OnboardingChecklist /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/observability" 
+            element={
+              <ProtectedRoute>
+                <Layout><ObservabilityDashboard /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/multicluster" 
+            element={
+              <ProtectedRoute>
+                <Layout><MultiClusterOverview /></Layout>
               </ProtectedRoute>
             } 
           />

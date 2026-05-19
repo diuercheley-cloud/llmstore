@@ -60,6 +60,27 @@
 - `make test` now exercises the feature-focused regression suite instead of succeeding as a no-op.
 - Default-safe behavior is preserved when `RBAC_ADMIN_ENABLED=false`, `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false`, `MODEL_HOT_SWAP_ENABLED=false`, and `TOKENIZER_MODE=auto`.
 
+## [1.9.5-operational-experience] - 2026-05-19
+
+### Added
+- **UX Operacional Avançada**: Nova camada administrativa com Dashboards de Performance, Onboarding Enterprise e Gestão Multi-Cluster.
+- **Automação de Deployment**: Scripts robustos para preflight, appliance setup, K8s (Helm) e fluxos de upgrade/rollback.
+- **Runtime Tuning**: Engine de recomendações baseada em benchmarks sintéticos (Advisory por default).
+- **Enterprise Onboarding**: Gestão de pilotos, checklists e geração de Handover Packs.
+- **Observabilidade Visual**: Dashboards Grafana provisionados e rastreamento de Error Budget (SLO).
+- **Operações Multi-Cluster**: Suporte a clusters remotos, drenagem de tráfego e sincronização segura de configurações.
+
+### Fixed
+- Melhoria na segurança de sincronização cross-cluster (proibição de payload sensível).
+- Validação de preflight mais rigorosa para variáveis de banco e GPU.
+
+## [1.8.3] - 2026-05-15
+
+### Added
+- Real tokenization support via `TokenizerService`.
+- Support for `tiktoken` (OpenAI models) and local HuggingFace tokenizers.
+- New environment variables: `TOKENIZER_MODE`, `TOKENIZER_MODEL_PATH`, `TOKENIZER_STRICT`, `TOKENIZER_CACHE_ENABLED`.
+
 ## [1.9.0] - 2026-05-18
 
 ### Added

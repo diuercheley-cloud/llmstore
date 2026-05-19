@@ -1,0 +1,8 @@
+{
+  "title": "Runtime Nodes",
+  "uid": "runtime-nodes",
+  "panels": [
+    { "title": "Node Status", "type": "stat", "targets": [{ "expr": "count(runtime_node_info)" }] },
+    { "title": "CPU Usage", "type": "timeseries", "targets": [{ "expr": "avg(node_cpu_seconds_total) by (instance)" }] }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "title": "SLO & Error Budget",
+  "uid": "slo-error-budget",
+  "panels": [
+    { "title": "Error Budget Remaining", "type": "gauge", "targets": [{ "expr": "error_budget_remaining" }] },
+    { "title": "Burn Rate", "type": "timeseries", "targets": [{ "expr": "error_budget_burn_rate" }] }
+  ]
+}

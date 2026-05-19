@@ -1,0 +1,8 @@
+{
+  "title": "GPU Capacity",
+  "uid": "gpu-capacity",
+  "panels": [
+    { "title": "GPU Memory Util", "type": "timeseries", "targets": [{ "expr": "nvidia_smi_memory_used_bytes / nvidia_smi_memory_total_bytes * 100" }] },
+    { "title": "GPU Temp", "type": "timeseries", "targets": [{ "expr": "nvidia_smi_temperature_celsius" }] }
+  ]
+}

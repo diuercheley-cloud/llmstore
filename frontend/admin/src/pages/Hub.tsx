@@ -1,4 +1,4 @@
-import { Users, Key, Box, Cpu, Wallet, Activity, Shield, FileText, Settings, ArrowRight } from 'lucide-react'
+import { Users, Key, Box, Cpu, Wallet, Activity, Shield, FileText, Settings, ArrowRight, Zap, Briefcase, Monitor, Network } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const adminSections = [
@@ -64,6 +64,41 @@ const adminSections = [
     icon: <FileText className="w-6 h-6" />,
     badge: "Ops",
     description: "Relatórios executivos, exportações e material operacional."
+  },
+  {
+    title: "Operações",
+    href: "/operations",
+    icon: <Activity className="w-6 h-6" />,
+    badge: "Ops",
+    description: "Overview operacional, nós de runtime, readiness e remediação."
+  },
+  {
+    title: "Performance",
+    href: "/performance",
+    icon: <Zap className="w-6 h-6" />,
+    badge: "Tuning",
+    description: "Benchmark de runtime, recomendações de IA e perfis de otimização."
+  },
+  {
+    title: "Enterprise Onboarding",
+    href: "/enterprise/onboarding",
+    icon: <Briefcase className="w-6 h-6" />,
+    badge: "Success",
+    description: "Gestão de pilotos, checklists enterprise e relatórios de handover."
+  },
+  {
+    title: "Observabilidade",
+    href: "/observability",
+    icon: <Monitor className="w-6 h-6" />,
+    badge: "Advanced",
+    description: "Dashboards Grafana, orçamentos de erro (SLO) e timeline de incidentes."
+  },
+  {
+    title: "Multi-Cluster",
+    href: "/multicluster",
+    icon: <Network className="w-6 h-6" />,
+    badge: "Enterprise",
+    description: "Gestão multi-cluster, sincronização de config e failover orquestrado."
   },
   {
     title: "Configurações",
