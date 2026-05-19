@@ -2,11 +2,10 @@
 
 **Sovereign, offline-first, deterministic AI inference platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v1.8.1-real-provider-validation`  
-> Previous stable: [`v1.8.0-hybrid-ai-platform`](releases/v1.8.0-hybrid-ai-platform)  
-> Release notes: [`docs/V1_8_1_RELEASE_NOTES.md`](docs/V1_8_1_RELEASE_NOTES.md)  
-> Hybrid AI docs: [`docs/HYBRID_AI_PLATFORM.md`](docs/HYBRID_AI_PLATFORM.md)  
-> Real Provider Validation: [`docs/REAL_PROVIDER_VALIDATION.md`](docs/REAL_PROVIDER_VALIDATION.md)  
+> Current build: `v1.9.4-enterprise-runtime`  
+> Previous stable: [`v1.9.3-stabilization-hardening`](releases/v1.9.3-stabilization-hardening)  
+> Release notes: [`docs/releases/V1_9_4_ENTERPRISE_RUNTIME.md`](docs/releases/V1_9_4_ENTERPRISE_RUNTIME.md)  
+> Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
 ---

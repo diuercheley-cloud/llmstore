@@ -16,8 +16,18 @@ These defaults keep Docker Compose as the baseline path and ensure every new ent
 
 ## What Changed
 
-### Optional runtime surfaces
-- Optional routers are mounted only when their corresponding feature gates are enabled.
+## Validation Results (v1.9.4 RC)
+
+- **Operational Readiness**: `pilot_ready` (verified via `make operational-readiness`).
+- **Resilience**: 100% pass on smoke and chaos tests (verified via `make test-smoke-resilience` and `make test-chaos-resilience`).
+- **Security**: No secrets or private certificates found in versioned files (verified via `bash scripts/check-secrets.sh --all`).
+- **Stability**: Single Alembic head verified (`6c73eca75cd9`).
+- **Working Tree**: Clean and audit-ready (verified via `make stabilization-check`).
+
+## Out of Scope
+- Direct exfiltration of prompt data via the managed control-plane (blocked by heartbeat schema enforcement).
+- Automated Kubernetes scaling without explicit configuration (advisory-only).
+- External PKI management (local-only issuance path).
 - Distributed runtime lookup is skipped when the feature is disabled, preserving the local GGUF hot-swap path.
 - GPU autoscaling is automatically suppressed unless distributed runtime is enabled.
 
