@@ -747,3 +747,13 @@ async def monitoring_dashboard():
 async def client_portal():
     static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
     return FileResponse(static_file)
+
+
+@router.get("/{page}.html", include_in_schema=False)
+async def portal_html_pages(page: str):
+    allowed_pages = {"keys", "usage", "invoices", "wallet", "rag", "playground", "index", "index.legacy"}
+    if page in allowed_pages:
+        static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / f"{page}.html"
+        return FileResponse(static_file)
+    from fastapi import HTTPException
+    raise HTTPException(status_code=404, detail="Page not found")

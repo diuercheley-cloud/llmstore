@@ -227,7 +227,12 @@ async def monthly_report_preview(
         period_end = date(int(year), int(m) + 1, 1)
 
     # Get client info
-    client = await session.get(Client, client_id)
+    result = await session.execute(
+        select(Client)
+        .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+        .where(Client.id == client_id)
+    )
+    client = result.unique().scalar_one_or_none()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
 
@@ -314,7 +319,7 @@ async def monthly_report_preview(
     tts_chars = monthly_counter.used_tts_chars if monthly_counter else 0
 
     # RAG usage
-    rag_usage = await get_rag_usage_and_limits(session, client_id)
+    rag_usage = await get_rag_usage_and_limits(session, client)
     rag_queries = rag_usage.get("queries_month", 0) if isinstance(rag_usage, dict) else 0
     rag_docs = rag_usage.get("doc_count", 0) if isinstance(rag_usage, dict) else 0
 

@@ -16,6 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy import select, update, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from redis.asyncio import Redis
 
 from app.db.session import get_db_session, get_redis
@@ -116,7 +117,14 @@ async def get_client_rag_usage(
     session: AsyncSession = Depends(get_db_session),
     admin_role: AdminRole = Depends(require_admin_role(AdminRole.READ))
 ):
-    client = await session.get(Client, client_id)
+    stmt = (
+        select(Client)
+        .options(joinedload(Client.billing_plan).joinedload(BillingPlan.pricing_rules))
+        .where(Client.id == client_id)
+    )
+    result = await session.execute(stmt)
+    client = result.unique().scalar_one_or_none()
+    
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     
