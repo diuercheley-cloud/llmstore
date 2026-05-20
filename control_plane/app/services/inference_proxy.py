@@ -243,13 +243,7 @@ class InferenceProxy:
             ]
         if "tools" in logged_payload and isinstance(logged_payload["tools"], list):
             logged_payload["tools"] = [
-                {
-                    "type": item.get("type"),
-                    "function": {
-                        "name": (item.get("function") or {}).get("name"),
-                        "has_parameters": "parameters" in (item.get("function") or {}),
-                    },
-                }
+                (item.get("function") or {}).get("name") or item.get("type") or "unknown"
                 for item in logged_payload["tools"]
                 if isinstance(item, dict)
             ]

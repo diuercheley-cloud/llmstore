@@ -24,11 +24,34 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, ensure_ascii=True)
 
 
+class HealthCheckFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Ignore GET /health 200 OK logs
+        msg = record.getMessage()
+        if "/health" in msg and ("200" in msg or "200 OK" in msg):
+            return False
+        return True
+
+
 def configure_logging() -> None:
     settings = get_settings()
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JsonFormatter())
+    
+    # Apply health-check filter
+    handler.addFilter(HealthCheckFilter())
+    
     root = logging.getLogger()
     root.handlers.clear()
     root.addHandler(handler)
     root.setLevel(settings.log_level.upper())
+
+    # 1. Disable duplicated uvicorn.access logs since middleware provides rich structured logging
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.handlers.clear()
+    uvicorn_access.propagate = False
+    uvicorn_access.setLevel(logging.WARNING)
+
+    # 4. Silence HTTPX logs unless they are WARNING or higher
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+

@@ -226,14 +226,20 @@ async def commercial_report_scheduler_loop(stop_event: asyncio.Event) -> None:
                     node_id=identity["node_id"],
                     lease_token=calibration_lease_token,
                 )
-                logger.info("commercial calibration scheduler evaluated", extra={"extra_data": calibration_result})
+                if calibration_result and (calibration_result.get("recommendations", 0) > 0 or calibration_result.get("auto_applied", 0) > 0):
+                    logger.info("commercial calibration scheduler evaluated", extra={"extra_data": calibration_result})
+                else:
+                    logger.debug("commercial calibration scheduler evaluated", extra={"extra_data": calibration_result})
             if canary_lease_token is not None:
                 canary_result = await run_commercial_canary_jobs_once(
                     cluster_id=cfg.cluster_id,
                     node_id=identity["node_id"],
                     lease_token=canary_lease_token,
                 )
-                logger.info("commercial canary scheduler evaluated", extra={"extra_data": canary_result})
+                if canary_result and (canary_result.get("promotions_checked", 0) > 0 or len(canary_result.get("results", [])) > 0):
+                    logger.info("commercial canary scheduler evaluated", extra={"extra_data": canary_result})
+                else:
+                    logger.debug("commercial canary scheduler evaluated", extra={"extra_data": canary_result})
         except Exception as exc:
             logger.exception("commercial report scheduler failed", extra={"extra_data": {"error": str(exc)}})
         try:
