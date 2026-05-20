@@ -104,6 +104,7 @@ from app.api.operations_ux_admin import router as operations_ux_admin_router
 from app.api.performance_admin import router as performance_admin_router
 from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
 from app.api.multi_cluster_admin import router as multi_cluster_admin_router
+from app.api.chaos_admin import router as chaos_admin_router
 from app.api.payments import router as payments_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -320,6 +321,7 @@ app.include_router(operations_ux_admin_router)
 app.include_router(performance_admin_router)
 app.include_router(enterprise_onboarding_admin_router)
 app.include_router(multi_cluster_admin_router)
+app.include_router(chaos_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 app.include_router(pki_attestation_admin_router)

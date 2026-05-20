@@ -22,6 +22,7 @@ import EnterpriseOnboardingDashboard from './pages/enterprise/EnterpriseOnboardi
 import OnboardingChecklist from './pages/enterprise/OnboardingChecklist'
 import ObservabilityDashboard from './pages/observability/ObservabilityDashboard'
 import MultiClusterOverview from './pages/multicluster/MultiClusterOverview'
+import ChaosDashboard from './pages/chaos/ChaosDashboard'
 import { useAuthStore } from './store/useAuthStore'
 import { ShieldAlert, LogIn, Activity } from 'lucide-react'
 
@@ -293,6 +294,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout><MultiClusterOverview /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/chaos" 
+            element={
+              <ProtectedRoute>
+                <Layout><ChaosDashboard /></Layout>
               </ProtectedRoute>
             } 
           />

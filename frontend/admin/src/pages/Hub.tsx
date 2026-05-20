@@ -1,4 +1,4 @@
-import { Users, Key, Box, Cpu, Wallet, Activity, Shield, FileText, Settings, ArrowRight, Zap, Briefcase, Monitor, Network } from 'lucide-react'
+import { Users, Key, Box, Cpu, Wallet, Activity, Shield, FileText, Settings, ArrowRight, Zap, Briefcase, Monitor, Network, FlaskConical } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const adminSections = [
@@ -99,6 +99,13 @@ const adminSections = [
     icon: <Network className="w-6 h-6" />,
     badge: "Enterprise",
     description: "Gestão multi-cluster, sincronização de config e failover orquestrado."
+  },
+  {
+    title: "Chaos Engineering",
+    href: "/chaos",
+    icon: <FlaskConical className="w-6 h-6" />,
+    badge: "Experimental",
+    description: "Injeção controlada de falhas para validar resiliência e recuperação."
   },
   {
     title: "Configurações",

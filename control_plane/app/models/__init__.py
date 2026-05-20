@@ -192,6 +192,13 @@ from app.models.operations.runtime_tuning import (
     RuntimeTuningRecommendation,
     RuntimeTuningEvent,
 )
+from app.models.operations.chaos import (
+    ChaosExperiment,
+    ChaosRun,
+    ChaosInjection,
+    ChaosAssertion,
+    ChaosReport,
+)
 from app.models.operations.multi_cluster import (
     Cluster,
     ClusterMembership,
