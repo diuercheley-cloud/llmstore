@@ -82,6 +82,53 @@ if not LOCAL_API_KEY:
 
 LOCAL_URL = "http://localhost:18080/v1/chat/completions"
 
+def get_admin_token():
+    """Gets the admin token dynamically from the running control-plane container."""
+    cmd = [
+        "docker", "exec", "-i", "llm-inference-stack-control-plane-1",
+        "env"
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode == 0:
+        for line in res.stdout.splitlines():
+            if line.strip().startswith("ADMIN_TOKEN="):
+                return line.strip().split("=", 1)[1].strip()
+    return None
+
+def reload_gateway_cache(admin_token):
+    """Triggers a model cache reload on the local gateway."""
+    if not admin_token:
+        print("Warning: Skipping gateway cache reload (no Admin Token available).", file=sys.stderr)
+        return False
+    print("Triggering control-plane model cache reload...")
+    url = "http://localhost:18080/admin/models/reload"
+    req = urllib.request.Request(
+        url,
+        headers={"X-Admin-Token": admin_token},
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req) as response:
+            res_data = json.loads(response.read().decode())
+            print(f"Gateway cache reload status: {res_data.get('status', 'unknown')} - {res_data.get('detail', '')}")
+            return True
+    except Exception as e:
+        print(f"Warning: Failed to trigger model cache reload: {e}", file=sys.stderr)
+        return False
+
+# Securely load admin token key
+ADMIN_TOKEN = load_env_val("ADMIN_TOKEN")
+if not ADMIN_TOKEN:
+    print("Admin Token not found in environment or .env.local. Attempting docker environment discovery...")
+    ADMIN_TOKEN = get_admin_token()
+    if ADMIN_TOKEN:
+        save_env_val("ADMIN_TOKEN", ADMIN_TOKEN)
+    else:
+        print("Warning: Could not dynamically discover ADMIN_TOKEN from control-plane container.")
+        ADMIN_TOKEN = input("Please paste your Admin Token (optional, press Enter to skip): ").strip()
+        if ADMIN_TOKEN:
+            save_env_val("ADMIN_TOKEN", ADMIN_TOKEN)
+
 def run_sql(query):
     """Executes a SQL query in the local postgres container and returns the output."""
     cmd = [
@@ -124,47 +171,79 @@ def fetch_free_models():
     return sorted(free_models)
 
 def register_model_if_needed(model_id):
-    """Checks database for the model and registers it if not present."""
-    # Check if already registered
-    check_query = f"SELECT id FROM model_registry WHERE model_id = '{model_id}';"
-    exists = run_sql(check_query)
-    
-    if exists:
-        print(f"Model '{model_id}' is already registered in the gateway database.")
-        return
-        
-    print(f"Model '{model_id}' not found in registry. Registering dynamically...")
-    
-    # 1. Get OpenRouter backend ID
+    """Checks database for the model and registers it if not present, healing fields if necessary."""
+    # Get OpenRouter backend ID
     backend_query = "SELECT id FROM inference_backends WHERE provider = 'openrouter' AND is_active = true LIMIT 1;"
     backend_rows = run_sql(backend_query)
     if not backend_rows:
         print("Error: Active OpenRouter backend not found in inference_backends database.", file=sys.stderr)
         sys.exit(1)
-    backend_id = backend_rows[0]
+    backend_id = backend_rows[0].strip()
     
-    # Generate UUIDs
-    model_uuid = str(uuid.uuid4())
-    route_uuid = str(uuid.uuid4())
+    # Check if already registered
+    check_query = f"SELECT id, inference_backend_id FROM model_registry WHERE model_id = '{model_id}';"
+    rows = run_sql(check_query)
     
-    # Create simple alias (clean model name)
-    alias = model_id.split("/")[-1].replace(":free", "")
+    modified = False
     
-    # 2. Insert into model_registry
-    insert_model = f"""
-    INSERT INTO model_registry (id, model_id, model_alias, provider, model_file, is_active, is_default, context_length, created_at, updated_at)
-    VALUES ('{model_uuid}', '{model_id}', '{alias}', 'openrouter', '{model_id}', true, false, 8192, now(), now());
-    """
-    run_sql(insert_model)
-    
-    # 3. Insert into model_backend_routes
-    insert_route = f"""
-    INSERT INTO model_backend_routes (id, model_registry_id, inference_backend_id, priority, weight, state, created_at, updated_at)
-    VALUES ('{route_uuid}', '{model_uuid}', '{backend_id}', 1, 100, 'healthy', now(), now());
-    """
-    run_sql(insert_route)
-    
-    print(f"Successfully registered '{model_id}' with alias '{alias}' in local gateway!")
+    if rows:
+        parts = rows[0].split("|")
+        model_uuid = parts[0].strip()
+        existing_backend_id = parts[1].strip() if len(parts) > 1 else ""
+        
+        print(f"Model '{model_id}' is already registered (ID: {model_uuid}).")
+        
+        # Self-healing for inference_backend_id in model_registry
+        if not existing_backend_id or existing_backend_id != backend_id:
+            print(f"Updating inference_backend_id in model_registry to active OpenRouter backend ({backend_id})...")
+            update_query = f"""
+            UPDATE model_registry 
+            SET inference_backend_id = '{backend_id}', updated_at = now() 
+            WHERE id = '{model_uuid}';
+            """
+            run_sql(update_query)
+            modified = True
+            
+        # Check if route is missing in model_backend_routes
+        route_query = f"SELECT id FROM model_backend_routes WHERE model_registry_id = '{model_uuid}' AND inference_backend_id = '{backend_id}';"
+        route_rows = run_sql(route_query)
+        if not route_rows:
+            print("Backend route missing in model_backend_routes. Adding backend route...")
+            route_uuid = str(uuid.uuid4())
+            insert_route = f"""
+            INSERT INTO model_backend_routes (id, model_registry_id, inference_backend_id, priority, weight, state, created_at, updated_at)
+            VALUES ('{route_uuid}', '{model_uuid}', '{backend_id}', 1, 100, 'healthy', now(), now());
+            """
+            run_sql(insert_route)
+            modified = True
+            
+        if modified:
+            print("Self-healing updates completed successfully.")
+    else:
+        print(f"Model '{model_id}' not found in registry. Registering dynamically...")
+        model_uuid = str(uuid.uuid4())
+        route_uuid = str(uuid.uuid4())
+        alias = model_id.split("/")[-1].replace(":free", "")
+        
+        # Insert into model_registry with inference_backend_id
+        insert_model = f"""
+        INSERT INTO model_registry (id, model_id, model_alias, inference_backend_id, provider, model_file, is_active, is_default, context_length, created_at, updated_at)
+        VALUES ('{model_uuid}', '{model_id}', '{alias}', '{backend_id}', 'openrouter', '{model_id}', true, false, 8192, now(), now());
+        """
+        run_sql(insert_model)
+        
+        # Insert into model_backend_routes
+        insert_route = f"""
+        INSERT INTO model_backend_routes (id, model_registry_id, inference_backend_id, priority, weight, state, created_at, updated_at)
+        VALUES ('{route_uuid}', '{model_uuid}', '{backend_id}', 1, 100, 'healthy', now(), now());
+        """
+        run_sql(insert_route)
+        modified = True
+        print(f"Successfully registered '{model_id}' with alias '{alias}' in local gateway!")
+        
+    # Always reload gateway cache if modified
+    if modified:
+        reload_gateway_cache(ADMIN_TOKEN)
 
 def call_local_gateway(model_id, prompt):
     """Sends a chat completions request to the local gateway."""
