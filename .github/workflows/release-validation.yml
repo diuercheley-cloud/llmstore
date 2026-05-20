@@ -18,6 +18,23 @@ jobs:
           fetch-depth: 0
       - name: Setup Python
         uses: ./.github/actions/setup-python-project
+      - name: Start Stack
+        run: make up
+      - name: Wait For Stack Readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if ./scripts/test-health.sh >/tmp/release-health.log 2>&1; then
+              cat /tmp/release-health.log
+              exit 0
+            fi
+            echo "Stack not ready yet (attempt ${attempt}/30). Retrying in 10s..."
+            sleep 10
+          done
+          echo "Stack did not become ready in time."
+          cat /tmp/release-health.log
+          exit 1
       - name: Stabilization Check
         run: make stabilization-check
       - name: Smoke Resilience
@@ -40,3 +57,12 @@ jobs:
         uses: ./.github/actions/upload-release-artifacts
         with:
           version: ${{ github.ref_name }}
+      - name: Dump Stack Diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          docker compose --env-file .env.example -f docker-compose.yml ps || true
+          docker compose --env-file .env.example -f docker-compose.yml logs --tail=200 control-plane || true
+      - name: Stop Stack
+        if: always()
+        run: make down
