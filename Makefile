@@ -166,6 +166,21 @@ help: ## Show this help message
 operational-readiness: ## Run the Operational Readiness Pack validation
 	@bash scripts/operational-readiness-pack.sh
 
+release-gate: ## Run the release gate validator (Requires TAG=vX.Y.Z)
+	@bash scripts/release-gate.sh $(TAG)
+
+verify-release-artifacts: ## Verify artifact governance and generate checksums (Requires TAG=vX.Y.Z)
+	@bash scripts/verify-release-artifacts.sh $(TAG)
+
+chaos-list: ## List all available chaos experiments
+	@bash scripts/chaos-list.sh
+
+chaos-run-safe: ## Run a safe chaos experiment (Requires ID=exp-id)
+	@bash scripts/chaos-run.sh $(ID) --safe
+
+chaos-report: ## Generate chaos experiment report (Requires RUN_ID=run-id)
+	@bash scripts/chaos-report.sh $(RUN_ID)
+
 test-smoke-resilience: ## Run smoke tests for resilience
 	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/smoke/test_smoke.py
 

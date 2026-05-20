@@ -1,0 +1,32 @@
+release:validate:
+  stage: validate
+  image: python:3.10
+  script:
+    - make stabilization-check
+    - make operational-readiness
+    - make validate-quick
+    - make release-gate TAG=$CI_COMMIT_TAG
+    - make verify-release-artifacts TAG=$CI_COMMIT_TAG
+    - bash scripts/generate-sbom.sh $CI_COMMIT_TAG
+    - bash scripts/sign-release-artifacts.sh $CI_COMMIT_TAG $RELEASE_SIGNING_KEY
+  artifacts:
+    paths:
+      - artifacts/releases/
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+release:package:
+  stage: package
+  image: alpine:latest
+  script:
+    - mkdir -p release-pack
+    - cp -r artifacts/releases/* release-pack/ || true
+    - echo "Release Version $CI_COMMIT_TAG" > release-pack/version.txt
+  artifacts:
+    paths:
+      - release-pack/
+    expire_in: 90 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/

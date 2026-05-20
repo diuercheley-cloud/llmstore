@@ -1,0 +1,42 @@
+name: Deploy Enterprise Pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      customer_id:
+        description: 'ID do Cliente Enterprise'
+        required: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-pilot:
+    runs-on: ubuntu-latest
+    environment: enterprise-pilots
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Runner
+        uses: ./.github/actions/setup-python-project
+      
+      - name: Generate Enterprise Readiness Pack
+        run: |
+          echo "Gerando pacote de prontidão para cliente ${{ github.event.inputs.customer_id }}"
+          make operational-readiness
+      
+      - name: Run Pilot Specific Smoke Tests
+        run: make test-smoke-resilience
+      
+      - name: Generate Handover Artifact
+        run: |
+          mkdir -p handover-${{ github.event.inputs.customer_id }}
+          cp docs/enterprise/onboarding-workflow.md handover-${{ github.event.inputs.customer_id }}/
+          echo "Release: ${{ github.ref_name }}" > handover-${{ github.event.inputs.customer_id }}/version.txt
+
+      - name: Upload Handover Pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: handover-pack-${{ github.event.inputs.customer_id }}
+          path: handover-${{ github.event.inputs.customer_id }}/

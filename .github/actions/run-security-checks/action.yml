@@ -1,0 +1,18 @@
+name: 'Run Security Checks'
+description: 'Runs secrets scanning and dependency audits'
+runs:
+  using: "composite"
+  steps:
+    - name: Scan for Secrets
+      shell: bash
+      run: bash scripts/check-secrets.sh --all
+    - name: Audit Python Dependencies
+      shell: bash
+      run: |
+        pip install safety
+        safety check -r control_plane/requirements.txt
+    - name: Audit Node Dependencies
+      shell: bash
+      run: |
+        cd frontend/admin
+        npm audit

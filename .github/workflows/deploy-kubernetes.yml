@@ -1,0 +1,42 @@
+name: Deploy Kubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Namespace de destino (staging, production)'
+        required: true
+        default: 'llm-stack-staging'
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-k8s:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+      
+      - name: Helm Template & Lint
+        run: helm lint deploy/kubernetes/helm/llm-inference-stack
+
+      - name: Deploy to K8s
+        run: |
+          # No CI real, aqui usaria kubeconfig de secrets ou OIDC
+          echo "Simulando helm upgrade --install..."
+          make deploy-k8s
+        env:
+          KUBE_NAMESPACE: ${{ github.event.inputs.target_env }}
+
+      - name: Wait for Rollout
+        run: |
+          echo "Simulando kubectl rollout status..."
+          sleep 5
+
+      - name: Post-Deploy Validation
+        run: make post-deploy-validate

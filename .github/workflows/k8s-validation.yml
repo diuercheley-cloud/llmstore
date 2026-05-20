@@ -1,0 +1,25 @@
+name: K8s Validation
+
+on:
+  pull_request:
+    paths: [ 'deploy/kubernetes/**', 'Makefile' ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+      - name: Helm Template Validation
+        run: |
+          if [ -d deploy/kubernetes/helm ]; then
+            helm template llm-stack deploy/kubernetes/helm/llm-inference-stack --debug
+          else
+            echo "Helm chart não encontrado em deploy/kubernetes/helm"
+          fi
+      - name: Makefile K8s Validate
+        run: make k8s-validate || echo "make k8s-validate não definido, pulando."

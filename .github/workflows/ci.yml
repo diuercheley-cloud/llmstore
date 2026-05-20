@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, 'release/*' ]
+  pull_request:
+    branches: [ main, 'release/*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      - name: Run Lint
+        run: ruff check control_plane/
+
+  test-backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: llm_inference_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      - name: Run Pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd control_plane
+          pytest tests/ -m "not slow" --cov=app
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: ./.github/actions/setup-node-admin
+      - name: Build Frontend
+        run: |
+          cd frontend/admin
+          npm run build
+
+  integrity-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Alembic Integrity
+        run: bash scripts/check-alembic-integrity.sh
+      - name: Secrets Check
+        run: bash scripts/check-secrets.sh --all
+      - name: Operational Readiness Dry-run
+        run: |
+          # Mocking env for readiness check
+          export OPERATIONAL_READINESS_CI_MODE=true
+          bash scripts/operational-readiness-pack.sh

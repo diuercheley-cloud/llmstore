@@ -1,0 +1,35 @@
+backend:test:
+  stage: test
+  image: python:3.10
+  services:
+    - name: postgres:15
+      alias: postgres
+    - name: redis:7
+      alias: redis
+  variables:
+    POSTGRES_DB: llm_inference_test
+    POSTGRES_USER: user
+    POSTGRES_PASSWORD: password
+    DATABASE_URL: postgresql+asyncpg://user:password@postgres:5432/llm_inference_test
+    REDIS_URL: redis://redis:6379/0
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - pip install --upgrade pip
+    - pip install -r control_plane/requirements.txt
+    - pip install pytest pytest-asyncio pytest-cov ruff
+  script:
+    - cd control_plane
+    - ruff check .
+    - pytest tests/ -m "not slow" --cov=app
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: control_plane/coverage.xml
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//

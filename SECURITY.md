@@ -76,6 +76,12 @@ No cross-cluster operations exfiltrate user prompts or RAG documents by default.
 ## Observability Privacy
 Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.
 
+## Supply Chain Security
+All releases include a Software Bill of Materials (SBOM) and are signed to ensure integrity. Lockfiles are enforced for all builds.
+
+## Chaos Engineering Safety
+Fault injection is strictly opt-in and blocked in production environments by default. Mandatory timeouts and rollback mechanisms prevent permanent service disruption.
+
 ## Reporting a Vulnerability
 
 This project is local-first and does not have a public disclosure program yet. For internal use, document the issue, affected version, reproduction steps, and proposed mitigation in the release checklist before shipping changes.

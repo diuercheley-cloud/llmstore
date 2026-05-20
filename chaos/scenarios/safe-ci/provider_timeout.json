@@ -1,0 +1,11 @@
+{
+  "name": "CI Provider Timeout",
+  "experiment_type": "provider_timeout",
+  "blast_radius": "low",
+  "injection_config": {"timeout": 5, "ratio": 0.5},
+  "timeout_seconds": 30,
+  "assertions": [
+    {"name": "fallback_triggered", "type": "status_code", "condition": "200"}
+  ],
+  "rollback_config": {"action": "reset_timeouts"}
+}

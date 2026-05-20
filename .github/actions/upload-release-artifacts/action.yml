@@ -1,0 +1,22 @@
+name: 'Upload Release Artifacts'
+description: 'Uploads validation reports and release metadata'
+inputs:
+  version:
+    description: 'Release version'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare Artifacts
+      shell: bash
+      run: |
+        mkdir -p release-pack-${{ inputs.version }}
+        cp artifacts/releases/v1.9.5-operational-experience/*.md release-pack-${{ inputs.version }}/ || true
+        # Adicionar logs de validação do CI
+        echo "Validation Date: $(date)" > release-pack-${{ inputs.version }}/ci-validation.log
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-validation-pack-${{ inputs.version }}
+        path: release-pack-${{ inputs.version }}/
+        retention-days: 7

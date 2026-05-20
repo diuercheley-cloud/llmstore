@@ -1,0 +1,48 @@
+name: Deploy Appliance
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Ambiente de destino (staging, production)'
+        required: true
+        default: 'staging'
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-appliance:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Runner
+        uses: ./.github/actions/setup-python-project
+      
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-validation-pack-${{ github.ref_name }}
+          path: artifacts/releases/${{ github.ref_name }}
+
+      - name: Run Preflight
+        run: make preflight
+
+      - name: Backup Current State
+        run: make backup
+
+      - name: Upgrade Release
+        run: make upgrade-release
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+
+      - name: Post-Deploy Validation
+        id: validate
+        run: make post-deploy-validate
+      
+      - name: Automatic Rollback on Failure
+        if: failure() && steps.validate.outcome == 'failure'
+        run: make rollback-release

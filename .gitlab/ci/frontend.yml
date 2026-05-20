@@ -1,0 +1,17 @@
+frontend:test:
+  stage: test
+  image: node:20
+  cache:
+    paths:
+      - frontend/admin/node_modules/
+  script:
+    - cd frontend/admin
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/admin/dist/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"

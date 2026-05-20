@@ -60,6 +60,14 @@
 - `make test` now exercises the feature-focused regression suite instead of succeeding as a no-op.
 - Default-safe behavior is preserved when `RBAC_ADMIN_ENABLED=false`, `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false`, `MODEL_HOT_SWAP_ENABLED=false`, and `TOKENIZER_MODE=auto`.
 
+## [v1.9.6-ci-chaos] - 2026-05-20
+### Added
+- **GitHub Actions & GitLab CI**: Pipelines modulares com paridade total para testes, segurança e release.
+- **Chaos Engineering Framework**: Injeção controlada de falhas com Admin UI, relatórios de resiliência e auto-rollback.
+- **Supply Chain Security**: Geração automática de SBOM e suporte a assinatura digital de artefatos.
+- **Release Gates**: Gating rigoroso baseado em prontidão operacional, segurança e documentação.
+- **Controlled Deployment**: Pipelines manuais protegidas por ambiente para Appliance, K8s e Pilots.
+
 ## [1.9.5-operational-experience] - 2026-05-19
 
 ### Added

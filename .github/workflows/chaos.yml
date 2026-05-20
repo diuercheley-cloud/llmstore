@@ -1,0 +1,59 @@
+name: Chaos Engineering
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ 'release/*' ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      scenario_group:
+        description: 'Grupo de cenários (safe-ci, extended, manual)'
+        required: true
+        default: 'safe-ci'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  chaos-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      
+      - name: Determine Scenario Group
+        id: group
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "group=chaos/scenarios/safe-ci" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ] && [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "group=chaos/scenarios/extended" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "group=chaos/scenarios/${{ github.event.inputs.scenario_group }}" >> $GITHUB_OUTPUT
+          else
+            echo "group=chaos/scenarios/safe-ci" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Chaos Experiments
+        env:
+          CHAOS_ENABLED: "true"
+          CHAOS_ENVIRONMENT: "test"
+        run: bash scripts/chaos-ci-runner.sh ${{ steps.group.outputs.group }}
+
+      - name: Upload Chaos Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-reports
+          path: chaos/reports/
+          retention-days: 7
+
+      - name: Publish Test Report
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: '**/chaos-junit.xml'

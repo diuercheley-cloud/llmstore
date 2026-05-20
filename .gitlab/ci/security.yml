@@ -1,0 +1,16 @@
+security:scan:
+  stage: security
+  image: python:3.10
+  script:
+    - bash scripts/check-secrets.sh --all
+    - pip install safety
+    - safety check -r control_plane/requirements.txt
+    - make security
+  artifacts:
+    paths:
+      - artifacts/security/
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "schedule"

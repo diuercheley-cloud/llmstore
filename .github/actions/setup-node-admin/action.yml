@@ -1,0 +1,21 @@
+name: 'Setup Node Admin'
+description: 'Sets up Node.js, dependencies, and caching for the admin frontend'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/admin/package-lock.json
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd frontend/admin
+        npm ci
