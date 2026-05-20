@@ -1,0 +1,11 @@
+profile_id: compliance-mode
+name: Compliance Mode Profile
+description: Strong compliance enforcement with full logging, auditing and evidence collection.
+settings:
+  COMMERCIAL_COMPLIANCE_CONTROLS_ENABLED: true
+  COMMERCIAL_COMPLIANCE_MODE: enforce
+  COMMERCIAL_COMPLIANCE_REQUIRE_EVIDENCE: true
+  COMMERCIAL_ENTERPRISE_AUDIT_REQUIRE_RBAC: true
+  PKI_ENABLED: true
+  ATTESTATION_MODE: advisory
+  HARDWARE_TRUST_ENABLED: true

@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
+# scripts/restore-local.sh
+# Hardened restore script with preflight checks and dry-run mode.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=/dev/null
-source "${SCRIPT_DIR}/common.sh"
-init_stack_env
-cd "${ROOT_DIR}"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Load common env if available
+if [[ -f "${SCRIPT_DIR}/common.sh" ]]; then
+  source "${SCRIPT_DIR}/common.sh"
+  init_stack_env
+fi
 
 usage() {
-  cat <<'EOF'
-Uso: ./scripts/restore-local.sh [OPÇÕES] /path/to/backup
+  cat <<EOF
+Uso: $0 [OPÇÕES] /caminho/do/backup
 
 Opções:
   --force-rag-overwrite  Sobrescreve arquivos RAG existentes se houver conflito
@@ -41,7 +47,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       if [[ -n "${BACKUP_DIR}" ]]; then
-        echo "[restore-local][error] argumento inesperado: $1" >&2
+        echo "[restore-local][error] Argumento inesperado: $1" >&2
         exit 1
       fi
       BACKUP_DIR="$1"
@@ -54,8 +60,9 @@ if [[ -z "${BACKUP_DIR}" ]]; then
   usage
   exit 1
 fi
+
 if [[ ! -d "${BACKUP_DIR}" ]]; then
-  echo "[restore-local][error] backup directory not found: ${BACKUP_DIR}" >&2
+  echo "[restore-local][error] Backup directory not found: ${BACKUP_DIR}" >&2
   exit 1
 fi
 
@@ -64,19 +71,58 @@ CHECKSUM_FILE="${BACKUP_DIR}/checksums.sha256"
 POSTGRES_DUMP_FILE="${BACKUP_DIR}/db/postgres.dump"
 CONFIG_FILE="${BACKUP_DIR}/config/config.env"
 
-if [[ ! -f "${MANIFEST_FILE}" ]]; then
-  echo "[restore-local][error] manifest not found: ${MANIFEST_FILE}" >&2
-  exit 1
-fi
-if [[ ! -f "${POSTGRES_DUMP_FILE}" ]]; then
-  echo "[restore-local][error] postgres dump not found: ${POSTGRES_DUMP_FILE}" >&2
-  exit 1
-fi
+# Run preflight checks
+run_preflight() {
+  echo "--- Running Restore Preflight Checks ---"
 
-echo "[restore-local] validando checksums..."
+  # 1. Required Files Presence
+  if [[ ! -f "${MANIFEST_FILE}" ]]; then
+    echo "[preflight][error] manifest.json missing: ${MANIFEST_FILE}" >&2
+    exit 1
+  fi
+  if [[ ! -f "${CHECKSUM_FILE}" ]]; then
+    echo "[preflight][error] checksums.sha256 missing: ${CHECKSUM_FILE}" >&2
+    exit 1
+  fi
+  if [[ ! -f "${POSTGRES_DUMP_FILE}" ]]; then
+    echo "[preflight][error] postgres.dump missing: ${POSTGRES_DUMP_FILE}" >&2
+    exit 1
+  fi
+  echo "- [x] Arquivos necessários presentes."
+
+  # 2. Disk Space Check
+  local avail_kb
+  avail_kb=$(df -k "${ROOT_DIR}" | awk 'NR==2 {print $4}')
+  if [[ -n "${avail_kb}" ]]; then
+    # Require at least 500MB free space
+    if [[ "${avail_kb}" -lt 512000 ]]; then
+      echo "[preflight][error] Espaço em disco insuficiente em ${ROOT_DIR}. Disponível: $((avail_kb / 1024))MB." >&2
+      exit 1
+    fi
+    echo "- [x] Espaço em disco suficiente: $((avail_kb / 1024))MB disponível."
+  fi
+
+  # 3. Tool Check
+  if ! command -v pg_restore &>/dev/null && ! dc exec -T postgres pg_restore --version &>/dev/null; then
+    echo "[preflight][error] pg_restore não encontrado localmente nem no container." >&2
+    exit 1
+  fi
+  echo "- [x] pg_restore disponível."
+  
+  # 4. Database Connection Check
+  if ! dc exec -T postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; then
+    echo "[preflight][error] Postgres database not ready or container inactive." >&2
+    exit 1
+  fi
+  echo "- [x] Conexão com o banco de dados OK."
+  echo "--- Preflight Checks Successful ---"
+}
+
+run_preflight
+
+# Validate checksums
+echo "[restore-local] Validando checksums..."
 python3 - "${BACKUP_DIR}" "${CHECKSUM_FILE}" <<'PY'
-from __future__ import annotations
-
 import hashlib
 from pathlib import Path
 import sys
@@ -85,13 +131,16 @@ backup_dir = Path(sys.argv[1])
 checksum_file = Path(sys.argv[2])
 if not checksum_file.exists():
     raise SystemExit(0)
+
 expected = {}
 for line in checksum_file.read_text(encoding="utf-8").splitlines():
     line = line.strip()
     if not line:
         continue
     digest, rel = line.split(maxsplit=1)
-    expected[backup_dir / rel] = digest
+    # Handle both format types (e.g. ./path or path)
+    rel_path = rel.lstrip("./")
+    expected[backup_dir / rel_path] = digest
 
 for path, digest in expected.items():
     if not path.exists():
@@ -101,6 +150,7 @@ for path, digest in expected.items():
         raise SystemExit(f"[restore-local][error] checksum mismatch: {path}")
 PY
 
+# Read manifest metadata
 MANIFEST_JSON="$(cat "${MANIFEST_FILE}")"
 BACKUP_VERSION="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["app_version"])' <<<"${MANIFEST_JSON}")"
 BACKUP_ALEMBIC_REVISION="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["alembic_revision"])' <<<"${MANIFEST_JSON}")"
@@ -108,14 +158,16 @@ BACKUP_INCLUDE_MODELS="$(python3 -c 'import json,sys; print(json.loads(sys.stdin
 BACKUP_INCLUDE_RAG_FILES="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["include_rag_files"])' <<<"${MANIFEST_JSON}")"
 BACKUP_DATE="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["created_at"])' <<<"${MANIFEST_JSON}")"
 
+# Check version compatibility
 CURRENT_VERSION="$(tr -d '\n' < "${ROOT_DIR}/VERSION")"
 if [[ "${BACKUP_VERSION}" != "${CURRENT_VERSION}" ]]; then
-  echo "[restore-local][error] backup version mismatch: backup=${BACKUP_VERSION} current=${CURRENT_VERSION}" >&2
+  echo "[restore-local][error] Versão incompatível: backup=${BACKUP_VERSION} atual=${CURRENT_VERSION}" >&2
   exit 1
 fi
 
+# Check alembic revision availability
 if [[ -n "${BACKUP_ALEMBIC_REVISION}" ]] && ! compgen -G "${ROOT_DIR}/control_plane/alembic/versions/*${BACKUP_ALEMBIC_REVISION}*.py" >/dev/null; then
-  echo "[restore-local][error] backup alembic revision is not available locally: ${BACKUP_ALEMBIC_REVISION}" >&2
+  echo "[restore-local][error] Alembic revision of the backup is not available in local versions folder: ${BACKUP_ALEMBIC_REVISION}" >&2
   exit 1
 fi
 
@@ -128,11 +180,47 @@ echo "  Models Included: ${BACKUP_INCLUDE_MODELS}"
 echo "  RAG Files Included: ${BACKUP_INCLUDE_RAG_FILES}"
 echo "--------------------------------------------------------"
 
+# Report generation helper
+generate_report() {
+  local status="$1"
+  local reports_dir="${ROOT_DIR}/artifacts/operations/latest"
+  mkdir -p "${reports_dir}"
+  
+  local report_file="${reports_dir}/restore-report.md"
+  
+  local sanitized_user="[REDACTED]"
+  local sanitized_db="[REDACTED]"
+  if [[ -n "${POSTGRES_USER:-}" ]]; then
+    sanitized_user="${POSTGRES_USER:0:2}***"
+  fi
+  if [[ -n "${POSTGRES_DB:-}" ]]; then
+    sanitized_db="${POSTGRES_DB:0:2}***"
+  fi
+
+  cat <<EOF > "${report_file}"
+# Restore Operation Report
+
+- **Date / Time:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- **Status:** ${status}
+- **Backup Version:** ${BACKUP_VERSION}
+- **Alembic Revision:** ${BACKUP_ALEMBIC_REVISION}
+- **Source Directory:** \`${BACKUP_DIR}\`
+- **Models Restored:** ${BACKUP_INCLUDE_MODELS}
+- **RAG Files Restored:** ${BACKUP_INCLUDE_RAG_FILES}
+- **Database User:** \`${sanitized_user}\`
+- **Database Name:** \`${sanitized_db}\`
+- **Mode:** $([[ "${dry_run}" == "true" ]] && echo "DRY-RUN" || echo "LIVE")
+EOF
+  echo "Report generated at: ${report_file}"
+}
+
 if [[ "${dry_run}" == "true" ]]; then
-  echo "[restore-local] modo dry-run: validacao concluida com sucesso."
+  echo "[restore-local] modo dry-run: validação concluída com sucesso."
+  generate_report "DRY-RUN SUCCESS"
   exit 0
 fi
 
+# Ask confirmation unless auto_confirm is true
 if [[ "${auto_confirm}" != "true" ]]; then
   printf "ATENCAO: Este comando ira destruir os dados atuais do banco de dados.\n"
   printf "Deseja continuar? (y/N) "
@@ -143,23 +231,14 @@ if [[ "${auto_confirm}" != "true" ]]; then
   fi
 fi
 
-dc up -d postgres redis >/dev/null
-
-for _ in $(seq 1 60); do
-  if dc exec -T postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
-
+# Live Restore Operations
+echo "--- Restoring RAG Files ---"
 if [[ "${BACKUP_INCLUDE_RAG_FILES}" == "True" || "${BACKUP_INCLUDE_RAG_FILES}" == "true" ]]; then
   RAG_STORAGE_DIR="${RAG_STORAGE_DIR:-/data/rag_uploads}"
   RAG_TARGET="$(python3 - "${ROOT_DIR}" "${RAG_STORAGE_DIR}" <<'PY'
 from pathlib import Path
 import sys
-
 from local_dr_backup import host_path_for_data_dir
-
 root = Path(sys.argv[1])
 storage_dir = sys.argv[2]
 resolved = host_path_for_data_dir(root, storage_dir)
@@ -170,46 +249,47 @@ PY
   if [[ -n "${RAG_TARGET}" && -d "${RAG_BACKUP_DIR}" ]]; then
     if [[ ! -e "${RAG_TARGET}" ]] || ! find "${RAG_TARGET}" -mindepth 1 -maxdepth 1 -print -quit >/dev/null 2>&1; then
       mkdir -p "${RAG_TARGET}"
-      if ! cp -a "${RAG_BACKUP_DIR}/." "${RAG_TARGET}/"; then
-        echo "[restore-local][warn] unable to copy rag files into ${RAG_TARGET}; continuing with database restore only" >&2
-      fi
-      echo "[restore-local] rag files restored into ${RAG_TARGET}"
+      cp -a "${RAG_BACKUP_DIR}/." "${RAG_TARGET}/"
+      echo "[restore-local] RAG files restored into ${RAG_TARGET}"
     elif [[ "${force_rag_overwrite}" == "true" ]]; then
       RAG_TARGET_BACKUP="${RAG_TARGET}.bak-$(date +%Y%m%dT%H%M%S)"
       mv "${RAG_TARGET}" "${RAG_TARGET_BACKUP}"
       mkdir -p "${RAG_TARGET}"
-      if ! cp -a "${RAG_BACKUP_DIR}/." "${RAG_TARGET}/"; then
-        echo "[restore-local][error] unable to overwrite rag files into ${RAG_TARGET}" >&2
-        exit 1
-      fi
-      echo "[restore-local] rag target moved to ${RAG_TARGET_BACKUP}"
-      echo "[restore-local] rag files restored into ${RAG_TARGET}"
+      cp -a "${RAG_BACKUP_DIR}/." "${RAG_TARGET}/"
+      echo "[restore-local] RAG target moved to ${RAG_TARGET_BACKUP}"
+      echo "[restore-local] RAG files restored into ${RAG_TARGET}"
     else
-      echo "[restore-local][warn] rag target already populated; use --force-rag-overwrite to replace it" >&2
+      echo "[restore-local][warn] RAG target already populated; use --force-rag-overwrite to replace it" >&2
     fi
   fi
 fi
 
+echo "--- Restoring Model Files ---"
 if [[ "${BACKUP_INCLUDE_MODELS}" == "True" || "${BACKUP_INCLUDE_MODELS}" == "true" ]]; then
   MODELS_TARGET="${ROOT_DIR}/models"
   MODELS_BACKUP_DIR="${BACKUP_DIR}/models"
   if [[ -d "${MODELS_BACKUP_DIR}" ]]; then
     mkdir -p "${MODELS_TARGET}"
     cp -a "${MODELS_BACKUP_DIR}/." "${MODELS_TARGET}/"
+    echo "[restore-local] Models restored into ${MODELS_TARGET}"
   fi
 fi
 
+# Terminate active DB connections
 dc exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${POSTGRES_DB}' AND pid <> pg_backend_pid();" >/dev/null
+
+# Restore DB dump
+echo "--- Restoring Database Dump ---"
 cat "${POSTGRES_DUMP_FILE}" | dc exec -T postgres pg_restore -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" --clean --if-exists --no-owner --no-privileges
 
+# Verify schema version integrity
 RESTORED_ALEMBIC_REVISION="$(dc exec -T postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -Atc "SELECT version_num FROM alembic_version LIMIT 1;")"
 if [[ -n "${BACKUP_ALEMBIC_REVISION}" && "${RESTORED_ALEMBIC_REVISION}" != "${BACKUP_ALEMBIC_REVISION}" ]]; then
-  echo "[restore-local][error] restored schema mismatch: expected ${BACKUP_ALEMBIC_REVISION}, got ${RESTORED_ALEMBIC_REVISION}" >&2
+  echo "[restore-local][error] Restored schema mismatch: expected ${BACKUP_ALEMBIC_REVISION}, got ${RESTORED_ALEMBIC_REVISION}" >&2
   exit 1
 fi
 
-printf '[restore-local] success\n'
-printf '[restore-local] backup_dir=%s\n' "${BACKUP_DIR}"
-printf '[restore-local] restored_revision=%s\n' "${RESTORED_ALEMBIC_REVISION}"
-printf '[restore-local] include_models=%s\n' "${BACKUP_INCLUDE_MODELS}"
-printf '[restore-local] include_rag_files=%s\n' "${BACKUP_INCLUDE_RAG_FILES}"
+generate_report "SUCCESS"
+
+echo "[restore-local] Restore completed successfully."
+exit 0

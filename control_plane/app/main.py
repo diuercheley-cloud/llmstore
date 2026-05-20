@@ -30,27 +30,21 @@ from app.api.providers import router as providers_router
 from app.api.routing_admin import router as routing_admin_router
 from app.api.routing_test import router as routing_test_router
 from app.api.hybrid_admin import router as hybrid_admin_router
+from app.api.support_admin import router as support_admin_router
 from app.api.abuse_admin import router as abuse_admin_router
 from app.api.financial_admin import router as financial_admin_router
 from app.api.commercial_guardrails_admin import router as commercial_guardrails_admin_router
 from app.api.commercial_autonomous_guardrails_admin import router as commercial_autonomous_guardrails_admin_router
 from app.api.commercial_routing_admin import router as commercial_routing_admin_router
 from app.api.commercial_distributed_analytics_admin import router as commercial_distributed_analytics_admin_router
-from app.api.commercial_revenue_forecasting_admin import router as commercial_revenue_forecasting_admin_router
-from app.api.commercial_revenue_protection_admin import router as commercial_revenue_protection_admin_router
-from app.api.commercial_revenue_escalations_admin import router as commercial_revenue_escalations_admin_router
 from app.api.commercial_ha_admin import router as commercial_ha_admin_router
 from app.api.commercial_federation_admin import router as commercial_federation_admin_router
-from app.api.commercial_global_routing_admin import router as commercial_global_routing_admin_router
-from app.api.commercial_global_traffic_admin import router as commercial_global_traffic_admin_router
-from app.api.commercial_cross_cluster_forwarding_admin import router as commercial_cross_cluster_forwarding_admin_router
-from app.api.commercial_geo_routing_admin import router as commercial_geo_routing_admin_router
-from app.api.commercial_live_balancing_admin import router as commercial_live_balancing_admin_router
-from app.api.commercial_qos_admin import router as commercial_qos_admin_router
-from app.api.commercial_qos_billing_admin import router as commercial_qos_billing_admin_router
+from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
 from app.api.commercial_capacity_admin import router as commercial_capacity_admin_router
 from app.api.commercial_infra_admin import router as commercial_infra_admin_router
-from app.api.commercial_compliance_admin import router as commercial_compliance_admin_router
+from app.api.supported_surface_admin import router as supported_surface_admin_router
+from app.api.runtime_profiles_admin import router as runtime_profiles_admin_router
+from app.api.feature_flags_admin import router as feature_flags_admin_router
 from app.api.commercial_policy_governance_admin import router as commercial_policy_governance_admin_router
 from app.api.commercial_governance_federation_admin import router as commercial_governance_federation_admin_router
 from app.api.commercial_encryption_admin import router as commercial_encryption_admin_router
@@ -107,6 +101,9 @@ from app.api.multi_cluster_admin import router as multi_cluster_admin_router
 from app.api.chaos_admin import router as chaos_admin_router
 from app.api.compliance_admin import router as compliance_admin_router
 from app.api.payments import router as payments_router
+from app.api.supported_surface_admin import router as supported_surface_admin_router
+from app.api.runtime_profiles_admin import router as runtime_profiles_admin_router
+from app.api.feature_flags_admin import router as feature_flags_admin_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
@@ -128,20 +125,60 @@ validate_runtime_security(settings)
 def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.distributed_runtime_enabled:
         from app.api.distributed_runtime import router as distributed_runtime_router
-
         app.include_router(distributed_runtime_router)
+    
     if settings.gpu_autoscaling_enabled:
         from app.api.gpu_autoscaling_admin import router as gpu_autoscaling_admin_router
-
         app.include_router(gpu_autoscaling_admin_router)
+    
     if settings.plugin_marketplace_enabled:
         from app.api.plugin_marketplace_admin import router as plugin_marketplace_admin_router
-
         app.include_router(plugin_marketplace_admin_router)
+    
     if settings.managed_control_plane_enabled and settings.deployment_mode == "managed_control_plane":
         from app.api.managed_control_plane import router as managed_control_plane_router
-
         app.include_router(managed_control_plane_router)
+
+    # Enterprise/Commercial Optional Routers
+    if getattr(settings, "commercial_qos_enabled", True):
+        from app.api.commercial_qos_admin import router as commercial_qos_admin_router
+        from app.api.commercial_qos_billing_admin import router as commercial_qos_billing_admin_router
+        app.include_router(commercial_qos_admin_router)
+        app.include_router(commercial_qos_billing_admin_router, prefix="/admin/billing/qos", tags=["commercial_qos_billing"])
+
+    if getattr(settings, "commercial_compliance_controls_enabled", True):
+        from app.api.commercial_compliance_admin import router as commercial_compliance_admin_router
+        app.include_router(commercial_compliance_admin_router)
+
+    if getattr(settings, "commercial_revenue_protection_enabled", True):
+        from app.api.commercial_revenue_protection_admin import router as commercial_revenue_protection_admin_router
+        app.include_router(commercial_revenue_protection_admin_router, prefix="/admin/billing/revenue-protection", tags=["commercial_revenue_protection"])
+
+    if getattr(settings, "commercial_revenue_forecasting_enabled", True):
+        from app.api.commercial_revenue_forecasting_admin import router as commercial_revenue_forecasting_admin_router
+        app.include_router(commercial_revenue_forecasting_admin_router)
+
+    if getattr(settings, "commercial_revenue_escalations_enabled", True):
+        from app.api.commercial_revenue_escalations_admin import router as commercial_revenue_escalations_admin_router
+        app.include_router(commercial_revenue_escalations_admin_router, prefix="/admin/billing/revenue-escalations", tags=["commercial_revenue_escalation"])
+
+    if getattr(settings, "commercial_global_routing_enabled", True):
+        from app.api.commercial_global_routing_admin import router as commercial_global_routing_admin_router
+        from app.api.commercial_global_traffic_admin import router as commercial_global_traffic_admin_router
+        app.include_router(commercial_global_routing_admin_router, prefix="/admin/routing/global-router", tags=["commercial_global_routing"])
+        app.include_router(commercial_global_traffic_admin_router, prefix="/admin/routing/global-traffic", tags=["commercial_global_traffic"])
+
+    if getattr(settings, "commercial_cross_cluster_forwarding_enabled", True):
+        from app.api.commercial_cross_cluster_forwarding_admin import router as commercial_cross_cluster_forwarding_admin_router
+        app.include_router(commercial_cross_cluster_forwarding_admin_router, prefix="/admin/routing/cross-cluster-forwarding", tags=["commercial_cross_cluster_forwarding"])
+
+    if getattr(settings, "commercial_geo_routing_enabled", True):
+        from app.api.commercial_geo_routing_admin import router as commercial_geo_routing_admin_router
+        app.include_router(commercial_geo_routing_admin_router, prefix="/admin/routing/geo-routing", tags=["commercial_geo_routing"])
+
+    if getattr(settings, "commercial_live_balancing_enabled", True):
+        from app.api.commercial_live_balancing_admin import router as commercial_live_balancing_admin_router
+        app.include_router(commercial_live_balancing_admin_router, prefix="/admin/routing/live-balancing", tags=["commercial_live_balancing"])
 
 
 @asynccontextmanager
@@ -149,38 +186,32 @@ async def lifespan(_: FastAPI):
     async with SessionLocal() as session:
         await seed_defaults(session)
         if settings.commercial_model_integrity_monitor_enabled and settings.commercial_model_integrity_boot_scan_enabled:
-            identity = resolve_node_identity(settings)
-            await scan_registered_models(
-                session,
-                scan_type="boot",
-                node_id=identity["node_id"],
-                cluster_id=settings.cluster_id,
-                settings=settings,
-            )
-        await session.commit()
-    stop_event = asyncio.Event()
-    scheduler_task = asyncio.create_task(billing_scheduler_loop(stop_event))
-    commercial_report_task = asyncio.create_task(commercial_report_scheduler_loop(stop_event))
-    distributed_analytics_task = asyncio.create_task(commercial_distributed_analytics_loop(stop_event))
-    federation_task = asyncio.create_task(commercial_federation_loop(stop_event))
-    integrity_task = asyncio.create_task(runtime_integrity_monitor_loop(stop_event))
+            await scan_registered_models(session)
+    
+    billing_task = asyncio.create_task(billing_scheduler_loop())
+    analytics_task = asyncio.create_task(commercial_distributed_analytics_loop())
+    federation_task = asyncio.create_task(sync_federation_clusters())
+    report_task = asyncio.create_task(commercial_report_scheduler_loop())
+    integrity_task = asyncio.create_task(runtime_integrity_monitor_loop())
+    
     yield
-    stop_event.set()
-    scheduler_task.cancel()
-    commercial_report_task.cancel()
-    distributed_analytics_task.cancel()
+    
+    billing_task.cancel()
+    analytics_task.cancel()
     federation_task.cancel()
+    report_task.cancel()
     integrity_task.cancel()
+    
     try:
-        await scheduler_task
+        await billing_task
     except asyncio.CancelledError:
         pass
     try:
-        await commercial_report_task
+        await analytics_task
     except asyncio.CancelledError:
         pass
     try:
-        await distributed_analytics_task
+        await report_task
     except asyncio.CancelledError:
         pass
     try:
@@ -225,7 +256,6 @@ app.add_middleware(
 )
 app.include_router(public_router)
 app.include_router(system_router)
-include_optional_routers(app, settings)
 app.include_router(admin_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)
@@ -246,28 +276,21 @@ app.include_router(providers_router)
 app.include_router(routing_admin_router)
 app.include_router(routing_test_router)
 app.include_router(hybrid_admin_router)
+app.include_router(support_admin_router)
 app.include_router(abuse_admin_router)
 app.include_router(financial_admin_router)
 app.include_router(commercial_guardrails_admin_router)
 app.include_router(commercial_autonomous_guardrails_admin_router)
 app.include_router(commercial_routing_admin_router)
 app.include_router(commercial_distributed_analytics_admin_router)
-app.include_router(commercial_revenue_forecasting_admin_router)
-app.include_router(commercial_revenue_protection_admin_router, prefix="/admin/billing/revenue-protection", tags=["commercial_revenue_protection"])
-app.include_router(commercial_revenue_escalations_admin_router, prefix="/admin/billing/revenue-escalations", tags=["commercial_revenue_escalation"])
 app.include_router(commercial_ha_admin_router)
 app.include_router(commercial_federation_admin_router)
-app.include_router(commercial_global_routing_admin_router, prefix="/admin/routing/global-router", tags=["commercial_global_routing"])
-app.include_router(commercial_global_traffic_admin_router, prefix="/admin/routing/global-traffic", tags=["commercial_global_traffic"])
-app.include_router(commercial_cross_cluster_forwarding_admin_router, prefix="/admin/routing/cross-cluster-forwarding", tags=["commercial_cross_cluster_forwarding"])
-app.include_router(commercial_geo_routing_admin_router, prefix="/admin/routing/geo-routing", tags=["commercial_geo_routing"])
-app.include_router(commercial_live_balancing_admin_router, prefix="/admin/routing/live-balancing", tags=["commercial_live_balancing"])
-app.include_router(commercial_qos_admin_router)
-app.include_router(commercial_qos_billing_admin_router, prefix="/admin/billing/qos", tags=["commercial_qos_billing"])
 app.include_router(billing_reconciliation_admin_router)
 app.include_router(commercial_capacity_admin_router)
 app.include_router(commercial_infra_admin_router)
-app.include_router(commercial_compliance_admin_router)
+app.include_router(supported_surface_admin_router)
+app.include_router(runtime_profiles_admin_router)
+app.include_router(feature_flags_admin_router)
 app.include_router(commercial_policy_governance_admin_router)
 app.include_router(commercial_governance_federation_admin_router)
 app.include_router(commercial_encryption_admin_router, prefix="/admin/security/encryption", tags=["commercial_encryption"])
@@ -328,23 +351,18 @@ app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 app.include_router(pki_attestation_admin_router)
 
-
-async def commercial_federation_loop(stop_event) -> None:
-    cfg = get_settings()
-    if not cfg.commercial_federation_enabled:
-        return
-    while not stop_event.is_set():
-        try:
-            if cfg.commercial_federation_mode in {"push", "hybrid"} and cfg.commercial_federation_allow_push:
-                async with SessionLocal() as session:
-                    await sync_federation_clusters(session, sync_type="push", settings=cfg)
-                    await session.commit()
-        except Exception:
-            pass
-        try:
-            await asyncio.wait_for(stop_event.wait(), timeout=cfg.commercial_federation_sync_interval_seconds)
-        except Exception:
-            continue
+include_optional_routers(app, settings)
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "app.main:app",
+        host=settings.control_plane_host,
+        port=settings.control_plane_port,
+        reload=settings.debug,
+    )

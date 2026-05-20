@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for `0.2.0-local`.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v1.9.8-platform-consolidation` line.
 
 ## Defaults
 
@@ -44,6 +44,7 @@
 - Correlation IDs are safe to log and are intended for troubleshooting.
 - If debug logging is enabled in production-like environments, review logs for prompt content and metadata retention before release.
 - Managed control-plane heartbeats are limited to operational metadata. Prompt bodies, document content, and similar payload fields are rejected before persistence.
+- **Supportability Pack Redaction**: Diagnostic bundles generated via `/admin/support/bundle` are automatically processed through a redaction engine. Regex patterns for `sk-...`, `ADMIN_TOKEN=...`, `JWT_SECRET=...`, and `Bearer ...` are intended to prevent sensitive keys, tokens, or PII from being exported in diagnostic logs or metadata.
 
 ## Managed Data Boundaries
 
@@ -80,7 +81,7 @@ Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no se
 All releases include a Software Bill of Materials (SBOM) and are signed to ensure integrity. Lockfiles are enforced for all builds.
 
 ## Compliance Readiness
-The platform includes an integrated SOC 2 and ISO 27001 readiness framework. Evidence collection is automated and strictly sanitized to ensure no sensitive data is exported.
+The platform includes an integrated SOC 2 and ISO 27001 readiness framework. Evidence collection is automated and sanitized to support internal preparation work only; this does not represent certification, attestation by an external auditor, or mandatory enforcement by default.
 
 ## Chaos Engineering Safety
 Fault injection is strictly opt-in and blocked in production environments by default. Mandatory timeouts and rollback mechanisms prevent permanent service disruption.

@@ -273,6 +273,7 @@ if [[ "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
   fi
   
   run_validation "validate-local-docs.sh" "true"
+  run_validation "check-feature-flags.sh" "true"
   
   if [[ "${VALIDATION_MODE:-}" != "quick" ]]; then
     run_validation "validate-observability-local.sh" "true"

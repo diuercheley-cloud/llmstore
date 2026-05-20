@@ -1,0 +1,1992 @@
+- name: ABUSE_AUTO_SUSPEND_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: ABUSE_DETECTION_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: ABUSE_DRY_RUN
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: ADMIN_TESTS_RATE_LIMIT_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: ANTHROPIC_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: CHAOS_ALLOW_PRODUCTION
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: CHAOS_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: CI_DEPLOY_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: CLOUD_PROVIDERS_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_AGENT_GOVERNANCE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_AIRGAP_REQUIRE_ENCRYPTION
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_AIRGAP_REQUIRE_SIGNATURE
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_AIRGAP_SYNC_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_ANALYTICS_DEDUPE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_APPLIANCE_MODE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_APPLIANCE_REQUIRE_REMOVABLE_MEDIA
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CALIBRATION_AUTO_APPLY
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CALIBRATION_AUTO_APPLY_REQUIRE_24H_DATA
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CALIBRATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CALIBRATION_USE_TRIMMED_MEAN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CANARY_AUTO_PROMOTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CANARY_AUTO_ROLLBACK_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_CAPACITY_PLANNING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_COMPLIANCE_CONTROLS_ENABLED
+  default: true
+  owner: platform-ops
+  area: Compliance
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_COMPLIANCE_REQUIRE_EVIDENCE
+  default: true
+  owner: platform-ops
+  area: Compliance
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_COMPLIANCE_SEGREGATION_REQUIRED
+  default: true
+  owner: platform-ops
+  area: Compliance
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_CONFIDENTIAL_PROHIBIT_PLAINTEXT_LOGGING
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CONFIDENTIAL_REQUIRE_MODEL_TRUST
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CONFIDENTIAL_RUNTIME_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_DISTRIBUTED_ANALYTICS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_ENTERPRISE_AUDIT_EXPORT_PDF_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_ENTERPRISE_AUDIT_PORTAL_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_ENTERPRISE_AUDIT_REQUIRE_RBAC
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_EXECUTION_PROOFS_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_EXECUTION_PROOFS_EXPORT_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_EXECUTIVE_DASHBOARD_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FEDERATION_ALLOW_PUSH
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FEDERATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FEDERATION_REQUIRE_TOKEN
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_FINANCIAL_ANOMALY_DETECTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FINANCIAL_AUDIT_CHAIN_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FINANCIAL_DISPUTE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FINANCIAL_MANUAL_CREDIT_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_FINANCIAL_RECONCILIATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GEO_ROUTING_ALLOW_CROSS_OCEAN
+  default: false
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GEO_ROUTING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts:
+  - COMMERCIAL_GLOBAL_ROUTING_ENABLED
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GLOBAL_ROUTING_ALLOW_CROSS_REGION
+  default: false
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GLOBAL_ROUTING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GLOBAL_ROUTING_REQUIRE_HEALTHY_CLUSTER
+  default: true
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_AUTO_ROLLBACK
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_ADMIN_APPROVAL
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_HEALTHY_TARGET
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_SIGNATURE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_TOKEN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_GUARDRAILS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_HARDWARE_ATTESTATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_ADAPTERS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_EXECUTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_REQUIRE_APPROVAL
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_REQUIRE_FENCING
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_REQUIRE_LEADER
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_INFRA_SIMULATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_K8S_DRY_RUN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_K8S_EXECUTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_LEADER_ELECTION_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_LEADER_FENCING_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_LIVE_BALANCING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Multi-provider routing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_LOCAL_GPU_ALLOW_POWER_LIMIT
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_LOCAL_GPU_ALLOW_PROCESS_KILL
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_LOCAL_GPU_ALLOW_SERVICE_RESTART
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_LOCAL_GPU_DRY_RUN
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_LOCAL_GPU_EXECUTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MERKLE_TIMELINES_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_MERKLE_TIMELINE_AUTO_SEAL
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_INTEGRITY_AUTO_QUARANTINE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_INTEGRITY_BOOT_SCAN_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_INTEGRITY_MONITOR_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_LIFECYCLE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_QUARANTINE_ON_CHECKSUM_MISMATCH
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_REQUIRE_CHECKSUM_FOR_LOCAL
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_REQUIRE_TRUSTED_FOR_ROUTING
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_MODEL_SUPPLY_CHAIN_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_NEGATIVE_MARGIN_ALERT
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_NOMAD_DRY_RUN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_NOMAD_EXECUTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_OFFLINE_CRL_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_OPERATIONAL_CONTROLS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_OPERATIONAL_CONTROL_OVERDUE_ESCALATIONS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_POLICY_DRIFT_DETECTION_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_POLICY_GOVERNANCE_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_POLICY_REQUIRE_APPROVAL_FOR_ENFORCE
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_POLICY_REQUIRE_SIGNATURE
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_PROXMOX_DRY_RUN
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_PROXMOX_EXECUTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_PROXMOX_VERIFY_TLS
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_PUBLIC_ATTESTATION_GATEWAY_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_BILLING_DEBIT_WALLET
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_BILLING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_BILLING_INCLUDE_OPPORTUNITY_COST
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_CHARGEBACK_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_FAIRNESS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_QOS_RATE_LIMITING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RAG_ENABLE_IMMUTABLE_AUDIT
+  default: true
+  owner: platform-ops
+  area: RAG
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_RAG_ENABLE_POISON_DETECTION
+  default: true
+  owner: platform-ops
+  area: RAG
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_RAG_REQUIRE_CONFIDENTIAL_RUNTIME
+  default: false
+  owner: platform-ops
+  area: RAG
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RAG_REQUIRE_SIGNED_DOCUMENTS
+  default: false
+  owner: platform-ops
+  area: RAG
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RAG_VAULT_ENABLED
+  default: false
+  owner: platform-ops
+  area: RAG
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies:
+  - RAG_ENABLED
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RECEIPTS_CHAINING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RECEIPTS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RECEIPTS_EXPORT_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RECEIPTS_SIGNATURE_REQUIRED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REPLAY_ALLOW_CROSS_BACKEND
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REPLAY_CAPTURE_PROMPT_HASH_ONLY
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_REPORT_EMAIL_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REPORT_SEND_REAL_EMAIL
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REPORT_SMTP_USE_STARTTLS
+  default: true
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_REPORT_SMTP_USE_TLS
+  default: true
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_REPRODUCIBILITY_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_REQUIRE_APPROVAL_FOR_CRITICAL
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_EMAIL_ESCALATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_ESCALATIONS_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_FORECASTING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_PAGERDUTY_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_PROTECTION_ALLOW_ENFORCE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_PROTECTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_PROTECTION_WEBHOOK_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_SLACK_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_REVENUE_WEBHOOK_ENABLED
+  default: false
+  owner: platform-ops
+  area: Billing
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_ROUTING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RUNTIME_ATTESTATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SENSITIVE_TENANTS
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SOVEREIGN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_SAFETY_GATES_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_SOVEREIGN_GOVERNANCE_ENABLED
+  default: true
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: COMMERCIAL_TENANT_ENCRYPTION_BLOCK_RESTRICTED_EXPORTS
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_TENANT_ENCRYPTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_TENANT_ENCRYPTION_REQUIRE_ENCRYPTED_EXPORTS
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_TRANSPARENCY_GOSSIP_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_WITNESS_FEDERATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_WITNESS_REQUIRE_EXTERNAL
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMMERCIAL_WORKFLOW_DETERMINISM_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMPLIANCE_AUDIT_PACKAGE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMPLIANCE_EVIDENCE_COLLECTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMPLIANCE_EXTERNAL_EXPORT_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: COMPLIANCE_READINESS_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: DEBUG
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: DEEPSEEK_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: DEMO_MODE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: DEPLOYMENT_AUTOMATION_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: DISTRIBUTED_RUNTIME_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: EMBEDDINGS_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: ENTERPRISE_ONBOARDING_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: GLOBAL_CLOUD_KILL_SWITCH
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: GPU_AUTOSCALING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: HARDWARE_TRUST_ENABLED
+  default: false
+  owner: platform-ops
+  area: PKI
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: KUBERNETES_MODE
+  default: false
+  owner: platform-ops
+  area: Distributed runtime
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: LLAMA_CONT_BATCHING
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: LLAMA_FLASH_ATTN
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: LMSTUDIO_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: LOCALHOST_MODE
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: LOCAL_APPLIANCE_MODE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: MANAGED_CONTROL_PLANE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: MOCK_BACKEND_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: MODEL_HOT_SWAP_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: MODEL_ROLLBACK_ON_FAILURE
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: MULTI_CLUSTER_AUTO_FAILOVER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: MULTI_CLUSTER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: OBSERVABILITY_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: OPENAI_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: OPENROUTER_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: OPERATIONAL_UI_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: PAYMENT_REAL_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PKI_ENABLED
+  default: false
+  owner: platform-ops
+  area: PKI
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PLUGIN_MARKETPLACE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PLUGIN_SIGNATURE_REQUIRED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PROVIDERS_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PUBLIC_API_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: PUBLIC_EXPOSURE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: PUBLIC_SIGNUP_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: RAG_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: RBAC_ADMIN_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: REAL_PROVIDER_LOG_PROMPTS
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: REAL_PROVIDER_STORE_RESPONSES
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: REAL_PROVIDER_VALIDATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: OpenAI-compatible API
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: RESPONSE_CACHE_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: ROUTING_TEST_FORCE_LOCAL_FAILURE
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: RUNTIME_TUNING_APPLY_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: SEMANTIC_CACHE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: SUPPLY_CHAIN_SIGNING_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: TEST_TOOLS_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: TOKENIZER_CACHE_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.
+- name: TOKENIZER_STRICT
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: TTS_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default value is safe for standard installations.
+- name: VISUAL_OBSERVABILITY_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v1.9.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default because this is a standard feature.

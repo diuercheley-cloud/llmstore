@@ -56,6 +56,10 @@ echo "Executando checks de segurança e integridade..."
 bash scripts/check-secrets.sh --all
 bash scripts/check-alembic-integrity.sh
 
+# 5.5 Feature Flag Governance
+echo "Validando Governança de Feature Flags..."
+bash scripts/check-feature-flags.sh
+
 # 6. Operational Readiness
 echo "Validando Operational Readiness..."
 READINESS_OUTPUT=$(bash scripts/operational-readiness-pack.sh --ci)

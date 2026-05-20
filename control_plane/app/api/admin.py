@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 import json
 import os
 import subprocess
@@ -1956,6 +1957,31 @@ async def get_demo_summary(
         "demo_models": usage_summary.get("models", []),
         "warnings": warnings,
     }
+
+
+@router.get("/system/api-surface", response_model=list[dict])
+async def get_system_api_surface(
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+):
+    """
+    Returns the full API surface list and status classification.
+    """
+    import yaml
+    import os
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.abspath(os.path.join(current_dir, "../../../config/api-surface.yaml"))
+    
+    if not os.path.exists(config_path):
+        raise HTTPException(status_code=404, detail="API Surface registry config not found.")
+        
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or []
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading API Surface registry: {str(e)}")
 
 
 @router.get("/export/clients")

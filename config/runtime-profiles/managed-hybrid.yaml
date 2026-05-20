@@ -1,0 +1,8 @@
+profile_id: managed-hybrid
+name: Managed Hybrid Profile
+description: Hybrid deployment connected to managed control plane with metadata sync only.
+settings:
+  DEPLOYMENT_MODE: hybrid
+  MANAGED_CONTROL_PLANE_ENABLED: true
+  OPENAI_PROVIDER_ENABLED: true
+  DEEPSEEK_PROVIDER_ENABLED: true

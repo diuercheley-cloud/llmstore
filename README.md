@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI inference platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v1.9.4-enterprise-runtime`  
-> Previous stable: [`v1.9.3-stabilization-hardening`](releases/v1.9.3-stabilization-hardening)  
-> Release notes: [`docs/releases/V1_9_4_ENTERPRISE_RUNTIME.md`](docs/releases/V1_9_4_ENTERPRISE_RUNTIME.md)  
+> Current build: `v1.9.8-platform-consolidation`  
+> Previous stable: [`v1.9.7-compliance-readiness`](releases/v1.9.7-compliance-readiness)  
+> Release notes: [`docs/releases/V1_9_8_PLATFORM_CONSOLIDATION.md`](docs/releases/V1_9_8_PLATFORM_CONSOLIDATION.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,9 +22,10 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Platform Consolidation (v1.9.8)**: Supportability and operational consolidation inside existing platform domains, plus lazy-loaded routers, endpoint cleanup, and release governance tightening.
+- **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
 - **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
 - **CI/CD & Chaos Engineering (v1.9.6)**: Fully modular GitHub/GitLab pipelines with automated fault injection and supply chain security.
-- **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
 - **Enterprise-Grade Observability**: Full Grafana dashboards for GPU, Nodes, SLO, and Error Budgets.
 - **Multi-Cluster Orchestration**: Secure management of multiple appliances from a single Control Plane.
 - **Deterministic Governance**: Audit receipts for every inference, configuration change, and administrative action.
@@ -191,6 +192,20 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | Múltiplos modelos | Suporte a GGUF via llama.cpp, backends HTTP, cloud APIs |
 | Segurança | Rate limiting, quotas, API keys hasheadas, circuit breaker |
 | Observabilidade | Métricas Prometheus, health/ready endpoints, provider health |
+
+> [!WARNING]
+> **Capacidades Advisory, Experimental e Placeholders**:
+> - Recursos como orquestração Kubernetes, Distributed control-plane mesh, GPU autoscaling, Plugin marketplace, Managed control-plane e Multi-cluster operam estritamente como **placeholders** de validação sem execução física ou efeitos reais de cluster por padrão.
+> - Recursos avançados de segurança como PKI, Attestation e Hardware trust são puramente **advisory** por padrão, servindo apenas para análise e verificação local sem certificação formal ou aplicação coercitiva (enforcement).
+> - O recurso de Chaos Engineering é classificado como **experimental**.
+>
+> Para uma matriz de suporte detalhada, consulte a [Política de Supported Surface Area](docs/support/supported-surface-area.md).
+
+### Release v1.9.8 scope
+
+- **No new major domain**: `v1.9.8-platform-consolidation` is a freeze-and-optimize release. It consolidates supportability, runtime profiles, surface classification, and complexity controls inside existing administrative and operational areas.
+- **Supportability is bounded**: support bundles are sanitized operational artifacts for diagnostics only. They do not widen tenant-facing product scope, and they must not include prompts, documents, `.env` files, or real secrets.
+- **Governance remains explicit**: compliance content remains readiness/advisory material, not a promise of SOC 2 or ISO certification.
 
 ## Quick start
 

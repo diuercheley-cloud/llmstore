@@ -9,7 +9,7 @@ ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 VERSION=$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo "unknown")
 
 # Load operator errors library
-if [[ -f "${ROOT_DIR}/lib/operator-errors.sh" ]]; then
+if [[ -f "${ROOT_DIR}/scripts/lib/operator-errors.sh" ]]; then
   source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
 fi
 
@@ -67,42 +67,12 @@ echo "===================================================="
 echo "Notice: Real PSP/PIX integrations are out of scope."
 echo ""
 
-if [ "$DRY_RUN" = true ]; then
-  echo "[DRY-RUN] Installer would proceed with:"
-  echo "  WITH_DEMO: $WITH_DEMO"
-  echo "  SKIP_BUILD: $SKIP_BUILD"
-  echo "  CPU_ONLY: $CPU_ONLY"
-  echo "  GPU: $GPU"
-  echo "  BASE_URL: $BASE_URL"
-  echo "  ADMIN_EMAIL: ${ADMIN_EMAIL:-N/A}"
-  
-  # Generate a dry-run report
-  TIMESTAMP=$(date +%Y%m%dT%H%M%S)
-  ARTIFACT_DIR="${ROOT_DIR}/artifacts/install-local-appliance/${TIMESTAMP}-dryrun"
-  mkdir -p "${ARTIFACT_DIR}/logs"
-  REPORT_JSON="${ARTIFACT_DIR}/install-report.json"
-  REPORT_MD="${ARTIFACT_DIR}/install-report.md"
-  
-  cat <<EOF > "${REPORT_JSON}"
-{
-  "version": "${VERSION}",
-  "generated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "dry_run": true,
-  "base_url": "${BASE_URL}",
-  "next_steps": ["Run without --dry-run to install"]
-}
-EOF
-  cat <<EOF > "${REPORT_MD}"
-# Installation Report (DRY-RUN)
-- **Version:** ${VERSION}
-- **Status:** DRY-RUN SUCCESS
-EOF
-  echo "Dry-run report generated at: ${ARTIFACT_DIR}"
-  exit 0
-fi
-
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
-ARTIFACT_DIR="${ROOT_DIR}/artifacts/install-local-appliance/${TIMESTAMP}"
+if [ "$DRY_RUN" = true ]; then
+  ARTIFACT_DIR="${ROOT_DIR}/artifacts/install-local-appliance/${TIMESTAMP}-dryrun"
+else
+  ARTIFACT_DIR="${ROOT_DIR}/artifacts/install-local-appliance/${TIMESTAMP}"
+fi
 LOGS_DIR="${ARTIFACT_DIR}/logs"
 mkdir -p "${LOGS_DIR}"
 REPORT_JSON="${ARTIFACT_DIR}/install-report.json"
@@ -122,8 +92,19 @@ error() {
   exit 1
 }
 
-# 1. Pre-checks
-log "Starting pre-checks..."
+# 1. Preflight Checks
+log "Starting preflight checks..."
+
+# Disk space check
+avail_kb=$(df -k "${ROOT_DIR}" | awk 'NR==2 {print $4}')
+if [[ -n "${avail_kb}" ]]; then
+  # Require at least 5GB
+  min_kb=5242880
+  if [[ "${avail_kb}" -lt "${min_kb}" ]]; then
+    error "Espaço em disco insuficiente em ${ROOT_DIR}. Disponível: $((avail_kb / 1024))MB. Requerido: 5000MB."
+  fi
+  log "Espaço em disco suficiente: $((avail_kb / 1024))MB disponível."
+fi
 
 OS=$(uname -s)
 WSL2=false
@@ -132,10 +113,14 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
 fi
 
 check_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
+  if [[ "$1" == "docker compose" ]]; then
+    if ! docker compose version &>/dev/null; then
+      return 1
+    fi
+  elif ! command -v "$1" >/dev/null 2>&1; then
     if [[ "$1" == "docker" ]]; then
        operator_error "DOCKER_NOT_RUNNING" "O Docker não parece estar instalado ou acessível." "Instale o Docker ou verifique se ele está no PATH."
-    elif [[ "$1" == "docker compose" ]] || [[ "$1" == "docker-compose" ]]; then
+    elif [[ "$1" == "docker-compose" ]]; then
        operator_error "DOCKER_COMPOSE_MISSING" "O Docker Compose não foi encontrado." "Instale o plugin docker-compose-plugin ou o executável docker-compose."
     else
        operator_error "VALIDATION_FAILED" "Dependência ausente: $1" "Instale $1 usando o gerenciador de pacotes do seu sistema."
@@ -165,6 +150,33 @@ if command -v nvidia-smi >/dev/null 2>&1; then
     GPU_DETECTED=true
     log "GPU detected: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)"
   fi
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  log "[DRY-RUN] Preflight checks passed. Simulating installer..."
+  log "  WITH_DEMO: $WITH_DEMO"
+  log "  SKIP_BUILD: $SKIP_BUILD"
+  log "  CPU_ONLY: $CPU_ONLY"
+  log "  GPU: $GPU"
+  log "  BASE_URL: $BASE_URL"
+  log "  ADMIN_EMAIL: ${ADMIN_EMAIL:-N/A}"
+  
+  cat <<EOF > "${REPORT_JSON}"
+{
+  "version": "${VERSION}",
+  "generated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "dry_run": true,
+  "base_url": "${BASE_URL}",
+  "next_steps": ["Run without --dry-run to install"]
+}
+EOF
+  cat <<EOF > "${REPORT_MD}"
+# Installation Report (DRY-RUN)
+- **Version:** ${VERSION}
+- **Status:** DRY-RUN SUCCESS
+EOF
+  echo "Dry-run report generated at: ${ARTIFACT_DIR}"
+  exit 0
 fi
 
 if [ "$GPU" = true ] && [ "$GPU_DETECTED" = false ]; then

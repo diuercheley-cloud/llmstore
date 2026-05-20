@@ -17,3 +17,6 @@ Focado na governança do Sistema de Gestão de Segurança da Informação (SGSI)
 
 ## Aviso Importante
 Este módulo fornece ferramentas de **prontidão (readiness)**. O uso da plataforma e a passagem em todos os controles internos não constitui uma certificação formal. A certificação deve ser obtida através de uma auditoria externa por uma entidade acreditada.
+
+> [!WARNING]
+> Quaisquer recursos da plataforma classificados como **advisory** (como PKI, Attestation e Hardware Trust) ou **placeholder** operam sem garantias de aplicação de segurança compulsória (enforcement) e não podem ser tratados em documentos de conformidade como controles certificados.

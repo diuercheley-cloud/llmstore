@@ -1,0 +1,10 @@
+profile_id: sovereign-cluster
+name: Sovereign Cluster Profile
+description: Distributed multi-node deployment with strict data boundaries.
+settings:
+  DEPLOYMENT_MODE: hybrid
+  DISTRIBUTED_RUNTIME_ENABLED: true
+  COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED: true
+  COMMERCIAL_SOVEREIGN_GOVERNANCE_ENABLED: true
+  OPENAI_PROVIDER_ENABLED: false
+  ANTHROPIC_PROVIDER_ENABLED: false

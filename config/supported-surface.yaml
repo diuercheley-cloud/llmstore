@@ -1,0 +1,231 @@
+capabilities:
+  - id: openai-api
+    name: OpenAI-compatible API
+    area: OpenAI-compatible API
+    status: supported
+    owner: core-team
+    support_level: production
+    docs_url: docs/OPENAI_COMPATIBILITY.md
+    api_prefix: /v1
+    since_version: v1.0.0
+    limitations: "Supports chat completions and models list; no fine-tuning or assistants endpoint yet."
+    test_coverage: 92%
+
+  - id: admin-rbac
+    name: Admin RBAC
+    area: Admin RBAC
+    status: supported
+    owner: security-team
+    support_level: production
+    docs_url: docs/admin-tests.md
+    feature_flag: rbac_admin_enabled
+    since_version: v1.2.0
+    limitations: "Role assignments are static and config-defined."
+    test_coverage: 85%
+
+  - id: billing
+    name: Billing
+    area: Billing
+    status: supported
+    owner: billing-team
+    support_level: production
+    docs_url: docs/BILLING_BRL.md
+    since_version: v1.0.0
+    limitations: "Manual billing and cycle enforcement only; webhook auto-chargeback is advisory."
+    test_coverage: 88%
+
+  - id: rag
+    name: RAG
+    area: RAG
+    status: supported
+    owner: rag-team
+    support_level: production
+    docs_url: docs/RAG.md
+    since_version: v1.1.0
+    limitations: "Supports standard pdf, txt, md processing. Large context routing is experimental."
+    test_coverage: 90%
+
+  - id: tts
+    name: TTS
+    area: TTS
+    status: supported
+    owner: audio-team
+    support_level: production
+    docs_url: docs/CUSTOMER_QUICKSTART.md
+    since_version: v1.3.0
+    limitations: "Single-speaker offline synthesis."
+    test_coverage: 80%
+
+  - id: multi-provider-routing
+    name: Multi-provider routing
+    area: Multi-provider routing
+    status: supported
+    owner: core-team
+    support_level: production
+    docs_url: docs/PROVIDERS.md
+    since_version: v1.4.0
+    limitations: "Supports local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter."
+    test_coverage: 91%
+
+  - id: hot-swap-gguf
+    name: Hot swap GGUF
+    area: Hot swap GGUF
+    status: supported
+    owner: model-team
+    support_level: production
+    docs_url: docs/MODEL_BENCHMARK_LOCAL.md
+    since_version: v1.5.0
+    limitations: "Requires local disk path and llama.cpp restart."
+    test_coverage: 84%
+
+  - id: kubernetes
+    name: Kubernetes
+    area: Kubernetes
+    status: placeholder
+    owner: cloud-team
+    support_level: none
+    docs_url: docs/kubernetes
+    feature_flag: KUBERNETES_MODE
+    since_version: v1.6.0
+    limitations: "Mock validation-only; no actual orchestration occurs."
+    test_coverage: 0%
+
+  - id: distributed-runtime
+    name: Distributed runtime
+    area: Distributed runtime
+    status: placeholder
+    owner: cloud-team
+    support_level: none
+    docs_url: docs/DISTRIBUTED_CONTROL_PLANE_MESH.md
+    feature_flag: DISTRIBUTED_RUNTIME_ENABLED
+    since_version: v1.6.0
+    limitations: "Mock validation-only; no actual mesh routing occurs."
+    test_coverage: 0%
+
+  - id: gpu-orchestration
+    name: GPU orchestration
+    area: GPU orchestration
+    status: placeholder
+    owner: cloud-team
+    support_level: none
+    docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
+    feature_flag: GPU_AUTOSCALING_ENABLED
+    since_version: v1.6.0
+    limitations: "Advisory-first recommendation only."
+    test_coverage: 0%
+
+  - id: marketplace
+    name: Marketplace
+    area: Marketplace
+    status: placeholder
+    owner: product-team
+    support_level: none
+    docs_url: docs/plugins
+    feature_flag: PLUGIN_MARKETPLACE_ENABLED
+    since_version: v1.7.0
+    limitations: "No real plugins marketplace is active."
+    test_coverage: 0%
+
+  - id: managed-control-plane
+    name: Managed control-plane
+    area: Managed control-plane
+    status: placeholder
+    owner: cloud-team
+    support_level: none
+    docs_url: docs/LOCAL_APPLIANCE_MODE.md
+    feature_flag: MANAGED_CONTROL_PLANE_ENABLED
+    since_version: v1.7.0
+    limitations: "Metadata exchange is strictly validation-only."
+    test_coverage: 0%
+
+  - id: multi-cluster
+    name: Multi-cluster
+    area: Multi-cluster
+    status: placeholder
+    owner: cloud-team
+    support_level: none
+    docs_url: docs/multicluster
+    since_version: v1.8.0
+    limitations: "Mock/placeholder validation only."
+    test_coverage: 0%
+
+  - id: ci-cd
+    name: CI/CD
+    area: CI/CD
+    status: internal
+    owner: infra-team
+    support_level: production
+    docs_url: docs/ci
+    since_version: v1.0.0
+    limitations: "Internal pipeline orchestrations."
+    test_coverage: 100%
+
+  - id: chaos-engineering
+    name: Chaos engineering
+    area: Chaos engineering
+    status: experimental
+    owner: qa-team
+    support_level: development
+    docs_url: docs/chaos
+    since_version: v1.8.0
+    limitations: "Runs synthetic load drops and provider delays for testing."
+    test_coverage: 75%
+
+  - id: compliance-readiness
+    name: Compliance readiness
+    area: Compliance readiness
+    status: beta
+    owner: compliance-team
+    support_level: pilot
+    docs_url: docs/compliance/readiness-framework.md
+    since_version: v1.9.0
+    limitations: "Self-attested advisory frameworks."
+    test_coverage: 82%
+
+  - id: support-bundle
+    name: Support bundle
+    area: Platform supportability
+    status: internal
+    owner: platform-ops
+    support_level: production
+    docs_url: docs/support/support-bundle.md
+    api_prefix: /admin/support
+    since_version: v1.9.8-platform-consolidation
+    limitations: "Operator-only diagnostic surface; bundles must stay sanitized and exclude prompts, documents, .env files, and real secrets."
+    test_coverage: 78%
+
+  - id: pki
+    name: PKI
+    area: PKI
+    status: advisory
+    owner: security-team
+    support_level: advisory
+    docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md
+    feature_flag: pki_enabled
+    since_version: v1.9.5
+    limitations: "Local self-signed keys and verification only."
+    test_coverage: 60%
+
+  - id: attestation
+    name: Attestation
+    area: Attestation
+    status: advisory
+    owner: security-team
+    support_level: advisory
+    docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
+    feature_flag: attestation_mode
+    since_version: v1.9.5
+    limitations: "Advisory-first signature validation only."
+    test_coverage: 55%
+
+  - id: hardware-trust
+    name: Hardware trust
+    area: Hardware trust
+    status: advisory
+    owner: security-team
+    support_level: advisory
+    docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md
+    feature_flag: hardware_trust_enabled
+    since_version: v1.9.6
+    limitations: "Advisory local validation only."
+    test_coverage: 40%

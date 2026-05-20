@@ -33,3 +33,16 @@ preflight:check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+
+platform:freeze-check:
+  stage: preflight
+  image: python:3.10
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - git fetch origin tag v1.9.7-compliance-readiness || true
+    - make platform-freeze-check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//

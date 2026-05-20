@@ -1,0 +1,5533 @@
+- path: scripts/activate-model.sh
+  purpose: 'Script to ACTIVATE an LLM model and load into memory (VRAM) Usage: ./scripts/activate-model.sh
+    <MODEL_ID_OR_ALIAS>'
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/activate.sh
+  purpose: Atalho para ativar/subir o sistema LLM Inference Stack
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/admin-lab-financial-flow.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/admin-lab-models-smoke.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/admin-lab-negative-flow.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/admin-lab-smoke.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/apply-runtime-profile.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/architecture-duplication-report.sh
+  purpose: scripts/architecture-duplication-report.sh Automated audit for llm-inference-stack
+    duplication.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/async-chat.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/audit-root-files-local.sh
+  purpose: scripts/audit-root-files-local.sh Audits Python files in the repository
+    root for usage and relocation potential.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/audit-shell-lib-layout.sh
+  purpose: Audit shell library layout in the repository.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/audit-v1.6-release-line.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/audit_v1_6_helper.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/backup-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/backup.sh
+  purpose: scripts/backup.sh Hardened backup script with preflight checks and dry-run
+    mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark-model-local.sh
+  purpose: Activate virtual environment if available
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark-runtime.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark_model_local_runner.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark_runner.py
+  purpose: Get Docker stats
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/build-llama-cpp.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/cache-clear.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/cache-stats.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/cache-stats2.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/cancel-job.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/chaos-ci-runner.sh
+  purpose: LLM Inference Stack - Chaos CI Runner Executa experimentos de chaos de
+    forma segura em ambientes de CI.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/chaos-run.sh
+  purpose: LLM Inference Stack - Chaos Experiment Runner
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-alembic-integrity.sh
+  purpose: 'scripts/check-alembic-integrity.sh Valida a integridade do histórico do
+    Alembic: - Único head linear'
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-api-surface.sh
+  purpose: scripts/check-api-surface.sh Entrypoint for API Surface classification
+    validation.
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-feature-flags.py
+  purpose: Ensure control_plane is in path to import app modules
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-feature-flags.sh
+  purpose: Detect Python executable from virtual environment
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-script-manifest.sh
+  purpose: scripts/check-script-manifest.sh Entrypoint for operational scripts governance
+    validation.
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-secrets.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: compliance
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/check-working-tree-clean.sh
+  purpose: check-working-tree-clean.sh Ensures the working tree is clean and no sensitive
+    data is present.
+  owner: platform-ops
+  category: compliance
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/clean-compose-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/clean-rag-local-data.sh
+  purpose: scripts/clean-rag-local-data.sh - Safe RAG data cleanup script
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: true
+  docs_url: null
+- path: scripts/clean-sensitive-artifacts-local.sh
+  purpose: scripts/clean-sensitive-artifacts-local.sh Safely cleans or redacts sensitive
+    local artifacts.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/cleanup-local-branches.sh
+  purpose: Safely list and remove stale local git branches.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/collect-compliance-evidence.sh
+  purpose: LLM Inference Stack - Compliance Evidence Collector Coleta evidências técnicas
+    sanitizadas para auditorias.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/common.sh
+  purpose: Ensure scripts directory is in PYTHONPATH for Python utilities
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/complexity-report.sh
+  purpose: scripts/complexity-report.sh Entrypoint for running the platform complexity
+    analyzer and generating markdown reports.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/configure-local-wizard.sh
+  purpose: LLM Inference Stack - Local Appliance Configuration Wizard Guided setup
+    for local appliance mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/create-client.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/create-customer-demo.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/create-opencode-client.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/create-plan.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/create-release-bundle.sh
+  purpose: Colors for output
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/customer-demo-local.sh
+  purpose: 'customer-demo-local.sh Comando unico para preparar e validar uma demo
+    comercial de cliente. Uso: ./scripts/customer-demo-local.sh [options]'
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/customer-ready-report.sh
+  purpose: scripts/customer-ready-report.sh Validação única de prontidão para cliente.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/deactivate-model.sh
+  purpose: 'Script to DEACTIVATE an LLM model and free memory (VRAM) Usage: ./scripts/deactivate-model.sh
+    <MODEL_ID_OR_ALIAS>'
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/debug-memory.sh
+  purpose: scripts/debug-memory.sh Script to monitor LLM memory usage across GPU and
+    RAM to detect "leaks" or dual-loading.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/delete-client-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/demo-full-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/deploy-appliance.sh
+  purpose: scripts/deploy-appliance.sh Hardened deploy script with preflight checks
+    and dry-run mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/deploy-kubernetes.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/deploy-vps.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/diagnose-artifact-secrets.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/diagnose-readiness-warnings-local.sh
+  purpose: scripts/diagnose-readiness-warnings-local.sh Diagnóstico de warnings do
+    Production Readiness local.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/diagnose-v1.7-warnings.sh
+  purpose: diagnose-v1.7-warnings.sh Localiza relatórios v1.7, extrai warnings e classifica-os.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/down.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/download-model.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/dr-test-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/dr-test.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/export-client-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/export-usage.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/expose-local.sh
+  purpose: Scripts para expor localmente usando ngrok ou cloudflared (tunnel) Requer
+    instalação prévia das ferramentas
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/first-run-local.sh
+  purpose: First Run Local Setup Sets up, configures, and validates the system locally
+    for technical operators.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/first-run.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/fix-local-permissions.sh
+  purpose: scripts/fix-local-permissions.sh Fixes file permissions for security cleanup.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/fix-repo-paths-local.sh
+  purpose: Suggest or apply fixes for broken repo paths.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/fresh-machine-readiness-check.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-acceptance-report.sh
+  purpose: scripts/generate-acceptance-report.sh
+  owner: platform-ops
+  category: reports
+  status: supported
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/generate-client-monthly-report.sh
+  purpose: scripts/generate-client-monthly-report.sh Generates a local monthly usage
+    report for a client.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-client-proposal.sh
+  purpose: Default values
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-client-ready-report.sh
+  purpose: generate-client-ready-report.sh Gera relatório final consolidado de pronto
+    para cliente (Client Ready Report). Produz artifacts/ e docs/CLIENT_READY_FINAL_REPORT.md
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-compliance-pack.sh
+  purpose: LLM Inference Stack - Compliance Pack Generator Consolida evidências e
+    gera o relatório de prontidão.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-customer-readiness-report.sh
+  purpose: scripts/generate-customer-readiness-report.sh
+  owner: platform-ops
+  category: reports
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/generate-enterprise-pack.sh
+  purpose: scripts/generate-enterprise-pack.sh
+  owner: platform-ops
+  category: reports
+  status: supported
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/generate-invoices.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-local-quote.sh
+  purpose: scripts/generate-local-quote.sh
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-proposal-pdf.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-release-history.sh
+  purpose: Generate consolidated release history from tags, branches, and releases/
+    metadata.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-release-manifest.sh
+  purpose: scripts/generate-release-manifest.sh Generates a release-manifest.json
+    for a specific version.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-sbom.sh
+  purpose: LLM Inference Stack - SBOM Generator Gera a lista de materiais de software
+    para garantir rastreabilidade.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-sow-local.sh
+  purpose: scripts/generate-sow-local.sh Generates a personalized Statement of Work
+    (SOW) from the contract template.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-tuning-recommendations.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/generate-v1.7-release-checklist-status.sh
+  purpose: generate-v1.7-release-checklist-status.sh Le relatorios existentes e preenche
+    um status gerado para o checklist. Nao altera o checklist base (docs/V1_7_RELEASE_CHECKLIST.md).
+  owner: platform-ops
+  category: reports
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/install-customer.sh
+  purpose: LLM Inference Stack - Professional Customer Installer Wizard Designed for
+    client-side installations with distinct product profiles.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/install-local-appliance.sh
+  purpose: LLM Inference Stack - Local Appliance Installer This script installs the
+    system as a local appliance.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/install-wsl-deps.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/install.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/invoice-preview.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/job-status.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/openai_real_validator.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/operator-errors.sh
+  purpose: Operator Friendly Error Library
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/project-root.sh
+  purpose: 'Helper to resolve the project root from any script location. Usage: source
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/project-root.sh"'
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/real-provider-env.sh
+  purpose: lib/real-provider-env.sh Helper library for real provider validation. Sources
+    .env.local and exposes functions to check provider config safely.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/redaction.sh
+  purpose: lib/redaction.sh Centralized redaction logic for llm-inference-stack. Provides
+    functions to mask sensitive information in strings and files.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/lib/validation-logging.sh
+  purpose: Validation Logging Library Provides standardized logging for validation
+    scripts.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/list-db.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/list-gpu-models.sh
+  purpose: scripts/list-gpu-models.sh
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/load-test-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/local-production-smoke.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/local-production-up.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/mark-invoice-paid.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/measure-real-provider-costs.sh
+  purpose: Defaults
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/meeting-ready-check-local.sh
+  purpose: Parse --help early to skip heavy initialization
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/model-runtime-activate.sh
+  purpose: Load environment variables if .env exists
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/model-runtime-list.sh
+  purpose: Load environment variables if .env exists
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/model-runtime-load.sh
+  purpose: Load environment variables if .env exists
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/model-runtime-rollback.sh
+  purpose: Load environment variables if .env exists
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/monthly-report.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/operational-readiness-pack.sh
+  purpose: scripts/operational-readiness-pack.sh Validates system readiness for demo,
+    pilot, or production.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/paid-implementation-checklist-local.sh
+  purpose: scripts/paid-implementation-checklist-local.sh Generates a paid implementation
+    checklist for a client deployment.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/parse-security-report-local.sh
+  purpose: scripts/parse-security-report-local.sh Parses security-report.json and
+    prints a safe summary.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/platform-freeze-check.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/platform-freeze-check.sh
+  purpose: Wrapper for python platform freeze check
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/pocket-tts.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/post-deploy-validate.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/post-upgrade-smoke-local.sh
+  purpose: scripts/post-upgrade-smoke-local.sh Post-upgrade/rollback smoke test for
+    llm-inference-stack local.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/pre-client-checklist-local.sh
+  purpose: Pre-client/Pre-demo Checklist Script
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/preflight-check.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/prepare-demo-screenshots-local.sh
+  purpose: 'prepare-demo-screenshots-local.sh Gera screenshots da demonstração local
+    ou cria plano de captura manual. Uso: ./scripts/prepare-demo-screenshots-local.sh
+    [--placeholders-only] [--help]'
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/prepare-v1.7-release-bundle.sh
+  purpose: 'prepare-v1.7-release-bundle.sh Script consolidado que prepara o release
+    bundle final da v1.7.0-local-ai-appliance. Uso: ./scripts/prepare-v1.7-release-bundle.sh
+    --version <versao>'
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/production-readiness-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/quality-smoke.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/redact-local-sensitive-artifacts.sh
+  purpose: scripts/redact-local-sensitive-artifacts.sh Redacts sensitive information
+    from local generated artifacts.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/redact_json.py
+  purpose: Regex patterns for sensitive data
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/register-backend.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/register-model.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/release-gate.sh
+  purpose: LLM Inference Stack - Release Gate Validator Garante que a release cumpre
+    os requisitos mínimos de governança.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/release-local-production.sh
+  purpose: scripts/release-local-production.sh Orchestrates the release process for
+    local-production.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/release-risk-report.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/reset-circuit-breaker.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/reset-client-quota.sh
+  purpose: 'Script to reset quota for a client based on an API Key prefix Usage: ./scripts/reset-client-quota.sh
+    <API_KEY_OR_PREFIX>'
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/reset-commercial-demo-pack.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: true
+  docs_url: null
+- path: scripts/reset-demo-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: true
+  docs_url: null
+- path: scripts/reset-dev.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/restore-local.sh
+  purpose: scripts/restore-local.sh Hardened restore script with preflight checks
+    and dry-run mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/restore.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/retention-local.sh
+  purpose: scripts/retention-local.sh - Local retention policy implementation
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/rollback-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/rollback-release.sh
+  purpose: scripts/rollback-release.sh Hardened rollback script with preflight checks
+    and dry-run mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/run-billing-cycle.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/run-v1.7-release-checklist.sh
+  purpose: run-v1.7-release-checklist.sh Script consolidado que executa todas as validacoes
+    essenciais da v1.7.0, coleta resultados existentes, gera status Go/No-Go e persiste
+    artefatos.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-node-drain.sh
+  purpose: scripts/runtime-node-drain.sh
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-node-health.sh
+  purpose: scripts/runtime-node-health.sh
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-node-list.sh
+  purpose: scripts/runtime-node-list.sh
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-node-register.sh
+  purpose: scripts/runtime-node-register.sh
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-profile-apply.sh
+  purpose: Parse arguments
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-profile-list.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/runtime-profile-validate.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/scan-real-provider-artifacts.sh
+  purpose: Defaults
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/security-events.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/security-report-local.sh
+  purpose: Load operator errors library if available
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/seed-commercial-demo-pack.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/seed-commercial-plans-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/seed-commercial-qos-tiers.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/seed-demo-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/seed-sales-demo-leads.sh
+  purpose: Load common environment
+  owner: platform-ops
+  category: operations
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/set-client-plan.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/set-plan-models.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/sign-release-artifacts.sh
+  purpose: LLM Inference Stack - Artifact Signer Assina os artefatos de release se
+    as chaves estiverem disponíveis.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/smoke-client.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/stabilization-check.sh
+  purpose: 1. make test-smoke
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/suspend-client.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-backend.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-backup-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-chat.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-dr-local-port-selection.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-dr-local-strict-rag.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-empty-short-response.sh
+  purpose: scripts/test-empty-short-response.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-health.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-large-prompt-short-completion.sh
+  purpose: scripts/test-large-prompt-short-completion.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-llama-cpp-params.sh
+  purpose: scripts/test-llama-cpp-params.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-lmstudio.sh
+  purpose: Configuração do LM Studio (conforme informado pelo usuário)
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-max-concurrency.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-max-concurrency.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-max-tokens-explicit.sh
+  purpose: scripts/test-max-tokens-explicit.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-max-tokens-v2.sh
+  purpose: scripts/test-max-tokens-v2.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-max-tokens.sh
+  purpose: scripts/test-max-tokens.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-memory-flow.sh
+  purpose: scripts/test-memory-flow.sh Test script to verify memory release and allocation
+    when toggling models.
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-non-streaming-gemma.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-opencode-behavior.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-opencode-compat.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-openrouter-integration.sh
+  purpose: Configurações
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-operations-dryrun.sh
+  purpose: scripts/test-operations-dryrun.sh Validates backup, restore, upgrade, and
+    rollback dry-runs and report safety.
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-poisoned-slot.sh
+  purpose: scripts/test-poisoned-slot.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-rag-local-multiclient-validation.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-real-fallback.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-restore-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-routing-fallback.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-stream.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/test-streaming-concatenation.sh
+  purpose: scripts/test-streaming-concatenation.sh
+  owner: platform-ops
+  category: testing
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/ui-health.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/unsuspend-client.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/up.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: /docs/operations/script-governance.md
+- path: scripts/upgrade-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/upgrade-release.sh
+  purpose: scripts/upgrade-release.sh Hardened upgrade script with preflight checks,
+    mandatory backup, and dry-run mode.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/user-behavior-report.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-abuse-protection-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-admin-lab-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-admin-readiness-security-dashboard.sh
+  purpose: Scripts dir
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-admin-tests.sh
+  purpose: Load environment variables
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-anthropic-real-provider.sh
+  purpose: 'validate-anthropic-real-provider.sh Validates Anthropic real provider
+    with cost control, sanitized logs, and billing BRL. Usage:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-api-keys-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-artifact-redaction-local.sh
+  purpose: scripts/validate-artifact-redaction-local.sh Validates the artifact redaction
+    system. FAKE SECRET FOR TESTS ONLY
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-autonomous-guardrails.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-backup-before-upgrade-local.sh
+  purpose: upgrade --dry-run mostra que backup seria criado
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-benchmark-local.sh
+  purpose: Limpa benchmarks antigos do teste
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-billing-brl-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-billing-wording-local.sh
+  purpose: Script to validate that no misleading PIX/PSP terminology is used in public-facing
+    files.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-capabilities-page-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-capability-matrix-local.sh
+  purpose: Get the project root directory
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-chat-sse-readiness-local.sh
+  purpose: scripts/validate-chat-sse-readiness-local.sh Validates chat and SSE streaming
+    for production readiness.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-clean-install-local.sh
+  purpose: validate-clean-install-local.sh Validates a from-scratch installation in
+    a sandbox temp directory.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-clean-install-validator.sh
+  purpose: validate-clean-install-validator.sh Validates the clean install script
+    and its outputs.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-clean-rag-local-data.sh
+  purpose: scripts/validate-clean-rag-local-data.sh - Validate RAG cleanup script
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-clean-sensitive-artifacts-local.sh
+  purpose: scripts/validate-clean-sensitive-artifacts-local.sh Validates the clean-sensitive-artifacts-local.sh
+    script. FAKE SECRET FOR TESTS ONLY
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-client-monthly-report.sh
+  purpose: scripts/validate-client-monthly-report.sh Validates the monthly report
+    generator.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-client-portal-local.sh
+  purpose: Validation script for Client Portal (Local Operation) This script assumes
+    the stack is running or it uses the available environment.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-client-presentation-docs.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-client-proposal-local.sh
+  purpose: Ensure we are in the root directory for relative paths in the generator
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-client-ready-report.sh
+  purpose: 'validate-client-ready-report.sh Valida o relatorio client-ready gerado
+    por generate-client-ready-report.sh. Verifica:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-auto-apply-canary.sh
+  purpose: 'LLM Inference Stack - Phase 8: Auto Apply Canary Validator Validates settings,
+    dry-run, run, promote, rollback, and canary selection.'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-calibration.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-canary-promotion.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-capacity-planning.sh
+  purpose: 'Validation script for Phase 21: Capacity Planning + Predictive Autoscaling
+    Commercial'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-compliance-controls.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-config-apply.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-cross-cluster-forwarding.sh
+  purpose: Simulate config validation
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-demo-e2e-local.sh
+  purpose: validate-commercial-demo-e2e-local.sh End-to-end validation of the commercial
+    demo flow.
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-demo-pack.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-distributed-analytics.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-enforcement.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-executive-dashboard.sh
+  purpose: 'Validation script for Phase 10: Executive Profitability and Drift Dashboard'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-federation.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-financial-reconciliation.sh
+  purpose: 1. Run tests
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-geo-routing.sh
+  purpose: 1. Syntax check
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-global-router.sh
+  purpose: Setup
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-global-traffic-shifting.sh
+  purpose: Verify Alembic models
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-guardrails.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-ha.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-infra-execution.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-infra-simulation.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-live-balancing.sh
+  purpose: 1. Syntax check
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-local-infra-adapters.sh
+  purpose: Colors for output
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: true
+  requires_gpu: true
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-plans-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-profit-routing.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-qos-billing.sh
+  purpose: 'Validation script for Phase 26: Commercial QoS Billing'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-qos-fairness.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-qos-queue.sh
+  purpose: 'Validation script for Phase 24: QoS Priority Queue & Rate Limiting'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-qos-routing.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-report-email.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-report-export.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-revenue-escalations.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-revenue-forecasting.sh
+  purpose: 1. Run Forecast
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-revenue-protection.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-commercial-routing-analytics.sh
+  purpose: 1. Check if migration is applied (best effort, check if table exists in
+    DB if possible)
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-confidential-agents.sh
+  purpose: 'Validation script for Phase 50: Confidential Multi-Agent Governance'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-confidential-rag-vault.sh
+  purpose: 'Validation script for Phase 53: Regulated RAG Vault'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-confidential-runtime.sh
+  purpose: 'Validation script for Phase 47: Confidential Inference Runtime'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-configure-local-wizard.sh
+  purpose: LLM Inference Stack - Validation for Configuration Wizard
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-context-optimization.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-contract-templates-local.sh
+  purpose: scripts/validate-contract-templates-local.sh Validates that contract templates
+    exist and contain required legal notices.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-control-plane-mesh.sh
+  purpose: Verify migration file syntax
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-cors-local-appliance.sh
+  purpose: LLM Inference Stack - CORS Validation for Local Appliance Validates that
+    CORS is explicitly and securely configured.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-crypto-trust.sh
+  purpose: Ensure we are in the project root
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-cryptographic-receipts.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-customer-demo-local.sh
+  purpose: 'validate-customer-demo-local.sh Valida o script customer-demo-local.sh
+    e seus artefatos. Uso: ./scripts/validate-customer-demo-local.sh'
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-customer-docs-local.sh
+  purpose: 1. Docs existem
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-customer-ready.sh
+  purpose: LLM Inference Stack - Customer Readiness Validator Validates if a client
+    installation is fully functional and secure.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-deepseek-real-provider.sh
+  purpose: 'validate-deepseek-real-provider.sh Validates DeepSeek real provider with
+    cost control, sanitized logs, and billing BRL. Usage:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-delete-client-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-demo-admin-dashboard.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-demo-client-portal.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-demo-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-demo-visual-guide.sh
+  purpose: 'validate-demo-visual-guide.sh Valida a integridade, segurança e completude
+    do guia visual de demo. Uso: ./scripts/validate-demo-visual-guide.sh'
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-deterministic-workflows.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-e2e.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-embeddings-local.sh
+  purpose: 'Script de validação para o endpoint de Embeddings Uso: ./scripts/validate-embeddings-local.sh
+    [API_KEY] [BASE_URL]'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-enterprise-audit-portal.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-enterprise-rag-local.sh
+  purpose: =============================================================================
+    validate-enterprise-rag-local.sh Validates Enterprise RAG pipeline
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-examples-local.sh
+  purpose: Base URL for local validation
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-execution-proofs.sh
+  purpose: '==========================================================================
+    Phase 42: Validate Verifiable AI Execution Proofs + Merkle Audit Timelines =========================================================================='
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-export-client-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-fake-demo-data.sh
+  purpose: Validador de dados ficticios para demo comercial Verifica que todos os
+    dados sao seguros, marcados como DEMO, sem informacoes reais.
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-federated-workflows.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-first-run-local.sh
+  purpose: Validate First Run Local Setup Script Dry-runs and validates options for
+    first-run-local.sh without affecting the system
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-fresh-machine-docs.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-gemma-chat.sh
+  purpose: scripts/validate-gemma-chat.sh
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-gitignore-security.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-governance-federation.sh
+  purpose: Check if required files exist
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-governance-supervisor.sh
+  purpose: 1. Run formatting/linting checks
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-hybrid-abuse-detection-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-hybrid-admin-dashboard-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-hybrid-platform-e2e-local.sh
+  purpose: validate-hybrid-platform-e2e-local.sh E2E validation of the Hybrid AI Platform
+    v1.8.0 Runs entirely locally — no real cloud providers, no real API keys required.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: false
+  requires_network: false
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-hybrid-platform-report.sh
+  purpose: validate-hybrid-platform-report.sh Validates the Hybrid Platform E2E report
+    artifacts.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-inference-reproducibility.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-install-local-appliance.sh
+  purpose: Validation script for the Local Appliance Installer
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-integrations-docs-local.sh
+  purpose: scripts/validate-integrations-docs-local.sh Valida documentação e exemplos
+    de integração
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-intelligent-cache-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-key-files-local.sh
+  purpose: scripts/validate-key-files-local.sh Validates that no real .pem or .key
+    files are present in the repo and that fixtures follow the security policy.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-landing-local.sh
+  purpose: scripts/validate-landing-local.sh
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-lmstudio-api-sales.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-lmstudio-backend.sh
+  purpose: scripts/validate-lmstudio-backend.sh
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-ai-appliance-branding.sh
+  purpose: 1. Check if BRANDING_DOC exists
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-appliance-mode.sh
+  purpose: scripts/validate-local-appliance-mode.sh Validates LOCAL_APPLIANCE_MODE
+    configuration and behavior.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-billing.sh
+  purpose: Scripts dir relative to project root
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-docs.sh
+  purpose: Get the project root directory
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-green.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-permissions.sh
+  purpose: scripts/validate-local-permissions.sh Validates file permissions for security
+    compliance.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-production-full.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: true
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-local-quote.sh
+  purpose: scripts/validate-local-quote.sh
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-localhost-mode.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-margin-dashboard.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-meeting-ready-check-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-migrations-local.sh
+  purpose: scripts/validate-migrations-local.sh Valida migrations do Alembic no ambiente
+    local.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-model-benchmark-real.sh
+  purpose: Limpa benchmarks antigos do teste
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-model-integrity-monitor.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-model-lifecycle.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-model-supply-chain.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-multitenant-isolation-full.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-observability-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-opa-rego-runtime.sh
+  purpose: Assuming pytest is available in the environment
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-openai-real-provider.sh
+  purpose: 'validate-openai-real-provider.sh Validates OpenAI real provider with cost
+    control, sanitized logs, and billing BRL. Usage:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-operational-controls.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-operations-center.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-operator-errors-local.sh
+  purpose: Validate Operator Errors implementation
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-paid-implementation-checklist.sh
+  purpose: scripts/validate-paid-implementation-checklist.sh Validates the paid implementation
+    checklist template and generation.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-phase56-migrations.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-plan-queues.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-policy-governance.sh
+  purpose: Check if required files exist
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-post-install-local.sh
+  purpose: validate-post-install-local.sh Final post-installation validation for Local
+    Appliance Mode.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-post-install-validator.sh
+  purpose: validate-post-install-validator.sh Validates the validate-post-install-local.sh
+    script itself.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-post-upgrade-smoke-local.sh
+  purpose: scripts/validate-post-upgrade-smoke-local.sh Validates that the post-upgrade
+    smoke test itself works correctly.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-pre-client-checklist-local.sh
+  purpose: 1. Test --help
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-predictive-aiops.sh
+  purpose: 1. Database Migrations
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-prepaid-wallet-local.sh
+  purpose: ===========================================================================
+    validate-prepaid-wallet-local.sh ===========================================================================
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-proposals-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-providers-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-public-attestation-gateway.sh
+  purpose: 'Validation script for Phase 46: Public Attestation Gateway'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-public-verifier.sh
+  purpose: '==========================================================================
+    Phase 43: Validate Public Verifier CLI + Offline Verification Tool =========================================================================='
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-rag-limits.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-rag-local-multiclient.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-rag-vault.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-rag.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-rate-limit-readiness-local.sh
+  purpose: scripts/validate-rate-limit-readiness-local.sh Prova segura de rate limit
+    para Production Readiness. Cria plano/cliente temporários com limite baixo e verifica
+    429.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-readiness-cleanup-v1.6.3.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-readme-product-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-billing-margin.sh
+  purpose: Defaults
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-fallback-local-to-cloud.sh
+  purpose: validate-real-fallback-local-to-cloud.sh Validates fallback local -> cloud
+    with simulated local failure, cost control, sanitized logs, and billing tracking.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-provider-env-local.sh
+  purpose: validate-real-provider-env-local.sh Validates .env.local safety and configuration
+    for real provider validation. Never prints full API keys. Never exposes secrets.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-provider-sanitization.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-providers-e2e.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-real-restore-rollback-local.sh
+  purpose: validate-real-restore-rollback-local.sh Validates real restore and rollback
+    in a controlled temporary environment.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-release-artifacts-security.sh
+  purpose: scripts/validate-release-artifacts-security.sh Validates that release artifacts
+    do not contain sensitive information.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-release-bundle.sh
+  purpose: Colors for output
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-release-history.sh
+  purpose: Validate the release history document.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-release-metadata.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-repo-paths-local.sh
+  purpose: Validate repository path integrity.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-reset-commercial-demo-pack.sh
+  purpose: Validador de seguranca do reset-commercial-demo-pack.sh Cria dados demo
+    temporarios + dados nao-demo temporarios, verifica que dry-run nao apaga nada,
+  owner: platform-ops
+  category: validation
+  status: experimental
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-responses-api-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-retention-local.sh
+  purpose: scripts/validate-retention-local.sh - Validation for retention policy
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-retrieval-proofs.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-routing-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-runtime-attestation.sh
+  purpose: 'Validation script for Phase 58: Hardware-backed Attestation Runtime'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-runtime-fabric.sh
+  purpose: 1. Check Python files syntax
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-runtime-health-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-sales-crm-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-security-cleanup-v1.5.4.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-smart-routing-local.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-sovereign-airgap-governance.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-sovereign-appliance.sh
+  purpose: 'Validation script for Phase 52: Sovereign Offline AI Appliance Mode'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-status-local.sh
+  purpose: Get the project root directory
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-system-control-center-local.sh
+  purpose: Configuration
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-system-health.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-tenant-encryption.sh
+  purpose: 'Validation script for Phase 36: Confidential Computing + Tenant Encryption
+    Controls'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-transparency-gossip.sh
+  purpose: 1. Check migrations
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-trusted-agent-runtime.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-tts-quota-billing-portal.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-tts-readiness-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-upgrade-migrations-local.sh
+  purpose: scripts/validate-upgrade-migrations-local.sh Simula e valida o processo
+    de upgrade de migrations com segurança.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-upgrade-rollback-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-usable-chat-model-local.sh
+  purpose: shellcheck source=/dev/null
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.6-release-line-audit.sh
+  purpose: 1. Audit script exists and is executable
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-final-local.sh
+  purpose: validate-v1.7-final-local.sh Validacao final da release v1.7.0-local-ai-appliance.
+    Roda todas as validacoes essenciais e gera relatorio consolidado.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-final-report.sh
+  purpose: 'validate-v1.7-final-report.sh Valida o relatorio gerado por validate-v1.7-final-local.sh.
+    Verifica:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-go-no-go-summary.sh
+  purpose: 'validate-v1.7-go-no-go-summary.sh Valida a integridade de docs/V1_7_GO_NO_GO_SUMMARY.md
+    Verifica:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-release-bundle.sh
+  purpose: 'validate-v1.7-release-bundle.sh Valida o release bundle da v1.7.0-local-ai-appliance.
+    Verifica:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-release-checklist.sh
+  purpose: 'validate-v1.7-release-checklist.sh Valida a integridade do docs/V1_7_RELEASE_CHECKLIST.md
+    Verifica:'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-release-notes.sh
+  purpose: 1. Check if docs/V1_7_RELEASE_NOTES.md exists
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-v1.7-warning-cleanup.sh
+  purpose: validate-v1.7-warning-cleanup.sh Valida se o processo de limpeza de warnings
+    foi concluído com sucesso.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-white-label-local.sh
+  purpose: scripts/validate-white-label-local.sh Validates white-label configuration
+    and branding.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-witness-federation.sh
+  purpose: 1. Check migrations
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate-workflow-governance.sh
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate_phase_70_correlation_engine.py
+  purpose: '--- Configuration ---'
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate_phase_71_remediation_planning.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate_phase_72_remediation_execution.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/validate_phase_73_adapter_sandbox.py
+  purpose: Operational script for stack management.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/verify-release-artifacts.sh
+  purpose: LLM Inference Stack - Artifact Governance Verifier Garante que os artefatos
+    de release estão limpos e íntegros.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null

@@ -3,9 +3,12 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+import os
+import yaml
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from starlette.routing import Match
 
 from app.core.config import get_settings
 from app.core.request_context import clear_correlation_id, clear_source_ip, set_correlation_id, set_source_ip
@@ -101,32 +104,65 @@ async def request_context_middleware(request: Request, call_next):
     return response
 
 
+_api_surface_cache = None
+
+def _get_api_surface_map():
+    global _api_surface_cache
+    if _api_surface_cache is not None:
+        return _api_surface_cache
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.abspath(os.path.join(current_dir, "../../config/api-surface.yaml"))
+    
+    mapping = {}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or []
+                for entry in data:
+                    key = (entry.get("endpoint"), entry.get("method"))
+                    mapping[key] = entry
+        except Exception as e:
+            logger.error(f"Error loading api-surface.yaml: {e}")
+    else:
+        logger.warning(f"api-surface.yaml not found at {config_path}")
+        
+    _api_surface_cache = mapping
+    return mapping
+
+
 async def deprecation_middleware(request: Request, call_next):
-    # List of legacy/deprecated path prefixes
-    deprecated_paths = {
-        "/admin/models/runtime", # admin_models_runtime.py
-        "/admin/billing",        # billing_admin.py (if not using commercial)
-        "/admin/legacy",         # placeholder for any future legacy routes
-    }
+    matched_route = None
+    scope = request.scope
     
-    # Specific files considered legacy but not yet fully prefix-isolated
-    # We can check specific paths or just rely on the documentation phase.
-    
-    path = request.url.path
-    is_deprecated = any(path.startswith(p) for p in deprecated_paths)
-    
-    # admin.py has many routes, some might be legacy. 
-    # For now we mark the specific modules mentioned in the plan.
-    if path == "/admin" or path.startswith("/admin/"):
-        # Exception: don't mark commercial or observability as deprecated
-        if not any(path.startswith(p) for p in ["/admin/observability", "/admin/commercial", "/admin/operations"]):
-            # This is a bit aggressive, but admin.py is the main target.
-            is_deprecated = True
+    # Try to match request to registered FastAPI routes
+    for route in request.app.routes:
+        try:
+            match, child_scope = route.matches(scope)
+            if match == Match.FULL:
+                matched_route = route
+                break
+        except Exception:
+            pass
+
+    status = "supported"
+    replacement = None
+
+    if matched_route:
+        surface_map = _get_api_surface_map()
+        key = (matched_route.path, request.method)
+        if key in surface_map:
+            entry = surface_map[key]
+            status = entry.get("status", "supported")
+            replacement = entry.get("replacement")
 
     response = await call_next(request)
     
-    if is_deprecated:
+    response.headers["X-API-Surface-Status"] = status
+    if status == "deprecated":
         response.headers["X-Deprecated-Endpoint"] = "true"
-        logger.warning(f"Deprecated endpoint accessed: {path}")
+        if replacement:
+            response.headers["X-Replacement-Endpoint"] = replacement
+        logger.warning(f"Deprecated endpoint accessed: {request.url.path}")
         
     return response

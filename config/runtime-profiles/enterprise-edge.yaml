@@ -1,0 +1,11 @@
+profile_id: enterprise-edge
+name: Enterprise Edge Profile
+description: Multi-tenant local appliance with RBAC and Observability enabled.
+settings:
+  DEPLOYMENT_MODE: appliance
+  KUBERNETES_MODE: false
+  MANAGED_CONTROL_PLANE_ENABLED: false
+  RBAC_ADMIN_ENABLED: true
+  OBSERVABILITY_ENABLED: true
+  COMMERCIAL_EXECUTIVE_DASHBOARD_ENABLED: true
+  PUBLIC_SIGNUP_ENABLED: true

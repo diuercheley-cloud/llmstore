@@ -167,6 +167,8 @@ operational-readiness: ## Run the Operational Readiness Pack validation
 	@bash scripts/operational-readiness-pack.sh
 
 release-gate: ## Run the release gate validator (Requires TAG=vX.Y.Z)
+	@make platform-freeze-check
+	@make validate-scripts
 	@bash scripts/release-gate.sh $(TAG)
 
 verify-release-artifacts: ## Verify artifact governance and generate checksums (Requires TAG=vX.Y.Z)
@@ -191,6 +193,10 @@ compliance-check: ## Run compliance readiness lint and audit
 
 compliance-release-gate: ## Validate compliance criteria for release (Requires TAG=vX.Y.Z)
 	@bash scripts/compliance-release-gate.sh $(TAG)
+
+platform-freeze-check: ## Verify architectural freeze rules
+	@chmod +x scripts/platform-freeze-check.sh scripts/platform-freeze-check.py
+	@bash scripts/platform-freeze-check.sh
 
 test-smoke-resilience: ## Run smoke tests for resilience
 	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/smoke/test_smoke.py
@@ -737,7 +743,32 @@ validate-release: ## Release production validation
 validate-nightly: ## Nightly production validation
 	VALIDATION_MODE=nightly ./scripts/validate-local-production-full.sh
 
-validate: validate-full ## Alias to validate-full
+validate: validate-full validate-feature-flags validate-scripts ## Alias to validate-full
+
+validate-feature-flags: ## Validate feature flags governance
+	chmod +x ./scripts/check-feature-flags.sh
+	./scripts/check-feature-flags.sh
+
+validate-scripts: ## Validate operational scripts governance
+	chmod +x ./scripts/check-script-manifest.sh
+	./scripts/check-script-manifest.sh
+
+backup-dry-run: ## Run dry-run database and configs backup simulation
+	chmod +x ./scripts/backup.sh
+	./scripts/backup.sh --dry-run
+
+restore-dry-run: ## Run dry-run database restore simulation
+	chmod +x ./scripts/restore-local.sh
+	./scripts/restore-local.sh --dry-run ./artifacts/backups/test-backup-run
+
+upgrade-dry-run: ## Run dry-run system upgrade simulation
+	chmod +x ./scripts/upgrade-release.sh
+	./scripts/upgrade-release.sh --dry-run --force
+
+rollback-dry-run: ## Run dry-run system rollback simulation
+	chmod +x ./scripts/rollback-release.sh
+	./scripts/rollback-release.sh --dry-run
+
 
 validate-migrations: ## Validate Alembic migrations integrity
 	./scripts/validate-migrations-local.sh
@@ -824,9 +855,16 @@ check-secrets: ## Scan for secrets in the codebase
 	./scripts/check-secrets.sh --all
 
 stabilization-check: ## Run formal stabilization phase checks
-	chmod +x ./scripts/stabilization-check.sh ./scripts/check-working-tree-clean.sh
+	chmod +x ./scripts/stabilization-check.sh ./scripts/check-working-tree-clean.sh ./scripts/check-feature-flags.sh
 	./scripts/check-working-tree-clean.sh
+	./scripts/check-feature-flags.sh
+	@make platform-freeze-check
 	./scripts/stabilization-check.sh
+
+complexity-report: ## Generate platform complexity analysis and recommendations
+	chmod +x ./scripts/complexity-report.sh
+	./scripts/complexity-report.sh
+
 
 release-risk-report: ## Generate stabilization risk report
 	chmod +x ./scripts/release-risk-report.sh ./scripts/check-working-tree-clean.sh

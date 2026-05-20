@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.9.8-platform-consolidation] - 2026-05-20
+
+### Added
+- **Supportability Pack**: Sanitized diagnostic bundles (`support-bundle-*.tar.gz`) and operator tooling for platform troubleshooting inside the existing admin/operations surface.
+- **Support API**: `POST /admin/support/bundle` and `GET /admin/support/bundle/latest` for operator-gated diagnostics.
+- **Performance Baseline**: `scripts/performance-baseline.sh` for measuring startup, imports, and latency during freeze validation.
+- **Release Artifacts**: Platform freeze, complexity, supported-surface, and validation reporting promoted into the release checklist.
+
+### Changed
+- **No new major domain**: `v1.9.8` consolidates existing administrative and operational areas rather than introducing a new bounded context.
+- **Lazy Loading**: Router imports in `app.main` are deferred to reduce startup overhead and keep optional surfaces gated.
+- **Latency Optimization**: Core endpoint latency was reduced through consolidation and import cleanup.
+- **Consolidated Setup**: `app.main`, supportability scripts, supported-surface metadata, and runtime-profile tooling were aligned for lower operational complexity.
+
+### Security
+- **Hardened Redaction**: Support-bundle redaction is intended to exclude prompts, documents, keys, and tokens from exported diagnostics.
+- **Zero-Secret Release Policy**: Release validation continues to block real `.env` files, committed secrets, and unsupported security marketing claims.
+
 ## [1.9.4-enterprise-runtime] - 2026-05-19
 
 ### Added
