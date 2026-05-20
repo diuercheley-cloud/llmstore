@@ -1,0 +1,2 @@
+- 2026-05-20: Added generic modal with portal rendering, overlay dismiss and escape handling.
+- 2026-05-20: Storybook now documents content, footer actions and danger/loading flows.

@@ -35,7 +35,9 @@ async def run_billing_cycle_once() -> dict:
         }
 
 
-async def billing_scheduler_loop(stop_event: asyncio.Event) -> None:
+async def billing_scheduler_loop(stop_event: asyncio.Event | None = None) -> None:
+    if stop_event is None:
+        stop_event = asyncio.Event()
     while not stop_event.is_set():
         try:
             result = await run_billing_cycle_once()

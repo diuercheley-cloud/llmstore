@@ -7,16 +7,16 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status, label }: StatusBadgeProps) {
   const config: Record<string, { color: string, icon: any }> = {
-    healthy: { color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-    ready: { color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-    warning: { color: 'bg-amber-100 text-amber-700', icon: AlertCircle },
-    investigating: { color: 'bg-amber-100 text-amber-700', icon: Clock },
-    error: { color: 'bg-rose-100 text-rose-700', icon: XCircle },
-    critical: { color: 'bg-rose-100 text-rose-700', icon: XCircle },
-    draining: { color: 'bg-slate-100 text-slate-700', icon: Clock },
+    healthy: { color: 'bg-primary/20 text-primary', icon: CheckCircle2 },
+    ready: { color: 'bg-primary/20 text-primary', icon: CheckCircle2 },
+    warning: { color: 'bg-yellow-500/20 text-yellow-600', icon: AlertCircle },
+    investigating: { color: 'bg-yellow-500/20 text-yellow-600', icon: Clock },
+    error: { color: 'bg-destructive/20 text-destructive', icon: XCircle },
+    critical: { color: 'bg-destructive/20 text-destructive', icon: XCircle },
+    draining: { color: 'bg-secondary text-foreground', icon: Clock },
   }
 
-  const { color, icon: Icon } = config[status.toLowerCase()] || { color: 'bg-slate-100 text-slate-600', icon: Clock }
+  const { color, icon: Icon } = config[status.toLowerCase()] || { color: 'bg-secondary text-muted-foreground', icon: Clock }
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${color}`}>

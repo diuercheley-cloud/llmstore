@@ -1,8 +1,7 @@
-from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -14,11 +13,11 @@ from app.models.billing_invoice import BillingInvoice
 from app.models.customer_payment import CustomerPayment
 from app.schemas.public import PublicSignupRequest, PublicSignupResponse, WebhookPayload
 from app.services.billing import refresh_billing_statuses
+from app.services.public_seo import PUBLIC_PAGES, generate_robots_txt, generate_sitemap, render_public_page
 from app.services.public_onboarding import create_public_signup, list_public_plans
 
 router = APIRouter(tags=["public"])
 settings = get_settings()
-static_dir = Path(__file__).resolve().parents[1] / "static" / "www"
 
 
 def _base_url(request: Request) -> str:
@@ -28,33 +27,43 @@ def _base_url(request: Request) -> str:
 
 
 @router.get("/", include_in_schema=False)
-async def landing_page():
-    return FileResponse(static_dir / "index.html")
+async def landing_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["landing"], request=request, settings=settings))
 
 
 @router.get("/pricing", include_in_schema=False)
-async def pricing_page():
-    return FileResponse(static_dir / "pricing.html")
+async def pricing_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["pricing"], request=request, settings=settings))
 
 
 @router.get("/signup", include_in_schema=False)
-async def signup_page():
-    return FileResponse(static_dir / "signup.html")
+async def signup_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["signup"], request=request, settings=settings))
 
 
 @router.get("/docs", include_in_schema=False)
-async def docs_page():
-    return FileResponse(static_dir / "docs.html")
+async def docs_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["docs"], request=request, settings=settings))
 
 
 @router.get("/getting-started", include_in_schema=False)
-async def getting_started_page():
-    return FileResponse(static_dir / "getting-started.html")
+async def getting_started_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["getting_started"], request=request, settings=settings))
 
 
 @router.get("/capabilities", include_in_schema=False)
-async def capabilities_page():
-    return FileResponse(static_dir / "capabilities.html")
+async def capabilities_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["capabilities"], request=request, settings=settings))
+
+
+@router.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml(request: Request):
+    return Response(content=generate_sitemap(request=request, settings=settings), media_type="application/xml")
+
+
+@router.get("/robots.txt", include_in_schema=False)
+async def robots_txt(request: Request):
+    return Response(content=generate_robots_txt(request=request, settings=settings), media_type="text/plain")
 
 
 @router.get("/public/capabilities")

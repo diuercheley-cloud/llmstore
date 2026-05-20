@@ -11,7 +11,7 @@ export default function RunbookLink({ href, label = 'Ver Runbook' }: RunbookLink
       href={href} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 font-bold text-xs uppercase tracking-wider transition-colors"
+      className="inline-flex items-center gap-2 text-primary hover:text-primary font-bold text-xs uppercase tracking-wider transition-colors"
     >
       <BookOpen className="w-3.5 h-3.5" />
       {label}

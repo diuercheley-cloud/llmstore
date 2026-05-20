@@ -1,6 +1,7 @@
 import json
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -65,7 +66,18 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
         if backend is None:
             backend = InferenceBackend(**payload)
             session.add(backend)
-            await session.flush()
+            try:
+                await session.flush()
+            except IntegrityError:
+                await session.rollback()
+                # Re-fetch all existing backends after rollback
+                existing = {
+                    item.name: item
+                    for item in (await session.execute(select(InferenceBackend))).scalars().all()
+                }
+                backend = existing.get(payload["name"])
+                if backend is None:
+                    continue
         else:
             for key, value in payload.items():
                 if backend.name == "ollama-local" and key in {"is_active", "status"}:
@@ -73,7 +85,9 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
                 setattr(backend, key, value)
         created_or_updated[backend.name] = backend
 
-    default_backend = created_or_updated["gemma-local"]
-    for item in created_or_updated.values():
-        item.is_default = item.id == default_backend.id
+    default_backend = created_or_updated.get("gemma-local")
+    if default_backend:
+        for item in created_or_updated.values():
+            item.is_default = item.id == default_backend.id
     return created_or_updated
+

@@ -30,32 +30,32 @@ export default function TuningProfiles() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black text-slate-900 mb-2">Perfis de <span className="text-teal-600">Runtime Tuning</span></h1>
-      <p className="text-slate-500 mb-10 font-medium">Configure como o sistema prioriza recursos e responde à carga.</p>
+      <h1 className="text-3xl font-black text-foreground mb-2">Perfis de <span className="text-primary">Runtime Tuning</span></h1>
+      <p className="text-muted-foreground mb-10 font-medium">Configure como o sistema prioriza recursos e responde à carga.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {profiles?.map((p: any) => (
           <div 
             key={p.name} 
-            className={`bg-white border-2 rounded-3xl p-6 transition-all cursor-pointer ${p.is_active ? 'border-teal-500 shadow-lg shadow-teal-500/10' : 'border-slate-100 hover:border-slate-300'}`}
+            className={`bg-card border-2 rounded-3xl p-6 transition-all cursor-pointer ${p.is_active ? 'border-primary shadow-lg shadow-teal-500/10' : 'border-border hover:border-border'}`}
             onClick={() => setSelectedProfile(p.name)}
           >
             <div className="flex justify-between items-start mb-4">
-              <div className={`p-3 rounded-2xl ${p.is_active ? 'bg-teal-50 text-teal-600' : 'bg-slate-50 text-slate-400'}`}>
+              <div className={`p-3 rounded-2xl ${p.is_active ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
                 {p.is_active ? <Check className="w-6 h-6" /> : <Info className="w-6 h-6" />}
               </div>
               {p.is_active && (
-                <span className="bg-teal-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Ativo</span>
+                <span className="bg-primary text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Ativo</span>
               )}
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-1 uppercase tracking-tight">{p.name.replace(/_/g, ' ')}</h3>
-            <p className="text-sm text-slate-500 mb-6 h-10 overflow-hidden">{p.description}</p>
+            <h3 className="text-xl font-bold text-foreground mb-1 uppercase tracking-tight">{p.name.replace(/_/g, ' ')}</h3>
+            <p className="text-sm text-muted-foreground mb-6 h-10 overflow-hidden">{p.description}</p>
             
             <div className="space-y-3 mb-8">
               {Object.entries(p.config).map(([key, val]: [string, any]) => (
                 <div key={key} className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                  <span className="text-slate-400">{key.replace(/_/g, ' ')}</span>
-                  <span className="text-slate-700">{val.toString()}</span>
+                  <span className="text-muted-foreground">{key.replace(/_/g, ' ')}</span>
+                  <span className="text-foreground">{val.toString()}</span>
                 </div>
               ))}
             </div>
@@ -66,7 +66,7 @@ export default function TuningProfiles() {
                 applyMutation.mutate(p.name)
               }}
               disabled={p.is_active || applyMutation.isPending}
-              className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.is_active ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-teal-600'}`}
+              className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.is_active ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-foreground text-white hover:bg-primary'}`}
             >
               {p.is_active ? 'Perfil Atual' : 'Aplicar Perfil'}
             </button>
@@ -74,13 +74,13 @@ export default function TuningProfiles() {
         ))}
       </div>
 
-      <div className="mt-12 p-8 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-4">
-        <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+      <div className="mt-12 p-8 bg-yellow-500/10 border border-amber-100 rounded-3xl flex items-start gap-4">
+        <AlertTriangle className="w-6 h-6 text-yellow-600 shrink-0" />
         <div>
           <h4 className="font-bold text-amber-900 mb-1">Modo de Aplicação de Tuning</h4>
-          <p className="text-sm text-amber-700 leading-relaxed">
+          <p className="text-sm text-yellow-600 leading-relaxed">
             Por padrão, a aplicação de perfis é **ADVISORY**. O sistema registra a intenção e os eventos, mas não altera as variáveis de ambiente reais do container. 
-            Para permitir mudanças reais, defina <code className="bg-amber-100 px-1 rounded font-bold">RUNTIME_TUNING_APPLY_ENABLED=true</code>.
+            Para permitir mudanças reais, defina <code className="bg-yellow-500/20 px-1 rounded font-bold">RUNTIME_TUNING_APPLY_ENABLED=true</code>.
           </p>
         </div>
       </div>

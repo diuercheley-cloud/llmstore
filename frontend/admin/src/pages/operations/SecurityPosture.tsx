@@ -6,10 +6,10 @@ export default function SecurityPosture() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 mb-2">Security <span className="text-teal-600">Posture</span></h1>
-          <p className="text-slate-500 font-medium">Monitoramento de conformidade, criptografia e auditoria.</p>
+          <h1 className="text-3xl font-black text-foreground mb-2">Security <span className="text-primary">Posture</span></h1>
+          <p className="text-muted-foreground font-medium">Monitoramento de conformidade, criptografia e auditoria.</p>
         </div>
-        <button className="bg-teal-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-teal-600/20">
+        <button className="bg-primary text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20">
           <Download className="w-4 h-4" />
           Baixar Relatório
         </button>
@@ -36,24 +36,24 @@ export default function SecurityPosture() {
         />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">Últimos Eventos de Segurança</h3>
+      <div className="bg-card border border-border rounded-3xl p-8 shadow-sm">
+        <h3 className="text-xl font-bold text-foreground mb-6">Últimos Eventos de Segurança</h3>
         <div className="space-y-4">
           {[
             { event: 'Rotação de Master Key', status: 'success', time: '2h atrás' },
             { event: 'Tentativa de acesso não autorizado (Node-05)', status: 'warning', time: '5h atrás' },
             { event: 'Novo certificado PKI emitido', status: 'success', time: '12h atrás' },
           ].map((e, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+            <div key={i} className="flex items-center justify-between p-4 bg-secondary rounded-2xl">
               <div className="flex items-center gap-3">
                 {e.status === 'success' ? (
-                  <ShieldCheck className="w-5 h-5 text-green-500" />
+                  <ShieldCheck className="w-5 h-5 text-primary" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
                 )}
-                <span className="font-bold text-slate-700">{e.event}</span>
+                <span className="font-bold text-foreground">{e.event}</span>
               </div>
-              <span className="text-xs text-slate-400 font-mono">{e.time}</span>
+              <span className="text-xs text-muted-foreground font-mono">{e.time}</span>
             </div>
           ))}
         </div>

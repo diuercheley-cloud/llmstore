@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary-color, #3b82f6);
+  --color-bg-base: #f8fafc;
+  --color-text-base: #0f172a;
+  --color-sidebar: #1e293b;
+  --color-sidebar-text: #f1f5f9;
+  --color-card: #ffffff;
+  --color-border-base: #e2e8f0;
+}
+
+:root {
+  --primary-color: #3b82f6;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-base text-text-base antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 shadow-sm;
+  }
+  
+  .btn-outline {
+    @apply border border-border-base bg-white hover:bg-slate-50 text-text-base;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 shadow-sm;
+  }
+
+  .card {
+    @apply bg-card border border-border-base rounded-xl shadow-sm p-5;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 bg-white border border-border-base rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
+  }
+
+  /* Responsive Table to Cards */
+  .resp-table-container {
+    @apply w-full overflow-x-auto;
+  }
+
+  .resp-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .resp-table thead {
+    @apply hidden md:table-header-group bg-slate-50;
+  }
+
+  .resp-table th {
+    @apply px-4 py-3 font-semibold text-slate-600 border-b border-border-base;
+  }
+
+  .resp-table tr {
+    @apply flex flex-col md:table-row border-b border-border-base mb-4 md:mb-0 last:border-0;
+  }
+
+  .resp-table td {
+    @apply flex items-center justify-between md:table-cell px-4 py-3 text-sm md:text-base before:content-[attr(data-label)] before:font-bold before:md:hidden;
+  }
+
+  .badge {
+    @apply px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+}

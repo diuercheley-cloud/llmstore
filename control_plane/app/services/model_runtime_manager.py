@@ -56,6 +56,22 @@ class ModelRuntimeManager(ModelRuntimeContract):
         if not self.settings.model_hot_swap_enabled:
             raise HTTPException(status_code=403, detail="Model hot swap is disabled")
 
+        if self.settings.model_runtime_mock_enabled:
+            port = await self._find_free_port()
+            instance = ModelRuntimeInstance(
+                model_id=model_id,
+                backend_id=backend_id,
+                model_path=model_path,
+                port=port,
+                status="ready",
+                health_status="healthy",
+                is_active=False
+            )
+            self.db.add(instance)
+            await self.db.commit()
+            await self.db.refresh(instance)
+            return instance
+
         # Validation
         p = Path(model_path)
         if not p.exists():

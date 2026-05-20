@@ -183,9 +183,9 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | Multi-Provider | Local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter |
 | Real Provider Validation | Teste seguro de chaves reais (opt-in, cost cap, sem leak) |
 | Commercial Analytics | Persistência de eventos de roteamento, ranking e lucro |
-| Admin Dashboard | Gestão de clientes, API keys, uso, billing, providers |
+| Admin Dashboard | Gestão de infraestrutura, clientes, modelos e monitoramento (Totalmente Responsivo) |
 | Admin Lab | Gestão de modelos, backends, testes de prompt |
-| Client Portal | Interface do cliente com uso e consumo |
+| Client Portal | Interface self-service: uso, billing, playground e RAG (Mobile-First) |
 | RAG | Upload de documentos (.pdf, .txt, .md) e busca semântica |
 | TTS | Text-to-speech local com pocket-tts |
 | Billing manual | Invoices, ciclos, suspensão automática |
@@ -444,6 +444,25 @@ Consulte [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md) para o histórico co
 - Fila distribuída e workers externos para múltiplos data planes
 - Tokenizer real para contabilidade de tokens
 - Tracing distribuído e retenção externa de métricas/logs
+
+## Suporte a Dispositivos Móveis e UI Responsiva
+
+Ambos os portais (**Admin Dashboard** e **Client Portal**) foram refatorados para oferecer uma experiência fluida em qualquer tamanho de tela, seguindo a abordagem **mobile-first**:
+
+- **Layout Mobile:** Sidebar colapsável com menu hambúrguer e backdrop para navegação intuitiva em smartphones.
+- **Tabelas Inteligentes:** Em telas pequenas (até 768px), as tabelas de dados (clientes, modelos, faturas) são automaticamente convertidas em "cards" verticais, garantindo legibilidade.
+- **Gráficos Flexíveis:** Dashboards de uso utilizam containers responsivos que se ajustam proporcionalmente ao redimensionar a janela.
+- **Playground Otimizado:** O ambiente de chat e configuração de parâmetros foi reorganizado para empilhamento vertical no mobile, permitindo testes rápidos de qualquer lugar.
+- **Modais de Ação:** Modais de pagamento (como o QR Code do PIX) e formulários ocupam a tela cheia em dispositivos móveis para facilitar a interação.
+- **Breakpoints Utilizados:** Otimização específica para 375px (iPhone SE), 768px (iPad) e 1280px+ (Desktop).
+
+### Tecnologias Frontend
+
+- **Framework:** React 19 + TypeScript
+- **Estilização:** Tailwind CSS v4
+- **Ícones:** Lucide React
+- **Gráficos:** Recharts (Responsive Containers)
+- **Build Tool:** Vite 8
 
 ---
 

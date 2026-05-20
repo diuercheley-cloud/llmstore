@@ -8,9 +8,11 @@ frontend:test:
     - cd frontend/admin
     - npm ci
     - npm run build
+    - npm run build-storybook
   artifacts:
     paths:
       - frontend/admin/dist/
+      - frontend/admin/storybook-static/
     expire_in: 7 days
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

@@ -6,4 +6,9 @@ __pycache__
 logs
 models
 *.gguf
-
+.cache
+!.cache/llama.cpp
+!.cache/llama.cpp/**
+.cache/llama.cpp/.git
+.cache/llama.cpp/build
+.cache/llama.cpp/models

@@ -1,0 +1,2 @@
+- 2026-05-20: Added presentational `Table` component for reusable data layouts.
+- 2026-05-20: Documented loading, empty, error and disabled table states in Storybook.

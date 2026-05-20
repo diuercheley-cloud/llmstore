@@ -4,7 +4,7 @@ from fastapi import Depends
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db_session
+from app.db.session import get_db_session, get_redis
 from app.services.auth import (
     AdminRole,
     admin_key_scheme,
@@ -12,6 +12,7 @@ from app.services.auth import (
     require_admin_permission,
     require_admin_role,
     require_superadmin,
+    require_admin,
 )
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker

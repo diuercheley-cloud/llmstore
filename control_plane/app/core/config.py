@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     public_base_url: str = Field(default="", alias="PUBLIC_BASE_URL")
     public_brand_name: str = Field(default="LLM Inference Stack Cloud", alias="PUBLIC_BRAND_NAME")
     public_support_email: str = Field(default="sales@example.com", alias="PUBLIC_SUPPORT_EMAIL")
+    public_analytics_provider: str = Field(default="none", alias="PUBLIC_ANALYTICS_PROVIDER")
+    public_plausible_domain: str = Field(default="", alias="PUBLIC_PLAUSIBLE_DOMAIN")
+    public_plausible_src: str = Field(default="https://plausible.io/js/script.js", alias="PUBLIC_PLAUSIBLE_SRC")
     database_url: str = Field(alias="DATABASE_URL")
     redis_url: str = Field(alias="REDIS_URL")
     data_plane_base_url: str = Field(alias="DATA_PLANE_BASE_URL")
@@ -537,6 +540,8 @@ class Settings(BaseSettings):
     plugin_signature_required: bool = Field(default=False, alias="PLUGIN_SIGNATURE_REQUIRED")
 
     model_hot_swap_enabled: bool = Field(default=False, alias="MODEL_HOT_SWAP_ENABLED")
+    model_runtime_mock_enabled: bool = Field(default=False, alias="MODEL_RUNTIME_MOCK_ENABLED")
+    create_tables_on_startup: bool = Field(default=False, alias="CREATE_TABLES_ON_STARTUP")
     model_runtime_port_start: int = Field(default=18081, alias="MODEL_RUNTIME_PORT_START")
     model_runtime_port_end: int = Field(default=18120, alias="MODEL_RUNTIME_PORT_END")
     model_load_timeout_seconds: int = Field(default=120, alias="MODEL_LOAD_TIMEOUT_SECONDS")

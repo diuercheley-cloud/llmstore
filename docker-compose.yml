@@ -127,6 +127,7 @@ services:
       - ./control_plane/alembic.ini:/app/alembic.ini
       - ./models:/models:ro
       - ./data:/data
+      - ./config:/config:ro
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       resources:
@@ -164,6 +165,7 @@ services:
       - ./control_plane/alembic.ini:/app/alembic.ini
       - ./models:/models:ro
       - ./data:/data
+      - ./config:/config:ro
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:

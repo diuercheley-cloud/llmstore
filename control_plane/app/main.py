@@ -97,6 +97,8 @@ from app.api.observability_admin import router as observability_admin_router
 from app.api.operations_ux_admin import router as operations_ux_admin_router
 from app.api.performance_admin import router as performance_admin_router
 from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
+from app.api.admin_onboarding import router as admin_onboarding_router
+from app.api.admin_metrics import router as admin_metrics_router
 from app.api.multi_cluster_admin import router as multi_cluster_admin_router
 from app.api.chaos_admin import router as chaos_admin_router
 from app.api.compliance_admin import router as compliance_admin_router
@@ -181,21 +183,46 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(commercial_live_balancing_admin_router, prefix="/admin/routing/live-balancing", tags=["commercial_live_balancing"])
 
 
+async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
+    if not settings.commercial_federation_enabled:
+        return
+    while not stop_event.is_set():
+        try:
+            async with SessionLocal() as session:
+                await sync_federation_clusters(session, sync_type="scheduled", settings=settings)
+                await session.commit()
+        except Exception as exc:
+            logging.getLogger(__name__).exception("federation sync loop failed", extra={"extra_data": {"error": str(exc)}})
+        try:
+            await asyncio.wait_for(stop_event.wait(), timeout=settings.commercial_federation_sync_interval_seconds)
+        except asyncio.TimeoutError:
+            continue
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if getattr(settings, "create_tables_on_startup", False):
+        from app.db.base import Base
+        from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts, operations
+        from app.db.session import engine
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
     async with SessionLocal() as session:
         await seed_defaults(session)
         if settings.commercial_model_integrity_monitor_enabled and settings.commercial_model_integrity_boot_scan_enabled:
             await scan_registered_models(session)
     
-    billing_task = asyncio.create_task(billing_scheduler_loop())
-    analytics_task = asyncio.create_task(commercial_distributed_analytics_loop())
-    federation_task = asyncio.create_task(sync_federation_clusters())
-    report_task = asyncio.create_task(commercial_report_scheduler_loop())
-    integrity_task = asyncio.create_task(runtime_integrity_monitor_loop())
+    stop_event = asyncio.Event()
+    billing_task = asyncio.create_task(billing_scheduler_loop(stop_event))
+    analytics_task = asyncio.create_task(commercial_distributed_analytics_loop(stop_event))
+    federation_task = asyncio.create_task(sync_federation_clusters_loop(stop_event))
+    report_task = asyncio.create_task(commercial_report_scheduler_loop(stop_event))
+    integrity_task = asyncio.create_task(runtime_integrity_monitor_loop(stop_event))
     
     yield
     
+    stop_event.set()
     billing_task.cancel()
     analytics_task.cancel()
     federation_task.cancel()
@@ -344,6 +371,8 @@ app.include_router(observability_admin_router)
 app.include_router(operations_ux_admin_router)
 app.include_router(performance_admin_router)
 app.include_router(enterprise_onboarding_admin_router)
+app.include_router(admin_onboarding_router)
+app.include_router(admin_metrics_router)
 app.include_router(multi_cluster_admin_router)
 app.include_router(chaos_admin_router)
 app.include_router(compliance_admin_router)

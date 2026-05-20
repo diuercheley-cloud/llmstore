@@ -1,0 +1,2 @@
+- 2026-05-20: Introduced reusable `Input` component with label, hint, icon and validation states.
+- 2026-05-20: Added Storybook docs for sizing, errors, focus handling and usage snippets.

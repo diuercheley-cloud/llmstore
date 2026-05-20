@@ -1,0 +1,2 @@
+- 2026-05-20: Storybook story set added with documented loading, disabled, hover and focus states.
+- 2026-05-20: Autodocs and TypeScript prop coverage enabled for the atomic button API.

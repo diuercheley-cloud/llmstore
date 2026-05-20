@@ -1,0 +1,2 @@
+- 2026-05-20: Added reusable toast presentation layer plus `showToast` helper on top of Sonner.
+- 2026-05-20: Storybook now shows inline anatomy and live trigger examples for design review.

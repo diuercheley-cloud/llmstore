@@ -1,0 +1,2 @@
+- 2026-05-20: Added generic card shell with header, eyebrow, action and severity variants.
+- 2026-05-20: Storybook docs cover elevated, interactive and critical content blocks.

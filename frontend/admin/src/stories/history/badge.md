@@ -1,0 +1,2 @@
+- 2026-05-20: Added reusable badge variants for status, severity and emphasis levels.
+- 2026-05-20: Storybook documents size and tone combinations for QA reference.

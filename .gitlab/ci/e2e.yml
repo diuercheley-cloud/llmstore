@@ -1,0 +1,27 @@
+e2e:test:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.49.0-jammy
+  services:
+    - name: redis:7
+      alias: redis
+  variables:
+    REDIS_URL: "redis://redis:6379/15"
+  before_script:
+    - apt-get update && apt-get install -y python3-pip python3-venv
+    - python3 -m venv .venv
+    - .venv/bin/pip install --upgrade pip
+    - .venv/bin/pip install -r control_plane/requirements.txt
+  script:
+    - cd tests/e2e-playwright
+    - npm ci
+    # Browsers are already in the image, but we might need to ensure they are the right version or just use the pre-installed ones.
+    # The image mcr.microsoft.com/playwright:v1.49.0-jammy comes with browsers.
+    - npx playwright test
+  artifacts:
+    when: always
+    paths:
+      - tests/e2e-playwright/playwright-report/
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"

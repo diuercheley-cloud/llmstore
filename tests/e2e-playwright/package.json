@@ -1,0 +1,14 @@
+{
+  "name": "e2e-playwright-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E Playwright tests for llm-inference-stack",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.0.0"
+  }
+}

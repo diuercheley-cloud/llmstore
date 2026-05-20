@@ -44,13 +44,13 @@ export default function OperationsOverview() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <header className="mb-10">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Centro de <span className="text-teal-600">Operações</span></h1>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">Centro de <span className="text-primary">Operações</span></h1>
           <div className="flex items-center gap-3">
-             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Modo:</span>
-             <span className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black rounded-full uppercase">{overview?.deployment_mode || 'Appliance'}</span>
+             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Modo:</span>
+             <span className="px-3 py-1 bg-foreground text-white text-[10px] font-black rounded-full uppercase">{overview?.deployment_mode || 'Appliance'}</span>
           </div>
         </div>
-        <p className="text-slate-500 font-medium">Monitoramento em tempo real, diagnóstico de prontidão e ações de remediação.</p>
+        <p className="text-muted-foreground font-medium">Monitoramento em tempo real, diagnóstico de prontidão e ações de remediação.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -91,42 +91,42 @@ export default function OperationsOverview() {
           >
             <button 
               onClick={() => setIsResetCBModalOpen(true)}
-              className="flex items-center gap-2 bg-rose-50 text-rose-700 hover:bg-rose-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-rose-200"
+              className="flex items-center gap-2 bg-destructive/10 text-destructive hover:bg-destructive/20 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-rose-200"
             >
               <Zap className="w-4 h-4" />
               Resetar Circuit Breaker
             </button>
             <Link 
               to="/operations/readiness"
-              className="flex items-center gap-2 bg-slate-50 text-slate-700 hover:bg-slate-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-slate-200"
+              className="flex items-center gap-2 bg-secondary text-foreground hover:bg-secondary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-border"
             >
               <CheckCircle2 className="w-4 h-4" />
               Executar Readiness Check
             </Link>
             <button 
-              className="flex items-center gap-2 bg-slate-50 text-slate-700 hover:bg-slate-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-slate-200"
+              className="flex items-center gap-2 bg-secondary text-foreground hover:bg-secondary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border border-border"
             >
               <RotateCcw className="w-4 h-4" />
               Forçar Resync de Config
             </button>
           </ActionPanel>
 
-          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-black text-slate-900 uppercase tracking-tight">Recomendações da AIOps</h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-1 rounded-md border border-slate-200">AUTO-GENERATE</span>
+          <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-secondary/50">
+              <h3 className="font-black text-foreground uppercase tracking-tight">Recomendações da AIOps</h3>
+              <span className="text-[10px] font-bold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border">AUTO-GENERATE</span>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {recommendations?.map((rec: any) => (
-                <div key={rec.id} className="p-6 hover:bg-slate-50/50 transition-colors">
+                <div key={rec.id} className="p-6 hover:bg-secondary/50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-slate-900">{rec.title}</h4>
+                    <h4 className="font-bold text-foreground">{rec.title}</h4>
                     <RiskLevelBadge level={rec.priority} />
                   </div>
-                  <p className="text-sm text-slate-500 mb-4">{rec.action}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{rec.action}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded uppercase tracking-tighter">{rec.impact}</span>
-                    <a href={rec.runbook_url} className="text-xs font-black text-slate-400 hover:text-teal-600 flex items-center gap-1 uppercase tracking-wider transition-colors">
+                    <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase tracking-tighter">{rec.impact}</span>
+                    <a href={rec.runbook_url} className="text-xs font-black text-muted-foreground hover:text-primary flex items-center gap-1 uppercase tracking-wider transition-colors">
                       <FileText className="w-3.5 h-3.5" />
                       View Runbook
                     </a>
@@ -138,27 +138,27 @@ export default function OperationsOverview() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-slate-900 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
+          <div className="bg-foreground text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <ShieldCheck className="w-24 h-24" />
             </div>
             <h3 className="text-xl font-bold mb-2">Postura de Segurança</h3>
-            <p className="text-slate-400 text-sm mb-6">Sua infraestrutura está seguindo 92% das recomendações de segurança.</p>
-            <div className="w-full bg-slate-800 h-2 rounded-full mb-8">
-              <div className="bg-teal-500 h-full rounded-full" style={{ width: '92%' }}></div>
+            <p className="text-muted-foreground text-sm mb-6">Sua infraestrutura está seguindo 92% das recomendações de segurança.</p>
+            <div className="w-full bg-foreground h-2 rounded-full mb-8">
+              <div className="bg-primary h-full rounded-full" style={{ width: '92%' }}></div>
             </div>
-            <Link to="/operations/security" className="block text-center bg-white text-slate-900 font-bold py-3 rounded-2xl hover:bg-teal-50 transition-colors">
+            <Link to="/operations/security" className="block text-center bg-card text-foreground font-bold py-3 rounded-2xl hover:bg-primary/10 transition-colors">
               Ver Relatório Completo
             </Link>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-            <h3 className="font-black text-slate-900 uppercase tracking-tight mb-4">Enterprise Features</h3>
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+            <h3 className="font-black text-foreground uppercase tracking-tight mb-4">Enterprise Features</h3>
             <div className="space-y-3">
               {Object.entries(overview?.enterprise_features || {}).map(([key, enabled]: [string, any]) => (
                 <div key={key} className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black ${enabled ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black ${enabled ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}`}>
                     {enabled ? 'OPT-IN' : 'OPT-OFF'}
                   </span>
                 </div>

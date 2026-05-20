@@ -94,6 +94,13 @@ const adminSections = [
     description: "Dashboards Grafana, orçamentos de erro (SLO) e timeline de incidentes."
   },
   {
+    title: "Monitoramento Live",
+    href: "/observability/realtime",
+    icon: <Activity className="w-6 h-6" />,
+    badge: "Real-time",
+    description: "Métricas de sistema, fila e latência em tempo real via SSE."
+  },
+  {
     title: "Multi-Cluster",
     href: "/multicluster",
     icon: <Network className="w-6 h-6" />,
@@ -125,53 +132,56 @@ const adminSections = [
 
 export default function Hub() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <header className="mb-12">
-        <div className="flex items-center gap-2 text-teal-600 font-bold uppercase tracking-wider text-sm mb-4">
-          <Shield className="w-4 h-4" />
+    <div className="space-y-12">
+      <header>
+        <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs md:text-sm mb-4" role="status">
+          <Shield className="w-4 h-4" aria-hidden="true" />
           Admin Hub
         </div>
-        <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
-          Infraestrutura <span className="text-teal-600">Global</span>
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+          Infraestrutura <span className="text-primary">Global</span>
         </h1>
-        <p className="text-lg text-slate-600 max-w-2xl leading-relaxed">
+        <p className="text-sm md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
           Plataforma de controle para inferência de LLMs em escala. 
           Gerencie clientes, modelos e custos em um único painel.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {adminSections.map((item) => (
-          <Link 
-            key={item.title} 
-            to={item.href}
-            className="group block p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-teal-500 transition-all"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-slate-50 text-slate-700 rounded-xl group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors">
-                {item.icon}
+      <section aria-label="Seções Administrativas">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {adminSections.map((item) => (
+            <Link 
+              key={item.title} 
+              to={item.href}
+              className="group block p-6 bg-card border border-border rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all focus-visible:ring-2 focus-visible:ring-primary outline-none active:scale-[0.98]"
+              aria-labelledby={`title-${item.title.replace(/\s+/g, '-').toLowerCase()}`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-3 bg-secondary text-foreground rounded-xl group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm" aria-hidden="true">
+                  {item.icon}
+                </div>
+                <span className="px-2.5 py-1 bg-secondary text-muted-foreground text-[10px] font-black rounded-full uppercase tracking-widest border border-border group-hover:border-primary/20 transition-colors">
+                  {item.badge}
+                </span>
               </div>
-              <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wider">
-                {item.badge}
-              </span>
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-teal-700">{item.title}</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              {item.description}
-            </p>
-            <div className="flex items-center justify-between text-slate-400 group-hover:text-teal-600 transition-colors">
-              <span className="text-xs font-mono">/admin{item.href}</span>
-              <strong className="text-sm flex items-center gap-1">
-                Acessar <ArrowRight className="w-4 h-4" />
-              </strong>
-            </div>
-          </Link>
-        ))}
-      </div>
+              <h2 id={`title-${item.title.replace(/\s+/g, '-').toLowerCase()}`} className="text-lg md:text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{item.title}</h2>
+              <p className="text-muted-foreground text-xs md:text-sm leading-relaxed mb-6 line-clamp-2 md:line-clamp-none">
+                {item.description}
+              </p>
+              <div className="flex items-center justify-between text-muted-foreground group-hover:text-primary transition-colors pt-2 border-t border-border group-hover:border-primary/10">
+                <span className="text-[10px] font-mono opacity-60">/admin{item.href}</span>
+                <strong className="text-xs flex items-center gap-1 font-black uppercase tracking-tighter">
+                  Ver Mais <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </strong>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-      <footer className="mt-20 pt-8 border-t border-slate-200 text-slate-400 text-sm flex justify-between">
+      <footer className="pt-12 border-t border-border text-muted-foreground text-[10px] md:text-xs flex flex-col md:flex-row justify-between gap-4">
         <p>© {new Date().getFullYear()} LLM Inference Stack • Enterprise Edition</p>
-        <p className="font-mono text-xs">V2.0-REACT-STABLE</p>
+        <p className="font-mono opacity-50">V2.0-REACT-STABLE</p>
       </footer>
     </div>
   )

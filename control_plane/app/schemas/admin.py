@@ -453,3 +453,14 @@ class ModelRuntimeInstanceSchema(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OnboardingStatusRead(BaseModel):
+    is_finished: bool
+    finished_at: datetime | None = None
+    metadata_json: str | None = None
+
+
+class OnboardingStatusUpdate(BaseModel):
+    is_finished: bool
+    metadata_json: str | None = None

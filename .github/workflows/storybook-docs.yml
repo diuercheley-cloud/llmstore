@@ -1,0 +1,44 @@
+name: Storybook Docs
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "frontend/admin/**"
+      - ".github/workflows/storybook-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: storybook-docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: storybook-docs
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Setup Node
+        uses: ./.github/actions/setup-node-admin
+      - name: Build Storybook
+        env:
+          STORYBOOK_DOCS_DOMAIN: ${{ vars.STORYBOOK_DOCS_DOMAIN }}
+        run: |
+          cd frontend/admin
+          npm run build-storybook
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/admin/storybook-static
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

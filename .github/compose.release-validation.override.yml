@@ -1,0 +1,26 @@
+services:
+  data-plane-gemma:
+    build:
+      context: ./data_plane_mock
+      dockerfile: Dockerfile.ci
+    gpus: !reset []
+    deploy: !reset {}
+    environment:
+      MODEL_FILE:
+      LLAMA_SERVER_PORT:
+      LLAMA_CTX_SIZE:
+      LLAMA_N_GPU_LAYERS:
+      LLAMA_THREADS:
+      LLAMA_BATCH_SIZE:
+      LLAMA_UBATCH_SIZE:
+      LLAMA_PARALLEL:
+      LLAMA_CONT_BATCHING:
+      LLAMA_FLASH_ATTN:
+      LLAMA_CHAT_TEMPLATE:
+    volumes: !reset []
+    ports: !reset []
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health').read()"]
+      interval: 5s
+      timeout: 2s
+      retries: 6

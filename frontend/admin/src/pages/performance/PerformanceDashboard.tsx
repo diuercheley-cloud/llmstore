@@ -52,14 +52,14 @@ export default function PerformanceDashboard() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <header className="mb-10 flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Performance <span className="text-teal-600">Tuning</span></h1>
-          <p className="text-slate-500 font-medium">Otimização de runtime baseada em benchmarks e IA.</p>
+          <h1 className="text-4xl font-black text-foreground tracking-tight">Performance <span className="text-primary">Tuning</span></h1>
+          <p className="text-muted-foreground font-medium">Otimização de runtime baseada em benchmarks e IA.</p>
         </div>
         <div className="flex gap-3">
            <button 
              onClick={() => benchmarkMutation.mutate('unsloth/gemma-4-E4B-it-GGUF')}
              disabled={isBenchmarking}
-             className="bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors disabled:opacity-50"
+             className="bg-foreground text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-foreground transition-colors disabled:opacity-50"
            >
              <RefreshCw className={`w-4 h-4 ${isBenchmarking ? 'animate-spin' : ''}`} />
              {isBenchmarking ? 'Executando Benchmark...' : 'Novo Benchmark'}
@@ -98,73 +98,73 @@ export default function PerformanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {benchmarks && benchmarks.length >= 2 && (
-            <div className="bg-slate-900 text-white rounded-3xl p-8 shadow-xl">
+            <div className="bg-foreground text-white rounded-3xl p-8 shadow-xl">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-teal-400" />
+                <TrendingUp className="w-6 h-6 text-primary" />
                 Comparativo: Últimas 2 Execuções
               </h3>
               <div className="grid grid-cols-2 gap-10">
                 <div>
-                  <div className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Atual ({new Date(benchmarks[0].timestamp).toLocaleTimeString()})</div>
+                  <div className="text-[10px] font-black text-muted-foreground uppercase mb-4 tracking-widest">Atual ({new Date(benchmarks[0].timestamp).toLocaleTimeString()})</div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-end border-b border-slate-800 pb-2">
-                      <span className="text-xs font-bold text-slate-400">TPS</span>
-                      <span className="text-2xl font-black text-teal-400">{benchmarks[0].tokens_per_sec.toFixed(1)}</span>
+                    <div className="flex justify-between items-end border-b border-border pb-2">
+                      <span className="text-xs font-bold text-muted-foreground">TPS</span>
+                      <span className="text-2xl font-black text-primary">{benchmarks[0].tokens_per_sec.toFixed(1)}</span>
                     </div>
-                    <div className="flex justify-between items-end border-b border-slate-800 pb-2">
-                      <span className="text-xs font-bold text-slate-400">Latency p95</span>
+                    <div className="flex justify-between items-end border-b border-border pb-2">
+                      <span className="text-xs font-bold text-muted-foreground">Latency p95</span>
                       <span className="text-2xl font-black text-white">{benchmarks[0].latency_p95.toFixed(0)}ms</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Anterior ({new Date(benchmarks[1].timestamp).toLocaleTimeString()})</div>
+                  <div className="text-[10px] font-black text-muted-foreground uppercase mb-4 tracking-widest">Anterior ({new Date(benchmarks[1].timestamp).toLocaleTimeString()})</div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-end border-b border-slate-800 pb-2">
-                      <span className="text-xs font-bold text-slate-400">TPS</span>
-                      <span className="text-2xl font-black text-slate-500">{benchmarks[1].tokens_per_sec.toFixed(1)}</span>
+                    <div className="flex justify-between items-end border-b border-border pb-2">
+                      <span className="text-xs font-bold text-muted-foreground">TPS</span>
+                      <span className="text-2xl font-black text-muted-foreground">{benchmarks[1].tokens_per_sec.toFixed(1)}</span>
                     </div>
-                    <div className="flex justify-between items-end border-b border-slate-800 pb-2">
-                      <span className="text-xs font-bold text-slate-400">Latency p95</span>
-                      <span className="text-2xl font-black text-slate-500">{benchmarks[1].latency_p95.toFixed(0)}ms</span>
+                    <div className="flex justify-between items-end border-b border-border pb-2">
+                      <span className="text-xs font-bold text-muted-foreground">Latency p95</span>
+                      <span className="text-2xl font-black text-muted-foreground">{benchmarks[1].latency_p95.toFixed(0)}ms</span>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400">Delta de Performance</span>
-                <span className={`text-sm font-black ${benchmarks[0].tokens_per_sec > benchmarks[1].tokens_per_sec ? 'text-green-400' : 'text-rose-400'}`}>
+              <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground">Delta de Performance</span>
+                <span className={`text-sm font-black ${benchmarks[0].tokens_per_sec > benchmarks[1].tokens_per_sec ? 'text-primary' : 'text-destructive'}`}>
                   {((benchmarks[0].tokens_per_sec / benchmarks[1].tokens_per_sec - 1) * 100).toFixed(1)}%
                 </span>
               </div>
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-black text-slate-900 uppercase tracking-tight">Recomendações de Tuning</h3>
-              <TrendingUp className="w-5 h-5 text-teal-600" />
+          <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-secondary/50">
+              <h3 className="font-black text-foreground uppercase tracking-tight">Recomendações de Tuning</h3>
+              <TrendingUp className="w-5 h-5 text-primary" />
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {recommendations?.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 font-medium">Nenhuma recomendação no momento. Execute um benchmark para gerar novos insights.</div>
+                <div className="p-10 text-center text-muted-foreground font-medium">Nenhuma recomendação no momento. Execute um benchmark para gerar novos insights.</div>
               ) : recommendations?.map((rec: any) => (
-                <div key={rec.id} className="p-6 hover:bg-slate-50/50 transition-colors">
+                <div key={rec.id} className="p-6 hover:bg-secondary/50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <AlertCircle className={`w-4 h-4 ${rec.priority === 'critical' ? 'text-rose-500' : 'text-amber-500'}`} />
-                      <h4 className="font-bold text-slate-900">{rec.title}</h4>
+                      <AlertCircle className={`w-4 h-4 ${rec.priority === 'critical' ? 'text-destructive' : 'text-yellow-500'}`} />
+                      <h4 className="font-bold text-foreground">{rec.title}</h4>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${rec.impact === 'PERFORMANCE' ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${rec.impact === 'PERFORMANCE' ? 'bg-primary/20 text-primary' : 'bg-yellow-500/20 text-yellow-600'}`}>
                       {rec.impact}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 mb-4">{rec.description}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{rec.description}</p>
                   <div className="flex items-center justify-between">
-                     <code className="text-[10px] bg-slate-100 px-2 py-1 rounded font-mono text-slate-600">
+                     <code className="text-[10px] bg-secondary px-2 py-1 rounded font-mono text-muted-foreground">
                        {JSON.stringify(rec.suggested_config)}
                      </code>
-                     <button className="text-xs font-black text-teal-600 hover:text-teal-700 uppercase tracking-widest">
+                     <button className="text-xs font-black text-primary hover:text-primary uppercase tracking-widest">
                        Aplicar Sugestão
                      </button>
                   </div>
@@ -176,25 +176,25 @@ export default function PerformanceDashboard() {
 
         <div className="space-y-6">
           <ActionPanel title="Perfis de Runtime" description="Selecione uma estratégia pré-definida.">
-            <Link to="/performance/profiles" className="w-full text-center bg-slate-900 text-white font-bold py-3 rounded-2xl hover:bg-slate-800 transition-colors">
+            <Link to="/performance/profiles" className="w-full text-center bg-foreground text-white font-bold py-3 rounded-2xl hover:bg-foreground transition-colors">
               Gerenciar Perfis
             </Link>
           </ActionPanel>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6">
-            <h3 className="font-black text-slate-900 uppercase tracking-tight mb-4">Quick Stats</h3>
+          <div className="bg-secondary border border-border rounded-3xl p-6">
+            <h3 className="font-black text-foreground uppercase tracking-tight mb-4">Quick Stats</h3>
             <div className="space-y-4">
                <div className="flex justify-between items-center">
-                 <span className="text-xs font-bold text-slate-500 uppercase">Total Benchmarks</span>
-                 <span className="font-mono font-bold text-slate-900">{benchmarks?.length || 0}</span>
+                 <span className="text-xs font-bold text-muted-foreground uppercase">Total Benchmarks</span>
+                 <span className="font-mono font-bold text-foreground">{benchmarks?.length || 0}</span>
                </div>
                <div className="flex justify-between items-center">
-                 <span className="text-xs font-bold text-slate-500 uppercase">Avg TPS</span>
-                 <span className="font-mono font-bold text-slate-900">42.5</span>
+                 <span className="text-xs font-bold text-muted-foreground uppercase">Avg TPS</span>
+                 <span className="font-mono font-bold text-foreground">42.5</span>
                </div>
                <div className="flex justify-between items-center">
-                 <span className="text-xs font-bold text-slate-500 uppercase">Optimal Profile</span>
-                 <span className="text-xs font-black text-teal-600">LOW_LATENCY</span>
+                 <span className="text-xs font-bold text-muted-foreground uppercase">Optimal Profile</span>
+                 <span className="text-xs font-black text-primary">LOW_LATENCY</span>
                </div>
             </div>
           </div>
