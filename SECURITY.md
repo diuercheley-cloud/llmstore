@@ -79,6 +79,9 @@ Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no se
 ## Supply Chain Security
 All releases include a Software Bill of Materials (SBOM) and are signed to ensure integrity. Lockfiles are enforced for all builds.
 
+## Compliance Readiness
+The platform includes an integrated SOC 2 and ISO 27001 readiness framework. Evidence collection is automated and strictly sanitized to ensure no sensitive data is exported.
+
 ## Chaos Engineering Safety
 Fault injection is strictly opt-in and blocked in production environments by default. Mandatory timeouts and rollback mechanisms prevent permanent service disruption.
 

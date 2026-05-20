@@ -1,0 +1,19 @@
+framework: ISO 27001:2022
+controls:
+  - code: A.5.1
+    title: "Policies for information security"
+    included: true
+    justification: "Core requirement for ISMS governance."
+    status: implemented
+
+  - code: A.9.1
+    title: "Access control policy"
+    included: true
+    justification: "Critical for protecting administrative functions."
+    status: implemented
+
+  - code: A.12.1
+    title: "Operational procedures and responsibilities"
+    included: true
+    justification: "Ensures consistent operations of the inference stack."
+    status: partial

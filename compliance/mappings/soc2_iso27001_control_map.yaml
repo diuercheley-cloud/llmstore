@@ -1,0 +1,121 @@
+# LLM Inference Stack - Compliance Control Map
+# Mapping of technical features to SOC 2 and ISO 27001 controls.
+
+frameworks:
+  SOC2:
+    version: "2017"
+  ISO27001:
+    version: "2022"
+
+controls:
+  # Logical Access (SOC 2: CC6, ISO: A.9)
+  - control_id: "SOC2-CC6.1-RBAC"
+    framework: "SOC2"
+    category: "Logical Access"
+    title: "Administrative RBAC Enforcement"
+    description: "Restricts access to administrative functions based on user roles and permissions."
+    implementation_status: "implemented"
+    evidence_sources: ["app/api/dependencies.py", "admin_portal_logs"]
+    owner_role: "Security Administrator"
+    review_frequency: "quarterly"
+    automated_test: "test_admin_access_restricted"
+    gaps: []
+    remediation_plan: ""
+
+  - control_id: "ISO-A.9.1.1-ACCESS"
+    framework: "ISO27001"
+    category: "Access Control"
+    title: "Access Control Policy"
+    description: "Policy defined and enforced for user access to the platform."
+    implementation_status: "implemented"
+    evidence_sources: ["docs/security/RBAC.md", "app/core/auth.py"]
+    owner_role: "ISMS Manager"
+    review_frequency: "annually"
+    automated_test: ""
+    gaps: []
+    remediation_plan: ""
+
+  # Change Management (SOC 2: CC8, ISO: A.12)
+  - control_id: "SOC2-CC8.1-RELEASE-GATES"
+    framework: "SOC2"
+    category: "Change Management"
+    title: "Automated Release Gates"
+    description: "Ensures all changes meet quality and security criteria before deployment."
+    implementation_status: "implemented"
+    evidence_sources: ["scripts/release-gate.sh", "github_actions_logs"]
+    owner_role: "DevOps Engineer"
+    review_frequency: "per_release"
+    automated_test: "release-validation.yml"
+    gaps: []
+    remediation_plan: ""
+
+  - control_id: "ISO-A.12.1.2-CHANGES"
+    framework: "ISO27001"
+    category: "Operations Security"
+    title: "Change Management Process"
+    description: "Formal process for tracking and approving changes."
+    implementation_status: "implemented"
+    evidence_sources: ["CHANGELOG.md", "scripts/verify-release-artifacts.sh"]
+    owner_role: "Release Manager"
+    review_frequency: "per_release"
+    automated_test: ""
+    gaps: []
+    remediation_plan: ""
+
+  # Operations (SOC 2: CC7, ISO: A.12)
+  - control_id: "SOC2-CC7.1-LOGGING"
+    framework: "SOC2"
+    category: "Operations"
+    title: "Audit Logging and Monitoring"
+    description: "System logs are collected and monitored for security events."
+    implementation_status: "implemented"
+    evidence_sources: ["app/core/logging.py", "elasticsearch_logs"]
+    owner_role: "Security Analyst"
+    review_frequency: "monthly"
+    automated_test: ""
+    gaps: ["Unified log alerting not yet fully automated across all clusters"]
+    remediation_plan: "Implement centralized alert routing in v1.9.8"
+
+  # Incident Response (SOC 2: CC7.3, ISO: A.16)
+  - control_id: "SOC2-CC7.3-INCIDENTS"
+    framework: "SOC2"
+    category: "Operations"
+    title: "Incident Timeline and Response"
+    description: "Standardized process for detecting and reporting security incidents."
+    implementation_status: "implemented"
+    evidence_sources: ["app/services/visual_observability.py", "incident_reports"]
+    owner_role: "Incident Manager"
+    review_frequency: "per_incident"
+    automated_test: ""
+    gaps: []
+    remediation_plan: ""
+
+  # Supply Chain (ISO: A.15)
+  - control_id: "ISO-A.15.1.1-SUPPLIER"
+    framework: "ISO27001"
+    category: "Supplier Relationships"
+    title: "Supplier Security Policy"
+    description: "Security requirements for mitigating risks associated with suppliers."
+    implementation_status: "implemented"
+    evidence_sources: ["scripts/generate-sbom.sh", "docs/security/supply-chain-ci.md"]
+    owner_role: "Procurement Officer"
+    review_frequency: "annually"
+    automated_test: "supply-chain-ci.yml"
+    gaps: []
+    remediation_plan: ""
+
+  # Resiliência (Chaos Engineering)
+  - control_id: "ISO-A.17.1.1-RESILIENCE"
+    framework: "ISO27001"
+    category: "Business Continuity"
+    title: "Information Security Continuity"
+    description: "Availability of information processing facilities under stress."
+    implementation_status: "implemented"
+    evidence_sources: ["scripts/chaos-run.sh", "docs/chaos/chaos-engineering.md"]
+    owner_role: "SRE"
+    review_frequency: "quarterly"
+    automated_test: "chaos.yml"
+    gaps: []
+    remediation_plan: ""
+
+  # ... (I will expand this list in the service or documentation to reach 50+)

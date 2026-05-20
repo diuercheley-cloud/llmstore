@@ -181,6 +181,17 @@ chaos-run-safe: ## Run a safe chaos experiment (Requires ID=exp-id)
 chaos-report: ## Generate chaos experiment report (Requires RUN_ID=run-id)
 	@bash scripts/chaos-report.sh $(RUN_ID)
 
+compliance-evidence: ## Collect and package compliance evidence (SOC 2 / ISO 27001)
+	@mkdir -p artifacts/compliance/latest
+	@bash scripts/collect-compliance-evidence.sh
+	@bash scripts/generate-compliance-pack.sh
+
+compliance-check: ## Run compliance readiness lint and audit
+	@bash scripts/compliance-check.sh
+
+compliance-release-gate: ## Validate compliance criteria for release (Requires TAG=vX.Y.Z)
+	@bash scripts/compliance-release-gate.sh $(TAG)
+
 test-smoke-resilience: ## Run smoke tests for resilience
 	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/smoke/test_smoke.py
 

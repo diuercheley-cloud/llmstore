@@ -1,0 +1,21 @@
+{
+  "framework": "SOC2",
+  "version": "2017",
+  "controls": [
+    {
+      "code": "CC1.1",
+      "title": "COSO Principle 1: Ethics and Integrity",
+      "category": "Control Environment"
+    },
+    {
+      "code": "CC6.1",
+      "title": "Logical Access Security",
+      "category": "Logical and Physical Access Controls"
+    },
+    {
+      "code": "CC7.1",
+      "title": "System Operations Monitoring",
+      "category": "System Operations"
+    }
+  ]
+}

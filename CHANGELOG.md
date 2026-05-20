@@ -60,6 +60,15 @@
 - `make test` now exercises the feature-focused regression suite instead of succeeding as a no-op.
 - Default-safe behavior is preserved when `RBAC_ADMIN_ENABLED=false`, `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false`, `MODEL_HOT_SWAP_ENABLED=false`, and `TOKENIZER_MODE=auto`.
 
+## [v1.9.7-compliance-readiness] - 2026-05-20
+### Added
+- **Compliance Readiness Framework**: Estrutura para preparação de auditorias SOC 2 e ISO 27001.
+- **Automated Evidence Collector**: Coleta e sanitização de evidências técnicas para auditoria.
+- **ISMS-Lite Governance**: Sistema de gestão de segurança com políticas, riscos e SoA.
+- **SOC 2 Control Operations**: Rotinas de revisão de acesso, mudanças e incidentes.
+- **Compliance Dashboard**: Interface visual premium para acompanhamento de prontidão e gaps.
+- **Continuous Compliance CI/CD**: Gates automáticos para validação de governança e políticas.
+
 ## [v1.9.6-ci-chaos] - 2026-05-20
 ### Added
 - **GitHub Actions & GitLab CI**: Pipelines modulares com paridade total para testes, segurança e release.

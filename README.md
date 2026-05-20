@@ -24,6 +24,7 @@
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
 - **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
 - **CI/CD & Chaos Engineering (v1.9.6)**: Fully modular GitHub/GitLab pipelines with automated fault injection and supply chain security.
+- **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
 - **Enterprise-Grade Observability**: Full Grafana dashboards for GPU, Nodes, SLO, and Error Budgets.
 - **Multi-Cluster Orchestration**: Secure management of multiple appliances from a single Control Plane.
 - **Deterministic Governance**: Audit receipts for every inference, configuration change, and administrative action.

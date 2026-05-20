@@ -1,0 +1,20 @@
+risks:
+  - id: R001
+    title: "Unauthorized Access to Admin API"
+    description: "Malicious actor gains access to administrative functions."
+    impact: 5
+    likelihood: 2
+    score: 10
+    mitigation_strategy: "Implement strict RBAC, MFA, and Audit Logging."
+    treatment_plan: "Ensure RBAC is enabled by default in all clusters."
+    status: active
+
+  - id: R002
+    title: "Secret Leak in CI Logs"
+    description: "Sensitive credentials exposed in build artifacts or logs."
+    impact: 4
+    likelihood: 3
+    score: 12
+    mitigation_strategy: "Automated secret scanning in PRs."
+    treatment_plan: "Enable Gitleaks/TruffleHog in GitHub Actions."
+    status: active

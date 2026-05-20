@@ -199,6 +199,22 @@ from app.models.operations.chaos import (
     ChaosAssertion,
     ChaosReport,
 )
+from app.models.operations.compliance import (
+    ComplianceFramework,
+    ComplianceControl,
+    ComplianceEvidenceItem,
+    ComplianceControlTest,
+    ComplianceRiskItem,
+    CompliancePolicyDocument,
+)
+from app.models.operations.soc2 import (
+    SOC2AccessReview,
+    SOC2ChangeReview,
+    SOC2IncidentReview,
+    SOC2VendorReview,
+    SOC2BackupRestoreReview,
+    SOC2ControlException,
+)
 from app.models.operations.multi_cluster import (
     Cluster,
     ClusterMembership,

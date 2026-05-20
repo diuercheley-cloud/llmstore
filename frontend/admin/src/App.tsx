@@ -23,6 +23,11 @@ import OnboardingChecklist from './pages/enterprise/OnboardingChecklist'
 import ObservabilityDashboard from './pages/observability/ObservabilityDashboard'
 import MultiClusterOverview from './pages/multicluster/MultiClusterOverview'
 import ChaosDashboard from './pages/chaos/ChaosDashboard'
+import ComplianceOverview from './pages/compliance/ComplianceOverview'
+import ControlMap from './pages/compliance/ControlMap'
+import EvidenceCenter from './pages/compliance/EvidenceCenter'
+import RiskRegister from './pages/compliance/RiskRegister'
+import PolicyCenter from './pages/compliance/PolicyCenter'
 import { useAuthStore } from './store/useAuthStore'
 import { ShieldAlert, LogIn, Activity } from 'lucide-react'
 
@@ -302,6 +307,46 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout><ChaosDashboard /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/compliance" 
+            element={
+              <ProtectedRoute>
+                <Layout><ComplianceOverview /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/compliance/controls" 
+            element={
+              <ProtectedRoute>
+                <Layout><ControlMap /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/compliance/evidence" 
+            element={
+              <ProtectedRoute>
+                <Layout><EvidenceCenter /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/compliance/risks" 
+            element={
+              <ProtectedRoute>
+                <Layout><RiskRegister /></Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/compliance/policies" 
+            element={
+              <ProtectedRoute>
+                <Layout><PolicyCenter /></Layout>
               </ProtectedRoute>
             } 
           />

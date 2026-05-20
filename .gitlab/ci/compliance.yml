@@ -1,0 +1,21 @@
+compliance:audit:
+  stage: validate
+  script:
+    - make compliance-check
+    - make compliance-evidence
+  artifacts:
+    name: "compliance-evidence-$CI_COMMIT_REF_SLUG"
+    paths:
+      - artifacts/compliance/latest/audit-package.zip
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+
+compliance:gate:
+  stage: release
+  needs: ["compliance:audit"]
+  script:
+    - make compliance-release-gate TAG=$CI_COMMIT_TAG
+  rules:
+    - if: $CI_COMMIT_TAG
