@@ -618,7 +618,12 @@ class OpenRouterDirectChatRequest(OpenRouterApiRequest):
 def _openrouter_request_config(payload: OpenRouterApiRequest | None = None) -> tuple[str, str]:
     settings = get_settings()
     base_url = (payload.base_url if payload and payload.base_url else settings.openrouter_base_url) or "https://openrouter.ai/api/v1"
-    api_key = (payload.api_key if payload and payload.api_key else settings.openrouter_api_key) or ""
+    
+    payload_key = payload.api_key if payload else None
+    if payload_key and ("*" in payload_key or "•" in payload_key):
+        payload_key = None
+        
+    api_key = (payload_key if payload_key else settings.openrouter_api_key) or ""
     return base_url.rstrip("/"), api_key
 
 
