@@ -1099,6 +1099,20 @@
   outputs: []
   is_destructive: false
   docs_url: null
+- path: scripts/generate-support-bundle.sh
+  purpose: Trigger and download a sanitized support bundle for operator diagnostics.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/support-bundles/*
+  is_destructive: false
+  docs_url: docs/support/support-bundle.md
 - path: scripts/generate-local-quote.sh
   purpose: scripts/generate-local-quote.sh
   owner: platform-ops
@@ -1641,6 +1655,20 @@
   outputs: []
   is_destructive: false
   docs_url: null
+- path: scripts/performance-baseline.sh
+  purpose: Measure startup, import time, endpoint latency, and focused pytest duration.
+  owner: platform-ops
+  category: validation
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/performance/latest/*
+  is_destructive: false
+  docs_url: docs/releases/V1_9_8_PLATFORM_CONSOLIDATION.md
 - path: scripts/post-deploy-validate.sh
   purpose: Operational script for stack management.
   owner: platform-ops
