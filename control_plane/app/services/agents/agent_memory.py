@@ -19,6 +19,8 @@ from app.services.agents.memory_policy import MemoryPolicyService
 from app.services.agents.memory_consent import MemoryConsentService
 from app.services.agents.memory_redaction import MemoryRedactionService
 from app.services.agents.memory_indexing import MemoryIndexingService
+from app.services.agents.memory_retriever import MemoryRetriever
+from app.services.agents.memory_context_builder import MemoryContextBuilder
 from app.services.agents import agent_state
 
 logger = logging.getLogger(__name__)
@@ -40,13 +42,14 @@ class AgentMemoryService:
         self.consent_service = MemoryConsentService(db)
         self.redaction_service = MemoryRedactionService(db)
         self.indexing_service = MemoryIndexingService(db)
+        self.retriever = MemoryRetriever(db)
+        self.context_builder = MemoryContextBuilder(db)
 
     def _check_enabled(self):
         if not self.settings.agent_memory_enabled:
             raise MemoryDisabledError("Agent memory is disabled globally.")
 
     def _contains_secrets(self, text: str) -> bool:
-        # Simple heuristic for secrets
         patterns = ["sk-", "api_", "key_", "passwd", "password", "secret"]
         for p in patterns:
             if p in text.lower():
@@ -95,7 +98,6 @@ class AgentMemoryService:
         if not policy:
             raise ValueError(f"No retention policy found for memory type '{memory_type}' and tenant '{tenant_id}'.")
 
-        # Redaction
         redaction_status = "none"
         final_content = content
         redacted_types = []
@@ -105,7 +107,7 @@ class AgentMemoryService:
                 redaction_status = "completed"
 
         retention_until = utc_now() + timedelta(days=policy.retention_days)
-        
+
         item = AgentMemoryItem(
             tenant_id=tenant_id,
             agent_id=agent_id,
@@ -119,18 +121,17 @@ class AgentMemoryService:
             retention_until=retention_until,
             redaction_status=redaction_status
         )
-        
+
         self.db.add(item)
         await self.db.flush()
-        
+
         if redacted_types:
             await self.redaction_service.log_redaction(tenant_id, agent_id, item.id, redacted_types)
-        
+
         await self._log_access(tenant_id, agent_id, item.id, "write", run_id)
-        
-        # Async indexing trigger
+
         await self.indexing_service.index_item(tenant_id, agent_id, item)
-        
+
         await self.db.commit()
         await self.db.refresh(item)
         return item
@@ -145,27 +146,27 @@ class AgentMemoryService:
         run_id: Optional[uuid.UUID] = None
     ) -> List[AgentMemoryItem]:
         self._check_enabled()
-        
+
         stmt = select(AgentMemoryItem).where(
             AgentMemoryItem.tenant_id == tenant_id,
             AgentMemoryItem.agent_id == agent_id,
             AgentMemoryItem.retention_until > utc_now()
         )
-        
+
         if memory_type:
             stmt = stmt.where(AgentMemoryItem.memory_type == memory_type)
         if collection_id:
             stmt = stmt.where(AgentMemoryItem.collection_id == collection_id)
-            
+
         stmt = stmt.order_by(AgentMemoryItem.created_at.desc()).limit(limit)
-        
+
         res = await self.db.execute(stmt)
         items = list(res.scalars().all())
-        
+
         for item in items:
             item.last_accessed_at = utc_now()
             await self._log_access(tenant_id, agent_id, item.id, "read", run_id)
-            
+
         await self.db.commit()
         return items
 
@@ -176,10 +177,10 @@ class AgentMemoryService:
         )
         res = await self.db.execute(stmt)
         item = res.scalar_one_or_none()
-        
+
         if not item:
             raise ValueError("Memory item not found or tenant mismatch.")
-            
+
         await self._log_access(tenant_id, item.agent_id, item.id, "delete")
         await self.db.delete(item)
         await self.db.commit()
@@ -187,7 +188,7 @@ class AgentMemoryService:
     async def export_memory(self, tenant_id: str, agent_id: Optional[uuid.UUID] = None, memory_type: Optional[str] = None) -> List[dict]:
         if not self.settings.agent_memory_export_enabled:
             raise MemoryDisabledError("Memory export is disabled.")
-            
+
         stmt = select(AgentMemoryItem).where(
             AgentMemoryItem.tenant_id == tenant_id,
             AgentMemoryItem.retention_until > utc_now()
@@ -196,16 +197,15 @@ class AgentMemoryService:
             stmt = stmt.where(AgentMemoryItem.agent_id == agent_id)
         if memory_type:
             stmt = stmt.where(AgentMemoryItem.memory_type == memory_type)
-            
+
         res = await self.db.execute(stmt)
         items = res.scalars().all()
-        
+
         export_data = []
         for item in items:
-            # Re-check for secrets on export just in case
             if self._contains_secrets(item.raw_content):
                 continue
-                
+
             await self._log_access(tenant_id, item.agent_id, item.id, "export")
             export_data.append({
                 "id": str(item.id),
@@ -215,7 +215,7 @@ class AgentMemoryService:
                 "summary": item.summary,
                 "created_at": item.created_at.isoformat()
             })
-            
+
         await self.db.commit()
         return export_data
 
@@ -223,5 +223,84 @@ class AgentMemoryService:
         self._check_enabled()
         if not self.settings.agent_memory_search_enabled:
             raise MemoryDisabledError("Memory search is disabled.")
-            
-        return await self.indexing_service.search(tenant_id, agent_id, query, limit)
+
+        semantic = self.settings.agent_memory_semantic_search_enabled
+        return await self.indexing_service.search(tenant_id, agent_id, query, limit, semantic=semantic)
+
+    async def semantic_search_memory(
+        self,
+        tenant_id: str,
+        agent_id: uuid.UUID,
+        query: str,
+        memory_type: str = "long_term",
+        user_id: Optional[str] = None,
+        top_k: int = 5,
+        score_threshold: float = 0.0,
+    ) -> List[Dict[str, Any]]:
+        self._check_enabled()
+        results = await self.retriever.retrieve(
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            query=query,
+            memory_type=memory_type,
+            user_id=user_id,
+            top_k=top_k,
+            score_threshold=score_threshold,
+        )
+        return [r.to_dict() for r in results]
+
+    async def build_memory_context(
+        self,
+        tenant_id: str,
+        agent_id: uuid.UUID,
+        query: str,
+        user_id: Optional[str] = None,
+        memory_type: str = "long_term",
+        max_tokens: int = 2048,
+        top_k: int = 5,
+        score_threshold: float = 0.0,
+    ) -> Dict[str, Any]:
+        self._check_enabled()
+        return await self.context_builder.build_context(
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            query=query,
+            user_id=user_id,
+            memory_type=memory_type,
+            max_tokens=max_tokens,
+            top_k=top_k,
+            score_threshold=score_threshold,
+        )
+
+    async def get_chat_history(self, run_id: uuid.UUID) -> List[Dict[str, str]]:
+        from app.models.agents import AgentRun, AgentRunStep
+
+        stmt = select(AgentRun).where(AgentRun.id == run_id)
+        res = await self.db.execute(stmt)
+        run = res.scalar_one_or_none()
+
+        if not run:
+            return []
+
+        history = []
+        if run.input_text:
+            history.append({"role": "user", "content": run.input_text})
+
+        stmt_mem = select(AgentMemoryItem).where(
+            AgentMemoryItem.source_run_id == run_id,
+            AgentMemoryItem.memory_type == "short_term"
+        ).order_by(AgentMemoryItem.created_at.asc())
+
+        res_mem = await self.db.execute(stmt_mem)
+        items = res_mem.scalars().all()
+
+        for item in items:
+            role = "assistant"
+            if item.summary and ":" in item.summary:
+                potential_role = item.summary.split(":")[0].lower()
+                if potential_role in ("user", "assistant", "system", "tool"):
+                    role = potential_role
+
+            history.append({"role": role, "content": item.raw_content})
+
+        return history

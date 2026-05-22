@@ -49,8 +49,8 @@ from app.models.agents import (
     AgentLifecycleEvent,
 )
 from app.services.agents.agent_evals import AgentEvalService
-from app.services.agents.eval_datasets import EvalDatasetsService
-from app.services.agents.eval_gates import EvalGatesService
+from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService as EvalDatasetsService
+from app.services.agents.eval_gate import EvalGateService as EvalGatesService
 from app.services.agents.eval_regression import EvalRegressionService
 from app.services.agents import agent_lifecycle, agent_registry
 

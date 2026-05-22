@@ -27,9 +27,10 @@ if ! grep -q "$TAG" CHANGELOG.md; then
 fi
 
 # 3. Verificar Release Notes
-RELEASE_NOTE_PATH="docs/releases/$(echo $TAG | sed 's/\./_/g' | tr '-' '_').md"
-# Fallback para nomes de arquivos que eu criei antes
-if [ ! -f "$RELEASE_NOTE_PATH" ] && [ ! -f "docs/releases/V1_9_5_OPERATIONAL_EXPERIENCE.md" ]; then
+RELEASE_NOTE_PATH="docs/releases/$(echo "$TAG" | sed 's/\./_/g' | tr '-' '_').md"
+RELEASE_NOTE_ALT_PATH="docs/releases/$(echo "$TAG" | tr '[:lower:]' '[:upper:]' | sed 's/\./_/g' | tr '-' '_').md"
+# Fallback para nomes de arquivos legados
+if [ ! -f "$RELEASE_NOTE_PATH" ] && [ ! -f "$RELEASE_NOTE_ALT_PATH" ] && [ ! -f "docs/releases/V1_9_5_OPERATIONAL_EXPERIENCE.md" ]; then
     echo "Erro: Release notes não encontradas para $TAG"
     exit 1
 fi

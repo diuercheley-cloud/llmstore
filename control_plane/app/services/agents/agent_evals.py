@@ -71,7 +71,24 @@ class AgentEvalService:
         if not suite:
             raise ValueError("Suite not found")
 
-        eval_run = AgentEvalRun(suite_id=suite_id, status="running", metadata_json=metadata)
+        res_entry = await self.db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.id == suite.agent_id))
+        agent = res_entry.scalar_one_or_none()
+        model_id = "unknown"
+        if agent:
+            res_def = await self.db.execute(select(AgentDefinition).where(AgentDefinition.id == agent.agent_id))
+            agent_def = res_def.scalar_one_or_none()
+            if agent_def:
+                model_id = agent_def.model_id
+        else:
+            agent_def = await agent_state.get_agent_definition(self.db, suite.agent_id)
+            if agent_def:
+                model_id = agent_def.model_id
+
+        run_metadata = metadata or {}
+        run_metadata["provider"] = self.settings.agent_eval_provider
+        run_metadata["model_id"] = model_id
+
+        eval_run = AgentEvalRun(suite_id=suite_id, status="running", metadata_json=run_metadata)
         self.db.add(eval_run)
         await self.db.commit()
         await self.db.refresh(eval_run)
@@ -164,20 +181,22 @@ class AgentEvalService:
         if not mock_responses:
             mock_responses = [{"type": "final", "output": "Default eval mock response"}]
 
-        # Enforce MockLLMProvider unless allow_paid_provider is explicitly set to True
-        if not allow_paid_provider:
-            mock_llm = MockLLMProvider(responses=mock_responses)
+        provider_type = self.settings.agent_eval_provider
+        if provider_type == "gateway":
+            if not allow_paid_provider and not self.settings.agent_eval_real_provider_enabled:
+                raise ValueError("Paid LLM provider is blocked")
+            from app.api.deps import get_inference_proxy
+            from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
+            proxy = get_inference_proxy()
+            resolved_llm_provider = GatewayAgentLLMProvider(self.db, proxy)
         else:
-            # Under paid provider configuration, we instantiate the real LLM provider
-            # If agent has model configs, we could dynamically instantiate it here,
-            # but for standard safety we still default to mock unless requested and configured.
-            mock_llm = None  # AgentExecutor will use configured provider or fallback
+            resolved_llm_provider = MockLLMProvider(responses=mock_responses)
 
         run = await agent_state.create_agent_run(
             self.db, agent_id, "eval-tenant", case.input_text, correlation_id=f"eval-{eval_run_id}"
         )
         
-        executor = AgentExecutor(self.db, run.id, llm_provider=mock_llm)
+        executor = AgentExecutor(self.db, run.id, llm_provider=resolved_llm_provider)
         
         start_time = utc_now()
         # Execute run

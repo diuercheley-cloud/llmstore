@@ -5601,6 +5601,26 @@
   status: beta
   description: Start an agent worker.
   requires_network: true
+- path: scripts/run-agent-worker.sh
+  owner: agent-platform
+  status: beta
+  description: Start the opt-in agent worker runtime process.
+  requires_network: true
+- path: scripts/agent-queue-inspect.sh
+  owner: agent-platform
+  status: beta
+  description: Inspect agent queue depth, worker heartbeats, and DLQ state.
+  requires_network: true
+- path: scripts/agent-worker-status.sh
+  owner: agent-platform
+  status: beta
+  description: Report agent worker heartbeat and queue processing state.
+  requires_network: true
+- path: scripts/agent-worker-drain.sh
+  owner: agent-platform
+  status: beta
+  description: Drain queued agent jobs for controlled maintenance.
+  requires_network: true
 - path: scripts/agentic-readiness.sh
   owner: agent-platform
   status: beta

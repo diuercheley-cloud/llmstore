@@ -45,6 +45,8 @@ fi
 
 cd "${ROOT_DIR}/control_plane"
 
+VERSIONS_DIR="${ALEMBIC_VERSIONS_DIR:-alembic/versions}"
+
 log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
@@ -68,7 +70,7 @@ check_heads() {
 
 check_duplicates() {
     log_info "Verificando IDs duplicados ou nomes de arquivos conflitantes..."
-    DUPS=$(find alembic/versions -name "*.py" | xargs grep -h "^revision =" | sort | uniq -d)
+    DUPS=$(find "${VERSIONS_DIR}" -name "*.py" -print0 | xargs -0 grep -h "^revision =" | sort | uniq -d)
     if [ -n "${DUPS}" ]; then
         log_error "IDs de revisão duplicados encontrados:"
         echo "${DUPS}"
@@ -81,7 +83,7 @@ check_duplicates() {
 check_imports() {
     log_info "Verificando imports quebrados nas migrations..."
     # Tenta importar cada arquivo de migration
-    for f in alembic/versions/*.py; do
+    for f in "${VERSIONS_DIR}"/*.py; do
         if ! python3 -m py_compile "${f}" > /dev/null 2>&1; then
             log_error "Erro de compilação/import no arquivo: ${f}"
             return 1

@@ -8697,63 +8697,63 @@
 - endpoint: /agents/{agent_id}/runs
   method: POST
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/{agent_id}/runs
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}
   method: GET
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/cancel
   method: POST
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}/cancel
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/pause
   method: POST
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/resume
   method: POST
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/steps
   method: GET
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}/events
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/replay
   method: POST
   owner: agent-platform
-  status: beta
-  replacement: null
+  status: deprecated
+  replacement: /v1/agents/runs/{run_id}
   since_version: 1.10.0
-  deprecation_version: null
+  deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /v1/agents
   method: POST
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8761,7 +8761,7 @@
 - endpoint: /v1/agents
   method: GET
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8769,7 +8769,7 @@
 - endpoint: /v1/agents/{agent_id}
   method: GET
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8777,7 +8777,7 @@
 - endpoint: /v1/agents/{agent_id}/runs
   method: POST
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8785,7 +8785,7 @@
 - endpoint: /v1/agents/runs/{run_id}
   method: GET
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8793,7 +8793,7 @@
 - endpoint: /v1/agents/runs/{run_id}/cancel
   method: POST
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
@@ -8801,7 +8801,7 @@
 - endpoint: /v1/agents/runs/{run_id}/events
   method: GET
   owner: agent-platform
-  status: beta
+  status: supported
   replacement: null
   since_version: 1.10.0
   deprecation_version: null

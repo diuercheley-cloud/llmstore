@@ -9,7 +9,13 @@ from app.db.base import Base
 from app.db.session import engine
 
 @pytest_asyncio.fixture(autouse=True)
-async def setup_agent_db():
+async def setup_agent_db(monkeypatch):
+    monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+    
     # Force import of all models
     import app.models
     async with engine.begin() as conn:

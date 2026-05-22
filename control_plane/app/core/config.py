@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     agent_worker_enabled: bool = Field(default=False, alias="AGENT_WORKER_ENABLED")
     # Owner: agent-platform
     # Status: beta
+    agent_embedded_worker_enabled: bool = Field(default=False, alias="AGENT_EMBEDDED_WORKER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_queue_backpressure_enabled: bool = Field(default=True, alias="AGENT_QUEUE_BACKPRESSURE_ENABLED")
     # Owner: agent-platform
     # Status: beta
@@ -93,6 +96,26 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_tool_rollback_enabled: bool = Field(default=True, alias="AGENT_TOOL_ROLLBACK_ENABLED")
+
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_adapters_enabled: bool = Field(default=False, alias="AGENT_TOOL_ADAPTERS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_http_tool_enabled: bool = Field(default=False, alias="AGENT_HTTP_TOOL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_db_read_tool_enabled: bool = Field(default=False, alias="AGENT_DB_READ_TOOL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_shell_tool_enabled: bool = Field(default=False, alias="AGENT_SHELL_TOOL_ENABLED")
+
+    # Owner: agent-platform
+    # Status: beta
+    agent_planner_real_execution_enabled: bool = Field(default=False, alias="AGENT_PLANNER_REAL_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_replan_enabled: bool = Field(default=True, alias="AGENT_REPLAN_ENABLED")
 
     # Owner: agent-platform
     # Status: beta
@@ -124,6 +147,16 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_eval_datasets_versioned: bool = Field(default=True, alias="AGENT_EVAL_DATASETS_VERSIONED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_real_provider_enabled: bool = Field(default=False, alias="AGENT_EVAL_REAL_PROVIDER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_provider: str = Field(default="mock", alias="AGENT_EVAL_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_promotion_requires_evals: bool = Field(default=True, alias="AGENT_PROMOTION_REQUIRES_EVALS")
+
 
     # Owner: agent-platform
     # Status: beta
@@ -146,6 +179,15 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_memory_encryption_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENCRYPTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_semantic_search_enabled: bool = Field(default=False, alias="AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_context_injection_enabled: bool = Field(default=False, alias="AGENT_MEMORY_CONTEXT_INJECTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_embeddings_provider: str = Field(default="mock", alias="AGENT_MEMORY_EMBEDDINGS_PROVIDER")
 
     # Owner: agent-platform
     # Status: beta
@@ -163,6 +205,16 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
+
+    # Owner: agent-platform
+    # Status: beta
+    agent_llm_provider: str = Field(default="mock", alias="AGENT_LLM_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_real_llm_enabled: bool = Field(default=False, alias="AGENT_REAL_LLM_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_llm_streaming_enabled: bool = Field(default=False, alias="AGENT_LLM_STREAMING_ENABLED")
 
     # Owner: agent-platform
     # Status: beta

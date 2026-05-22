@@ -189,10 +189,12 @@ capabilities:
     owner: agent-platform
     support_level: pilot
     docs_url: docs/agents/agent-runtime.md
-    api_prefix: /agents
+    api_prefix: /v1/agents
     feature_flag: agent_runtime_enabled
     additional_flags:
       - agent_execution_enabled
+      - agent_real_llm_enabled
+      - agent_llm_provider
       - agent_async_execution_enabled
       - agent_execution_plane_enabled
       - agent_worker_enabled
@@ -204,8 +206,8 @@ capabilities:
       - agent_queue
       - agent_execution_plane
       - agent_cancellation
-    since_version: v1.10.0-agentic-runtime
-    limitations: "Disabled by default. No real agent execution occurs until runtime and execution flags are explicitly enabled."
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Operational runtime is available behind opt-in flags. `/agents` remains as a deprecated admin legacy surface; `/v1/agents` is the canonical tenant API."
     test_coverage: 72%
 
   - id: agent-registry
@@ -237,6 +239,7 @@ capabilities:
     api_prefix: /admin/agent-tools
     feature_flag: agent_tool_registry_enabled
     additional_flags:
+      - agent_tool_adapters_enabled
       - agent_tool_execution_enabled
       - agent_tool_sandbox_enabled
       - agent_tool_credential_delegation_enabled
@@ -266,6 +269,8 @@ capabilities:
     additional_flags:
       - agent_long_term_memory_enabled
       - agent_memory_search_enabled
+      - agent_memory_semantic_search_enabled
+      - agent_memory_context_injection_enabled
       - agent_memory_encryption_enabled
     associated_services:
       - agent_memory
@@ -275,7 +280,7 @@ capabilities:
       - memory_consent
       - memory_retention
     since_version: v1.10.0-agentic-runtime
-    limitations: "Memory is disabled by default, cross-tenant sharing is not supported, and exports remain off unless explicitly enabled."
+    limitations: "Memory is disabled by default, cross-tenant sharing is not supported, and semantic reinjection stays off until explicitly enabled."
     test_coverage: 68%
 
   - id: agent-planning
@@ -287,8 +292,11 @@ capabilities:
     docs_url: docs/agents/task-engine.md
     api_prefix: /admin/agent-tasks
     feature_flag: agent_planning_enabled
-    since_version: v1.10.0-agentic-runtime
-    limitations: "Plans can be modeled administratively, but planning and plan execution are disabled by default."
+    additional_flags:
+      - agent_plan_execution_enabled
+      - agent_planner_real_execution_enabled
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Plans can execute real tasks through the governed task engine only when plan execution and planner real execution are both explicitly enabled."
     test_coverage: 61%
 
   - id: agent-hitl
@@ -340,6 +348,8 @@ capabilities:
       - agent_production_requires_eval_baseline
       - agent_eval_regression_gate_enabled
       - agent_eval_datasets_versioned
+      - agent_eval_real_provider_enabled
+      - agent_promotion_requires_evals
     associated_services:
       - agent_evals
       - eval_gate
@@ -347,7 +357,7 @@ capabilities:
       - eval_dataset_registry
       - eval_datasets
     since_version: v1.10.0-agentic-runtime
-    limitations: "Evals are opt-in and do not grant production activation unless operators maintain a baseline."
+    limitations: "Evals are opt-in, real provider evals are separately gated, and promotion remains blocked when required eval evidence fails."
     test_coverage: 66%
 
   - id: agent-marketplace

@@ -1,37 +1,41 @@
-# V2.0.0 Agentic AI Platform Release
+# V2.0.0 Agentic AI Platform
 
-## Critical Hardenings
+## Summary
 
-This release introduces the production-ready Agentic AI Platform.
+`v2.0.0-agentic-ai-platform` closes the runtime loop that was still beta in `v1.10.0-agentic-runtime`:
 
-### 1. Async Runtime & Worker
-Highly scalable, queue-driven execution plane for autonomous agents.
-- Supports long-running tasks.
-- Distributed worker heartbeats.
+- Real LLM execution is available through the internal gateway via `AgentLLMProvider`.
+- Versioned tool adapters are seeded into the registry and executed through the governed tool pipeline.
+- Planner output can execute real tasks through the task engine when explicitly enabled.
+- Semantic memory can be retrieved and reinjected into prompt context.
+- Worker and queue are documented and deployable as an opt-in profile or Helm deployment.
+- `/v1/agents` is the canonical runtime API and `/agents` is retained as a deprecated legacy admin surface.
+- Promotion remains blocked when required eval baselines or eval gates fail.
 
-### 2. Tool Execution Sandbox
-Secure and governed tool calling.
-- Automatic credential delegation.
-- Action rollback on failure.
+## Required Safe Defaults
 
-### 3. Evaluation Gates
-Mandatory quality control for agent promotion.
-- Baseline requirements for production.
-- Automated regression detection.
-
-### 4. Observability & Incident Response
-Full visibility into agent reasoning and tool usage.
-- Automated incident detection (loops, failures).
-- SLO monitoring.
-
-## Default Configuration
-All agentic features are **opt-in** by default:
 - `AGENT_RUNTIME_ENABLED=false`
-- `AGENT_ASYNC_EXECUTION_ENABLED=false`
-- `AGENT_WORKER_ENABLED=false`
+- `AGENT_REAL_LLM_ENABLED=false`
+- `AGENT_LLM_PROVIDER=mock`
+- `AGENT_TOOL_ADAPTERS_ENABLED=false`
 - `AGENT_TOOL_EXECUTION_ENABLED=false`
-- `AGENT_MEMORY_ENABLED=false`
+- `AGENT_PLANNER_REAL_EXECUTION_ENABLED=false`
+- `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`
+- `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`
+- `AGENT_WORKER_ENABLED=false`
+- `AGENT_ASYNC_EXECUTION_ENABLED=false`
 - `AGENT_EVALS_ENABLED=false`
+- `AGENT_EVAL_REAL_PROVIDER_ENABLED=false`
+- `AGENT_PROMOTION_REQUIRES_EVALS=true`
 
-## How to Enable
-Set the desired flags to `true` in your environment or `config/feature-flags.yaml`.
+## Operational Scope
+
+- Canonical tenant runtime API: `/v1/agents`
+- Deprecated runtime API: `/agents`
+- Real provider path: `AGENT_LLM_PROVIDER=gateway` plus `AGENT_REAL_LLM_ENABLED=true`
+- Worker deployment: Docker Compose `agentic` profile or Helm `agentWorker.enabled=true`
+- Promotion remains blocked unless eval requirements pass
+
+## Release Gate Expectation
+
+This release is only promotable when test, validation, security, stabilization, operational readiness, complexity, agent eval, and readiness gates succeed and the working tree is clean after the release commit.

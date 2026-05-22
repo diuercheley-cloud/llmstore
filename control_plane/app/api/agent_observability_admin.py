@@ -123,7 +123,7 @@ async def get_run_trace(
     if not run:
         raise HTTPException(status_code=404, detail="Agent run not found")
 
-    obs = AgentObservabilityService()
+    obs = AgentObservabilityService(db)
     
     # Root span
     root_trace = {

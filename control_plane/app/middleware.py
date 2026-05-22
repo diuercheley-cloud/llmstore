@@ -165,4 +165,9 @@ async def deprecation_middleware(request: Request, call_next):
             response.headers["X-Replacement-Endpoint"] = replacement
         logger.warning(f"Deprecated endpoint accessed: {request.url.path}")
         
+    # Inject Deprecation header for all legacy admin agent endpoints
+    path = request.url.path
+    if path == "/agents" or path.startswith("/agents/"):
+        response.headers["Deprecation"] = "true"
+
     return response

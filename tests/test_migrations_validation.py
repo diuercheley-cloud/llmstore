@@ -1,4 +1,6 @@
+import os
 import subprocess
+import shutil
 from pathlib import Path
 import pytest
 
@@ -22,11 +24,13 @@ def test_validate_migrations_dry_run():
     assert "Verificando heads do Alembic" in result.stdout
     assert "Verificando IDs duplicados" in result.stdout
 
-def test_validate_migrations_duplicate_check_logic():
+def test_validate_migrations_duplicate_check_logic(tmp_path):
     """
     Simula uma migration duplicada para ver se o script detecta.
     """
-    versions_dir = ROOT_DIR / "control_plane" / "alembic" / "versions"
+    source_versions_dir = ROOT_DIR / "control_plane" / "alembic" / "versions"
+    versions_dir = tmp_path / "versions"
+    shutil.copytree(source_versions_dir, versions_dir)
     fake_migration = versions_dir / "fake_duplicate.py"
     
     # Cria uma migration com um ID que provavelmente já existe ou é padrão
@@ -42,7 +46,17 @@ down_revision = None
     
     try:
         cmd = [str(ROOT_DIR / "scripts" / "validate-migrations-local.sh")]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT_DIR))
+        env = {
+            **os.environ,
+            "ALEMBIC_VERSIONS_DIR": str(versions_dir),
+        }
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(ROOT_DIR),
+            env=env,
+        )
         assert result.returncode != 0
         assert "IDs de revisão duplicados encontrados" in result.stdout
     finally:

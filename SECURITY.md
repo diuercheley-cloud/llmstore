@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v1.10.0-agentic-runtime` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.0-agentic-ai-platform` line.
 
 ## Defaults
 
@@ -16,7 +16,8 @@
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
 - Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
 - `DEPLOYMENT_MODE=appliance`, `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false`, and `MANAGED_CONTROL_PLANE_ENABLED=false` keep enterprise runtime surfaces disabled by default.
-- `AGENT_RUNTIME_ENABLED=false`, `AGENT_EXECUTION_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_PLANNING_ENABLED=false`, `AGENT_HANDOFFS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` keep the agentic runtime non-executing by default.
+- `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_PLANNER_REAL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_ASYNC_EXECUTION_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, and `AGENT_EVAL_REAL_PROVIDER_ENABLED=false` keep the agentic runtime safe-by-default.
+- `AGENT_PROMOTION_REQUIRES_EVALS=true` preserves eval gating even while eval execution remains opt-in.
 - `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` preserve mandatory approval for high-risk agent actions.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=managed_control_plane`.
 
@@ -80,6 +81,7 @@ No cross-cluster operations exfiltrate user prompts or RAG documents by default.
 ## Agentic Data Boundaries
 - Agent memory is tenant-scoped and disabled by default.
 - Cross-tenant memory sharing is not supported.
+- `/v1/agents` is the canonical tenant runtime API and `/agents` is deprecated for admin-only legacy compatibility.
 - Destructive tools remain disabled unless explicitly enabled and separately approval-gated.
 - Agent marketplace installs are offline-first and disabled by default.
 

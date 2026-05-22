@@ -143,6 +143,31 @@
     - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Evals remain opt-in until operators prepare suites and baselines.
+- name: AGENT_EVAL_REAL_PROVIDER_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_EVALS_ENABLED
+  conflicts: []
+  safe_default_reason: Real eval provider calls stay disabled until operators explicitly accept provider cost and data-flow risk.
+- name: AGENT_PROMOTION_REQUIRES_EVALS
+  # Owner: agent-platform
+  # Status: beta
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Promotion keeps requiring eval evidence even when eval execution itself is opt-in.
 - name: AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE
   # Owner: agent-platform
   # Status: beta
@@ -220,6 +245,32 @@
     - AGENT_MEMORY_ENABLED
   conflicts: []
   safe_default_reason: Long-term memory remains disabled until retention, redaction, and isolation policies are explicitly enabled.
+- name: AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Semantic retrieval stays disabled until embedding providers and retention policy are intentionally enabled.
+- name: AGENT_MEMORY_CONTEXT_INJECTION_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Retrieved memory is not reinjected into prompts unless operators explicitly opt in.
 - name: AGENT_MARKETPLACE_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -410,6 +461,83 @@
   dependencies: []
   conflicts: []
   safe_default_reason: The runtime is disabled by default to preserve the existing non-agentic platform posture.
+- name: AGENT_REAL_LLM_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Real provider calls remain disabled until model routing, cost, and data handling are explicitly approved.
+- name: AGENT_LLM_PROVIDER
+  # Owner: agent-platform
+  # Status: beta
+  default: mock
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: The runtime defaults to the mock provider so the platform never reaches an external model gateway unintentionally.
+- name: AGENT_TOOL_ADAPTERS_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Versioned tool adapters remain disabled until the operator intentionally enables governed tool execution.
+- name: AGENT_HTTP_TOOL_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_TOOL_ADAPTERS_ENABLED
+  conflicts: []
+  safe_default_reason: External HTTP tool execution remains disabled until operators intentionally allow outbound network side effects.
+- name: AGENT_DB_READ_TOOL_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_TOOL_ADAPTERS_ENABLED
+  conflicts: []
+  safe_default_reason: Database read access remains disabled until operators explicitly allow governed read-only SQL access.
+- name: AGENT_SHELL_TOOL_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_TOOL_ADAPTERS_ENABLED
+  conflicts: []
+  safe_default_reason: Shell command execution remains disabled until operators explicitly opt in to local command side effects.
 - name: AGENT_TOOL_EXECUTION_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -420,10 +548,37 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_TOOL_REGISTRY_ENABLED
+    - AGENT_TOOL_ADAPTERS_ENABLED
     - AGENT_EXECUTION_ENABLED
   conflicts: []
   safe_default_reason: Real tool execution remains disabled until an operator explicitly opts into side effects.
+- name: AGENT_PLANNER_REAL_EXECUTION_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_PLANNING_ENABLED
+    - AGENT_PLAN_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Planner-created tasks do not execute real side effects until explicitly enabled.
+- name: AGENT_REPLAN_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: low
+  dependencies:
+    - AGENT_PLANNING_ENABLED
+  conflicts: []
+  safe_default_reason: Replanning metadata can remain available without enabling autonomous execution by default.
 - name: AGENT_TOOL_REGISTRY_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -515,6 +670,19 @@
     - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Background worker should be opt-in.
+- name: AGENT_EMBEDDED_WORKER_ENABLED
+  # Owner: agent-platform
+  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_WORKER_ENABLED
+  conflicts: []
+  safe_default_reason: Embedded worker mode stays disabled so the control plane does not silently start local background execution.
 - name: AGENT_QUEUE_BACKPRESSURE_ENABLED
   # Owner: agent-platform
   # Status: beta

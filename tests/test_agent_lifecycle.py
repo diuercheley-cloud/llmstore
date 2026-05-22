@@ -8,6 +8,15 @@ from app.models.agents import AgentRegistryEntry, AgentVersion, AgentLifecycleEv
 from app.services.agents import agent_registry as reg_service
 from app.services.agents import agent_lifecycle as lifecycle_service
 
+@pytest.fixture(autouse=True)
+def disable_baseline_by_default(settings):
+    original = settings.agent_production_requires_eval_baseline
+    settings.agent_production_requires_eval_baseline = False
+    yield
+    settings.agent_production_requires_eval_baseline = original
+
+
+
 @pytest.mark.asyncio
 async def test_agent_registry_destructive_tool_default_approval(admin_client: AsyncClient, admin_token_headers):
     # 1. Create agent with a destructive tool (e.g. "delete")
@@ -135,7 +144,7 @@ async def test_high_risk_requires_approval_gate(admin_client: AsyncClient, admin
 
 
 @pytest.mark.asyncio
-async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, admin_token_headers, session: AsyncSession):
+async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, admin_token_headers, session: AsyncSession, settings):
     # 1. Create agent without owner & baseline
     payload = {
         "name": "Gated Agent",
@@ -153,6 +162,9 @@ async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, ad
         json={"approved_by": "Compliance Lead"},
         headers=admin_token_headers
     )
+
+    # Re-enable baseline check for activation testing
+    settings.agent_production_requires_eval_baseline = True
 
     # 2. Try to activate -> fails because Owner is missing
     resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)

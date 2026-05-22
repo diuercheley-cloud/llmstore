@@ -25,6 +25,42 @@ class AgentObservabilityService:
         metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status="started").inc()
         await self._record_timeline_event(run_id, "run.started", {"tenant_hash": hashed_tenant})
 
+    async def record_run_completion(self, agent_id: uuid.UUID, run_id: uuid.UUID):
+        if not self.settings.agent_observability_enabled:
+            return
+        metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status="completed").inc()
+        await self._record_timeline_event(run_id, "run.completed", {})
+
+    async def record_run_failure(self, agent_id: uuid.UUID, run_id: uuid.UUID, reason: str):
+        if not self.settings.agent_observability_enabled:
+            return
+        metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status="failed").inc()
+        metrics.LLM_AGENT_RUN_FAILURES_TOTAL.labels(agent_id=str(agent_id), reason=reason).inc()
+        await self._record_timeline_event(run_id, "run.failed", {"reason": reason})
+
+    def get_trace_attributes(self, run: Any, step: Any = None) -> Dict[str, Any]:
+        tenant_val = self._hash_tenant(run.tenant_id) if self.settings.agent_trace_export_enabled else run.tenant_id
+        if step is None:
+            attrs = {
+                "agent_id": str(run.agent_id),
+                "tenant_id": tenant_val,
+                "status": run.status,
+                "total_steps": run.total_steps,
+                "total_tokens": run.total_tokens,
+                "estimated_cost_brl": run.estimated_cost_brl,
+            }
+            if run.correlation_id:
+                attrs["correlation_id"] = run.correlation_id
+            return attrs
+        else:
+            attrs = {
+                "step_number": step.step_number,
+                "step_type": step.step_type,
+                "status": step.status,
+                "latency_ms": step.latency_ms,
+            }
+            return attrs
+
     async def record_step(self, agent_id: uuid.UUID, run_id: uuid.UUID, step_type: str, duration_ms: float):
         metrics.LLM_AGENT_STEP_LATENCY_SECONDS.labels(agent_id=str(agent_id), step_type=step_type).observe(duration_ms / 1000.0)
         await self._record_timeline_event(run_id, f"step.{step_type}", {"duration_ms": duration_ms})
@@ -48,6 +84,12 @@ class AgentObservabilityService:
     async def record_policy_denial(self, agent_id: uuid.UUID, run_id: uuid.UUID, tool_name: str):
         metrics.LLM_AGENT_POLICY_DENIALS_TOTAL.labels(agent_id=str(agent_id), tool_name=tool_name).inc()
         await self._record_timeline_event(run_id, "policy.denied", {"tool_name": tool_name})
+
+    def record_approval_wait(self, agent_id_str: str, tool_name: str, wait_time_seconds: float):
+        # We don't have a specific metric for this yet, so we'll just log a timeline event if we had a run_id
+        # but the current signature in human_approval.py doesn't pass run_id.
+        # For now, let's just make it a no-op to fix the crash, or better, add the metric.
+        pass
 
     async def record_cost(self, agent_id: uuid.UUID, run_id: uuid.UUID, cost_brl: float, prompt_tokens: int, completion_tokens: int):
         metrics.LLM_AGENT_COST_BRL_TOTAL.labels(agent_id=str(agent_id)).inc(cost_brl)

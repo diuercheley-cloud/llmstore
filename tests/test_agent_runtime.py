@@ -25,6 +25,7 @@ from app.services.agents.agent_runtime import RuntimeDisabledError, ReplayDisabl
 async def test_create_and_activate_agent(admin_client: AsyncClient, admin_token_headers, monkeypatch):
     # Enable runtime via feature flags
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     get_settings.cache_clear()
 
     # 1. Create a draft agent definition
@@ -77,6 +78,7 @@ async def test_create_and_activate_agent(admin_client: AsyncClient, admin_token_
 @pytest.mark.asyncio
 async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     get_settings.cache_clear()
 
@@ -181,6 +183,7 @@ async def test_execute_agent_runtime_disabled(admin_client: AsyncClient, admin_t
 @pytest.mark.asyncio
 async def test_execute_agent_execution_disabled_mocks_tool(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "false")  # execution disabled
     get_settings.cache_clear()
 
@@ -244,6 +247,7 @@ async def test_execute_agent_execution_disabled_mocks_tool(session: AsyncSession
 @pytest.mark.asyncio
 async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     get_settings.cache_clear()
 
@@ -332,6 +336,7 @@ async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
 @pytest.mark.asyncio
 async def test_replay_run(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     monkeypatch.setenv("AGENT_REPLAY_ENABLED", "true")
     get_settings.cache_clear()
@@ -383,6 +388,7 @@ async def test_replay_run(session: AsyncSession, monkeypatch):
 @pytest.mark.asyncio
 async def test_max_steps_limit(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     get_settings.cache_clear()
 
@@ -423,6 +429,7 @@ async def test_max_steps_limit(session: AsyncSession, monkeypatch):
 @pytest.mark.asyncio
 async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     get_settings.cache_clear()
 
@@ -473,6 +480,7 @@ async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
 @pytest.mark.asyncio
 async def test_prompt_logs_masking(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     get_settings.cache_clear()
 

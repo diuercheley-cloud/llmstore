@@ -14,8 +14,8 @@ from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.services.auth import require_client
 from app.models.client import Client
-from app.models.agents import AgentDefinition, AgentRun, AgentRunStep
-from app.services.agents import agent_state
+from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent
+from app.services.agents import agent_state, agent_api_facade
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
 
@@ -106,28 +106,19 @@ async def start_run(
     """
     Starts a new execution run for the specified agent.
     """
-    agent = await agent_state.get_agent_definition(db, agent_id)
-    if not agent or agent.tenant_id != str(client.id):
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    if agent.status not in ["active", "approved"]:
-        raise HTTPException(status_code=400, detail=f"Agent is not active (current status: {agent.status})")
-
-    # Policy Check for run initiation
-    policy_engine = AgentPolicyEngine(db)
-    decision, reason = await policy_engine.evaluate_agent_activation(agent)
-    if decision == PolicyDecision.DENY:
-        raise HTTPException(status_code=403, detail=f"Policy denial: {reason}")
-
-    run = await agent_state.create_agent_run(db, agent_id, str(client.id), input_text)
-
-    settings = get_settings()
-    if (
-        settings.agent_runtime_enabled
-        and settings.agent_execution_enabled
-        and settings.agent_async_execution_enabled
-    ):
-        asyncio.create_task(_execute_run_in_fresh_session(run.id))
+    try:
+        run = await agent_api_facade.validate_and_start_run(
+            db=db,
+            agent_id=agent_id,
+            tenant_id=str(client.id),
+            input_text=input_text,
+            is_admin=False
+        )
+    except agent_api_facade.PolicyDenialError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        status_code = 404 if "not found" in str(e).lower() else 400
+        raise HTTPException(status_code=status_code, detail=str(e))
     
     return {
         "id": str(run.id),
@@ -174,7 +165,16 @@ async def cancel_run(
     if run.status in ["completed", "failed", "cancelled"]:
         return {"status": run.status, "message": "Run already finished"}
         
-    await agent_state.update_run(db, run_id, status="cancelled")
+    try:
+        await agent_api_facade.validate_and_cancel_run(
+            db=db,
+            run_id=run_id,
+            tenant_id=str(client.id),
+            is_admin=False
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="Run not found")
+        
     return {"status": "cancelled"}
 
 @router.get("/runs/{run_id}/events")
@@ -193,9 +193,6 @@ async def stream_run_events(
     settings = get_settings()
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        # Emit started event immediately
-        yield f"event: run.started\ndata: {json.dumps({'status': run.status, 'timestamp': run.started_at.isoformat()})}\n\n"
-
         runtime_active = (
             settings.agent_runtime_enabled
             and settings.agent_execution_enabled
@@ -206,32 +203,32 @@ async def stream_run_events(
             yield f"event: run.idle\ndata: {json.dumps({'status': run.status, 'reason': 'agent_execution_disabled_by_default'})}\n\n"
             return
         
-        last_step = 0
+        last_event_count = 0
         while True:
-            # Poll for new steps/events
-            steps = await agent_state.get_run_steps(db, run_id)
-            for step in steps[last_step:]:
-                event_name = "step.completed" if step.status == "success" else "step.failed"
-                if step.step_type == "tool_call":
-                    event_name = "tool.called"
-                
-                payload = {
-                    "step_number": step.step_number,
-                    "step_type": step.step_type,
-                    "status": step.status,
-                    "timestamp": step.created_at.isoformat()
-                }
-                yield f"event: {event_name}\ndata: {json.dumps(payload)}\n\n"
-                last_step += 1
+            # Poll for new events from AgentRunEvent
+            stmt = select(AgentRunEvent).where(AgentRunEvent.run_id == run_id).order_by(AgentRunEvent.created_at.asc())
+            res = await db.execute(stmt)
+            events = res.scalars().all()
+            
+            for event in events[last_event_count:]:
+                sanitized = agent_api_facade.sanitize_payload(event.payload or {})
+                yield f"event: {event.event_type}\ndata: {json.dumps(sanitized)}\n\n"
+                last_event_count += 1
 
             # Check if run finished
             current_run = await agent_state.get_agent_run(db, run_id)
             if not current_run:
-                yield "event: run.failed\ndata: {\"status\":\"failed\",\"failure_reason\":\"Run not found\"}\n\n"
+                yield "event: run_failed\ndata: {\"status\":\"failed\",\"failure_reason\":\"Run not found\"}\n\n"
                 break
             if current_run.status in ["completed", "failed", "cancelled"]:
-                final_event = "run.completed" if current_run.status == "completed" else "run.failed"
-                yield f"event: {final_event}\ndata: {json.dumps({'status': current_run.status, 'failure_reason': current_run.failure_reason})}\n\n"
+                # Fetch any remaining events logged right at the end
+                stmt = select(AgentRunEvent).where(AgentRunEvent.run_id == run_id).order_by(AgentRunEvent.created_at.asc())
+                res = await db.execute(stmt)
+                events = res.scalars().all()
+                for event in events[last_event_count:]:
+                    sanitized = agent_api_facade.sanitize_payload(event.payload or {})
+                    yield f"event: {event.event_type}\ndata: {json.dumps(sanitized)}\n\n"
+                    last_event_count += 1
                 break
                 
             await asyncio.sleep(1)

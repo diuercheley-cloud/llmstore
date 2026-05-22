@@ -98,6 +98,7 @@ async def create_agent_run(
         tenant_id=tenant_id,
         user_id=user_id,
         status="queued",
+        input_text=input_text,
         input_hash=input_hash,
         total_steps=0,
         total_tokens=0,
@@ -137,6 +138,7 @@ async def log_run_step(
     status: str = "success",
     latency_ms: Optional[int] = None,
     policy_result: Optional[dict] = None,
+    metadata: Optional[dict] = None,
     error: Optional[str] = None,
 ) -> AgentRunStep:
     input_hash = compute_sha256(input_data)
@@ -151,6 +153,7 @@ async def log_run_step(
         status=status,
         latency_ms=latency_ms,
         policy_result=policy_result,
+        step_metadata=metadata,
         error=error,
         created_at=utc_now(),
     )

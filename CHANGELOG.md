@@ -1,16 +1,25 @@
 # Changelog
 
-## [v2.0.0-agentic-platform] - 2026-05-22
+## [v2.0.0-agentic-ai-platform] - 2026-05-22
 
 ### Added
-- **Agentic AI Platform**: Production-ready runtime for autonomous agents.
-- **Async Execution Plane**: Highly scalable worker-based execution.
-- **Tool Sandbox**: Secure, governed tool calling with rollback support.
-- **Memory Infrastructure**: Versioned and isolated long-term agent memory.
-- **Promotion Gates**: Mandatory evaluation baselines for production activation.
-- **Agent Observability**: End-to-end telemetry and automated incident response.
-- **Granular RBAC**: Scoped roles for agent operations and security.
-- **Builder Experience**: `agentctl` CLI and multi-language SDKs.
+- **Gateway LLM Provider**: `AgentExecutor` can use the internal inference gateway when `AGENT_REAL_LLM_ENABLED=true` and `AGENT_LLM_PROVIDER=gateway`.
+- **Versioned Tool Adapters**: Built-in adapters are registered, seeded into the tool registry, and executed through the governed tool pipeline.
+- **Planner Runtime Loop**: Planner-created tasks can execute real tool/model/memory work through `TaskEngine` when explicitly enabled.
+- **Semantic Memory Reinjection**: Long-term memory retrieval can be injected back into model context behind dedicated flags.
+- **Opt-in Worker Deployment**: Docker Compose `agentic` profile and Helm `agentWorker.enabled=true` now expose the official worker deployment path.
+- **Canonical Agent API**: `/v1/agents` is the unified runtime surface and `/agents` is now explicitly deprecated.
+- **Promotion Gate Artifacts**: Eval promotion reports are written under `artifacts/agent-evals/latest/`.
+
+### Changed
+- **Safe defaults expanded**: real LLM, tool adapters, planner real execution, semantic search, context injection, worker, async execution, evals, and real eval provider all stay disabled by default.
+- **Promotion posture hardened**: `AGENT_PROMOTION_REQUIRES_EVALS=true` remains the default and blocks promotion without passing eval evidence.
+- **Runtime classification updated**: the platform is operational when enabled, but still opt-in and governance-gated by default.
+
+### Security
+- **No implicit provider reach-out**: agent LLM execution stays on `mock` until the operator intentionally selects the gateway path.
+- **Legacy surface deprecation**: `/agents` now advertises deprecation and points operators toward `/v1/agents`.
+- **Release artifact hygiene**: eval markdown output is redirected to the artifacts tree to support clean release commits.
 
 ## [1.10.0-agentic-runtime] - 2026-05-15
 

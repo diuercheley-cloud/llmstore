@@ -1,9 +1,14 @@
 import pytest
 import uuid
+import json
+import math
 from app.services.agents.agent_memory import AgentMemoryService, MemoryDisabledError, SecretFoundError, ConsentRequiredError
 from app.services.agents.memory_policy import MemoryPolicyService
 from app.services.agents.memory_retention import MemoryRetentionService
 from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_indexing import MemoryIndexingService, cosine_similarity, get_mock_embedding
+from app.services.agents.memory_retriever import MemoryRetriever
+from app.services.agents.memory_context_builder import MemoryContextBuilder
 from app.services.agents import agent_state
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -262,3 +267,296 @@ async def test_indexing_nao_mistura_tenants(session):
     res_b = await service.search_memory(tenant_b, agent_id_b, "special")
     assert len(res_b) == 1
     assert res_b[0].tenant_id == tenant_b
+
+
+@pytest.mark.asyncio
+async def test_semantic_search_returns_relevant_memory(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_memory_search_enabled = True
+    settings.agent_memory_semantic_search_enabled = True
+
+    tenant_id = "t_semantic"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "short_term"})
+
+    service = AgentMemoryService(session)
+    await service.write_memory(tenant_id, agent_id, "short_term", "O gato subiu na árvore", user_id="u1")
+    await service.write_memory(tenant_id, agent_id, "short_term", "O cachorro correu no parque", user_id="u2")
+
+    results = await service.search_memory(tenant_id, agent_id, "gato")
+    assert len(results) >= 1
+    contents = [r.raw_content for r in results]
+    assert any("gato" in c for c in contents)
+
+
+@pytest.mark.asyncio
+async def test_like_fallback_works_in_mock(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_memory_search_enabled = True
+    settings.agent_memory_semantic_search_enabled = False
+
+    tenant_id = "t_like"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "short_term"})
+
+    service = AgentMemoryService(session)
+    await service.write_memory(tenant_id, agent_id, "short_term", "banana amarela", user_id="u1")
+    await service.write_memory(tenant_id, agent_id, "short_term", "morango vermelho", user_id="u2")
+
+    results = await service.search_memory(tenant_id, agent_id, "banana")
+    assert len(results) == 1
+    assert results[0].raw_content == "banana amarela"
+
+
+@pytest.mark.asyncio
+async def test_context_injection_builds_block(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_long_term_memory_enabled = True
+    settings.agent_memory_context_injection_enabled = True
+
+    tenant_id = "t_ctx"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "long_term"})
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "short_term"})
+
+    from app.services.agents.memory_consent import MemoryConsentService
+    consent_service = MemoryConsentService(session)
+    await consent_service.create_consent(tenant_id, "u1", "long_term", agent_id)
+
+    service = AgentMemoryService(session)
+    await service.write_memory(
+        tenant_id, agent_id, "long_term",
+        "O cliente prefere e-mails resumidos.",
+        user_id="u1", summary="Preference: concise emails"
+    )
+
+    ctx = await service.build_memory_context(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        query="e-mails resumidos",
+        user_id="u1",
+        memory_type="long_term",
+    )
+
+    assert "Relevant Memory" in ctx["context_block"]
+    assert len(ctx["memory_ids"]) > 0
+    assert ctx["total_tokens"] > 0
+
+
+@pytest.mark.asyncio
+async def test_context_token_limit_is_respected(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_long_term_memory_enabled = True
+    settings.agent_memory_context_injection_enabled = True
+
+    tenant_id = "t_tokenlim"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "long_term"})
+
+    from app.services.agents.memory_consent import MemoryConsentService
+    consent_service = MemoryConsentService(session)
+    await consent_service.create_consent(tenant_id, "u1", "long_term", agent_id)
+    await consent_service.create_consent(tenant_id, "u2", "long_term", agent_id)
+
+    service = AgentMemoryService(session)
+    await service.write_memory(
+        tenant_id, agent_id, "long_term", "A" * 5000,
+        user_id="u1", summary="Long memory 1"
+    )
+    await service.write_memory(
+        tenant_id, agent_id, "long_term", "B" * 5000,
+        user_id="u2", summary="Long memory 2"
+    )
+
+    ctx = await service.build_memory_context(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        query="memory",
+        user_id="u1",
+        memory_type="long_term",
+        max_tokens=100,
+    )
+
+    assert ctx["total_tokens"] <= 120  # allow small padding
+    if ctx["memory_ids"]:
+        assert ctx["total_tokens"] <= 120
+
+
+@pytest.mark.asyncio
+async def test_secret_like_memory_not_reinjected(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_long_term_memory_enabled = True
+    settings.agent_memory_context_injection_enabled = True
+
+    tenant_id = "t_secret"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "long_term"})
+
+    service = AgentMemoryService(session)
+    # This will fail to write due to secret detection, so we write directly
+    from app.models.agents import AgentMemoryItem
+    from datetime import timedelta
+    item = AgentMemoryItem(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        memory_type="long_term",
+        content_hash="abc",
+        raw_content="minha chave api sk-12345",
+        summary="Secret key",
+        retention_until=utc_now() + timedelta(days=30),
+    )
+    session.add(item)
+    await session.commit()
+
+    ctx = await service.build_memory_context(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        query="chave api",
+        user_id="u1",
+        memory_type="long_term",
+    )
+
+    assert len(ctx["memory_ids"]) == 0
+    assert ctx["context_block"] == ""
+
+
+@pytest.mark.asyncio
+async def test_tenant_isolation_semantic_search(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_memory_search_enabled = True
+    settings.agent_memory_semantic_search_enabled = True
+
+    tenant_a = "t_iso_a"
+    tenant_b = "t_iso_b"
+    agent_id_a = uuid.uuid4()
+    agent_id_b = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_a, "memory_type": "short_term"})
+    await policy_service.create_policy({"tenant_id": tenant_b, "memory_type": "short_term"})
+
+    service = AgentMemoryService(session)
+    await service.write_memory(tenant_a, agent_id_a, "short_term", "dado confidencial do tenant A", user_id="u1")
+    await service.write_memory(tenant_b, agent_id_b, "short_term", "dado confidencial do tenant B", user_id="u2")
+
+    semantic_results_a = await service.semantic_search_memory(tenant_a, agent_id_a, "confidencial")
+    semantic_results_b = await service.semantic_search_memory(tenant_b, agent_id_b, "confidencial")
+
+    for r in semantic_results_a:
+        assert r["memory_id"] not in [s["memory_id"] for s in semantic_results_b]
+
+    ids_a = {r["memory_id"] for r in semantic_results_a}
+    ids_b = {r["memory_id"] for r in semantic_results_b}
+    assert ids_a.isdisjoint(ids_b)
+
+
+@pytest.mark.asyncio
+async def test_memory_ids_appear_in_step_metadata(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_long_term_memory_enabled = True
+    settings.agent_memory_context_injection_enabled = True
+
+    tenant_id = "t_stepmeta"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "long_term"})
+
+    from app.services.agents.memory_consent import MemoryConsentService
+    consent_service = MemoryConsentService(session)
+    await consent_service.create_consent(tenant_id, "u1", "long_term", agent_id)
+
+    service = AgentMemoryService(session)
+    item = await service.write_memory(
+        tenant_id, agent_id, "long_term",
+        "memória importante para o agente",
+        user_id="u1", summary="Important context"
+    )
+
+    ctx = await service.build_memory_context(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        query="importante",
+        user_id="u1",
+        memory_type="long_term",
+    )
+
+    assert len(ctx["memory_ids"]) >= 1
+    assert str(item.id) in ctx["memory_ids"]
+
+
+@pytest.mark.asyncio
+async def test_cosine_similarity_basic():
+    a = [1.0, 0.0, 0.0]
+    b = [1.0, 0.0, 0.0]
+    assert cosine_similarity(a, b) == pytest.approx(1.0)
+
+    c = [0.0, 1.0, 0.0]
+    assert cosine_similarity(a, c) == pytest.approx(0.0)
+
+    d = [0.5, 0.5, 0.0]
+    val = cosine_similarity(a, d)
+    assert 0.5 < val < 1.0
+
+
+@pytest.mark.asyncio
+async def test_mock_embedding_deterministic():
+    emb1 = get_mock_embedding("hello world")
+    emb2 = get_mock_embedding("hello world")
+    assert emb1 == emb2
+    assert len(emb1) == 384
+
+    emb3 = get_mock_embedding("different text")
+    assert emb1 != emb3
+
+
+@pytest.mark.asyncio
+async def test_context_injection_disabled_by_default(session):
+    settings = get_settings()
+    settings.agent_memory_enabled = True
+    settings.agent_memory_write_enabled = True
+    settings.agent_long_term_memory_enabled = True
+    settings.agent_memory_context_injection_enabled = False
+    settings.agent_memory_consent_required = False
+
+    tenant_id = "t_disabled"
+    agent_id = uuid.uuid4()
+
+    policy_service = MemoryPolicyService(session)
+    await policy_service.create_policy({"tenant_id": tenant_id, "memory_type": "long_term"})
+
+    service = AgentMemoryService(session)
+    ctx = await service.build_memory_context(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        query="test",
+        user_id="u1",
+    )
+
+    assert ctx["context_block"] == ""
+    assert ctx["memory_ids"] == []
+    assert ctx["total_tokens"] == 0

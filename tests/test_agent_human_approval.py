@@ -34,6 +34,9 @@ from app.services.auth import AdminRole
 def setup_approval_flags(monkeypatch):
     """Setup environment flags for the human approval test suite."""
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_TOOL_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_DESTRUCTIVE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     monkeypatch.setenv("AGENT_HUMAN_APPROVAL_ENABLED", "true")
     monkeypatch.setenv("AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK", "true")

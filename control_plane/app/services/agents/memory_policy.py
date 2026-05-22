@@ -13,7 +13,6 @@ class MemoryPolicyService:
         self.db = db
 
     async def get_policy(self, tenant_id: str, agent_id: Optional[uuid.UUID], memory_type: str) -> Optional[AgentMemoryPolicy]:
-        # Specific policy for agent
         stmt = select(AgentMemoryPolicy).where(
             AgentMemoryPolicy.tenant_id == tenant_id,
             AgentMemoryPolicy.agent_id == agent_id,
@@ -21,9 +20,8 @@ class MemoryPolicyService:
         )
         res = await self.db.execute(stmt)
         policy = res.scalar_one_or_none()
-        
+
         if not policy and agent_id is not None:
-            # Fallback to tenant-level policy for this memory type
             stmt = select(AgentMemoryPolicy).where(
                 AgentMemoryPolicy.tenant_id == tenant_id,
                 AgentMemoryPolicy.agent_id.is_(None),
@@ -31,7 +29,7 @@ class MemoryPolicyService:
             )
             res = await self.db.execute(stmt)
             policy = res.scalar_one_or_none()
-            
+
         return policy
 
     async def create_policy(self, data: dict) -> AgentMemoryPolicy:
@@ -42,7 +40,7 @@ class MemoryPolicyService:
             retention_days=data.get("retention_days", 30),
             redaction_enabled=data.get("redaction_enabled", True),
             encryption_required=data.get("encryption_required", False),
-            allow_export=data.get("allow_export", False)
+            allow_export=data.get("allow_export", False),
         )
         self.db.add(policy)
         await self.db.commit()
@@ -53,3 +51,15 @@ class MemoryPolicyService:
         stmt = select(AgentMemoryPolicy).where(AgentMemoryPolicy.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
+
+    async def get_search_policy(
+        self, tenant_id: str, agent_id: Optional[uuid.UUID], memory_type: str
+    ) -> dict:
+        policy = await self.get_policy(tenant_id, agent_id, memory_type)
+        if not policy:
+            return {"top_k": 5, "score_threshold": 0.0, "redaction_enabled": True}
+        return {
+            "top_k": getattr(policy, "top_k", None) or 5,
+            "score_threshold": getattr(policy, "score_threshold", None) or 0.0,
+            "redaction_enabled": getattr(policy, "redaction_enabled", True),
+        }

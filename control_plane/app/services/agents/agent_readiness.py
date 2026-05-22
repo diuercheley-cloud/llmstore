@@ -11,7 +11,13 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agents import AgentRun, AgentIncident
-from app.models.agent_execution import AgentWorkerHeartbeat, AgentExecutionJob, AgentExecutionLease
+from app.models.agent_execution import (
+    AgentWorkerHeartbeat,
+    AgentExecutionJob,
+    AgentExecutionLease,
+    AgentExecutionDeadLetter,
+    AgentExecutionRetry,
+)
 from app.core.config import get_settings
 from app.core.time import utc_now
 
@@ -38,7 +44,7 @@ class AgentReadinessService:
 
         # 2. Worker Heartbeats
         res_workers = await self.db.execute(
-            select(func.count(AgentWorkerHeartbeat.id))
+            select(func.count(AgentWorkerHeartbeat.worker_id))
             .where(AgentWorkerHeartbeat.last_heartbeat >= utc_now() - timedelta(minutes=5))
         )
         active_workers = res_workers.scalar() or 0
@@ -62,7 +68,7 @@ class AgentReadinessService:
         res_stuck = await self.db.execute(
             select(func.count(AgentRun.id))
             .where(AgentRun.status == "running")
-            .where(AgentRun.created_at <= utc_now() - timedelta(hours=1))
+            .where(AgentRun.started_at <= utc_now() - timedelta(hours=1))
         )
         stuck_runs = res_stuck.scalar() or 0
         results["checks"]["stuck_runs"] = {
@@ -81,7 +87,28 @@ class AgentReadinessService:
             "value": orphan_leases
         }
 
-        # 6. Incident Backlog
+        # 6. Dead Letter Queue
+        res_dlq = await self.db.execute(
+            select(func.count(AgentExecutionDeadLetter.id))
+        )
+        dlq_count = res_dlq.scalar() or 0
+        results["checks"]["dead_letter_queue"] = {
+            "status": "pass" if dlq_count == 0 else "warn",
+            "value": dlq_count
+        }
+
+        # 7. Retry Backlog
+        res_retry = await self.db.execute(
+            select(func.count(AgentExecutionRetry.id))
+            .where(AgentExecutionRetry.next_attempt_at > utc_now())
+        )
+        retry_backlog = res_retry.scalar() or 0
+        results["checks"]["retry_backlog"] = {
+            "status": "pass" if retry_backlog < 10 else "warn",
+            "value": retry_backlog
+        }
+
+        # 8. Incident Backlog
         res_incidents = await self.db.execute(
             select(func.count(AgentIncident.id))
             .where(AgentIncident.status == "open")

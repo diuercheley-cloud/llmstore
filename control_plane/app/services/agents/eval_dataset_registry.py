@@ -59,7 +59,6 @@ class EvalDatasetRegistryService:
             dataset_id=dataset_id,
             version=version,
             cases_json=cases_json,
-            cases_count=len(cases_json),
             created_at=utc_now()
         )
         self.db.add(ds_version)

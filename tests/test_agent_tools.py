@@ -280,17 +280,19 @@ async def test_rollback_compensation_execution(session: AsyncSession):
     tool = await create_tool(session, {
         "name": "rollback_test_tool",
         "category": "database_write",
+        "side_effect_level": "write",
         "input_schema_json": {"type": "object"},
         "output_schema_json": {"type": "object"},
         "timeout_seconds": 10,
-        "rollback_supported": True
+        "rollback_supported": True,
+        "requires_approval": False
     })
 
     async def failing_tool():
         raise RuntimeError("Something went wrong")
 
     rollback_called = False
-    async def rollback_callback():
+    async def rollback_callback(**kwargs):
         nonlocal rollback_called
         rollback_called = True
 
@@ -346,7 +348,7 @@ async def test_feature_flags_destructive_gate(session: AsyncSession, monkeypatch
     # Destructive tool
     tool = await create_tool(session, {
         "name": "destructive_ff_tool",
-        "category": "shell_command",
+        "category": "database_write",
         "side_effect_level": "destructive",
         "input_schema_json": {"type": "object"},
         "output_schema_json": {"type": "object"},

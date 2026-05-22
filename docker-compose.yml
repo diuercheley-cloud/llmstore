@@ -193,6 +193,35 @@ services:
     networks:
       - control_net
 
+  agent-worker:
+    profiles: ["agentic"]
+    build:
+      context: .
+      dockerfile: docker/control-plane/Dockerfile
+    env_file:
+      - ${STACK_ENV_FILE:-.env.local}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      AGENT_EXECUTION_PLANE_ENABLED: "true"
+      AGENT_WORKER_ENABLED: "true"
+      AGENT_RUNTIME_ENABLED: "true"
+    command: ["bash", "-lc", "python -m app.workers.agent_worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      control-plane:
+        condition: service_started
+    volumes:
+      - ./control_plane/app:/app/app
+      - ./data:/data
+      - ./config:/config:ro
+    restart: unless-stopped
+    networks:
+      - control_net
+
   prometheus:
     image: prom/prometheus:v2.53.4
     profiles: ["observability"]

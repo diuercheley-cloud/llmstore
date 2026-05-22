@@ -19,11 +19,22 @@ class AgentPlanner:
         if not self.settings.agent_planning_enabled:
             logger.warning("Agent planning is disabled.")
 
+        # Calculate initial risk score based on task types and tools
+        risk_score = 0.0
+        requires_approval = False
+        for t in tasks_data:
+            if t.get("task_type") in ("destructive", "external"):
+                risk_score += 0.5
+                requires_approval = True
+            elif t.get("task_type") == "tool_call":
+                risk_score += 0.1
+
         plan = AgentPlan(
             agent_run_id=run_id,
             goal_hash=agent_state.compute_sha256(goal),
             status="draft",
-            risk_score=0.0 # Should be calculated
+            risk_score=min(risk_score, 1.0),
+            requires_approval=requires_approval
         )
         self.db.add(plan)
         await self.db.flush()
@@ -38,10 +49,12 @@ class AgentPlanner:
                 description_hash=agent_state.compute_sha256(t_data.get("description", "")),
                 task_type=t_data.get("task_type", "tool_call"),
                 max_attempts=t_data.get("max_attempts", 3),
+                input_data=t_data.get("input_data", {})
             )
             self.db.add(task)
             created_tasks.append((task, t_data))
             task_map[t_data.get("ref", i)] = task
+            task_map[t_data["title"]] = task
 
         await self.db.flush()
 

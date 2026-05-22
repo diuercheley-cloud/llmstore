@@ -226,9 +226,28 @@ restart: ## Restart the stack
 status: ## Show stack status
 	docker compose ps
 
+agent-worker: ## Start the Agent Worker process
+	@chmod +x scripts/run-agent-worker.sh
+	@./scripts/run-agent-worker.sh
+
+agentic-up: ## Start stack with agentic profile (includes agent-worker)
+	docker compose --profile agentic up -d
+
 agentic-readiness: ## Run Agentic Runtime Readiness Checks
 	@chmod +x scripts/agentic-readiness.sh
 	@./scripts/agentic-readiness.sh
+
+agent-queue-inspect: ## Inspect agent queue depth, workers, DLQ
+	@chmod +x scripts/agent-queue-inspect.sh
+	@./scripts/agent-queue-inspect.sh
+
+agent-worker-status: ## Show agent worker status and heartbeats
+	@chmod +x scripts/agent-worker-status.sh
+	@./scripts/agent-worker-status.sh
+
+agent-worker-drain: ## Drain agent worker (cancel queued jobs)
+	@chmod +x scripts/agent-worker-drain.sh
+	@./scripts/agent-worker-drain.sh
 
 agent-evals: ## Run Agent Evaluation suites
 	@echo "Running Agent Evaluations..."
@@ -872,7 +891,7 @@ logs: ## Show logs (use SERVICE=name for specific service)
 	@if [[ -n "$$SERVICE" ]]; then \
 		docker compose --env-file $${ENV_FILE:-.env.local} -f docker-compose.yml logs -f $$SERVICE; \
 	else \
-		docker compose --env-file $${ENV_FILE:-.env.local} -f docker-compose.yml logs -f control-plane control-plane-worker data-plane-gemma; \
+		docker compose --env-file $${ENV_FILE:-.env.local} -f docker-compose.yml logs -f control-plane control-plane-worker data-plane-gemma agent-worker; \
 	fi
 
 check-secrets: ## Scan for secrets in the codebase

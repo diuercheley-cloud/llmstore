@@ -107,7 +107,7 @@ async def approve_agent(
         approved_by=approved_by,
         approved_at=utc_now(),
         promoted_by=performed_by,
-        promotion_metadata=metadata
+        promotion_step_metadata=metadata
     )
     db.add(promotion)
 
@@ -142,7 +142,8 @@ async def activate_agent(db: AsyncSession, entry_id: uuid.UUID, performed_by: st
 
     # 2. Enforce Evaluation Baseline and Gate requirement
     settings = get_settings()
-    if settings.agent_production_requires_eval_baseline:
+    if settings.agent_production_requires_eval_baseline or settings.agent_promotion_requires_evals:
+
         # Check AgentEvalBaseline table
         res_baseline = await db.execute(
             select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == entry.id)
@@ -156,17 +157,17 @@ async def activate_agent(db: AsyncSession, entry_id: uuid.UUID, performed_by: st
             if getattr(baseline, "is_stale", False):
                 raise ValueError("Cannot activate agent: Evaluation baseline is stale. A new evaluation is required before activation.")
 
-        # Check AgentPromotionGateResult
-        res_gate = await db.execute(
-            select(AgentPromotionGateResult)
-            .where(AgentPromotionGateResult.agent_id == entry.id)
-            .order_by(AgentPromotionGateResult.created_at.desc())
-        )
-        gate_res = res_gate.scalars().first()
-        if not gate_res:
-            raise ValueError("Cannot activate agent: Promotion gate verification has not been run.")
-        if not gate_res.passed and not gate_res.audit_override:
-            raise ValueError("Cannot activate agent: Promotion gate verification failed. Override required to proceed.")
+            # Check AgentPromotionGateResult
+            res_gate = await db.execute(
+                select(AgentPromotionGateResult)
+                .where(AgentPromotionGateResult.agent_id == entry.id)
+                .order_by(AgentPromotionGateResult.created_at.desc())
+            )
+            gate_res = res_gate.scalars().first()
+            if not gate_res:
+                raise ValueError("Cannot activate agent: Promotion gate verification has not been run.")
+            if not gate_res.passed and not gate_res.audit_override:
+                raise ValueError("Cannot activate agent: Promotion gate verification failed. Override required to proceed.")
 
     # 3. Enforce Version presence
     # Check if a version exists
@@ -194,7 +195,7 @@ async def activate_agent(db: AsyncSession, entry_id: uuid.UUID, performed_by: st
         approved_by=performed_by,
         approved_at=utc_now(),
         promoted_by=performed_by,
-        promotion_metadata={"notes": "Agent promoted to active (production)"}
+        promotion_step_metadata={"notes": "Agent promoted to active (production)"}
     )
     db.add(promotion)
 

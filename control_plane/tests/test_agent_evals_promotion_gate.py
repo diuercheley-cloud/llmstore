@@ -37,6 +37,7 @@ async def _create_test_data(db: AsyncSession):
         id=uuid.uuid4(),
         name="GateTestAgent",
         version="1.0.0",
+        instructions="test",
         model_id="mock-model",
         owner="test",
         tenant_id="test-tenant",

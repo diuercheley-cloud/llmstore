@@ -1,0 +1,66 @@
+{{- if .Values.agentWorker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-agent-worker
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+    app: agent-worker
+spec:
+  replicas: {{ .Values.agentWorker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "llm-inference-stack.selectorLabels" . | nindent 6 }}
+      app: agent-worker
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "llm-inference-stack.selectorLabels" . | nindent 8 }}
+        app: agent-worker
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "llm-inference-stack.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: agent-worker
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "app.workers.agent_worker"]
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.config.databaseUrl | default (printf "postgresql://llmuser:%s@%s-postgres:5432/llmstack" .Values.postgres.password (include "llm-inference-stack.fullname" .)) | quote }}
+            - name: REDIS_URL
+              value: {{ .Values.config.redisUrl | default (printf "redis://%s-redis:6379/0" (include "llm-inference-stack.fullname" .)) | quote }}
+            - name: DEMO_MODE
+              value: {{ .Values.config.demoMode | quote }}
+            - name: AGENT_EXECUTION_PLANE_ENABLED
+              value: "true"
+            - name: AGENT_WORKER_ENABLED
+              value: "true"
+            - name: AGENT_RUNTIME_ENABLED
+              value: {{ .Values.agentWorker.runtimeEnabled | default "true" | quote }}
+          resources:
+            {{- toYaml .Values.agentWorker.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

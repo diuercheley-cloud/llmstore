@@ -24,6 +24,7 @@ from app.services.agents.tool_rollback import (
     rollback_invocation_side_effects,
 )
 from app.services.agents.tool_audit import log_audit_event
+from app.services.agents.tool_adapter_registry import adapter_registry
 
 logger = logging.getLogger(__name__)
 
@@ -218,10 +219,36 @@ async def execute_tool(
     start_time = time.monotonic()
     output = {}
 
+     # Try to resolve tool_callable from adapter_registry if not provided
+    effective_tool_callable = tool_callable
+    effective_rollback_callable = rollback_callable
+    is_dry_run_callable = False
+
+    if effective_tool_callable is None and settings.agent_tool_adapters_enabled:
+        adapter = adapter_registry.get_adapter(tool.name)
+        if adapter:
+            effective_tool_callable = adapter.execute
+            if is_dry_run:
+                effective_tool_callable = adapter.dry_run
+                is_dry_run_callable = True
+            
+            if tool.rollback_supported:
+                effective_rollback_callable = adapter.rollback
+
     try:
         if is_dry_run:
             # dry-run não causa side effect
-            output = {"status": "dry_run_success", "message": "Dry-run simulation completed successfully."}
+            if effective_tool_callable and is_dry_run_callable:
+                 if asyncio.iscoroutinefunction(effective_tool_callable):
+                        output = await asyncio.wait_for(
+                            effective_tool_callable(**modified_parameters),
+                            timeout=float(tool.timeout_seconds)
+                        )
+                 else:
+                        output = effective_tool_callable(**modified_parameters)
+            else:
+                output = {"status": "dry_run_success", "message": "Dry-run simulation completed successfully."}
+            
             invocation.status = "dry_run"
             
             # Execute mock sandbox to record sandbox audit logs as dry run
@@ -292,19 +319,19 @@ async def execute_tool(
                     parameters=modified_parameters,
                     allowed_commands=["*"], # Allow registry defined or * by default
                     timeout_seconds=int(tool.timeout_seconds),
-                    tool_callable=tool_callable
+                    tool_callable=effective_tool_callable
                 )
             else:
-                if tool_callable is not None:
+                if effective_tool_callable is not None:
                     # Enforce programmatic timeout outside sandbox
-                    if asyncio.iscoroutinefunction(tool_callable):
+                    if asyncio.iscoroutinefunction(effective_tool_callable):
                         output = await asyncio.wait_for(
-                            tool_callable(**modified_parameters),
+                            effective_tool_callable(**modified_parameters),
                             timeout=float(tool.timeout_seconds)
                         )
                     else:
                         def sync_wrapper():
-                            return tool_callable(**modified_parameters)
+                            return effective_tool_callable(**modified_parameters)
                         output = await asyncio.wait_for(
                             asyncio.to_thread(sync_wrapper),
                             timeout=float(tool.timeout_seconds)
@@ -349,7 +376,7 @@ async def execute_tool(
                     db=db,
                     tenant_id=effective_tenant,
                     invocation_id=invocation.id,
-                    rollback_callable=rollback_callable
+                    rollback_callable=effective_rollback_callable
                 )
                 if rolled_back:
                     invocation.status = "rolled_back"

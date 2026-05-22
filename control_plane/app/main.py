@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -131,8 +132,10 @@ from app.services.routing.commercial_report_scheduler import commercial_report_s
 from app.services.models.runtime_integrity_monitor import runtime_integrity_monitor_loop, scan_registered_models
 from app.services.routing.commercial_node_heartbeat import resolve_node_identity
 from app.services.seed import seed_defaults
+from app.services.agents.tool_adapters import register_all_adapters
 
 configure_logging()
+logger = logging.getLogger(__name__)
 settings = get_settings()
 validate_runtime_security(settings)
 
@@ -214,6 +217,9 @@ async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Initialize Tool Adapters
+    register_all_adapters()
+
     if getattr(settings, "create_tables_on_startup", False):
         from app.db.base import Base
         from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts, operations, agents
@@ -225,6 +231,14 @@ async def lifespan(_: FastAPI):
         if settings.commercial_model_integrity_monitor_enabled and settings.commercial_model_integrity_boot_scan_enabled:
             await scan_registered_models(session)
     
+    # Agent Embedded Worker (dev mode only, off by default)
+    agent_worker_task = None
+    if settings.agent_embedded_worker_enabled and settings.agent_worker_enabled:
+        from app.services.agents.agent_worker import AgentWorkerService
+        embedded_worker = AgentWorkerService(worker_id="embedded-dev")
+        agent_worker_task = asyncio.create_task(embedded_worker.start())
+        logger.info("Embedded agent worker started (AGENT_EMBEDDED_WORKER_ENABLED=true)")
+
     stop_event = asyncio.Event()
     billing_task = asyncio.create_task(billing_scheduler_loop(stop_event))
     analytics_task = asyncio.create_task(commercial_distributed_analytics_loop(stop_event))
@@ -235,6 +249,8 @@ async def lifespan(_: FastAPI):
     yield
     
     stop_event.set()
+    if agent_worker_task:
+        agent_worker_task.cancel()
     billing_task.cancel()
     analytics_task.cancel()
     federation_task.cancel()
