@@ -187,6 +187,20 @@ async def update_registry_entry(
         new_version = bump_version(old_version)
         update_data["semantic_version"] = new_version
 
+    # Detect changes to instructions, tools, or memory policy
+    inst_changed = ("instructions" in update_data and update_data["instructions"] != entry.instructions)
+    tools_changed = ("allowed_tools" in update_data and update_data["allowed_tools"] != entry.allowed_tools)
+    memory_changed = ("memory_enabled" in update_data and update_data["memory_enabled"] != entry.memory_enabled)
+
+    if inst_changed or tools_changed or memory_changed:
+        from app.models.agents import AgentEvalBaseline
+        res_baseline = await db.execute(
+            select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == entry.id)
+        )
+        baseline = res_baseline.scalar_one_or_none()
+        if baseline:
+            baseline.is_stale = True
+
     # Apply updates
     for key, val in update_data.items():
         setattr(entry, key, val)

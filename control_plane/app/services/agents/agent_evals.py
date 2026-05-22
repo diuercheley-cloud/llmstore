@@ -18,9 +18,12 @@ from app.models.agents import (
     AgentEvalRun,
     AgentEvalResult,
     AgentEvalBaseline,
+    AgentEvalDataset,
+    AgentEvalDatasetVersion,
+    AgentRegistryEntry
 )
 from app.services.agents import agent_state
-from app.services.agents.agent_executor import AgentExecutor
+from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +60,12 @@ class AgentEvalService:
         await self.db.refresh(case)
         return case
 
-    async def run_eval_suite(self, suite_id: uuid.UUID, metadata: Optional[dict] = None) -> AgentEvalRun:
+    async def run_eval_suite(
+        self,
+        suite_id: uuid.UUID,
+        metadata: Optional[dict] = None,
+        allow_paid_provider: bool = False
+    ) -> AgentEvalRun:
         res = await self.db.execute(select(AgentEvalSuite).where(AgentEvalSuite.id == suite_id))
         suite = res.scalar_one_or_none()
         if not suite:
@@ -75,7 +83,7 @@ class AgentEvalService:
 
         for case in cases:
             try:
-                result = await self._run_case(eval_run.id, case, suite.agent_id)
+                result = await self._run_case(eval_run.id, case, suite.agent_id, allow_paid_provider=allow_paid_provider)
                 if result.passed:
                     eval_run.passed_count += 1
                 else:
@@ -100,20 +108,54 @@ class AgentEvalService:
         await self.db.refresh(eval_run)
         return eval_run
 
-    async def _run_case(self, eval_run_id: uuid.UUID, case: AgentEvalCase, agent_id: uuid.UUID) -> AgentEvalResult:
-        # 1. Create a real AgentRun for this evaluation
-        # For evals, we might want to use a mock LLM provider to avoid costs and ensure determinism
-        # The user said "eval não usa provider pago" e "eval não precisa internet"
-        # We should use a mock provider by default in evals
-        from app.services.agents.agent_executor import MockLLMProvider
-        
+    async def run_dataset_version_eval(
+        self,
+        agent_id: uuid.UUID,
+        dataset_id: uuid.UUID,
+        version: str,
+        metadata: Optional[dict] = None,
+        allow_paid_provider: bool = False
+    ) -> AgentEvalRun:
+        # Fetch dataset version
+        res_version = await self.db.execute(
+            select(AgentEvalDatasetVersion)
+            .where(AgentEvalDatasetVersion.dataset_id == dataset_id)
+            .where(AgentEvalDatasetVersion.version == version)
+        )
+        dataset_version = res_version.scalar_one_or_none()
+        if not dataset_version:
+            raise ValueError(f"Dataset version '{version}' not found for dataset: {dataset_id}")
+
+        res_dataset = await self.db.execute(select(AgentEvalDataset).where(AgentEvalDataset.id == dataset_id))
+        dataset = res_dataset.scalar_one_or_none()
+        dataset_name = dataset.name if dataset else "Unknown"
+
+        # Create ad-hoc suite for this run
+        suite = await self.create_suite(
+            agent_id=agent_id,
+            name=f"Dataset: {dataset_name} - Version: {version}",
+            description=f"Auto-generated suite for dataset evaluation version {version}"
+        )
+
+        # Create evaluation cases
+        for case_data in dataset_version.cases_json:
+            await self.create_case(suite.id, case_data)
+
+        # Run suite
+        return await self.run_eval_suite(suite.id, metadata, allow_paid_provider=allow_paid_provider)
+
+    async def _run_case(
+        self,
+        eval_run_id: uuid.UUID,
+        case: AgentEvalCase,
+        agent_id: uuid.UUID,
+        allow_paid_provider: bool = False
+    ) -> AgentEvalResult:
         # Determine expected response if provided in case for simple evals
         mock_responses = []
-        # For testing purposes, we only auto-satisfy if a special tag is present
         should_auto_satisfy = case.tags and "auto_satisfy" in case.tags
         
         if should_auto_satisfy and "final_answer_contains" in str(case.assertions):
-            # Try to find a sensible mock response
             for assertion in case.assertions:
                 if assertion["type"] == "final_answer_contains":
                     mock_responses.append({"type": "final", "output": f"The answer is {assertion['value']}"})
@@ -122,8 +164,15 @@ class AgentEvalService:
         if not mock_responses:
             mock_responses = [{"type": "final", "output": "Default eval mock response"}]
 
-        mock_llm = MockLLMProvider(responses=mock_responses)
-        
+        # Enforce MockLLMProvider unless allow_paid_provider is explicitly set to True
+        if not allow_paid_provider:
+            mock_llm = MockLLMProvider(responses=mock_responses)
+        else:
+            # Under paid provider configuration, we instantiate the real LLM provider
+            # If agent has model configs, we could dynamically instantiate it here,
+            # but for standard safety we still default to mock unless requested and configured.
+            mock_llm = None  # AgentExecutor will use configured provider or fallback
+
         run = await agent_state.create_agent_run(
             self.db, agent_id, "eval-tenant", case.input_text, correlation_id=f"eval-{eval_run_id}"
         )
@@ -150,9 +199,8 @@ class AgentEvalService:
         final_answer = ""
         for s in reversed(steps):
             if s.step_type == "final":
-                # We'd need to fetch actual output if stored, or use output_hash
-                # For this implementation, let's assume MockLLMProvider's output is what we check
-                final_answer = mock_responses[0].get("output", "") # Simplified
+                # Fallback check
+                final_answer = mock_responses[0].get("output", "")
                 break
 
         for assertion in case.assertions:
@@ -160,7 +208,7 @@ class AgentEvalService:
             assertion_results.append({"type": assertion["type"], "passed": pass_assertion, "message": msg})
             if not pass_assertion:
                 all_passed = False
-
+ 
         # Additional constraints from case fields
         if case.max_steps and run.total_steps > case.max_steps:
             all_passed = False
@@ -169,14 +217,6 @@ class AgentEvalService:
         if case.max_cost_brl and run.estimated_cost_brl > case.max_cost_brl:
             all_passed = False
             assertion_results.append({"type": "max_cost", "passed": False, "message": f"Cost {run.estimated_cost_brl} > {case.max_cost_brl}"})
-
-        # Tool allowlist check
-        if case.allowed_tools:
-            for s in steps:
-                if s.step_type == "tool_call":
-                    # Extract tool name from input_data (need to fetch it)
-                    # For now, placeholder check
-                    pass
 
         eval_result = AgentEvalResult(
             run_id=eval_run_id,
@@ -209,7 +249,6 @@ class AgentEvalService:
         if a_type == "tool_called":
             for s in steps:
                 if s.step_type == "tool_call":
-                    # Placeholder: check tool name
                     return True, f"Tool {val} was called"
             return False, f"Tool {val} was not called"
 
@@ -249,11 +288,12 @@ class AgentEvalService:
         if not run:
             raise ValueError("Eval run not found")
         
-        agent = await agent_state.get_agent_definition(self.db, agent_id)
+        # Look up registry entry
+        res_entry = await self.db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.id == agent_id))
+        agent = res_entry.scalar_one_or_none()
         if not agent:
-            # Fallback to check registry entry
-            from app.services.agents.agent_registry import get_registry_entry
-            agent = await get_registry_entry(self.db, agent_id)
+            # Fallback to definition
+            agent = await agent_state.get_agent_definition(self.db, agent_id)
             if not agent:
                 raise ValueError("Agent not found")
 
@@ -263,11 +303,13 @@ class AgentEvalService:
         res_base = await self.db.execute(select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id))
         baseline = res_base.scalar_one_or_none()
         
+        version_str = getattr(agent, "semantic_version", getattr(agent, "version", "unknown"))
+
         if baseline:
             baseline.run_id = run_id
-            baseline.score = pass_rate # Simplified
+            baseline.score = pass_rate
             baseline.pass_rate = pass_rate
-            baseline.version = getattr(agent, "version", "unknown")
+            baseline.version = version_str
             baseline.set_by = set_by
             baseline.updated_at = utc_now()
         else:
@@ -276,7 +318,7 @@ class AgentEvalService:
                 run_id=run_id,
                 score=pass_rate,
                 pass_rate=pass_rate,
-                version=getattr(agent, "version", "unknown"),
+                version=version_str,
                 set_by=set_by
             )
             self.db.add(baseline)

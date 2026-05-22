@@ -1,10 +1,11 @@
 import uuid
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional, Any, Dict
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
+from app.api.deps import require_admin
 from app.services.agents import agent_registry as reg_service
 from app.services.agents import agent_lifecycle as lifecycle_service
 
@@ -264,3 +265,50 @@ async def get_agent_registry_versions(
     """Retrieves all semantic versions registered for a given agent entry."""
     versions = await reg_service.get_agent_versions(db, id)
     return [to_version_response(v) for v in versions]
+
+@router.get("/{id}/policy-diff")
+async def get_agent_policy_diff(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> Dict[str, Any]:
+    return {
+        "agent_id": str(id),
+        "policy_diff": {
+            "instructions": {"old": "", "new": ""},
+            "allowed_tools": {"old": [], "new": []},
+            "memory_policy": {"old": {}, "new": {}}
+        }
+    }
+
+@router.get("/{id}/lineage")
+async def get_agent_lineage(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> Dict[str, Any]:
+    return {
+        "agent_id": str(id),
+        "versions": [],
+        "promotions": [],
+        "eval_baselines": [],
+        "policy_changes": []
+    }
+
+@router.post("/{id}/promote")
+async def promote_agent(
+    id: uuid.UUID,
+    target_status: str = Body(..., embed=True),
+    reason: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> Dict[str, Any]:
+    # Promotion check logic
+    # 1. Eval pass?
+    # 2. Approval?
+    # 3. No critical incidents?
+    return {
+        "agent_id": str(id),
+        "new_status": target_status,
+        "promotion_id": str(uuid.uuid4())
+    }

@@ -5,49 +5,99 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.api.deps import require_admin, get_db_session
-from app.models.agents import AgentEvalSuite, AgentEvalRun, AgentEvalBaseline
+from app.models.agents import (
+    AgentEvalSuite,
+    AgentEvalRun,
+    AgentEvalBaseline,
+    AgentEvalResult,
+    AgentEvalGateResult,
+    AgentPromotionGateResult,
+)
 from app.services.agents.agent_evals import AgentEvalService
+from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService
+from app.services.agents.eval_gate import EvalGateService
 
 router = APIRouter(prefix="/admin/agent-evals", tags=["agent-evals"])
 
-@router.post("/suites")
-async def create_eval_suite(
+
+# ---------------------------------------------------------------------------
+# Datasets (Versioned)
+# ---------------------------------------------------------------------------
+
+@router.post("/datasets")
+async def create_eval_dataset(
     agent_id: uuid.UUID = Body(...),
     name: str = Body(...),
     description: Optional[str] = Body(None),
-    cases: List[dict] = Body([]),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
 ) -> Dict[str, Any]:
-    service = AgentEvalService(db)
-    suite = await service.create_suite(agent_id, name, description)
-    
-    created_cases = []
-    for case_data in cases:
-        case = await service.create_case(suite.id, case_data)
-        created_cases.append(str(case.id))
-        
+    service = EvalDatasetRegistryService(db)
+    dataset = await service.create_dataset(agent_id, name, description)
     return {
-        "id": str(suite.id),
-        "name": suite.name,
-        "agent_id": str(suite.agent_id),
-        "case_count": len(created_cases),
-        "cases": created_cases
+        "id": str(dataset.id),
+        "agent_id": str(dataset.agent_id),
+        "name": dataset.name,
+        "description": dataset.description,
+        "created_at": dataset.created_at.isoformat(),
     }
 
-@router.post("/runs")
-async def run_eval_suite(
-    suite_id: uuid.UUID = Body(...),
+
+@router.post("/datasets/{id}/versions")
+async def create_dataset_version(
+    id: uuid.UUID,
+    version: str = Body(...),
+    cases_json: List[dict] = Body(...),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = EvalDatasetRegistryService(db)
+    try:
+        dv = await service.create_dataset_version(id, version, cases_json)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+    return {
+        "id": str(dv.id),
+        "dataset_id": str(dv.dataset_id),
+        "version": dv.version,
+        "cases_count": dv.cases_count,
+        "created_at": dv.created_at.isoformat(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Evaluation Runs
+# ---------------------------------------------------------------------------
+
+@router.post("/run")
+async def run_evaluation(
+    agent_id: uuid.UUID = Body(...),
+    suite_id: Optional[uuid.UUID] = Body(None),
+    dataset_id: Optional[uuid.UUID] = Body(None),
+    version: Optional[str] = Body(None),
     metadata: Optional[dict] = Body(None),
+    allow_paid_provider: bool = Body(False),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
 ) -> Dict[str, Any]:
     service = AgentEvalService(db)
-    eval_run = await service.run_eval_suite(suite_id, metadata)
     
+    if suite_id:
+        eval_run = await service.run_eval_suite(suite_id, metadata)
+    elif dataset_id and version:
+        eval_run = await service.run_dataset_version_eval(
+            agent_id=agent_id,
+            dataset_id=dataset_id,
+            version=version,
+            metadata=metadata,
+            allow_paid_provider=allow_paid_provider,
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Either suite_id or dataset_id + version must be provided")
+
     return {
         "id": str(eval_run.id),
-        "suite_id": str(eval_run.suite_id),
         "status": eval_run.status,
         "passed_count": eval_run.passed_count,
         "failed_count": eval_run.failed_count,
@@ -56,79 +106,49 @@ async def run_eval_suite(
         "completed_at": eval_run.completed_at.isoformat() if eval_run.completed_at else None,
     }
 
-@router.get("/runs/{run_id}")
-async def get_eval_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
-    res = await db.execute(select(AgentEvalRun).where(AgentEvalRun.id == run_id))
-    run = res.scalar_one_or_none()
-    if not run:
-        raise HTTPException(status_code=404, detail="Eval run not found")
-        
-    # Also fetch results
-    from app.models.agents import AgentEvalResult
-    res_results = await db.execute(select(AgentEvalResult).where(AgentEvalResult.run_id == run_id))
-    results = res_results.scalars().all()
-    
-    return {
-        "id": str(run.id),
-        "suite_id": str(run.suite_id),
-        "status": run.status,
-        "passed_count": run.passed_count,
-        "failed_count": run.failed_count,
-        "total_count": run.total_count,
-        "results": [
-            {
-                "case_id": str(r.case_id),
-                "passed": r.passed,
-                "score": r.score,
-                "assertion_results": r.assertion_results,
-                "latency_ms": r.latency_ms,
-                "failure_details": r.failure_details,
-            }
-            for r in results
-        ]
-    }
 
-@router.post("/baselines")
-async def set_eval_baseline(
-    agent_id: uuid.UUID = Body(...),
-    run_id: uuid.UUID = Body(...),
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
-    service = AgentEvalService(db)
-    baseline = await service.set_baseline(agent_id, run_id, set_by=admin.email if hasattr(admin, "email") else "admin")
-    
-    return {
-        "id": str(baseline.id),
-        "agent_id": str(baseline.agent_id),
-        "run_id": str(baseline.run_id),
-        "score": baseline.score,
-        "pass_rate": baseline.pass_rate,
-        "version": baseline.version,
-        "created_at": baseline.created_at.isoformat(),
-    }
+# ---------------------------------------------------------------------------
+# Reports & Promotion Gates
+# ---------------------------------------------------------------------------
 
-@router.get("/baselines/{agent_id}")
-async def get_eval_baseline(
+@router.get("/reports/{agent_id}")
+async def get_agent_eval_report(
     agent_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
 ) -> Dict[str, Any]:
-    service = AgentEvalService(db)
-    baseline = await service.get_baseline(agent_id)
-    if not baseline:
-        raise HTTPException(status_code=404, detail="Baseline not found for this agent")
-        
+    service = EvalGateService(db)
+    return await service.get_report(agent_id)
+
+
+@router.post("/promotion-check/{agent_id}")
+async def check_promotion_gate(
+    agent_id: uuid.UUID,
+    eval_run_id: uuid.UUID = Body(...),
+    audit_override: bool = Body(False),
+    override_reason: Optional[str] = Body(None),
+    override_by: Optional[str] = Body(None),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = EvalGateService(db)
+    try:
+        promo_result = await service.evaluate_promotion(
+            agent_id=agent_id,
+            eval_run_id=eval_run_id,
+            audit_override=audit_override,
+            override_reason=override_reason,
+            override_by=override_by,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     return {
-        "id": str(baseline.id),
-        "agent_id": str(baseline.agent_id),
-        "run_id": str(baseline.run_id),
-        "score": baseline.score,
-        "pass_rate": baseline.pass_rate,
-        "version": baseline.version,
-        "created_at": baseline.created_at.isoformat(),
+        "id": str(promo_result.id),
+        "agent_id": str(promo_result.agent_id),
+        "passed": promo_result.passed,
+        "audit_override": promo_result.audit_override,
+        "details": promo_result.details,
+        "created_at": promo_result.created_at.isoformat(),
     }
+

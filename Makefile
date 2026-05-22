@@ -226,10 +226,30 @@ restart: ## Restart the stack
 status: ## Show stack status
 	docker compose ps
 
+agentic-readiness: ## Run Agentic Runtime Readiness Checks
+	@chmod +x scripts/agentic-readiness.sh
+	@./scripts/agentic-readiness.sh
+
 agent-evals: ## Run Agent Evaluation suites
 	@echo "Running Agent Evaluations..."
 	@PYTHONPATH=control_plane .venv/bin/python -m pytest tests/agent_evals/
 
+agent-eval-gate: ## Run Agent Evaluation promotion gate verification
+	@echo "Running Agent Eval Gate Verification..."
+	@PYTHONPATH=control_plane .venv/bin/python -c "\
+	import asyncio; \
+	from app.db.session import SessionLocal; \
+	from app.services.agents.eval_gate import EvalGateService; \
+	from sqlalchemy import select; \
+	from app.models.agents import AgentRegistryEntry; \
+	async def run(): \
+	    async with SessionLocal() as db: \
+	        res = await db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.status == 'approved')); \
+	        entries = res.scalars().all(); \
+	        print(f'Found {len(entries)} agents pending gate check'); \
+	        for entry in entries: \
+	            print(f'  Agent: {entry.name} ({entry.id}) - status: {entry.status}'); \
+	asyncio.run(run())"
 health: ## Check stack health (endpoints: /health, /ready, /status)
 	./scripts/test-health.sh
 

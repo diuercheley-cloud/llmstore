@@ -9,7 +9,10 @@ from app.models.agents import (
     AgentPromotion,
     AgentDeprecation,
     AgentLifecycleEvent,
-    AgentEvalBaseline
+    AgentEvalBaseline,
+    AgentEvalSuite,
+    AgentEvalRun,
+    AgentPromotionGateResult
 )
 from app.services.agents.agent_registry import get_registry_entry
 from app.core.config import get_settings
@@ -26,6 +29,23 @@ async def submit_review(db: AsyncSession, entry_id: uuid.UUID, performed_by: str
 
     if entry.status != "draft":
         raise ValueError(f"Cannot submit review: agent is in '{entry.status}' status, must be 'draft'")
+
+    # Enforce evaluation dry-run requirement (at least one completed eval run)
+    settings = get_settings()
+    if settings.agent_evals_enabled:
+        # Fetch suites for the agent entry
+        res_suites = await db.execute(select(AgentEvalSuite.id).where(AgentEvalSuite.agent_id == entry.id))
+        suite_ids = res_suites.scalars().all()
+        if not suite_ids:
+            raise ValueError("Cannot submit review: At least one completed evaluation dry-run is required.")
+        
+        res_runs = await db.execute(
+            select(AgentEvalRun.id)
+            .where(AgentEvalRun.suite_id.in_(suite_ids))
+            .where(AgentEvalRun.status == "completed")
+        )
+        if not res_runs.scalars().first():
+            raise ValueError("Cannot submit review: At least one completed evaluation dry-run is required.")
 
     old_status = entry.status
     entry.status = "review"
@@ -63,6 +83,18 @@ async def approve_agent(
     if entry.risk_level in ("high", "critical"):
         if not approved_by or not approved_by.strip():
             raise ValueError(f"Approval signature ('approved_by') is strictly required for high/critical risk level agents.")
+
+    # Enforce Evaluation Baseline requirement
+    settings = get_settings()
+    if settings.agent_production_requires_eval_baseline:
+        res_baseline = await db.execute(
+            select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == entry.id)
+        )
+        baseline = res_baseline.scalar_one_or_none()
+        if not baseline:
+            raise ValueError("Cannot approve agent: Evaluation baseline is missing. Baseline must be set before approval.")
+        if getattr(baseline, "is_stale", False):
+            raise ValueError("Cannot approve agent: Evaluation baseline is stale. A new baseline must be set before approval.")
 
     old_status = entry.status
     entry.status = "approved"
@@ -108,17 +140,33 @@ async def activate_agent(db: AsyncSession, entry_id: uuid.UUID, performed_by: st
     if not entry.owner or not entry.owner.strip():
         raise ValueError("Cannot activate agent: Owner is missing. Owner must be set before activation.")
 
-    # 2. Enforce Evaluation Baseline requirement
+    # 2. Enforce Evaluation Baseline and Gate requirement
     settings = get_settings()
     if settings.agent_production_requires_eval_baseline:
         # Check AgentEvalBaseline table
         res_baseline = await db.execute(
             select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == entry.id)
         )
-        if not res_baseline.scalar_one_or_none():
+        baseline = res_baseline.scalar_one_or_none()
+        if not baseline:
             # Fallback to check if legacy eval_baseline field is populated as string
             if not entry.eval_baseline or not entry.eval_baseline.strip():
                 raise ValueError("Cannot activate agent: Evaluation baseline is missing. Eval baseline must be defined and run.")
+        else:
+            if getattr(baseline, "is_stale", False):
+                raise ValueError("Cannot activate agent: Evaluation baseline is stale. A new evaluation is required before activation.")
+
+        # Check AgentPromotionGateResult
+        res_gate = await db.execute(
+            select(AgentPromotionGateResult)
+            .where(AgentPromotionGateResult.agent_id == entry.id)
+            .order_by(AgentPromotionGateResult.created_at.desc())
+        )
+        gate_res = res_gate.scalars().first()
+        if not gate_res:
+            raise ValueError("Cannot activate agent: Promotion gate verification has not been run.")
+        if not gate_res.passed and not gate_res.audit_override:
+            raise ValueError("Cannot activate agent: Promotion gate verification failed. Override required to proceed.")
 
     # 3. Enforce Version presence
     # Check if a version exists

@@ -1,6 +1,8 @@
 import httpx
 from typing import List, Optional, Union, Any, Dict
 
+from .agents import AgentsAPI, AgentEvalsAPI
+
 class KleberAIError(Exception):
     """Base exception for Kleber AI SDK"""
     pass
@@ -19,6 +21,8 @@ class Client:
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
+        self.agents = AgentsAPI(self)
+        self.agent_evals = AgentEvalsAPI(self)
 
     def _request(self, method: str, path: str, json: Any = None) -> Any:
         url = f"{self.base_url}{path}"

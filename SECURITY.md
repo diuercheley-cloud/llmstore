@@ -95,6 +95,14 @@ The platform includes an integrated SOC 2 and ISO 27001 readiness framework. Evi
 ## Chaos Engineering Safety
 Fault injection is strictly opt-in and blocked in production environments by default. Mandatory timeouts and rollback mechanisms prevent permanent service disruption.
 
+## Security Posture
+
+- **Sovereign First**: All data and models reside within the operator's perimeter.
+- **Agent Sandbox**: All agent tools execute in a controlled sandbox with mandatory credential delegation.
+- **Isolated Memory**: Multi-tenant memory isolation ensures no cross-tenant data leakage.
+- **Audit Trails**: Every reasoning step, tool call, and policy decision is cryptographically signed and archived.
+- **Production Gates**: High-risk agents require explicit evaluation baselines and human review before production activation.
+
 ## Reporting a Vulnerability
 
 This project is local-first and does not have a public disclosure program yet. For internal use, document the issue, affected version, reproduction steps, and proposed mitigation in the release checklist before shipping changes.

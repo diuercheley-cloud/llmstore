@@ -5573,3 +5573,36 @@
   - .env.local
   is_destructive: false
   docs_url: null
+- path: scripts/agent-jobs-list.sh
+  owner: agent-platform
+  status: beta
+  description: List agent execution jobs.
+  requires_network: true
+- path: scripts/agentctl.py
+  owner: agent-platform
+  status: beta
+  description: Agent control CLI.
+  requires_network: true
+  writes_files: true
+  outputs:
+    - "./*" # Scaffolded agent directory
+- path: scripts/agent-job-cancel.sh
+  owner: agent-platform
+  status: beta
+  description: Cancel an agent execution job.
+  requires_network: true
+- path: scripts/agent-dead-letter-list.sh
+  owner: agent-platform
+  status: beta
+  description: List agent dead letter queue.
+  requires_network: true
+- path: scripts/agent-worker-start.sh
+  owner: agent-platform
+  status: beta
+  description: Start an agent worker.
+  requires_network: true
+- path: scripts/agentic-readiness.sh
+  owner: agent-platform
+  status: beta
+  description: Check agentic runtime readiness.
+  requires_network: true

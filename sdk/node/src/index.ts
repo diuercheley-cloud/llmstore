@@ -1,3 +1,5 @@
+import { AgentsAPI, AgentEvalsAPI } from './agents';
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
@@ -20,11 +22,15 @@ export class Client {
   private apiKey: string;
   private baseUrl: string;
   private timeout: number;
+  public agents: AgentsAPI;
+  public agentEvals: AgentEvalsAPI;
 
   constructor(options: ClientOptions) {
     this.apiKey = options.apiKey;
     this.baseUrl = (options.baseUrl || 'http://localhost:18080').replace(/\/$/, '');
     this.timeout = options.timeout || 60000;
+    this.agents = new AgentsAPI(this);
+    this.agentEvals = new AgentEvalsAPI(this);
   }
 
   private async request(method: string, path: string, body?: any): Promise<any> {

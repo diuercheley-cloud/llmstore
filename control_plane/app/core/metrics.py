@@ -274,6 +274,11 @@ LLM_AGENT_RUN_FAILURES_TOTAL = Counter(
     "Total agent run failures",
     ["agent_id", "reason"]
 )
+LLM_AGENT_RUN_DURATION_SECONDS = Histogram(
+    "llm_agent_run_duration_seconds",
+    "End-to-end duration of agent runs",
+    ["agent_id"]
+)
 LLM_AGENT_STEPS_TOTAL = Counter(
     "llm_agent_steps_total",
     "Total agent steps executed",
@@ -284,45 +289,50 @@ LLM_AGENT_STEP_LATENCY_SECONDS = Histogram(
     "Latency of agent steps",
     ["agent_id", "step_type"]
 )
-LLM_AGENT_TOOL_CALLS_TOTAL = Counter(
-    "llm_agent_tool_calls_total",
-    "Total tool calls by agents",
+LLM_AGENT_TOOL_DURATION_SECONDS = Histogram(
+    "llm_agent_tool_duration_seconds",
+    "Time spent executing tools",
     ["agent_id", "tool_name"]
-)
-LLM_AGENT_TOOL_FAILURES_TOTAL = Counter(
-    "llm_agent_tool_failures_total",
-    "Total tool failures in agents",
-    ["agent_id", "tool_name", "error_type"]
 )
 LLM_AGENT_APPROVAL_WAIT_SECONDS = Histogram(
     "llm_agent_approval_wait_seconds",
     "Time agents spent waiting for human approval",
     ["agent_id", "tool_name"]
 )
+LLM_AGENT_MEMORY_LATENCY_SECONDS = Histogram(
+    "llm_agent_memory_latency_seconds",
+    "Latency of agent memory operations",
+    ["agent_id", "operation"]
+)
+LLM_AGENT_HANDOFF_COUNT = Counter(
+    "llm_agent_handoff_count",
+    "Total agent handoffs",
+    ["agent_id", "target_agent_id"]
+)
 LLM_AGENT_POLICY_DENIALS_TOTAL = Counter(
     "llm_agent_policy_denials_total",
     "Total agent policy denials",
     ["agent_id", "tool_name"]
 )
-LLM_AGENT_MEMORY_READS_TOTAL = Counter(
-    "llm_agent_memory_reads_total",
-    "Total memory reads by agents",
-    ["agent_id"]
+LLM_AGENT_INCIDENTS_TOTAL = Counter(
+    "llm_agent_incidents_total",
+    "Total agent incidents detected",
+    ["agent_id", "incident_type", "severity"]
 )
-LLM_AGENT_MEMORY_WRITES_TOTAL = Counter(
-    "llm_agent_memory_writes_total",
-    "Total memory writes by agents",
+LLM_AGENT_SLO_BREACHES_TOTAL = Counter(
+    "llm_agent_slo_breaches_total",
+    "Total agent SLO breaches",
+    ["agent_id", "window_type"]
+)
+LLM_AGENT_COST_BRL_TOTAL = Counter(
+    "llm_agent_cost_brl_total",
+    "Total estimated cost of agent runs in BRL",
     ["agent_id"]
 )
 LLM_AGENT_TOKENS_TOTAL = Counter(
     "llm_agent_tokens_total",
     "Total tokens consumed by agents",
     ["agent_id", "token_type"]
-)
-LLM_AGENT_COST_ESTIMATED_BRL_TOTAL = Counter(
-    "llm_agent_cost_estimated_brl_total",
-    "Estimated cost of agent runs in BRL",
-    ["agent_id"]
 )
 
 # Keep legacy metrics for internal compatibility where needed, or alias them
@@ -462,3 +472,52 @@ def record_hot_swap_failure(model_id: str, reason: str) -> None:
 
 def record_attestation_failure(node_id: str, reason: str) -> None:
     LLM_ATTESTATION_FAILURES_TOTAL.labels(node_id=node_id, reason=reason).inc()
+
+
+# Agent Execution Plane Metrics
+LLM_AGENT_JOBS_QUEUED = Gauge(
+    "llm_agent_jobs_queued",
+    "Current number of agent jobs queued",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_JOBS_RUNNING = Gauge(
+    "llm_agent_jobs_running",
+    "Current number of agent jobs running",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_JOBS_COMPLETED_TOTAL = Counter(
+    "llm_agent_jobs_completed_total",
+    "Total agent jobs completed",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_JOBS_FAILED_TOTAL = Counter(
+    "llm_agent_jobs_failed_total",
+    "Total agent jobs failed",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_JOBS_CANCELLED_TOTAL = Counter(
+    "llm_agent_jobs_cancelled_total",
+    "Total agent jobs cancelled",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_JOB_RETRIES_TOTAL = Counter(
+    "llm_agent_job_retries_total",
+    "Total agent job retries",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_DEAD_LETTERS_TOTAL = Counter(
+    "llm_agent_dead_letters_total",
+    "Total agent jobs sent to dead letter queue",
+    ["tenant_id", "agent_id"],
+)
+LLM_AGENT_WORKER_HEARTBEATS_TOTAL = Counter(
+    "llm_agent_worker_heartbeats_total",
+    "Total heartbeats received from workers",
+    ["worker_id"],
+)
+LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL = Counter(
+    "llm_agent_queue_backpressure_total",
+    "Total enqueuing rejections due to backpressure limits",
+    ["tenant_id", "agent_id", "limit_type"],
+)
+

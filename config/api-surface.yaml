@@ -8830,3 +8830,27 @@
   since_version: 1.0.0
   deprecation_version: null
   docs_url: /docs/api/supported-api-surface.md
+- endpoint: /client/agents
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/builder-guide.md
+- endpoint: /client/agents/{agent_id}/run
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/builder-guide.md
+- endpoint: /admin/agent-registry/readiness
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/production-readiness.md

@@ -1,0 +1,17 @@
+name: support-triage-agent
+version: 1.0.0
+description: "Triages support tickets based on severity and category."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "ticket.lookup"
+  - "ticket.update"
+  - "slack.notify"
+memory_policy:
+  enabled: true
+  retention_days: 7
+eval_suite: "triage-eval"
+risk_level: "medium"
+owner: "support-team"
+environment: "production"
+supported_surface_status: "active"

@@ -2,116 +2,79 @@ import uuid
 import logging
 import hashlib
 from typing import Any, Dict, Optional, List
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import metrics
 from app.core.config import get_settings
+from app.core.time import utc_now
+from app.models.agents import AgentTraceSpan, AgentTimelineEvent
 
 logger = logging.getLogger(__name__)
 
 class AgentObservabilityService:
-    def __init__(self):
+    def __init__(self, db: AsyncSession):
+        self.db = db
         self.settings = get_settings()
 
-    def _hash_tenant(self, tenant_id: str) -> str:
-        if not tenant_id:
-            return "unknown"
-        # For trace export, we hash the tenant ID to protect privacy
-        return hashlib.sha256(tenant_id.encode()).hexdigest()[:12]
-
-    def record_run_started(self, agent_id: str, tenant_id: str):
+    async def record_run_start(self, agent_id: uuid.UUID, run_id: uuid.UUID, tenant_id: str):
         if not self.settings.agent_observability_enabled:
             return
-        metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status="started").inc()
-        logger.info(f"Agent run started: agent={agent_id} tenant={self._hash_tenant(tenant_id)}")
-
-    def record_run_status(self, agent_id: str, status: str):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status=status).inc()
-
-    def record_run_failure(self, agent_id: str, reason: str):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_RUN_FAILURES_TOTAL.labels(agent_id=str(agent_id), reason=reason[:32]).inc()
-
-    def record_step(self, agent_id: str, step_type: str, latency_ms: int, status: str):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_STEPS_TOTAL.labels(agent_id=str(agent_id), step_type=step_type).inc()
-        metrics.LLM_AGENT_STEP_LATENCY_SECONDS.labels(agent_id=str(agent_id), step_type=step_type).observe(latency_ms / 1000.0)
-
-    def record_tool_call(self, agent_id: str, tool_name: str, latency_ms: int, success: bool, error_type: Optional[str] = None):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_TOOL_CALLS_TOTAL.labels(agent_id=str(agent_id), tool_name=tool_name).inc()
-        if not success:
-            metrics.LLM_AGENT_TOOL_FAILURES_TOTAL.labels(
-                agent_id=str(agent_id), tool_name=tool_name, error_type=error_type or "execution_error"
-            ).inc()
-
-    def record_approval_wait(self, agent_id: str, tool_name: str, wait_seconds: float):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_APPROVAL_WAIT_SECONDS.labels(agent_id=str(agent_id), tool_name=tool_name).observe(wait_seconds)
-
-    def record_policy_denial(self, agent_id: str, tool_name: str):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_POLICY_DENIALS_TOTAL.labels(agent_id=str(agent_id), tool_name=tool_name).inc()
-
-    def record_memory_operation(self, agent_id: str, operation: str):
-        if not self.settings.agent_observability_enabled:
-            return
-        if operation == "read":
-            metrics.LLM_AGENT_MEMORY_READS_TOTAL.labels(agent_id=str(agent_id)).inc()
-        elif operation == "write":
-            metrics.LLM_AGENT_MEMORY_WRITES_TOTAL.labels(agent_id=str(agent_id)).inc()
-
-    def record_tokens(self, agent_id: str, prompt_tokens: int, completion_tokens: int):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_TOKENS_TOTAL.labels(agent_id=str(agent_id), token_type="input").inc(prompt_tokens)
-        metrics.LLM_AGENT_TOKENS_TOTAL.labels(agent_id=str(agent_id), token_type="output").inc(completion_tokens)
-
-    def record_cost(self, agent_id: str, cost_brl: float):
-        if not self.settings.agent_observability_enabled:
-            return
-        metrics.LLM_AGENT_COST_ESTIMATED_BRL_TOTAL.labels(agent_id=str(agent_id)).inc(cost_brl)
-
-    def get_trace_attributes(self, run: Any, step: Optional[Any] = None) -> Dict[str, Any]:
-        """
-        Returns a dictionary of attributes following GenAI/Agentic OTel conventions.
-        """
-        attrs = {
-            "agent.id": str(run.agent_id),
-            "agent.run_id": str(run.id),
-            "tenant.id": self._hash_tenant(run.tenant_id) if self.settings.agent_trace_export_enabled else run.tenant_id,
-        }
         
-        if hasattr(run, "agent") and run.agent:
-            attrs["agent.name"] = run.agent.name
-            attrs["agent.version"] = run.agent.version
+        # Hash tenant_id for privacy in logs/exports if enabled
+        hashed_tenant = self._hash_tenant(tenant_id)
+        
+        metrics.LLM_AGENT_RUNS_TOTAL.labels(agent_id=str(agent_id), status="started").inc()
+        await self._record_timeline_event(run_id, "run.started", {"tenant_hash": hashed_tenant})
 
-        if step:
-            attrs["agent.step_id"] = str(step.id)
-            attrs["agent.step_type"] = step.step_type
-            attrs["agent.step_number"] = step.step_number
-            
-            if step.step_type == "tool_call" and "tool_name" in (step.input_data or {}):
-                attrs["tool.name"] = step.input_data["tool_name"]
-            
-            if step.error:
-                attrs["error.message"] = step.error
+    async def record_step(self, agent_id: uuid.UUID, run_id: uuid.UUID, step_type: str, duration_ms: float):
+        metrics.LLM_AGENT_STEP_LATENCY_SECONDS.labels(agent_id=str(agent_id), step_type=step_type).observe(duration_ms / 1000.0)
+        await self._record_timeline_event(run_id, f"step.{step_type}", {"duration_ms": duration_ms})
 
-        return attrs
+    async def record_tool_call(self, agent_id: uuid.UUID, run_id: uuid.UUID, tool_name: str, duration_ms: float, success: bool):
+        metrics.LLM_AGENT_TOOL_DURATION_SECONDS.labels(agent_id=str(agent_id), tool_name=tool_name).observe(duration_ms / 1000.0)
+        await self._record_timeline_event(run_id, "tool.called", {
+            "tool_name": tool_name,
+            "duration_ms": duration_ms,
+            "success": success
+        })
 
-    def summarize_tool_output(self, output: Any) -> str:
-        """Summarizes tool output for observability logs to avoid huge payloads."""
-        if isinstance(output, str):
-            if len(output) > 500:
-                return output[:497] + "..."
-            return output
-        if isinstance(output, dict):
-            # If it's a large dict, maybe just show keys
-            if len(str(output)) > 500:
-                return f"Dict with keys: {list(output.keys())}"
-        return str(output)
+    async def record_memory_op(self, agent_id: uuid.UUID, run_id: uuid.UUID, operation: str, latency_ms: float):
+        metrics.LLM_AGENT_MEMORY_LATENCY_SECONDS.labels(agent_id=str(agent_id), operation=operation).observe(latency_ms / 1000.0)
+        await self._record_timeline_event(run_id, f"memory.{operation}", {"latency_ms": latency_ms})
+
+    async def record_handoff(self, agent_id: uuid.UUID, target_agent_id: uuid.UUID, run_id: uuid.UUID):
+        metrics.LLM_AGENT_HANDOFF_COUNT.labels(agent_id=str(agent_id), target_agent_id=str(target_agent_id)).inc()
+        await self._record_timeline_event(run_id, "handoff.started", {"target_agent_id": str(target_agent_id)})
+
+    async def record_policy_denial(self, agent_id: uuid.UUID, run_id: uuid.UUID, tool_name: str):
+        metrics.LLM_AGENT_POLICY_DENIALS_TOTAL.labels(agent_id=str(agent_id), tool_name=tool_name).inc()
+        await self._record_timeline_event(run_id, "policy.denied", {"tool_name": tool_name})
+
+    async def record_cost(self, agent_id: uuid.UUID, run_id: uuid.UUID, cost_brl: float, prompt_tokens: int, completion_tokens: int):
+        metrics.LLM_AGENT_COST_BRL_TOTAL.labels(agent_id=str(agent_id)).inc(cost_brl)
+        metrics.LLM_AGENT_TOKENS_TOTAL.labels(agent_id=str(agent_id), token_type="prompt").inc(prompt_tokens)
+        metrics.LLM_AGENT_TOKENS_TOTAL.labels(agent_id=str(agent_id), token_type="completion").inc(completion_tokens)
+
+    async def _record_timeline_event(self, run_id: uuid.UUID, event_type: str, details: Dict[str, Any]):
+        # Redact secrets
+        details_sanitized = self._sanitize_payload(details)
+        
+        event = AgentTimelineEvent(
+            run_id=run_id,
+            event_type=event_type,
+            details_json=details_sanitized,
+            event_time=utc_now()
+        )
+        self.db.add(event)
+        # We don't commit here, let the caller commit or do it in bulk
+
+    def _sanitize_payload(self, payload: Any) -> Any:
+        if isinstance(payload, dict):
+            return {k: self._sanitize_payload(v) for k, v in payload.items() if "prompt" not in k.lower()}
+        if isinstance(payload, str):
+            for secret in ["SECRET_", "KEY_", "TOKEN_"]:
+                if secret in payload:
+                    return "[REDACTED]"
+        return payload
+
+    def _hash_tenant(self, tenant_id: str) -> str:
+        return hashlib.sha256(tenant_id.encode()).hexdigest()[:16]

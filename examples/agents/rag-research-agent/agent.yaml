@@ -1,0 +1,13 @@
+name: rag-research-agent
+version: 1.0.0
+description: "Performs deep research using RAG on uploaded knowledge bases."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "rag.search"
+  - "web.search"
+  - "research.summarize"
+risk_level: "low"
+owner: "research-team"
+environment: "dev"
+supported_surface_status: "draft"

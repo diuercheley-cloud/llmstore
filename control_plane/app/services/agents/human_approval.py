@@ -294,7 +294,7 @@ async def approve_approval_request(
 
     # Record metrics
     from app.services.agents.agent_observability import AgentObservabilityService
-    obs = AgentObservabilityService()
+    obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
     obs.record_approval_wait(str(run.agent_id), tool_name, wait_time)
@@ -366,7 +366,7 @@ async def reject_approval_request(
 
     # Record metrics
     from app.services.agents.agent_observability import AgentObservabilityService
-    obs = AgentObservabilityService()
+    obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
     obs.record_approval_wait(str(run.agent_id) if run else "unknown", tool_name, wait_time)

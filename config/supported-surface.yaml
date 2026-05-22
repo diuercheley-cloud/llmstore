@@ -191,6 +191,19 @@ capabilities:
     docs_url: docs/agents/agent-runtime.md
     api_prefix: /agents
     feature_flag: agent_runtime_enabled
+    additional_flags:
+      - agent_execution_enabled
+      - agent_async_execution_enabled
+      - agent_execution_plane_enabled
+      - agent_worker_enabled
+      - agent_queue_backpressure_enabled
+      - agent_auto_retry_enabled
+    associated_services:
+      - agent_runtime
+      - agent_worker
+      - agent_queue
+      - agent_execution_plane
+      - agent_cancellation
     since_version: v1.10.0-agentic-runtime
     limitations: "Disabled by default. No real agent execution occurs until runtime and execution flags are explicitly enabled."
     test_coverage: 72%
@@ -204,6 +217,12 @@ capabilities:
     docs_url: docs/agents/agent-registry.md
     api_prefix: /admin/agent-registry
     feature_flag: agent_runtime_enabled
+    additional_flags:
+      - agent_production_requires_eval_baseline
+    associated_services:
+      - agent_registry
+      - agent_state
+      - agent_lifecycle
     since_version: v1.10.0-agentic-runtime
     limitations: "Administrative registry and lifecycle workflows are beta and do not imply autonomous production activation."
     test_coverage: 70%
@@ -217,6 +236,20 @@ capabilities:
     docs_url: docs/agents/tool-registry.md
     api_prefix: /admin/agent-tools
     feature_flag: agent_tool_registry_enabled
+    additional_flags:
+      - agent_tool_execution_enabled
+      - agent_tool_sandbox_enabled
+      - agent_tool_credential_delegation_enabled
+      - agent_tool_rollback_enabled
+    associated_services:
+      - tool_registry
+      - tool_executor
+      - tool_policy_engine
+      - tool_sandbox
+      - tool_credentials
+      - tool_rollback
+      - tool_audit
+      - tool_quota
     since_version: v1.10.0-agentic-runtime
     limitations: "Tool registration is gated off by default, real execution is separately disabled, and destructive tools remain blocked without approval."
     test_coverage: 74%
@@ -230,6 +263,17 @@ capabilities:
     docs_url: docs/agents/memory.md
     api_prefix: /admin/agent-memory
     feature_flag: agent_memory_enabled
+    additional_flags:
+      - agent_long_term_memory_enabled
+      - agent_memory_search_enabled
+      - agent_memory_encryption_enabled
+    associated_services:
+      - agent_memory
+      - memory_policy
+      - memory_indexing
+      - memory_redaction
+      - memory_consent
+      - memory_retention
     since_version: v1.10.0-agentic-runtime
     limitations: "Memory is disabled by default, cross-tenant sharing is not supported, and exports remain off unless explicitly enabled."
     test_coverage: 68%
@@ -269,6 +313,16 @@ capabilities:
     docs_url: docs/agents/observability.md
     api_prefix: /admin/agents/observability
     feature_flag: agent_observability_enabled
+    additional_flags:
+      - agent_incident_response_enabled
+    associated_services:
+      - agent_observability
+      - agent_run_timeline
+      - agent_incidents
+      - agent_trace_correlation
+      - agent_cost_meter
+      - agent_slo
+      - agent_readiness
     since_version: v1.10.0-agentic-runtime
     limitations: "Metrics and traces are sanitized by default and external export remains disabled unless explicitly enabled."
     test_coverage: 76%
@@ -282,6 +336,16 @@ capabilities:
     docs_url: docs/agents/evals.md
     api_prefix: /admin/agent-evals
     feature_flag: agent_evals_enabled
+    additional_flags:
+      - agent_production_requires_eval_baseline
+      - agent_eval_regression_gate_enabled
+      - agent_eval_datasets_versioned
+    associated_services:
+      - agent_evals
+      - eval_gate
+      - eval_regression
+      - eval_dataset_registry
+      - eval_datasets
     since_version: v1.10.0-agentic-runtime
     limitations: "Evals are opt-in and do not grant production activation unless operators maintain a baseline."
     test_coverage: 66%
@@ -289,15 +353,39 @@ capabilities:
   - id: agent-marketplace
     name: Agent marketplace
     area: Agentic AI Platform
-    status: experimental
+    status: beta
     owner: agent-platform
-    support_level: development
+    support_level: pilot
     docs_url: docs/agents/marketplace.md
     api_prefix: /admin/agent-marketplace
     feature_flag: agent_marketplace_enabled
+    additional_flags:
+      - agent_remote_marketplace_enabled
+      - agent_bundle_signature_required
+    associated_services:
+      - agent_marketplace
+      - agent_supply_chain
+      - agent_bundle_signing
+      - agent_bundle_verifier
+      - agent_compatibility
     since_version: v1.10.0-agentic-runtime
-    limitations: "Marketplace workflows are experimental, offline-first, and disabled by default."
-    test_coverage: 54%
+    limitations: "Marketplace workflows are offline-first; remote fetching is disabled by default."
+    test_coverage: 65%
+
+  - id: agent-rbac
+    name: Agentic RBAC
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agentic-rbac.md
+    associated_services:
+      - agent_rbac
+      - agent_environment_policy
+      - ephemeral_credentials
+    since_version: v2.0.0
+    limitations: "Granular roles enforced at service level."
+    test_coverage: 80%
 
   - id: agent-admin-ui
     name: Agent admin UI

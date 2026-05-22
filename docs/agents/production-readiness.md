@@ -1,25 +1,19 @@
-# Production Readiness for Agents
+# Production Readiness for Agentic Runtime
 
-Deploying an agent to production requires meeting several governance gates to ensure stability, safety, and accountability.
+## Overview
 
-## Requirements for Activation
+Autonomous agents require a specialized readiness framework to ensure safety and performance in production.
 
-To transition an agent to `active` status, the following conditions must be met:
+## Readiness Gates
 
-1. **Owner Assigned**: Every production agent must have a designated owner (email or user ID).
-2. **Evaluation Baseline**: If `AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE` is enabled, the agent must have a linked `AgentEvalBaseline`.
-3. **Approval Signature**: Agents with `high` or `critical` risk levels require an explicit approval signature from an authorized reviewer.
-4. **Version Control**: The agent definition must be finalized and approved in the registry.
+- **Heartbeat**: At least 3 healthy workers must be active.
+- **Queue Health**: p95 wait time < 5 seconds.
+- **Incident Backlog**: Zero open critical incidents.
+- **Evaluation Baseline**: All agents must have a passed baseline within the last 30 days.
 
-## Evaluation Baseline
+## Verification
 
-A baseline is established by running an evaluation suite against the agent version and verifying that the results meet the required pass rate. This ensures that:
-
-- Regressions are caught before deployment.
-- Security vulnerabilities (like prompt injection) are tested.
-- Tool usage is within expected boundaries.
-- Costs and latency are monitored.
-
-## Governance Override
-
-In exceptional cases, the baseline requirement can be overridden by an administrator with `SUPER` role by manually populating the `eval_baseline` field in the registry with a justification string, although using the automated framework is strongly preferred.
+Run the automated readiness suite:
+```bash
+make agentic-readiness
+```

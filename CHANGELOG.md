@@ -1,6 +1,18 @@
 # Changelog
 
-## [v1.10.0-agentic-runtime] - 2026-05-22
+## [v2.0.0-agentic-platform] - 2026-05-22
+
+### Added
+- **Agentic AI Platform**: Production-ready runtime for autonomous agents.
+- **Async Execution Plane**: Highly scalable worker-based execution.
+- **Tool Sandbox**: Secure, governed tool calling with rollback support.
+- **Memory Infrastructure**: Versioned and isolated long-term agent memory.
+- **Promotion Gates**: Mandatory evaluation baselines for production activation.
+- **Agent Observability**: End-to-end telemetry and automated incident response.
+- **Granular RBAC**: Scoped roles for agent operations and security.
+- **Builder Experience**: `agentctl` CLI and multi-language SDKs.
+
+## [1.10.0-agentic-runtime] - 2026-05-15
 
 ### Added
 - Agent Registry, Agent Runtime, Tool Governance, Memory, Planning, Human-in-the-Loop approvals, Observability, Evals, and Admin UI surfaces for the Agentic AI Platform.

@@ -1,0 +1,13 @@
+name: compliance-evidence-agent
+version: 1.0.0
+description: "Collects and validates evidence for compliance audits."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "auth.audit_logs"
+  - "db.schema_check"
+  - "s3.list_sensitive_files"
+risk_level: "high"
+owner: "compliance-team"
+environment: "production"
+supported_surface_status: "active"

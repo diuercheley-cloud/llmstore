@@ -11,6 +11,24 @@ from app.services.agents.agent_observability import AgentObservabilityService
 
 router = APIRouter(prefix="/admin/agents/observability", tags=["agent-observability"])
 
+from app.services.agents.agent_readiness import AgentReadinessService
+
+@router.get("/readiness")
+async def get_agent_readiness(
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> Dict[str, Any]:
+    service = AgentReadinessService(db)
+    return await service.check_readiness()
+
+@router.post("/readiness/run")
+async def run_readiness_check(
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> Dict[str, Any]:
+    service = AgentReadinessService(db)
+    return await service.check_readiness()
+
 @router.get("/overview")
 async def get_observability_overview(
     db: AsyncSession = Depends(get_db_session),

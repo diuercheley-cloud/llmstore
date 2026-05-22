@@ -103,6 +103,64 @@ class AgentToolInvocationResponse(BaseModel):
         from_attributes = True
 
 
+class ToolExecuteRequest(BaseModel):
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CredentialCreate(BaseModel):
+    name: str = Field(..., max_length=128)
+    credential_type: str = Field(..., max_length=32)
+    raw_secret: str
+    tenant_id: str = "default"
+    expires_at: Optional[str] = None
+    agent_tool_id: Optional[uuid.UUID] = None
+    agent_id: Optional[uuid.UUID] = None
+
+
+class CredentialResponse(BaseModel):
+    id: uuid.UUID
+    tenant_id: str
+    name: str
+    credential_type: str
+    secret_masked: str
+    created_at: str
+    updated_at: str
+    expires_at: Optional[str] = None
+    revoked: bool
+
+    class Config:
+        from_attributes = True
+
+
+class SideEffectResponse(BaseModel):
+    id: uuid.UUID
+    invocation_id: uuid.UUID
+    tenant_id: str
+    side_effect_level: str
+    description: str
+    resource_id: Optional[str] = None
+    change_payload: Optional[Dict[str, Any]] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class QuotaCounterResponse(BaseModel):
+    id: uuid.UUID
+    tenant_id: str
+    agent_id: Optional[uuid.UUID] = None
+    agent_tool_id: Optional[uuid.UUID] = None
+    side_effect_level: Optional[str] = None
+    window_start: str
+    window_end: str
+    invocation_count: int
+    max_limit: int
+
+    class Config:
+        from_attributes = True
+
+
 # Helpers
 def format_datetime(dt) -> str:
     return dt.isoformat() if dt else ""
@@ -241,3 +299,253 @@ async def list_tool_invocations(
     )
     invocations = result.scalars().all()
     return [to_invocation_response(inv) for inv in invocations]
+
+
+@router.post("/{id}/dry-run", dependencies=[Depends(verify_tool_registry_active)])
+async def dry_run_agent_tool(
+    id: uuid.UUID,
+    payload: ToolExecuteRequest,
+    tenant_id: str = "default",
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Executes a dry-run invocation of a tool."""
+    tool = await tool_service.get_tool(db, id)
+    if not tool:
+        raise HTTPException(status_code=404, detail=f"AgentTool {id} not found.")
+    
+    from app.services.agents.tool_executor import execute_tool
+    try:
+        output = await execute_tool(
+            db=db,
+            tool=tool,
+            parameters=payload.parameters,
+            tenant_id=tenant_id,
+            is_dry_run=True,
+            executed_by="admin"
+        )
+        return output
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{id}/execute", dependencies=[Depends(verify_tool_registry_active)])
+async def execute_agent_tool(
+    id: uuid.UUID,
+    payload: ToolExecuteRequest,
+    tenant_id: str = "default",
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Executes a real invocation of a tool."""
+    tool = await tool_service.get_tool(db, id)
+    if not tool:
+        raise HTTPException(status_code=404, detail=f"AgentTool {id} not found.")
+    
+    from app.services.agents.tool_executor import execute_tool
+    try:
+        output = await execute_tool(
+            db=db,
+            tool=tool,
+            parameters=payload.parameters,
+            tenant_id=tenant_id,
+            is_dry_run=False,
+            executed_by="admin"
+        )
+        return output
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/invocations/{id}/rollback", dependencies=[Depends(verify_tool_registry_active)])
+async def rollback_invocation(
+    id: uuid.UUID,
+    tenant_id: str = "default",
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Triggers manual rollback for the tool invocation."""
+    from app.services.agents.tool_rollback import rollback_invocation_side_effects
+    try:
+        success = await rollback_invocation_side_effects(
+            db=db,
+            tenant_id=tenant_id,
+            invocation_id=id
+        )
+        return {"success": success, "status": "rolled_back" if success else "failed"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/side-effects", response_model=List[SideEffectResponse], dependencies=[Depends(verify_tool_registry_active)])
+async def list_side_effects(
+    tenant_id: str = "default",
+    limit: int = 100,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Retrieves captured side effects."""
+    from app.models.agent_tool_execution import AgentToolSideEffect
+    stmt = (
+        select(AgentToolSideEffect)
+        .where(AgentToolSideEffect.tenant_id == tenant_id)
+        .order_by(AgentToolSideEffect.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    effects = res.scalars().all()
+    
+    return [
+        SideEffectResponse(
+            id=e.id,
+            invocation_id=e.invocation_id,
+            tenant_id=e.tenant_id,
+            side_effect_level=e.side_effect_level,
+            description=e.description,
+            resource_id=e.resource_id,
+            change_payload=e.change_payload,
+            created_at=format_datetime(e.created_at)
+        )
+        for e in effects
+    ]
+
+
+@router.get("/credentials", response_model=List[CredentialResponse], dependencies=[Depends(verify_tool_registry_active)])
+async def list_credentials(
+    tenant_id: str = "default",
+    limit: int = 100,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Lists registered credentials in masked format."""
+    from app.models.agent_tool_execution import AgentToolCredential
+    stmt = (
+        select(AgentToolCredential)
+        .where(AgentToolCredential.tenant_id == tenant_id)
+        .order_by(AgentToolCredential.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    creds = res.scalars().all()
+    
+    return [
+        CredentialResponse(
+            id=c.id,
+            tenant_id=c.tenant_id,
+            name=c.name,
+            credential_type=c.credential_type,
+            secret_masked=c.secret_masked,
+            created_at=format_datetime(c.created_at),
+            updated_at=format_datetime(c.updated_at),
+            expires_at=format_datetime(c.expires_at) if c.expires_at else None,
+            revoked=c.revoked
+        )
+        for c in creds
+    ]
+
+
+@router.post("/credentials", response_model=CredentialResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(verify_tool_registry_active)])
+async def create_credential(
+    payload: CredentialCreate,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Registers a delegated credential and optionally grants it to a tool/agent."""
+    from app.services.agents.tool_credentials import register_credential, grant_credential
+    from datetime import datetime
+    
+    expires_dt = None
+    if payload.expires_at:
+        try:
+            expires_dt = datetime.fromisoformat(payload.expires_at)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid expires_at format. Use ISO format.")
+            
+    try:
+        cred = await register_credential(
+            db=db,
+            tenant_id=payload.tenant_id,
+            name=payload.name,
+            credential_type=payload.credential_type,
+            raw_secret=payload.raw_secret,
+            expires_at=expires_dt
+        )
+        
+        if payload.agent_tool_id:
+            await grant_credential(
+                db=db,
+                tenant_id=payload.tenant_id,
+                credential_id=cred.id,
+                agent_tool_id=payload.agent_tool_id,
+                agent_id=payload.agent_id,
+                expires_at=expires_dt
+            )
+            
+        await db.commit()
+        return CredentialResponse(
+            id=cred.id,
+            tenant_id=cred.tenant_id,
+            name=cred.name,
+            credential_type=cred.credential_type,
+            secret_masked=cred.secret_masked,
+            created_at=format_datetime(cred.created_at),
+            updated_at=format_datetime(cred.updated_at),
+            expires_at=format_datetime(cred.expires_at) if cred.expires_at else None,
+            revoked=cred.revoked
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/credentials/{id}/revoke", dependencies=[Depends(verify_tool_registry_active)])
+async def revoke_tool_credential(
+    id: uuid.UUID,
+    tenant_id: str = "default",
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Revokes a registered credential."""
+    from app.services.agents.tool_credentials import revoke_credential
+    try:
+        success = await revoke_credential(db, tenant_id, id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Credential not found or not owned by tenant.")
+        await db.commit()
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/quotas", response_model=List[QuotaCounterResponse], dependencies=[Depends(verify_tool_registry_active)])
+async def list_quotas(
+    tenant_id: str = "default",
+    limit: int = 100,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Retrieves daily quota usage counters."""
+    from app.models.agent_tool_execution import AgentToolQuotaCounter
+    stmt = (
+        select(AgentToolQuotaCounter)
+        .where(AgentToolQuotaCounter.tenant_id == tenant_id)
+        .offset(offset)
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    counters = res.scalars().all()
+    
+    return [
+        QuotaCounterResponse(
+            id=c.id,
+            tenant_id=c.tenant_id,
+            agent_id=c.agent_id,
+            agent_tool_id=c.agent_tool_id,
+            side_effect_level=c.side_effect_level,
+            window_start=format_datetime(c.window_start),
+            window_end=format_datetime(c.window_end),
+            invocation_count=c.invocation_count,
+            max_limit=c.max_limit
+        )
+        for c in counters
+    ]

@@ -1,10 +1,10 @@
-# LLM Inference Stack
+# LLM Inference Stack & Agentic AI Platform
 
-**Sovereign, offline-first, deterministic AI inference platform — multi-tenant, multi-provider, white-label ready.**
+**Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v1.10.0-agentic-runtime`  
-> Previous stable: [`v1.9.8-platform-consolidation`](releases/v1.9.8-platform-consolidation)  
-> Release notes: [`docs/releases/V1_10_0_AGENTIC_RUNTIME.md`](docs/releases/V1_10_0_AGENTIC_RUNTIME.md)  
+> Current build: `v2.0.0-agentic-platform`  
+> Previous stable: [`v1.10.0-agentic-runtime`](releases/v1.10.0-agentic-runtime)  
+> Release notes: [`docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md`](docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 

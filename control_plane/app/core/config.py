@@ -50,41 +50,136 @@ class Settings(BaseSettings):
     commercial_appliance_deployment_tier: str = "regulated"
     commercial_appliance_require_removable_media: bool = False
 
+    # Owner: agent-platform
+    # Status: beta
     agent_runtime_enabled: bool = Field(default=False, alias="AGENT_RUNTIME_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_execution_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_async_execution_enabled: bool = Field(default=False, alias="AGENT_ASYNC_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_execution_plane_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_PLANE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_worker_enabled: bool = Field(default=False, alias="AGENT_WORKER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_queue_backpressure_enabled: bool = Field(default=True, alias="AGENT_QUEUE_BACKPRESSURE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_replay_enabled: bool = Field(default=True, alias="AGENT_REPLAY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_runtime_advisory_mode: bool = Field(default=True, alias="AGENT_RUNTIME_ADVISORY_MODE")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_tool_registry_enabled: bool = Field(default=False, alias="AGENT_TOOL_REGISTRY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_tool_execution_enabled: bool = Field(default=False, alias="AGENT_TOOL_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_destructive_tools_enabled: bool = Field(default=False, alias="AGENT_DESTRUCTIVE_TOOLS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_sandbox_enabled: bool = Field(default=True, alias="AGENT_TOOL_SANDBOX_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_credential_delegation_enabled: bool = Field(default=False, alias="AGENT_TOOL_CREDENTIAL_DELEGATION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_rollback_enabled: bool = Field(default=True, alias="AGENT_TOOL_ROLLBACK_ENABLED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_approval_required_for_high_risk: bool = Field(default=True, alias="AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK")
     agent_approval_timeout_seconds: int = Field(default=86400, alias="AGENT_APPROVAL_TIMEOUT_SECONDS")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_trace_export_enabled: bool = Field(default=False, alias="AGENT_TRACE_EXPORT_ENABLED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_evals_enabled: bool = Field(default=False, alias="AGENT_EVALS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_production_requires_eval_baseline: bool = Field(default=True, alias="AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_regression_evals_required: bool = Field(default=True, alias="AGENT_REGRESSION_EVALS_REQUIRED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_regression_gate_enabled: bool = Field(default=True, alias="AGENT_EVAL_REGRESSION_GATE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_datasets_versioned: bool = Field(default=True, alias="AGENT_EVAL_DATASETS_VERSIONED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_memory_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_long_term_memory_enabled: bool = Field(default=False, alias="AGENT_LONG_TERM_MEMORY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_memory_write_enabled: bool = Field(default=False, alias="AGENT_MEMORY_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_memory_export_enabled: bool = Field(default=False, alias="AGENT_MEMORY_EXPORT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_search_enabled: bool = Field(default=False, alias="AGENT_MEMORY_SEARCH_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_consent_required: bool = Field(default=True, alias="AGENT_MEMORY_CONSENT_REQUIRED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_encryption_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENCRYPTION_ENABLED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_planning_enabled: bool = Field(default=False, alias="AGENT_PLANNING_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_plan_execution_enabled: bool = Field(default=False, alias="AGENT_PLAN_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_auto_retry_enabled: bool = Field(default=True, alias="AGENT_AUTO_RETRY_ENABLED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_handoffs_enabled: bool = Field(default=False, alias="AGENT_HANDOFFS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
 
+    # Owner: agent-platform
+    # Status: beta
     agent_marketplace_enabled: bool = Field(default=False, alias="AGENT_MARKETPLACE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_remote_marketplace_enabled: bool = Field(default=False, alias="AGENT_REMOTE_MARKETPLACE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_bundle_install_enabled: bool = Field(default=False, alias="AGENT_BUNDLE_INSTALL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_bundle_signature_required: bool = Field(default=False, alias="AGENT_BUNDLE_SIGNATURE_REQUIRED")
+
+    # Owner: agent-platform
+    # Status: beta
+    agent_incident_response_enabled: bool = Field(default=True, alias="AGENT_INCIDENT_RESPONSE_ENABLED")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

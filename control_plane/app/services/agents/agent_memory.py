@@ -16,6 +16,9 @@ from app.models.agents import (
     AgentMemoryCollection,
 )
 from app.services.agents.memory_policy import MemoryPolicyService
+from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_redaction import MemoryRedactionService
+from app.services.agents.memory_indexing import MemoryIndexingService
 from app.services.agents import agent_state
 
 logger = logging.getLogger(__name__)
@@ -26,11 +29,17 @@ class MemoryDisabledError(RuntimeError):
 class SecretFoundError(ValueError):
     pass
 
+class ConsentRequiredError(ValueError):
+    pass
+
 class AgentMemoryService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
         self.policy_service = MemoryPolicyService(db)
+        self.consent_service = MemoryConsentService(db)
+        self.redaction_service = MemoryRedactionService(db)
+        self.indexing_service = MemoryIndexingService(db)
 
     def _check_enabled(self):
         if not self.settings.agent_memory_enabled:
@@ -60,6 +69,7 @@ class AgentMemoryService:
         agent_id: uuid.UUID,
         memory_type: str,
         content: str,
+        user_id: Optional[str] = None,
         summary: Optional[str] = None,
         run_id: Optional[uuid.UUID] = None,
         collection_id: Optional[uuid.UUID] = None
@@ -71,6 +81,13 @@ class AgentMemoryService:
         if memory_type == "long_term" and not self.settings.agent_long_term_memory_enabled:
             raise MemoryDisabledError("Long-term memory is disabled.")
 
+        if self.settings.agent_memory_consent_required and memory_type == "long_term":
+            if not user_id:
+                raise ConsentRequiredError("user_id must be provided when consent is required.")
+            consent = await self.consent_service.get_consent(tenant_id, user_id, memory_type, agent_id)
+            if not consent:
+                raise ConsentRequiredError(f"No active consent found for user {user_id} and memory type {memory_type}.")
+
         if self._contains_secrets(content):
             raise SecretFoundError("Potential secret detected in memory content. Blocking persistence.")
 
@@ -81,10 +98,11 @@ class AgentMemoryService:
         # Redaction
         redaction_status = "none"
         final_content = content
+        redacted_types = []
         if policy.redaction_enabled:
-            # Basic redaction placeholder
-            final_content = content.replace("email@", "[REDACTED]@")
-            redaction_status = "completed"
+            final_content, redacted_types = self.redaction_service.redact_content(content)
+            if redacted_types:
+                redaction_status = "completed"
 
         retention_until = utc_now() + timedelta(days=policy.retention_days)
         
@@ -105,7 +123,14 @@ class AgentMemoryService:
         self.db.add(item)
         await self.db.flush()
         
+        if redacted_types:
+            await self.redaction_service.log_redaction(tenant_id, agent_id, item.id, redacted_types)
+        
         await self._log_access(tenant_id, agent_id, item.id, "write", run_id)
+        
+        # Async indexing trigger
+        await self.indexing_service.index_item(tenant_id, agent_id, item)
+        
         await self.db.commit()
         await self.db.refresh(item)
         return item
@@ -159,25 +184,44 @@ class AgentMemoryService:
         await self.db.delete(item)
         await self.db.commit()
 
-    async def export_memory(self, tenant_id: str) -> List[dict]:
+    async def export_memory(self, tenant_id: str, agent_id: Optional[uuid.UUID] = None, memory_type: Optional[str] = None) -> List[dict]:
         if not self.settings.agent_memory_export_enabled:
             raise MemoryDisabledError("Memory export is disabled.")
             
-        stmt = select(AgentMemoryItem).where(AgentMemoryItem.tenant_id == tenant_id)
+        stmt = select(AgentMemoryItem).where(
+            AgentMemoryItem.tenant_id == tenant_id,
+            AgentMemoryItem.retention_until > utc_now()
+        )
+        if agent_id:
+            stmt = stmt.where(AgentMemoryItem.agent_id == agent_id)
+        if memory_type:
+            stmt = stmt.where(AgentMemoryItem.memory_type == memory_type)
+            
         res = await self.db.execute(stmt)
         items = res.scalars().all()
         
         export_data = []
         for item in items:
+            # Re-check for secrets on export just in case
+            if self._contains_secrets(item.raw_content):
+                continue
+                
             await self._log_access(tenant_id, item.agent_id, item.id, "export")
             export_data.append({
                 "id": str(item.id),
                 "agent_id": str(item.agent_id),
                 "type": item.memory_type,
-                "content": item.raw_content, # Should we redact more for export?
+                "content": item.raw_content,
                 "summary": item.summary,
                 "created_at": item.created_at.isoformat()
             })
             
         await self.db.commit()
         return export_data
+
+    async def search_memory(self, tenant_id: str, agent_id: uuid.UUID, query: str, limit: int = 10) -> List[AgentMemoryItem]:
+        self._check_enabled()
+        if not self.settings.agent_memory_search_enabled:
+            raise MemoryDisabledError("Memory search is disabled.")
+            
+        return await self.indexing_service.search(tenant_id, agent_id, query, limit)

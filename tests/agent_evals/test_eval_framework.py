@@ -105,8 +105,11 @@ async def test_production_requires_eval_baseline(session):
     run = await AgentEvalService(session).run_eval_suite(suite.id)
     await AgentEvalService(session).set_baseline(entry.id, run.id, "admin")
     
-    # Now try to activate - should succeed (need to refresh entry to get the baseline if cached)
-    # Actually activate_agent fetches from DB
+    # Run Promotion Gate Check
+    from app.services.agents.eval_gate import EvalGateService
+    await EvalGateService(session).evaluate_promotion(entry.id, run.id)
+    
+    # Now try to activate - should succeed
     await activate_agent(session, entry.id)
     
     await session.refresh(entry)

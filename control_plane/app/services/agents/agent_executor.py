@@ -44,7 +44,7 @@ class AgentExecutor:
         self.settings = get_settings()
         self.llm_provider = llm_provider or MockLLMProvider()
         self.tool_runner = tool_runner
-        self.obs = AgentObservabilityService()
+        self.obs = AgentObservabilityService(db)
         self.memory = AgentMemoryService(db)
         self.policy_engine = AgentPolicyEngine(db)
         self.handoff = AgentHandoffService(db)
@@ -68,7 +68,7 @@ class AgentExecutor:
         # Ensure status is 'running' if it was queued
         if run.status == "queued":
             run = await agent_state.update_run(self.db, self.run_id, status="running")
-            self.obs.record_run_started(run.agent_id, run.tenant_id)
+            await self.obs.record_run_start(run.agent_id, run.id, run.tenant_id)
 
         # 2. Retrieve agent definition
         agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
@@ -100,7 +100,27 @@ class AgentExecutor:
                 self.db, self.run_id, status="failed", failure_reason="Max runtime seconds exceeded", completed_at=utc_now()
             )
             await agent_state.log_run_event(self.db, self.run_id, "limit_exceeded", {"reason": "max_runtime_seconds"})
-            self.obs.record_run_failure(run.agent_id, "max_runtime_exceeded")
+            await self.obs._record_timeline_event(run.id, "run.failed", {"reason": "max_runtime_exceeded"})
+            return False
+
+        # Max tokens check
+        if agent_def.max_tokens is not None and run.total_tokens >= agent_def.max_tokens:
+            logger.warning(f"Run {self.run_id} exceeded max tokens: {run.total_tokens} >= {agent_def.max_tokens}")
+            await agent_state.update_run(
+                self.db, self.run_id, status="failed", failure_reason="Max tokens exceeded", completed_at=utc_now()
+            )
+            await agent_state.log_run_event(self.db, self.run_id, "limit_exceeded", {"reason": "max_tokens"})
+            await self.obs._record_timeline_event(run.id, "run.failed", {"reason": "max_tokens_exceeded"})
+            return False
+
+        # Max cost check
+        if agent_def.max_cost_brl is not None and run.estimated_cost_brl >= agent_def.max_cost_brl:
+            logger.warning(f"Run {self.run_id} exceeded max cost: {run.estimated_cost_brl} >= {agent_def.max_cost_brl}")
+            await agent_state.update_run(
+                self.db, self.run_id, status="failed", failure_reason="Max cost BRL exceeded", completed_at=utc_now()
+            )
+            await agent_state.log_run_event(self.db, self.run_id, "limit_exceeded", {"reason": "max_cost_brl"})
+            await self.obs._record_timeline_event(run.id, "run.failed", {"reason": "max_cost_exceeded"})
             return False
 
         # Check if we are resuming from an approved approval request
@@ -157,27 +177,26 @@ class AgentExecutor:
                 await agent_state.update_run(
                     self.db, self.run_id, status="failed", failure_reason=f"LLM generation error: {str(e)}", completed_at=utc_now()
                 )
-                self.obs.record_step(run.agent_id, "model_call", latency_ms, "failed")
-                self.obs.record_run_failure(run.agent_id, "llm_generation_error")
+                await self.obs.record_step(run.agent_id, run.id, "model_call", latency_ms)
+                await self.obs._record_timeline_event(run.id, "run.failed", {"reason": "llm_generation_error", "error": str(e)})
                 return False
 
             latency_ms = int((time.time() - start_time) * 1000)
             step_number = run.total_steps + 1
-            self.obs.record_step(run.agent_id, "model_call", latency_ms, "success")
+            await self.obs.record_step(run.agent_id, run.id, "model_call", latency_ms)
 
             # Record tokens and update run totals
             usage = decision.get("usage", {})
             if usage:
                 prompt_tokens = usage.get("prompt_tokens", 0)
                 completion_tokens = usage.get("completion_tokens", 0)
-                self.obs.record_tokens(run.agent_id, prompt_tokens, completion_tokens)
                 
                 # Update run stats
                 run.total_tokens += (prompt_tokens + completion_tokens)
                 # Simple cost estimation (e.g., 0.05 BRL per 1k tokens as a placeholder if not provided)
                 cost_est = decision.get("cost_brl") or ((prompt_tokens + completion_tokens) * 0.00005)
                 run.estimated_cost_brl += cost_est
-                self.obs.record_cost(run.agent_id, cost_est)
+                await self.obs.record_cost(run.agent_id, run.id, cost_est, prompt_tokens, completion_tokens)
                 await self.db.commit()
 
             # 5. Process decision
@@ -191,7 +210,7 @@ class AgentExecutor:
             if policy_decision == PolicyDecision.DENY:
                 logger.warning(f"Action denied by policy: {reason}")
                 await agent_state.log_run_event(self.db, self.run_id, "policy_denial", {"reason": reason})
-                self.obs.record_policy_denial(run.agent_id, decision.get("tool_name", "model_call"))
+                await self.obs.record_policy_denial(run.agent_id, run.id, decision.get("tool_name", "model_call"))
                 await agent_state.update_run(self.db, self.run_id, status="failed", failure_reason=f"Policy denial: {reason}", completed_at=utc_now())
                 return False
 
@@ -296,7 +315,7 @@ class AgentExecutor:
                     output_hash=agent_state.compute_sha256(final_output),
                     completed_at=utc_now(),
                 )
-                self.obs.record_run_status(run.agent_id, "completed")
+                await self.obs._record_timeline_event(run.id, "run.completed", {})
                 return False
 
         # Create checkpoint before tool call
@@ -321,11 +340,44 @@ class AgentExecutor:
             }
         else:
             try:
-                if self.tool_runner:
-                    tool_output = await self.tool_runner(tool_name, tool_input)
+                from sqlalchemy import select
+                from app.models.agents import AgentTool, AgentRegistryEntry
+                from app.services.agents.tool_executor import execute_tool
+
+                stmt = select(AgentTool).where(
+                    AgentTool.name == tool_name,
+                    AgentTool.enabled == True
+                )
+                res = await self.db.execute(stmt)
+                agent_tool = res.scalar_one_or_none()
+
+                if agent_tool:
+                    agent_entry_stmt = select(AgentRegistryEntry).where(AgentRegistryEntry.agent_id == run.agent_id)
+                    agent_entry_res = await self.db.execute(agent_entry_stmt)
+                    agent_entry = agent_entry_res.scalar_one_or_none()
+
+                    tool_callable = None
+                    if self.tool_runner:
+                        async def runner_wrapper(**kwargs):
+                            return await self.tool_runner(tool_name, kwargs)
+                        tool_callable = runner_wrapper
+
+                    tool_output = await execute_tool(
+                        db=self.db,
+                        tool=agent_tool,
+                        parameters=tool_input,
+                        run_id=self.run_id,
+                        agent=agent_entry,
+                        tenant_id=run.tenant_id,
+                        is_dry_run=False,
+                        tool_callable=tool_callable
+                    )
                 else:
-                    # Default runner if none provided
-                    tool_output = {"result": f"Mock output for tool {tool_name}"}
+                    if self.tool_runner:
+                        tool_output = await self.tool_runner(tool_name, tool_input)
+                    else:
+                        # Default runner if none provided
+                        tool_output = {"result": f"Mock output for tool {tool_name}"}
             except Exception as ex:
                 logger.exception(f"Tool {tool_name} execution failed")
                 tool_error = str(ex)
@@ -334,8 +386,8 @@ class AgentExecutor:
         tool_latency = int((time.time() - tool_start_time) * 1000)
         tool_step_number = step_number + 1
         
-        self.obs.record_step(run.agent_id, "tool_call", tool_latency, "failed" if tool_error else "success")
-        self.obs.record_tool_call(run.agent_id, tool_name, tool_latency, success=(tool_error is None), error_type=tool_error)
+        await self.obs.record_step(run.agent_id, run.id, "tool_call", tool_latency)
+        await self.obs.record_tool_call(run.agent_id, run.id, tool_name, tool_latency, success=(tool_error is None))
 
         # Log tool call step
         await agent_state.log_run_step(
@@ -358,7 +410,7 @@ class AgentExecutor:
             {
                 "tool_name": tool_name,
                 "status": "failed" if tool_error else "success",
-                "summary": self.obs.summarize_tool_output(tool_output)
+                "summary": str(tool_output)[:200]
             }
         )
 
@@ -414,7 +466,7 @@ class AgentExecutor:
                 status="success",
                 latency_ms=latency_ms
             )
-            self.obs.record_memory_operation(run.agent_id, "read")
+            await self.obs.record_memory_op(run.agent_id, run.id, "read", latency_ms)
             # In a real scenario, we'd feed items back to the LLM context
             return True
         except Exception as e:
@@ -449,7 +501,7 @@ class AgentExecutor:
                 status="success",
                 latency_ms=latency_ms
             )
-            self.obs.record_memory_operation(run.agent_id, "write")
+            await self.obs.record_memory_op(run.agent_id, run.id, "write", latency_ms)
             return True
         except Exception as e:
             logger.exception("Memory write failed")
@@ -481,6 +533,7 @@ class AgentExecutor:
                 status="success",
                 latency_ms=latency_ms
             )
+            await self.obs.record_handoff(run.agent_id, uuid.UUID(str(target_agent_id)), run.id)
             # Finish current run as it handed off
             await agent_state.update_run(
                 self.db, self.run_id, status="completed", failure_reason=f"Handed off to {target_agent_id}"

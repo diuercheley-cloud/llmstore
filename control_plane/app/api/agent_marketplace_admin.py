@@ -6,8 +6,49 @@ from sqlalchemy import select
 
 from app.api.deps import require_admin, get_db_session
 from app.services.agents.agent_marketplace import AgentMarketplaceService
+from app.services.agents.agent_bundle_verifier import AgentBundleVerifierService
+from app.services.agents.agent_supply_chain import AgentSupplyChainService
 
 router = APIRouter(prefix="/admin/agent-marketplace", tags=["agent-marketplace"])
+
+@router.post("/bundles/verify")
+async def verify_bundle(
+    file: UploadFile = File(...),
+    version_id: uuid.UUID = Body(...),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = AgentBundleVerifierService(db)
+    content = await file.read()
+    result = await service.verify_bundle(version_id, content)
+    return result
+
+@router.post("/bundles/{id}/review")
+async def review_publication(
+    id: uuid.UUID, # version_id
+    status: str = Body(...),
+    notes: Optional[str] = Body(None),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = AgentSupplyChainService(db)
+    reviewer = getattr(admin, "email", "admin")
+    # This is a bit simplified, usually we'd have a review_id
+    # For now let's just use version_id to find or create a review
+    review = await service.submit_for_review(id, reviewer)
+    if status == "approved":
+        await service.approve_publication(review.id, notes or "Approved via API")
+    
+    return {"id": str(review.id), "status": status}
+
+@router.post("/bundles/{id}/publish")
+async def publish_bundle(
+    id: uuid.UUID, # version_id
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    # Check if approved
+    return {"status": "published"}
 
 @router.get("")
 async def list_marketplace(

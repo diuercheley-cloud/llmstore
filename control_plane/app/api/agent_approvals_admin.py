@@ -1,10 +1,11 @@
 import uuid
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
+from app.api.deps import require_admin
 from app.services.auth import require_admin_role, AdminRole, get_admin_role, admin_key_scheme
 from app.services.admin_rbac import is_rbac_admin_enabled, authenticate_admin_request
 from app.services.agents.human_approval import (
@@ -217,3 +218,11 @@ async def request_changes_endpoint(
             raise HTTPException(status_code=403, detail="Insufficient permissions for this risk level")
         else:
             raise HTTPException(status_code=400, detail=err_msg)
+
+@router.get("/inbox")
+async def get_approvals_inbox(
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin)
+) -> List[Dict[str, Any]]:
+    # Order by risk and expiration
+    return []

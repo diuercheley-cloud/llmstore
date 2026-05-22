@@ -1,0 +1,13 @@
+name: ops-readiness-agent
+version: 1.0.0
+description: "Evaluates if a system is ready for operational deployment."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "k8s.lookup_cluster"
+  - "monitoring.check_alerts"
+  - "git.check_commit_history"
+risk_level: "low"
+owner: "ops-team"
+environment: "staging"
+supported_surface_status: "beta"

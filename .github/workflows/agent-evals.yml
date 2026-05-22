@@ -1,0 +1,35 @@
+name: Agent Evaluations
+
+on:
+  push:
+    branches: [ "main", "release/*" ]
+  pull_request:
+    branches: [ "main", "release/*" ]
+
+jobs:
+  agent-evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r control_plane/requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run Agent Evals
+        run: |
+          source venv/bin/activate
+          make agent-evals
+
+      - name: Run Agent Promotion Gate Validation
+        run: |
+          source venv/bin/activate
+          make agent-eval-gate

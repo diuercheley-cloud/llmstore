@@ -22,6 +22,8 @@ class ReplayDisabledError(RuntimeError):
 
 def _verify_runtime_enabled():
     settings = get_settings()
+    if not settings.agent_execution_plane_enabled:
+        raise RuntimeDisabledError("Agent Execution Plane is disabled. Set AGENT_EXECUTION_PLANE_ENABLED=true to enable it.")
     if not settings.agent_runtime_enabled:
         raise RuntimeDisabledError("Agent runtime is disabled. Set AGENT_RUNTIME_ENABLED=true to enable it.")
 
@@ -68,9 +70,16 @@ async def start_run(
     # 3. Trigger execution loop
     settings = get_settings()
     if settings.agent_async_execution_enabled:
-        # Async execution in background
-        logger.info(f"Triggering async execution for run {run.id}")
-        asyncio.create_task(run_execution_loop(db, run.id, llm_provider, tool_runner))
+        # Enqueue job in execution plane
+        logger.info(f"Enqueuing run {run.id} in agent queue")
+        from app.services.agents.agent_queue import AgentQueueManager
+        queue_mgr = AgentQueueManager(db)
+        await queue_mgr.enqueue_job(
+            agent_run_id=run.id,
+            agent_id=agent_id,
+            tenant_id=tenant_id,
+            max_attempts=3,
+        )
     else:
         # Sync execution
         logger.info(f"Running synchronous execution for run {run.id}")
@@ -168,13 +177,31 @@ async def resume_run_internal(
     if not run:
         raise ValueError(f"Agent run not found: {run_id}")
 
-    updated = await agent_state.update_run(db, run_id, status="running")
-    await agent_state.log_run_event(db, run_id, "run_resumed", {"resumed_at": str(utc_now())})
-
     settings = get_settings()
     if settings.agent_async_execution_enabled:
-        asyncio.create_task(run_execution_loop(db, run_id, llm_provider, tool_runner))
+        from app.models.agent_execution import AgentExecutionJob
+        from sqlalchemy import select
+        stmt = select(AgentExecutionJob).where(AgentExecutionJob.agent_run_id == run_id)
+        res = await db.execute(stmt)
+        job = res.scalar_one_or_none()
+        if job:
+            job.status = "queued"
+            job.scheduled_at = utc_now()
+            job.updated_at = utc_now()
+        else:
+            from app.services.agents.agent_queue import AgentQueueManager
+            queue_mgr = AgentQueueManager(db)
+            await queue_mgr.enqueue_job(
+                agent_run_id=run_id,
+                agent_id=run.agent_id,
+                tenant_id=run.tenant_id,
+                max_attempts=3
+            )
+        updated = await agent_state.update_run(db, run_id, status="queued")
+        await db.commit()
     else:
+        updated = await agent_state.update_run(db, run_id, status="running")
+        await agent_state.log_run_event(db, run_id, "run_resumed", {"resumed_at": str(utc_now())})
         await run_execution_loop(db, run_id, llm_provider, tool_runner)
         await db.refresh(updated)
 
@@ -188,9 +215,10 @@ async def cancel_run(db: AsyncSession, run_id: uuid.UUID) -> Optional[Any]:
     if run.status in ("completed", "failed", "cancelled"):
         raise ValueError(f"Cannot cancel a run that has already finished. Status: {run.status}")
 
-    updated = await agent_state.update_run(db, run_id, status="cancelled", completed_at=utc_now())
-    await agent_state.log_run_event(db, run_id, "run_cancelled", {"cancelled_at": str(utc_now())})
-    return updated
+    from app.services.agents.agent_cancellation import AgentCancellationService
+    await AgentCancellationService.cancel_run(db, run_id)
+    await db.refresh(run)
+    return run
 
 async def replay_run(db: AsyncSession, run_id: uuid.UUID) -> Dict[str, Any]:
     """

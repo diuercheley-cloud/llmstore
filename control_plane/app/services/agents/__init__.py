@@ -48,8 +48,15 @@ from app.services.agents.human_approval import (
     check_all_expired_requests,
 )
 
+from app.services.agents.eval_gate import EvalGateService
+from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService
+from app.services.agents.eval_regression import EvalRegressionService
+
 __all__ = [
     "TrustedAgentRuntime",
+    "EvalGateService",
+    "EvalDatasetRegistryService",
+    "EvalRegressionService",
     "ToolPolicyEngine",
     "build_action_receipt",
     "verify_action_receipt",
