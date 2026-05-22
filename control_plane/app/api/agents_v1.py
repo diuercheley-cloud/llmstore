@@ -1,3 +1,4 @@
+# Surface: client
 import uuid
 import json
 import asyncio
@@ -20,7 +21,7 @@ from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDec
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/v1/agents", tags=["agents-api"])
+router = APIRouter(prefix="/v1/agents", tags=["client", "agents-api"])
 
 
 async def _execute_run_in_fresh_session(run_id: uuid.UUID) -> None:

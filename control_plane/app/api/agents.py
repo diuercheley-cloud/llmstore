@@ -1,3 +1,4 @@
+# Surface: client
 import uuid
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,7 +8,7 @@ from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.services.agents import agent_state, agent_runtime
 
-router = APIRouter(prefix="/agents", tags=["agent-runtime-client"])
+router = APIRouter(prefix="/agents", tags=["client", "agent-runtime"])
 
 def verify_runtime_active():
     settings = get_settings()
