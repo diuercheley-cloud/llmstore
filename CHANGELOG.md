@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.10.0-agentic-runtime] - 2026-05-22
+
+### Added
+- Agent Registry, Agent Runtime, Tool Governance, Memory, Planning, Human-in-the-Loop approvals, Observability, Evals, and Admin UI surfaces for the Agentic AI Platform.
+- Safe-by-default agentic feature gates in `Settings`, `.env.example`, supported-surface governance, and API surface metadata.
+- Release artifacts and release notes for `v1.10.0-agentic-runtime`.
+
+### Changed
+- Agentic capabilities are now classified as `beta` or `experimental` until the platform matures.
+- The default platform posture still prevents real agent execution, real tool execution, memory persistence, planning execution, handoffs, multi-agent orchestration, and marketplace installs.
+- Human approval remains enabled by default for high-risk agent actions, and observability remains sanitized by default.
+
+### Security
+- Raw prompts are not displayed by default in approval, replay, observability, or memory flows.
+- Cross-tenant memory remains disallowed, destructive tools remain blocked by default, and unrestricted autonomy claims are explicitly out of scope.
+
 ## [v1.9.8-platform-consolidation] - 2026-05-20
 
 ### Added

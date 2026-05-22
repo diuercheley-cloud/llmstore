@@ -38,6 +38,288 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+- name: AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_HUMAN_APPROVAL_ENABLED
+  conflicts: []
+  safe_default_reason: Enabled by default so high-risk agent actions always remain approval-gated.
+- name: AGENT_ASYNC_EXECUTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Background execution stays disabled until operators explicitly opt in.
+- name: AGENT_RUNTIME_ADVISORY_MODE
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Advisory mode defaults to enabled so operators can stage the runtime without enforcement.
+- name: AGENT_AUTO_RETRY_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies:
+    - AGENT_PLANNING_ENABLED
+  conflicts: []
+  safe_default_reason: Retry metadata can be present safely even while planning execution remains disabled by default.
+- name: AGENT_BUNDLE_INSTALL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_MARKETPLACE_ENABLED
+  conflicts: []
+  safe_default_reason: Bundle installation remains off until marketplace workflows mature.
+- name: AGENT_BUNDLE_SIGNATURE_REQUIRED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies:
+    - AGENT_BUNDLE_INSTALL_ENABLED
+  conflicts: []
+  safe_default_reason: Signature enforcement is opt-in because marketplace installs are disabled by default.
+- name: AGENT_DESTRUCTIVE_TOOLS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_TOOL_EXECUTION_ENABLED
+    - AGENT_HUMAN_APPROVAL_ENABLED
+  conflicts: []
+  safe_default_reason: Destructive tool execution is blocked until explicitly enabled and approval-gated.
+- name: AGENT_EVALS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Evals remain opt-in until operators prepare suites and baselines.
+- name: AGENT_EXECUTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Real agent execution is disabled until the operator intentionally enables it.
+- name: AGENT_HANDOFFS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Handoffs are off by default to prevent uncontrolled delegation.
+- name: AGENT_HUMAN_APPROVAL_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Human approval is enabled by default to preserve a controlled rollout posture.
+- name: AGENT_LONG_TERM_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Long-term memory remains disabled until retention, redaction, and isolation policies are explicitly enabled.
+- name: AGENT_MARKETPLACE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Marketplace functionality stays disabled until signed bundle governance is validated.
+- name: AGENT_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Memory is disabled by default to avoid cross-tenant retention until operators opt in deliberately.
+- name: AGENT_MEMORY_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Memory export stays disabled unless an operator explicitly enables controlled export workflows.
+- name: AGENT_MEMORY_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Memory writes are blocked until retention and isolation policies are explicitly enabled.
+- name: AGENT_MULTI_AGENT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_HANDOFFS_ENABLED
+  conflicts: []
+  safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration policies are approved.
+- name: AGENT_OBSERVABILITY_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Observability is on by default because timelines and metrics are sanitized and local-first.
+- name: AGENT_PLANNING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Planning remains opt-in until operators validate policy coverage and plan review flows.
+- name: AGENT_PLAN_EXECUTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_PLANNING_ENABLED
+  conflicts: []
+  safe_default_reason: Plan execution is disabled by default so generated plans cannot act without explicit enablement.
+- name: AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Production activation remains guarded by default with an eval baseline requirement.
+- name: AGENT_REPLAY_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Read-only replay is enabled by default because it does not trigger real execution.
+- name: AGENT_RUNTIME_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: The runtime is disabled by default to preserve the existing non-agentic platform posture.
+- name: AGENT_TOOL_EXECUTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: high
+  dependencies:
+    - AGENT_TOOL_REGISTRY_ENABLED
+    - AGENT_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Real tool execution remains disabled until an operator explicitly opts into side effects.
+- name: AGENT_TOOL_REGISTRY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Tool registry administration is gated off until agentic rollout is explicitly enabled.
+- name: AGENT_TRACE_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: medium
+  dependencies:
+    - AGENT_OBSERVABILITY_ENABLED
+  conflicts: []
+  safe_default_reason: External trace export stays off so sanitized observability remains local by default.
 - name: ANTHROPIC_PROVIDER_ENABLED
   default: false
   owner: platform-ops
@@ -1900,6 +2182,16 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+- name: MODEL_RUNTIME_MOCK_ENABLED
+  default: false
+  owner: model-team
+  area: Model runtime
+  status: active
+  introduced_in: v1.10.0-agentic-runtime
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Mock model runtime behavior remains disabled unless explicitly requested for testing.
 - name: ROUTING_TEST_FORCE_LOCAL_FAILURE
   default: false
   owner: platform-ops

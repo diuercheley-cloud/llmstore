@@ -182,6 +182,134 @@ capabilities:
     limitations: "Self-attested advisory frameworks."
     test_coverage: 82%
 
+  - id: agentic-runtime
+    name: Agentic runtime
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agent-runtime.md
+    api_prefix: /agents
+    feature_flag: agent_runtime_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Disabled by default. No real agent execution occurs until runtime and execution flags are explicitly enabled."
+    test_coverage: 72%
+
+  - id: agent-registry
+    name: Agent registry
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agent-registry.md
+    api_prefix: /admin/agent-registry
+    feature_flag: agent_runtime_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Administrative registry and lifecycle workflows are beta and do not imply autonomous production activation."
+    test_coverage: 70%
+
+  - id: agent-tool-governance
+    name: Agent tool governance
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/tool-registry.md
+    api_prefix: /admin/agent-tools
+    feature_flag: agent_tool_registry_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Tool registration is gated off by default, real execution is separately disabled, and destructive tools remain blocked without approval."
+    test_coverage: 74%
+
+  - id: agent-memory
+    name: Agent memory
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/memory.md
+    api_prefix: /admin/agent-memory
+    feature_flag: agent_memory_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Memory is disabled by default, cross-tenant sharing is not supported, and exports remain off unless explicitly enabled."
+    test_coverage: 68%
+
+  - id: agent-planning
+    name: Agent planning
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/task-engine.md
+    api_prefix: /admin/agent-tasks
+    feature_flag: agent_planning_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Plans can be modeled administratively, but planning and plan execution are disabled by default."
+    test_coverage: 61%
+
+  - id: agent-hitl
+    name: Agent human approval
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/human-in-the-loop.md
+    api_prefix: /admin/agent-approvals
+    feature_flag: agent_human_approval_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Approval remains the default posture for high-risk operations; raw prompts are not shown to reviewers."
+    test_coverage: 78%
+
+  - id: agent-observability
+    name: Agent observability
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/observability.md
+    api_prefix: /admin/agents/observability
+    feature_flag: agent_observability_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Metrics and traces are sanitized by default and external export remains disabled unless explicitly enabled."
+    test_coverage: 76%
+
+  - id: agent-evals
+    name: Agent evals
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/evals.md
+    api_prefix: /admin/agent-evals
+    feature_flag: agent_evals_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Evals are opt-in and do not grant production activation unless operators maintain a baseline."
+    test_coverage: 66%
+
+  - id: agent-marketplace
+    name: Agent marketplace
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/marketplace.md
+    api_prefix: /admin/agent-marketplace
+    feature_flag: agent_marketplace_enabled
+    since_version: v1.10.0-agentic-runtime
+    limitations: "Marketplace workflows are experimental, offline-first, and disabled by default."
+    test_coverage: 54%
+
+  - id: agent-admin-ui
+    name: Agent admin UI
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/admin-ui.md
+    since_version: v1.10.0-agentic-runtime
+    limitations: "The administrative UI is operator-facing and must not be used to imply unrestricted agent autonomy."
+    test_coverage: 63%
+
   - id: support-bundle
     name: Support bundle
     area: Platform supportability

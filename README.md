@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI inference platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v1.9.8-platform-consolidation`  
-> Previous stable: [`v1.9.7-compliance-readiness`](releases/v1.9.7-compliance-readiness)  
-> Release notes: [`docs/releases/V1_9_8_PLATFORM_CONSOLIDATION.md`](docs/releases/V1_9_8_PLATFORM_CONSOLIDATION.md)  
+> Current build: `v1.10.0-agentic-runtime`  
+> Previous stable: [`v1.9.8-platform-consolidation`](releases/v1.9.8-platform-consolidation)  
+> Release notes: [`docs/releases/V1_10_0_AGENTIC_RUNTIME.md`](docs/releases/V1_10_0_AGENTIC_RUNTIME.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Agentic Runtime (v1.10.0)**: Adds an operator-gated Agent Registry, Runtime, Tool Governance, Memory, Planning, HITL, Observability, Evals, and Admin UI while preserving safe defaults and the existing platform posture.
 - **Platform Consolidation (v1.9.8)**: Supportability and operational consolidation inside existing platform domains, plus lazy-loaded routers, endpoint cleanup, and release governance tightening.
 - **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
 - **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
@@ -151,6 +152,10 @@ make validate-platform-documentation
 - **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior.
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
+- **Agentic surfaces are opt-in and remain beta/experimental.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_PLANNING_ENABLED=false`, `AGENT_HANDOFFS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` preserve the non-agentic default posture.
+- **Human approval stays on for sensitive agent actions.** `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` keep high-risk execution approval-gated by default.
+- **Raw prompts are not surfaced by default in agentic flows.** Observability, approvals, replay, and memory workflows use hashes and sanitized payloads rather than exposing raw prompts.
+- **No cross-tenant agent memory is supported.** Agent memory is tenant-scoped and disabled by default until operators explicitly enable it.
 - **Managed control-plane metadata is restricted.** Heartbeats accept operational metadata only; prompt/document payloads are rejected by schema validation.
 - **No real runtime execution.** Runtime abstractions are advisory placeholders. All phase implementations are validation-only.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.
@@ -198,12 +203,14 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 > - Recursos como orquestração Kubernetes, Distributed control-plane mesh, GPU autoscaling, Plugin marketplace, Managed control-plane e Multi-cluster operam estritamente como **placeholders** de validação sem execução física ou efeitos reais de cluster por padrão.
 > - Recursos avançados de segurança como PKI, Attestation e Hardware trust são puramente **advisory** por padrão, servindo apenas para análise e verificação local sem certificação formal ou aplicação coercitiva (enforcement).
 > - O recurso de Chaos Engineering é classificado como **experimental**.
+> - A superfície **Agentic AI Platform** é classificada como **beta/experimental** nesta release. Nenhum agente executa, nenhuma tool real roda e nenhuma memória persiste por padrão.
 >
 > Para uma matriz de suporte detalhada, consulte a [Política de Supported Surface Area](docs/support/supported-surface-area.md).
 
-### Release v1.9.8 scope
+### Release v1.10.0 scope
 
-- **No new major domain**: `v1.9.8-platform-consolidation` is a freeze-and-optimize release. It consolidates supportability, runtime profiles, surface classification, and complexity controls inside existing administrative and operational areas.
+- **Agentic AI Platform, default-safe**: `v1.10.0-agentic-runtime` integrates registry, runtime, tool governance, memory, planning, HITL, observability, evals, and admin UI without enabling autonomous behavior by default.
+- **No unrestricted autonomy claims**: the platform does not advertise or expose unrestricted autonomous execution. Operators must explicitly enable runtime, execution, tools, memory, and planning.
 - **Supportability is bounded**: support bundles are sanitized operational artifacts for diagnostics only. They do not widen tenant-facing product scope, and they must not include prompts, documents, `.env` files, or real secrets.
 - **Governance remains explicit**: compliance content remains readiness/advisory material, not a promise of SOC 2 or ISO certification.
 
@@ -220,6 +227,11 @@ cp .env.example .env.local
 # GPU_AUTOSCALING_ENABLED=false
 # PLUGIN_MARKETPLACE_ENABLED=false
 # MANAGED_CONTROL_PLANE_ENABLED=false
+# Mantenha a superfície agentic em modo seguro por padrão:
+# AGENT_RUNTIME_ENABLED=false
+# AGENT_EXECUTION_ENABLED=false
+# AGENT_TOOL_EXECUTION_ENABLED=false
+# AGENT_MEMORY_ENABLED=false
 
 # 3. Instale o appliance com dados de demonstração
 make install-local

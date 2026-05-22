@@ -263,6 +263,68 @@ LLM_AUTOSCALING_REPLICAS_CURRENT = Gauge(
     ["policy_id"]
 )
 
+# Agent Observability Metrics
+LLM_AGENT_RUNS_TOTAL = Counter(
+    "llm_agent_runs_total",
+    "Total agent runs started",
+    ["agent_id", "status"]
+)
+LLM_AGENT_RUN_FAILURES_TOTAL = Counter(
+    "llm_agent_run_failures_total",
+    "Total agent run failures",
+    ["agent_id", "reason"]
+)
+LLM_AGENT_STEPS_TOTAL = Counter(
+    "llm_agent_steps_total",
+    "Total agent steps executed",
+    ["agent_id", "step_type"]
+)
+LLM_AGENT_STEP_LATENCY_SECONDS = Histogram(
+    "llm_agent_step_latency_seconds",
+    "Latency of agent steps",
+    ["agent_id", "step_type"]
+)
+LLM_AGENT_TOOL_CALLS_TOTAL = Counter(
+    "llm_agent_tool_calls_total",
+    "Total tool calls by agents",
+    ["agent_id", "tool_name"]
+)
+LLM_AGENT_TOOL_FAILURES_TOTAL = Counter(
+    "llm_agent_tool_failures_total",
+    "Total tool failures in agents",
+    ["agent_id", "tool_name", "error_type"]
+)
+LLM_AGENT_APPROVAL_WAIT_SECONDS = Histogram(
+    "llm_agent_approval_wait_seconds",
+    "Time agents spent waiting for human approval",
+    ["agent_id", "tool_name"]
+)
+LLM_AGENT_POLICY_DENIALS_TOTAL = Counter(
+    "llm_agent_policy_denials_total",
+    "Total agent policy denials",
+    ["agent_id", "tool_name"]
+)
+LLM_AGENT_MEMORY_READS_TOTAL = Counter(
+    "llm_agent_memory_reads_total",
+    "Total memory reads by agents",
+    ["agent_id"]
+)
+LLM_AGENT_MEMORY_WRITES_TOTAL = Counter(
+    "llm_agent_memory_writes_total",
+    "Total memory writes by agents",
+    ["agent_id"]
+)
+LLM_AGENT_TOKENS_TOTAL = Counter(
+    "llm_agent_tokens_total",
+    "Total tokens consumed by agents",
+    ["agent_id", "token_type"]
+)
+LLM_AGENT_COST_ESTIMATED_BRL_TOTAL = Counter(
+    "llm_agent_cost_estimated_brl_total",
+    "Estimated cost of agent runs in BRL",
+    ["agent_id"]
+)
+
 # Keep legacy metrics for internal compatibility where needed, or alias them
 REQUESTS_TOTAL = LLM_REQUESTS_TOTAL
 REQUEST_LATENCY_SECONDS = LLM_REQUEST_LATENCY_SECONDS

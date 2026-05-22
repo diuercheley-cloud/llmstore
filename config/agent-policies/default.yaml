@@ -1,0 +1,21 @@
+global_policies:
+  - name: max_steps_by_risk
+    description: "Limits execution steps based on agent risk score"
+    rules:
+      - if: "risk_score < 10"
+        then: { max_steps: 50 }
+      - if: "risk_score < 50"
+        then: { max_steps: 20 }
+      - default: { max_steps: 10 }
+
+  - name: block_destructive_tools
+    description: "Requires approval for destructive operations"
+    rules:
+      - if: "tool_name matches (delete|drop|purge)"
+        then: { action: "require_approval" }
+
+  - name: sovereign_isolation
+    description: "Blocks external APIs in sovereign environments"
+    rules:
+      - if: "environment == 'sovereign' and is_external == true"
+        then: { action: "deny" }

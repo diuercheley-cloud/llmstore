@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v1.9.8-platform-consolidation` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v1.10.0-agentic-runtime` line.
 
 ## Defaults
 
@@ -16,6 +16,8 @@
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
 - Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
 - `DEPLOYMENT_MODE=appliance`, `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false`, and `MANAGED_CONTROL_PLANE_ENABLED=false` keep enterprise runtime surfaces disabled by default.
+- `AGENT_RUNTIME_ENABLED=false`, `AGENT_EXECUTION_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_PLANNING_ENABLED=false`, `AGENT_HANDOFFS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` keep the agentic runtime non-executing by default.
+- `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` preserve mandatory approval for high-risk agent actions.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=managed_control_plane`.
 
 ## Secrets Handling
@@ -43,6 +45,7 @@
 - Admin tokens must not be returned by public or client-facing endpoints.
 - Correlation IDs are safe to log and are intended for troubleshooting.
 - If debug logging is enabled in production-like environments, review logs for prompt content and metadata retention before release.
+- Agent approvals, traces, replays, and memory workflows must not expose raw prompts by default; sanitized payloads and hashes are the baseline expectation.
 - Managed control-plane heartbeats are limited to operational metadata. Prompt bodies, document content, and similar payload fields are rejected before persistence.
 - **Supportability Pack Redaction**: Diagnostic bundles generated via `/admin/support/bundle` are automatically processed through a redaction engine. Regex patterns for `sk-...`, `ADMIN_TOKEN=...`, `JWT_SECRET=...`, and `Bearer ...` are intended to prevent sensitive keys, tokens, or PII from being exported in diagnostic logs or metadata.
 
@@ -73,6 +76,12 @@
 
 ## Multi-Cluster Data Boundaries
 No cross-cluster operations exfiltrate user prompts or RAG documents by default. Synchronizations are limited to configuration metadata and health status.
+
+## Agentic Data Boundaries
+- Agent memory is tenant-scoped and disabled by default.
+- Cross-tenant memory sharing is not supported.
+- Destructive tools remain disabled unless explicitly enabled and separately approval-gated.
+- Agent marketplace installs are offline-first and disabled by default.
 
 ## Observability Privacy
 Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.

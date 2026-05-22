@@ -17,7 +17,9 @@ import {
   Zap, 
   Cloud,
   LogOut,
-  Loader2
+  Loader2,
+  CheckSquare,
+  Bot
 } from 'lucide-react'
 import { ThemeProvider } from './components/theme-provider'
 import { ThemeToggle } from './components/theme-toggle'
@@ -56,6 +58,19 @@ const EvidenceCenter = lazy(() => import('./pages/compliance/EvidenceCenter'))
 const RiskRegister = lazy(() => import('./pages/compliance/RiskRegister'))
 const PolicyCenter = lazy(() => import('./pages/compliance/PolicyCenter'))
 const RealtimeDashboard = lazy(() => import('./pages/observability/RealtimeDashboard'))
+const AgentObservability = lazy(() => import('./pages/observability/AgentObservability'))
+
+// Agent Pages
+const AgentsOverview = lazy(() => import('./pages/agents/AgentsOverview'))
+const AgentRegistry = lazy(() => import('./pages/agents/AgentRegistry'))
+const AgentRuns = lazy(() => import('./pages/agents/AgentRuns'))
+const AgentRunTimeline = lazy(() => import('./pages/agents/AgentRunTimeline'))
+const AgentTools = lazy(() => import('./pages/agents/AgentTools'))
+const AgentMemory = lazy(() => import('./pages/agents/AgentMemory'))
+const AgentApprovals = lazy(() => import('./pages/agents/AgentApprovals'))
+const AgentEvals = lazy(() => import('./pages/agents/AgentEvals'))
+const AgentPolicies = lazy(() => import('./pages/agents/AgentPolicies'))
+const AgentMarketplace = lazy(() => import('./pages/agents/AgentMarketplace'))
 
 const queryClient = new QueryClient()
 
@@ -150,6 +165,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     { to: "/plugins", label: "Plugins", icon: Zap },
     { to: "/operations", label: "Operações", icon: Activity },
     { to: "/saas", label: "SaaS", icon: Cloud },
+    { to: "/agents", label: "Agentes", icon: Bot },
   ]
 
   return (
@@ -458,6 +474,14 @@ function App() {
               } 
             />
             <Route 
+              path="/observability/agents" 
+              element={
+                <ProtectedRoute>
+                  <Layout><Suspense fallback={<PageLoader />}><AgentObservability /></Suspense></Layout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/multicluster" 
               element={
                 <ProtectedRoute>
@@ -513,7 +537,28 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/agent-approvals" 
+              element={
+                <ProtectedRoute>
+                  <Layout><Suspense fallback={<PageLoader />}><AgentApprovals /></Suspense></Layout>
+                </ProtectedRoute>
+              } 
+            />
+            {/* Agent Control Plane Routes */}
+            <Route path="/agents" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentsOverview /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/registry" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentRegistry /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/runs" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentRuns /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/runs/:id" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentRunTimeline /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/tools" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentTools /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/memory" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentMemory /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/approvals" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentApprovals /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/evals" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentEvals /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/policies" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentPolicies /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/marketplace" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentMarketplace /></Suspense></Layout></ProtectedRoute>} />
+
             <Route path="*" element={<Layout><NotFound /></Layout>} />
+
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

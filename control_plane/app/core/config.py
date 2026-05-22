@@ -49,6 +49,43 @@ class Settings(BaseSettings):
     commercial_appliance_id: str = "appliance-000"
     commercial_appliance_deployment_tier: str = "regulated"
     commercial_appliance_require_removable_media: bool = False
+
+    agent_runtime_enabled: bool = Field(default=False, alias="AGENT_RUNTIME_ENABLED")
+    agent_execution_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_ENABLED")
+    agent_async_execution_enabled: bool = Field(default=False, alias="AGENT_ASYNC_EXECUTION_ENABLED")
+    agent_replay_enabled: bool = Field(default=True, alias="AGENT_REPLAY_ENABLED")
+    agent_runtime_advisory_mode: bool = Field(default=True, alias="AGENT_RUNTIME_ADVISORY_MODE")
+
+    agent_tool_registry_enabled: bool = Field(default=False, alias="AGENT_TOOL_REGISTRY_ENABLED")
+    agent_tool_execution_enabled: bool = Field(default=False, alias="AGENT_TOOL_EXECUTION_ENABLED")
+    agent_destructive_tools_enabled: bool = Field(default=False, alias="AGENT_DESTRUCTIVE_TOOLS_ENABLED")
+
+    agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
+    agent_approval_required_for_high_risk: bool = Field(default=True, alias="AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK")
+    agent_approval_timeout_seconds: int = Field(default=86400, alias="AGENT_APPROVAL_TIMEOUT_SECONDS")
+
+    agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
+    agent_trace_export_enabled: bool = Field(default=False, alias="AGENT_TRACE_EXPORT_ENABLED")
+
+    agent_evals_enabled: bool = Field(default=False, alias="AGENT_EVALS_ENABLED")
+    agent_production_requires_eval_baseline: bool = Field(default=True, alias="AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE")
+
+    agent_memory_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENABLED")
+    agent_long_term_memory_enabled: bool = Field(default=False, alias="AGENT_LONG_TERM_MEMORY_ENABLED")
+    agent_memory_write_enabled: bool = Field(default=False, alias="AGENT_MEMORY_WRITE_ENABLED")
+    agent_memory_export_enabled: bool = Field(default=False, alias="AGENT_MEMORY_EXPORT_ENABLED")
+
+    agent_planning_enabled: bool = Field(default=False, alias="AGENT_PLANNING_ENABLED")
+    agent_plan_execution_enabled: bool = Field(default=False, alias="AGENT_PLAN_EXECUTION_ENABLED")
+    agent_auto_retry_enabled: bool = Field(default=True, alias="AGENT_AUTO_RETRY_ENABLED")
+
+    agent_handoffs_enabled: bool = Field(default=False, alias="AGENT_HANDOFFS_ENABLED")
+    agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
+
+    agent_marketplace_enabled: bool = Field(default=False, alias="AGENT_MARKETPLACE_ENABLED")
+    agent_bundle_install_enabled: bool = Field(default=False, alias="AGENT_BUNDLE_INSTALL_ENABLED")
+    agent_bundle_signature_required: bool = Field(default=False, alias="AGENT_BUNDLE_SIGNATURE_REQUIRED")
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     project_name: str = Field(default="local-llm-inference-stack", alias="PROJECT_NAME")

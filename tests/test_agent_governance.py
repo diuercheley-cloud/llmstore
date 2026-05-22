@@ -1,76 +1,90 @@
 import pytest
 import uuid
-import hashlib
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.inference import agent_governance
-from app.models.commercial_agents import CommercialAgentProfile, CommercialAgentExecution
-
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.db.base import Base
-
-@pytest_asyncio.fixture
-async def session(isolated_db_url):
-    engine = create_async_engine(isolated_db_url)
-    session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    async with session_local() as s:
-        yield s
-    await engine.dispose()
+from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
+from app.services.agents.agent_risk_engine import AgentRiskEngine
+from app.services.agents import agent_state
+from app.models.agents import AgentDefinition, AgentRun
 
 @pytest.mark.asyncio
-async def test_create_agent_profile(session: AsyncSession):
-    profile = await agent_governance.create_agent_profile(
-        session, "Researcher", allowed_tools=["search", "browser"]
-    )
-    assert profile.agent_name == "Researcher"
-    assert "search" in profile.allowed_tools
-
-@pytest.mark.asyncio
-async def test_agent_execution_tracking(session: AsyncSession):
-    profile = await agent_governance.create_agent_profile(session, "Worker")
+async def test_policy_destructive_tool_requires_approval(session):
+    engine = AgentPolicyEngine(session)
+    agent = AgentDefinition(id=uuid.uuid4(), name="Test", risk_level="low", allowed_tools=["*"])
+    run = AgentRun(agent_id=agent.id, tenant_id="t1", total_steps=0)
     
-    execution = await agent_governance.start_agent_execution(
-        session, profile.id, "session-123", "Run analysis"
-    )
-    assert execution.session_id == "session-123"
-    assert execution.status == "running"
+    action = {"task_type": "tool_call", "tool_name": "delete_database"}
+    decision, reason = await engine.evaluate_action(agent, run, action)
+    
+    assert decision == PolicyDecision.REQUIRE_APPROVAL
+    assert "destructive" in reason.lower()
 
 @pytest.mark.asyncio
-async def test_tool_authorization_allowed(session: AsyncSession):
-    profile = await agent_governance.create_agent_profile(
-        session, "ToolUser", allowed_tools=["calculator"], can_delegate=False
-    )
-    execution = await agent_governance.start_agent_execution(session, profile.id, "s1", "calc")
+async def test_policy_shell_tool_blocked(session):
+    engine = AgentPolicyEngine(session)
+    agent = AgentDefinition(id=uuid.uuid4(), name="Test", risk_level="low", allowed_tools=["*"])
+    run = AgentRun(agent_id=agent.id, tenant_id="t1", total_steps=0)
     
-    # We need to ensure requires_approval_for_tools is false for auto-approval test
-    profile.requires_approval_for_tools = False
+    action = {"task_type": "tool_call", "tool_name": "execute_shell"}
+    decision, reason = await engine.evaluate_action(agent, run, action)
+    
+    assert decision == PolicyDecision.DENY
+    assert "shell" in reason.lower()
+
+@pytest.mark.asyncio
+async def test_policy_max_steps_by_risk(session):
+    engine = AgentPolicyEngine(session)
+    # High risk agent (high risk level + many tools)
+    agent = AgentDefinition(id=uuid.uuid4(), name="High Risk", risk_level="high", allowed_tools=["t1", "t2", "t3"], max_steps=100)
+    
+    # Run with 25 steps (limit will be 20 for risk score 36)
+    run = AgentRun(agent_id=agent.id, tenant_id="t1", total_steps=25)
+    
+    action = {"task_type": "model_call"}
+    decision, reason = await engine.evaluate_action(agent, run, action)
+    
+    assert decision == PolicyDecision.DENY
+    assert "max steps" in reason.lower()
+
+@pytest.mark.asyncio
+async def test_policy_no_production_without_baseline(session):
+    engine = AgentPolicyEngine(session)
+    agent = AgentDefinition(
+        id=uuid.uuid4(), 
+        name="Prod Agent", 
+        version="1", 
+        instructions="test", 
+        model_id="m1", 
+        owner="admin",
+        status="active" # production
+    )
+    session.add(agent)
     await session.commit()
     
-    allowed, msg = await agent_governance.authorize_tool_execution(
-        session, execution.id, "calculator", {"expression": "2+2"}
-    )
-    assert allowed == True
-    assert msg == "Authorized"
+    decision, reason = await engine.evaluate_agent_activation(agent)
+    
+    assert decision == PolicyDecision.DENY
+    assert "baseline" in reason.lower()
 
 @pytest.mark.asyncio
-async def test_tool_authorization_blocked(session: AsyncSession):
-    profile = await agent_governance.create_agent_profile(
-        session, "Restricted", allowed_tools=["safe_tool"]
-    )
-    execution = await agent_governance.start_agent_execution(session, profile.id, "s1", "hack")
+async def test_simulate_policy_does_not_execute(session):
+    # This is a bit conceptual as simulate_action just calls evaluate_action
+    # But it proves the API layer works without a real run record
+    engine = AgentPolicyEngine(session)
     
-    allowed, msg = await agent_governance.authorize_tool_execution(
-        session, execution.id, "dangerous_tool", {}
+    # Create real agent for simulation
+    agent = AgentDefinition(
+        id=uuid.uuid4(), 
+        name="Sim Agent", 
+        version="1", 
+        instructions="test", 
+        model_id="m1", 
+        owner="admin",
+        risk_level="low"
     )
-    assert allowed == False
-    assert "not in agent's allow-list" in msg
-
-@pytest.mark.asyncio
-async def test_delegation_check(session: AsyncSession):
-    a1 = await agent_governance.create_agent_profile(session, "Manager", can_delegate=True)
-    a2 = await agent_governance.create_agent_profile(session, "Worker")
+    session.add(agent)
+    await session.commit()
     
-    allowed = await agent_governance.check_delegation_allowed(session, a1.id, a2.id)
-    assert allowed == True # Fallback to global can_delegate
+    action = {"task_type": "tool_call", "tool_name": "shell_exec"}
+    res = await engine.simulate_action(agent.id, action)
+    
+    assert res["decision"] == PolicyDecision.DENY
+    assert res["simulated"] is True

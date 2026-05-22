@@ -10,6 +10,19 @@ import app.models  # noqa: F401
 
 from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
+from app.api.agent_runtime_admin import router as agent_runtime_admin_router
+from app.api.agent_registry_admin import router as agent_registry_admin_router
+from app.api.agent_tools_admin import router as agent_tools_admin_router
+from app.api.agent_approvals_admin import router as agent_approvals_admin_router
+from app.api.agent_observability_admin import router as agent_observability_admin_router
+from app.api.agent_evals_admin import router as agent_evals_admin_router
+from app.api.agent_memory_admin import router as agent_memory_admin_router
+from app.api.agent_tasks_admin import router as agent_tasks_admin_router
+from app.api.agent_governance_admin import router as agent_governance_admin_router
+from app.api.agent_handoffs_admin import router as agent_handoffs_admin_router
+from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
+from app.api.agents_v1 import router as agents_v1_router
+from app.api.agents import router as agents_router
 from app.api.admin_rbac import router as admin_rbac_router
 from app.api.saas_admin import router as saas_admin_router
 from app.api.sales import router as sales_router
@@ -203,7 +216,7 @@ async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
 async def lifespan(_: FastAPI):
     if getattr(settings, "create_tables_on_startup", False):
         from app.db.base import Base
-        from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts, operations
+        from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts, operations, agents
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
@@ -283,6 +296,19 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(agent_runtime_admin_router)
+app.include_router(agent_registry_admin_router)
+app.include_router(agent_tools_admin_router)
+app.include_router(agent_approvals_admin_router)
+app.include_router(agent_observability_admin_router)
+app.include_router(agent_evals_admin_router)
+app.include_router(agent_memory_admin_router)
+app.include_router(agent_tasks_admin_router)
+app.include_router(agent_governance_admin_router)
+app.include_router(agent_handoffs_admin_router)
+app.include_router(agent_marketplace_admin_router)
+app.include_router(agents_v1_router)
+app.include_router(agents_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)
 app.include_router(saas_admin_router)

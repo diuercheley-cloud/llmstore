@@ -40,26 +40,24 @@ def get_inference_proxy() -> InferenceProxy:
     return InferenceProxy(get_queue_manager(), get_circuit_breaker())
 
 
-async def get_db() -> AsyncSession:
-    async for session in get_db_session():
-        return session
-    raise RuntimeError("database session unavailable")
+async def get_db(
+    session: AsyncSession = Depends(get_db_session),
+) -> AsyncSession:
+    return session
 
 
 async def get_admin_db(
+    session: AsyncSession = Depends(get_db_session),
     _role=Depends(require_admin_permission("system:read")),
 ) -> AsyncSession:
-    async for session in get_db_session():
-        return session
-    raise RuntimeError("database session unavailable")
+    return session
 
 
 async def get_super_admin_db(
+    session: AsyncSession = Depends(get_db_session),
     _role=Depends(require_superadmin),
 ) -> AsyncSession:
-    async for session in get_db_session():
-        return session
-    raise RuntimeError("database session unavailable")
+    return session
 
 
 async def get_admin_token(x_admin_token: str = Depends(admin_key_scheme)) -> str:

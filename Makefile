@@ -226,6 +226,10 @@ restart: ## Restart the stack
 status: ## Show stack status
 	docker compose ps
 
+agent-evals: ## Run Agent Evaluation suites
+	@echo "Running Agent Evaluations..."
+	@PYTHONPATH=control_plane .venv/bin/python -m pytest tests/agent_evals/
+
 health: ## Check stack health (endpoints: /health, /ready, /status)
 	./scripts/test-health.sh
 

@@ -1,0 +1,31 @@
+{
+  "name": "support-triage-agent",
+  "version": "1.0.0",
+  "description": "Agent especializado em triagem e classificação de tickets de suporte.",
+  "author": "Platform Core Team",
+  "category": "support",
+  "min_platform_version": "1.7.0",
+  "agent_definition": {
+    "name": "Support Triage Specialist",
+    "instructions": "Analise o ticket de entrada e classifique por prioridade e departamento.",
+    "model_id": "gpt-4o",
+    "allowed_tools": ["search_knowledge_base", "assign_ticket"]
+  },
+  "tool_requirements": [
+    {"name": "search_knowledge_base", "version": "^1.0.0"},
+    {"name": "assign_ticket", "version": "^1.2.0"}
+  ],
+  "memory_policy": {
+    "type": "short_term",
+    "retention_days": 7
+  },
+  "eval_suite": {
+    "name": "Triage Accuracy",
+    "cases": [
+      {"input": "O sistema está fora do ar!", "expected_priority": "high"}
+    ]
+  },
+  "checksums": {
+    "manifest": "abc123hash"
+  }
+}

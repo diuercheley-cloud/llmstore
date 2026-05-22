@@ -1,0 +1,12 @@
+risk_levels:
+  - low
+  - medium
+  - high
+  - critical
+
+destructive_tools:
+  - write
+  - delete
+  - destroy
+  - remove
+  - update
