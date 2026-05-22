@@ -74,3 +74,60 @@ async def test_client_api_key_flow(e2e_client, admin_headers):
     usage = usage_resp.json()["usage"]
     assert len(usage) > 0
     assert usage[0]["prompt_tokens"] > 0
+
+
+@pytest.mark.asyncio
+async def test_admin_api_key_delete_definitely(e2e_client, admin_headers):
+    # 1. Criar cliente
+    client_payload = {
+        "name": "Delete Test Client",
+        "rate_limit_per_minute": 60
+    }
+    resp = await e2e_client.post("/admin/clients", json=client_payload, headers=admin_headers)
+    assert resp.status_code == 201
+    client_id = resp.json()["id"]
+
+    # 2. Criar API key
+    key_payload = {
+        "client_id": client_id,
+        "name": "Delete Test Key"
+    }
+    resp = await e2e_client.post("/admin/api-keys", json=key_payload, headers=admin_headers)
+    assert resp.status_code == 201
+    key_id = resp.json()["id"]
+
+    # 3. List keys to verify it's there
+    resp = await e2e_client.get("/admin/api-keys", headers=admin_headers)
+    assert resp.status_code == 200
+    keys = resp.json()
+    assert any(k["id"] == key_id for k in keys)
+    key_item = next(k for k in keys if k["id"] == key_id)
+    assert key_item["is_active"] is True
+    assert key_item["revoked_at"] is None
+
+    # 4. First DELETE call -> should soft-delete (revoke)
+    resp = await e2e_client.delete(f"/admin/api-keys/{key_id}", headers=admin_headers)
+    assert resp.status_code == 204
+
+    # Verify it is still listed but is revoked/inactive
+    resp = await e2e_client.get("/admin/api-keys", headers=admin_headers)
+    assert resp.status_code == 200
+    keys = resp.json()
+    assert any(k["id"] == key_id for k in keys)
+    key_item = next(k for k in keys if k["id"] == key_id)
+    assert key_item["is_active"] is False
+    assert key_item["revoked_at"] is not None
+
+    # 5. Second DELETE call -> should hard-delete (definitely remove from DB)
+    resp = await e2e_client.delete(f"/admin/api-keys/{key_id}", headers=admin_headers)
+    assert resp.status_code == 204
+
+    # Verify it is completely gone
+    resp = await e2e_client.get("/admin/api-keys", headers=admin_headers)
+    assert resp.status_code == 200
+    keys = resp.json()
+    assert not any(k["id"] == key_id for k in keys)
+
+    # 6. Third DELETE call -> should return 404 (not found)
+    resp = await e2e_client.delete(f"/admin/api-keys/{key_id}", headers=admin_headers)
+    assert resp.status_code == 404

@@ -1056,8 +1056,11 @@ async def revoke_api_key(api_key_id: uuid.UUID, session: AsyncSession = Depends(
     api_key = await session.get(ApiKey, api_key_id)
     if api_key is None:
         raise HTTPException(status_code=404, detail="api key not found")
-    api_key.revoked_at = utc_now()
-    api_key.is_active = False
+    if not api_key.is_active or api_key.revoked_at is not None:
+        await session.delete(api_key)
+    else:
+        api_key.revoked_at = utc_now()
+        api_key.is_active = False
     await session.commit()
 
 
