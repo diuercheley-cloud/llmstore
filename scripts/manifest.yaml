@@ -5559,3 +5559,17 @@
   - logs/*
   is_destructive: false
   docs_url: null
+- path: scripts/run_free_model.py
+  purpose: Interactive utility to configure and run a free external model against the local gateway.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: false
+  requires_docker: true
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - .env.local
+  is_destructive: false
+  docs_url: null
