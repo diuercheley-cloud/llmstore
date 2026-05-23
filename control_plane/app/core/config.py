@@ -166,6 +166,18 @@ class Settings(BaseSettings):
     # Status: beta
     agent_eval_provider: str = Field(default="mock", alias="AGENT_EVAL_PROVIDER")
     # Owner: agent-platform
+    # Status: active
+    agent_real_provider_validation_enabled: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_real_provider_validation_allow_paid: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID")
+    # Owner: agent-platform
+    # Status: active
+    agent_real_provider_validation_budget_brl: float = Field(default=1.00, alias="AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL")
+    # Owner: agent-platform
+    # Status: active
+    agent_real_provider_validation_timeout_seconds: int = Field(default=60, alias="AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS")
+    # Owner: agent-platform
     # Status: beta
     agent_promotion_requires_evals: bool = Field(default=True, alias="AGENT_PROMOTION_REQUIRES_EVALS")
 
@@ -273,6 +285,11 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_plan_execution_enabled: bool = Field(default=False, alias="AGENT_PLAN_EXECUTION_ENABLED")
+    
+    agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
+    agent_task_mock_mode: bool = Field(default=False, alias="AGENT_TASK_MOCK_MODE")
+    agent_task_dry_run_mode: bool = Field(default=False, alias="AGENT_TASK_DRY_RUN_MODE")
+
     # Owner: agent-platform
     # Status: beta
     agent_auto_retry_enabled: bool = Field(default=True, alias="AGENT_AUTO_RETRY_ENABLED")

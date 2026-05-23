@@ -133,19 +133,27 @@ class TaskEngine:
 
         try:
             output = {}
-            if not self.settings.agent_planner_real_execution_enabled:
-                output = {"status": "simulated", "message": f"Simulated {task.task_type}"}
+            execution_mode = "real"
+
+            if getattr(self.settings, "agent_task_mock_mode", False):
+                execution_mode = "mock"
+                output = {"status": "mock", "message": f"Mocked {task.task_type}", "mock": True}
+            elif getattr(self.settings, "agent_task_dry_run_mode", False):
+                execution_mode = "dry_run"
+                output = {"status": "simulated", "message": f"Simulated {task.task_type}", "dry_run": True}
+            elif getattr(self.settings, "agent_task_simulation_mode", False) or not self.settings.agent_planner_real_execution_enabled:
+                raise NotImplementedError("controlled_not_implemented")
             else:
                 if task.task_type == "model_reasoning":
                     from app.services.agents.agent_llm_provider import get_agent_llm_provider
                     provider = get_agent_llm_provider(self.db)
-                    decision = await provider.generate(
+                    decision_llm = await provider.generate(
                         agent_def,
                         run,
                         allowed_tools=agent_def.allowed_tools or [],
                         input_override=task.input_data.get("prompt"),
                     )
-                    output = decision.to_dict() if hasattr(decision, "to_dict") else decision
+                    output = decision_llm.to_dict() if hasattr(decision_llm, "to_dict") else decision_llm
                 
                 elif task.task_type == "tool_call":
                     from app.models.agents import AgentTool
@@ -231,6 +239,23 @@ class TaskEngine:
                     plan.status = "waiting_approval"
                     await self.db.commit()
                     return
+
+            import hashlib
+            import json
+            
+            if not isinstance(output, dict):
+                output = {"result": output}
+
+            output["execution_mode"] = execution_mode
+            output["executor_name"] = "task_engine"
+            
+            output_str = json.dumps(output, sort_keys=True, default=str)
+            output_hash = hashlib.sha256(output_str.encode("utf-8")).hexdigest()
+            output["output_hash"] = output_hash
+            output["receipt_id"] = str(uuid.uuid4())
+            
+            # policy_decision_id
+            output["policy_decision_id"] = str(decision.id) if hasattr(decision, "id") else None
 
             task.output_data = output
             task.status = "completed"

@@ -263,13 +263,26 @@ class AgentExecutor:
                     return await self.tool_runner(tool_name, kwargs)
                 tool_callable = runner_wrapper
 
-            output = await execute_tool(
-                self.db, tool, tool_input, self.run_id, 
-                agent_id=run.agent_id,
-                tenant_id=run.tenant_id, 
-                is_dry_run=not self.settings.agent_execution_enabled,
-                tool_callable=tool_callable
-            )
+            if getattr(self.settings, "agent_task_mock_mode", False):
+                output = {"status": "mock", "message": f"Mocked tool {tool_name}", "mock": True}
+            elif getattr(self.settings, "agent_task_dry_run_mode", False):
+                output = await execute_tool(
+                    self.db, tool, tool_input, self.run_id, 
+                    agent_id=run.agent_id,
+                    tenant_id=run.tenant_id, 
+                    is_dry_run=True,
+                    tool_callable=tool_callable
+                )
+            elif not self.settings.agent_execution_enabled and not getattr(self.settings, "agent_task_simulation_mode", False):
+                raise NotImplementedError("controlled_not_implemented")
+            else:
+                output = await execute_tool(
+                    self.db, tool, tool_input, self.run_id, 
+                    agent_id=run.agent_id,
+                    tenant_id=run.tenant_id, 
+                    is_dry_run=False,
+                    tool_callable=tool_callable
+                )
             error = None
         except Exception as e:
             output, error = {"error": str(e)}, str(e)
