@@ -19,7 +19,8 @@ const els = {
   clientSelect: document.getElementById("client_id"),
   keysTableBody: document.getElementById("keysTableBody"),
   newKeyPanel: document.getElementById("newKeyPanel"),
-  newKeyValue: document.getElementById("newKeyValue")
+  newKeyValue: document.getElementById("newKeyValue"),
+  copyKeyBtn: document.getElementById("copyKeyBtn")
 };
 
 function escapeHtml(value) {
@@ -140,9 +141,10 @@ async function connect() {
 async function submitForm(event) {
   event.preventDefault();
   const formData = new FormData(els.keyForm);
+  const rawName = formData.get("name") || "";
   const payload = {
     client_id: formData.get("client_id"),
-    name: formData.get("name") || null
+    name: rawName || "API Key via Admin"
   };
 
   try {
@@ -152,14 +154,18 @@ async function submitForm(event) {
       body: JSON.stringify(payload)
     });
 
-    els.newKeyValue.textContent = result.plaintext_key;
+    els.newKeyValue.textContent = result.api_key;
     els.newKeyPanel.classList.remove("hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
+
     await loadData();
     els.keyForm.reset();
   } catch (error) {
-    SharedNotifications.error(error.message || "Falha ao gerar chave.");
+    const detail = error.payload && error.payload.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
+      : detail || error.message || "Falha ao gerar chave.";
+    SharedNotifications.error(message);
   }
 }
 
@@ -172,7 +178,7 @@ async function performAction(action, keyId) {
     } else if (action === "rotate") {
       if (!confirm("Rotacionar esta chave? A chave antiga será revogada imediatamente.")) return;
       const result = await adminFetch(`/admin/api-keys/${keyId}/rotate`, { method: "POST" });
-      els.newKeyValue.textContent = result.api_key.plaintext_key;
+      els.newKeyValue.textContent = result.api_key.api_key;
       els.newKeyPanel.classList.remove("hidden");
       SharedNotifications.success("Chave rotacionada.");
     }
@@ -182,9 +188,78 @@ async function performAction(action, keyId) {
   }
 }
 
+async function copyWithExecCommand(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.top = "0";
+  ta.style.left = "0";
+  ta.style.opacity = "0";
+  ta.style.pointerEvents = "none";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, ta.value.length);
+  try {
+    return document.execCommand("copy");
+  } finally {
+    document.body.removeChild(ta);
+  }
+}
+
+function selectNewKeyText() {
+  if (!els.newKeyValue) return;
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(els.newKeyValue);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+async function copyWithNavigatorClipboard(text, timeoutMs = 1200) {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error("Clipboard API unavailable");
+  }
+  await Promise.race([
+    navigator.clipboard.writeText(text),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Clipboard API timeout")), timeoutMs))
+  ]);
+}
+
+async function copyApiKey() {
+  const text = els.newKeyValue ? els.newKeyValue.textContent.trim() : "";
+  if (!text) {
+    SharedNotifications.error("Nenhuma chave para copiar.");
+    return;
+  }
+  const btn = els.copyKeyBtn;
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = "Copiando...";
+  btn.disabled = true;
+  try {
+    let copied = await copyWithExecCommand(text);
+    if (!copied) {
+      await copyWithNavigatorClipboard(text);
+      copied = true;
+    }
+    if (!copied) throw new Error("Clipboard copy failed");
+    SharedNotifications.success("Copiado!");
+    btn.textContent = "Copiado!";
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+  } catch {
+    selectNewKeyText();
+    SharedNotifications.error("Copie manualmente: selecione o texto e pressione Ctrl+C");
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
 els.connectButton.addEventListener("click", connect);
 els.reloadButton.addEventListener("click", () => connect());
 els.keyForm.addEventListener("submit", submitForm);
+els.copyKeyBtn.addEventListener("click", copyApiKey);
 els.keysTableBody.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-action]");
   if (btn) performAction(btn.dataset.action, btn.dataset.keyId);

@@ -262,7 +262,7 @@
               <div class="new-key-display">
                 <div class="warning-text">⚠️ ATENÇÃO: Esta chave só será exibida ESTA VEZ. Salve-a agora!</div>
                 <div id="newKeyValue" class="key-value">sk-local-preview...</div>
-                <button class="button secondary" onclick="navigator.clipboard.writeText(document.getElementById('newKeyValue').textContent); SharedNotifications.success('Copiado!')">Copiar chave</button>
+                <button class="button secondary" id="copyKeyBtn" type="button">Copiar chave</button>
               </div>
               <button class="button" onclick="document.getElementById('newKeyPanel').classList.add('hidden')">Entendido</button>
             </div>
@@ -334,6 +334,6 @@
     <script src="/static/shared/auth.js"></script>
     <script src="/static/shared/navigation.js"></script>
     <script src="/static/shared/notifications.js"></script>
-    <script src="/static/admin/api-keys.js"></script>
+    <script src="/static/admin/api-keys.js?v=20260523-1703"></script>
   </body>
 </html>
