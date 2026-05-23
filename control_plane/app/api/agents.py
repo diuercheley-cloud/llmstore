@@ -9,13 +9,10 @@ from app.db.session import get_db_session
 from app.services.agents import agent_state, agent_runtime, agent_api_facade
 from app.services.auth import require_admin
 
-async def add_deprecation_header(response: Response):
-    response.headers["Deprecation"] = "true"
-
 router = APIRouter(
     prefix="/agents",
     tags=["client", "agent-runtime"],
-    dependencies=[Depends(require_admin), Depends(add_deprecation_header)]
+    dependencies=[Depends(require_admin)]
 )
 
 def verify_runtime_active():
@@ -174,7 +171,11 @@ async def pause_run(
     db: AsyncSession = Depends(get_db_session)
 ):
     try:
-        run = await agent_runtime.pause_run(db, run_id)
+        run = await agent_api_facade.validate_and_pause_run(
+            db=db,
+            run_id=run_id,
+            is_admin=True,
+        )
         return to_run_response(run)
     except ValueError as e:
         raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
@@ -185,7 +186,11 @@ async def resume_run(
     db: AsyncSession = Depends(get_db_session)
 ):
     try:
-        run = await agent_runtime.resume_run(db, run_id)
+        run = await agent_api_facade.validate_and_resume_run(
+            db=db,
+            run_id=run_id,
+            is_admin=True,
+        )
         return to_run_response(run)
     except ValueError as e:
         raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
@@ -208,12 +213,18 @@ async def replay_run(
     db: AsyncSession = Depends(get_db_session)
 ):
     try:
-        result = await agent_runtime.replay_run(db, run_id)
+        result = await agent_api_facade.validate_and_replay_run(
+            db=db,
+            run_id=run_id,
+            is_admin=True,
+        )
         # Convert run_id to string and return dictionary
         result["run_id"] = str(result["run_id"])
         result["agent_id"] = str(result["agent_id"])
         return result
     except ValueError as e:
         raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
-    except agent_runtime.ReplayDisabledError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        if "replay" in str(e).lower() and "disabled" in str(e).lower():
+             raise HTTPException(status_code=400, detail=str(e))
+        raise

@@ -8696,116 +8696,316 @@
   docs_url: /docs/agents/handoffs.md
 - endpoint: /agents/{agent_id}/runs
   method: POST
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/{agent_id}/runs
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}
   method: GET
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/cancel
   method: POST
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}/cancel
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/pause
   method: POST
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/resume
   method: POST
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/steps
   method: GET
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}/events
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /agents/runs/{run_id}/replay
   method: POST
-  owner: agent-platform
+  owner: internal-compat
   status: deprecated
-  replacement: /v1/agents/runs/{run_id}
+  replacement: /v1/agents
   since_version: 1.10.0
   deprecation_version: 2.0.0
   docs_url: /docs/agents/agent-runtime.md
 - endpoint: /v1/agents
   method: POST
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents
   method: GET
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents/{agent_id}
   method: GET
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents/{agent_id}/runs
   method: POST
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents/runs/{run_id}
   method: GET
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents/runs/{run_id}/cancel
   method: POST
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
 - endpoint: /v1/agents/runs/{run_id}/events
   method: GET
   owner: agent-platform
-  status: supported
+  status: beta
   replacement: null
   since_version: 1.10.0
   deprecation_version: null
-  docs_url: /docs/api/agents-api.md
+  docs_url: /docs/api/agentic-api.md
+- endpoint: /admin/agents/readiness
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agentic-readiness.md
+- endpoint: /admin/agents/readiness/run
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agentic-readiness.md
+- endpoint: /admin/agents/worker/dlq
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/worker-operations.md
+- endpoint: /admin/agents/worker/dlq/{dlq_id}/retry
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/queue-recovery.md
+- endpoint: /admin/agents/governance/{agent_id}/promotion-check
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/eval-gates.md
+- endpoint: /admin/agents/governance/{agent_id}/promote
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/promotion-gates.md
+- endpoint: /admin/agents/connectors
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/saas-connectors.md
+- endpoint: /admin/agents/connectors/{name}
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/saas-connectors.md
+- endpoint: /admin/agents/connectors/{name}/dry-run
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/saas-connectors.md
+- endpoint: /admin/agents/connectors/{name}/execute
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/saas-connectors.md
+- endpoint: /admin/agents/connectors/{name}/oauth/start
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/connector-oauth.md
+- endpoint: /admin/agents/workflows
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/stateful-workflows.md
+- endpoint: /admin/agents/workflows/{id}/run
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/stateful-workflows.md
+- endpoint: /admin/agents/workflows/{id}/run/{run_id}/signal
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/workflow-signals.md
+- endpoint: /admin/agents/workflows/{id}/run/{run_id}/webhook-wait
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/workflow-webhooks.md
+- endpoint: /admin/agents/workflows/{id}/run/{run_id}/polling-job
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/workflow-polling.md
+- endpoint: /admin/agents/teams
+  method: POST
+  owner: agent-platform
+  status: experimental
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/multi-agent-orchestration.md
+- endpoint: /admin/agents/teams
+  method: GET
+  owner: agent-platform
+  status: experimental
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/multi-agent-orchestration.md
+- endpoint: /admin/agents/teams/{id}/runs
+  method: POST
+  owner: agent-platform
+  status: experimental
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/multi-agent-orchestration.md
+- endpoint: /admin/agents/teams/runs/{run_id}/trace
+  method: GET
+  owner: agent-platform
+  status: experimental
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/multi-agent-runtime.md
+- endpoint: /admin/agents/studio/flows
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agent-studio.md
+- endpoint: /admin/agents/studio/flows
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agent-studio.md
+- endpoint: /admin/agents/studio/flows/{id}/validate
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agent-studio.md
+- endpoint: /admin/agents/studio/flows/{id}/compile
+  method: POST
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agent-studio.md
+- endpoint: /admin/agents/studio/debug/{run_id}
+  method: GET
+  owner: agent-platform
+  status: beta
+  replacement: null
+  since_version: 2.0.0
+  deprecation_version: null
+  docs_url: /docs/agents/agent-studio.md
 - endpoint: /sitemap.xml
   method: GET
   owner: platform-ops

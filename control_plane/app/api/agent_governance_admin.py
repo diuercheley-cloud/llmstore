@@ -7,7 +7,54 @@ from sqlalchemy import select
 from app.api.deps import require_admin, get_db_session
 from app.services.agents.agent_policy_engine import AgentPolicyEngine
 
+from app.services.agents.promotion_gate import AgentPromotionService
+from app.models.agents import AgentPromotionGate
+
 router = APIRouter(prefix="/admin/agents/governance", tags=["agent-governance"])
+
+@router.post("/{agent_id}/promotion-check")
+async def promotion_check(
+    agent_id: uuid.UUID,
+    target_status: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = AgentPromotionService(db)
+    return await service.run_promotion_check(agent_id, target_status)
+
+@router.post("/{agent_id}/promote")
+async def promote_agent(
+    agent_id: uuid.UUID,
+    target_status: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    service = AgentPromotionService(db)
+    try:
+        return await service.promote_agent(agent_id, target_status, approved_by=str(admin.get("id", "admin")))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/{agent_id}/promotion-history")
+async def get_promotion_history(
+    agent_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> List[Dict[str, Any]]:
+    stmt = select(AgentPromotionGate).where(AgentPromotionGate.agent_id == agent_id).order_by(AgentPromotionGate.created_at.desc())
+    res = await db.execute(stmt)
+    gates = res.scalars().all()
+    return [
+        {
+            "id": str(g.id),
+            "target_status": g.target_status,
+            "status": g.status,
+            "eval_passed": g.eval_passed,
+            "security_passed": g.security_passed,
+            "created_at": g.created_at.isoformat()
+        }
+        for g in gates
+    ]
 
 @router.get("/policies")
 async def list_global_policies(

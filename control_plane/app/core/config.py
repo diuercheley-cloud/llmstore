@@ -102,6 +102,18 @@ class Settings(BaseSettings):
     agent_tool_adapters_enabled: bool = Field(default=False, alias="AGENT_TOOL_ADAPTERS_ENABLED")
     # Owner: agent-platform
     # Status: beta
+    agent_saas_connectors_enabled: bool = Field(default=False, alias="AGENT_SAAS_CONNECTORS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_write_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_external_network_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_oauth_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_OAUTH_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_http_tool_enabled: bool = Field(default=False, alias="AGENT_HTTP_TOOL_ENABLED")
     # Owner: agent-platform
     # Status: beta
@@ -157,6 +169,72 @@ class Settings(BaseSettings):
     # Status: beta
     agent_promotion_requires_evals: bool = Field(default=True, alias="AGENT_PROMOTION_REQUIRES_EVALS")
 
+    # SaaS Connectors Auth
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_token_storage_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_credential_rotation_enabled: bool = Field(default=True, alias="AGENT_CONNECTOR_CREDENTIAL_ROTATION_ENABLED")
+
+    # Agent Studio
+    # Owner: agent-platform
+    # Status: beta
+    agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_visual_builder_enabled: bool = Field(default=False, alias="AGENT_VISUAL_BUILDER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_debugger_enabled: bool = Field(default=False, alias="AGENT_DEBUGGER_ENABLED")
+
+    # Multi-Agent Orchestration
+    # Owner: agent-platform
+    # Status: beta
+    agent_hierarchical_teams_enabled: bool = Field(default=False, alias="AGENT_HIERARCHICAL_TEAMS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_debate_teams_enabled: bool = Field(default=False, alias="AGENT_DEBATE_TEAMS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_shared_workspace_enabled: bool = Field(default=False, alias="AGENT_SHARED_WORKSPACE_ENABLED")
+
+    # Reasoning Loops
+    # Owner: agent-platform
+    # Status: beta
+    agent_reasoning_loop_enabled: bool = Field(default=False, alias="AGENT_REASONING_LOOP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_react_loop_enabled: bool = Field(default=False, alias="AGENT_REACT_LOOP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_plan_and_solve_enabled: bool = Field(default=False, alias="AGENT_PLAN_AND_SOLVE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_structured_output_retry_enabled: bool = Field(default=True, alias="AGENT_STRUCTURED_OUTPUT_RETRY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_context_compression_enabled: bool = Field(default=False, alias="AGENT_CONTEXT_COMPRESSION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_semantic_model_fallback_enabled: bool = Field(default=False, alias="AGENT_SEMANTIC_MODEL_FALLBACK_ENABLED")
+
+    # Stateful Workflows
+    # Owner: agent-platform
+    # Status: beta
+    agent_stateful_workflows_enabled: bool = Field(default=False, alias="AGENT_STATEFUL_WORKFLOWS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_workflow_timers_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_TIMERS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_workflow_webhooks_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_WEBHOOKS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_workflow_polling_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_POLLING_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_workflow_distributed_locks_enabled: bool = Field(default=True, alias="AGENT_WORKFLOW_DISTRIBUTED_LOCKS_ENABLED")
 
     # Owner: agent-platform
     # Status: beta

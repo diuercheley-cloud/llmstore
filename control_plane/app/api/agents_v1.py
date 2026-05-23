@@ -23,13 +23,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/agents", tags=["client", "agents-api"])
 
-
-async def _execute_run_in_fresh_session(run_id: uuid.UUID) -> None:
-    async for session in get_db_session():
-        executor = AgentExecutor(session, run_id)
-        await executor.execute_step()
-        break
-
 @router.post("")
 async def create_agent(
     data: dict = Body(...),

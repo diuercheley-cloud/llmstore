@@ -1,56 +1,35 @@
 # Agent Promotion Gates
 
-This document outlines the promotion gates process used to activate or promote an agent to `active` (production) status.
+O `llm-inference-stack` utiliza um processo rigoroso de **Promotion Gates** para garantir que agentes, adapters e prompts só cheguem ao ambiente de produção após validação técnica, de segurança e de conformidade.
 
-## Overview
+## Critérios do Gate de Promoção
 
-Promotion gates act as hard automated checks within the agent lifecycle. When an agent activation is requested via `agent_lifecycle.activate_agent`, the system verifies the evaluation history and gate results to ensure the candidate meets strict quality, safety, and regression criteria.
+Para que um agente seja promovido (ex: de `draft` para `active`), ele deve obrigatoriamente passar pelos seguintes checks:
 
-## Configuration & Feature Flags
+1.  **Eval Baseline Passed**: O agente deve possuir um baseline de avaliação (`AgentEvalBaseline`) com métricas que atendam aos requisitos mínimos (ex: `score >= 0.8`).
+2.  **Security Check Passed**: Validação contra injeção de prompts, vazamento de segredos e acesso a ferramentas não autorizadas.
+3.  **Compatibility Check**: Verificação de que o agente é compatível com a versão atual do Control Plane e do Data Plane.
+4.  **Prompt Freshness**: O prompt atual deve corresponder exatamente ao hash registrado no último baseline aprovado (`AgentPromptBaseline`). Qualquer alteração no prompt exige um novo ciclo de evals.
+5.  **No Critical Incidents**: Não podem existir incidentes de severidade `critical` abertos para o agente.
+6.  **Owner Approval**: A promoção deve ser solicitada ou aprovada pelo proprietário (`owner`) designado.
 
--   `AGENT_PROMOTION_REQUIRES_EVALS` (Default: `true`): Enforces that promotion to active status requires evaluation checks.
--   `AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE` (Default: `true`): Enforces that a baseline evaluation must exist for the agent.
--   `AGENT_EVAL_REGRESSION_GATE_ENABLED` (Default: `true`): Compares the candidate run against the baseline and fails if quality regresses.
+## Ciclo de Vida de Promoção
 
-## Promotion Blocker Conditions
+### 1. Verificação (`promotion-check`)
+O administrador solicita um check preventivo. O sistema avalia todos os critérios e retorna um relatório detalhado de sucessos e bloqueios.
 
-The promotion gate will block activation if any of the following failure conditions occur:
+### 2. Baseline de Prompt
+Toda vez que um agente é promovido, o estado do seu prompt (instruções e versão do modelo) é "congelado" em um `AgentPromptBaseline`. Se o desenvolvedor alterar o prompt, o gate de promoção bloqueará a entrada em produção até que um novo baseline seja gerado via evals.
 
-1.  **Missing or Stale Baseline**:
-    -   If no baseline has been registered for the agent.
-    -   If the registered baseline is marked as stale (e.g. after agent definition or tool registration updates).
-2.  **Regression**:
-    -   If the candidate run's pass rate is lower than the baseline (or fails regression thresholds for latency and cost).
-3.  **Safety Assertions Failures**:
-    -   **Secret Leaks**: Verification fails if markers like `SECRET_`, `KEY_`, `SECRET_KEY`, or `API_KEY` are detected in outputs or assertion logs.
-    -   **Cross-Tenant Isolation Violations**: Verification fails if unauthorized cross-tenant data access is detected or if tenant isolation assertions fail.
-    -   **Policy Bypass**: If policy engines are bypassed or `no_policy_denial` assertions fail.
-    -   **Prohibited Tool Usage**: If the agent attempts to call a tool not listed in the case's `allowed_tools` list, or fails `tool_not_called` assertions.
-4.  **Cost and Steps Budget Exceeded**:
-    -   If individual cases exceed their `max_cost_brl` or `max_steps`.
-    -   If the entire suite run exceeds the global budget constraints.
+### 3. Promoção Real (`promote`)
+Se todos os checks do gate passarem, o status do agente é atualizado e um evento `agent_promoted` é registrado na timeline do sistema para auditoria.
 
-## Evaluation Gate Results & Metadata
+## APIs Administrativas
 
-When the gate runs:
--   It records results in the `AgentEvalGateResult` and `AgentPromotionGateResult` models.
--   It populates metrics such as `tool_misuse_rate`, `policy_denial_rate`, `avg_latency_ms`, `total_cost_brl`, `secret_leak_detected`, `cross_tenant_access_detected`, and `max_steps_exceeded`.
+- **POST** `/admin/agents/governance/{id}/promotion-check`: Executa a bateria de testes sem alterar o status.
+- **POST** `/admin/agents/governance/{id}/promote`: Executa os testes e, se aprovado, promove o agente.
+- **GET** `/admin/agents/governance/{id}/promotion-history`: Lista o histórico de tentativas e sucessos de promoção.
 
-## Markdown Report Generation
+## Rollback Plan
 
-Upon evaluating a promotion, the system automatically writes an evaluation report `agent_eval_report.md` in the current working directory. This report includes:
-
--   **Overall Status**: `PASS` or `FAIL`.
--   **Metadata**: Agent ID, Eval Run ID, LLM Provider, Model ID, and Override details.
--   **Gate Details**: Pass rate, average latency, total cost, tool misuse rates, and safety violation flags.
--   **Regression Diff**: Comparison with the baseline run (pass rate diff, latency diff, and cost diff).
--   **Case-by-Case Results**: Tabular overview showing the name, status, latency, cost, token usage, and assertion messages for each test case.
-
-## Audit Override Mechanism
-
-In emergencies or when regression is expected and accepted, authorized administrators can bypass promotion gate blocks by supplying:
--   `audit_override: true`
--   `override_reason`: A description of why the block is being bypassed.
--   `override_by`: The username of the performing administrator.
-
-This bypass will mark `passed` as `true` on the `AgentPromotionGateResult` and log the override details for compliance auditing.
+Toda promoção deve ser acompanhada de um plano de rollback automático ou manual, permitindo retornar ao status anterior em caso de degradação de performance detectada pós-promoção.

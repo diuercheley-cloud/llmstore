@@ -197,8 +197,25 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_agent_promotion_gate_results_agent_id'), 'agent_promotion_gate_results', ['agent_id'], unique=False)
 
+    # 11. agent_prompt_baselines
+    op.create_table('agent_prompt_baselines',
+        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('agent_id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('prompt_hash', sa.String(length=128), nullable=False),
+        sa.Column('eval_run_id', postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column('status', sa.String(length=32), nullable=False),
+        sa.Column('metrics', sa.JSON(), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(['agent_id'], ['agent_registry_entries.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['eval_run_id'], ['agent_eval_runs.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_agent_prompt_baselines_agent_id'), 'agent_prompt_baselines', ['agent_id'], unique=False)
+
 
 def downgrade() -> None:
+    op.drop_index(op.f('ix_agent_prompt_baselines_agent_id'), table_name='agent_prompt_baselines')
+    op.drop_table('agent_prompt_baselines')
     op.drop_table('agent_promotion_gate_results')
     op.drop_table('agent_eval_regression_results')
     op.drop_table('agent_eval_gate_results')

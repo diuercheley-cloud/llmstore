@@ -214,6 +214,11 @@ services:
         condition: service_healthy
       control-plane:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep 'app.workers.agent_worker'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - ./control_plane/app:/app/app
       - ./data:/data

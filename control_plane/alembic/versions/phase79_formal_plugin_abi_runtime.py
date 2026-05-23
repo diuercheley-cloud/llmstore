@@ -1,6 +1,6 @@
 """Add Phase 79 formal plugin ABI and extension runtime
 
-Revision ID: phase79_formal_plugin_abi_runtime
+Revision ID: phase79_plugin_abi
 Revises: phase78_compatibility_contracts
 Create Date: 2026-05-16 14:00:00.000000
 """
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "phase79_formal_plugin_abi_runtime"
+revision = "phase79_plugin_abi"
 down_revision = "phase78_compatibility_contracts"
 branch_labels = None
 depends_on = None

@@ -105,21 +105,26 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
     if category not in VALID_CATEGORIES:
         raise ValueError(f"Invalid category '{category}'. Must be one of {VALID_CATEGORIES}")
 
-    # Validate risk level
-    risk_level = data.get("risk_level", "low")
+    # 1.1 Risk level is mandatory
+    risk_level = data.get("risk_level")
     if risk_level not in VALID_RISK_LEVELS:
-        raise ValueError(f"Invalid risk_level '{risk_level}'. Must be one of {VALID_RISK_LEVELS}")
+        raise ValueError(f"Tool must define a valid risk_level. One of {VALID_RISK_LEVELS}")
 
     # Validate side effect level
     side_effect_level = data.get("side_effect_level", "none")
     if side_effect_level not in VALID_SIDE_EFFECTS:
         raise ValueError(f"Invalid side_effect_level '{side_effect_level}'. Must be one of {VALID_SIDE_EFFECTS}")
 
-    # 3. Tool external_api must declare data_boundary
-    if category == "external_api":
+    # 3. Tool external_api or side_effect external must declare data_boundary
+    if category == "external_api" or side_effect_level == "external":
         data_boundary = data.get("data_boundary")
         if not data_boundary or not str(data_boundary).strip():
-            raise ValueError("Tool category 'external_api' must declare a non-empty 'data_boundary'.")
+            raise ValueError("External tools must declare a non-empty 'data_boundary'.")
+
+    # 3.1 Write/destructive exige approval policy
+    if side_effect_level in ("write", "destructive"):
+        if not data.get("approval_policy"):
+             raise ValueError(f"Tools with side_effect '{side_effect_level}' must define an 'approval_policy'.")
 
     # 7. Timeout is mandatory
     timeout = data.get("timeout_seconds")
@@ -129,6 +134,12 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
 
 async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
     """Registers a new tool in the catalog, enforces defaults, and creates version snapshot."""
+    
+    # Defaults for new fields if missing
+    if "scope" not in data: data["scope"] = "tenant"
+    if "max_cost_brl" not in data: data["max_cost_brl"] = 0.5  # Conservative default
+    if "max_calls_per_run" not in data: data["max_calls_per_run"] = 5
+
     # Enforce default rules
     validate_tool_data(data)
 
@@ -139,9 +150,10 @@ async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
     if data.get("requires_approval") is None:
         data["requires_approval"] = side_effect in ("write", "destructive")
 
-    # 4. Tool shell_command é disabled por padrão
+    # 4. Shell/HTTP/DB tools are disabled by default
     if data.get("enabled") is None:
-        data["enabled"] = category != "shell_command"
+        disabled_by_default_categories = {"shell_command", "external_api", "database_write"}
+        data["enabled"] = category not in disabled_by_default_categories
 
     # Check uniqueness of name
     existing = await get_tool_by_name(db, data["name"])
@@ -162,7 +174,11 @@ async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
         risk_level=tool.risk_level,
         side_effect_level=tool.side_effect_level,
         timeout_seconds=tool.timeout_seconds,
-        retry_policy=tool.retry_policy
+        retry_policy=tool.retry_policy,
+        scope=tool.scope,
+        max_cost_brl=tool.max_cost_brl,
+        max_calls_per_run=tool.max_calls_per_run,
+        approval_policy=tool.approval_policy
     )
     db.add(version_snapshot)
     await db.commit()

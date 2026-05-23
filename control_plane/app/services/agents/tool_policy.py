@@ -24,44 +24,30 @@ async def evaluate_tool_policy(
     db: AsyncSession,
     tool: AgentTool,
     agent: Optional[AgentRegistryEntry] = None,
+    agent_id: Optional[uuid.UUID] = None,
     tenant_id: Optional[str] = None,
-    is_dry_run: bool = False
+    is_dry_run: bool = False,
+    run_id: Optional[uuid.UUID] = None
 ) -> PolicyDecision:
-    """Evaluates whether an agent or tenant is allowed to execute a registered tool."""
+    """Evaluates tool execution using the unified Policy Engine v2."""
+    from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
     
-    # 1. Enforce Enablement
-    if not tool.enabled:
-        return PolicyDecision(allowed=False, reason="tool_disabled")
-
-    # 5. Tool without dry_run cannot be used by an experimental agent
-    if agent and agent.supported_surface_status == "experimental":
-        if not tool.dry_run_supported:
-            return PolicyDecision(allowed=False, reason="experimental_agent_restricted_no_dry_run")
-
-    # Enforce RBAC Permissions
-    # Fetch permissions for this tool
-    stmt = select(AgentToolPermission).where(AgentToolPermission.agent_tool_id == tool.id)
-    result = await db.execute(stmt)
-    permissions = result.scalars().all()
-
-    if permissions:
-        # Caller must match at least one permission rule
-        matched = False
-        for perm in permissions:
-            # Match tenant if specified in permission
-            tenant_match = (perm.tenant_id is None or perm.tenant_id == tenant_id)
-            # Match agent if specified in permission
-            agent_match = (perm.agent_id is None or (agent and perm.agent_id == agent.agent_id))
-            
-            if tenant_match and agent_match:
-                matched = True
-                break
-        
-        if not matched:
-            return PolicyDecision(allowed=False, reason="permission_denied")
-
-    # Enforce Approval requirements
-    if tool.requires_approval and not is_dry_run:
-        return PolicyDecision(allowed=True, reason="approval_required", requires_approval=True)
-
-    return PolicyDecision(allowed=True, reason="policy_allow")
+    policy_engine = AgentPolicyEngine(db)
+    req_agent_id = agent_id or (agent.agent_id if agent else tool.owner_agent_id if hasattr(tool, "owner_agent_id") else uuid.UUID(int=0))
+    
+    req = PolicyRequest(
+        action_type="tool_call",
+        subject=tool.name,
+        tenant_id=tenant_id or "default",
+        agent_id=req_agent_id,
+        run_id=run_id,
+        context={"is_dry_run": is_dry_run}
+    )
+    
+    decision = await policy_engine.evaluate_action_v2(req)
+    
+    return PolicyDecision(
+        allowed=decision.result != "deny",
+        reason=decision.reason or "Policy evaluated",
+        requires_approval=decision.result == "require_approval"
+    )

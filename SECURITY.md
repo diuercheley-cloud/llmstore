@@ -16,10 +16,22 @@
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
 - Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
 - `DEPLOYMENT_MODE=appliance`, `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false`, and `MANAGED_CONTROL_PLANE_ENABLED=false` keep enterprise runtime surfaces disabled by default.
-- `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_PLANNER_REAL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_ASYNC_EXECUTION_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, and `AGENT_EVAL_REAL_PROVIDER_ENABLED=false` keep the agentic runtime safe-by-default.
+- `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_SAAS_CONNECTORS_ENABLED=false`, `AGENT_CONNECTOR_WRITE_ENABLED=false`, `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false`, `AGENT_STATEFUL_WORKFLOWS_ENABLED=false`, `AGENT_REASONING_LOOP_ENABLED=false`, `AGENT_REACT_LOOP_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, `AGENT_HIERARCHICAL_TEAMS_ENABLED=false`, `AGENT_DEBATE_TEAMS_ENABLED=false`, `AGENT_STUDIO_ENABLED=false`, `AGENT_VISUAL_BUILDER_ENABLED=false`, `AGENT_DEBUGGER_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` keep the agentic runtime safe-by-default.
 - `AGENT_PROMOTION_REQUIRES_EVALS=true` preserves eval gating even while eval execution remains opt-in.
 - `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` preserve mandatory approval for high-risk agent actions.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=managed_control_plane`.
+
+## Agentic release controls
+
+- Governed SaaS connectors require explicit enablement before any external network use or write action is possible.
+- Stateful workflows must wake from persisted timers, signals, webhooks, or polling instead of pinning a worker for the entire wait period.
+- Reasoning loops must repair malformed structured output and compress context before escalating to fallback behavior.
+- Multi-agent orchestration must remain bounded by topology flags and governance controls for hierarchical and debate teams.
+- Agent Studio visual authoring and debugger surfaces remain operator-only and disabled until explicitly enabled.
+- Runtime, tool, and memory contracts are versioned and validated before promotion.
+- Worker and queue execution are official but opt-in; no background worker starts unless `AGENT_WORKER_ENABLED=true`.
+- Promotion remains blocked on failed or missing eval evidence even if runtime APIs are enabled.
+- SLOs, metrics, readiness checks, and incident playbooks are required operator controls for the agentic surface.
 
 ## Secrets Handling
 
@@ -47,6 +59,7 @@
 - Correlation IDs are safe to log and are intended for troubleshooting.
 - If debug logging is enabled in production-like environments, review logs for prompt content and metadata retention before release.
 - Agent approvals, traces, replays, and memory workflows must not expose raw prompts by default; sanitized payloads and hashes are the baseline expectation.
+- Agent runs must remain audit-reconstructable end to end: plan, tool call, memory access, approval, and terminal status all require durable timeline evidence.
 - Managed control-plane heartbeats are limited to operational metadata. Prompt bodies, document content, and similar payload fields are rejected before persistence.
 - **Supportability Pack Redaction**: Diagnostic bundles generated via `/admin/support/bundle` are automatically processed through a redaction engine. Regex patterns for `sk-...`, `ADMIN_TOKEN=...`, `JWT_SECRET=...`, and `Bearer ...` are intended to prevent sensitive keys, tokens, or PII from being exported in diagnostic logs or metadata.
 
@@ -84,6 +97,7 @@ No cross-cluster operations exfiltrate user prompts or RAG documents by default.
 - `/v1/agents` is the canonical tenant runtime API and `/agents` is deprecated for admin-only legacy compatibility.
 - Destructive tools remain disabled unless explicitly enabled and separately approval-gated.
 - Agent marketplace installs are offline-first and disabled by default.
+- Multi-agent delegation remains disabled by default and is outside the default-supported posture for this release.
 
 ## Observability Privacy
 Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.
@@ -103,6 +117,7 @@ Fault injection is strictly opt-in and blocked in production environments by def
 - **Agent Sandbox**: All agent tools execute in a controlled sandbox with mandatory credential delegation.
 - **Isolated Memory**: Multi-tenant memory isolation ensures no cross-tenant data leakage.
 - **Audit Trails**: Every reasoning step, tool call, and policy decision is cryptographically signed and archived.
+- **Versioned Contracts**: Runtime, tool, and memory payloads are validated against versioned contracts before being treated as supported surface.
 - **Production Gates**: High-risk agents require explicit evaluation baselines and human review before production activation.
 
 ## Reporting a Vulnerability

@@ -52,15 +52,23 @@ class AgentSLOService:
         success_runs = res_success.scalar() or 0
         failed_runs = total_runs - success_runs
 
+        from app.services.agents.agent_budget import AgentBudgetService
+        budget_svc = AgentBudgetService()
+        agent_def = await self.db.get(AgentDefinition, agent_id)
+        cls_cfg = budget_svc.get_class_config(agent_def.agent_class if agent_def else None)
+        
+        target_success_rate = cls_cfg.get("run_success_rate_target", 0.95)
+        
         success_rate = success_runs / total_runs if total_runs > 0 else 1.0
         
-        # Simple SLO: success rate >= 95%
-        slo_breached = success_rate < 0.95
+        # Class-based SLO
+        slo_breached = success_rate < target_success_rate
 
         metrics_json = {
             "success_rate": success_rate,
-            "target": 0.95,
-            "failed_runs": failed_runs
+            "target": target_success_rate,
+            "failed_runs": failed_runs,
+            "agent_class": agent_def.agent_class if agent_def else "unknown"
         }
 
         window = AgentSLOWindow(
@@ -81,6 +89,19 @@ class AgentSLOService:
             metrics.LLM_AGENT_SLO_BREACHES_TOTAL.labels(
                 agent_id=str(agent_id), window_type=window_type
             ).inc()
+            
+            # Create incident
+            from app.services.agents.agent_incidents import AgentIncidentService
+            inc_svc = AgentIncidentService(self.db)
+            await inc_svc.detect_and_create_incident(
+                tenant_id=agent_def.tenant_id if agent_def else "unknown",
+                agent_id=agent_id,
+                run_id=None,
+                incident_type="slo_breach",
+                title=f"SLO Breach for agent class: {agent_def.agent_class if agent_def else 'unknown'}",
+                severity="high",
+                details=metrics_json
+            )
 
         await self.db.commit()
         await self.db.refresh(window)

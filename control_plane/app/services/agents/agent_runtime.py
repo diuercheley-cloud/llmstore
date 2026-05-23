@@ -239,6 +239,10 @@ async def replay_run(db: AsyncSession, run_id: uuid.UUID) -> Dict[str, Any]:
     # Replay runs through steps and verifies them, logging metadata without calling external components
     logger.info(f"Replaying run {run_id} read-only. Verification of {len(steps)} steps.")
 
+    executor = AgentExecutor(db, run_id, is_replay=True)
+    # The user might want to actually re-run the logic but with is_replay=True
+    # For now, we return the data as requested, but the executor is ready for more complex replays.
+
     return {
         "run_id": run_id,
         "agent_id": run.agent_id,

@@ -1,6 +1,6 @@
 """Add cross cluster forwarding fields
 
-Revision ID: 20260514_0039_cross_cluster_forwarding
+Revision ID: 20260514_0039
 Revises: 20260514_0038_global_traffic
 Create Date: 2026-05-14 16:00:00.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '20260514_0039_cross_cluster_forwarding'
+revision = '20260514_0039'
 down_revision = '20260514_0038'
 branch_labels = None
 depends_on = None

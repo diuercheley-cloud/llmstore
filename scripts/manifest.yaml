@@ -5621,8 +5621,123 @@
   status: beta
   description: Drain queued agent jobs for controlled maintenance.
   requires_network: true
+  writes_files: true
+  outputs:
+  - logs/*
+- path: scripts/agent-dlq-inspect.sh
+  owner: agent-platform
+  status: beta
+  description: Inspect dead-letter queue contents for agent worker recovery.
+  requires_network: true
+- path: scripts/agent-dlq-retry.sh
+  owner: agent-platform
+  status: beta
+  description: Retry a dead-lettered agent execution job through the admin worker API.
+  requires_network: true
+- path: scripts/agent-approval-expire.sh
+  owner: agent-platform
+  status: beta
+  description: Expire stale human-approval requests for governed agent actions.
+  requires_network: true
+- path: scripts/agent-disable-tool.sh
+  owner: agent-platform
+  status: beta
+  description: Disable a governed tool from the registry without changing code.
+  requires_network: true
+  writes_files: true
+  outputs:
+  - logs/*
+- path: scripts/agent-incident-diagnose.sh
+  owner: agent-platform
+  status: beta
+  description: Gather incident diagnostics for failed or stuck agent runs.
+  requires_network: true
+- path: scripts/agent-quarantine-memory.sh
+  owner: agent-platform
+  status: beta
+  description: Quarantine tenant-scoped memory during an agent security investigation.
+  requires_network: true
+  writes_files: true
+  outputs:
+  - logs/*
+- path: scripts/agent-queue-recovery-test.sh
+  owner: agent-platform
+  status: beta
+  description: Exercise queue lease recovery and DLQ remediation behavior.
+  requires_network: true
+- path: scripts/agent-queue-throttle.sh
+  owner: agent-platform
+  status: beta
+  description: Apply queue backpressure or throttling controls for agent workers.
+  requires_network: true
+- path: scripts/agent-run-kill.sh
+  owner: agent-platform
+  status: beta
+  description: Force-stop a stuck agent run through the governed runtime surface.
+  requires_network: true
 - path: scripts/agentic-readiness.sh
   owner: agent-platform
   status: beta
-  description: Check agentic runtime readiness.
+  description: Check v2.0.0 agentic readiness across connectors, workflows, reasoning, multi-agent, and Studio surfaces.
   requires_network: true
+- path: scripts/tenant-agentic-readiness.sh
+  owner: agent-platform
+  status: beta
+  description: Check tenant-specific agentic readiness and governance blockers.
+  requires_network: true
+- path: scripts/agentic-chaos-run.sh
+  owner: agent-platform
+  status: beta
+  description: Run controlled chaos scenarios against the agentic runtime, workflow wake-up, and multi-agent orchestration surfaces.
+  requires_network: true
+  writes_files: true
+  outputs:
+  - artifacts/agentic-chaos/*
+- path: scripts/agentic-recovery-test.sh
+  owner: agent-platform
+  status: beta
+  description: Exercise recovery behavior for agentic runtime failures and stuck runs.
+  requires_network: true
+  writes_files: true
+  outputs:
+  - artifacts/agentic-recovery/*
+- path: scripts/compliance-check.sh
+  owner: compliance-team
+  status: beta
+  description: Validate compliance readiness controls and local evidence posture.
+  requires_network: true
+  writes_files: true
+  outputs:
+  - artifacts/compliance/*
+- path: scripts/compliance-release-gate.sh
+  owner: compliance-team
+  status: beta
+  description: Run compliance-specific release gating checks and summarize blockers.
+  requires_network: false
+  writes_files: true
+  outputs:
+  - artifacts/compliance/*
+- path: scripts/generate-compliance-gap-analysis.sh
+  owner: compliance-team
+  status: beta
+  description: Generate a compliance gap analysis artifact for the current workspace state.
+  requires_network: false
+  writes_files: true
+  outputs:
+  - artifacts/compliance/*
+- path: scripts/soc2-access-review.sh
+  owner: compliance-team
+  status: beta
+  description: Run the SOC 2 access review evidence workflow.
+  requires_network: false
+  writes_files: true
+  outputs:
+  - artifacts/compliance/*
+- path: scripts/soc2-change-review.sh
+  owner: compliance-team
+  status: beta
+  description: Run the SOC 2 change review evidence workflow.
+  requires_network: false
+  writes_files: true
+  outputs:
+  - artifacts/compliance/*

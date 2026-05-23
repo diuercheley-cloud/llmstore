@@ -1,7 +1,7 @@
 # Models: AgentIncidentLink, AgentSLOWindow, AgentTraceLink
 """Agentic Observability End-to-End
 
-Revision ID: phase88_agentic_observability_end_to_end
+Revision ID: phase88_agentic_observability
 Revises: phase87_agent_eval_gates_refined
 Create Date: 2026-05-22 17:00:00.000000
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'phase88_agentic_observability_end_to_end'
+revision: str = 'phase88_agentic_observability'
 down_revision: Union[str, None] = 'phase87_agent_eval_gates_refined'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

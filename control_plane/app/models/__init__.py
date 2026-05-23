@@ -782,3 +782,40 @@ from app.models.agent_execution import (
     AgentExecutionRetry,
     AgentExecutionDeadLetter,
 )
+from app.models.agent_workflows import (
+    AgentWorkflow,
+    AgentWorkflowRun,
+    AgentWorkflowEvent,
+    AgentWorkflowTimer,
+    AgentWorkflowSignal,
+    AgentWorkflowWebhookWait,
+    AgentWorkflowLock
+)
+from app.models.multi_agent import (
+    AgentTeam,
+    AgentTeamMember,
+    AgentTeamRun,
+    AgentTeamMessage,
+    AgentTeamDelegation,
+    AgentSharedWorkspace,
+    AgentTeamTrace
+)
+from app.models.agent_studio import (
+    AgentFlowDefinition,
+    AgentFlowVersion,
+    AgentFlowNode,
+    AgentFlowEdge,
+    AgentDebugSession,
+    AgentDebugEvent
+)
+from app.models.connector_auth import (
+    ConnectorOAuthClient,
+    ConnectorOAuthToken,
+    ConnectorCredentialGrant,
+    ConnectorScopePolicy
+)
+from app.models.agent_workflows_external import (
+    AgentWorkflowWebhookSubscription,
+    AgentWorkflowPollingJob,
+    AgentWorkflowExternalEvent
+)

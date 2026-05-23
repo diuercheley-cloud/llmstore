@@ -188,7 +188,7 @@ capabilities:
     status: beta
     owner: agent-platform
     support_level: pilot
-    docs_url: docs/agents/agent-runtime.md
+    docs_url: docs/agents/runtime-canonical-api.md
     api_prefix: /v1/agents
     feature_flag: agent_runtime_enabled
     additional_flags:
@@ -207,7 +207,7 @@ capabilities:
       - agent_execution_plane
       - agent_cancellation
     since_version: v2.0.0-agentic-ai-platform
-    limitations: "Operational runtime is available behind opt-in flags. `/agents` remains as a deprecated admin legacy surface; `/v1/agents` is the canonical tenant API."
+    limitations: "Operational runtime is available behind opt-in flags. `/agents` remains as a deprecated admin legacy surface; `/v1/agents` is the canonical tenant API, and background execution still requires explicit worker enablement."
     test_coverage: 72%
 
   - id: agent-registry
@@ -225,6 +225,8 @@ capabilities:
       - agent_registry
       - agent_state
       - agent_lifecycle
+      - agent_catalog
+      - prompt_baseline_registry
     since_version: v1.10.0-agentic-runtime
     limitations: "Administrative registry and lifecycle workflows are beta and do not imply autonomous production activation."
     test_coverage: 70%
@@ -235,7 +237,7 @@ capabilities:
     status: beta
     owner: agent-platform
     support_level: pilot
-    docs_url: docs/agents/tool-registry.md
+    docs_url: docs/agents/tool-governance.md
     api_prefix: /admin/agent-tools
     feature_flag: agent_tool_registry_enabled
     additional_flags:
@@ -254,7 +256,7 @@ capabilities:
       - tool_audit
       - tool_quota
     since_version: v1.10.0-agentic-runtime
-    limitations: "Tool registration is gated off by default, real execution is separately disabled, and destructive tools remain blocked without approval."
+    limitations: "Tool registration is gated off by default, real execution is separately disabled, destructive tools remain blocked without approval, and adapter I/O is governed by versioned tool contracts."
     test_coverage: 74%
 
   - id: agent-memory
@@ -263,7 +265,7 @@ capabilities:
     status: beta
     owner: agent-platform
     support_level: pilot
-    docs_url: docs/agents/memory.md
+    docs_url: docs/agents/memory-context-injection.md
     api_prefix: /admin/agent-memory
     feature_flag: agent_memory_enabled
     additional_flags:
@@ -280,7 +282,7 @@ capabilities:
       - memory_consent
       - memory_retention
     since_version: v1.10.0-agentic-runtime
-    limitations: "Memory is disabled by default, cross-tenant sharing is not supported, and semantic reinjection stays off until explicitly enabled."
+    limitations: "Memory is disabled by default, cross-tenant sharing is not supported, semantic reinjection stays off until explicitly enabled, and memory payloads remain bound to versioned contracts."
     test_coverage: 68%
 
   - id: agent-planning
@@ -308,6 +310,9 @@ capabilities:
     docs_url: docs/agents/human-in-the-loop.md
     api_prefix: /admin/agent-approvals
     feature_flag: agent_human_approval_enabled
+    associated_services:
+      - human_approval
+      - agent_receipts
     since_version: v1.10.0-agentic-runtime
     limitations: "Approval remains the default posture for high-risk operations; raw prompts are not shown to reviewers."
     test_coverage: 78%
@@ -318,7 +323,7 @@ capabilities:
     status: beta
     owner: agent-platform
     support_level: pilot
-    docs_url: docs/agents/observability.md
+    docs_url: docs/agents/agentic-observability.md
     api_prefix: /admin/agents/observability
     feature_flag: agent_observability_enabled
     additional_flags:
@@ -331,8 +336,11 @@ capabilities:
       - agent_cost_meter
       - agent_slo
       - agent_readiness
+      - agent_incident_playbooks
+      - tenant_agentic_readiness
+      - agent_budget
     since_version: v1.10.0-agentic-runtime
-    limitations: "Metrics and traces are sanitized by default and external export remains disabled unless explicitly enabled."
+    limitations: "Metrics and traces are sanitized by default, external export remains disabled unless explicitly enabled, and end-to-end run auditability is mandatory for the supported surface."
     test_coverage: 76%
 
   - id: agent-evals
@@ -341,7 +349,7 @@ capabilities:
     status: beta
     owner: agent-platform
     support_level: pilot
-    docs_url: docs/agents/evals.md
+    docs_url: docs/agents/eval-gates.md
     api_prefix: /admin/agent-evals
     feature_flag: agent_evals_enabled
     additional_flags:
@@ -356,8 +364,311 @@ capabilities:
       - eval_regression
       - eval_dataset_registry
       - eval_datasets
+      - promotion_gate
     since_version: v1.10.0-agentic-runtime
-    limitations: "Evals are opt-in, real provider evals are separately gated, and promotion remains blocked when required eval evidence fails."
+    limitations: "Evals are opt-in, real provider evals are separately gated, and promotion remains blocked when required eval evidence fails or baselines are missing."
+    test_coverage: 66%
+
+  - id: agent-worker-operations
+    name: Agent worker operations
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/worker-operations.md
+    api_prefix: /admin/agents/worker
+    feature_flag: agent_worker_enabled
+    associated_services:
+      - agent_worker
+      - agent_worker_admin
+      - agent_receipts
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Worker control, DLQ inspection, and retry tooling are official operator surfaces, but background execution remains opt-in."
+    test_coverage: 69%
+
+  - id: agent-readiness
+    name: Agent readiness
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agentic-readiness.md
+    api_prefix: /admin/agents/readiness
+    feature_flag: agent_runtime_enabled
+    associated_services:
+      - agent_readiness
+      - tenant_agentic_readiness
+      - agent_budget
+      - agent_incident_playbooks
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Readiness is advisory while the runtime is disabled, and becomes a blocking operational control once agent execution is enabled."
+    test_coverage: 71%
+
+  - id: tenant-agentic-readiness
+    name: Tenant agentic readiness
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/tenant-readiness.md
+    api_prefix: /admin/tenants
+    feature_flag: agent_runtime_enabled
+    associated_services:
+      - tenant_agentic_readiness
+      - agent_budget
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Tenant readiness reports are operator-facing and do not override global safe defaults or tenant isolation policy."
+    test_coverage: 67%
+
+  - id: agent-multi-agent-governance
+    name: Agent multi-agent governance
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/multi-agent-runtime.md
+    feature_flag: agent_multi_agent_enabled
+    associated_services:
+      - multi_agent_governance
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Delegation and shared-memory governance are defined, but multi-agent execution remains disabled by default."
+    test_coverage: 60%
+
+  - id: agent-saas-connectors
+    name: Agent SaaS connectors
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/saas-connectors.md
+    api_prefix: /admin/agents/connectors
+    feature_flag: agent_saas_connectors_enabled
+    additional_flags:
+      - agent_connector_write_enabled
+      - agent_connector_external_network_enabled
+      - agent_connector_oauth_enabled
+    associated_services:
+      - connector_registry
+      - connector_credentials
+      - connector_audit
+      - connector_oauth
+      - connector_token_rotation
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Connectors are governed and mock-friendly by default; external network access and writes remain disabled until explicitly enabled."
+    test_coverage: 73%
+
+  - id: agent-connector-oauth
+    name: Agent connector OAuth
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/connector-oauth.md
+    api_prefix: /admin/agents/connectors
+    feature_flag: agent_connector_oauth_enabled
+    associated_services:
+      - oauth
+      - credentials
+      - connector_token_rotation
+      - connector_secret_store
+      - connector_scopes
+      - rate_limits
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "OAuth bootstrap and token persistence remain disabled until explicitly enabled and governed."
+    test_coverage: 69%
+
+  - id: agent-stateful-workflows
+    name: Agent stateful workflows
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/stateful-workflows.md
+    api_prefix: /admin/agents/workflows
+    feature_flag: agent_stateful_workflows_enabled
+    additional_flags:
+      - agent_workflow_timers_enabled
+      - agent_workflow_webhooks_enabled
+      - agent_workflow_polling_enabled
+      - agent_workflow_distributed_locks_enabled
+    associated_services:
+      - workflow_engine
+      - workflow_scheduler
+      - workflow_signals
+      - workflow_webhooks
+      - workflow_polling
+      - workflow_recovery
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Workflows persist state and support wake-up via timers, webhooks, and polling, but the entire execution plane remains opt-in by default."
+    test_coverage: 71%
+
+  - id: agent-workflow-webhooks
+    name: Agent workflow webhooks
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/workflow-webhooks.md
+    api_prefix: /admin/agents/workflows
+    feature_flag: agent_workflow_webhooks_enabled
+    associated_services:
+      - workflow_webhooks
+      - workflow_signals
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Webhook wake-up remains disabled until operators explicitly enable inbound workflow callbacks."
+    test_coverage: 70%
+
+  - id: agent-workflow-polling
+    name: Agent workflow polling
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/workflow-polling.md
+    api_prefix: /admin/agents/workflows
+    feature_flag: agent_workflow_polling_enabled
+    associated_services:
+      - workflow_polling
+      - workflow_scheduler
+      - workflow_timers
+      - workflow_locks
+      - workflow_recovery
+      - workflow_state_machine
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Polling wake-up remains disabled until operators explicitly allow external check loops."
+    test_coverage: 70%
+
+  - id: agent-reasoning-loop
+    name: Agent reasoning loop
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/reasoning-loop.md
+    feature_flag: agent_reasoning_loop_enabled
+    additional_flags:
+      - agent_react_loop_enabled
+      - agent_structured_output_retry_enabled
+      - agent_context_compression_enabled
+      - agent_semantic_model_fallback_enabled
+    associated_services:
+      - reasoning.structured_output
+      - reasoning.output_repair
+      - reasoning.context_compressor
+      - reasoning.semantic_model_fallback
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Loop repair, context compression, and fallback logic are available when enabled, but iterative reasoning remains disabled by default."
+    test_coverage: 70%
+
+  - id: agent-context-compression
+    name: Agent context compression
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/context-compression.md
+    feature_flag: agent_context_compression_enabled
+    associated_services:
+      - context_compressor
+      - prompt_runtime
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Compression remains disabled until operators explicitly enable context budget shaping."
+    test_coverage: 68%
+
+  - id: agent-structured-output-repair
+    name: Agent structured output repair
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/reasoning-loop.md
+    feature_flag: agent_structured_output_retry_enabled
+    associated_services:
+      - structured_output
+      - output_repair
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Repair and retry are bounded by policy and remain part of the disabled-by-default reasoning surface."
+    test_coverage: 69%
+
+  - id: agent-semantic-fallback
+    name: Agent semantic fallback
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/model-fallback.md
+    feature_flag: agent_semantic_model_fallback_enabled
+    associated_services:
+      - semantic_model_fallback
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Fallback remains disabled until operators explicitly allow semantic recovery across models."
+    test_coverage: 67%
+
+  - id: agent-react-loop
+    name: Agent ReAct loop
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/reasoning-loop.md
+    feature_flag: agent_react_loop_enabled
+    associated_services:
+      - reasoning_loop
+      - react_loop
+      - plan_and_solve_loop
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Iterative reasoning/acting remains disabled until operators explicitly enable loop execution."
+    test_coverage: 68%
+
+  - id: agent-studio
+    name: Agent Studio
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agent-studio.md
+    api_prefix: /admin/agents/studio
+    feature_flag: agent_studio_enabled
+    additional_flags:
+      - agent_visual_builder_enabled
+      - agent_debugger_enabled
+    associated_services:
+      - studio.flow_validator
+      - studio.flow_compiler
+      - agent_debug_sessions
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Visual builder and debugger are operator-facing and remain disabled until Studio is explicitly enabled."
+    test_coverage: 68%
+
+  - id: agent-visual-builder
+    name: Agent visual builder
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agent-studio.md
+    api_prefix: /admin/agents/studio
+    feature_flag: agent_visual_builder_enabled
+    associated_services:
+      - flow_compiler
+      - flow_validator
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Graph authoring remains disabled until operators explicitly enable the Studio builder."
+    test_coverage: 67%
+
+  - id: agent-debugger
+    name: Agent debugger
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: pilot
+    docs_url: docs/agents/agent-studio.md
+    api_prefix: /admin/agents/studio/debug
+    feature_flag: agent_debugger_enabled
+    associated_services:
+      - agent_debug_sessions
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Interactive debugging remains disabled until operators explicitly enable debugger access."
     test_coverage: 66%
 
   - id: agent-marketplace
@@ -406,6 +717,62 @@ capabilities:
     docs_url: docs/agents/admin-ui.md
     since_version: v1.10.0-agentic-runtime
     limitations: "The administrative UI is operator-facing and must not be used to imply unrestricted agent autonomy."
+    test_coverage: 63%
+
+  - id: agent-multi-agent-topologies
+    name: Agent multi-agent topologies
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/multi-agent-orchestration.md
+    api_prefix: /admin/agents/teams
+    feature_flag: agent_multi_agent_enabled
+    additional_flags:
+      - agent_hierarchical_teams_enabled
+      - agent_debate_teams_enabled
+      - agent_shared_workspace_enabled
+    associated_services:
+      - team_registry
+      - hierarchical_runtime
+      - debate_runtime
+      - team_trace
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Hierarchical and debate topologies are available behind explicit flags and remain disabled by default."
+    test_coverage: 64%
+
+  - id: agent-hierarchical-teams
+    name: Agent hierarchical teams
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/hierarchical-agents.md
+    api_prefix: /admin/agents/teams
+    feature_flag: agent_hierarchical_teams_enabled
+    associated_services:
+      - team_runtime
+      - team_observability
+      - delegation_policy
+      - shared_workspace
+      - loop_guard
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Hierarchical delegation remains disabled until operators explicitly enable the topology."
+    test_coverage: 63%
+
+  - id: agent-debate-teams
+    name: Agent debate teams
+    area: Agentic AI Platform
+    status: experimental
+    owner: agent-platform
+    support_level: development
+    docs_url: docs/agents/debate-agents.md
+    api_prefix: /admin/agents/teams
+    feature_flag: agent_debate_teams_enabled
+    associated_services:
+      - debate_runtime
+    since_version: v2.0.0-agentic-ai-platform
+    limitations: "Debate topology remains disabled until operators explicitly enable adjudicated multi-agent collaboration."
     test_coverage: 63%
 
   - id: support-bundle

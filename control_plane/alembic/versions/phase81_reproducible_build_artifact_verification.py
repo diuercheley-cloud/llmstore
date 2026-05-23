@@ -1,7 +1,7 @@
 """Add Phase 81 reproducible build artifact verification framework
 
-Revision ID: phase81_reproducible_build_artifact_verification
-Revises: phase80_plugin_supply_chain_provenance_sbom
+Revision ID: phase81_reproducible_builds
+Revises: phase80_plugin_sbom
 Create Date: 2026-05-16 16:00:00.000000
 """
 
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "phase81_reproducible_build_artifact_verification"
-down_revision = "phase80_plugin_supply_chain_provenance_sbom"
+revision = "phase81_reproducible_builds"
+down_revision = "phase80_plugin_sbom"
 branch_labels = None
 depends_on = None
 

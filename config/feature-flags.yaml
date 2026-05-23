@@ -188,7 +188,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_EVALS_ENABLED
@@ -290,7 +290,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: experimental
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
     - AGENT_MARKETPLACE_ENABLED
@@ -335,6 +335,139 @@
     - AGENT_MEMORY_ENABLED
   conflicts: []
   safe_default_reason: Memory writes are blocked until retention and isolation policies are explicitly enabled.
+- name: AGENT_SAAS_CONNECTORS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_TOOL_ADAPTERS_ENABLED
+  conflicts: []
+  safe_default_reason: SaaS connectors stay disabled until operators explicitly allow governed external system access.
+- name: AGENT_CONNECTOR_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_SAAS_CONNECTORS_ENABLED
+    - AGENT_HUMAN_APPROVAL_ENABLED
+  conflicts: []
+  safe_default_reason: Connector writes remain blocked until operators explicitly allow side effects and approval coverage.
+- name: AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_SAAS_CONNECTORS_ENABLED
+  conflicts: []
+  safe_default_reason: External connector traffic stays off until operators intentionally accept outbound network reachability.
+- name: AGENT_CONNECTOR_OAUTH_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_SAAS_CONNECTORS_ENABLED
+  conflicts: []
+  safe_default_reason: OAuth flows remain disabled until operators explicitly enable delegated connector credential bootstrap.
+- name: AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+    - AGENT_SAAS_CONNECTORS_ENABLED
+  conflicts: []
+  safe_default_reason: Connector token storage remains disabled until operators explicitly accept persisted delegated credentials.
+- name: AGENT_CONNECTOR_CREDENTIAL_ROTATION_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED
+  conflicts: []
+  safe_default_reason: Rotation logic may remain enabled safely while token storage itself is still disabled by default.
+- name: AGENT_STATEFUL_WORKFLOWS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Stateful workflows remain opt-in until persistence, wake-up, and recovery paths are validated by operators.
+- name: AGENT_REASONING_LOOP_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Robust reasoning loops stay disabled until operators accept iterative model behavior and cost controls.
+- name: AGENT_REACT_LOOP_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: ReAct execution remains off until reasoning, acting, and policy interception are explicitly enabled together.
+- name: AGENT_PLAN_AND_SOLVE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: Plan-and-solve remains opt-in until operators validate latency and quality tradeoffs for multi-pass reasoning.
+- name: AGENT_CONTEXT_COMPRESSION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: Context compression stays off until operators explicitly enable compression behavior in iterative loops.
+- name: AGENT_SEMANTIC_MODEL_FALLBACK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: Semantic fallback stays disabled until operators explicitly allow cross-model recovery behavior.
 - name: AGENT_MULTI_AGENT_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -348,6 +481,105 @@
     - AGENT_HANDOFFS_ENABLED
   conflicts: []
   safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration policies are approved.
+- name: AGENT_HIERARCHICAL_TEAMS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_MULTI_AGENT_ENABLED
+  conflicts: []
+  safe_default_reason: Hierarchical teams stay disabled until delegation and escalation policies are explicitly reviewed.
+- name: AGENT_DEBATE_TEAMS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_MULTI_AGENT_ENABLED
+  conflicts: []
+  safe_default_reason: Debate teams remain opt-in until arbitration cost, latency, and conflict resolution policies are accepted.
+- name: AGENT_STUDIO_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Agent Studio remains off until operators intentionally expose visual authoring surfaces.
+- name: AGENT_VISUAL_BUILDER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_STUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: Visual graph editing stays disabled until Studio governance is explicitly enabled.
+- name: AGENT_DEBUGGER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_STUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: Interactive debugging remains off until operators explicitly allow richer execution introspection.
+- name: AGENT_WORKFLOW_TIMERS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  conflicts: []
+  safe_default_reason: Timer wake-ups remain off until operators explicitly enable persistent workflow scheduling.
+- name: AGENT_WORKFLOW_WEBHOOKS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  conflicts: []
+  safe_default_reason: Workflow webhooks remain disabled until operators explicitly expose callback entrypoints.
+- name: AGENT_WORKFLOW_POLLING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  conflicts: []
+  safe_default_reason: Polling wake-ups remain disabled until operators explicitly allow external check loops.
+- name: AGENT_WORKFLOW_DISTRIBUTED_LOCKS_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: low
+  dependencies:
+    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  conflicts: []
+  safe_default_reason: Lock coordination can be enabled safely while workflows themselves remain disabled by default.
 - name: AGENT_INCIDENT_RESPONSE_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -355,7 +587,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_OBSERVABILITY_ENABLED
@@ -406,7 +638,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v1.10.0-agentic-runtime
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies: []
   conflicts: []
@@ -418,7 +650,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_EVALS_ENABLED
@@ -431,7 +663,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_EVALS_ENABLED
@@ -599,7 +831,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
     - AGENT_TOOL_REGISTRY_ENABLED
@@ -612,7 +844,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_TOOL_REGISTRY_ENABLED
@@ -625,7 +857,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
     - AGENT_TOOL_REGISTRY_ENABLED
@@ -651,7 +883,7 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
     - AGENT_RUNTIME_ENABLED
@@ -664,12 +896,12 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
     - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Background worker should be opt-in.
+  safe_default_reason: Background worker should be opt-in so the control plane never starts async execution implicitly.
 - name: AGENT_EMBEDDED_WORKER_ENABLED
   # Owner: agent-platform
   # Status: beta
@@ -690,12 +922,12 @@
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
+  introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
     - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Enable backpressure checks by default.
+  safe_default_reason: Backpressure checks stay enabled by default to keep queue growth bounded when workers are enabled.
 - name: ANTHROPIC_PROVIDER_ENABLED
   default: false
   owner: platform-ops

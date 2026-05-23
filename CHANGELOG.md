@@ -5,21 +5,32 @@
 ### Added
 - **Gateway LLM Provider**: `AgentExecutor` can use the internal inference gateway when `AGENT_REAL_LLM_ENABLED=true` and `AGENT_LLM_PROVIDER=gateway`.
 - **Versioned Tool Adapters**: Built-in adapters are registered, seeded into the tool registry, and executed through the governed tool pipeline.
+- **Governed SaaS Connectors**: GitHub, Slack, Jira, Confluence, Salesforce, and Microsoft 365 connectors can operate through governed mock/dry-run and explicit execution paths.
+- **Resilient Stateful Workflows**: Workflow runs can persist, sleep, wake on signals/webhooks/polling, and recover without tying up a worker for the entire wait.
+- **Reasoning/Acting Repair Loop**: Structured-output repair, malformed JSON correction, context compression, and fallback controls are available for robust iterative execution.
+- **Advanced Multi-Agent Topologies**: Team orchestration now includes hierarchical and debate runtimes behind explicit governance flags.
+- **Agent Studio and Debugger**: Visual flow definition, validation, compilation, and debug session surfaces are added for operator-facing authoring.
 - **Planner Runtime Loop**: Planner-created tasks can execute real tool/model/memory work through `TaskEngine` when explicitly enabled.
 - **Semantic Memory Reinjection**: Long-term memory retrieval can be injected back into model context behind dedicated flags.
 - **Opt-in Worker Deployment**: Docker Compose `agentic` profile and Helm `agentWorker.enabled=true` now expose the official worker deployment path.
 - **Canonical Agent API**: `/v1/agents` is the unified runtime surface and `/agents` is now explicitly deprecated.
 - **Promotion Gate Artifacts**: Eval promotion reports are written under `artifacts/agent-evals/latest/`.
+- **Versioned Agent Contracts**: Runtime, planner, tool-call, and memory-injection contracts are formalized and validated in test coverage.
+- **Agentic SLO and Playbooks**: Operational SLO classes, dashboards, readiness checks, and playbooks are part of the release line.
 
 ### Changed
 - **Safe defaults expanded**: real LLM, tool adapters, planner real execution, semantic search, context injection, worker, async execution, evals, and real eval provider all stay disabled by default.
+- **Five critical layers made explicit**: connectors, workflows, reasoning/acting, multi-agent, and Studio all ship as opt-in, auditable, safe-by-default release surfaces.
 - **Promotion posture hardened**: `AGENT_PROMOTION_REQUIRES_EVALS=true` remains the default and blocks promotion without passing eval evidence.
 - **Runtime classification updated**: the platform is operational when enabled, but still opt-in and governance-gated by default.
+- **Release criteria formalized**: release readiness is now tracked against the eight required criteria for planning/execution, auditability, policy/approval, worker/queue, eval promotion gates, SLOs, versioned contracts, and safe defaults.
 
 ### Security
 - **No implicit provider reach-out**: agent LLM execution stays on `mock` until the operator intentionally selects the gateway path.
+- **Connector side effects stay blocked**: external network access and write capabilities for SaaS connectors remain disabled until explicitly enabled.
 - **Legacy surface deprecation**: `/agents` now advertises deprecation and points operators toward `/v1/agents`.
 - **Release artifact hygiene**: eval markdown output is redirected to the artifacts tree to support clean release commits.
+- **Approval-first posture preserved**: `AGENT_HUMAN_APPROVAL_ENABLED=true` remains the default and continues to gate high-risk or destructive actions.
 
 ## [1.10.0-agentic-runtime] - 2026-05-15
 

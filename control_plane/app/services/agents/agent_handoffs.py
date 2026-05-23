@@ -60,7 +60,22 @@ class AgentHandoffService:
         if not source_run:
             raise ValueError("Source run not found")
 
-        # 1. Policy Check
+        # 0. Policy Engine Check (v2)
+        from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
+        policy_req = PolicyRequest(
+            action_type="handoff",
+            subject=str(target_agent_id),
+            tenant_id=source_run.tenant_id,
+            agent_id=source_run.agent_id,
+            run_id=source_run_id,
+            context={"reason": reason}
+        )
+        policy_engine = AgentPolicyEngine(self.db)
+        decision = await policy_engine.evaluate_action_v2(policy_req)
+        if decision.result == "deny":
+            raise HandoffDeniedError(f"Handoff denied by policy: {decision.reason}")
+
+        # 1. Handoff Specific Policy Check
         stmt_policy = select(AgentHandoffPolicy).where(
             AgentHandoffPolicy.source_agent_id == source_run.agent_id,
             AgentHandoffPolicy.target_agent_id == target_agent_id,

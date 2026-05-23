@@ -52,18 +52,47 @@ class ShellCommandToolAdapter(ToolAdapterContract):
 
         command = kwargs["command"]
         args = [str(arg) for arg in kwargs.get("args", [])]
-        proc = await asyncio.create_subprocess_exec(
-            command,
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        return {
-            "stdout": stdout.decode("utf-8", errors="replace"),
-            "stderr": stderr.decode("utf-8", errors="replace"),
-            "exit_code": proc.returncode
-        }
+        
+        # 1. Command Allowlist
+        allowlist = {"ls", "grep", "cat", "echo", "ps", "pwd", "whoami", "df", "free"}
+        if command not in allowlist:
+             raise ValueError(f"Command '{command}' is not in the allowed shell command list.")
+
+        # 2. Block sensitive file access in args
+        sensitive_patterns = {".env", "data/pki", "uploads/", "models/", "/etc/passwd", "/etc/shadow", ".ssh/"}
+        for arg in args:
+            if any(p in arg for p in sensitive_patterns):
+                raise ValueError(f"Access to sensitive path detected in arguments: {arg}")
+
+        # 3. Execution with Timeout
+        timeout = kwargs.get("timeout_seconds", 5)
+        try:
+            proc = await asyncio.wait_for(
+                asyncio.create_subprocess_exec(
+                    command,
+                    *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    shell=False  # Mandatory security: no shell expansion
+                ),
+                timeout=float(timeout)
+            )
+            stdout, stderr = await proc.communicate()
+            
+            # Sanitization/Truncation
+            decoded_out = stdout.decode("utf-8", errors="replace")[:10000]
+            decoded_err = stderr.decode("utf-8", errors="replace")[:2000]
+
+            return {
+                "stdout": decoded_out,
+                "stderr": decoded_err,
+                "exit_code": proc.returncode,
+                "truncated": len(stdout) > 10000
+            }
+        except asyncio.TimeoutError:
+            return {"error": "Execution timed out", "exit_code": -1}
+        except Exception as e:
+            return {"error": str(e), "exit_code": -1}
 
     async def dry_run(self, **kwargs) -> Dict[str, Any]:
         return {"status": "dry_run", "message": f"Would execute shell command: {kwargs['command']}"}

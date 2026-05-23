@@ -8,7 +8,7 @@ import logging
 import traceback
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
@@ -31,6 +31,10 @@ from app.core.metrics import (
     LLM_AGENT_JOB_RETRIES_TOTAL,
     LLM_AGENT_DEAD_LETTERS_TOTAL,
     LLM_AGENT_WORKER_HEARTBEATS_TOTAL,
+    LLM_AGENT_ACTIVE_LEASES,
+    LLM_AGENT_DRAIN_STATUS,
+    LLM_AGENT_ACTIVE_WORKERS,
+    LLM_AGENT_STUCK_RUNS_TOTAL
 )
 
 logger = logging.getLogger(__name__)
@@ -40,7 +44,9 @@ class AgentWorkerService:
         self.settings = get_settings()
         self.worker_id = worker_id or f"worker-{uuid.uuid4().hex[:8]}"
         self.is_running = False
+        self.is_draining = False
         self._heartbeat_task = None
+        self._recovery_task = None
 
     async def register_heartbeat(self, db: AsyncSession) -> None:
         now = utc_now()
@@ -48,19 +54,31 @@ class AgentWorkerService:
         res = await db.execute(stmt)
         hb = res.scalar_one_or_none()
 
+        status = "draining" if self.is_draining else "active"
         if hb:
             hb.last_heartbeat = now
-            hb.status = "active"
+            hb.status = status
         else:
             hb = AgentWorkerHeartbeat(
                 worker_id=self.worker_id,
                 last_heartbeat=now,
-                status="active",
+                status=status,
                 started_at=now,
             )
             db.add(hb)
 
+        # Count globally active workers for metrics
+        stmt_count = select(func.count(AgentWorkerHeartbeat.worker_id)).where(
+            AgentWorkerHeartbeat.last_heartbeat >= now - timedelta(minutes=2),
+            AgentWorkerHeartbeat.status != "inactive"
+        )
+        res_count = await db.execute(stmt_count)
+        active_count = res_count.scalar() or 0
+        from app.core.metrics import LLM_AGENT_ACTIVE_WORKERS
+        LLM_AGENT_ACTIVE_WORKERS.set(active_count)
+
         LLM_AGENT_WORKER_HEARTBEATS_TOTAL.labels(worker_id=self.worker_id).inc()
+        LLM_AGENT_DRAIN_STATUS.labels(worker_id=self.worker_id).set(1 if self.is_draining else 0)
         await db.commit()
 
     async def start(self) -> None:
@@ -75,23 +93,20 @@ class AgentWorkerService:
         self.is_running = True
         logger.info(f"Starting Agent Worker: {self.worker_id}")
 
-        # Register initial heartbeat
         async with SessionLocal() as db:
             await self.register_heartbeat(db)
 
-        # Start heartbeat background loop
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+        self._recovery_task = asyncio.create_task(self._recovery_loop())
 
     async def stop(self) -> None:
         self.is_running = False
         if self._heartbeat_task:
             self._heartbeat_task.cancel()
-            try:
-                await self._heartbeat_task
-            except asyncio.CancelledError:
-                pass
+        if self._recovery_task:
+            self._recovery_task.cancel()
         
-        # Mark worker as inactive in database
+        # Mark worker as inactive
         try:
             async with SessionLocal() as db:
                 stmt = select(AgentWorkerHeartbeat).where(AgentWorkerHeartbeat.worker_id == self.worker_id)
@@ -106,6 +121,11 @@ class AgentWorkerService:
 
         logger.info(f"Stopped Agent Worker: {self.worker_id}")
 
+    def drain(self) -> None:
+        """Sets the worker to drain mode: finishes current job then stops."""
+        logger.info(f"Worker {self.worker_id} entering DRAIN mode.")
+        self.is_draining = True
+
     async def _heartbeat_loop(self) -> None:
         while self.is_running:
             try:
@@ -117,11 +137,59 @@ class AgentWorkerService:
             except Exception as e:
                 logger.error(f"Error in heartbeat loop: {e}")
 
+    async def _recovery_loop(self) -> None:
+        """Background loop to recover orphan leases and stuck runs globally."""
+        while self.is_running:
+            try:
+                await asyncio.sleep(60) # Run every minute
+                async with SessionLocal() as db:
+                    await self.recover_orphans(db)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in recovery loop: {e}")
+
+    async def recover_orphans(self, db: AsyncSession) -> int:
+        """Identifies expired leases and puts jobs back in queue. Also identifies stuck runs."""
+        now = utc_now()
+        
+        # 1. Recover orphan leases
+        stmt = select(AgentExecutionLease).where(AgentExecutionLease.expires_at <= now)
+        res = await db.execute(stmt)
+        expired = res.scalars().all()
+        
+        count = 0
+        for lease in expired:
+            stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == lease.job_id).with_for_update()
+            res_job = await db.execute(stmt_job)
+            job = res_job.scalar_one_or_none()
+            if job and job.status == "running":
+                logger.warning(f"Recovering orphan job {job.id} from expired lease.")
+                job.status = "queued"
+                job.updated_at = now
+                count += 1
+            
+            await db.delete(lease)
+        
+        # 2. Monitor stuck runs (running for > 2 hours with no recent update)
+        stmt_stuck = select(func.count(AgentRun.id)).where(
+            AgentRun.status == "running",
+            AgentRun.updated_at <= now - timedelta(hours=2)
+        )
+        res_stuck = await db.execute(stmt_stuck)
+        stuck_count = res_stuck.scalar() or 0
+        LLM_AGENT_STUCK_RUNS_TOTAL.set(stuck_count)
+        
+        if count > 0:
+            await db.commit()
+            logger.info(f"Recovered {count} orphan leases.")
+        return count
+
     async def run_once(self) -> bool:
-        """
-        Polls and executes a single job.
-        Returns True if a job was executed, False if the queue was empty.
-        """
+        if self.is_draining:
+            logger.info(f"Worker {self.worker_id} is draining. Skipping pickup.")
+            return False
+
         async with SessionLocal() as db:
             queue_mgr = AgentQueueManager(db)
             job = await queue_mgr.dequeue_job(self.worker_id, lease_timeout_seconds=60)
@@ -135,11 +203,12 @@ class AgentWorkerService:
 
         # Execute the job
         logger.info(f"Worker {self.worker_id} executing job {job_id} for run {run_id}")
+        LLM_AGENT_ACTIVE_LEASES.inc()
         
-        # Start lease renewer loop
         lease_renewer = asyncio.create_task(self._lease_renewer_loop(job_id))
 
         try:
+            # ... (rest of implementation remains similar)
             async with SessionLocal() as db:
                 # Transition job status to running
                 stmt = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
@@ -229,15 +298,18 @@ class AgentWorkerService:
                     await db.commit()
                     await update_queue_metrics(db, tenant_id, agent_id)
                     logger.info(f"Finished job {job_id} with status {db_job.status}")
+                LLM_AGENT_ACTIVE_LEASES.dec()
 
             else:
                 # Handle unexpected/failed step executions (retry, backoff or dead letter)
                 await self._handle_job_failure(job_id, failure_reason)
+                LLM_AGENT_ACTIVE_LEASES.dec()
 
         except Exception as e:
             logger.exception(f"Unexpected error executing job {job_id}")
             lease_renewer.cancel()
             await self._handle_job_failure(job_id, str(e))
+            LLM_AGENT_ACTIVE_LEASES.dec()
 
         return True
 

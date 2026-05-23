@@ -2,7 +2,7 @@
 """Agentic RBAC and Policies
 
 Revision ID: phase89_agentic_rbac_hardening
-Revises: phase88_agentic_observability_end_to_end
+Revises: phase88_agentic_observability
 Create Date: 2026-05-22 18:00:00.000000
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'phase89_agentic_rbac_hardening'
-down_revision: Union[str, None] = 'phase88_agentic_observability_end_to_end'
+down_revision: Union[str, None] = 'phase88_agentic_observability'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

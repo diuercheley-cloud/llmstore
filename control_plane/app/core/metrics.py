@@ -269,6 +269,11 @@ LLM_AGENT_RUNS_TOTAL = Counter(
     "Total agent runs started",
     ["agent_id", "status"]
 )
+LLM_AGENT_RUN_SUCCESS_RATE = Gauge(
+    "llm_agent_run_success_rate",
+    "Current success rate of agent runs",
+    ["agent_id"]
+)
 LLM_AGENT_RUN_FAILURES_TOTAL = Counter(
     "llm_agent_run_failures_total",
     "Total agent run failures",
@@ -289,9 +294,24 @@ LLM_AGENT_STEP_LATENCY_SECONDS = Histogram(
     "Latency of agent steps",
     ["agent_id", "step_type"]
 )
+LLM_AGENT_PLAN_DEPTH = Gauge(
+    "llm_agent_plan_depth",
+    "Current depth of the agent's plan",
+    ["agent_id", "run_id"]
+)
 LLM_AGENT_TOOL_DURATION_SECONDS = Histogram(
     "llm_agent_tool_duration_seconds",
     "Time spent executing tools",
+    ["agent_id", "tool_name"]
+)
+LLM_AGENT_TOOL_LATENCY_SECONDS = Histogram(
+    "llm_agent_tool_latency_seconds",
+    "Latency of tool executions in seconds",
+    ["agent_id", "tool_name"]
+)
+LLM_AGENT_TOOL_FAILURE_RATE = Gauge(
+    "llm_agent_tool_failure_rate",
+    "Current failure rate of tool calls",
     ["agent_id", "tool_name"]
 )
 LLM_AGENT_APPROVAL_WAIT_SECONDS = Histogram(
@@ -304,15 +324,30 @@ LLM_AGENT_MEMORY_LATENCY_SECONDS = Histogram(
     "Latency of agent memory operations",
     ["agent_id", "operation"]
 )
+LLM_AGENT_MEMORY_HIT_RATE = Gauge(
+    "llm_agent_memory_hit_rate",
+    "Current memory hit rate",
+    ["agent_id", "memory_type"]
+)
 LLM_AGENT_HANDOFF_COUNT = Counter(
     "llm_agent_handoff_count",
     "Total agent handoffs",
     ["agent_id", "target_agent_id"]
 )
+LLM_AGENT_HANDOFF_DEPTH = Gauge(
+    "llm_agent_handoff_depth",
+    "Current handoff depth",
+    ["agent_id", "run_id"]
+)
 LLM_AGENT_POLICY_DENIALS_TOTAL = Counter(
     "llm_agent_policy_denials_total",
     "Total agent policy denials",
     ["agent_id", "tool_name"]
+)
+LLM_AGENT_REPLAN_TOTAL = Counter(
+    "llm_agent_replan_total",
+    "Total number of replans executed",
+    ["agent_id"]
 )
 LLM_AGENT_INCIDENTS_TOTAL = Counter(
     "llm_agent_incidents_total",
@@ -329,10 +364,20 @@ LLM_AGENT_COST_BRL_TOTAL = Counter(
     "Total estimated cost of agent runs in BRL",
     ["agent_id"]
 )
+LLM_AGENT_COST_BUDGET_USED_BRL = Gauge(
+    "llm_agent_cost_budget_used_brl",
+    "Total cost in BRL against budget",
+    ["agent_id"]
+)
 LLM_AGENT_TOKENS_TOTAL = Counter(
     "llm_agent_tokens_total",
     "Total tokens consumed by agents",
     ["agent_id", "token_type"]
+)
+LLM_AGENT_TOKEN_BUDGET_USED = Gauge(
+    "llm_agent_token_budget_used",
+    "Total tokens consumed against budget",
+    ["agent_id"]
 )
 
 # Keep legacy metrics for internal compatibility where needed, or alias them
@@ -514,6 +559,23 @@ LLM_AGENT_WORKER_HEARTBEATS_TOTAL = Counter(
     "llm_agent_worker_heartbeats_total",
     "Total heartbeats received from workers",
     ["worker_id"],
+)
+LLM_AGENT_ACTIVE_WORKERS = Gauge(
+    "llm_agent_active_workers",
+    "Current number of active agent workers",
+)
+LLM_AGENT_ACTIVE_LEASES = Gauge(
+    "llm_agent_active_leases",
+    "Current number of active job leases",
+)
+LLM_AGENT_STUCK_RUNS_TOTAL = Gauge(
+    "llm_agent_stuck_runs_total",
+    "Current number of agent runs detected as stuck",
+)
+LLM_AGENT_DRAIN_STATUS = Gauge(
+    "llm_agent_drain_status",
+    "Drain status of workers (1 if draining)",
+    ["worker_id"]
 )
 LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL = Counter(
     "llm_agent_queue_backpressure_total",

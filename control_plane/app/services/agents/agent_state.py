@@ -53,6 +53,7 @@ async def create_agent_definition(db: AsyncSession, data: dict) -> AgentDefiniti
         max_runtime_seconds=data.get("max_runtime_seconds", 300),
         max_tokens=data.get("max_tokens"),
         max_cost_brl=data.get("max_cost_brl"),
+        agent_class=data.get("agent_class", "default"),
     )
     db.add(agent_def)
     await db.commit()
@@ -127,6 +128,15 @@ async def update_run(db: AsyncSession, run_id: uuid.UUID, **kwargs) -> Optional[
     await db.refresh(run)
     logger.info(f"Updated agent run: {run.id} fields: {list(kwargs.keys())}")
     return run
+
+async def increment_run_metric(db: AsyncSession, run_id: uuid.UUID, metric: str, value: float = 1.0):
+    run = await get_agent_run(db, run_id)
+    if not run:
+        return
+    if hasattr(run, metric):
+        current = getattr(run, metric) or 0
+        setattr(run, metric, current + value)
+    await db.commit()
 
 async def log_run_step(
     db: AsyncSession,

@@ -1,0 +1,40 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Memory Hit Rate",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "options": {
+        "min": 0, "max": 100,
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "green", "value": 80 }
+          ]
+        }
+      },
+      "targets": [
+        { "expr": "avg(llm_agent_memory_hit_rate) * 100" }
+      ]
+    },
+    {
+      "title": "Memory Access Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 0 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(llm_agent_memory_latency_seconds_bucket[5m])) by (le, operation))" }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": ["agentic", "memory"],
+  "title": "Agentic Memory Observability",
+  "uid": "agentic-memory",
+  "version": 1
+}

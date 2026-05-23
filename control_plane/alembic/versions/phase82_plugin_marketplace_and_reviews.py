@@ -1,6 +1,6 @@
 """Add plugin marketplace tables and plugin reviews
 
-Revision ID: phase82_plugin_marketplace_and_reviews
+Revision ID: phase82_plugin_marketplace
 Revises: 20260519_0086
 Create Date: 2026-05-19 18:00:00.000000
 """
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "phase82_plugin_marketplace_and_reviews"
+revision = "phase82_plugin_marketplace"
 down_revision = "20260519_0086"
 branch_labels = None
 depends_on = None

@@ -1,7 +1,7 @@
 """repair missing witness and transparency tables
 
 Revision ID: 20260518_0082
-Revises: phase81_reproducible_build_artifact_verification
+Revises: phase81_reproducible_builds
 Create Date: 2026-05-18 00:00:00.000000
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = "20260518_0082"
-down_revision = "phase81_reproducible_build_artifact_verification"
+down_revision = "phase81_reproducible_builds"
 branch_labels = None
 depends_on = None
 

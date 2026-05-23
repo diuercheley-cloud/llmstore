@@ -1,0 +1,92 @@
+# Agent Class SLOs and Budgets Configuration
+classes:
+  support:
+    run_success_rate_target: 0.98
+    p95_latency_seconds: 30
+    max_cost_brl_per_run: 2.0
+    max_tokens_per_run: 50000
+    max_steps: 15
+    max_tool_calls: 10
+    max_approval_wait_seconds: 300
+    max_memory_reads: 20
+    max_replans: 2
+  ops:
+    run_success_rate_target: 0.95
+    p95_latency_seconds: 60
+    max_cost_brl_per_run: 5.0
+    max_tokens_per_run: 100000
+    max_steps: 25
+    max_tool_calls: 20
+    max_approval_wait_seconds: 600
+    max_memory_reads: 50
+    max_replans: 5
+  compliance:
+    run_success_rate_target: 1.0
+    p95_latency_seconds: 120
+    max_cost_brl_per_run: 10.0
+    max_tokens_per_run: 200000
+    max_steps: 50
+    max_tool_calls: 30
+    max_approval_wait_seconds: 3600
+    max_memory_reads: 100
+    max_replans: 3
+  billing:
+    run_success_rate_target: 0.99
+    p95_latency_seconds: 45
+    max_cost_brl_per_run: 3.0
+    max_tokens_per_run: 75000
+    max_steps: 20
+    max_tool_calls: 15
+    max_approval_wait_seconds: 900
+    max_memory_reads: 30
+    max_replans: 2
+  rag_research:
+    run_success_rate_target: 0.90
+    p95_latency_seconds: 300
+    max_cost_brl_per_run: 15.0
+    max_tokens_per_run: 500000
+    max_steps: 100
+    max_tool_calls: 50
+    max_approval_wait_seconds: 1800
+    max_memory_reads: 200
+    max_replans: 10
+  deployment:
+    run_success_rate_target: 0.98
+    p95_latency_seconds: 180
+    max_cost_brl_per_run: 8.0
+    max_tokens_per_run: 150000
+    max_steps: 40
+    max_tool_calls: 25
+    max_approval_wait_seconds: 1200
+    max_memory_reads: 60
+    max_replans: 4
+  security:
+    run_success_rate_target: 1.0
+    p95_latency_seconds: 15
+    max_cost_brl_per_run: 1.0
+    max_tokens_per_run: 25000
+    max_steps: 5
+    max_tool_calls: 5
+    max_approval_wait_seconds: 60
+    max_memory_reads: 10
+    max_replans: 1
+  custom:
+    run_success_rate_target: 0.95
+    p95_latency_seconds: 60
+    max_cost_brl_per_run: 5.0
+    max_tokens_per_run: 100000
+    max_steps: 20
+    max_tool_calls: 15
+    max_approval_wait_seconds: 600
+    max_memory_reads: 40
+    max_replans: 3
+  default:
+    run_success_rate_target: 0.95
+    p95_latency_seconds: 60
+    max_cost_brl_per_run: 5.0
+    max_tokens_per_run: 100000
+    max_steps: 10
+    max_tool_calls: 10
+    max_approval_wait_seconds: 300
+    max_memory_reads: 20
+    max_replans: 2

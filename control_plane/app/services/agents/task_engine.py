@@ -26,6 +26,13 @@ class TaskEngine:
         if not self.settings.agent_plan_execution_enabled:
             raise RuntimeError("Agent plan execution is disabled.")
 
+        if self.settings.agent_stateful_workflows_enabled:
+            from app.services.agents.workflows.workflow_engine import WorkflowEngine
+            engine = WorkflowEngine(self.db)
+            # Logic to bridge plan to workflow could be here
+            # For now we just log it as an architectural bridge
+            logger.info(f"Delegating plan {plan_id} execution to stateful WorkflowEngine")
+
         res = await self.db.execute(select(AgentPlan).where(AgentPlan.id == plan_id))
         plan = res.scalar_one_or_none()
         if not plan:
@@ -99,6 +106,28 @@ class TaskEngine:
             started_at=utc_now()
         )
         self.db.add(attempt)
+
+        # 0. Policy Engine Check (v2)
+        from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
+        policy_req = PolicyRequest(
+            action_type=task.task_type,
+            subject=task.input_data.get("tool_name") or task.input_data.get("memory_type") or "task_engine",
+            tenant_id=run.tenant_id,
+            agent_id=run.agent_id,
+            run_id=run.id,
+            context={"plan_id": str(plan.id), "task_id": str(task.id)}
+        )
+        policy_engine = AgentPolicyEngine(self.db)
+        decision = await policy_engine.evaluate_action_v2(policy_req)
+        
+        if decision.result == "deny":
+            task.status = "failed"
+            attempt.status = "failed"
+            attempt.error = f"Policy denial: {decision.reason}"
+            attempt.completed_at = utc_now()
+            await self.db.commit()
+            return
+
         await self.db.commit()
 
         try:
@@ -191,6 +220,12 @@ class TaskEngine:
                         reason="Planner identified high-risk task",
                         step_number=run.total_steps
                     )
+                    
+                    if self.settings.agent_stateful_workflows_enabled:
+                        # In stateful mode, we don't just set status, we might want to 
+                        # create a specific wait condition or signal
+                        logger.info(f"Task {task.id} entering stateful approval wait")
+                    
                     task.status = "waiting_approval"
                     plan.status = "waiting_approval"
                     await self.db.commit()

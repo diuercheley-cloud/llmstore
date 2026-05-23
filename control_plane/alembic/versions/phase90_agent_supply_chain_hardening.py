@@ -1,7 +1,7 @@
 # Models: AgentBundleSignature, AgentBundleProvenance, AgentBundleCompatibility, AgentPublisherProfile, AgentPublicationReview
 """Harden Marketplace and Supply Chain
 
-Revision ID: phase90_agent_supply_chain_hardening
+Revision ID: phase90_agent_supply_chain
 Revises: phase89_agentic_rbac_hardening
 Create Date: 2026-05-22 19:00:00.000000
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'phase90_agent_supply_chain_hardening'
+revision: str = 'phase90_agent_supply_chain'
 down_revision: Union[str, None] = 'phase89_agentic_rbac_hardening'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

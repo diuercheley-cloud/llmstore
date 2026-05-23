@@ -1,31 +1,28 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
-init_stack_env
+echo "----------------------------------------------------------------"
+echo "  AGENT WORKER STATUS"
+echo "----------------------------------------------------------------"
 
-BASE_URL="${BASE_URL:-$(default_base_url)}"
-ADMIN_TOKEN="${ADMIN_TOKEN:-}"
+BASE_URL=${KLEBER_BASE_URL:-"http://localhost:18080"}
+API_KEY=${KLEBER_API_KEY}
 
-if [[ -z "${ADMIN_TOKEN}" ]]; then
-  echo "Warning: ADMIN_TOKEN env variable not set."
-fi
+# Check readiness which contains worker info
+RESPONSE=$(curl -s -H "X-Admin-Token: $API_KEY" -X GET "$BASE_URL/admin/agents/readiness")
 
-echo "=== Agent Worker Status ==="
+STATUS=$(echo "$RESPONSE" | jq -r '.status')
+WORKERS=$(echo "$RESPONSE" | jq -r '.checks[] | select(.id=="worker_heartbeat") | .value')
 
-# Get worker heartbeats from the readiness endpoint
+echo "Global Status: $STATUS"
+echo "Active Workers: $WORKERS"
 echo ""
-echo "--- Readiness Check ---"
-curl -fsS "${BASE_URL}/admin/agents/observability/readiness" \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" 2>/dev/null | python3 -m json.tool || echo "Readiness endpoint unavailable"
+echo "Worker Details (Heartbeats):"
+# In a real scenario, we might have a dedicated endpoint for listing workers
+# For now, let's assume we can see them in readiness or via a quick SQL query if possible
+# But as a CLI tool, we prefer API.
 
-echo ""
-echo "--- Active Workers ---"
-curl -fsS "${BASE_URL}/admin/agents/execution/workers" \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" 2>/dev/null | python3 -m json.tool || echo "Workers endpoint unavailable"
+echo "Queue Metrics:"
+echo "$RESPONSE" | jq -r '.checks[] | select(.id=="queue_depth" or .id=="dead_letter_queue" or .id=="stuck_runs") | "[\(.status | ascii_upcase)] \(.name): \(.value)"'
 
-echo ""
-echo "--- Queue Summary ---"
-curl -fsS "${BASE_URL}/admin/agents/execution/jobs" \
-  -H "X-Admin-Token: ${ADMIN_TOKEN}" 2>/dev/null | python3 -m json.tool || echo "Jobs endpoint unavailable"
+echo "----------------------------------------------------------------"

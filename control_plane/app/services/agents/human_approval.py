@@ -297,7 +297,7 @@ async def approve_approval_request(
     obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
-    obs.record_approval_wait(str(run.agent_id), tool_name, wait_time)
+    await obs.record_approval_wait(run.agent_id, run.id, tool_name, wait_time)
 
     # Audit log
     await record_admin_audit_event(
@@ -369,7 +369,8 @@ async def reject_approval_request(
     obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
-    obs.record_approval_wait(str(run.agent_id) if run else "unknown", tool_name, wait_time)
+    if run:
+        await obs.record_approval_wait(run.agent_id, run.id, tool_name, wait_time)
 
     # 5. Terminate the run execution
     if run:

@@ -14,7 +14,10 @@ from app.api.admin import router as admin_router
 from app.api.agent_runtime_admin import router as agent_runtime_admin_router
 from app.api.agent_registry_admin import router as agent_registry_admin_router
 from app.api.agent_tools_admin import router as agent_tools_admin_router
+from app.api.agent_teams_admin import router as agent_teams_admin_router
+from app.api.agent_studio_admin import router as agent_studio_admin_router
 from app.api.agent_approvals_admin import router as agent_approvals_admin_router
+from app.api.agent_connectors_admin import router as agent_connectors_admin_router
 from app.api.agent_observability_admin import router as agent_observability_admin_router
 from app.api.agent_evals_admin import router as agent_evals_admin_router
 from app.api.agent_memory_admin import router as agent_memory_admin_router
@@ -24,6 +27,10 @@ from app.api.agent_handoffs_admin import router as agent_handoffs_admin_router
 from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
 from app.api.agents_v1 import router as agents_v1_router
 from app.api.agents import router as agents_router
+from app.api.agent_readiness_admin import router as agent_readiness_admin_router
+from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
+from app.api.agent_worker_admin import router as agent_worker_admin_router
+from app.api.agent_workflows_admin import router as agent_workflows_admin_router
 from app.api.admin_rbac import router as admin_rbac_router
 from app.api.saas_admin import router as saas_admin_router
 from app.api.sales import router as sales_router
@@ -239,6 +246,14 @@ async def lifespan(_: FastAPI):
         agent_worker_task = asyncio.create_task(embedded_worker.start())
         logger.info("Embedded agent worker started (AGENT_EMBEDDED_WORKER_ENABLED=true)")
 
+    # Workflow Scheduler
+    workflow_scheduler_task = None
+    if settings.agent_stateful_workflows_enabled:
+        from app.services.agents.workflows.workflow_scheduler import WorkflowScheduler
+        scheduler = WorkflowScheduler()
+        workflow_scheduler_task = asyncio.create_task(scheduler.start())
+        logger.info("Stateful Workflow Scheduler started")
+
     stop_event = asyncio.Event()
     billing_task = asyncio.create_task(billing_scheduler_loop(stop_event))
     analytics_task = asyncio.create_task(commercial_distributed_analytics_loop(stop_event))
@@ -251,6 +266,8 @@ async def lifespan(_: FastAPI):
     stop_event.set()
     if agent_worker_task:
         agent_worker_task.cancel()
+    if workflow_scheduler_task:
+        workflow_scheduler_task.cancel()
     billing_task.cancel()
     analytics_task.cancel()
     federation_task.cancel()
@@ -312,10 +329,17 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(agent_readiness_admin_router)
+app.include_router(tenant_agentic_readiness_admin_router)
+app.include_router(agent_worker_admin_router)
+app.include_router(agent_workflows_admin_router)
 app.include_router(agent_runtime_admin_router)
 app.include_router(agent_registry_admin_router)
 app.include_router(agent_tools_admin_router)
+app.include_router(agent_teams_admin_router)
+app.include_router(agent_studio_admin_router)
 app.include_router(agent_approvals_admin_router)
+app.include_router(agent_connectors_admin_router)
 app.include_router(agent_observability_admin_router)
 app.include_router(agent_evals_admin_router)
 app.include_router(agent_memory_admin_router)

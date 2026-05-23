@@ -152,12 +152,12 @@ make validate-platform-documentation
 - **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior.
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
-- **Agentic surfaces are opt-in and safe-by-default.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_PLANNER_REAL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_ASYNC_EXECUTION_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, and `AGENT_EVAL_REAL_PROVIDER_ENABLED=false` preserve the non-agentic default posture.
+- **Agentic surfaces are opt-in and safe-by-default.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` preserve the non-agentic default posture.
 - **Human approval stays on for sensitive agent actions.** `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` keep high-risk execution approval-gated by default.
 - **Raw prompts are not surfaced by default in agentic flows.** Observability, approvals, replay, and memory workflows use hashes and sanitized payloads rather than exposing raw prompts.
 - **No cross-tenant agent memory is supported.** Agent memory is tenant-scoped and disabled by default until operators explicitly enable it.
 - **Managed control-plane metadata is restricted.** Heartbeats accept operational metadata only; prompt/document payloads are rejected by schema validation.
-- **No real runtime execution.** Runtime abstractions are advisory placeholders. All phase implementations are validation-only.
+- **No unrestricted agent autonomy.** Real runtime execution exists behind explicit feature gates, policy evaluation, and approval controls; the platform never enables that path by default.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.
 
 ---
@@ -210,9 +210,35 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 ### Release v2.0.0 scope
 
 - **Agentic AI Platform, default-safe**: `v2.0.0-agentic-ai-platform` closes the real execution loop with gateway LLM, versioned tool adapters, planner-to-task execution, semantic memory reinjection, opt-in worker deployment, canonical `/v1/agents` runtime API, and eval-gated promotion.
+- **Five critical layers integrated**: governed SaaS connectors, resilient stateful workflows, robust reasoning/acting loops, advanced multi-agent orchestration, and Agent Studio with visual builder plus debugger are part of the release line.
 - **No unrestricted autonomy claims**: the platform does not advertise or expose unrestricted autonomous execution. Operators must explicitly enable runtime, execution, tools, memory, and planning.
 - **Supportability is bounded**: support bundles are sanitized operational artifacts for diagnostics only. They do not widen tenant-facing product scope, and they must not include prompts, documents, `.env` files, or real secrets.
 - **Governance remains explicit**: compliance content remains readiness/advisory material, not a promise of SOC 2 or ISO certification.
+
+### Critical layers and defaults
+
+| Layer | Release posture | Key defaults |
+|-----------|-------------|-------------|
+| Governed SaaS connectors | Mock/governed external actions can be enabled without opening unrestricted network access. | `AGENT_SAAS_CONNECTORS_ENABLED=false`, `AGENT_CONNECTOR_WRITE_ENABLED=false`, `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false` |
+| Stateful workflows | Long-running workflows can persist, sleep, and wake without holding workers when explicitly enabled. | `AGENT_STATEFUL_WORKFLOWS_ENABLED=false` |
+| Reasoning/acting loop | Structured-output repair, ReAct-style execution, and context compression are present but opt-in. | `AGENT_REASONING_LOOP_ENABLED=false`, `AGENT_REACT_LOOP_ENABLED=false` |
+| Multi-agent orchestration | Hierarchical and debate topologies exist behind bounded team governance. | `AGENT_MULTI_AGENT_ENABLED=false`, `AGENT_HIERARCHICAL_TEAMS_ENABLED=false`, `AGENT_DEBATE_TEAMS_ENABLED=false` |
+| Agent Studio and debugger | Visual authoring and debugging are operator-facing and disabled by default. | `AGENT_STUDIO_ENABLED=false`, `AGENT_VISUAL_BUILDER_ENABLED=false`, `AGENT_DEBUGGER_ENABLED=false` |
+
+### Agentic release criteria
+
+`v2.0.0-agentic-ai-platform` is only considered releasable when all eight criteria below are satisfied:
+
+| Criterion | v2.0.0 posture |
+|-----------|----------------|
+| 1. Planning, execution, tools, memory, completion | Runtime can plan, execute, call governed tools, retrieve memory, and conclude tasks when the corresponding agent flags are enabled. |
+| 2. End-to-end auditability | Runs, steps, events, approvals, replay artifacts, and receipts are persisted and queryable through agent observability surfaces. |
+| 3. Risk policy and approval | High-risk actions remain policy-evaluated and approval-gated by default via `AGENT_HUMAN_APPROVAL_ENABLED=true`. |
+| 4. Official worker and queue | Async execution has an official worker/queue deployment path and operator scripts. |
+| 5. Evals block promotion | Promotion remains blocked by `AGENT_PROMOTION_REQUIRES_EVALS=true` and eval regression gates. |
+| 6. SLOs, metrics, playbooks | Agentic SLOs, dashboards, readiness checks, and playbooks are part of the release surface. |
+| 7. Versioned contracts | Runtime, tool, and memory contracts are versioned and covered by contract tests. |
+| 8. Safe-by-default | All agentic capabilities with side effects remain disabled until explicitly enabled by operators. |
 
 ## Quick start
 
@@ -237,6 +263,22 @@ cp .env.example .env.local
 # AGENT_MEMORY_ENABLED=false
 # AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false
 # AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false
+# AGENT_WORKER_ENABLED=false
+# AGENT_EVALS_ENABLED=false
+# AGENT_HUMAN_APPROVAL_ENABLED=true
+# AGENT_SAAS_CONNECTORS_ENABLED=false
+# AGENT_CONNECTOR_WRITE_ENABLED=false
+# AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false
+# AGENT_STATEFUL_WORKFLOWS_ENABLED=false
+# AGENT_REASONING_LOOP_ENABLED=false
+# AGENT_REACT_LOOP_ENABLED=false
+# AGENT_MULTI_AGENT_ENABLED=false
+# AGENT_HIERARCHICAL_TEAMS_ENABLED=false
+# AGENT_DEBATE_TEAMS_ENABLED=false
+# AGENT_STUDIO_ENABLED=false
+# AGENT_VISUAL_BUILDER_ENABLED=false
+# AGENT_DEBUGGER_ENABLED=false
+# AGENT_MARKETPLACE_ENABLED=false
 
 # 3. Instale o appliance com dados de demonstração
 make install-local

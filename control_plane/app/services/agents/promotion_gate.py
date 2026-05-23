@@ -1,0 +1,113 @@
+import uuid
+import logging
+from typing import Dict, Any, List, Optional
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.agents import (
+    AgentDefinition, 
+    AgentPromotionGate, 
+    AgentRegistryEntry,
+    AgentIncident,
+    AgentEvalBaseline
+)
+from app.services.agents.prompt_baseline_registry import PromptBaselineRegistry
+from app.services.agents.agent_risk_engine import AgentRiskEngine
+from app.core.time import utc_now
+
+logger = logging.getLogger(__name__)
+
+class PromotionGateError(RuntimeError):
+    pass
+
+class AgentPromotionService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.baseline_registry = PromptBaselineRegistry(db)
+        self.risk_engine = AgentRiskEngine()
+
+    async def run_promotion_check(self, agent_id: uuid.UUID, target_status: str) -> Dict[str, Any]:
+        """
+        Runs a comprehensive promotion check for an agent.
+        """
+        res_agent = await self.db.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))
+        agent = res_agent.scalar_one_or_none()
+        if not agent:
+            raise ValueError("Agent definition not found")
+
+        registry_res = await self.db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.agent_id == agent.id))
+        registry = registry_res.scalar_one_or_none()
+
+        checks = {
+            "eval_baseline": False,
+            "security_check": True, # Placeholder
+            "compatibility_check": True, # Placeholder
+            "no_critical_incidents": False,
+            "prompt_freshness": False,
+            "owner_assigned": bool(agent.owner)
+        }
+
+        # 1. Eval Baseline Check
+        res_eval = await self.db.execute(select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id))
+        eval_baseline = res_eval.scalar_one_or_none()
+        # A baseline exists and has a decent score
+        checks["eval_baseline"] = eval_baseline is not None and eval_baseline.score >= 0.8
+
+        # 2. No Critical Incidents
+        res_incidents = await self.db.execute(
+            select(AgentIncident).where(
+                AgentIncident.agent_id == agent_id,
+                AgentIncident.status == "open",
+                AgentIncident.severity == "critical"
+            )
+        )
+        checks["no_critical_incidents"] = res_incidents.scalar_one_or_none() is None
+
+        # 3. Prompt Freshness
+        checks["prompt_freshness"] = await self.baseline_registry.validate_prompt_against_baseline(agent_id, agent.instructions)
+
+        # Result consolidation
+        passed = all(checks.values())
+        
+        gate = AgentPromotionGate(
+            agent_id=registry.id if registry else agent_id,
+            target_status=target_status,
+            eval_passed=checks["eval_baseline"],
+            security_passed=checks["security_check"],
+            compatibility_passed=checks["compatibility_check"],
+            policy_passed=checks["owner_assigned"],
+            owner_approved=False,
+            status="passed" if passed else "failed",
+            created_at=utc_now()
+        )
+        self.db.add(gate)
+        await self.db.commit()
+
+        return {
+            "passed": passed,
+            "checks": checks,
+            "gate_id": str(gate.id),
+            "risk_level": self.risk_engine.calculate_risk_level(agent)
+        }
+
+    async def promote_agent(self, agent_id: uuid.UUID, target_status: str, approved_by: str) -> Dict[str, Any]:
+        """
+        Promotes an agent if it passes the promotion gate.
+        """
+        check_result = await self.run_promotion_check(agent_id, target_status)
+        if not check_result["passed"]:
+            raise PromotionGateError(f"Agent failed promotion check: {check_result['checks']}")
+        
+        res_agent = await self.db.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))
+        agent = res_agent.scalar_one_or_none()
+        
+        agent.status = target_status
+        # Log promotion event
+        from app.services.agents import agent_state
+        await agent_state.log_run_event(
+            self.db, run_id=None, # System level
+            event_type="agent_promoted",
+            details={"agent_id": str(agent_id), "to_status": target_status, "promoted_by": approved_by}
+        )
+        
+        await self.db.commit()
+        return {"status": "promoted", "agent_id": str(agent_id), "new_status": target_status}

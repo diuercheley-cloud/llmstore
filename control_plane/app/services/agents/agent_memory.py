@@ -78,6 +78,22 @@ class AgentMemoryService:
         collection_id: Optional[uuid.UUID] = None
     ) -> AgentMemoryItem:
         self._check_enabled()
+        
+        # 0. Policy Engine Check (v2)
+        from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
+        policy_req = PolicyRequest(
+            action_type="memory_write",
+            subject=memory_type,
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            run_id=run_id,
+            context={"content_length": len(content)}
+        )
+        policy_engine = AgentPolicyEngine(self.db)
+        decision = await policy_engine.evaluate_action_v2(policy_req)
+        if decision.result == "deny":
+            raise ValueError(f"Memory write denied by policy: {decision.reason}")
+
         if not self.settings.agent_memory_write_enabled:
             raise MemoryDisabledError("Memory write is disabled.")
 

@@ -1,7 +1,7 @@
 """geo_routing_fields
 
 Revision ID: 20260514_0040
-Revises: 20260514_0039_cross_cluster_forwarding
+Revises: 20260514_0039
 Create Date: 2026-05-14 16:05:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20260514_0040'
-down_revision = '20260514_0039_cross_cluster_forwarding'
+down_revision = '20260514_0039'
 branch_labels = None
 depends_on = None
 

@@ -100,3 +100,60 @@ async def validate_and_cancel_run(
     from app.services.agents import agent_runtime
     run = await agent_runtime.cancel_run(db, run_id)
     return run
+
+async def validate_and_pause_run(
+    db: AsyncSession,
+    run_id: uuid.UUID,
+    tenant_id: Optional[str] = None,
+    is_admin: bool = False,
+) -> Any:
+    """
+    Validates run ownership and pauses it.
+    """
+    run = await agent_state.get_agent_run(db, run_id)
+    if not run:
+        raise ValueError("Agent run not found")
+        
+    if not is_admin and run.tenant_id != str(tenant_id):
+        raise ValueError("Agent run not found")
+            
+    from app.services.agents import agent_runtime
+    return await agent_runtime.pause_run(db, run_id)
+
+async def validate_and_resume_run(
+    db: AsyncSession,
+    run_id: uuid.UUID,
+    tenant_id: Optional[str] = None,
+    is_admin: bool = False,
+) -> Any:
+    """
+    Validates run ownership and resumes it.
+    """
+    run = await agent_state.get_agent_run(db, run_id)
+    if not run:
+        raise ValueError("Agent run not found")
+        
+    if not is_admin and run.tenant_id != str(tenant_id):
+        raise ValueError("Agent run not found")
+            
+    from app.services.agents import agent_runtime
+    return await agent_runtime.resume_run(db, run_id)
+
+async def validate_and_replay_run(
+    db: AsyncSession,
+    run_id: uuid.UUID,
+    tenant_id: Optional[str] = None,
+    is_admin: bool = False,
+) -> Dict[str, Any]:
+    """
+    Validates run ownership and replays it.
+    """
+    run = await agent_state.get_agent_run(db, run_id)
+    if not run:
+        raise ValueError("Agent run not found")
+        
+    if not is_admin and run.tenant_id != str(tenant_id):
+        raise ValueError("Agent run not found")
+            
+    from app.services.agents import agent_runtime
+    return await agent_runtime.replay_run(db, run_id)

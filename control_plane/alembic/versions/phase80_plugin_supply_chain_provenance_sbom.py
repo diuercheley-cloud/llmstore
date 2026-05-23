@@ -1,7 +1,7 @@
 """Add Phase 80 plugin supply-chain provenance and SBOM placeholders
 
-Revision ID: phase80_plugin_supply_chain_provenance_sbom
-Revises: phase79_formal_plugin_abi_runtime
+Revision ID: phase80_plugin_sbom
+Revises: phase79_plugin_abi
 Create Date: 2026-05-16 15:00:00.000000
 """
 
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "phase80_plugin_supply_chain_provenance_sbom"
-down_revision = "phase79_formal_plugin_abi_runtime"
+revision = "phase80_plugin_sbom"
+down_revision = "phase79_plugin_abi"
 branch_labels = None
 depends_on = None
 

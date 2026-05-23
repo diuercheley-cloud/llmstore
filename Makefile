@@ -237,6 +237,15 @@ agentic-readiness: ## Run Agentic Runtime Readiness Checks
 	@chmod +x scripts/agentic-readiness.sh
 	@./scripts/agentic-readiness.sh
 
+agent-worker-status: ## Show agent worker and queue status
+	@./scripts/agent-worker-status.sh
+
+agent-dlq-inspect: ## Inspect agent dead letter queue
+	@./scripts/agent-dlq-inspect.sh
+
+agent-recovery-test: ## Run agent queue recovery test
+	@./scripts/agent-queue-recovery-test.sh
+
 agent-queue-inspect: ## Inspect agent queue depth, workers, DLQ
 	@chmod +x scripts/agent-queue-inspect.sh
 	@./scripts/agent-queue-inspect.sh

@@ -25,11 +25,20 @@ async def main() -> None:
         await asyncio.gather(*tasks, return_exceptions=True)
         loop.stop()
 
+    def handle_drain(sig_name: str):
+        logger.info(f"Received {sig_name}. Entering drain mode...")
+        worker.drain()
+
     for sig in (signal.SIGINT, signal.SIGTERM):
         try:
             loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(shutdown(s.name)))
         except NotImplementedError:
             pass
+            
+    try:
+        loop.add_signal_handler(signal.SIGUSR1, lambda: handle_drain("SIGUSR1"))
+    except (NotImplementedError, AttributeError):
+        pass
 
     await worker.start()
 

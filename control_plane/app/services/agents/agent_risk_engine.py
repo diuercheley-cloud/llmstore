@@ -55,3 +55,10 @@ class AgentRiskEngine:
 
     def is_high_risk(self, score: float) -> bool:
         return score >= 20.0
+
+    def calculate_risk_level(self, agent: AgentDefinition) -> str:
+        score = self.calculate_agent_risk(agent)
+        if score >= 100: return "critical"
+        if score >= 50: return "high"
+        if score >= 10: return "medium"
+        return "low"
