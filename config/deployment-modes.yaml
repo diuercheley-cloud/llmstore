@@ -106,6 +106,16 @@ production:
       - flag: AGENT_EVAL_REGRESSION_GATE_ENABLED
         expected: true
         severity: blocker
+      - flag: AGENT_LLM_PROVIDER
+        expected: gateway
+        expected_alternatives: [real]
+        severity: blocker
+      - flag: AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION
+        expected: false
+        severity: blocker
+      - flag: AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION
+        expected: true
+        severity: warning
 
 enterprise_managed:
   name: "Enterprise Managed Mode"
@@ -138,5 +148,15 @@ enterprise_managed:
         expected: true
         severity: blocker
       - flag: MANAGED_CONTROL_PLANE_ENABLED
+        expected: true
+        severity: blocker
+      - flag: AGENT_LLM_PROVIDER
+        expected: real
+        expected_alternatives: [gateway]
+        severity: blocker
+      - flag: AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION
+        expected: false
+        severity: blocker
+      - flag: AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION
         expected: true
         severity: blocker

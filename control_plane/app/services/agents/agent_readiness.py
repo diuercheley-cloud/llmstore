@@ -17,8 +17,11 @@ from app.models.agent_execution import (
 )
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.services.agents.agent_llm_provider import LLMProviderType
 
 logger = logging.getLogger(__name__)
+
+VALID_LLM_PROVIDERS = {e.value for e in LLMProviderType}
 
 class ReadinessStatus(str, Enum):
     DISABLED = "disabled"
@@ -54,13 +57,81 @@ class AgentReadinessService:
                 "message": "Agentic runtime is disabled by configuration (opt-out)."
             })
             return results
-        
+
         results["checks"].append({
             "id": "runtime_enabled",
             "name": "Agent Runtime Enabled",
             "status": "pass",
             "value": True
         })
+
+        # 1b. LLM Provider Mode Check
+        llm_provider = getattr(self.settings, "agent_llm_provider", "mock")
+        deployment_mode = getattr(self.settings, "deployment_mode", "appliance")
+        allow_mock_in_prod = getattr(self.settings, "agent_allow_mock_llm_in_production", False)
+        require_real = getattr(self.settings, "agent_require_real_llm_for_production", True)
+
+        if llm_provider not in VALID_LLM_PROVIDERS:
+            results["checks"].append({
+                "id": "llm_provider",
+                "name": "LLM Provider Valid",
+                "status": "fail",
+                "value": llm_provider,
+                "message": f"Invalid LLM provider '{llm_provider}'. Must be one of: {sorted(VALID_LLM_PROVIDERS)}"
+            })
+            results["blockers"].append(f"Invalid LLM provider configured: {llm_provider}")
+            results["status"] = ReadinessStatus.BLOCKED
+        else:
+            provider_status = "pass"
+            messages = []
+
+            if llm_provider == "mock" and deployment_mode in ("production", "enterprise_managed"):
+                if allow_mock_in_prod:
+                    provider_status = "warn"
+                    messages.append(
+                        f"Mock LLM provider active in '{deployment_mode}' mode with override. "
+                        "Use gateway or real provider for GA workloads."
+                    )
+                    results["warnings"].extend(messages)
+                    if results["status"] == ReadinessStatus.READY:
+                        results["status"] = ReadinessStatus.DEGRADED
+                else:
+                    provider_status = "fail"
+                    messages.append(
+                        f"Mock LLM provider blocked in '{deployment_mode}' mode. "
+                        "Set AGENT_LLM_PROVIDER=gateway or AGENT_LLM_PROVIDER=real."
+                    )
+                    results["blockers"].extend(messages)
+                    results["status"] = ReadinessStatus.BLOCKED
+
+            elif llm_provider == "mock" and deployment_mode == "pilot":
+                provider_status = "warn"
+                messages.append(
+                    "Mock LLM provider used in pilot mode. "
+                    "Use gateway or real provider for meaningful pilot evaluation."
+                )
+                results["warnings"].extend(messages)
+                if results["status"] == ReadinessStatus.READY:
+                    results["status"] = ReadinessStatus.DEGRADED
+
+            elif llm_provider in ("gateway", "real") and deployment_mode in ("production", "enterprise_managed"):
+                if not require_real:
+                    provider_status = "warn"
+                    messages.append(
+                        "AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION is disabled. "
+                        "Production readiness posture is weakened."
+                    )
+                    results["warnings"].extend(messages)
+                    if results["status"] == ReadinessStatus.READY:
+                        results["status"] = ReadinessStatus.DEGRADED
+
+            results["checks"].append({
+                "id": "llm_provider",
+                "name": "LLM Provider Status",
+                "status": provider_status,
+                "value": {"provider": llm_provider, "mode": deployment_mode},
+                "message": "; ".join(messages) if messages else f"LLM provider '{llm_provider}' is valid for '{deployment_mode}' mode."
+            })
 
         # 2. Execution Plane Check
         plane_enabled = self.settings.agent_execution_plane_enabled

@@ -12,7 +12,9 @@ All APIs, UI pages, services, scripts, feature flags, adapters, dashboards, and 
 | **beta** | Functional but subject to rapid evolutionary changes. Safe for pilot deployments. | Pilot |
 | **experimental** | Proof of concept or development-only capabilities. Disabled by default. | Development |
 | **deprecated** | Legacy features scheduled for deletion. Accessing deprecated APIs triggers warning headers. | Deprecated |
+| **internal** | System-internal endpoints requiring RBAC/admin auth, not listed as public APIs. | Operator-only |
 | **internal_only** | System-internal code, test utilities, or pipeline scripts. | Operator-only |
+| **removed_candidate** | Dead endpoints removed from active registry. | None (Scheduled for deletion) |
 | **orphaned** | Dead code, unreferenced endpoints, unrouted pages, or unused scripts. | None (Scheduled for deletion) |
 
 ---

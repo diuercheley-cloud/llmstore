@@ -302,8 +302,14 @@ class Settings(BaseSettings):
     agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
 
     # Owner: agent-platform
-    # Status: beta
+    # Status: active
     agent_llm_provider: str = Field(default="mock", alias="AGENT_LLM_PROVIDER")
+    # Owner: agent-platform
+    # Status: active
+    agent_allow_mock_llm_in_production: bool = Field(default=False, alias="AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION")
+    # Owner: agent-platform
+    # Status: active
+    agent_require_real_llm_for_production: bool = Field(default=True, alias="AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION")
     # Owner: agent-platform
     # Status: beta
     agent_real_llm_enabled: bool = Field(default=False, alias="AGENT_REAL_LLM_ENABLED")

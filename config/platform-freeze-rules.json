@@ -188,6 +188,7 @@
     "payments.py",
     "performance_admin.py",
     "platform_ga_admin.py",
+    "provider_validation_admin.py",
     "pki_attestation_admin.py",
     "plugin_marketplace_admin.py",
     "pocket_tts.py",
@@ -1376,7 +1377,8 @@
     "agent_workflow_timers_enabled",
     "agent_workflow_webhooks_enabled",
     "agent_workflow_polling_enabled",
-    "agent_workflow_distributed_locks_enabled"
+    "agent_workflow_distributed_locks_enabled",
+    "agent_real_provider_validation_enabled"
   ],
   "approved_exceptions": [
     "platform",

@@ -10,7 +10,45 @@ sys.path.insert(0, os.path.join(base_dir, "control_plane"))
 
 from app.services.platform.surface_audit import SurfaceAuditService
 
+def validate_ga_surface():
+    api_surface_path = os.path.join(base_dir, "config/api-surface.yaml")
+    if os.path.exists(api_surface_path):
+        with open(api_surface_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or []
+            
+        errors = []
+        for entry in data:
+            path = entry.get("path") or entry.get("endpoint", "unknown")
+            method = entry.get("method", "unknown")
+            ref = f"{method} {path}"
+            
+            if not entry.get("owner"):
+                errors.append(f"{ref} sem owner")
+            if not entry.get("status"):
+                errors.append(f"{ref} sem status")
+            if "auth_required" not in entry:
+                errors.append(f"{ref} sem auth classification")
+            
+            status = entry.get("status", "")
+            if status in ["supported", "beta", "experimental"] and not entry.get("docs_url"):
+                if "internal" not in status: # internal ones might not need public docs
+                    errors.append(f"{ref} public sem docs")
+                    
+            if status in ["beta", "experimental"] and (not entry.get("feature_flag") or entry.get("feature_flag") == "none"):
+                errors.append(f"{ref} beta/experimental sem feature flag")
+                
+            if status == "deprecated":
+                if not entry.get("replacement") and not entry.get("justification"):
+                    errors.append(f"{ref} deprecated sem replacement ou justification")
+                    
+        if os.environ.get("GA_MODE") == "true" and errors:
+            print("GA Validation Failed for API Surface:")
+            for err in errors:
+                print(f" - {err}")
+            sys.exit(1)
+
 def generate_markdown_reports():
+    validate_ga_surface()
     print("Running platform surface area audit...")
     service = SurfaceAuditService(base_dir=base_dir)
     audit_results = service.run_audit()
@@ -50,6 +88,12 @@ def generate_markdown_reports():
                 f.write(f"  - `{u}`\n")
         else:
             f.write("  - None\n")
+            
+        unclassified_len = len(apis.get("unclassified", []))
+        if unclassified_len > 0:
+            f.write(f"- **Unclassified Endpoints ({unclassified_len})**:\n")
+            for u in apis["unclassified"]:
+                f.write(f"  - `{u}`\n")
 
         f.write(f"- **Unregistered Routes ({len(apis['unregistered_routes'])})**:\n")
         if apis["unregistered_routes"]:

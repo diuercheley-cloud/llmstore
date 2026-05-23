@@ -11,7 +11,7 @@ from app.models.client import Client
 from app.models.model_registry import ModelRegistry
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
-from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
+from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider, ProviderUnavailableError
 from app.services.inference_proxy import InferenceProxy, ForwardResult
 from app.core.config import get_settings
 
@@ -132,6 +132,7 @@ async def test_gateway_llm_provider_real_disabled(session: AsyncSession, monkeyp
     agent_def = MagicMock(spec=AgentDefinition)
     run = MagicMock(spec=AgentRun)
     
-    result = await provider.generate(agent_def, run, allowed_tools=[])
-    assert "[Real LLM disabled]" in result["output"]
+    with pytest.raises(ProviderUnavailableError) as exc:
+        await provider.generate(agent_def, run, allowed_tools=[])
+    assert "AGENT_REAL_LLM_ENABLED is false" in str(exc.value)
     mock_proxy.chat.assert_not_called()

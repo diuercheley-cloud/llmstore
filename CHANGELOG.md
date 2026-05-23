@@ -1,5 +1,22 @@
 # Changelog
 
+## [v2.0.2-agentic-ga-readiness] - 2026-05-23
+
+### Added
+- **GA readiness release gate**: `scripts/ga-readiness.sh` and `make ga-readiness` now generate platform and release artifacts and fail unless all 12 GA criteria pass.
+- **Surface-area audit target**: `make surface-area-audit` now produces release-governed surface artifacts from declarative inventories.
+- **Release evidence line**: `docs/releases/V2_0_2_AGENTIC_GA_READINESS.md` documents the GA criteria, artifacts, and final blocking conditions.
+
+### Changed
+- **Surface governance is inventory-driven**: supported surface, API surface, and script manifest metadata now drive GA evidence instead of broad heuristic orphan detection.
+- **Provider validation evidence is stricter**: GA only accepts recent non-mock validation when a real/gateway `basic_model_call` passed.
+- **Task execution is fail-closed**: unsupported simulation mode no longer falls through implicit execution paths, and completed task/tool outputs require explicit `execution_mode`.
+- **Legacy provider-validation alias deprecated**: `REAL_PROVIDER_VALIDATION_ENABLED` now points operators to `AGENT_REAL_PROVIDER_VALIDATION_ENABLED`.
+
+### Security
+- **No silent production mock posture for GA**: production overrides for mock LLM remain outside the GA-ready posture.
+- **No silent task completion**: task and tool execution paths now tag `execution_mode` explicitly or fail.
+
 ## [v2.0.1-agentic-operational-maturity] - 2026-05-23
 
 ### Added

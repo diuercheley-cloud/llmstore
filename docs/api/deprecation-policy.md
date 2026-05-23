@@ -26,7 +26,7 @@ Integrating clients must monitor HTTP responses for the following headers:
 
 ### `X-API-Surface-Status`
 Returns the status classification of the endpoint.
-- Value: `supported | deprecated | internal | experimental`
+- Value: `supported | beta | deprecated | internal | experimental | removed_candidate`
 
 ### `X-Deprecated-Endpoint`
 Injected on deprecated endpoints.

@@ -14,9 +14,12 @@ from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.agent_budget import AgentBudgetService
 from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
 from app.services.agents.agent_llm_provider import (
-    AgentLLMProvider, 
-    get_agent_llm_provider, 
-    MockAgentLLMProvider as MockLLMProvider
+    AgentLLMProvider,
+    get_agent_llm_provider,
+    MockAgentLLMProvider as MockLLMProvider,
+    ProviderResponse,
+    MockProviderError,
+    ProviderUnavailableError,
 )
 from app.services.agents.agent_handoffs import AgentHandoffService
 from app.models.agents import AgentPlan
@@ -26,9 +29,6 @@ from app.services.agents.agent_receipts import AgentReceiptsService
 from app.services.agents.reasoning.reasoning_loop import ReasoningLoop
 
 logger = logging.getLogger(__name__)
-
-# Re-export for tests
-MockLLMProvider = MockLLMProvider
 
 class AgentExecutor:
     def __init__(
@@ -213,8 +213,26 @@ class AgentExecutor:
             decision = await self.reasoning_loop.execute(agent_def=agent_def, run=run, allowed_tools=agent_def.allowed_tools or [])
             latency_ms = int((time.time() - start_time) * 1000)
             await self.obs.record_model_call(self.run_id, "completed", latency_ms, decision.get("usage"))
+
+            if isinstance(decision, ProviderResponse):
+                await self._record_provider_metadata(run, decision)
+
             await self._update_usage(run, decision)
             return decision
+        except MockProviderError as e:
+            latency_ms = int((time.time() - start_time) * 1000)
+            logger.error(f"Mock provider blocked in production: {e}")
+            await self.obs.record_model_call(self.run_id, "failed", latency_ms, error=str(e))
+            await agent_state.log_run_step(self.db, self.run_id, step_number, "model_call", {"input_hash": run.input_hash}, {}, "failed", latency_ms, error=str(e))
+            await self._fail_run(f"LLM provider denied: {str(e)}")
+            return None
+        except ProviderUnavailableError as e:
+            latency_ms = int((time.time() - start_time) * 1000)
+            logger.error(f"Provider unavailable: {e}")
+            await self.obs.record_model_call(self.run_id, "failed", latency_ms, error=str(e))
+            await agent_state.log_run_step(self.db, self.run_id, step_number, "model_call", {"input_hash": run.input_hash}, {}, "failed", latency_ms, error=str(e))
+            await self._fail_run(f"Provider unavailable: {str(e)}")
+            return None
         except Exception as e:
             latency_ms = int((time.time() - start_time) * 1000)
             await self.obs.record_model_call(self.run_id, "failed", latency_ms, error=str(e))
@@ -223,13 +241,34 @@ class AgentExecutor:
             return None
 
     async def _update_usage(self, run, decision):
-        usage = decision.get("usage", {})
-        p_tok, c_tok = usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+        if isinstance(decision, ProviderResponse):
+            usage = decision.usage
+            p_tok = usage.get("prompt_tokens", 0)
+            c_tok = usage.get("completion_tokens", 0)
+            cost = decision.cost_brl
+        else:
+            usage = decision.get("usage", {})
+            p_tok, c_tok = usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
+            cost = decision.get("cost_brl") or ((p_tok + c_tok) * 0.00005)
         run.total_tokens += (p_tok + c_tok)
-        cost = decision.get("cost_brl") or ((p_tok + c_tok) * 0.00005)
         run.estimated_cost_brl += cost
         await self.obs.record_cost(run.agent_id, run.id, cost, p_tok, c_tok)
         await self.db.commit()
+
+    async def _record_provider_metadata(self, run, decision: ProviderResponse):
+        await self.obs.record_model_call(
+            self.run_id,
+            "completed",
+            decision.latency,
+            {
+                "provider_type": decision.provider_type,
+                "model_id": decision.model_id,
+                "backend_id": decision.backend_id,
+                "execution_mode": decision.execution_mode,
+                "fallback_used": decision.fallback_used,
+                "validation_status": decision.validation_status,
+            }
+        )
 
     async def _handle_tool_call_decision(self, run, decision, step_number):
         tool_name, tool_input = decision.get("tool_name"), decision.get("tool_input", {})
@@ -264,7 +303,12 @@ class AgentExecutor:
                 tool_callable = runner_wrapper
 
             if getattr(self.settings, "agent_task_mock_mode", False):
-                output = {"status": "mock", "message": f"Mocked tool {tool_name}", "mock": True}
+                output = {
+                    "status": "mock",
+                    "message": f"Mocked tool {tool_name}",
+                    "mock": True,
+                    "execution_mode": "mock",
+                }
             elif getattr(self.settings, "agent_task_dry_run_mode", False):
                 output = await execute_tool(
                     self.db, tool, tool_input, self.run_id, 
@@ -273,7 +317,11 @@ class AgentExecutor:
                     is_dry_run=True,
                     tool_callable=tool_callable
                 )
-            elif not self.settings.agent_execution_enabled and not getattr(self.settings, "agent_task_simulation_mode", False):
+                if isinstance(output, dict):
+                    output.setdefault("execution_mode", "dry_run")
+            elif getattr(self.settings, "agent_task_simulation_mode", False):
+                raise NotImplementedError("controlled_not_implemented")
+            elif not self.settings.agent_execution_enabled:
                 raise NotImplementedError("controlled_not_implemented")
             else:
                 output = await execute_tool(
@@ -283,6 +331,8 @@ class AgentExecutor:
                     is_dry_run=False,
                     tool_callable=tool_callable
                 )
+                if isinstance(output, dict):
+                    output.setdefault("execution_mode", "real")
             error = None
         except Exception as e:
             output, error = {"error": str(e)}, str(e)

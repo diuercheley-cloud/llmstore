@@ -1,92 +1,111 @@
-import pytest
 import os
 import sys
+
+import pytest
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../control_plane"))
 from app.services.platform.ga_readiness import GAReadinessService
 
+
 @pytest.fixture
 def service():
-    # Make sure we use the right config path
     config_path = os.path.join(os.path.dirname(__file__), "../../config/ga-readiness-rules.yaml")
     return GAReadinessService(config_path=config_path)
 
+
 def get_perfect_state():
     return {
-        "readiness_passing": True,
-        "release_gate_passing": True,
+        "operational_readiness_passed": True,
+        "agentic_readiness_passed": True,
+        "release_gate_passed": True,
+        "platform_freeze_passed": True,
+        "surface_audit_clean": True,
         "no_orphaned_flags": True,
-        "no_orphaned_apis": True,
-        "eval_pass_rate": 0.99,
-        "slo_stability_required": True,
-        "incident_recovery_tested": True,
-        "operational_playbooks_present": True,
-        "observability_dashboards_provisioned": True,
-        "promotion_gates_enabled": True,
         "security_warnings_classified": True,
-        "tenant_isolation_validated": True
+        "eval_gate_enforced": True,
+        "provider_validation_recent": True,
+        "no_silent_mock_in_production": True,
+        "no_silent_task_simulation": True,
+        "tenant_isolation_validated": True,
+        "_reasons": {
+            "provider_validation_recent": "validated providers: local_gateway",
+        },
     }
 
-def test_perfect_state_is_ga_ready(service):
-    state = get_perfect_state()
-    result = service.evaluate_readiness(state)
+
+def test_all_12_criteria_pass_is_ga_ready(service):
+    result = service.evaluate_readiness(get_perfect_state())
     assert result["maturity_level"] == "ga_ready"
     assert result["score"] == 12
+    assert result["total_possible"] == 12
 
-def test_missing_playbook_reduces_maturity(service):
+
+def test_surface_audit_dirty_blocks_ga(service):
     state = get_perfect_state()
-    state["operational_playbooks_present"] = False
+    state["surface_audit_clean"] = False
+    state["_reasons"]["surface_audit_clean"] = "surface audit is dirty: 6 unregistered API routes"
+
     result = service.evaluate_readiness(state)
-    
+
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
-    assert "failed" in result["details"]["operational_playbooks_present"]
+    assert result["details"]["surface_audit_clean"] == "failed: surface audit is dirty: 6 unregistered API routes"
 
-def test_orphaned_flags_reduces_maturity(service):
+
+def test_provider_validation_missing_blocks_ga(service):
     state = get_perfect_state()
-    state["no_orphaned_flags"] = False
+    state["provider_validation_recent"] = False
+    state["_reasons"]["provider_validation_recent"] = (
+        "provider validation latest/results.json has no non-mock provider with a passing basic_model_call"
+    )
+
     result = service.evaluate_readiness(state)
-    
+
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
-    assert "failed" in result["details"]["no_orphaned_flags"]
+    assert result["details"]["provider_validation_recent"] == (
+        "failed: provider validation latest/results.json has no non-mock provider with a passing basic_model_call"
+    )
 
-def test_failed_evals_reduces_maturity(service):
+
+def test_silent_mock_blocks_ga(service):
     state = get_perfect_state()
-    state["eval_pass_rate"] = 0.80  # Below 0.95 threshold
+    state["no_silent_mock_in_production"] = False
+    state["_reasons"]["no_silent_mock_in_production"] = "mock LLM is explicitly allowed in production-capable mode"
+
     result = service.evaluate_readiness(state)
-    
+
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
-    assert "failed" in result["details"]["eval_pass_rate"]
+    assert result["details"]["no_silent_mock_in_production"] == (
+        "failed: mock LLM is explicitly allowed in production-capable mode"
+    )
 
-def test_slo_instability_reduces_maturity(service):
+
+def test_task_simulation_blocks_ga(service):
     state = get_perfect_state()
-    state["slo_stability_required"] = False
+    state["no_silent_task_simulation"] = False
+    state["_reasons"]["no_silent_task_simulation"] = (
+        "task_engine.py still contains AGENT_TASK_SIMULATION_MODE execution path"
+    )
+
     result = service.evaluate_readiness(state)
-    
+
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
-    assert "failed" in result["details"]["slo_stability"]
+    assert result["details"]["no_silent_task_simulation"] == (
+        "failed: task_engine.py still contains AGENT_TASK_SIMULATION_MODE execution path"
+    )
 
-def test_multiple_failures_reduce_to_pilot_or_beta(service):
-    state = get_perfect_state()
-    state["slo_stability_required"] = False
-    state["eval_pass_rate"] = 0.80
-    state["no_orphaned_flags"] = False
-    state["operational_playbooks_present"] = False
-    
-    result = service.evaluate_readiness(state)
-    # Score drops by 4 -> 8. Pilot ready threshold is 8.
-    assert result["maturity_level"] == "pilot_ready"
-    assert result["score"] == 8
 
 def test_report_generation(service, tmpdir):
     state = get_perfect_state()
     report_path = os.path.join(tmpdir, "ga-readiness.md")
     service.generate_report(state, filepath=report_path)
-    
+
     assert os.path.exists(report_path)
-    with open(report_path, "r") as f:
+    with open(report_path, "r", encoding="utf-8") as f:
         content = f.read()
         assert "GA_READY" in content
         assert "12 / 12" in content
+        assert "Platform is GA_READY 12/12." in content

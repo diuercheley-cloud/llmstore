@@ -204,6 +204,10 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_evals_admin import router as agent_evals_admin_router
         app.include_router(agent_evals_admin_router)
 
+    if settings.agent_real_provider_validation_enabled:
+        from app.api.provider_validation_admin import router as provider_validation_admin_router
+        app.include_router(provider_validation_admin_router)
+
     if settings.agent_memory_enabled:
         from app.api.agent_memory_admin import router as agent_memory_admin_router
         app.include_router(agent_memory_admin_router)

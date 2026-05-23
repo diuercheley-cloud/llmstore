@@ -120,7 +120,7 @@ def _get_api_surface_map():
             with open(config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or []
                 for entry in data:
-                    key = (entry.get("endpoint"), entry.get("method"))
+                    key = (entry.get("path") or entry.get("endpoint"), entry.get("method"))
                     mapping[key] = entry
         except Exception as e:
             logger.error(f"Error loading api-surface.yaml: {e}")

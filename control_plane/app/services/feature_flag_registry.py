@@ -135,15 +135,24 @@ class FeatureFlagRegistryService:
         Scans the codebase and configuration to find orphaned flags.
         """
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-        
-        # Get all boolean settings fields from Settings class to filter out non-boolean settings
+
         from app.core.config import Settings
+        settings_keys = set()
         bool_settings_keys = set()
+        alias_to_field = {}
         for field_name, field_info in Settings.model_fields.items():
+            settings_keys.add(field_name.upper())
             field_type = field_info.annotation
-            type_str = str(field_type).lower()
-            if "bool" in type_str:
+            if "bool" in str(field_type).lower():
                 bool_settings_keys.add(field_name.upper())
+            validation_alias = getattr(field_info, "validation_alias", None)
+            if validation_alias is not None:
+                alias_repr = str(validation_alias)
+                for alias in re.findall(r"'([A-Z0-9_]+)'", alias_repr):
+                    alias_to_field[alias.upper()] = field_name.upper()
+                    settings_keys.add(alias.upper())
+                    if "bool" in str(field_type).lower():
+                        bool_settings_keys.add(alias.upper())
 
         # 1. Parse .env.example
         env_example_path = os.path.join(base_dir, ".env.example")
@@ -155,15 +164,17 @@ class FeatureFlagRegistryService:
                     if not line or line.startswith("#") or "=" not in line:
                         continue
                     key = line.split("=", 1)[0].strip().upper()
-                    # Filter: only keep if it is a boolean setting field
-                    if key in bool_settings_keys:
+                    canonical = alias_to_field.get(key, key)
+                    if key in settings_keys or canonical in settings_keys:
                         env_keys.add(key)
+                        env_keys.add(canonical)
 
         # 2. Scan codebase for setting usage (e.g. settings.SOME_FLAG)
         code_keys = set()
         settings_pattern = re.compile(r"(?:settings|get_settings\(\))\s*\.\s*([A-Za-z0-9_]+)")
         env_get_pattern = re.compile(r"os\s*\.\s*environ\s*\[\s*['\"]([A-Za-z0-9_]+)['\"]")
         env_get_opt_pattern = re.compile(r"os\s*\.\s*getenv\s*\(\s*['\"]([A-Za-z0-9_]+)['\"]")
+        getattr_pattern = re.compile(r"getattr\s*\([^,]+,\s*['\"]([A-Za-z0-9_]+)['\"]")
         
         # Avoid scanning virtual environments, build artifacts, git
         exclude_dirs = {".git", "venv", ".venv", "__pycache__", "node_modules", "artifacts", "brain"}
@@ -184,8 +195,16 @@ class FeatureFlagRegistryService:
                             code_keys.add(m.group(1).upper())
                         for m in env_get_opt_pattern.finditer(content):
                             code_keys.add(m.group(1).upper())
+                        for m in getattr_pattern.finditer(content):
+                            code_keys.add(m.group(1).upper())
                 except Exception:
                     pass
+
+        normalized_code_keys = set()
+        for key in code_keys:
+            normalized_code_keys.add(key)
+            normalized_code_keys.add(alias_to_field.get(key, key))
+        code_keys = normalized_code_keys
 
         # 3. Load registered flags
         flags = self.load_registry()
@@ -200,14 +219,13 @@ class FeatureFlagRegistryService:
 
         # In env/code but not registered
         missing_registration = []
-        # Filter code_keys to only include boolean feature flags
         for c_key in sorted(code_keys):
             if c_key in bool_settings_keys:
                 if c_key not in registered_keys:
                     missing_registration.append(c_key)
                     
         for e_key in sorted(env_keys):
-            if e_key not in registered_keys:
+            if e_key in bool_settings_keys and e_key not in registered_keys:
                 if e_key not in missing_registration:
                     missing_registration.append(e_key)
 
@@ -218,4 +236,3 @@ class FeatureFlagRegistryService:
             "env_references_count": len(env_keys),
             "registered_count": len(registered_keys)
         }
-

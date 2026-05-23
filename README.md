@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v2.0.1-agentic-operational-maturity`  
+> Current build: `v2.0.2-agentic-ga-readiness`  
 > Previous stable: [`v2.0.0-agentic-ai-platform`](docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md)  
-> Release notes: [`docs/releases/V2_0_1_AGENTIC_OPERATIONAL_MATURITY.md`](docs/releases/V2_0_1_AGENTIC_OPERATIONAL_MATURITY.md)  
+> Release notes: [`docs/releases/V2_0_2_AGENTIC_GA_READINESS.md`](docs/releases/V2_0_2_AGENTIC_GA_READINESS.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **GA Readiness (v2.0.2)**: Tightens surface governance, explicit execution modes, production mock posture, and opt-in provider validation into the final GA gate.
 - **Operational Maturity (v2.0.1)**: Consolidates deployment modes, GA scoring, feature-flag hygiene, surface reduction, security warning governance, activation playbooks, and provider validation into an operator-ready release line.
 - **Platform Consolidation (v1.9.8)**: Supportability and operational consolidation inside existing platform domains, plus lazy-loaded routers, endpoint cleanup, and release governance tightening.
 - **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
@@ -153,6 +154,7 @@ make validate-platform-documentation
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
 - **Agentic surfaces are opt-in and safe-by-default.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` preserve the non-agentic default posture.
+- **GA does not accept implicit production fallbacks.** `AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=false` and `AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION=true` preserve a fail-closed production posture; any real provider validation remains opt-in and budgeted.
 - **Human approval stays on for sensitive agent actions.** `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` keep high-risk execution approval-gated by default.
 - **Raw prompts are not surfaced by default in agentic flows.** Observability, approvals, replay, and memory workflows use hashes and sanitized payloads rather than exposing raw prompts.
 - **No cross-tenant agent memory is supported.** Agent memory is tenant-scoped and disabled by default until operators explicitly enable it.
@@ -207,6 +209,13 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 >
 > Para uma matriz de suporte detalhada, consulte a [Política de Supported Surface Area](docs/support/supported-surface-area.md).
 
+### Release v2.0.2 scope
+
+- **Surface governance is declarative**: GA uses versioned API/support-surface inventories and script manifests instead of broad filesystem heuristics.
+- **Task execution is explicit**: task and tool execution paths must emit `execution_mode`, and unsupported simulation paths fail closed instead of completing implicitly.
+- **Provider validation evidence is stricter**: GA only counts a recent non-mock provider/gateway validation when `basic_model_call` actually passes.
+- **Production mock posture is fail-closed for GA**: mock provider usage remains acceptable for appliance development, but is not counted as production-safe evidence.
+
 ### Release v2.0.1 scope
 
 - **Operational modes made official**: `DEPLOYMENT_MODE` now defines the supported activation postures across `appliance`, `pilot`, `production`, and `enterprise_managed`.
@@ -225,20 +234,16 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | Multi-agent orchestration | Hierarchical and debate topologies exist behind bounded team governance. | `AGENT_MULTI_AGENT_ENABLED=false`, `AGENT_HIERARCHICAL_TEAMS_ENABLED=false`, `AGENT_DEBATE_TEAMS_ENABLED=false` |
 | Agent Studio and debugger | Visual authoring and debugging are operator-facing and disabled by default. | `AGENT_STUDIO_ENABLED=false`, `AGENT_VISUAL_BUILDER_ENABLED=false`, `AGENT_DEBUGGER_ENABLED=false` |
 
-### Agentic release criteria
+### GA readiness criteria
 
-`v2.0.1-agentic-operational-maturity` is only considered releasable when all eight criteria below are satisfied:
+`v2.0.2-agentic-ga-readiness` is only `GA_READY` when all 12 criteria in [docs/platform/ga-readiness.md](docs/platform/ga-readiness.md) pass. The most release-sensitive items are:
 
-| Criterion | v2.0.0 posture |
-|-----------|----------------|
-| 1. Planning, execution, tools, memory, completion | Runtime can plan, execute, call governed tools, retrieve memory, and conclude tasks when the corresponding agent flags are enabled. |
-| 2. End-to-end auditability | Runs, steps, events, approvals, replay artifacts, and receipts are persisted and queryable through agent observability surfaces. |
-| 3. Risk policy and approval | High-risk actions remain policy-evaluated and approval-gated by default via `AGENT_HUMAN_APPROVAL_ENABLED=true`. |
-| 4. Official worker and queue | Async execution has an official worker/queue deployment path and operator scripts. |
-| 5. Evals block promotion | Promotion remains blocked by `AGENT_PROMOTION_REQUIRES_EVALS=true` and eval regression gates. |
-| 6. SLOs, metrics, playbooks | Agentic SLOs, dashboards, readiness checks, and playbooks are part of the release surface. |
-| 7. Versioned contracts | Runtime, tool, and memory contracts are versioned and covered by contract tests. |
-| 8. Safe-by-default | All agentic capabilities with side effects remain disabled until explicitly enabled by operators. |
+| Criterion | Gate |
+|-----------|------|
+| Surface governance | No unclassified endpoints and no API surface drift. |
+| Provider validation | A recent non-mock provider or validated gateway must pass `basic_model_call`. |
+| Production posture | No silent mock LLM path is accepted for production GA evidence. |
+| Task execution posture | No completed task is accepted without explicit `execution_mode`. |
 
 ### Operational maturity controls
 

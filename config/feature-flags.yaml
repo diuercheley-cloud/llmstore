@@ -38,6 +38,17 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+- name: CREATE_TABLES_ON_STARTUP
+  default: false
+  owner: platform-ops
+  area: core
+  status: internal
+  introduced_in: v1.9.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default. Automatic schema creation is a local development
+    convenience and is not part of the supported production posture.
 - name: AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK
   default: true
   owner: agent-platform
@@ -701,6 +712,30 @@
   conflicts: []
   safe_default_reason: The runtime defaults to the mock provider so the platform never
     reaches an external model gateway unintentionally.
+- name: AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: high
+  dependencies:
+  - AGENT_LLM_PROVIDER
+  conflicts: []
+  safe_default_reason: Mock LLM in production is blocked by default. Only override
+    for development or CI environments, never for GA.
+- name: AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: medium
+  dependencies:
+  - AGENT_LLM_PROVIDER
+  conflicts: []
+  safe_default_reason: Production deployments require gateway or real LLM provider
+    by default. Disabling this weakens production readiness.
 - name: AGENT_TOOL_ADAPTERS_ENABLED
   default: false
   owner: agent-platform
@@ -775,6 +810,42 @@
   conflicts: []
   safe_default_reason: Planner-created tasks do not execute real side effects until
     explicitly enabled.
+- name: AGENT_TASK_SIMULATION_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_PLANNING_ENABLED
+  conflicts: []
+  safe_default_reason: Unsupported simulation paths stay disabled by default and must
+    fail closed outside internal development.
+- name: AGENT_TASK_MOCK_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_PLAN_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Mock task execution is an internal-only control and not part
+    of the supported GA surface.
+- name: AGENT_TASK_DRY_RUN_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_PLAN_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Dry-run task execution is disabled by default and must emit
+    explicit execution_mode when used.
 - name: AGENT_REPLAN_ENABLED
   default: true
   owner: agent-platform
@@ -2801,12 +2872,15 @@
   default: false
   owner: platform-ops
   area: OpenAI-compatible API
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
-  safe_default_reason: Default value is safe for standard installations.
+  replacement: AGENT_REAL_PROVIDER_VALIDATION_ENABLED
+  remove_after: v2.1.0
+  safe_default_reason: Deprecated legacy alias. Agentic provider validation must be
+    controlled through AGENT_REAL_PROVIDER_VALIDATION_ENABLED.
 - name: RESPONSE_CACHE_ENABLED
   default: true
   owner: platform-ops
@@ -3014,3 +3088,49 @@
   conflicts: []
   safe_default_reason: Disabled by default. Enables cryptographic and strict tenant
     isolation rules.
+- name: AGENT_REAL_PROVIDER_VALIDATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: high
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default. Real provider validation enforces opt-in
+    to prevent unexpected outbound costs and data exposure.
+- name: AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: high
+  dependencies:
+  - AGENT_REAL_PROVIDER_VALIDATION_ENABLED
+  conflicts: []
+  safe_default_reason: Paid provider calls remain blocked until operators explicitly
+    accept provider billing risk.
+- name: AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL
+  default: 1.00
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: medium
+  dependencies:
+  - AGENT_REAL_PROVIDER_VALIDATION_ENABLED
+  conflicts: []
+  safe_default_reason: Budget of R$1.00 limits maximum validation spend per suite
+    run.
+- name: AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS
+  default: 60
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Default 60-second timeout prevents hanging validations.

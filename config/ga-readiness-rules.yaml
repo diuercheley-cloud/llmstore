@@ -1,16 +1,25 @@
 rules:
-  readiness_passing: true
-  release_gate_passing: true
-  no_orphaned_flags: true
-  no_orphaned_apis: true
-  eval_pass_rate_threshold: 0.95
-  slo_stability_required: true
-  incident_recovery_tested: true
-  operational_playbooks_present: true
-  observability_dashboards_provisioned: true
-  promotion_gates_enabled: true
-  security_warnings_classified: true
-  tenant_isolation_validated: true
+  criteria:
+    - operational_readiness_passed
+    - agentic_readiness_passed
+    - release_gate_passed
+    - platform_freeze_passed
+    - surface_audit_clean
+    - no_orphaned_flags
+    - security_warnings_classified
+    - eval_gate_enforced
+    - provider_validation_recent
+    - no_silent_mock_in_production
+    - no_silent_task_simulation
+    - tenant_isolation_validated
+  ga_requires_all_criteria: true
+  provider_validation_max_age_days: 30
+  allowed_release_statuses:
+    - experimental
+    - beta
+    - pilot_ready
+    - production_ready
+    - ga_ready
 
 weights:
   experimental: 0

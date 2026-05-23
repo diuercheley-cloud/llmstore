@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.1-agentic-operational-maturity` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.2-agentic-ga-readiness` line.
 
 ## Defaults
 
@@ -20,6 +20,8 @@
 - In `pilot` mode, the agentic runtime is active but SaaS connectors are read-only (writes blocked), and any mutating tool or memory action strictly requires human operator approval (`AGENT_HUMAN_APPROVAL_ENABLED=true`). Strict resource budgets are enforced.
 - In `production` mode, automatic evaluation gates are strictly enforced (`AGENT_PROMOTION_REQUIRES_EVALS=true` and `AGENT_EVAL_REGRESSION_GATE_ENABLED=true`) to block unvalidated agents.
 - In `enterprise_managed` mode, the same production gates apply, supplemented by strict cryptographic tenant isolation (`AGENT_TENANT_ISOLATION_STRICT=true`), managed control plane constraints, and enterprise observability.
+- `AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=false` is the expected GA posture. Any production override is a release blocker.
+- Unsupported task simulation paths must fail closed. Completed task outputs must carry explicit `execution_mode`.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
 
 ## Agentic release controls
@@ -33,6 +35,7 @@
 - Worker and queue execution are official but opt-in; no background worker starts unless `AGENT_WORKER_ENABLED=true`.
 - Promotion remains blocked on failed or missing eval evidence even if runtime APIs are enabled.
 - SLOs, metrics, readiness checks, and incident playbooks are required operator controls for the agentic surface.
+- Provider validation is opt-in, budgeted, and must use synthetic data. GA evidence only counts when a non-mock provider/gateway actually answers a passing `basic_model_call`.
 
 ## Secrets Handling
 

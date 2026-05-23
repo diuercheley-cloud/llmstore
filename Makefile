@@ -260,6 +260,24 @@ agent-evals: ## Run Agent Evaluation suites
 	@echo "Running Agent Evaluations..."
 	@PYTHONPATH=control_plane .venv/bin/python -m pytest tests/agent_evals/
 
+agent-real-provider-validation: ## Run Agent real provider validation suite (opt-in, budgeted)
+	@echo "Running Agent Real Provider Validation..."
+	@chmod +x scripts/run-agent-real-provider-validation.sh
+	@AGENT_REAL_PROVIDER_VALIDATION_ENABLED=true \
+	 AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL=1.00 \
+	 AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS=60 \
+	 PYTHONPATH=control_plane \
+	 ./scripts/run-agent-real-provider-validation.sh
+
+agent-real-provider-validation-real: ## Run Agent real provider validation (real calls, may incur cost)
+	@echo "Running Agent Real Provider Validation (REAL MODE)..."
+	@chmod +x scripts/run-agent-real-provider-validation.sh
+	@AGENT_REAL_PROVIDER_VALIDATION_ENABLED=true \
+	 AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID=false \
+	 AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL=1.00 \
+	 PYTHONPATH=control_plane \
+	 ./scripts/run-agent-real-provider-validation.sh --real --budget 1.00
+
 agent-eval-gate: ## Run Agent Evaluation promotion gate verification
 	@echo "Running Agent Eval Gate Verification..."
 	@PYTHONPATH=control_plane .venv/bin/python -c "\
@@ -804,6 +822,16 @@ feature-flag-audit: ## Run the feature flags governance auditor
 	@if [ -x ./.venv/bin/python3 ]; then ./.venv/bin/python3 ./scripts/audit-feature-flags.py; \
 	elif [ -x ./venv/bin/python3 ]; then ./venv/bin/python3 ./scripts/audit-feature-flags.py; \
 	else python3 ./scripts/audit-feature-flags.py; fi
+
+surface-area-audit: ## Run the supported surface governance audit
+	chmod +x ./scripts/surface-area-audit.py
+	@if [ -x ./.venv/bin/python3 ]; then PYTHONPATH=control_plane ./.venv/bin/python3 ./scripts/surface-area-audit.py; \
+	elif [ -x ./venv/bin/python3 ]; then PYTHONPATH=control_plane ./venv/bin/python3 ./scripts/surface-area-audit.py; \
+	else PYTHONPATH=control_plane python3 ./scripts/surface-area-audit.py; fi
+
+ga-readiness: ## Run the GA readiness gate
+	chmod +x ./scripts/ga-readiness.sh
+	./scripts/ga-readiness.sh $(TAG)
 
 validate-scripts: ## Validate operational scripts governance
 	chmod +x ./scripts/check-script-manifest.sh

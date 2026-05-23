@@ -25,6 +25,7 @@
 - No relevant uncleared security warnings.
 - Runtime activation is documented and executable through official playbooks.
 - GA classification is objective and reproducible from repository evidence and generated artifacts.
+- Surface reduction is complete: 242 previously unreferenced agentic registry endpoints have been classified and unreferenced registry count is exactly 0.
 - Release evidence is written under `artifacts/releases/v2.0.1-agentic-operational-maturity/`.
 
 ## Required validation commands
