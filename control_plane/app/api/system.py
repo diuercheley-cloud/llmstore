@@ -163,8 +163,33 @@ async def get_operational_readiness(
         "agentic": agentic_info,
     }
     
-    # 5. Overall status
-    all_ok = all(v == "ok" or v.startswith("ok") for k, v in checks.items() if k != "modes")
+    # 5. Deployment Mode Coherence Check
+    try:
+        from app.services.platform.deployment_modes import DeploymentModeService
+        mode_svc = DeploymentModeService()
+        is_coherent, blockers, warnings = mode_svc.validate_coherence(settings)
+        checks["deployment_mode"] = {
+            "mode": settings.deployment_mode,
+            "is_coherent": is_coherent,
+            "blockers": blockers,
+            "warnings": warnings,
+            "governance_posture": mode_svc.get_governance_posture(settings.deployment_mode)
+        }
+    except Exception as e:
+        is_coherent = False
+        blockers = [f"Coherence check error: {str(e)}"]
+        warnings = []
+        checks["deployment_mode"] = {
+            "mode": settings.deployment_mode,
+            "is_coherent": False,
+            "blockers": blockers,
+            "warnings": warnings,
+            "governance_posture": "Unknown"
+        }
+    
+    # 6. Overall status
+    all_ok = all(v == "ok" or v.startswith("ok") for k, v in checks.items() if k not in ("modes", "deployment_mode"))
+    all_ok = all_ok and is_coherent and len(blockers) == 0
     status = "pilot_ready" if all_ok else "production_blocked"
     
     return {
@@ -274,6 +299,25 @@ async def ready(
             logging.error(f"Readiness agentic check failed: {e}")
             dependencies["agentic"] = "error"
             status = "not_ready"
+
+    # 5. Deployment Mode Coherence Check
+    try:
+        from app.services.platform.deployment_modes import DeploymentModeService
+        mode_svc = DeploymentModeService()
+        is_coherent, blockers, warnings = mode_svc.validate_coherence(settings)
+        dependencies["deployment_mode"] = "ok" if is_coherent else "degraded"
+        if blockers:
+            dependencies["deployment_mode"] = "blocked"
+            status = "not_ready"
+            logging.error(f"Readiness check failed: deployment mode configuration incoherence. Blockers: {blockers}")
+        elif warnings:
+            if status != "not_ready":
+                status = "degraded"
+            logging.warning(f"Readiness check warning: deployment mode configuration warning. Warnings: {warnings}")
+    except Exception as e:
+        logging.error(f"Readiness check failed: deployment mode check failed. Error: {e}")
+        dependencies["deployment_mode"] = "error"
+        status = "not_ready"
 
     if status == "not_ready":
         return Response(

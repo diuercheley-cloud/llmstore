@@ -1,0 +1,142 @@
+# Configuration file defining the controlled operational modes
+# and their default feature mappings / governance postures.
+
+appliance:
+  name: "Appliance Mode"
+  description: "Fully local, self-contained deployment. No agentic runtime, workers, or external connectors enabled."
+  features:
+    AGENT_RUNTIME_ENABLED: false
+    AGENT_EXECUTION_ENABLED: false
+    AGENT_ASYNC_EXECUTION_ENABLED: false
+    AGENT_WORKER_ENABLED: false
+    AGENT_EMBEDDED_WORKER_ENABLED: false
+    AGENT_SAAS_CONNECTORS_ENABLED: false
+    AGENT_CONNECTOR_WRITE_ENABLED: false
+    AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED: false
+    AGENT_MULTI_AGENT_ENABLED: false
+    AGENT_STATEFUL_WORKFLOWS_ENABLED: false
+    AGENT_STUDIO_ENABLED: false
+    AGENT_STRICT_BUDGETS: false
+    AGENT_WORKER_AUTOSCALING_ENABLED: false
+    AGENT_SLO_ENFORCEMENT_ENABLED: false
+    AGENT_ENTERPRISE_OBSERVABILITY_ENABLED: false
+    AGENT_TENANT_ISOLATION_STRICT: false
+  governance:
+    posture: "Strict Air-gapped / Local Only"
+    readiness_constraints:
+      - flag: AGENT_RUNTIME_ENABLED
+        expected: false
+        severity: blocker
+      - flag: AGENT_SAAS_CONNECTORS_ENABLED
+        expected: false
+        severity: blocker
+      - flag: AGENT_MULTI_AGENT_ENABLED
+        expected: false
+        severity: blocker
+      - flag: AGENT_STATEFUL_WORKFLOWS_ENABLED
+        expected: false
+        severity: blocker
+
+pilot:
+  name: "Pilot Mode"
+  description: "Controlled evaluation mode. Agentic runtime enabled with read-only connectors and strict approvals."
+  features:
+    AGENT_RUNTIME_ENABLED: true
+    AGENT_EXECUTION_ENABLED: true
+    AGENT_ASYNC_EXECUTION_ENABLED: true
+    AGENT_WORKER_ENABLED: true
+    AGENT_EMBEDDED_WORKER_ENABLED: true
+    AGENT_SAAS_CONNECTORS_ENABLED: true
+    AGENT_CONNECTOR_WRITE_ENABLED: false
+    AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED: true
+    AGENT_HUMAN_APPROVAL_ENABLED: true
+    AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK: true
+    AGENT_MULTI_AGENT_ENABLED: false
+    AGENT_STATEFUL_WORKFLOWS_ENABLED: true
+    AGENT_STUDIO_ENABLED: true
+    AGENT_STRICT_BUDGETS: true
+    AGENT_WORKER_AUTOSCALING_ENABLED: false
+    AGENT_SLO_ENFORCEMENT_ENABLED: false
+    AGENT_ENTERPRISE_OBSERVABILITY_ENABLED: false
+    AGENT_TENANT_ISOLATION_STRICT: false
+  governance:
+    posture: "Governed Testing / Human-in-the-loop"
+    readiness_constraints:
+      - flag: AGENT_RUNTIME_ENABLED
+        expected: true
+        severity: blocker
+      - flag: AGENT_CONNECTOR_WRITE_ENABLED
+        expected: false
+        severity: blocker
+      - flag: AGENT_HUMAN_APPROVAL_ENABLED
+        expected: true
+        severity: blocker
+      - flag: AGENT_MULTI_AGENT_ENABLED
+        expected: false
+        severity: warning
+
+production:
+  name: "Production Mode"
+  description: "Full production deployment with governed connectors, mandatory eval gates, and SLO enforcement."
+  features:
+    AGENT_RUNTIME_ENABLED: true
+    AGENT_EXECUTION_ENABLED: true
+    AGENT_ASYNC_EXECUTION_ENABLED: true
+    AGENT_WORKER_ENABLED: true
+    AGENT_SAAS_CONNECTORS_ENABLED: true
+    AGENT_CONNECTOR_WRITE_ENABLED: true
+    AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED: true
+    AGENT_PROMOTION_REQUIRES_EVALS: true
+    AGENT_EVAL_REGRESSION_GATE_ENABLED: true
+    AGENT_STATEFUL_WORKFLOWS_ENABLED: true
+    AGENT_WORKER_AUTOSCALING_ENABLED: true
+    AGENT_SLO_ENFORCEMENT_ENABLED: true
+    AGENT_STRICT_BUDGETS: false
+    AGENT_ENTERPRISE_OBSERVABILITY_ENABLED: false
+    AGENT_TENANT_ISOLATION_STRICT: false
+  governance:
+    posture: "Production Grade / Automatic Evals & SLOs"
+    readiness_constraints:
+      - flag: AGENT_RUNTIME_ENABLED
+        expected: true
+        severity: blocker
+      - flag: AGENT_PROMOTION_REQUIRES_EVALS
+        expected: true
+        severity: blocker
+      - flag: AGENT_EVAL_REGRESSION_GATE_ENABLED
+        expected: true
+        severity: blocker
+
+enterprise_managed:
+  name: "Enterprise Managed Mode"
+  description: "Federated enterprise grade deployment with strict isolation and managed control plane."
+  features:
+    AGENT_RUNTIME_ENABLED: true
+    AGENT_EXECUTION_ENABLED: true
+    AGENT_ASYNC_EXECUTION_ENABLED: true
+    AGENT_WORKER_ENABLED: true
+    AGENT_SAAS_CONNECTORS_ENABLED: true
+    AGENT_CONNECTOR_WRITE_ENABLED: true
+    AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED: true
+    AGENT_PROMOTION_REQUIRES_EVALS: true
+    AGENT_EVAL_REGRESSION_GATE_ENABLED: true
+    AGENT_STATEFUL_WORKFLOWS_ENABLED: true
+    AGENT_WORKER_AUTOSCALING_ENABLED: true
+    AGENT_SLO_ENFORCEMENT_ENABLED: true
+    COMMERCIAL_FEDERATION_ENABLED: true
+    COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED: true
+    MANAGED_CONTROL_PLANE_ENABLED: true
+    AGENT_ENTERPRISE_OBSERVABILITY_ENABLED: true
+    AGENT_TENANT_ISOLATION_STRICT: true
+  governance:
+    posture: "Enterprise Managed / Federated & Strict Isolation"
+    readiness_constraints:
+      - flag: AGENT_RUNTIME_ENABLED
+        expected: true
+        severity: blocker
+      - flag: AGENT_TENANT_ISOLATION_STRICT
+        expected: true
+        severity: blocker
+      - flag: MANAGED_CONTROL_PLANE_ENABLED
+        expected: true
+        severity: blocker

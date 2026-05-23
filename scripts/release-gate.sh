@@ -139,7 +139,7 @@ if VALIDATION_MODE=quick bash scripts/validate-local-production-full.sh; then
     GATES_PASSED=$((GATES_PASSED+1))
     GATE_RESULTS="${GATE_RESULTS}| validate-quick | PASS |\n"
 else
-    local rc=$?
+    rc=$?
     echo "━━━ [FAIL] validate-quick (exit code: $rc) ━━━"
     GATES_FAILED=$((GATES_FAILED+1))
     FAILED_GATES="$FAILED_GATES validate-quick"
@@ -253,6 +253,31 @@ cat > "$ARTIFACT_DIR/validation.md" << EOF
 |------|--------|
 $(echo -e "$GATE_RESULTS")
 EOF
+
+if [ -f artifacts/platform/ga-readiness.md ]; then
+    cp artifacts/platform/ga-readiness.md "$ARTIFACT_DIR/ga-readiness.md"
+fi
+
+if [ -f artifacts/platform/feature-flag-audit.md ]; then
+    cp artifacts/platform/feature-flag-audit.md "$ARTIFACT_DIR/feature-flags.md"
+elif [ -f control_plane/artifacts/platform/feature-flag-audit.md ]; then
+    cp control_plane/artifacts/platform/feature-flag-audit.md "$ARTIFACT_DIR/feature-flags.md"
+fi
+
+if [ -f artifacts/platform/surface-audit.md ]; then
+    cp artifacts/platform/surface-audit.md "$ARTIFACT_DIR/surface-audit.md"
+elif [ -f control_plane/artifacts/platform/surface-audit.md ]; then
+    cp control_plane/artifacts/platform/surface-audit.md "$ARTIFACT_DIR/surface-audit.md"
+fi
+
+if [ -f artifacts/security/security-cleanup.md ]; then
+    cp artifacts/security/security-cleanup.md "$ARTIFACT_DIR/security-cleanup.md"
+else
+    latest_security_report=$(ls -td artifacts/security-reports/* 2>/dev/null | head -n 1 || true)
+    if [ -n "$latest_security_report" ] && [ -f "$latest_security_report/security-report.md" ]; then
+        cp "$latest_security_report/security-report.md" "$ARTIFACT_DIR/security-cleanup.md"
+    fi
+fi
 
 # agentic-readiness.md
 if echo "$AGENTIC_OUTPUT" | grep -q "disabled"; then

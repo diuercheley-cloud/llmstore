@@ -1,5 +1,27 @@
 # Changelog
 
+## [v2.0.1-agentic-operational-maturity] - 2026-05-23
+
+### Added
+- **Controlled deployment modes**: `DEPLOYMENT_MODE` now governs supported postures for `appliance`, `pilot`, `production`, and `enterprise_managed`.
+- **GA readiness framework**: Objective maturity scoring, admin reporting endpoints, and release artifacts now measure pilot, production, and GA posture.
+- **Runtime activation playbooks**: Official pilot, production, and rollback playbooks now update real platform flags instead of placeholder rollout markers.
+- **Feature flag audit artifacts**: Governance audit, orphan detection, and release evidence are promoted into the operational maturity workflow.
+- **Surface reduction reporting**: Supported surface and deprecation evidence are consolidated into release-ready markdown artifacts.
+- **Security warning governance**: Allowlist metadata, expiration checks, and tracked-file blocking formalize warning cleanup.
+- **Real provider validation workflow**: Provider validation remains opt-in but now sits inside the release readiness evidence chain.
+
+### Changed
+- **Release narrative shifted from architectural to operational**: the release line now emphasizes activation safety, supportability, and objective readiness over feature expansion.
+- **Managed control-plane mode naming aligned**: runtime gating now consistently uses `enterprise_managed`.
+- **Playbook activation is environment-realistic**: pilot/production/rollback scripts now write canonical platform flags such as `AGENT_RUNTIME_ENABLED`, `AGENT_EVALS_ENABLED`, and `AGENT_WORKER_AUTOSCALING_ENABLED`.
+- **README and security posture updated**: documentation now points operators to operational modes, GA readiness, rollout playbooks, and cleanup governance.
+
+### Security
+- **No critical orphaned flags accepted for release**: feature-flag cleanup is now part of the operational maturity gate.
+- **Allowlists are restricted to non-versioned synthetic artifacts**: tracked code and versioned files cannot bypass security warning review.
+- **Rollback posture restored to appliance-safe defaults**: operational rollback explicitly disables runtime execution and connector writes.
+
 ## [v2.0.0-agentic-ai-platform] - 2026-05-22
 
 ### Added

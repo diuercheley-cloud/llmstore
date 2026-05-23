@@ -147,6 +147,7 @@ async def deprecation_middleware(request: Request, call_next):
 
     status = "supported"
     replacement = None
+    sunset_date = None
 
     if matched_route:
         surface_map = _get_api_surface_map()
@@ -155,6 +156,9 @@ async def deprecation_middleware(request: Request, call_next):
             entry = surface_map[key]
             status = entry.get("status", "supported")
             replacement = entry.get("replacement")
+            sunset_date = entry.get("sunset_date")
+            if status == "deprecated" and not sunset_date:
+                sunset_date = "2026-12-31"
 
     response = await call_next(request)
     
@@ -163,6 +167,9 @@ async def deprecation_middleware(request: Request, call_next):
         response.headers["X-Deprecated-Endpoint"] = "true"
         if replacement:
             response.headers["X-Replacement-Endpoint"] = replacement
+        if sunset_date:
+            response.headers["X-Sunset-Date"] = str(sunset_date)
+            response.headers["Sunset"] = str(sunset_date)
         logger.warning(f"Deprecated endpoint accessed: {request.url.path}")
         
     # Inject Deprecation header for all legacy admin agent endpoints

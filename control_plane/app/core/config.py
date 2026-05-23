@@ -311,6 +311,22 @@ class Settings(BaseSettings):
     # Status: beta
     agent_incident_response_enabled: bool = Field(default=True, alias="AGENT_INCIDENT_RESPONSE_ENABLED")
 
+    # Owner: agent-platform
+    # Status: active
+    agent_strict_budgets: bool = Field(default=False, alias="AGENT_STRICT_BUDGETS")
+    # Owner: agent-platform
+    # Status: active
+    agent_worker_autoscaling_enabled: bool = Field(default=False, alias="AGENT_WORKER_AUTOSCALING_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_slo_enforcement_enabled: bool = Field(default=False, alias="AGENT_SLO_ENFORCEMENT_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_enterprise_observability_enabled: bool = Field(default=False, alias="AGENT_ENTERPRISE_OBSERVABILITY_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_tenant_isolation_strict: bool = Field(default=False, alias="AGENT_TENANT_ISOLATION_STRICT")
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     project_name: str = Field(default="local-llm-inference-stack", alias="PROJECT_NAME")
@@ -1093,9 +1109,22 @@ class Settings(BaseSettings):
         elif self.negative_margin_block_mode not in valid_negative_margin_modes:
             self.negative_margin_block_mode = "report_only"
 
-        valid_deployment_modes = {"appliance", "saas", "managed_control_plane", "hybrid"}
+        # Derive feature flags partially from deployment mode
+        valid_deployment_modes = {"appliance", "pilot", "production", "enterprise_managed"}
         if self.deployment_mode not in valid_deployment_modes:
             self.deployment_mode = "appliance"
+
+        try:
+            from app.services.platform.deployment_modes import DeploymentModeService
+            mode_svc = DeploymentModeService()
+            mode_defaults = mode_svc.get_mode_defaults(self.deployment_mode)
+            for flag, default_val in mode_defaults.items():
+                attr_name = flag.lower()
+                if attr_name not in self.model_fields_set and flag not in self.model_fields_set:
+                    setattr(self, attr_name, default_val)
+        except Exception:
+            pass
+
         if not self.distributed_runtime_enabled:
             self.gpu_autoscaling_enabled = False
         if self.deployment_mode == "appliance":

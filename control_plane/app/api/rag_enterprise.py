@@ -356,7 +356,6 @@ async def delete_enterprise_document_endpoint(
 
 # --- Query ---
 
-@router.post("/query", response_model=EnterpriseQueryResponse)
 async def query_enterprise_rag(
     payload: EnterpriseQueryRequest,
     client: Client = Depends(require_client),

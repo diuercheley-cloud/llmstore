@@ -1,0 +1,20 @@
+rules:
+  readiness_passing: true
+  release_gate_passing: true
+  no_orphaned_flags: true
+  no_orphaned_apis: true
+  eval_pass_rate_threshold: 0.95
+  slo_stability_required: true
+  incident_recovery_tested: true
+  operational_playbooks_present: true
+  observability_dashboards_provisioned: true
+  promotion_gates_enabled: true
+  security_warnings_classified: true
+  tenant_isolation_validated: true
+
+weights:
+  experimental: 0
+  beta: 4
+  pilot_ready: 8
+  production_ready: 11
+  ga_ready: 12

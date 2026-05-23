@@ -1,0 +1,638 @@
+# Platform Surface Area Audit
+
+Generated platform surface area audit report tracking operational complexity and dead code.
+
+## 1. APIs Audit
+- **Duplicate Routes (0)**:
+  - None
+- **Unreferenced Registry (242)**:
+  - `DELETE /admin/agent-memory/items/{item_id}`
+  - `DELETE /v1/api-keys/{api_key_id}`
+  - `GET /admin/agent-evals/baselines/{agent_id}`
+  - `GET /admin/agent-evals/runs/{run_id}`
+  - `GET /admin/agent-marketplace`
+  - `GET /admin/agent-marketplace/versions/{version_id}/trust-report`
+  - `GET /admin/agent-memory/agents/{agent_id}/memory`
+  - `GET /admin/agent-memory/items`
+  - `GET /admin/agent-memory/policies`
+  - `GET /admin/agent-registry`
+  - `GET /admin/agent-registry/readiness`
+  - `GET /admin/agent-registry/{id}`
+  - `GET /admin/agent-registry/{id}/versions`
+  - `GET /admin/agent-tasks/plans/{plan_id}`
+  - `GET /admin/agent-tools`
+  - `GET /admin/agent-tools/{id}/invocations`
+  - `GET /admin/agents`
+  - `GET /admin/agents/connectors`
+  - `GET /admin/agents/connectors/{name}`
+  - `GET /admin/agents/governance/decisions`
+  - `GET /admin/agents/governance/policies`
+  - `GET /admin/agents/handoff-policies`
+  - `GET /admin/agents/replay/records`
+  - `GET /admin/agents/replay/violations`
+  - `GET /admin/agents/runs/{run_id}/handoffs`
+  - `GET /admin/agents/runtime/actions/{execution_id}`
+  - `GET /admin/agents/runtime/executions`
+  - `GET /admin/agents/runtime/profiles`
+  - `GET /admin/agents/runtime/status`
+  - `GET /admin/agents/studio/debug/{run_id}`
+  - `GET /admin/agents/studio/flows`
+  - `GET /admin/agents/teams`
+  - `GET /admin/agents/teams/runs/{run_id}/trace`
+  - `GET /admin/agents/tools`
+  - `GET /admin/agents/tools/approvals`
+  - `GET /admin/agents/worker/dlq`
+  - `GET /admin/inference/agents/executions`
+  - `GET /admin/inference/agents/profiles`
+  - `GET /admin/inference/agents/status`
+  - `GET /admin/inference/agents/tool-executions`
+  - `GET /admin/inference/workflows/definitions`
+  - `GET /admin/inference/workflows/executions`
+  - `GET /admin/inference/workflows/replays`
+  - `GET /admin/inference/workflows/reports`
+  - `GET /admin/inference/workflows/status`
+  - `GET /admin/routing/cross-cluster-forwarding/circuit-breakers`
+  - `GET /admin/routing/cross-cluster-forwarding/status`
+  - `GET /admin/routing/geo-routing/overview`
+  - `GET /admin/routing/geo-routing/recommendations`
+  - `GET /admin/routing/global-router/export`
+  - `GET /admin/routing/global-router/overview`
+  - `GET /admin/routing/global-router/recommendations`
+  - `GET /admin/routing/global-traffic/decisions`
+  - `GET /admin/routing/global-traffic/policies`
+  - `GET /admin/routing/global-traffic/policies/{id}/health`
+  - `GET /admin/routing/live-balancing/opportunities`
+  - `GET /admin/routing/live-balancing/overview`
+  - `GET /admin/workflows/approvals`
+  - `GET /admin/workflows/definitions`
+  - `GET /admin/workflows/executions`
+  - `GET /admin/workflows/executions/{execution_id}`
+  - `GET /admin/workflows/executions/{execution_id}/checkpoints`
+  - `GET /admin/workflows/executions/{execution_id}/provenance`
+  - `GET /admin/workflows/federation/consensus`
+  - `GET /admin/workflows/federation/drift`
+  - `GET /admin/workflows/federation/executions`
+  - `GET /admin/workflows/federation/overview`
+  - `GET /admin/workflows/federation/peers`
+  - `GET /admin/workflows/federation/replay`
+  - `GET /admin/workflows/governance/executions/{execution_id}`
+  - `GET /admin/workflows/governance/executions/{execution_id}/ledger`
+  - `GET /admin/workflows/governance/executions/{execution_id}/snapshots`
+  - `GET /admin/workflows/receipts`
+  - `GET /admin/workflows/replay-sessions`
+  - `GET /admin/workflows/replays`
+  - `GET /admin/workflows/reports`
+  - `GET /admin/workflows/status`
+  - `GET /agents/runs/{run_id}`
+  - `GET /agents/runs/{run_id}/steps`
+  - `GET /client/agents`
+  - `GET /docs/oauth2-redirect`
+  - `GET /openapi.json`
+  - `GET /portal/agents/audit/actions`
+  - `GET /portal/agents/audit/executions`
+  - `GET /portal/agents/audit/executions/{execution_id}`
+  - `GET /portal/agents/audit/replay`
+  - `GET /portal/agents/audit/violations`
+  - `GET /portal/workflows/audit/determinism/{execution_id}`
+  - `GET /portal/workflows/audit/executions`
+  - `GET /portal/workflows/audit/governance/executions`
+  - `GET /portal/workflows/audit/governance/{execution_id}`
+  - `GET /portal/workflows/audit/provenance/{execution_id}`
+  - `GET /portal/workflows/audit/receipts`
+  - `GET /portal/workflows/audit/replay/sessions`
+  - `GET /portal/workflows/federation/status`
+  - `GET /portal/workflows/governance/executions`
+  - `GET /portal/workflows/governance/executions/{execution_id}`
+  - `GET /portal/workflows/replay/sessions`
+  - `GET /redoc`
+  - `GET /v1/agents`
+  - `GET /v1/agents/runs/{run_id}`
+  - `GET /v1/agents/runs/{run_id}/events`
+  - `GET /v1/agents/{agent_id}`
+  - `GET /v1/api-keys`
+  - `GET /v1/audit/access-logs`
+  - `GET /v1/audit/approval-chains`
+  - `GET /v1/audit/attestations`
+  - `GET /v1/audit/evidence-packages`
+  - `GET /v1/audit/exceptions`
+  - `GET /v1/audit/operational-controls`
+  - `GET /v1/audit/operational-evidence`
+  - `GET /v1/audit/operational-reviews`
+  - `GET /v1/audit/reports`
+  - `GET /v1/audit/reports/{report_id}/download`
+  - `GET /v1/billing/disputes`
+  - `GET /v1/examples`
+  - `GET /v1/governance-federation-summary`
+  - `GET /v1/inference/receipts`
+  - `GET /v1/inference/receipts/{receipt_id}`
+  - `GET /v1/inference/reproducibility`
+  - `GET /v1/invoices`
+  - `GET /v1/invoices/{invoice_id}/download`
+  - `GET /v1/me`
+  - `GET /v1/plans`
+  - `GET /v1/qos-billing`
+  - `GET /v1/rag/legal-holds`
+  - `GET /v1/rag/retrieval-history`
+  - `GET /v1/rag/trust-status`
+  - `GET /v1/rag/vault`
+  - `GET /v1/usage`
+  - `GET /v1/usage-stats`
+  - `GET /v1/wallet`
+  - `GET /v1/wallet/topups`
+  - `HEAD /docs`
+  - `HEAD /docs/oauth2-redirect`
+  - `HEAD /openapi.json`
+  - `HEAD /redoc`
+  - `PATCH /admin/agent-registry/{id}`
+  - `PATCH /admin/agent-tools/{id}`
+  - `PATCH /admin/agents/{id}`
+  - `POST /admin/agent-evals/baselines`
+  - `POST /admin/agent-evals/runs`
+  - `POST /admin/agent-evals/suites`
+  - `POST /admin/agent-marketplace/install`
+  - `POST /admin/agent-marketplace/{install_id}/disable`
+  - `POST /admin/agent-marketplace/{install_id}/enable`
+  - `POST /admin/agent-memory/export`
+  - `POST /admin/agent-memory/policies`
+  - `POST /admin/agent-registry`
+  - `POST /admin/agent-registry/{id}/activate`
+  - `POST /admin/agent-registry/{id}/approve`
+  - `POST /admin/agent-registry/{id}/archive`
+  - `POST /admin/agent-registry/{id}/deprecate`
+  - `POST /admin/agent-registry/{id}/pause`
+  - `POST /admin/agent-registry/{id}/submit-review`
+  - `POST /admin/agent-tasks/plans`
+  - `POST /admin/agent-tasks/plans/{plan_id}/execute`
+  - `POST /admin/agent-tasks/tasks/{task_id}/compensate`
+  - `POST /admin/agent-tasks/tasks/{task_id}/retry`
+  - `POST /admin/agent-tasks/tasks/{task_id}/skip`
+  - `POST /admin/agent-tools`
+  - `POST /admin/agent-tools/{id}/disable`
+  - `POST /admin/agent-tools/{id}/enable`
+  - `POST /admin/agents`
+  - `POST /admin/agents/connectors/{name}/dry-run`
+  - `POST /admin/agents/connectors/{name}/execute`
+  - `POST /admin/agents/connectors/{name}/oauth/start`
+  - `POST /admin/agents/governance/policies/simulate`
+  - `POST /admin/agents/governance/{agent_id}/promote`
+  - `POST /admin/agents/governance/{agent_id}/promotion-check`
+  - `POST /admin/agents/handoff-policies`
+  - `POST /admin/agents/replay/verify/{execution_id}`
+  - `POST /admin/agents/runtime/execute/{execution_id}`
+  - `POST /admin/agents/runtime/plans`
+  - `POST /admin/agents/studio/flows`
+  - `POST /admin/agents/studio/flows/{id}/compile`
+  - `POST /admin/agents/studio/flows/{id}/validate`
+  - `POST /admin/agents/teams`
+  - `POST /admin/agents/teams/{id}/runs`
+  - `POST /admin/agents/tools`
+  - `POST /admin/agents/tools/approvals/{action_id}`
+  - `POST /admin/agents/worker/dlq/{dlq_id}/retry`
+  - `POST /admin/agents/workflows`
+  - `POST /admin/agents/workflows/{id}/run`
+  - `POST /admin/agents/workflows/{id}/run/{run_id}/polling-job`
+  - `POST /admin/agents/workflows/{id}/run/{run_id}/signal`
+  - `POST /admin/agents/workflows/{id}/run/{run_id}/webhook-wait`
+  - `POST /admin/agents/{id}/activate`
+  - `POST /admin/agents/{id}/deprecate`
+  - `POST /admin/inference/agents/profiles`
+  - `POST /admin/inference/agents/tool-executions/{id}/approve`
+  - `POST /admin/inference/workflows/definitions`
+  - `POST /admin/routing/cross-cluster-forwarding/reset-circuit-breaker`
+  - `POST /admin/routing/cross-cluster-forwarding/test`
+  - `POST /admin/routing/geo-routing/simulate`
+  - `POST /admin/routing/global-router/simulate`
+  - `POST /admin/routing/global-traffic/policies`
+  - `POST /admin/routing/global-traffic/policies/{id}/pause`
+  - `POST /admin/routing/global-traffic/policies/{id}/rollback`
+  - `POST /admin/routing/global-traffic/simulate`
+  - `POST /admin/routing/live-balancing/simulate`
+  - `POST /admin/workflows/approvals/executions/{execution_id}/stages/{stage_key}/request`
+  - `POST /admin/workflows/approvals/{chain_id}/decide`
+  - `POST /admin/workflows/definitions`
+  - `POST /admin/workflows/executions`
+  - `POST /admin/workflows/executions/{execution_id}/pause`
+  - `POST /admin/workflows/executions/{execution_id}/resume`
+  - `POST /admin/workflows/executions/{execution_id}/rollback`
+  - `POST /admin/workflows/executions/{execution_id}/stages/{stage_key}`
+  - `POST /admin/workflows/federation/consensus/{federated_execution_id}`
+  - `POST /admin/workflows/federation/executions`
+  - `POST /admin/workflows/federation/executions/{federated_execution_id}/lease`
+  - `POST /admin/workflows/federation/reconcile/{federated_execution_id}`
+  - `POST /admin/workflows/federation/replay/{federated_execution_id}`
+  - `POST /admin/workflows/governance/executions/{execution_id}/stages/{stage_key}/rollback-policy`
+  - `POST /admin/workflows/receipts/{execution_id}`
+  - `POST /admin/workflows/receipts/{receipt_id}/export`
+  - `POST /admin/workflows/receipts/{receipt_id}/verify`
+  - `POST /admin/workflows/replay-sessions`
+  - `POST /admin/workflows/replay-sessions/{session_id}/complete`
+  - `POST /admin/workflows/replay/{execution_id}`
+  - `POST /admin/workflows/replay/{replay_id}/attach/{replay_execution_id}`
+  - `POST /admin/workflows/replay/{replay_id}/verify`
+  - `POST /agents/runs/{run_id}/cancel`
+  - `POST /agents/runs/{run_id}/pause`
+  - `POST /agents/runs/{run_id}/replay`
+  - `POST /agents/runs/{run_id}/resume`
+  - `POST /agents/{agent_id}/runs`
+  - `POST /client/agents/{agent_id}/run`
+  - `POST /v1/agents`
+  - `POST /v1/agents/runs/{run_id}/cancel`
+  - `POST /v1/agents/{agent_id}/runs`
+  - `POST /v1/api-keys`
+  - `POST /v1/audit/reports/generate`
+  - `POST /v1/billing/disputes`
+  - `POST /v1/inference/receipts/{receipt_id}/verify`
+  - `POST /v1/onboarding/event`
+  - `POST /v1/simulate-payment/{invoice_id}`
+  - `POST /v1/test-chat`
+  - `POST /v1/upgrade`
+  - `POST /v1/wallet/recharge-request`
+  - `POST /v1/wallet/topups`
+- **Unregistered Routes (6)**:
+  - `GET /admin/agent-approvals/inbox`
+  - `GET /admin/metrics/stream`
+  - `GET /admin/onboarding/status`
+  - `GET /admin/platform/ga-readiness`
+  - `GET /admin/platform/maturity-report`
+  - `POST /admin/onboarding/status`
+
+## 2. Pages UI Audit
+- **Orphaned UI Pages (24)**:
+  - `agents/AgentApprovalInbox.tsx`
+  - `agents/AgentIncidentDrilldown.tsx`
+  - `agents/AgentLineage.tsx`
+  - `agents/AgentPolicyDiff.tsx`
+  - `agents/AgentPromotion.tsx`
+  - `agents/AgentReplayCompare.tsx`
+  - `agents/AgenticOperationsDashboard.tsx`
+  - `agents/studio/AgentStudio.tsx`
+  - `agents/studio/components/AgentNode.tsx`
+  - `agents/studio/components/ApprovalNode.tsx`
+  - `agents/studio/components/ConditionNode.tsx`
+  - `agents/studio/components/ContextWindowViewer.tsx`
+  - `agents/studio/components/DebuggerPanel.tsx`
+  - `agents/studio/components/EvalNode.tsx`
+  - `agents/studio/components/FlowBuilder.tsx`
+  - `agents/studio/components/HandoffNode.tsx`
+  - `agents/studio/components/MemoryNode.tsx`
+  - `agents/studio/components/NodePalette.tsx`
+  - `agents/studio/components/PolicyDecisionViewer.tsx`
+  - `agents/studio/components/PromptPreview.tsx`
+  - `agents/studio/components/RunTimelinePanel.tsx`
+  - `agents/studio/components/ToolNode.tsx`
+  - `agents/studio/components/TraceInspector.tsx`
+  - `compliance/ComplianceDashboard.tsx`
+
+## 3. Services Audit
+- **Orphaned Services (55)**:
+  - `agents/agent_api_facade.py`
+  - `agents/agent_bundle_signing.py`
+  - `agents/agent_compatibility.py`
+  - `agents/agent_cost_meter.py`
+  - `agents/agent_environment_policy.py`
+  - `agents/agent_execution_plane.py`
+  - `agents/agent_rbac.py`
+  - `agents/agent_run_timeline.py`
+  - `agents/agent_trace_correlation.py`
+  - `agents/connectors/rate_limits.py`
+  - `agents/ephemeral_credentials.py`
+  - `agents/multi_agent/delegation_policy.py`
+  - `agents/multi_agent/loop_guard.py`
+  - `agents/multi_agent/shared_workspace.py`
+  - `agents/provider_validation.py`
+  - `agents/workflows/workflow_recovery.py`
+  - `billing/guardrails.py`
+  - `event_service.py`
+  - `governance/autonomous_execution_limits.py`
+  - `governance/data_governance/data_lineage_service.py`
+  - `governance/data_governance/data_zone_service.py`
+  - `governance/data_governance/export_governance_service.py`
+  - `governance/data_governance/retention_policy_service.py`
+  - `governance/human_checkpointing.py`
+  - `governance/human_governance/approval_quorum_service.py`
+  - `governance/human_governance/escalation_service.py`
+  - `governance/human_governance/review_workflow_service.py`
+  - `governance/human_governance/separation_of_duties.py`
+  - `governance/release_engineering/release_manifest_service.py`
+  - `governance/release_engineering/release_notes_generator.py`
+  - `governance/release_engineering/release_receipts.py`
+  - `governance/release_engineering/release_replay_verifier.py`
+  - `governance/release_engineering/validation_snapshot_service.py`
+  - `governance/utils.py`
+  - `operations/adapter_promotion/audit_events.py`
+  - `operations/adapter_registry/audit_events.py`
+  - `operations/disaster_recovery/audit_events.py`
+  - `operations/disaster_recovery/backup_manifest_service.py`
+  - `operations/disaster_recovery/recovery_receipts.py`
+  - `operations/disaster_recovery/recovery_replay_verifier.py`
+  - `operations/events/event_contract_registry.py`
+  - `operations/events/event_lineage.py`
+  - `operations/events/event_replay_verifier.py`
+  - `operations/events/event_schema_compatibility.py`
+  - `operations/forecasting/audit_events.py`
+  - `operations/observability/observability_replay_verifier.py`
+  - `operations/observability/observability_sanitizer.py`
+  - `operations/observability/timeline_builder.py`
+  - `operations/observability/trace_recorder.py`
+  - `plugins/plugin_loader.py`
+  - `rag/chunk_lineage.py`
+  - `rag/context_sanitizer.py`
+  - `rag/retrieval_receipts.py`
+  - `rag_enterprise/reranking.py`
+  - `tts_readiness.py`
+
+## 4. Scripts Audit
+- **Orphaned Scripts (239)**:
+  - `activate-agentic-pilot.sh`
+  - `activate-agentic-production.sh`
+  - `activate-model.sh`
+  - `activate.sh`
+  - `admin-lab-financial-flow.sh`
+  - `admin-lab-models-smoke.sh`
+  - `admin-lab-negative-flow.sh`
+  - `admin-lab-smoke.sh`
+  - `agent-approval-expire.sh`
+  - `agent-dead-letter-list.sh`
+  - `agent-disable-tool.sh`
+  - `agent-dlq-retry.sh`
+  - `agent-incident-diagnose.sh`
+  - `agent-job-cancel.sh`
+  - `agent-jobs-list.sh`
+  - `agent-quarantine-memory.sh`
+  - `agent-queue-throttle.sh`
+  - `agent-run-kill.sh`
+  - `agent-worker-start.sh`
+  - `agentctl.py`
+  - `agentic-chaos-run.sh`
+  - `agentic-recovery-test.sh`
+  - `apply-runtime-profile.sh`
+  - `architecture-duplication-report.sh`
+  - `async-chat.sh`
+  - `audit-root-files-local.sh`
+  - `audit-shell-lib-layout.sh`
+  - `audit-v1.6-release-line.sh`
+  - `audit_v1_6_helper.py`
+  - `benchmark-runtime.sh`
+  - `benchmark_model_local_runner.py`
+  - `benchmark_runner.py`
+  - `build-llama-cpp.sh`
+  - `cache-clear.sh`
+  - `cache-stats.sh`
+  - `cache-stats2.sh`
+  - `cancel-job.sh`
+  - `check-api-surface.sh`
+  - `check-feature-flags.py`
+  - `clean-rag-local-data.sh`
+  - `clean-sensitive-artifacts-local.sh`
+  - `common.sh`
+  - `create-client.sh`
+  - `create-customer-demo.sh`
+  - `create-opencode-client.sh`
+  - `create-plan.sh`
+  - `customer-ready-report.sh`
+  - `deactivate-model.sh`
+  - `debug-memory.sh`
+  - `debug_suspension.py`
+  - `delete-client-local.sh`
+  - `deploy-vps.sh`
+  - `diagnose-artifact-secrets.sh`
+  - `diagnose-readiness-warnings-local.sh`
+  - `diagnose-v1.7-warnings.sh`
+  - `download-model.sh`
+  - `export-usage.sh`
+  - `expose-local.sh`
+  - `first-run.sh`
+  - `fix-repo-paths-local.sh`
+  - `generate-acceptance-report.sh`
+  - `generate-compliance-gap-analysis.sh`
+  - `generate-customer-readiness-report.sh`
+  - `generate-enterprise-pack.sh`
+  - `generate-invoices.sh`
+  - `generate-proposal-pdf.sh`
+  - `generate-release-history.sh`
+  - `generate-release-manifest.sh`
+  - `generate-support-bundle.sh`
+  - `generate-tuning-recommendations.sh`
+  - `generate_report.py`
+  - `install-wsl-deps.sh`
+  - `invoice-preview.sh`
+  - `job-status.sh`
+  - `list-db.sh`
+  - `list-gpu-models.sh`
+  - `llm_stack_client.py`
+  - `load-test-local.sh`
+  - `local-production-up.sh`
+  - `local_dr_backup.py`
+  - `manifest.yaml`
+  - `model-runtime-activate.sh`
+  - `model-runtime-list.sh`
+  - `model-runtime-load.sh`
+  - `model-runtime-rollback.sh`
+  - `parse-security-report-local.sh`
+  - `performance-baseline.sh`
+  - `prepare-v1.7-release-bundle.sh`
+  - `quality-smoke.sh`
+  - `redact-local-sensitive-artifacts.sh`
+  - `register-backend.sh`
+  - `register-model.sh`
+  - `release-local-production.sh`
+  - `reset-circuit-breaker.sh`
+  - `reset-client-quota.sh`
+  - `reset-demo-local.sh`
+  - `reset-dev.sh`
+  - `restore.sh`
+  - `run-real-provider-validation.sh`
+  - `run-v1.7-release-checklist.sh`
+  - `run_free_model.py`
+  - `runtime-node-drain.sh`
+  - `runtime-node-health.sh`
+  - `runtime-node-list.sh`
+  - `runtime-node-register.sh`
+  - `runtime-profile-apply.sh`
+  - `runtime-profile-list.sh`
+  - `runtime-profile-validate.sh`
+  - `security-events.sh`
+  - `seed-commercial-plans-local.sh`
+  - `seed-commercial-qos-tiers.sh`
+  - `seed-demo-local.sh`
+  - `seed_tuning.py`
+  - `set-client-plan.sh`
+  - `set-plan-models.sh`
+  - `smoke-client.sh`
+  - `soc2-access-review.sh`
+  - `soc2-change-review.sh`
+  - `surface-area-audit.py`
+  - `suspend-client.sh`
+  - `tenant-agentic-readiness.sh`
+  - `test-backend.sh`
+  - `test-backup-local.sh`
+  - `test-dr-local-port-selection.sh`
+  - `test-dr-local-strict-rag.sh`
+  - `test-empty-short-response.sh`
+  - `test-large-prompt-short-completion.sh`
+  - `test-llama-cpp-params.sh`
+  - `test-lmstudio.sh`
+  - `test-max-concurrency.py`
+  - `test-max-concurrency.sh`
+  - `test-max-tokens-explicit.sh`
+  - `test-max-tokens-v2.sh`
+  - `test-max-tokens.sh`
+  - `test-memory-flow.sh`
+  - `test-non-streaming-gemma.sh`
+  - `test-opencode-behavior.sh`
+  - `test-opencode-compat.sh`
+  - `test-openrouter-integration.sh`
+  - `test-operations-dryrun.sh`
+  - `test-poisoned-slot.sh`
+  - `test-rag-local-multiclient-validation.sh`
+  - `test-restore-local.sh`
+  - `test-routing-fallback.sh`
+  - `test-streaming-concatenation.sh`
+  - `unsuspend-client.sh`
+  - `update_index.py`
+  - `user-behavior-report.sh`
+  - `validate-admin-lab-local.sh`
+  - `validate-admin-readiness-security-dashboard.sh`
+  - `validate-admin-tests.sh`
+  - `validate-api-keys-local.sh`
+  - `validate-artifact-redaction-local.sh`
+  - `validate-autonomous-guardrails.sh`
+  - `validate-benchmark-local.sh`
+  - `validate-billing-wording-local.sh`
+  - `validate-capabilities-page-local.sh`
+  - `validate-capability-matrix-local.sh`
+  - `validate-chat-sse-readiness-local.sh`
+  - `validate-clean-rag-local-data.sh`
+  - `validate-clean-sensitive-artifacts-local.sh`
+  - `validate-client-portal-local.sh`
+  - `validate-client-presentation-docs.sh`
+  - `validate-commercial-cross-cluster-forwarding.sh`
+  - `validate-commercial-plans-local.sh`
+  - `validate-configure-local-wizard.sh`
+  - `validate-context-optimization.sh`
+  - `validate-crypto-trust.sh`
+  - `validate-customer-docs-local.sh`
+  - `validate-delete-client-local.sh`
+  - `validate-demo-admin-dashboard.sh`
+  - `validate-demo-client-portal.sh`
+  - `validate-demo-local.sh`
+  - `validate-embeddings-local.sh`
+  - `validate-examples-local.sh`
+  - `validate-export-client-local.sh`
+  - `validate-first-run-local.sh`
+  - `validate-gemma-chat.sh`
+  - `validate-gitignore-security.sh`
+  - `validate-governance-supervisor.sh`
+  - `validate-integrations-docs-local.sh`
+  - `validate-key-files-local.sh`
+  - `validate-landing-local.sh`
+  - `validate-lmstudio-api-sales.sh`
+  - `validate-lmstudio-backend.sh`
+  - `validate-local-ai-appliance-branding.sh`
+  - `validate-local-appliance-mode.sh`
+  - `validate-local-billing.sh`
+  - `validate-local-docs.sh`
+  - `validate-local-green.sh`
+  - `validate-local-permissions.sh`
+  - `validate-localhost-mode.sh`
+  - `validate-localhost-mode.sh.tmp`
+  - `validate-model-benchmark-real.sh`
+  - `validate-model-lifecycle.sh`
+  - `validate-observability-local.sh`
+  - `validate-opa-rego-runtime.sh`
+  - `validate-operations-center.sh`
+  - `validate-operator-errors-local.sh`
+  - `validate-plan-queues.sh`
+  - `validate-post-install-validator.sh`
+  - `validate-post-upgrade-smoke-local.sh`
+  - `validate-pre-client-checklist-local.sh`
+  - `validate-predictive-aiops.sh`
+  - `validate-proposals-local.sh`
+  - `validate-rag-limits.sh`
+  - `validate-rag-local-multiclient.sh`
+  - `validate-rag.sh`
+  - `validate-rate-limit-readiness-local.sh`
+  - `validate-readiness-cleanup-v1.6.3.sh`
+  - `validate-readme-product-local.sh`
+  - `validate-release-artifacts-security.sh`
+  - `validate-release-bundle.sh`
+  - `validate-release-history.sh`
+  - `validate-release-metadata.sh`
+  - `validate-repo-paths-local.sh`
+  - `validate-responses-api-local.sh`
+  - `validate-retention-local.sh`
+  - `validate-routing-local.sh`
+  - `validate-runtime-fabric.sh`
+  - `validate-runtime-health-local.sh`
+  - `validate-security-cleanup-v1.5.4.sh`
+  - `validate-status-local.sh`
+  - `validate-transparency-gossip.sh`
+  - `validate-tts-quota-billing-portal.sh`
+  - `validate-tts-readiness-local.sh`
+  - `validate-upgrade-migrations-local.sh`
+  - `validate-upgrade-rollback-local.sh`
+  - `validate-usable-chat-model-local.sh`
+  - `validate-v1.6-release-line-audit.sh`
+  - `validate-v1.7-final-local.sh`
+  - `validate-v1.7-final-report.sh`
+  - `validate-v1.7-go-no-go-summary.sh`
+  - `validate-v1.7-release-bundle.sh`
+  - `validate-v1.7-release-notes.sh`
+  - `validate-v1.7-warning-cleanup.sh`
+  - `validate-witness-federation.sh`
+  - `validate_commercial_demo_e2e_helper.py`
+  - `validate_real_restore_rollback_helper.py`
+
+## 5. Feature Flags Audit
+- **Orphaned Feature Flags (29)**:
+  - `CI_DEPLOY_ENABLED`
+  - `COMMERCIAL_AGENT_GOVERNANCE_ENABLED`
+  - `COMMERCIAL_APPLIANCE_MODE_ENABLED`
+  - `COMMERCIAL_APPLIANCE_REQUIRE_REMOVABLE_MEDIA`
+  - `COMMERCIAL_CONFIDENTIAL_PROHIBIT_PLAINTEXT_LOGGING`
+  - `COMMERCIAL_CONFIDENTIAL_REQUIRE_MODEL_TRUST`
+  - `COMMERCIAL_CONFIDENTIAL_RUNTIME_ENABLED`
+  - `COMMERCIAL_POLICY_DRIFT_DETECTION_ENABLED`
+  - `COMMERCIAL_POLICY_GOVERNANCE_ENABLED`
+  - `COMMERCIAL_POLICY_REQUIRE_APPROVAL_FOR_ENFORCE`
+  - `COMMERCIAL_POLICY_REQUIRE_SIGNATURE`
+  - `COMMERCIAL_PUBLIC_ATTESTATION_GATEWAY_ENABLED`
+  - `COMMERCIAL_TRANSPARENCY_GOSSIP_ENABLED`
+  - `COMMERCIAL_WITNESS_FEDERATION_ENABLED`
+  - `COMMERCIAL_WITNESS_REQUIRE_EXTERNAL`
+  - `COMMERCIAL_WORKFLOW_DETERMINISM_ENABLED`
+  - `COMPLIANCE_AUDIT_PACKAGE_ENABLED`
+  - `COMPLIANCE_EVIDENCE_COLLECTION_ENABLED`
+  - `COMPLIANCE_EXTERNAL_EXPORT_ENABLED`
+  - `COMPLIANCE_READINESS_ENABLED`
+  - `DEPLOYMENT_AUTOMATION_ENABLED`
+  - `ENTERPRISE_ONBOARDING_ENABLED`
+  - `LLAMA_CONT_BATCHING`
+  - `LLAMA_FLASH_ATTN`
+  - `MULTI_CLUSTER_AUTO_FAILOVER_ENABLED`
+  - `MULTI_CLUSTER_ENABLED`
+  - `OPERATIONAL_UI_ENABLED`
+  - `SUPPLY_CHAIN_SIGNING_ENABLED`
+  - `VISUAL_OBSERVABILITY_ENABLED`
+
+## 6. Tool Adapters Audit
+- **Unregistered Tool Adapters (0)**:
+  - None
+
+## 7. Dashboards Audit
+- **Unprovisioned Dashboards (9)**:
+  - `agentic-approvals.json`
+  - `agentic-costs.json`
+  - `agentic-memory.json`
+  - `agentic-overview.json`
+  - `agentic-tools.json`
+  - `gpu-capacity.json`
+  - `platform-overview.json`
+  - `runtime-nodes.json`
+  - `slo-error-budget.json`
+
+## 8. Test Coverage Audit
+- **Useless Test Files (3)**:
+  - `test_multitenant_embeddings_responses.py`
+  - `test_multitenant_tts.py`
+  - `test_simulate.py`

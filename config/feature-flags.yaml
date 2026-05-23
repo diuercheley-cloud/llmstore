@@ -39,8 +39,6 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
 - name: AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -48,12 +46,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_HUMAN_APPROVAL_ENABLED
+  - AGENT_HUMAN_APPROVAL_ENABLED
   conflicts: []
-  safe_default_reason: Enabled by default so high-risk agent actions always remain approval-gated.
+  safe_default_reason: Enabled by default so high-risk agent actions always remain
+    approval-gated.
 - name: AGENT_ASYNC_EXECUTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -61,12 +58,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Background execution stays disabled until operators explicitly opt in.
+  safe_default_reason: Background execution stays disabled until operators explicitly
+    opt in.
 - name: AGENT_RUNTIME_ADVISORY_MODE
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -74,12 +70,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: low
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Advisory mode defaults to enabled so operators can stage the runtime without enforcement.
+  safe_default_reason: Advisory mode defaults to enabled so operators can stage the
+    runtime without enforcement.
 - name: AGENT_AUTO_RETRY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -87,12 +82,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: low
   dependencies:
-    - AGENT_PLANNING_ENABLED
+  - AGENT_PLANNING_ENABLED
   conflicts: []
-  safe_default_reason: Retry metadata can be present safely even while planning execution remains disabled by default.
+  safe_default_reason: Retry metadata can be present safely even while planning execution
+    remains disabled by default.
 - name: AGENT_BUNDLE_INSTALL_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -100,12 +94,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_MARKETPLACE_ENABLED
+  - AGENT_MARKETPLACE_ENABLED
   conflicts: []
-  safe_default_reason: Bundle installation remains off until marketplace workflows mature.
+  safe_default_reason: Bundle installation remains off until marketplace workflows
+    mature.
 - name: AGENT_BUNDLE_SIGNATURE_REQUIRED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -113,12 +106,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: low
   dependencies:
-    - AGENT_BUNDLE_INSTALL_ENABLED
+  - AGENT_BUNDLE_INSTALL_ENABLED
   conflicts: []
-  safe_default_reason: Signature enforcement is opt-in because marketplace installs are disabled by default.
+  safe_default_reason: Signature enforcement is opt-in because marketplace installs
+    are disabled by default.
 - name: AGENT_DESTRUCTIVE_TOOLS_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -126,13 +118,12 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_TOOL_EXECUTION_ENABLED
-    - AGENT_HUMAN_APPROVAL_ENABLED
+  - AGENT_TOOL_EXECUTION_ENABLED
+  - AGENT_HUMAN_APPROVAL_ENABLED
   conflicts: []
-  safe_default_reason: Destructive tool execution is blocked until explicitly enabled and approval-gated.
+  safe_default_reason: Destructive tool execution is blocked until explicitly enabled
+    and approval-gated.
 - name: AGENT_EVALS_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -140,12 +131,10 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Evals remain opt-in until operators prepare suites and baselines.
 - name: AGENT_EVAL_REAL_PROVIDER_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -153,12 +142,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_EVALS_ENABLED
+  - AGENT_EVALS_ENABLED
   conflicts: []
-  safe_default_reason: Real eval provider calls stay disabled until operators explicitly accept provider cost and data-flow risk.
+  safe_default_reason: Real eval provider calls stay disabled until operators explicitly
+    accept provider cost and data-flow risk.
 - name: AGENT_PROMOTION_REQUIRES_EVALS
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -167,10 +155,9 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Promotion keeps requiring eval evidence even when eval execution itself is opt-in.
+  safe_default_reason: Promotion keeps requiring eval evidence even when eval execution
+    itself is opt-in.
 - name: AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -178,12 +165,11 @@
   introduced_in: v2.0.0
   risk_level: medium
   dependencies:
-    - AGENT_EVALS_ENABLED
+  - AGENT_EVALS_ENABLED
   conflicts: []
-  safe_default_reason: Mandating baselines ensures no agent enters production without quality verification.
+  safe_default_reason: Mandating baselines ensures no agent enters production without
+    quality verification.
 - name: AGENT_EVAL_REGRESSION_GATE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -191,12 +177,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_EVALS_ENABLED
+  - AGENT_EVALS_ENABLED
   conflicts: []
-  safe_default_reason: Regression gates prevent deployment of lower-quality agent versions.
+  safe_default_reason: Regression gates prevent deployment of lower-quality agent
+    versions.
 - name: AGENT_EXECUTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -204,12 +189,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Real agent execution is disabled until the operator intentionally enables it.
+  safe_default_reason: Real agent execution is disabled until the operator intentionally
+    enables it.
 - name: AGENT_HANDOFFS_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -217,12 +201,10 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Handoffs are off by default to prevent uncontrolled delegation.
 - name: AGENT_HUMAN_APPROVAL_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -231,10 +213,9 @@
   risk_level: low
   dependencies: []
   conflicts: []
-  safe_default_reason: Human approval is enabled by default to preserve a controlled rollout posture.
+  safe_default_reason: Human approval is enabled by default to preserve a controlled
+    rollout posture.
 - name: AGENT_LONG_TERM_MEMORY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -242,12 +223,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Long-term memory remains disabled until retention, redaction, and isolation policies are explicitly enabled.
+  safe_default_reason: Long-term memory remains disabled until retention, redaction,
+    and isolation policies are explicitly enabled.
 - name: AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -255,12 +235,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Semantic retrieval stays disabled until embedding providers and retention policy are intentionally enabled.
+  safe_default_reason: Semantic retrieval stays disabled until embedding providers
+    and retention policy are intentionally enabled.
 - name: AGENT_MEMORY_CONTEXT_INJECTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -268,12 +247,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Retrieved memory is not reinjected into prompts unless operators explicitly opt in.
+  safe_default_reason: Retrieved memory is not reinjected into prompts unless operators
+    explicitly opt in.
 - name: AGENT_MARKETPLACE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -282,23 +260,23 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Marketplace functionality stays disabled until signed bundle governance is validated.
+  safe_default_reason: Marketplace functionality stays disabled until signed bundle
+    governance is validated.
 - name: AGENT_REMOTE_MARKETPLACE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: experimental
+  status: deprecated
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_MARKETPLACE_ENABLED
+  - AGENT_MARKETPLACE_ENABLED
   conflicts: []
-  safe_default_reason: Remote marketplace fetching is disabled by default to prevent unauthorized code execution.
+  safe_default_reason: Remote marketplace fetching is disabled by default to prevent
+    unauthorized code execution.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_MEMORY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -306,12 +284,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Memory is disabled by default to avoid cross-tenant retention until operators opt in deliberately.
+  safe_default_reason: Memory is disabled by default to avoid cross-tenant retention
+    until operators opt in deliberately.
 - name: AGENT_MEMORY_EXPORT_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -319,12 +296,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Memory export stays disabled unless an operator explicitly enables controlled export workflows.
+  safe_default_reason: Memory export stays disabled unless an operator explicitly
+    enables controlled export workflows.
 - name: AGENT_MEMORY_WRITE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -332,9 +308,10 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Memory writes are blocked until retention and isolation policies are explicitly enabled.
+  safe_default_reason: Memory writes are blocked until retention and isolation policies
+    are explicitly enabled.
 - name: AGENT_SAAS_CONNECTORS_ENABLED
   default: false
   owner: agent-platform
@@ -343,9 +320,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_TOOL_ADAPTERS_ENABLED
+  - AGENT_TOOL_ADAPTERS_ENABLED
   conflicts: []
-  safe_default_reason: SaaS connectors stay disabled until operators explicitly allow governed external system access.
+  safe_default_reason: SaaS connectors stay disabled until operators explicitly allow
+    governed external system access.
 - name: AGENT_CONNECTOR_WRITE_ENABLED
   default: false
   owner: agent-platform
@@ -354,10 +332,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_SAAS_CONNECTORS_ENABLED
-    - AGENT_HUMAN_APPROVAL_ENABLED
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_HUMAN_APPROVAL_ENABLED
   conflicts: []
-  safe_default_reason: Connector writes remain blocked until operators explicitly allow side effects and approval coverage.
+  safe_default_reason: Connector writes remain blocked until operators explicitly
+    allow side effects and approval coverage.
 - name: AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED
   default: false
   owner: agent-platform
@@ -366,9 +345,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_SAAS_CONNECTORS_ENABLED
   conflicts: []
-  safe_default_reason: External connector traffic stays off until operators intentionally accept outbound network reachability.
+  safe_default_reason: External connector traffic stays off until operators intentionally
+    accept outbound network reachability.
 - name: AGENT_CONNECTOR_OAUTH_ENABLED
   default: false
   owner: agent-platform
@@ -377,31 +357,38 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_SAAS_CONNECTORS_ENABLED
   conflicts: []
-  safe_default_reason: OAuth flows remain disabled until operators explicitly enable delegated connector credential bootstrap.
+  safe_default_reason: OAuth flows remain disabled until operators explicitly enable
+    delegated connector credential bootstrap.
 - name: AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: active
+  status: deprecated
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_SAAS_CONNECTORS_ENABLED
   conflicts: []
-  safe_default_reason: Connector token storage remains disabled until operators explicitly accept persisted delegated credentials.
+  safe_default_reason: Connector token storage remains disabled until operators explicitly
+    accept persisted delegated credentials.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_CONNECTOR_CREDENTIAL_ROTATION_ENABLED
   default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: active
+  status: deprecated
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED
+  - AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED
   conflicts: []
-  safe_default_reason: Rotation logic may remain enabled safely while token storage itself is still disabled by default.
+  safe_default_reason: Rotation logic may remain enabled safely while token storage
+    itself is still disabled by default.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_STATEFUL_WORKFLOWS_ENABLED
   default: false
   owner: agent-platform
@@ -410,9 +397,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Stateful workflows remain opt-in until persistence, wake-up, and recovery paths are validated by operators.
+  safe_default_reason: Stateful workflows remain opt-in until persistence, wake-up,
+    and recovery paths are validated by operators.
 - name: AGENT_REASONING_LOOP_ENABLED
   default: false
   owner: agent-platform
@@ -421,9 +409,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Robust reasoning loops stay disabled until operators accept iterative model behavior and cost controls.
+  safe_default_reason: Robust reasoning loops stay disabled until operators accept
+    iterative model behavior and cost controls.
 - name: AGENT_REACT_LOOP_ENABLED
   default: false
   owner: agent-platform
@@ -432,9 +421,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_REASONING_LOOP_ENABLED
+  - AGENT_REASONING_LOOP_ENABLED
   conflicts: []
-  safe_default_reason: ReAct execution remains off until reasoning, acting, and policy interception are explicitly enabled together.
+  safe_default_reason: ReAct execution remains off until reasoning, acting, and policy
+    interception are explicitly enabled together.
 - name: AGENT_PLAN_AND_SOLVE_ENABLED
   default: false
   owner: agent-platform
@@ -443,9 +433,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_REASONING_LOOP_ENABLED
+  - AGENT_REASONING_LOOP_ENABLED
   conflicts: []
-  safe_default_reason: Plan-and-solve remains opt-in until operators validate latency and quality tradeoffs for multi-pass reasoning.
+  safe_default_reason: Plan-and-solve remains opt-in until operators validate latency
+    and quality tradeoffs for multi-pass reasoning.
 - name: AGENT_CONTEXT_COMPRESSION_ENABLED
   default: false
   owner: agent-platform
@@ -454,9 +445,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_REASONING_LOOP_ENABLED
+  - AGENT_REASONING_LOOP_ENABLED
   conflicts: []
-  safe_default_reason: Context compression stays off until operators explicitly enable compression behavior in iterative loops.
+  safe_default_reason: Context compression stays off until operators explicitly enable
+    compression behavior in iterative loops.
 - name: AGENT_SEMANTIC_MODEL_FALLBACK_ENABLED
   default: false
   owner: agent-platform
@@ -465,12 +457,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_REASONING_LOOP_ENABLED
+  - AGENT_REASONING_LOOP_ENABLED
   conflicts: []
-  safe_default_reason: Semantic fallback stays disabled until operators explicitly allow cross-model recovery behavior.
+  safe_default_reason: Semantic fallback stays disabled until operators explicitly
+    allow cross-model recovery behavior.
 - name: AGENT_MULTI_AGENT_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -478,9 +469,10 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_HANDOFFS_ENABLED
+  - AGENT_HANDOFFS_ENABLED
   conflicts: []
-  safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration policies are approved.
+  safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration
+    policies are approved.
 - name: AGENT_HIERARCHICAL_TEAMS_ENABLED
   default: false
   owner: agent-platform
@@ -489,9 +481,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_MULTI_AGENT_ENABLED
+  - AGENT_MULTI_AGENT_ENABLED
   conflicts: []
-  safe_default_reason: Hierarchical teams stay disabled until delegation and escalation policies are explicitly reviewed.
+  safe_default_reason: Hierarchical teams stay disabled until delegation and escalation
+    policies are explicitly reviewed.
 - name: AGENT_DEBATE_TEAMS_ENABLED
   default: false
   owner: agent-platform
@@ -500,9 +493,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_MULTI_AGENT_ENABLED
+  - AGENT_MULTI_AGENT_ENABLED
   conflicts: []
-  safe_default_reason: Debate teams remain opt-in until arbitration cost, latency, and conflict resolution policies are accepted.
+  safe_default_reason: Debate teams remain opt-in until arbitration cost, latency,
+    and conflict resolution policies are accepted.
 - name: AGENT_STUDIO_ENABLED
   default: false
   owner: agent-platform
@@ -511,9 +505,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Agent Studio remains off until operators intentionally expose visual authoring surfaces.
+  safe_default_reason: Agent Studio remains off until operators intentionally expose
+    visual authoring surfaces.
 - name: AGENT_VISUAL_BUILDER_ENABLED
   default: false
   owner: agent-platform
@@ -522,9 +517,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_STUDIO_ENABLED
+  - AGENT_STUDIO_ENABLED
   conflicts: []
-  safe_default_reason: Visual graph editing stays disabled until Studio governance is explicitly enabled.
+  safe_default_reason: Visual graph editing stays disabled until Studio governance
+    is explicitly enabled.
 - name: AGENT_DEBUGGER_ENABLED
   default: false
   owner: agent-platform
@@ -533,20 +529,24 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_STUDIO_ENABLED
+  - AGENT_STUDIO_ENABLED
   conflicts: []
-  safe_default_reason: Interactive debugging remains off until operators explicitly allow richer execution introspection.
+  safe_default_reason: Interactive debugging remains off until operators explicitly
+    allow richer execution introspection.
 - name: AGENT_WORKFLOW_TIMERS_ENABLED
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: active
+  status: deprecated
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  - AGENT_STATEFUL_WORKFLOWS_ENABLED
   conflicts: []
-  safe_default_reason: Timer wake-ups remain off until operators explicitly enable persistent workflow scheduling.
+  safe_default_reason: Timer wake-ups remain off until operators explicitly enable
+    persistent workflow scheduling.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_WORKFLOW_WEBHOOKS_ENABLED
   default: false
   owner: agent-platform
@@ -555,9 +555,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  - AGENT_STATEFUL_WORKFLOWS_ENABLED
   conflicts: []
-  safe_default_reason: Workflow webhooks remain disabled until operators explicitly expose callback entrypoints.
+  safe_default_reason: Workflow webhooks remain disabled until operators explicitly
+    expose callback entrypoints.
 - name: AGENT_WORKFLOW_POLLING_ENABLED
   default: false
   owner: agent-platform
@@ -566,23 +567,25 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  - AGENT_STATEFUL_WORKFLOWS_ENABLED
   conflicts: []
-  safe_default_reason: Polling wake-ups remain disabled until operators explicitly allow external check loops.
+  safe_default_reason: Polling wake-ups remain disabled until operators explicitly
+    allow external check loops.
 - name: AGENT_WORKFLOW_DISTRIBUTED_LOCKS_ENABLED
   default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: active
+  status: deprecated
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
-    - AGENT_STATEFUL_WORKFLOWS_ENABLED
+  - AGENT_STATEFUL_WORKFLOWS_ENABLED
   conflicts: []
-  safe_default_reason: Lock coordination can be enabled safely while workflows themselves remain disabled by default.
+  safe_default_reason: Lock coordination can be enabled safely while workflows themselves
+    remain disabled by default.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_INCIDENT_RESPONSE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -590,12 +593,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_OBSERVABILITY_ENABLED
+  - AGENT_OBSERVABILITY_ENABLED
   conflicts: []
-  safe_default_reason: Incident response is enabled to auto-detect stuck or misbehaving agents.
+  safe_default_reason: Incident response is enabled to auto-detect stuck or misbehaving
+    agents.
 - name: AGENT_OBSERVABILITY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -604,10 +606,9 @@
   risk_level: low
   dependencies: []
   conflicts: []
-  safe_default_reason: Observability is on by default because timelines and metrics are sanitized and local-first.
+  safe_default_reason: Observability is on by default because timelines and metrics
+    are sanitized and local-first.
 - name: AGENT_PLANNING_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -615,12 +616,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Planning remains opt-in until operators validate policy coverage and plan review flows.
+  safe_default_reason: Planning remains opt-in until operators validate policy coverage
+    and plan review flows.
 - name: AGENT_PLAN_EXECUTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -628,24 +628,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_PLANNING_ENABLED
+  - AGENT_PLANNING_ENABLED
   conflicts: []
-  safe_default_reason: Plan execution is disabled by default so generated plans cannot act without explicit enablement.
-- name: AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE
-  # Owner: agent-platform
-  # Status: beta
-  default: true
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies: []
-  conflicts: []
-  safe_default_reason: Production activation remains guarded by default with an eval baseline requirement.
+  safe_default_reason: Plan execution is disabled by default so generated plans cannot
+    act without explicit enablement.
 - name: AGENT_REGRESSION_EVALS_REQUIRED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -653,12 +640,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_EVALS_ENABLED
+  - AGENT_EVALS_ENABLED
   conflicts: []
-  safe_default_reason: Regression evals are required by default to prevent quality degradation.
+  safe_default_reason: Regression evals are required by default to prevent quality
+    degradation.
 - name: AGENT_EVAL_DATASETS_VERSIONED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -666,12 +652,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_EVALS_ENABLED
+  - AGENT_EVALS_ENABLED
   conflicts: []
-  safe_default_reason: Dataset versioning defaults to enabled to track immutable evaluation sets.
+  safe_default_reason: Dataset versioning defaults to enabled to track immutable evaluation
+    sets.
 - name: AGENT_REPLAY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -680,10 +665,9 @@
   risk_level: low
   dependencies: []
   conflicts: []
-  safe_default_reason: Read-only replay is enabled by default because it does not trigger real execution.
+  safe_default_reason: Read-only replay is enabled by default because it does not
+    trigger real execution.
 - name: AGENT_RUNTIME_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -692,10 +676,9 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: The runtime is disabled by default to preserve the existing non-agentic platform posture.
+  safe_default_reason: The runtime is disabled by default to preserve the existing
+    non-agentic platform posture.
 - name: AGENT_REAL_LLM_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -703,12 +686,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Real provider calls remain disabled until model routing, cost, and data handling are explicitly approved.
+  safe_default_reason: Real provider calls remain disabled until model routing, cost,
+    and data handling are explicitly approved.
 - name: AGENT_LLM_PROVIDER
-  # Owner: agent-platform
-  # Status: beta
   default: mock
   owner: agent-platform
   area: Agentic AI Platform
@@ -717,10 +699,9 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: The runtime defaults to the mock provider so the platform never reaches an external model gateway unintentionally.
+  safe_default_reason: The runtime defaults to the mock provider so the platform never
+    reaches an external model gateway unintentionally.
 - name: AGENT_TOOL_ADAPTERS_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -728,12 +709,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Versioned tool adapters remain disabled until the operator intentionally enables governed tool execution.
+  safe_default_reason: Versioned tool adapters remain disabled until the operator
+    intentionally enables governed tool execution.
 - name: AGENT_HTTP_TOOL_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -741,12 +721,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_TOOL_ADAPTERS_ENABLED
+  - AGENT_TOOL_ADAPTERS_ENABLED
   conflicts: []
-  safe_default_reason: External HTTP tool execution remains disabled until operators intentionally allow outbound network side effects.
+  safe_default_reason: External HTTP tool execution remains disabled until operators
+    intentionally allow outbound network side effects.
 - name: AGENT_DB_READ_TOOL_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -754,12 +733,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_TOOL_ADAPTERS_ENABLED
+  - AGENT_TOOL_ADAPTERS_ENABLED
   conflicts: []
-  safe_default_reason: Database read access remains disabled until operators explicitly allow governed read-only SQL access.
+  safe_default_reason: Database read access remains disabled until operators explicitly
+    allow governed read-only SQL access.
 - name: AGENT_SHELL_TOOL_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -767,12 +745,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_TOOL_ADAPTERS_ENABLED
+  - AGENT_TOOL_ADAPTERS_ENABLED
   conflicts: []
-  safe_default_reason: Shell command execution remains disabled until operators explicitly opt in to local command side effects.
+  safe_default_reason: Shell command execution remains disabled until operators explicitly
+    opt in to local command side effects.
 - name: AGENT_TOOL_EXECUTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -780,13 +757,12 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: high
   dependencies:
-    - AGENT_TOOL_ADAPTERS_ENABLED
-    - AGENT_EXECUTION_ENABLED
+  - AGENT_TOOL_ADAPTERS_ENABLED
+  - AGENT_EXECUTION_ENABLED
   conflicts: []
-  safe_default_reason: Real tool execution remains disabled until an operator explicitly opts into side effects.
+  safe_default_reason: Real tool execution remains disabled until an operator explicitly
+    opts into side effects.
 - name: AGENT_PLANNER_REAL_EXECUTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -794,13 +770,12 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_PLANNING_ENABLED
-    - AGENT_PLAN_EXECUTION_ENABLED
+  - AGENT_PLANNING_ENABLED
+  - AGENT_PLAN_EXECUTION_ENABLED
   conflicts: []
-  safe_default_reason: Planner-created tasks do not execute real side effects until explicitly enabled.
+  safe_default_reason: Planner-created tasks do not execute real side effects until
+    explicitly enabled.
 - name: AGENT_REPLAN_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -808,12 +783,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
-    - AGENT_PLANNING_ENABLED
+  - AGENT_PLANNING_ENABLED
   conflicts: []
-  safe_default_reason: Replanning metadata can remain available without enabling autonomous execution by default.
+  safe_default_reason: Replanning metadata can remain available without enabling autonomous
+    execution by default.
 - name: AGENT_TOOL_REGISTRY_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -821,12 +795,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Tool registry administration is gated off until agentic rollout is explicitly enabled.
+  safe_default_reason: Tool registry administration is gated off until agentic rollout
+    is explicitly enabled.
 - name: AGENT_TOOL_SANDBOX_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -834,12 +807,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
-    - AGENT_TOOL_REGISTRY_ENABLED
+  - AGENT_TOOL_REGISTRY_ENABLED
   conflicts: []
   safe_default_reason: Sandboxing is enabled by default to secure tool executions.
 - name: AGENT_TOOL_CREDENTIAL_DELEGATION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -847,12 +818,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_TOOL_REGISTRY_ENABLED
+  - AGENT_TOOL_REGISTRY_ENABLED
   conflicts: []
   safe_default_reason: Delegated credentials should be explicit opt-in.
 - name: AGENT_TOOL_ROLLBACK_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -860,12 +829,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_TOOL_REGISTRY_ENABLED
+  - AGENT_TOOL_REGISTRY_ENABLED
   conflicts: []
   safe_default_reason: Rollback recovery is enabled by default to ensure state consistency.
 - name: AGENT_TRACE_EXPORT_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -873,12 +840,11 @@
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
-    - AGENT_OBSERVABILITY_ENABLED
+  - AGENT_OBSERVABILITY_ENABLED
   conflicts: []
-  safe_default_reason: External trace export stays off so sanitized observability remains local by default.
+  safe_default_reason: External trace export stays off so sanitized observability
+    remains local by default.
 - name: AGENT_EXECUTION_PLANE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -886,12 +852,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Operator must enable async agent execution plane.
 - name: AGENT_WORKER_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -899,12 +863,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: high
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Background worker should be opt-in so the control plane never starts async execution implicitly.
+  safe_default_reason: Background worker should be opt-in so the control plane never
+    starts async execution implicitly.
 - name: AGENT_EMBEDDED_WORKER_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -912,12 +875,11 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: medium
   dependencies:
-    - AGENT_WORKER_ENABLED
+  - AGENT_WORKER_ENABLED
   conflicts: []
-  safe_default_reason: Embedded worker mode stays disabled so the control plane does not silently start local background execution.
+  safe_default_reason: Embedded worker mode stays disabled so the control plane does
+    not silently start local background execution.
 - name: AGENT_QUEUE_BACKPRESSURE_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -925,9 +887,10 @@
   introduced_in: v2.0.0-agentic-ai-platform
   risk_level: low
   dependencies:
-    - AGENT_RUNTIME_ENABLED
+  - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Backpressure checks stay enabled by default to keep queue growth bounded when workers are enabled.
+  safe_default_reason: Backpressure checks stay enabled by default to keep queue growth
+    bounded when workers are enabled.
 - name: ANTHROPIC_PROVIDER_ENABLED
   default: false
   owner: platform-ops
@@ -962,12 +925,14 @@
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: CLOUD_PROVIDERS_ENABLED
   default: false
   owner: platform-ops
@@ -1022,12 +987,14 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_APPLIANCE_MODE_ENABLED
   default: false
   owner: platform-ops
@@ -1072,12 +1039,14 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_CALIBRATION_USE_TRIMMED_MEAN
   default: false
   owner: platform-ops
@@ -1182,22 +1151,26 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_DISTRIBUTED_ANALYTICS_ENABLED
   default: false
   owner: platform-ops
@@ -1262,12 +1235,14 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_FEDERATION_ALLOW_PUSH
   default: false
   owner: platform-ops
@@ -1302,32 +1277,38 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_FINANCIAL_AUDIT_CHAIN_ENABLED
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_FINANCIAL_DISPUTE_ENABLED
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_FINANCIAL_MANUAL_CREDIT_ENABLED
   default: false
   owner: platform-ops
@@ -1342,12 +1323,14 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_GEO_ROUTING_ALLOW_CROSS_OCEAN
   default: false
   owner: platform-ops
@@ -1703,12 +1686,14 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_MODEL_QUARANTINE_ON_CHECKSUM_MISMATCH
   default: false
   owner: platform-ops
@@ -1813,42 +1798,50 @@
   default: true
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_POLICY_GOVERNANCE_ENABLED
   default: true
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_POLICY_REQUIRE_APPROVAL_FOR_ENFORCE
   default: true
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_POLICY_REQUIRE_SIGNATURE
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_PROXMOX_DRY_RUN
   default: true
   owner: platform-ops
@@ -1923,22 +1916,26 @@
   default: false
   owner: platform-ops
   area: Billing
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_QOS_FAIRNESS_ENABLED
   default: false
   owner: platform-ops
   area: Billing
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED
   default: false
   owner: platform-ops
@@ -2154,12 +2151,14 @@
   default: false
   owner: platform-ops
   area: Billing
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_REVENUE_PAGERDUTY_ENABLED
   default: false
   owner: platform-ops
@@ -2314,22 +2313,26 @@
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_WITNESS_FEDERATION_ENABLED
   default: false
   owner: platform-ops
   area: Distributed runtime
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: medium
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMMERCIAL_WITNESS_REQUIRE_EXTERNAL
   default: false
   owner: platform-ops
@@ -2354,42 +2357,50 @@
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMPLIANCE_EVIDENCE_COLLECTION_ENABLED
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMPLIANCE_EXTERNAL_EXPORT_ENABLED
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: COMPLIANCE_READINESS_ENABLED
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: DEBUG
   default: false
   owner: platform-ops
@@ -2424,12 +2435,14 @@
   default: true
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: DISTRIBUTED_RUNTIME_ENABLED
   default: false
   owner: platform-ops
@@ -2454,12 +2467,14 @@
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: GLOBAL_CLOUD_KILL_SWITCH
   default: false
   owner: platform-ops
@@ -2504,22 +2519,26 @@
   default: true
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: LLAMA_FLASH_ATTN
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: LMSTUDIO_ENABLED
   default: false
   owner: platform-ops
@@ -2594,32 +2613,38 @@
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: MULTI_CLUSTER_ENABLED
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: OBSERVABILITY_ENABLED
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: OPENAI_PROVIDER_ENABLED
   default: false
   owner: platform-ops
@@ -2644,12 +2669,14 @@
   default: true
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: PAYMENT_REAL_ENABLED
   default: false
   owner: platform-ops
@@ -2799,7 +2826,8 @@
   risk_level: low
   dependencies: []
   conflicts: []
-  safe_default_reason: Mock model runtime behavior remains disabled unless explicitly requested for testing.
+  safe_default_reason: Mock model runtime behavior remains disabled unless explicitly
+    requested for testing.
 - name: ROUTING_TEST_FORCE_LOCAL_FAILURE
   default: false
   owner: platform-ops
@@ -2834,12 +2862,14 @@
   default: false
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+  remove_after: v2.2.0
+  replacement: ''
 - name: TEST_TOOLS_ENABLED
   default: false
   owner: platform-ops
@@ -2884,15 +2914,15 @@
   default: true
   owner: platform-ops
   area: core
-  status: active
+  status: deprecated
   introduced_in: v1.9.0
   risk_level: low
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
+  remove_after: v2.2.0
+  replacement: ''
 - name: AGENT_MEMORY_SEARCH_ENABLED
-  # Owner: agent-platform
-  # Status: beta
   default: false
   owner: agent-platform
   area: Agentic AI Platform
@@ -2900,12 +2930,10 @@
   introduced_in: v2.0.0
   risk_level: high
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
   safe_default_reason: Memory search is disabled by default for privacy.
 - name: AGENT_MEMORY_CONSENT_REQUIRED
-  # Owner: agent-platform
-  # Status: beta
   default: true
   owner: agent-platform
   area: Agentic AI Platform
@@ -2913,19 +2941,76 @@
   introduced_in: v2.0.0
   risk_level: medium
   dependencies:
-    - AGENT_MEMORY_ENABLED
+  - AGENT_MEMORY_ENABLED
   conflicts: []
   safe_default_reason: Consent is required by default for privacy compliance.
 - name: AGENT_MEMORY_ENCRYPTION_ENABLED
-  # Owner: agent-platform
-  # Status: beta
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: deprecated
+  introduced_in: v2.0.0
+  risk_level: high
+  dependencies:
+  - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Encryption is disabled by default to simplify setup but available
+    for compliance.
+  remove_after: v2.2.0
+  replacement: ''
+- name: AGENT_STRICT_BUDGETS
   default: false
   owner: agent-platform
   area: Agentic AI Platform
   status: active
-  introduced_in: v2.0.0
-  risk_level: high
-  dependencies:
-    - AGENT_MEMORY_ENABLED
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: medium
+  dependencies: []
   conflicts: []
-  safe_default_reason: Encryption is disabled by default to simplify setup but available for compliance.
+  safe_default_reason: Disabled by default. If enabled, enforces strict cost and resource
+    limits on agent runs.
+- name: AGENT_WORKER_AUTOSCALING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: medium
+  dependencies:
+  - AGENT_WORKER_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default. Enables automatic scaling of background
+    execution workers in production.
+- name: AGENT_SLO_ENFORCEMENT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default. If enabled, proactively alerts or halts
+    tasks violating SLA policies.
+- name: AGENT_ENTERPRISE_OBSERVABILITY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default. Enables deep observability and tracing
+    required for large scale enterprise deployments.
+- name: AGENT_TENANT_ISOLATION_STRICT
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.1-agentic-operational-maturity
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default. Enables cryptographic and strict tenant
+    isolation rules.

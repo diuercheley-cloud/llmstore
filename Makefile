@@ -799,6 +799,12 @@ validate-feature-flags: ## Validate feature flags governance
 	chmod +x ./scripts/check-feature-flags.sh
 	./scripts/check-feature-flags.sh
 
+feature-flag-audit: ## Run the feature flags governance auditor
+	chmod +x ./scripts/audit-feature-flags.py
+	@if [ -x ./.venv/bin/python3 ]; then ./.venv/bin/python3 ./scripts/audit-feature-flags.py; \
+	elif [ -x ./venv/bin/python3 ]; then ./venv/bin/python3 ./scripts/audit-feature-flags.py; \
+	else python3 ./scripts/audit-feature-flags.py; fi
+
 validate-scripts: ## Validate operational scripts governance
 	chmod +x ./scripts/check-script-manifest.sh
 	./scripts/check-script-manifest.sh
@@ -852,6 +858,12 @@ demo: ## Run full demo (no build)
 
 security: ## Generate security report
 	./scripts/security-report-local.sh
+
+security-cleanup-report: ## Generate security cleanup report
+	./scripts/security-report-local.sh
+	mkdir -p artifacts/security
+	cp $$(ls -td artifacts/security-reports/* | head -n 1)/security-report.md artifacts/security/security-cleanup.md
+	@echo "Security cleanup report written to artifacts/security/security-cleanup.md"
 
 pre-client-check: ## Run pre-client installation checklist
 	chmod +x ./scripts/pre-client-checklist-local.sh

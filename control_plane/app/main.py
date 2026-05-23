@@ -18,7 +18,7 @@ from app.api.admin_tests import router as admin_tests_router
 from app.api.client import router as client_router
 from app.api.rag import router as rag_router, client_rag_router
 from app.api.rag_enterprise import router as rag_enterprise_router, admin_router as admin_rag_router
-from app.api.portal import router as portal_router
+from app.api.portal import router as portal_router, account_router
 from app.api.admin_models_runtime import router as admin_models_runtime_router
 from app.api.public import router as public_router
 from app.api.system import router as system_router
@@ -126,6 +126,15 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 validate_runtime_security(settings)
 
+# Print operational modes banner
+try:
+    from app.services.platform.deployment_modes import DeploymentModeService
+    mode_svc = DeploymentModeService()
+    mode_svc.print_startup_banner(settings)
+except Exception as e:
+    logger.error(f"Failed to print startup banner: {e}")
+
+
 
 def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.distributed_runtime_enabled:
@@ -140,14 +149,16 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.plugin_marketplace_admin import router as plugin_marketplace_admin_router
         app.include_router(plugin_marketplace_admin_router)
     
-    if settings.managed_control_plane_enabled and settings.deployment_mode == "managed_control_plane":
+    if settings.managed_control_plane_enabled and settings.deployment_mode == "enterprise_managed":
         from app.api.managed_control_plane import router as managed_control_plane_router
         app.include_router(managed_control_plane_router)
 
     # Agentic Platform Routers
     # Always include readiness for release gates
     from app.api.agent_readiness_admin import router as agent_readiness_admin_router
+    from app.api.platform_ga_admin import router as platform_ga_admin_router
     app.include_router(agent_readiness_admin_router)
+    app.include_router(platform_ga_admin_router)
 
     if settings.agent_runtime_enabled or settings.agent_execution_enabled:
         from app.api.agents import router as agents_router
@@ -164,10 +175,6 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_worker_enabled:
         from app.api.agent_worker_admin import router as agent_worker_admin_router
         app.include_router(agent_worker_admin_router)
-
-    if settings.agent_stateful_workflows_enabled:
-        from app.api.agent_workflows_admin import router as agent_workflows_admin_router
-        app.include_router(agent_workflows_admin_router)
 
     if settings.agent_tool_registry_enabled:
         from app.api.agent_tools_admin import router as agent_tools_admin_router
@@ -380,6 +387,8 @@ Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteam
     version="1.0.0",
     debug=settings.debug,
     lifespan=lifespan,
+    docs_url="/api-docs",
+    redoc_url="/api-redoc",
     openapi_tags=[
         {"name": "system", "description": "Endpoints de saúde e métricas do sistema."},
         {"name": "public", "description": "Endpoints públicos para onboarding e listagem de planos."},
@@ -412,7 +421,7 @@ app.include_router(client_rag_router)
 app.include_router(rag_enterprise_router)
 app.include_router(admin_rag_router)
 app.include_router(portal_router, prefix="/portal")
-app.include_router(portal_router, prefix="/v1") # Alias for /account
+app.include_router(account_router, prefix="/v1") # Alias for /account
 app.include_router(developer_docs_router)
 app.include_router(billing_admin_router)
 app.include_router(wallet_admin_router)

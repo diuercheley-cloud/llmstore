@@ -23,10 +23,16 @@ class RAGFileListResponse(BaseModel):
 class RAGQueryRequest(BaseModel):
     question: str = Field(..., min_length=1)
     file_ids: Optional[List[uuid.UUID]] = None
+    collection_ids: Optional[List[uuid.UUID]] = None
+    document_ids: Optional[List[uuid.UUID]] = None
     model: str = "default"
     top_k: int = 5
     max_tokens: int = 700
     temperature: float = 0.2
+    score_threshold: Optional[float] = 0.0
+    rerank: Optional[bool] = False
+    user_identity: Optional[str] = None
+    abac_attributes: Optional[dict] = None
 
 class RAGSource(BaseModel):
     file_id: uuid.UUID

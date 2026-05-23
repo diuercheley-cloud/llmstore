@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v2.0.0-agentic-ai-platform`  
-> Previous stable: [`v1.10.0-agentic-runtime`](releases/v1.10.0-agentic-runtime)  
-> Release notes: [`docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md`](docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md)  
+> Current build: `v2.0.1-agentic-operational-maturity`  
+> Previous stable: [`v2.0.0-agentic-ai-platform`](docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md)  
+> Release notes: [`docs/releases/V2_0_1_AGENTIC_OPERATIONAL_MATURITY.md`](docs/releases/V2_0_1_AGENTIC_OPERATIONAL_MATURITY.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,7 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
-- **Agentic AI Platform (v2.0.0)**: Closes the real execution loop with gateway-backed LLM execution, versioned tool adapters, planner-to-task execution, semantic memory reinjection, opt-in workers, canonical `/v1/agents`, and eval-gated promotion while preserving safe defaults.
+- **Operational Maturity (v2.0.1)**: Consolidates deployment modes, GA scoring, feature-flag hygiene, surface reduction, security warning governance, activation playbooks, and provider validation into an operator-ready release line.
 - **Platform Consolidation (v1.9.8)**: Supportability and operational consolidation inside existing platform domains, plus lazy-loaded routers, endpoint cleanup, and release governance tightening.
 - **Compliance Readiness (v1.9.7)**: Integrated SOC 2 & ISO 27001 preparation framework with automated evidence collection and ISMS governance.
 - **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
@@ -207,13 +207,13 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 >
 > Para uma matriz de suporte detalhada, consulte a [Política de Supported Surface Area](docs/support/supported-surface-area.md).
 
-### Release v2.0.0 scope
+### Release v2.0.1 scope
 
-- **Agentic AI Platform, default-safe**: `v2.0.0-agentic-ai-platform` closes the real execution loop with gateway LLM, versioned tool adapters, planner-to-task execution, semantic memory reinjection, opt-in worker deployment, canonical `/v1/agents` runtime API, and eval-gated promotion.
-- **Five critical layers integrated**: governed SaaS connectors, resilient stateful workflows, robust reasoning/acting loops, advanced multi-agent orchestration, and Agent Studio with visual builder plus debugger are part of the release line.
-- **No unrestricted autonomy claims**: the platform does not advertise or expose unrestricted autonomous execution. Operators must explicitly enable runtime, execution, tools, memory, and planning.
-- **Supportability is bounded**: support bundles are sanitized operational artifacts for diagnostics only. They do not widen tenant-facing product scope, and they must not include prompts, documents, `.env` files, or real secrets.
-- **Governance remains explicit**: compliance content remains readiness/advisory material, not a promise of SOC 2 or ISO certification.
+- **Operational modes made official**: `DEPLOYMENT_MODE` now defines the supported activation postures across `appliance`, `pilot`, `production`, and `enterprise_managed`.
+- **Release evidence is objective**: GA classification, feature-flag audit, surface audit, security cleanup, validation summary, and rollout playbooks are now part of the release artifact set.
+- **No unrestricted autonomy claims**: the platform still requires explicit runtime activation, approvals, and governed connectors before real side effects occur.
+- **Supportability is bounded**: support bundles and security exceptions remain sanitized operational artifacts and do not widen tenant-facing scope.
+- **Provider validation is explicit**: real-provider checks remain opt-in, budgeted, and report-driven.
 
 ### Critical layers and defaults
 
@@ -227,7 +227,7 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 
 ### Agentic release criteria
 
-`v2.0.0-agentic-ai-platform` is only considered releasable when all eight criteria below are satisfied:
+`v2.0.1-agentic-operational-maturity` is only considered releasable when all eight criteria below are satisfied:
 
 | Criterion | v2.0.0 posture |
 |-----------|----------------|
@@ -239,6 +239,15 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | 6. SLOs, metrics, playbooks | Agentic SLOs, dashboards, readiness checks, and playbooks are part of the release surface. |
 | 7. Versioned contracts | Runtime, tool, and memory contracts are versioned and covered by contract tests. |
 | 8. Safe-by-default | All agentic capabilities with side effects remain disabled until explicitly enabled by operators. |
+
+### Operational maturity controls
+
+- Deployment modes: [docs/platform/deployment-modes.md](docs/platform/deployment-modes.md)
+- Pilot vs production rollout: [docs/platform/pilot-vs-production.md](docs/platform/pilot-vs-production.md)
+- Runtime activation playbooks: [docs/operations/agentic-rollout.md](docs/operations/agentic-rollout.md)
+- GA readiness framework: [docs/platform/ga-readiness.md](docs/platform/ga-readiness.md)
+- Feature-flag governance: [docs/platform/feature-flag-governance.md](docs/platform/feature-flag-governance.md)
+- Security warning governance: [docs/security/warning-governance.md](docs/security/warning-governance.md)
 
 ## Quick start
 
@@ -435,7 +444,7 @@ make validate-real-provider-env
 
 - **PSP real está fora do escopo.** O sistema simula faturamento com invoices e ciclos, mas não processa pagamentos reais.
 - **PIX real está fora do escopo.** Não há integração com gateways de pagamento brasileiros.
-- **Cloud gerenciada é opcional e desabilitada por padrão.** O modo local/offline continua sendo o baseline; `MANAGED_CONTROL_PLANE_ENABLED=false` e `DEPLOYMENT_MODE=appliance` preservam o comportamento de appliance.
+- **Modos Operacionais Controlados.** A ativação de features é governada pela variável `DEPLOYMENT_MODE`. O modo padrão é `appliance` (totalmente local e com runtime desativado). Outros modos suportados são `pilot` (sandboxes de teste com escritas externas bloqueadas e orçamentos estritos), `production` (ambientes produtivos com eval gates e SLOs mandatórios) e `enterprise_managed` (multi-cluster federado com isolamento estrito de tenants).
 - **Modelos dependem do hardware local.** Desempenho varia conforme GPU, RAM e quantização. Consulte [docs/MODEL_BENCHMARK_LOCAL.md](docs/MODEL_BENCHMARK_LOCAL.md).
 - **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade, cache e providers cloud requerem ativação explícita em `.env.local`.
 - **RBAC administrativo permanece em legado por padrão.** `RBAC_ADMIN_ENABLED=false` mantém o fluxo atual baseado em `X-Admin-Token`.

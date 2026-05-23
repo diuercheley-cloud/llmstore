@@ -81,7 +81,7 @@ capabilities:
   - id: kubernetes
     name: Kubernetes
     area: Kubernetes
-    status: placeholder
+    status: deprecated
     owner: cloud-team
     support_level: none
     docs_url: docs/kubernetes
@@ -93,7 +93,7 @@ capabilities:
   - id: distributed-runtime
     name: Distributed runtime
     area: Distributed runtime
-    status: placeholder
+    status: deprecated
     owner: cloud-team
     support_level: none
     docs_url: docs/DISTRIBUTED_CONTROL_PLANE_MESH.md
@@ -105,7 +105,7 @@ capabilities:
   - id: gpu-orchestration
     name: GPU orchestration
     area: GPU orchestration
-    status: placeholder
+    status: deprecated
     owner: cloud-team
     support_level: none
     docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
@@ -117,7 +117,7 @@ capabilities:
   - id: marketplace
     name: Marketplace
     area: Marketplace
-    status: placeholder
+    status: deprecated
     owner: product-team
     support_level: none
     docs_url: docs/plugins
@@ -129,7 +129,7 @@ capabilities:
   - id: managed-control-plane
     name: Managed control-plane
     area: Managed control-plane
-    status: placeholder
+    status: deprecated
     owner: cloud-team
     support_level: none
     docs_url: docs/LOCAL_APPLIANCE_MODE.md
@@ -141,7 +141,7 @@ capabilities:
   - id: multi-cluster
     name: Multi-cluster
     area: Multi-cluster
-    status: placeholder
+    status: deprecated
     owner: cloud-team
     support_level: none
     docs_url: docs/multicluster
@@ -152,7 +152,7 @@ capabilities:
   - id: ci-cd
     name: CI/CD
     area: CI/CD
-    status: internal
+    status: internal_only
     owner: infra-team
     support_level: production
     docs_url: docs/ci
@@ -386,6 +386,48 @@ capabilities:
     limitations: "Worker control, DLQ inspection, and retry tooling are official operator surfaces, but background execution remains opt-in."
     test_coverage: 69%
 
+  - id: agent-worker-autoscaling
+    name: Agent worker autoscaling
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: production
+    docs_url: docs/platform/deployment-modes.md
+    feature_flag: agent_worker_autoscaling_enabled
+    associated_services:
+      - deployment_modes
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "Autoscaling is only part of the supported posture in production and enterprise managed modes."
+    test_coverage: 64%
+
+  - id: agent-slo-enforcement
+    name: Agent SLO enforcement
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: production
+    docs_url: docs/platform/deployment-modes.md
+    feature_flag: agent_slo_enforcement_enabled
+    associated_services:
+      - deployment_modes
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "SLO enforcement is an operator control and only becomes meaningful after runtime activation."
+    test_coverage: 64%
+
+  - id: agent-enterprise-observability
+    name: Agent enterprise observability
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: production
+    docs_url: docs/platform/deployment-modes.md
+    feature_flag: agent_enterprise_observability_enabled
+    associated_services:
+      - deployment_modes
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "Enhanced enterprise observability is only part of the enterprise managed posture."
+    test_coverage: 63%
+
   - id: agent-readiness
     name: Agent readiness
     area: Agentic AI Platform
@@ -403,6 +445,73 @@ capabilities:
     since_version: v2.0.0-agentic-ai-platform
     limitations: "Readiness is advisory while the runtime is disabled, and becomes a blocking operational control once agent execution is enabled."
     test_coverage: 71%
+
+  - id: ga-readiness
+    name: Platform GA readiness
+    area: Platform Operations
+    status: beta
+    owner: platform-ops
+    support_level: production
+    docs_url: docs/platform/ga-readiness.md
+    api_prefix: /admin/platform
+    associated_services:
+      - ga_readiness
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "GA readiness is evidence-driven and only as current as the latest generated artifacts."
+    test_coverage: 70%
+
+  - id: deployment-modes
+    name: Deployment modes
+    area: Platform Operations
+    status: beta
+    owner: platform-ops
+    support_level: production
+    docs_url: docs/platform/deployment-modes.md
+    associated_services:
+      - deployment_modes
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "Deployment modes govern posture defaults but can still be overridden; readiness catches incoherent overrides."
+    test_coverage: 72%
+
+  - id: surface-audit
+    name: Surface audit
+    area: Platform Operations
+    status: beta
+    owner: platform-ops
+    support_level: production
+    docs_url: docs/support/supported-surface-area.md
+    associated_services:
+      - surface_audit
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "Surface audit is a governance report, not a runtime enforcement plane by itself."
+    test_coverage: 69%
+
+  - id: feature-flag-audit
+    name: Feature flag audit
+    area: Platform Operations
+    status: beta
+    owner: platform-ops
+    support_level: production
+    docs_url: docs/platform/feature-flag-governance.md
+    associated_services:
+      - feature_flag_audit
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "The audit validates registry hygiene but does not remove flags automatically unless invoked with cleanup mode."
+    test_coverage: 70%
+
+  - id: provider-validation
+    name: Provider validation
+    area: Agentic AI Platform
+    status: beta
+    owner: agent-platform
+    support_level: production
+    docs_url: docs/evals/real-provider-validation.md
+    feature_flag: real_provider_validation_enabled
+    associated_services:
+      - provider_validation
+    since_version: v2.0.1-agentic-operational-maturity
+    limitations: "Provider validation is opt-in and designed to run with synthetic data and constrained budgets."
+    test_coverage: 68%
 
   - id: tenant-agentic-readiness
     name: Tenant agentic readiness
@@ -778,7 +887,7 @@ capabilities:
   - id: support-bundle
     name: Support bundle
     area: Platform supportability
-    status: internal
+    status: internal_only
     owner: platform-ops
     support_level: production
     docs_url: docs/support/support-bundle.md
@@ -790,7 +899,7 @@ capabilities:
   - id: pki
     name: PKI
     area: PKI
-    status: advisory
+    status: internal_only
     owner: security-team
     support_level: advisory
     docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md
@@ -802,7 +911,7 @@ capabilities:
   - id: attestation
     name: Attestation
     area: Attestation
-    status: advisory
+    status: internal_only
     owner: security-team
     support_level: advisory
     docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
@@ -814,7 +923,7 @@ capabilities:
   - id: hardware-trust
     name: Hardware trust
     area: Hardware trust
-    status: advisory
+    status: internal_only
     owner: security-team
     support_level: advisory
     docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md

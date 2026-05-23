@@ -1,0 +1,5 @@
+allowlist:
+- expiration_review_date: '2030-01-01'
+  file_path: artifacts/test-secrets-temp/config.env
+  justification: Synthetic fake token for test cases
+  owner: test-suite

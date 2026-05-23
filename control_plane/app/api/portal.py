@@ -100,7 +100,9 @@ from app.services.compliance.customer_audit_portal import (
 )
 from app.services.compliance.portal_rbac import get_portal_capabilities, require_portal_permission
 
+# Surface: portal
 router = APIRouter(tags=["portal"])
+account_router = APIRouter(tags=["portal"])
 
 
 class PortalAuditReportGeneratePayload(BaseModel):
@@ -705,6 +707,7 @@ async def portal_list_models(
 
 
 @router.get("/account")
+@account_router.get("/account")
 async def portal_account(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),

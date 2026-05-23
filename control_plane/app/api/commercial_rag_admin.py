@@ -17,32 +17,6 @@ from ..api.dependencies import get_admin_user
 
 router = APIRouter(prefix="/admin/rag", tags=["Confidential RAG Vault Admin"])
 
-@router.get("/vaults", response_model=List[dict])
-async def list_vaults(db: AsyncSession = Depends(get_db), admin: Any = Depends(get_admin_user)):
-    result = await db.execute(select(CommercialRAGVault).order_by(CommercialRAGVault.created_at.desc()))
-    vaults = result.scalars().all()
-    return [
-        {
-            "id": str(v.id),
-            "tenant_id": v.tenant_id,
-            "vault_name": v.vault_name,
-            "is_encrypted": v.is_encrypted,
-            "retention_policy_days": v.retention_policy_days,
-            "created_at": v.created_at.isoformat()
-        }
-        for v in vaults
-    ]
-
-@router.post("/vaults")
-async def create_vault(payload: dict, db: AsyncSession = Depends(get_db), admin: Any = Depends(get_admin_user)):
-    vault = await confidential_rag_vault.create_vault(
-        db, 
-        tenant_id=payload["tenant_id"],
-        vault_name=payload["vault_name"],
-        retention_days=payload.get("retention_days", 30)
-    )
-    return {"id": str(vault.id), "vault_name": vault.vault_name}
-
 @router.get("/receipts", response_model=List[dict])
 async def list_receipts(db: AsyncSession = Depends(get_db), admin: Any = Depends(get_admin_user)):
     result = await db.execute(select(CommercialRetrievalReceipt).order_by(CommercialRetrievalReceipt.created_at.desc()).limit(100))

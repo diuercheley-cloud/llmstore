@@ -54,11 +54,56 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import yaml
 
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:18080")
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "artifacts/security-reports")
 STRICT = os.environ.get("STRICT") == "true"
 SKIP_ARTIFACTS = os.environ.get("SKIP_ARTIFACTS") == "true"
+
+ALLOWLIST_PATH = Path("config/security-warning-allowlist.yaml")
+allowlist = []
+if ALLOWLIST_PATH.exists():
+    try:
+        with open(ALLOWLIST_PATH) as f:
+            data = yaml.safe_load(f) or {}
+            allowlist = data.get("allowlist", []) or []
+    except Exception as e:
+        print(f"Error loading allowlist: {e}", file=sys.stderr)
+
+def check_allowlist(file_path: str, is_versioned: bool):
+    if not file_path:
+        return False, ""
+    norm_file_path = str(Path(file_path)).replace("\\", "/")
+    for entry in allowlist:
+        entry_path = str(Path(entry.get("file_path", ""))).replace("\\", "/")
+        if entry_path and (norm_file_path == entry_path or norm_file_path.endswith("/" + entry_path)):
+            justification = entry.get("justification")
+            owner = entry.get("owner")
+            exp_date_str = entry.get("expiration_review_date")
+            
+            if not justification or not owner or not exp_date_str:
+                print(f"Allowlist entry invalid (missing fields) for: {file_path}", file=sys.stderr)
+                continue
+            
+            try:
+                if isinstance(exp_date_str, datetime.date):
+                    exp_date = datetime.datetime.combine(exp_date_str, datetime.time.min)
+                else:
+                    exp_date = datetime.datetime.strptime(str(exp_date_str), "%Y-%m-%d")
+                if exp_date < datetime.datetime.now():
+                    print(f"Allowlist entry expired ({exp_date_str}) for: {file_path}", file=sys.stderr)
+                    continue
+            except Exception as e:
+                print(f"Allowlist entry date parsing error for {file_path}: {e}", file=sys.stderr)
+                continue
+            
+            if is_versioned:
+                print(f"Allowlist rule violation: file is tracked/staged in git, cannot be allowlisted: {file_path}", file=sys.stderr)
+                continue
+            
+            return True, f"Allowlisted by {owner} until {exp_date_str} (Reason: {justification})"
+    return False, ""
 
 CLASSIFICATIONS = [
     "real_secret_suspected",
@@ -234,6 +279,14 @@ def add_secret_scan_results(check_id_prefix: str, title_context: str, output: st
                 current_severity = "low"
                 current_contributes = False
 
+            # Allowlist check
+            is_versioned = bool(git_info.get("tracked") or git_info.get("staged"))
+            is_allowlisted, allowlist_reason = check_allowlist(file_path, is_versioned)
+            if is_allowlisted:
+                current_status = "skip"
+                current_severity = "low"
+                current_contributes = False
+
             details = {
                 "real_secret_suspected": f"Found suspected real secrets in {title_context}.",
                 "fixture_expected": f"Found authorized fake fixtures in {title_context}.",
@@ -242,6 +295,9 @@ def add_secret_scan_results(check_id_prefix: str, title_context: str, output: st
                 "needs_review": f"Found items needing manual review in {title_context}.",
                 "redacted_safe": f"Found redacted markers in {title_context}.",
             }.get(classification, f"Findings for {classification}")
+
+            if is_allowlisted:
+                details = f"[Allowlisted] {details} ({allowlist_reason})"
 
             remediation = {
                 "real_secret_suspected": "Remove the secret or replace it with runtime-generated test data.",
@@ -438,7 +494,12 @@ if out.strip():
         in_allowed_path = normalized.startswith("tests/fixtures/")
         allowed_name = "fake_" in name or "fixture_" in name
         blocked_area = normalized.startswith(("releases/", "docs/", "scripts/", "control_plane/"))
-        if in_allowed_path and allowed_name and marker_ok and not blocked_area:
+        
+        git_info = get_file_git_info(file_path)
+        is_versioned = bool(git_info.get("tracked") or git_info.get("staged"))
+        is_allowlisted, allowlist_reason = check_allowlist(normalized, is_versioned)
+
+        if (in_allowed_path and allowed_name and marker_ok and not blocked_area) or is_allowlisted:
             allowed.append(normalized)
         else:
             unauthorized.append(normalized)

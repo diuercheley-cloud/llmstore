@@ -384,6 +384,61 @@ async def query_rag(
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
 
+    # Delegate to enterprise RAG if plan indicates enterprise or enterprise fields are present
+    effective_plan = resolve_effective_plan(client)
+    has_enterprise_fields = (
+        payload.collection_ids is not None or
+        payload.document_ids is not None or
+        payload.abac_attributes is not None or
+        payload.rerank or
+        (payload.score_threshold and payload.score_threshold > 0.0)
+    )
+    if has_enterprise_fields or effective_plan.code in ("enterprise", "scale") or getattr(effective_plan, "rag_max_documents", 0) > 5:
+        from app.api.rag_enterprise import query_enterprise_rag
+        from app.services.rag_enterprise.schemas import EnterpriseQueryRequest
+        from starlette.responses import JSONResponse
+
+        ent_payload = EnterpriseQueryRequest(
+            question=payload.question,
+            collection_ids=payload.collection_ids,
+            document_ids=payload.document_ids or payload.file_ids,
+            model=payload.model,
+            top_k=payload.top_k,
+            score_threshold=payload.score_threshold or 0.0,
+            max_tokens=payload.max_tokens,
+            temperature=payload.temperature,
+            rerank=payload.rerank or False,
+            user_identity=payload.user_identity,
+            abac_attributes=payload.abac_attributes,
+        )
+        ent_res = await query_enterprise_rag(ent_payload, client, session, proxy)
+        if isinstance(ent_res, JSONResponse):
+            return ent_res
+
+        # Map response to RAGQueryResponse schema structure
+        if hasattr(ent_res, "dict"):
+            res_dict = ent_res.dict()
+        elif isinstance(ent_res, dict):
+            res_dict = ent_res
+        else:
+            return ent_res
+
+        mapped_sources = []
+        for s in res_dict.get("sources", []):
+            mapped_sources.append({
+                "file_id": s.get("document_id") or s.get("file_id"),
+                "filename": s.get("filename"),
+                "page": s.get("page"),
+                "chunk_index": s.get("chunk_index"),
+                "text": s.get("text"),
+                "score": s.get("score"),
+            })
+        return {
+            "answer": res_dict.get("answer"),
+            "sources": mapped_sources,
+            "usage": res_dict.get("usage"),
+        }
+
     is_blocked, block_reason = await check_rag_feature_blocked(session, client.id)
     if is_blocked:
         raise HTTPException(status_code=403, detail=f"RAG feature blocked: {block_reason}")

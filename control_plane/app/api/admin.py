@@ -3322,27 +3322,3 @@ async def get_model_benchmark(model: str):
             return json.load(f)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading benchmark: {str(e)}")
-
-@router.get("/providers/cost-validation/latest")
-def get_latest_provider_cost_validation():
-    validation_dir = Path("artifacts/real-provider-validation/costs")
-    if not validation_dir.exists():
-        raise HTTPException(status_code=404, detail="No cost validation reports found")
-
-    runs = [d for d in validation_dir.iterdir() if d.is_dir()]
-    if not runs:
-        raise HTTPException(status_code=404, detail="No cost validation runs found")
-
-    latest_run = max(runs, key=lambda d: d.name)
-    report_file = latest_run / "provider-costs.json"
-
-    if not report_file.exists():
-        raise HTTPException(status_code=404, detail="Report file not found for latest run")
-
-    try:
-        with open(report_file, "r") as f:
-            # Mask sensitive data if any (although script should not output full prompt/resp)
-            data = json.load(f)
-            return {"run": latest_run.name, "results": data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")

@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.0-agentic-ai-platform` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.1-agentic-operational-maturity` line.
 
 ## Defaults
 
@@ -15,11 +15,12 @@
 - Security headers are added by the API/proxy layer.
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
 - Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
-- `DEPLOYMENT_MODE=appliance`, `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false`, and `MANAGED_CONTROL_PLANE_ENABLED=false` keep enterprise runtime surfaces disabled by default.
-- `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_SAAS_CONNECTORS_ENABLED=false`, `AGENT_CONNECTOR_WRITE_ENABLED=false`, `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false`, `AGENT_STATEFUL_WORKFLOWS_ENABLED=false`, `AGENT_REASONING_LOOP_ENABLED=false`, `AGENT_REACT_LOOP_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, `AGENT_HIERARCHICAL_TEAMS_ENABLED=false`, `AGENT_DEBATE_TEAMS_ENABLED=false`, `AGENT_STUDIO_ENABLED=false`, `AGENT_VISUAL_BUILDER_ENABLED=false`, `AGENT_DEBUGGER_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` keep the agentic runtime safe-by-default.
-- `AGENT_PROMOTION_REQUIRES_EVALS=true` preserves eval gating even while eval execution remains opt-in.
-- `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` preserve mandatory approval for high-risk agent actions.
-- Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=managed_control_plane`.
+- The security posture and active features are partially driven by `DEPLOYMENT_MODE`.
+- In `appliance` mode (default), the agentic runtime is completely disabled and SaaS external connectors are blocked.
+- In `pilot` mode, the agentic runtime is active but SaaS connectors are read-only (writes blocked), and any mutating tool or memory action strictly requires human operator approval (`AGENT_HUMAN_APPROVAL_ENABLED=true`). Strict resource budgets are enforced.
+- In `production` mode, automatic evaluation gates are strictly enforced (`AGENT_PROMOTION_REQUIRES_EVALS=true` and `AGENT_EVAL_REGRESSION_GATE_ENABLED=true`) to block unvalidated agents.
+- In `enterprise_managed` mode, the same production gates apply, supplemented by strict cryptographic tenant isolation (`AGENT_TENANT_ISOLATION_STRICT=true`), managed control plane constraints, and enterprise observability.
+- Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
 
 ## Agentic release controls
 
