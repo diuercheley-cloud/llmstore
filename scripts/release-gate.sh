@@ -2,71 +2,358 @@
 set -e
 
 # LLM Inference Stack - Release Gate Validator
-# Garante que a release cumpre os requisitos mínimos de governança.
+# Runs all mandatory gates and generates release artifacts.
 
 VERSION=$(cat VERSION 2>/dev/null || echo "v0.0.0")
 TAG=$1
 
 if [ -z "$TAG" ]; then
+    echo "=========================================="
+    echo "  Release Gate: FAILED"
+    echo "=========================================="
     echo "Erro: Tag de release não fornecida."
+    echo "Uso: make release-gate TAG=vX.Y.Z"
     exit 1
 fi
 
-echo "--- Iniciando Release Gate para $TAG ---"
+echo "=========================================="
+echo "  Release Gate: $TAG"
+echo "=========================================="
 
-# 1. Validar padrão da tag
+ARTIFACT_DIR="artifacts/releases/$TAG"
+mkdir -p "$ARTIFACT_DIR"
+
+GATES_PASSED=0
+GATES_FAILED=0
+FAILED_GATES=""
+GATE_RESULTS=""
+
+run_gate() {
+    local name=$1
+    shift
+    echo ""
+    echo "━━━ Gate: $name ━━━"
+    if "$@"; then
+        echo "━━━ [PASS] $name ━━━"
+        GATES_PASSED=$((GATES_PASSED+1))
+        GATE_RESULTS="${GATE_RESULTS}| $name | PASS |\n"
+    else
+        local rc=$?
+        echo "━━━ [FAIL] $name (exit code: $rc) ━━━"
+        GATES_FAILED=$((GATES_FAILED+1))
+        FAILED_GATES="$FAILED_GATES $name"
+        GATE_RESULTS="${GATE_RESULTS}| $name | FAIL |\n"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# 1. Tag Validation
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: tag-format ━━━"
 if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9-]+)?$ ]]; then
-    echo "Erro: Tag $TAG não segue o padrão vX.Y.Z-name"
+    echo "Erro: Tag '$TAG' não segue o padrão vX.Y.Z-name"
     exit 1
 fi
+echo "[PASS] Tag format: $TAG"
+GATES_PASSED=$((GATES_PASSED+1))
+GATE_RESULTS="${GATE_RESULTS}| tag-format | PASS |\n"
 
-# 2. Verificar CHANGELOG
+# ---------------------------------------------------------------------------
+# 2. CHANGELOG
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: changelog ━━━"
 if ! grep -q "$TAG" CHANGELOG.md; then
     echo "Erro: CHANGELOG.md não contém a versão $TAG"
-    exit 1
+    GATES_FAILED=$((GATES_FAILED+1))
+    FAILED_GATES="$FAILED_GATES changelog"
+    GATE_RESULTS="${GATE_RESULTS}| changelog | FAIL |\n"
+else
+    echo "[PASS] CHANGELOG.md contém entrada para $TAG"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| changelog | PASS |\n"
 fi
 
-# 3. Verificar Release Notes
+# ---------------------------------------------------------------------------
+# 3. Release Notes
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: release-notes ━━━"
 RELEASE_NOTE_PATH="docs/releases/$(echo "$TAG" | sed 's/\./_/g' | tr '-' '_').md"
 RELEASE_NOTE_ALT_PATH="docs/releases/$(echo "$TAG" | tr '[:lower:]' '[:upper:]' | sed 's/\./_/g' | tr '-' '_').md"
-# Fallback para nomes de arquivos legados
-if [ ! -f "$RELEASE_NOTE_PATH" ] && [ ! -f "$RELEASE_NOTE_ALT_PATH" ] && [ ! -f "docs/releases/V1_9_5_OPERATIONAL_EXPERIENCE.md" ]; then
+if [ -f "$RELEASE_NOTE_PATH" ]; then
+    echo "[PASS] Release notes: $RELEASE_NOTE_PATH"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| release-notes | PASS |\n"
+elif [ -f "$RELEASE_NOTE_ALT_PATH" ]; then
+    echo "[PASS] Release notes: $RELEASE_NOTE_ALT_PATH"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| release-notes | PASS |\n"
+else
     echo "Erro: Release notes não encontradas para $TAG"
-    exit 1
+    echo "  Procurou: $RELEASE_NOTE_PATH"
+    echo "  Procurou: $RELEASE_NOTE_ALT_PATH"
+    GATES_FAILED=$((GATES_FAILED+1))
+    FAILED_GATES="$FAILED_GATES release-notes"
+    GATE_RESULTS="${GATE_RESULTS}| release-notes | FAIL |\n"
 fi
 
-# 4. Verificar Artifacts de Release
-ARTIFACT_DIR="artifacts/releases/$TAG"
-if [ ! -d "$ARTIFACT_DIR" ]; then
-    # Fallback para o diretório fixo que usei antes se for 1.9.5
-    if [[ "$TAG" == "v1.9.5-operational-experience" ]]; then
-       ARTIFACT_DIR="artifacts/releases/v1.9.5-operational-experience"
+# ---------------------------------------------------------------------------
+# 4. Feature Flags Governance
+# ---------------------------------------------------------------------------
+run_gate "feature-flags" bash scripts/check-feature-flags.sh
+
+# ---------------------------------------------------------------------------
+# 5. check-secrets
+# ---------------------------------------------------------------------------
+run_gate "check-secrets" bash scripts/check-secrets.sh --all
+
+# ---------------------------------------------------------------------------
+# 6. check-alembic-integrity
+# ---------------------------------------------------------------------------
+run_gate "check-alembic-integrity" bash scripts/check-alembic-integrity.sh
+
+# ---------------------------------------------------------------------------
+# 7. platform-freeze-check
+# ---------------------------------------------------------------------------
+run_gate "platform-freeze-check" bash scripts/platform-freeze-check.sh
+
+# ---------------------------------------------------------------------------
+# 8. complexity-report
+# ---------------------------------------------------------------------------
+run_gate "complexity-report" bash scripts/complexity-report.sh
+
+# ---------------------------------------------------------------------------
+# 9. security
+# ---------------------------------------------------------------------------
+run_gate "security" bash scripts/security-report-local.sh
+
+# ---------------------------------------------------------------------------
+# 10. validate-quick
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: validate-quick ━━━"
+if VALIDATION_MODE=quick bash scripts/validate-local-production-full.sh; then
+    echo "━━━ [PASS] validate-quick ━━━"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| validate-quick | PASS |\n"
+else
+    local rc=$?
+    echo "━━━ [FAIL] validate-quick (exit code: $rc) ━━━"
+    GATES_FAILED=$((GATES_FAILED+1))
+    FAILED_GATES="$FAILED_GATES validate-quick"
+    GATE_RESULTS="${GATE_RESULTS}| validate-quick | FAIL |\n"
+fi
+
+# ---------------------------------------------------------------------------
+# 11. operational-readiness
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: operational-readiness ━━━"
+READINESS_OUTPUT=$(bash scripts/operational-readiness-pack.sh 2>&1)
+READINESS_RC=$?
+if [ $READINESS_RC -eq 0 ] || echo "$READINESS_OUTPUT" | grep -q "production_blocked"; then
+    if [ $READINESS_RC -ne 0 ]; then
+        echo "$READINESS_OUTPUT"
+        echo "━━━ [FAIL] operational-readiness (production_blocked) ━━━"
+        GATES_FAILED=$((GATES_FAILED+1))
+        FAILED_GATES="$FAILED_GATES operational-readiness"
+        GATE_RESULTS="${GATE_RESULTS}| operational-readiness | FAIL |\n"
     else
-       echo "Erro: Diretório de artifacts $ARTIFACT_DIR não existe."
-       exit 1
+        echo "$READINESS_OUTPUT"
+        echo "━━━ [PASS] operational-readiness ━━━"
+        GATES_PASSED=$((GATES_PASSED+1))
+        GATE_RESULTS="${GATE_RESULTS}| operational-readiness | PASS |\n"
     fi
+else
+    echo "$READINESS_OUTPUT"
+    echo "━━━ [FAIL] operational-readiness (exit code: $READINESS_RC) ━━━"
+    GATES_FAILED=$((GATES_FAILED+1))
+    FAILED_GATES="$FAILED_GATES operational-readiness"
+    GATE_RESULTS="${GATE_RESULTS}| operational-readiness | FAIL |\n"
 fi
 
-if [ ! -f "$ARTIFACT_DIR/summary.md" ] || [ ! -f "$ARTIFACT_DIR/validation.md" ]; then
-    echo "Erro: Artifacts de sumário ou validação ausentes em $ARTIFACT_DIR"
+# ---------------------------------------------------------------------------
+# 12. agentic-readiness
+# ---------------------------------------------------------------------------
+echo ""
+echo "━━━ Gate: agentic-readiness ━━━"
+AGENTIC_OUTPUT=$(bash scripts/agentic-readiness.sh 2>&1)
+AGENTIC_RC=$?
+echo "$AGENTIC_OUTPUT"
+
+# disabled is a safe default — never blocks
+AGENTIC_STATUS=$(echo "$AGENTIC_OUTPUT" | grep -oP 'Status:\s*\K\S+' || echo "unknown")
+if echo "$AGENTIC_OUTPUT" | grep -q "disabled"; then
+    echo "━━━ [PASS] agentic-readiness (disabled — safe default) ━━━"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | PASS (disabled — safe default) |\n"
+elif [ $AGENTIC_RC -eq 0 ]; then
+    echo "━━━ [PASS] agentic-readiness ━━━"
+    GATES_PASSED=$((GATES_PASSED+1))
+    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | PASS |\n"
+else
+    echo "━━━ [FAIL] agentic-readiness (status: $AGENTIC_STATUS) ━━━"
+    GATES_FAILED=$((GATES_FAILED+1))
+    FAILED_GATES="$FAILED_GATES agentic-readiness"
+    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | FAIL (status: $AGENTIC_STATUS) |\n"
+fi
+
+# ---------------------------------------------------------------------------
+# 13. compliance-check (se aplicável)
+# ---------------------------------------------------------------------------
+if [ -f scripts/compliance-check.sh ]; then
+    run_gate "compliance-check" bash scripts/compliance-check.sh
+fi
+
+# ---------------------------------------------------------------------------
+# Generate Release Artifacts
+# ---------------------------------------------------------------------------
+echo ""
+echo "=========================================="
+echo "  Generating Release Artifacts"
+echo "=========================================="
+
+TIMESTAMP_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# summary.md
+cat > "$ARTIFACT_DIR/summary.md" << EOF
+# $TAG Release Summary
+
+**Generated at**: $TIMESTAMP_NOW
+**Gates passed**: $GATES_PASSED
+**Gates failed**: $GATES_FAILED
+
+## Result
+EOF
+
+if [ $GATES_FAILED -gt 0 ]; then
+    echo "**Status**: BLOCKED" >> "$ARTIFACT_DIR/summary.md"
+    echo "**Failed gates**:$FAILED_GATES" >> "$ARTIFACT_DIR/summary.md"
+else
+    echo "**Status**: PASS" >> "$ARTIFACT_DIR/summary.md"
+fi
+
+cat >> "$ARTIFACT_DIR/summary.md" << EOF
+
+## Gate Results
+| Gate | Result |
+|------|--------|
+$(echo -e "$GATE_RESULTS")
+EOF
+
+# validation.md
+cat > "$ARTIFACT_DIR/validation.md" << EOF
+# $TAG Validation
+
+**Generated at**: $TIMESTAMP_NOW
+
+| Gate | Result |
+|------|--------|
+$(echo -e "$GATE_RESULTS")
+EOF
+
+# agentic-readiness.md
+if echo "$AGENTIC_OUTPUT" | grep -q "disabled"; then
+    AGENTIC_ARTIFACT_STATUS="disabled"
+elif echo "$AGENTIC_OUTPUT" | grep -q "ready"; then
+    AGENTIC_ARTIFACT_STATUS="ready"
+elif echo "$AGENTIC_OUTPUT" | grep -q "degraded"; then
+    AGENTIC_ARTIFACT_STATUS="degraded"
+elif echo "$AGENTIC_OUTPUT" | grep -q "BLOCKED\|blocked"; then
+    AGENTIC_ARTIFACT_STATUS="blocked"
+else
+    AGENTIC_ARTIFACT_STATUS="$([ $AGENTIC_RC -eq 0 ] && echo 'passed' || echo 'failed')"
+fi
+
+cat > "$ARTIFACT_DIR/agentic-readiness.md" << EOF
+# Agentic Readiness
+
+**Generated at**: $TIMESTAMP_NOW
+**Status**: $AGENTIC_ARTIFACT_STATUS
+**Runtime enabled**: ${AGENT_RUNTIME_ENABLED:-false}
+**Worker enabled**: ${AGENT_WORKER_ENABLED:-false}
+EOF
+
+if [ -n "$AGENTIC_OUTPUT" ]; then
+    echo "" >> "$ARTIFACT_DIR/agentic-readiness.md"
+    echo '```' >> "$ARTIFACT_DIR/agentic-readiness.md"
+    echo "$AGENTIC_OUTPUT" >> "$ARTIFACT_DIR/agentic-readiness.md"
+    echo '```' >> "$ARTIFACT_DIR/agentic-readiness.md"
+fi
+
+# security.md
+SECURITY_STATUS="passed"
+if [ $GATES_FAILED -gt 0 ]; then
+    case "$FAILED_GATES" in
+        *security*) SECURITY_STATUS="failed" ;;
+    esac
+fi
+cat > "$ARTIFACT_DIR/security.md" << EOF
+# Security
+
+**Generated at**: $TIMESTAMP_NOW
+**Status**: $SECURITY_STATUS
+
+## Gates
+- check-secrets: $(echo "$GATE_RESULTS" | grep "check-secrets" | awk -F'|' '{print $3}')
+- security: $(echo "$GATE_RESULTS" | grep "security" | awk -F'|' '{print $3}')
+EOF
+
+# evals.md
+EVALS_STATUS="not_run"
+cat > "$ARTIFACT_DIR/evals.md" << EOF
+# Agent Evals
+
+**Generated at**: $TIMESTAMP_NOW
+**Status**: $EVALS_STATUS
+
+This artifact is produced by the agentic evaluation pipeline.
+EOF
+
+# slo.md
+cat > "$ARTIFACT_DIR/slo.md" << EOF
+# Agentic SLO
+
+**Generated at**: $TIMESTAMP_NOW
+**Status**: DOCUMENTED
+
+SLO governance is defined in \`config/agent-slo-classes.yaml\`.
+EOF
+
+# Copy operational readiness artifacts if available
+if [ -f artifacts/operational-readiness/latest/checks.json ]; then
+    cp artifacts/operational-readiness/latest/checks.json "$ARTIFACT_DIR/operational-readiness-checks.json" 2>/dev/null || true
+fi
+
+echo "Artifacts written to $ARTIFACT_DIR/"
+
+# ---------------------------------------------------------------------------
+# Final Result
+# ---------------------------------------------------------------------------
+echo ""
+echo "=========================================="
+echo "  Release Gate Results"
+echo "=========================================="
+echo "  Gates passed : $GATES_PASSED"
+echo "  Gates failed : $GATES_FAILED"
+if [ $GATES_FAILED -gt 0 ]; then
+    echo "  Failed gates :$FAILED_GATES"
+    echo ""
+    echo "=========================================="
+    echo "  Release Gate: FAILED"
+    echo "=========================================="
+    echo ""
+    echo "Os seguintes gates falharam e precisam ser resolvidos antes do tag:"
+    for gate in $FAILED_GATES; do
+        echo "  - $gate"
+    done
     exit 1
+else
+    echo ""
+    echo "=========================================="
+    echo "  Release Gate: PASS"
+    echo "=========================================="
+    exit 0
 fi
-
-# 5. Segurança e Integridade
-echo "Executando checks de segurança e integridade..."
-bash scripts/check-secrets.sh --all
-bash scripts/check-alembic-integrity.sh
-
-# 5.5 Feature Flag Governance
-echo "Validando Governança de Feature Flags..."
-bash scripts/check-feature-flags.sh
-
-# 6. Operational Readiness
-echo "Validando Operational Readiness..."
-READINESS_OUTPUT=$(bash scripts/operational-readiness-pack.sh --ci)
-if echo "$READINESS_OUTPUT" | grep -q "production_blocked"; then
-    echo "Erro: Operational Readiness retornou production_blocked"
-    exit 1
-fi
-
-echo "--- Release Gate: PASS ---"

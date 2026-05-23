@@ -1,3 +1,5 @@
+
+# Owner: platform-ops
 import asyncio
 import json
 import os
@@ -134,23 +136,41 @@ async def get_operational_readiness(
     except Exception as e:
         checks["redis"] = f"failed: {str(e)}"
         
-    # 3. Modes
+    # 3. Agentic Readiness check
+    agentic_info = {"enabled": settings.agent_runtime_enabled, "status": "disabled"}
+    if settings.agent_runtime_enabled:
+        try:
+            from app.services.agents.agent_readiness import AgentReadinessService
+            agent_svc = AgentReadinessService(db)
+            agent_report = await agent_svc.check_readiness()
+            agentic_info["status"] = agent_report["status"]
+            agentic_info["blockers"] = agent_report.get("blockers", [])
+            agentic_info["warnings"] = agent_report.get("warnings", [])
+            checks["agentic"] = "ok" if agent_report["status"] in ["ready", "degraded", "disabled"] else f"failed: {agent_report['status']}"
+        except Exception as e:
+            agentic_info["status"] = "error"
+            checks["agentic"] = f"error: {str(e)}"
+    else:
+        checks["agentic"] = "ok"
+
+    # 4. Modes
     checks["modes"] = {
         "rbac": "enabled" if settings.rbac_admin_enabled else "disabled",
         "pki": "enabled" if settings.pki_enabled else "disabled",
         "attestation": settings.attestation_mode,
         "tokenizer": settings.tokenizer_mode,
         "hot_swap": "enabled" if settings.model_hot_swap_enabled else "disabled",
+        "agentic": agentic_info,
     }
     
-    # 4. Overall status
-    all_ok = all(v == "ok" for k, v in checks.items() if k != "modes")
+    # 5. Overall status
+    all_ok = all(v == "ok" or v.startswith("ok") for k, v in checks.items() if k != "modes")
     status = "pilot_ready" if all_ok else "production_blocked"
     
     return {
         "status": status,
         "checks": checks,
-        "timestamp": utc_now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -236,6 +256,24 @@ async def ready(
             status = "degraded"
     else:
         dependencies["lmstudio"] = "ok"
+
+    # 4. Agentic Runtime
+    if not settings.agent_runtime_enabled:
+        dependencies["agentic"] = "disabled"
+    else:
+        try:
+            from app.services.agents.agent_readiness import AgentReadinessService
+            agent_svc = AgentReadinessService(session)
+            agent_report = await agent_svc.check_readiness()
+            dependencies["agentic"] = agent_report["status"]
+            if agent_report["status"] == "blocked":
+                status = "not_ready"
+            elif agent_report["status"] == "degraded" and status != "not_ready":
+                status = "degraded"
+        except Exception as e:
+            logging.error(f"Readiness agentic check failed: {e}")
+            dependencies["agentic"] = "error"
+            status = "not_ready"
 
     if status == "not_ready":
         return Response(

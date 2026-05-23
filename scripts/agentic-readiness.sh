@@ -3,6 +3,8 @@ set -e
 
 BASE_URL=${KLEBER_BASE_URL:-"http://localhost:18080"}
 API_KEY=${KLEBER_API_KEY}
+MODE=${AGENTIC_READINESS_MODE:-"advisory"} # advisory | release
+ALLOW_DEGRADED=${AGENTIC_READINESS_ALLOW_DEGRADED:-"false"}
 
 if [ -z "${API_KEY}" ]; then
     for env_file in .env.local .env; do
@@ -16,7 +18,7 @@ if [ -z "${API_KEY}" ]; then
 fi
 
 echo "----------------------------------------------------------------"
-echo "  AGENTIC RUNTIME READINESS CHECK"
+echo "  AGENTIC RUNTIME READINESS CHECK (Mode: $MODE)"
 echo "----------------------------------------------------------------"
 
 # Check if API_KEY is set
@@ -33,7 +35,7 @@ if [[ $(echo "$RESPONSE" | jq -r '.detail' 2>/dev/null) == "Not Found" ]]; then
     exit 1
 fi
 
-STATUS=$(echo "$RESPONSE" | jq -r '.status')
+STATUS=$(echo "$RESPONSE" | jq -r '.status' 2>/dev/null)
 
 if [ "$STATUS" == "null" ] || [ -z "$STATUS" ]; then
     echo "ERROR: Unexpected readiness response."
@@ -50,8 +52,7 @@ echo "Detailed Checks:"
 echo "$RESPONSE" | jq -r '.checks[] | "[\(.status | ascii_upcase)] \(.name): \(.value) (\(.message // "OK"))"'
 
 # Display Blockers
-blockers_val=$(echo "$RESPONSE" | jq -r '.blockers // []')
-BLOCKERS_COUNT=$(echo "$RESPONSE" | jq '.blockers | length')
+BLOCKERS_COUNT=$(echo "$RESPONSE" | jq '.blockers | length' 2>/dev/null || echo 0)
 if [ "$BLOCKERS_COUNT" -gt 0 ]; then
     echo ""
     echo "BLOCKERS DETECTED ($BLOCKERS_COUNT):"
@@ -59,7 +60,7 @@ if [ "$BLOCKERS_COUNT" -gt 0 ]; then
 fi
 
 # Display Warnings
-WARNINGS_COUNT=$(echo "$RESPONSE" | jq '.warnings | length')
+WARNINGS_COUNT=$(echo "$RESPONSE" | jq '.warnings | length' 2>/dev/null || echo 0)
 if [ "$WARNINGS_COUNT" -gt 0 ]; then
     echo ""
     echo "WARNINGS ($WARNINGS_COUNT):"
@@ -67,7 +68,7 @@ if [ "$WARNINGS_COUNT" -gt 0 ]; then
 fi
 
 # Display Recommendations
-RECS_COUNT=$(echo "$RESPONSE" | jq '.recommendations | length')
+RECS_COUNT=$(echo "$RESPONSE" | jq '.recommendations | length' 2>/dev/null || echo 0)
 if [ "$RECS_COUNT" -gt 0 ]; then
     echo ""
     echo "RECOMMENDATIONS:"
@@ -80,12 +81,20 @@ if [ "$STATUS" == "ready" ]; then
     echo "✅ Agentic Runtime is ready for production."
     exit 0
 elif [ "$STATUS" == "disabled" ]; then
-    echo "⚪ Agentic Runtime is disabled (opt-out)."
+    echo "⚪ Agentic Runtime is disabled (safe default)."
     exit 0
 elif [ "$STATUS" == "degraded" ]; then
-    echo "⚠️  Agentic Runtime is degraded. Review warnings."
-    exit 0
+    if [ "$MODE" == "release" ] && [ "$ALLOW_DEGRADED" != "true" ]; then
+        echo "❌ Agentic Runtime is DEGRADED. Blocked in release mode."
+        exit 1
+    else
+        echo "⚠️  Agentic Runtime is degraded. Review warnings."
+        exit 0
+    fi
+elif [ "$STATUS" == "blocked" ]; then
+    echo "❌ Agentic Runtime is BLOCKED. Manual intervention required."
+    exit 1
 else
-    echo "❌ Agentic Runtime is BLOCKED or UNKNOWN. Manual intervention required."
+    echo "❌ Agentic Runtime state is UNKNOWN ($STATUS)."
     exit 1
 fi

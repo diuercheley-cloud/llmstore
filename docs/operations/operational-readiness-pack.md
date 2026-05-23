@@ -30,3 +30,17 @@ Os resultados são salvos em `artifacts/operational-readiness/latest/`:
 3. **Segurança**: Arquivo `.env` (presença e se está no `.gitignore`).
 4. **Hardware**: Detecção de GPU NVIDIA (best-effort).
 5. **Configuração**: Modos de RBAC, PKI, Attestation e Tokenizer.
+
+## Seção Agentic
+A seção agentic é reportada separadamente no `checks.json` com os seguintes campos:
+- **agentic_runtime_enabled**: Valor de `AGENT_RUNTIME_ENABLED`.
+- **agentic_worker_enabled**: Valor de `AGENT_WORKER_ENABLED`.
+- **agentic_readiness_status**: `disabled`, `ready`, `degraded` ou `blocked`.
+- **agentic_blockers**: Lista de impedimentos retornados pelo endpoint `/admin/agents/readiness`.
+- **agentic_warnings**: Lista de avisos retornados pelo endpoint `/admin/agents/readiness`.
+
+### Regras de Bloqueio
+- Se `AGENT_RUNTIME_ENABLED=false`: agentic não bloqueia o operational readiness.
+- Se `AGENT_RUNTIME_ENABLED=true`: o status é delegado ao serviço `agent-readiness`.
+- Worker ausente só bloqueia se `AGENT_WORKER_ENABLED=true`.
+- Connectors externos, Studio e Real LLM desabilitados **não** bloqueiam.

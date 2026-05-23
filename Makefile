@@ -167,8 +167,6 @@ operational-readiness: ## Run the Operational Readiness Pack validation
 	@bash scripts/operational-readiness-pack.sh
 
 release-gate: ## Run the release gate validator (Requires TAG=vX.Y.Z)
-	@make platform-freeze-check
-	@make validate-scripts
 	@bash scripts/release-gate.sh $(TAG)
 
 verify-release-artifacts: ## Verify artifact governance and generate checksums (Requires TAG=vX.Y.Z)

@@ -1,3 +1,4 @@
+# Owner: platform-ops
 import json
 import logging
 from time import perf_counter

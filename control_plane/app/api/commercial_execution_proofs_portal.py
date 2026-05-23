@@ -1,3 +1,4 @@
+# Owner: commercial-ops
 """Portal API for Verifiable AI Execution Proofs.
 
 Tenant-safe access to Merkle timelines and execution proofs.

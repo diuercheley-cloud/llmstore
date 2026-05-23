@@ -11,26 +11,6 @@ import app.models  # noqa: F401
 
 from app.api.deps import get_inference_proxy
 from app.api.admin import router as admin_router
-from app.api.agent_runtime_admin import router as agent_runtime_admin_router
-from app.api.agent_registry_admin import router as agent_registry_admin_router
-from app.api.agent_tools_admin import router as agent_tools_admin_router
-from app.api.agent_teams_admin import router as agent_teams_admin_router
-from app.api.agent_studio_admin import router as agent_studio_admin_router
-from app.api.agent_approvals_admin import router as agent_approvals_admin_router
-from app.api.agent_connectors_admin import router as agent_connectors_admin_router
-from app.api.agent_observability_admin import router as agent_observability_admin_router
-from app.api.agent_evals_admin import router as agent_evals_admin_router
-from app.api.agent_memory_admin import router as agent_memory_admin_router
-from app.api.agent_tasks_admin import router as agent_tasks_admin_router
-from app.api.agent_governance_admin import router as agent_governance_admin_router
-from app.api.agent_handoffs_admin import router as agent_handoffs_admin_router
-from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
-from app.api.agents_v1 import router as agents_v1_router
-from app.api.agents import router as agents_router
-from app.api.agent_readiness_admin import router as agent_readiness_admin_router
-from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
-from app.api.agent_worker_admin import router as agent_worker_admin_router
-from app.api.agent_workflows_admin import router as agent_workflows_admin_router
 from app.api.admin_rbac import router as admin_rbac_router
 from app.api.saas_admin import router as saas_admin_router
 from app.api.sales import router as sales_router
@@ -164,6 +144,97 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.managed_control_plane import router as managed_control_plane_router
         app.include_router(managed_control_plane_router)
 
+    # Agentic Platform Routers
+    # Always include readiness for release gates
+    from app.api.agent_readiness_admin import router as agent_readiness_admin_router
+    app.include_router(agent_readiness_admin_router)
+
+    if settings.agent_runtime_enabled or settings.agent_execution_enabled:
+        from app.api.agents import router as agents_router
+        from app.api.agents_v1 import router as agents_v1_router
+        from app.api.agent_runtime_admin import router as agent_runtime_admin_router
+        from app.api.agent_registry_admin import router as agent_registry_admin_router
+        from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
+        app.include_router(agents_router)
+        app.include_router(agents_v1_router)
+        app.include_router(agent_runtime_admin_router)
+        app.include_router(agent_registry_admin_router)
+        app.include_router(tenant_agentic_readiness_admin_router)
+
+    if settings.agent_worker_enabled:
+        from app.api.agent_worker_admin import router as agent_worker_admin_router
+        app.include_router(agent_worker_admin_router)
+
+    if settings.agent_stateful_workflows_enabled:
+        from app.api.agent_workflows_admin import router as agent_workflows_admin_router
+        app.include_router(agent_workflows_admin_router)
+
+    if settings.agent_tool_registry_enabled:
+        from app.api.agent_tools_admin import router as agent_tools_admin_router
+        app.include_router(agent_tools_admin_router)
+
+    if settings.agent_multi_agent_enabled:
+        from app.api.agent_teams_admin import router as agent_teams_admin_router
+        app.include_router(agent_teams_admin_router)
+
+    if settings.agent_studio_enabled:
+        from app.api.agent_studio_admin import router as agent_studio_admin_router
+        app.include_router(agent_studio_admin_router)
+
+    if settings.agent_human_approval_enabled:
+        from app.api.agent_approvals_admin import router as agent_approvals_admin_router
+        app.include_router(agent_approvals_admin_router)
+
+    if settings.agent_saas_connectors_enabled:
+        from app.api.agent_connectors_admin import router as agent_connectors_admin_router
+        app.include_router(agent_connectors_admin_router)
+
+    if settings.agent_observability_enabled:
+        from app.api.agent_observability_admin import router as agent_observability_admin_router
+        app.include_router(agent_observability_admin_router)
+
+    if settings.agent_evals_enabled:
+        from app.api.agent_evals_admin import router as agent_evals_admin_router
+        app.include_router(agent_evals_admin_router)
+
+    if settings.agent_memory_enabled:
+        from app.api.agent_memory_admin import router as agent_memory_admin_router
+        app.include_router(agent_memory_admin_router)
+
+    if settings.agent_planning_enabled:
+        from app.api.agent_tasks_admin import router as agent_tasks_admin_router
+        app.include_router(agent_tasks_admin_router)
+
+    if getattr(settings, "commercial_agent_governance_enabled", False):
+        from app.api.agent_governance_admin import router as agent_governance_admin_router
+        from app.api.commercial_agents_admin import router as commercial_agents_admin_router
+        from app.api.commercial_trusted_agents_admin import router as commercial_trusted_agents_admin_router
+        from app.api.commercial_agent_audit_portal import router as commercial_agent_audit_portal_router
+        app.include_router(agent_governance_admin_router)
+        app.include_router(commercial_agents_admin_router)
+        app.include_router(commercial_trusted_agents_admin_router)
+        app.include_router(commercial_agent_audit_portal_router)
+
+    if settings.agent_stateful_workflows_enabled:
+        from app.api.agent_workflows_admin import router as agent_workflows_admin_router
+        from app.api.commercial_workflows_admin import router as commercial_workflows_admin_router
+        from app.api.commercial_workflow_audit_portal import router as commercial_workflow_audit_portal_router
+        from app.api.commercial_workflow_governance_portal import router as commercial_workflow_governance_portal_router
+        from app.api.commercial_federated_workflows_admin import router as commercial_federated_workflows_admin_router
+        app.include_router(agent_workflows_admin_router)
+        app.include_router(commercial_workflows_admin_router)
+        app.include_router(commercial_workflow_audit_portal_router)
+        app.include_router(commercial_workflow_governance_portal_router)
+        app.include_router(commercial_federated_workflows_admin_router)
+
+    if settings.agent_handoffs_enabled:
+        from app.api.agent_handoffs_admin import router as agent_handoffs_admin_router
+        app.include_router(agent_handoffs_admin_router)
+
+    if settings.agent_marketplace_enabled:
+        from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
+        app.include_router(agent_marketplace_admin_router)
+
     # Enterprise/Commercial Optional Routers
     if getattr(settings, "commercial_qos_enabled", True):
         from app.api.commercial_qos_admin import router as commercial_qos_admin_router
@@ -225,7 +296,8 @@ async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Initialize Tool Adapters
-    register_all_adapters()
+    if settings.agent_runtime_enabled or settings.agent_tool_adapters_enabled:
+        register_all_adapters()
 
     if getattr(settings, "create_tables_on_startup", False):
         from app.db.base import Base
@@ -329,26 +401,6 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
-app.include_router(agent_readiness_admin_router)
-app.include_router(tenant_agentic_readiness_admin_router)
-app.include_router(agent_worker_admin_router)
-app.include_router(agent_workflows_admin_router)
-app.include_router(agent_runtime_admin_router)
-app.include_router(agent_registry_admin_router)
-app.include_router(agent_tools_admin_router)
-app.include_router(agent_teams_admin_router)
-app.include_router(agent_studio_admin_router)
-app.include_router(agent_approvals_admin_router)
-app.include_router(agent_connectors_admin_router)
-app.include_router(agent_observability_admin_router)
-app.include_router(agent_evals_admin_router)
-app.include_router(agent_memory_admin_router)
-app.include_router(agent_tasks_admin_router)
-app.include_router(agent_governance_admin_router)
-app.include_router(agent_handoffs_admin_router)
-app.include_router(agent_marketplace_admin_router)
-app.include_router(agents_v1_router)
-app.include_router(agents_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)
 app.include_router(saas_admin_router)
@@ -399,13 +451,6 @@ app.include_router(commercial_attestation_public_router)
 app.include_router(commercial_attestation_admin_router)
 app.include_router(commercial_attestation_portal_router)
 app.include_router(commercial_confidential_runtime_admin_router)
-app.include_router(commercial_agents_admin_router)
-app.include_router(commercial_trusted_agents_admin_router)
-app.include_router(commercial_agent_audit_portal_router)
-app.include_router(commercial_workflows_admin_router)
-app.include_router(commercial_workflow_audit_portal_router)
-app.include_router(commercial_workflow_governance_portal_router)
-app.include_router(commercial_federated_workflows_admin_router)
 app.include_router(commercial_appliance_admin_router)
 app.include_router(commercial_mesh_admin_router)
 app.include_router(commercial_mesh_portal_router)

@@ -19,10 +19,12 @@ async def seed_defaults(session: AsyncSession) -> None:
     settings = get_settings()
     await ensure_admin_rbac_seed(session)
     await ensure_default_model(session)
-    await seed_tool_adapters(session)
+    if settings.agent_tool_adapters_enabled or settings.agent_runtime_enabled:
+        await seed_tool_adapters(session)
     plans = await ensure_default_billing_plans(session)
     await ensure_default_pricing_rules(session, plans)
-    await ensure_default_safety_policies(session)
+    if getattr(settings, "commercial_guardrails_enabled", False):
+        await ensure_default_safety_policies(session)
     demo_plan = plans["basic"]
 
     result = await session.execute(select(Client).where(Client.name == settings.demo_client_name))

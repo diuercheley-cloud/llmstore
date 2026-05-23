@@ -1,3 +1,4 @@
+# Owner: agent-platform
 import uuid
 from typing import Any, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession

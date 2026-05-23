@@ -1,3 +1,4 @@
+# Owner: agent-platform
 import uuid
 import logging
 from typing import Dict, Any, List, Optional
@@ -48,20 +49,18 @@ class AgentReadinessService:
             results["checks"].append({
                 "id": "runtime_enabled",
                 "name": "Agent Runtime Enabled",
-                "status": "fail",
-                "value": False,
-                "message": "Agent Runtime is globally disabled."
-            })
-            results["blockers"].append("AGENT_RUNTIME_ENABLED is false")
-            results["recommendations"].append("Set AGENT_RUNTIME_ENABLED=true in environment.")
-            # If disabled, we stop some checks or proceed with caution
-        else:
-            results["checks"].append({
-                "id": "runtime_enabled",
-                "name": "Agent Runtime Enabled",
                 "status": "pass",
-                "value": True
+                "value": False,
+                "message": "Agentic runtime is disabled by configuration (opt-out)."
             })
+            return results
+        
+        results["checks"].append({
+            "id": "runtime_enabled",
+            "name": "Agent Runtime Enabled",
+            "status": "pass",
+            "value": True
+        })
 
         # 2. Execution Plane Check
         plane_enabled = self.settings.agent_execution_plane_enabled

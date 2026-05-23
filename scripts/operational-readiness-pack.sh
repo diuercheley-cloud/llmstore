@@ -139,6 +139,49 @@ check_gpu() {
     fi
 }
 
+# 5. Agentic Section
+check_agentic() {
+    local runtime_enabled="${AGENT_RUNTIME_ENABLED:-false}"
+    local worker_enabled="${AGENT_WORKER_ENABLED:-false}"
+    echo "\"agentic_runtime_enabled\": \"$runtime_enabled\"," >> "$CHECKS_FILE"
+    echo "\"agentic_worker_enabled\": \"$worker_enabled\"," >> "$CHECKS_FILE"
+    
+    # When runtime is disabled, agentic is explicitly opted out — never blocks
+    if [ "$runtime_enabled" != "true" ]; then
+        echo '"agentic_readiness_status": "disabled",' >> "$CHECKS_FILE"
+        echo '"agentic_blockers": [],' >> "$CHECKS_FILE"
+        echo '"agentic_warnings": [],' >> "$CHECKS_FILE"
+        return
+    fi
+    
+    if [ $API_READY -ne 0 ]; then
+        echo '"agentic_readiness_status": "api_unreachable",' >> "$CHECKS_FILE"
+        echo '"agentic_blockers": ["Control plane API unreachable for agentic readiness check"],' >> "$CHECKS_FILE"
+        echo '"agentic_warnings": [],' >> "$CHECKS_FILE"
+        return
+    fi
+    
+    local AGENTIC_JSON
+    AGENTIC_JSON=$(curl -s "http://localhost:$API_PORT/admin/agents/readiness" -H "X-Admin-Token: $ADMIN_TOKEN")
+    local a_status
+    a_status=$(echo "$AGENTIC_JSON" | jq -r '.status' 2>/dev/null || echo "unknown")
+    echo "\"agentic_readiness_status\": \"$a_status\"," >> "$CHECKS_FILE"
+    
+    local blockers
+    blockers=$(echo "$AGENTIC_JSON" | jq -c '.blockers // []' 2>/dev/null || echo "[]")
+    echo "\"agentic_blockers\": $blockers," >> "$CHECKS_FILE"
+    
+    local warnings
+    warnings=$(echo "$AGENTIC_JSON" | jq -c '.warnings // []' 2>/dev/null || echo "[]")
+    echo "\"agentic_warnings\": $warnings," >> "$CHECKS_FILE"
+    
+    if [ "$a_status" == "blocked" ]; then
+        ERRORS=$((ERRORS+1))
+    elif [ "$a_status" == "degraded" ]; then
+        WARNINGS=$((WARNINGS+1))
+    fi
+}
+
 # Run infrastructure check
 check_docker
 check_postgres
@@ -159,6 +202,8 @@ if [ $API_READY -eq 0 ]; then
     check_api "/health" "health_api"
     check_api "/ready" "ready_api"
     check_api "/metrics" "metrics_api"
+    # Agentic health
+    check_agentic
 else
     echo '"health_api": "failed",' >> "$CHECKS_FILE"
     echo '"ready_api": "failed",' >> "$CHECKS_FILE"

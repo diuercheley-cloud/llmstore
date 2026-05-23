@@ -17,6 +17,30 @@ fi
 
 echo "--- Verificando Governança de Artefatos em $ARTIFACT_DIR ---"
 
+# 0. Verificar presença de artifacts obrigatórios
+REQUIRED_ARTIFACTS=(
+    "summary.md"
+    "validation.md"
+    "agentic-readiness.md"
+    "security.md"
+    "evals.md"
+    "slo.md"
+)
+MISSING_ARTIFACTS=()
+for artifact in "${REQUIRED_ARTIFACTS[@]}"; do
+    if [ ! -f "$ARTIFACT_DIR/$artifact" ]; then
+        MISSING_ARTIFACTS+=("$artifact")
+    fi
+done
+if [ ${#MISSING_ARTIFACTS[@]} -gt 0 ]; then
+    echo "ERRO: Artifacts obrigatórios ausentes:"
+    for a in "${MISSING_ARTIFACTS[@]}"; do
+        echo "  - $ARTIFACT_DIR/$a"
+    done
+    exit 1
+fi
+echo "[PASS] Todos os artifacts obrigatórios presentes."
+
 # 1. Proibir arquivos sensíveis
 SENSITIVE_FILES=(
     ".env"

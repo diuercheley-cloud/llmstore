@@ -1,3 +1,4 @@
+# Owner: platform-ops
 from typing import Any, Optional
 from uuid import UUID
 

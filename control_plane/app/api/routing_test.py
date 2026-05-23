@@ -1,3 +1,4 @@
+# Owner: platform-ops
 """Admin test-only endpoints for routing validation.
 
 Protected by admin token and only active when REAL_PROVIDER_VALIDATION_ENABLED=true.
