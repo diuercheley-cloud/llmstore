@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v2.1.0-agentic-platform-expansion`  
-> Previous stable: [`v2.0.3-agentic-real-execution-hardening`](docs/releases/V2_0_3_AGENTIC_REAL_EXECUTION_HARDENING.md)  
-> Release notes: [`docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md`](docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md)  
+> Current build: `v2.1.1-agentic-scale-hardening`  
+> Previous stable: [`v2.1.0-agentic-platform-expansion`](docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md)  
+> Release notes: [`docs/releases/V2_1_1_AGENTIC_SCALE_HARDENING.md`](docs/releases/V2_1_1_AGENTIC_SCALE_HARDENING.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Scale Hardening (v2.1.1)**: Adds opt-in Firecracker/gVisor sandbox providers, MCP delegated OAuth token exchange, PostgreSQL/pgvector/pgRouting GraphRAG, optimizer tournaments, and telemetry leaky-bucket backpressure without weakening defaults.
 - **Enterprise Agentic Autonomy (v2.1.0)**: Adds governed code interpretation, graph-native RAG, event-driven agents, agent IAM, agentic CI/CD optimization controls, per-step router decisions, and shared artifact collaboration under explicit opt-in gates.
 - **GA Readiness (v2.0.2)**: Tightens surface governance, explicit execution modes, production mock posture, and opt-in provider validation into the final GA gate.
 - **Operational Maturity (v2.0.1)**: Consolidates deployment modes, GA scoring, feature-flag hygiene, surface reduction, security warning governance, activation playbooks, and provider validation into an operator-ready release line.
@@ -155,13 +156,13 @@ make validate-platform-documentation
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
 - **Agentic surfaces are opt-in and safe-by-default.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` preserve the non-agentic default posture.
-- **Enterprise autonomy controls stay disabled until explicitly enabled.** `AGENT_TOOL_SYNTHESIS_ENABLED=false`, `AGENT_CODE_INTERPRETER_ENABLED=false`, `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=false`, `AGENT_CODE_SANDBOX_NETWORK_ENABLED=false`, `AGENT_CODE_SANDBOX_WRITE_ENABLED=false`, `AGENT_KNOWLEDGE_GRAPH_ENABLED=false`, `AGENT_GRAPH_RAG_ENABLED=false`, `AGENT_GRAPH_WRITE_ENABLED=false`, `AGENT_GRAPH_EXTERNAL_DB_ENABLED=false`, `AGENT_EVENT_DRIVEN_ENABLED=false`, `AGENT_IAM_ENABLED=false`, `AGENT_SERVICE_PRINCIPALS_ENABLED=false`, `AGENT_AUTO_OPTIMIZATION_ENABLED=false`, `AGENT_OPTIMIZATION_APPLY_ENABLED=false`, `AGENTIC_ROUTER_V2_ENABLED=false`, `AGENT_STEP_MODEL_ROUTING_ENABLED=false`, `AGENT_COST_OPTIMIZED_ROUTING_ENABLED=false`, `AGENT_SHARED_WORKSPACE_ENABLED=false`, `AGENT_SHARED_ARTIFACTS_ENABLED=false`, and `AGENT_COLLABORATIVE_EDITING_ENABLED=false` preserve the governed appliance posture.
+- **Enterprise autonomy controls stay disabled until explicitly enabled.** `AGENT_TOOL_SYNTHESIS_ENABLED=false`, `AGENT_CODE_INTERPRETER_ENABLED=false`, `AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED=false`, `AGENT_CODE_SANDBOX_GVISOR_ENABLED=false`, `AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED=false`, `AGENT_KNOWLEDGE_GRAPH_ENABLED=false`, `AGENT_GRAPH_RAG_ENABLED=false`, `AGENT_KG_EXTERNAL_PROVIDER_ENABLED=false`, `AGENT_KG_POSTGRES_GRAPH_ENABLED=false`, `AGENT_KG_PGVECTOR_ENABLED=false`, `AGENT_KG_PGROUTING_ENABLED=false`, `AGENT_EVENT_DRIVEN_ENABLED=false`, `AGENT_IAM_ENABLED=false`, `AGENT_SERVICE_PRINCIPALS_ENABLED=false`, `AGENT_AUTO_OPTIMIZATION_ENABLED=false`, `AGENT_OPTIMIZATION_APPLY_ENABLED=false`, `AGENT_OPTIMIZER_APPLY_WINNER_ENABLED=false`, `AGENTIC_ROUTER_V2_ENABLED=false`, `AGENT_STEP_MODEL_ROUTING_ENABLED=false`, `AGENT_COST_OPTIMIZED_ROUTING_ENABLED=false`, `AGENT_SHARED_WORKSPACE_ENABLED=false`, `AGENT_SHARED_ARTIFACTS_ENABLED=false`, and `AGENT_COLLABORATIVE_EDITING_ENABLED=false` preserve the governed appliance posture.
 - **GA does not accept implicit production fallbacks.** `AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=false` and `AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION=true` preserve a fail-closed production posture; any real provider validation remains opt-in and budgeted.
 - **Human approval stays on for sensitive agent actions.** `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` keep high-risk execution approval-gated by default.
-- **Code interpreter remains sandboxed unless operators expand the policy.** The sandbox starts without network, write access, or dynamic tool execution enabled.
+- **Code interpreter remains sandboxed unless operators expand the policy.** The sandbox starts on `mock`, with network, write access, Firecracker, and gVisor disabled until operators opt in.
 - **Raw prompts are not surfaced by default in agentic flows.** Observability, approvals, replay, and memory workflows use hashes and sanitized payloads rather than exposing raw prompts.
 - **No cross-tenant agent memory is supported.** Agent memory is tenant-scoped and disabled by default until operators explicitly enable it.
-- **Knowledge graph remains tenant-isolated.** Graph entities, relations, and Graph RAG are disabled by default and cannot operate cross-tenant.
+- **Knowledge graph remains tenant-isolated.** Graph entities, relations, GraphRAG cache, and PostgreSQL/pgvector/pgRouting providers are disabled by default and cannot operate cross-tenant.
 - **Managed control-plane metadata is restricted.** Heartbeats accept operational metadata only; prompt/document payloads are rejected by schema validation.
 - **No unrestricted agent autonomy.** Real runtime execution exists behind explicit feature gates, policy evaluation, and approval controls; the platform never enables that path by default.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.

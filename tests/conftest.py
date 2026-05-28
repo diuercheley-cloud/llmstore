@@ -42,6 +42,7 @@ os.environ["LMSTUDIO_ENABLED"] = "false"
 os.environ["TTS_ENABLED"] = "false"
 os.environ["EMBEDDINGS_ENABLED"] = "true"
 os.environ["EMBEDDINGS_BACKEND"] = "mock"
+os.environ["AGENT_MCP_ENABLED"] = "true"
 
 # Ensure control_plane is on path
 CONTROL_PLANE = ROOT / "control_plane"

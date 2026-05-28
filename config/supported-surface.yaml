@@ -1257,21 +1257,27 @@ capabilities:
   status: beta
   owner: agent-platform
   support_level: pilot
-  docs_url: docs/agents/code-interpreter.md
+  docs_url: docs/security/microvm-sandbox.md
   feature_flag: AGENT_CODE_INTERPRETER_ENABLED
   additional_flags:
   - AGENT_CODE_SANDBOX_DOCKER_ENABLED
+  - AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED
+  - AGENT_CODE_SANDBOX_GVISOR_ENABLED
+  - AGENT_CODE_SANDBOX_MICROVM_REQUIRED
   - AGENT_CODE_SANDBOX_WASM_ENABLED
   - AGENT_CODE_SANDBOX_NETWORK_ENABLED
   - AGENT_CODE_SANDBOX_WRITE_ENABLED
-  since_version: v2.1.0-agentic-platform-expansion
-  limitations: Mock sandbox is the default; real Docker and WASM providers remain opt-in.
+  since_version: v2.1.1-agentic-scale-hardening
+  limitations: Mock sandbox is the default; Docker, Firecracker, and gVisor remain opt-in providers and MicroVM enforcement is explicit.
   test_coverage: 75%
-  rollback_story: Disable the interpreter or force the provider back to mock mode.
+  rollback_story: Disable the interpreter or force the provider back to mock mode; clear MicroVM enforcement if provider readiness regresses.
   associated_services:
   - agents/code_interpreter/sandbox_audit.py
   - agents/code_interpreter/sandbox_limits.py
   - agents/code_interpreter/providers/docker_sandbox.py
+  - agents/code_interpreter/providers/firecracker_sandbox.py
+  - agents/code_interpreter/providers/gvisor_sandbox.py
+  - agents/code_interpreter/microvm_policy.py
   - agents/code_interpreter/providers/mock_sandbox.py
   - agents/code_interpreter/providers/wasm_sandbox.py
 - id: knowledge-graph
@@ -1288,14 +1294,22 @@ capabilities:
   - AGENT_GRAPH_EXTERNAL_DB_ENABLED
   - AGENT_KG_EXTERNAL_PROVIDER_ENABLED
   - AGENT_KG_WRITE_ENABLED
-  since_version: v2.1.0-agentic-platform-expansion
-  limitations: Internal SQL provider is the supported default; external graph providers are opt-in only.
+  - AGENT_KG_ADJACENCY_CACHE_ENABLED
+  - AGENT_KG_POSTGRES_GRAPH_ENABLED
+  - AGENT_KG_PGVECTOR_ENABLED
+  - AGENT_KG_PGROUTING_ENABLED
+  since_version: v2.1.1-agentic-scale-hardening
+  limitations: Internal SQL provider remains the default; PostgreSQL, pgvector, pgRouting, and adjacency cache are opt-in production controls.
   test_coverage: 72%
   rollback_story: Disable graph writes and revert to vector-only retrieval.
   associated_services:
   - agents/knowledge_graph/providers/neo4j_graph.py
   - agents/knowledge_graph/providers/internal_sql_graph.py
   - agents/knowledge_graph/providers/falkordb_graph.py
+  - agents/knowledge_graph/providers/postgres_graph.py
+  - agents/knowledge_graph/graph_cache.py
+  - agents/knowledge_graph/graph_query_optimizer.py
+  - agents/knowledge_graph/vector_graph_hybrid.py
 - id: mcp-interoperability
   name: MCP client/server
   area: agent runtime
@@ -1309,8 +1323,11 @@ capabilities:
   - AGENT_MCP_SERVER_ENABLED
   - AGENT_MCP_EXTERNAL_NETWORK_ENABLED
   - AGENT_MCP_SAMPLING_ENABLED
-  since_version: v2.1.0-agentic-platform-expansion
-  limitations: External network and sampling remain disabled until explicitly allowed.
+  - AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED
+  - AGENT_MCP_USER_DELEGATION_REQUIRED
+  - AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED
+  since_version: v2.1.1-agentic-scale-hardening
+  limitations: External network, sampling, and delegated OAuth remain disabled until explicitly allowed; identity delegation is audit-governed.
   test_coverage: 55%
   rollback_story: Disable MCP flags and continue using internal tool adapters only.
   api_prefix: /admin/agents/mcp
@@ -1323,6 +1340,9 @@ capabilities:
   - agents/mcp/mcp_security.py
   - agents/mcp/mcp_prompt_adapter.py
   - agents/mcp/mcp_client.py
+  - agents/mcp/mcp_oauth.py
+  - agents/mcp/mcp_token_exchange.py
+  - agents/mcp/mcp_delegated_identity.py
   - agent_mcp_admin.py
 - id: cognitive-memory
   name: Advanced Cognitive Memory
@@ -1391,17 +1411,24 @@ capabilities:
   status: experimental
   owner: agent-platform
   support_level: development
-  docs_url: docs/observability/agent-otel.md
+  docs_url: docs/observability/agent-telemetry-backpressure.md
   feature_flag: AGENT_OTEL_TRACING_ENABLED
   additional_flags:
   - AGENT_OTEL_EXPORT_ENABLED
   - AGENT_PHOENIX_EXPORT_ENABLED
   - AGENT_LANGSMITH_EXPORT_ENABLED
-  since_version: v2.1.0-agentic-platform-expansion
-  limitations: Exporters are disabled by default to prevent credential leakages.
+  - AGENT_TELEMETRY_BACKPRESSURE_ENABLED
+  - AGENT_TELEMETRY_DROP_DEBUG_SPANS_ENABLED
+  - AGENT_TELEMETRY_STRICT_EXPORT
+  since_version: v2.1.1-agentic-scale-hardening
+  limitations: Exporters remain disabled by default and backpressure stays enabled to protect the control plane under span floods.
   test_coverage: 65%
   rollback_story: Disable OTEL flags and revert to standard console logs.
   associated_services:
+  - agents/telemetry/backpressure.py
+  - agents/telemetry/leaky_bucket.py
+  - agents/telemetry/span_priority.py
+  - agents/telemetry/span_sampler.py
   - agents/telemetry/phoenix_exporter.py
   - agents/telemetry/trace_sanitizer.py
   - agents/telemetry/otel_semconv_mapper.py
@@ -1414,12 +1441,21 @@ capabilities:
   status: beta
   owner: agent-platform
   support_level: pilot
-  docs_url: docs/agents/auto-optimization.md
+  docs_url: docs/agents/optimizer-tournaments.md
   feature_flag: AGENT_OPTIMIZER_ENABLED
   additional_flags:
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   - AGENT_OPTIMIZATION_APPLY_ENABLED
-  since_version: v2.1.0-agentic-platform-expansion
-  limitations: Optimization is purely advisory and requires manual candidate promotion.
+  - AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
+  - AGENT_OPTIMIZER_PARALLEL_EVALS_ENABLED
+  - AGENT_OPTIMIZER_APPLY_WINNER_ENABLED
+  since_version: v2.1.1-agentic-scale-hardening
+  limitations: Optimization remains advisory by default; tournaments support parallel evaluation but winner application stays disabled until explicitly enabled.
   test_coverage: 68%
   rollback_story: Revert candidate promotions back to baseline configurations.
+  api_prefix: /admin/agents
+  associated_services:
+  - agents/optimization/tournament_runner.py
+  - agents/optimization/ab_testing.py
+  - agents/optimization/candidate_ranker.py
+  - agents/optimization/statistical_scoring.py

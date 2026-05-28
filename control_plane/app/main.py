@@ -280,6 +280,10 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_optimization_admin import router as agent_optimization_admin_router
         app.include_router(agent_optimization_admin_router)
 
+    if settings.agent_optimizer_tournaments_enabled:
+        from app.api.agent_optimization_tournaments_admin import router as agent_optimization_tournaments_admin_router
+        app.include_router(agent_optimization_tournaments_admin_router)
+
     # Agent Shared Workspace and Artifacts Routers
     from app.api.agent_workspace_admin import router as agent_workspace_admin_router
     app.include_router(agent_workspace_admin_router)

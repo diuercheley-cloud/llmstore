@@ -583,3 +583,25 @@ LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL = Counter(
     ["tenant_id", "agent_id", "limit_type"],
 )
 
+# Agent Telemetry Backpressure Metrics
+LLM_AGENT_TELEMETRY_QUEUE_DEPTH = Gauge(
+    "llm_agent_telemetry_queue_depth",
+    "Current depth of the telemetry span queue",
+    ["tenant_id", "agent_id", "priority"],
+)
+LLM_AGENT_TELEMETRY_SPANS_DROPPED_TOTAL = Counter(
+    "llm_agent_telemetry_spans_dropped_total",
+    "Total telemetry spans dropped due to backpressure",
+    ["tenant_id", "agent_id", "priority", "reason"],
+)
+LLM_AGENT_TELEMETRY_EXPORT_FAILURES_TOTAL = Counter(
+    "llm_agent_telemetry_export_failures_total",
+    "Total telemetry export failures",
+    ["tenant_id", "agent_id", "exporter"],
+)
+LLM_AGENT_TELEMETRY_BACKPRESSURE_ACTIVE = Gauge(
+    "llm_agent_telemetry_backpressure_active",
+    "Whether telemetry backpressure is currently active (1=active)",
+    ["tenant_id", "agent_id"],
+)
+

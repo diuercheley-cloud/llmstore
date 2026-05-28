@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.1.0-agentic-platform-expansion` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.1.1-agentic-scale-hardening` line.
 
 ## Defaults
 
@@ -30,14 +30,19 @@
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
 - Enterprise autonomy features stay disabled by default, including tool synthesis, code interpreter, event-driven hooks, IAM service principals, optimization apply, Router V2, and shared artifacts.
 - Code interpreter sandbox access starts with `AGENT_CODE_SANDBOX_NETWORK_ENABLED=false` and `AGENT_CODE_SANDBOX_WRITE_ENABLED=false`.
+- Firecracker and gVisor sandbox providers remain opt-in with `AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED=false` and `AGENT_CODE_SANDBOX_GVISOR_ENABLED=false`; MicroVM enforcement is also opt-in.
 - Generated tool execution is blocked unless `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=true`.
 - Connector side effects remain blocked by default with `AGENT_CONNECTOR_WRITE_ENABLED=false` and `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false`.
+- MCP delegated OAuth and token exchange remain disabled by default with `AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED=false`; user-delegation enforcement is explicit and audit-logged when enabled.
+- GraphRAG production provider controls remain disabled by default with `AGENT_KG_EXTERNAL_PROVIDER_ENABLED=false`, `AGENT_KG_POSTGRES_GRAPH_ENABLED=false`, `AGENT_KG_PGVECTOR_ENABLED=false`, and `AGENT_KG_PGROUTING_ENABLED=false`.
+- Telemetry backpressure stays enabled with `AGENT_TELEMETRY_BACKPRESSURE_ENABLED=true` so tracing bursts cannot overwhelm exporter paths during agent execution spikes.
 - Real execution readiness must also pass the durable queue, scheduler prerequisite, operator mode, and code-integrity gates before release.
 
 ## Agentic release controls
 
 - Governed SaaS connectors require explicit enablement before any external network use or write action is possible.
 - Service principals and delegated token exchange are operator-governed and audit-logged; raw secrets are returned once and redacted thereafter.
+- MCP delegated identity can resolve user grants, tenant service principals, or an explicit global fallback, but each branch is auditable and feature-flagged.
 - Stateful workflows must wake from persisted timers, signals, webhooks, or polling instead of pinning a worker for the entire wait period.
 - Reasoning loops must repair malformed structured output and compress context before escalating to fallback behavior.
 - Multi-agent orchestration must remain bounded by topology flags and governance controls for hierarchical and debate teams.
@@ -49,7 +54,8 @@
 - Provider validation is opt-in, budgeted, and must use synthetic data. GA evidence only counts when a non-mock provider/gateway actually answers a passing `basic_model_call`.
 - Event-driven executions must remain bounded by trigger-level rate limits, budgets, and deduplication keys.
 - Knowledge graph extraction and Graph RAG must remain tenant-scoped; cross-tenant querying is outside the supported posture.
-- Optimization candidates may be generated and evaluated, but cannot be applied safely without explicit `AGENT_OPTIMIZATION_APPLY_ENABLED=true`.
+- Knowledge graph cache and PostgreSQL/pgvector/pgRouting acceleration are opt-in and must preserve the same tenant isolation guarantees as the internal provider.
+- Optimization candidates may be generated and evaluated, including tournament brackets, but cannot be applied safely without explicit `AGENT_OPTIMIZATION_APPLY_ENABLED=true` and `AGENT_OPTIMIZER_APPLY_WINNER_ENABLED=true`.
 - Router V2 decisions must be persisted with explanations so step-level model selection stays auditable.
 - Shared artifacts must preserve immutable versions and lock semantics to prevent concurrent overwrite races.
 

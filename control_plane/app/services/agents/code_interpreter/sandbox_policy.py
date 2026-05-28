@@ -12,7 +12,14 @@ SECRET_PATTERNS = [
 SUSPICIOUS_PATHS = {
     ".env",
     "/etc/passwd",
+    "/proc",
+    "/proc/kcore",
+    "/proc/keys",
+    "/proc/sys",
+    "/sys",
+    "/dev/mem",
     "/var/run/docker.sock",
+    "docker.sock",
     "data/pki",
     "uploads",
     "models",
@@ -121,6 +128,8 @@ class SandboxPolicyEngine:
                 )
         if normalized.startswith("http://") or normalized.startswith("https://"):
             raise SandboxPolicyViolation("Network access is disabled by default", {"target": normalized})
+        if "169.254.169.254" in normalized or "metadata.google.internal" in normalized or "169.254.170.2" in normalized:
+            raise SandboxPolicyViolation("Metadata endpoint access is disabled by default", {"target": normalized})
         return None
 
     def _call_name(self, node: ast.AST) -> str | None:

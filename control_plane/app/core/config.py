@@ -52,401 +52,28 @@ class Settings(BaseSettings):
 
     # Owner: agent-platform
     # Status: beta
-    agent_runtime_enabled: bool = Field(default=False, alias="AGENT_RUNTIME_ENABLED")
+    agent_optimizer_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_optimizer_tournaments_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_TOURNAMENTS_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_optimizer_parallel_evals_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_PARALLEL_EVALS_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_optimizer_apply_winner_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_APPLY_WINNER_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_execution_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_async_execution_enabled: bool = Field(default=False, alias="AGENT_ASYNC_EXECUTION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_execution_plane_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_PLANE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_worker_enabled: bool = Field(default=False, alias="AGENT_WORKER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_embedded_worker_enabled: bool = Field(default=False, alias="AGENT_EMBEDDED_WORKER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_queue_backpressure_enabled: bool = Field(default=True, alias="AGENT_QUEUE_BACKPRESSURE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_replay_enabled: bool = Field(default=True, alias="AGENT_REPLAY_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_runtime_advisory_mode: bool = Field(default=True, alias="AGENT_RUNTIME_ADVISORY_MODE")
-
-    # Owner: agent-platform
-    # Status: beta
-    agent_tool_registry_enabled: bool = Field(default=False, alias="AGENT_TOOL_REGISTRY_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_tool_execution_enabled: bool = Field(default=False, alias="AGENT_TOOL_EXECUTION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_destructive_tools_enabled: bool = Field(default=False, alias="AGENT_DESTRUCTIVE_TOOLS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_tool_sandbox_enabled: bool = Field(default=True, alias="AGENT_TOOL_SANDBOX_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_tool_credential_delegation_enabled: bool = Field(default=False, alias="AGENT_TOOL_CREDENTIAL_DELEGATION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_tool_rollback_enabled: bool = Field(default=True, alias="AGENT_TOOL_ROLLBACK_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_event_driven_enabled: bool = Field(default=False, alias="AGENT_EVENT_DRIVEN_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_event_hooks_enabled: bool = Field(default=False, alias="AGENT_EVENT_HOOKS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_cron_triggers_enabled: bool = Field(default=False, alias="AGENT_CRON_TRIGGERS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_pubsub_triggers_enabled: bool = Field(default=False, alias="AGENT_PUBSUB_TRIGGERS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_external_webhook_triggers_enabled: bool = Field(default=False, alias="AGENT_EXTERNAL_WEBHOOK_TRIGGERS_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    # Agent IAM Flags
-    agent_iam_enabled: bool = Field(default=False, alias="AGENT_IAM_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_service_principals_enabled: bool = Field(default=False, alias="AGENT_SERVICE_PRINCIPALS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_delegated_tokens_enabled: bool = Field(default=False, alias="AGENT_DELEGATED_TOKENS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_oauth_on_behalf_of_enabled: bool = Field(default=False, alias="AGENT_OAUTH_ON_BEHALF_OF_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    # Agent Auto-Optimization Flags
     agent_auto_optimization_enabled: bool = Field(default=False, alias="AGENT_AUTO_OPTIMIZATION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_dspy_optimizer_enabled: bool = Field(default=False, alias="AGENT_DSPY_OPTIMIZER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_auto_promote_optimizations: bool = Field(default=False, alias="AGENT_AUTO_PROMOTE_OPTIMIZATIONS")
     # Owner: agent-platform
     # Status: beta
     agent_optimization_apply_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZATION_APPLY_ENABLED")
 
-    # Owner: agent-platform
-    # Status: beta
-    # Agentic Router V2
-    agentic_router_v2_enabled: bool = Field(default=False, alias="AGENTIC_ROUTER_V2_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_step_model_routing_enabled: bool = Field(default=False, alias="AGENT_STEP_MODEL_ROUTING_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_cost_optimized_routing_enabled: bool = Field(default=False, alias="AGENT_COST_OPTIMIZED_ROUTING_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    # Shared Workspace & Artifacts
-    agent_shared_workspace_enabled: bool = Field(default=False, alias="AGENT_SHARED_WORKSPACE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_shared_artifacts_enabled: bool = Field(default=False, alias="AGENT_SHARED_ARTIFACTS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_collaborative_editing_enabled: bool = Field(default=False, alias="AGENT_COLLABORATIVE_EDITING_ENABLED")
-
-
-
-    # Owner: agent-platform
-    # Status: beta
-    # Tool Synthesis & Code Interpreter
-    agent_tool_synthesis_enabled: bool = Field(default=False, alias="AGENT_TOOL_SYNTHESIS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_code_interpreter_enabled: bool = Field(default=False, alias="AGENT_CODE_INTERPRETER_ENABLED")
-    agent_code_sandbox_provider: str = Field(default="mock", alias="AGENT_CODE_SANDBOX_PROVIDER")
-    # Owner: agent-platform
-    # Status: beta
-    agent_code_sandbox_docker_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_DOCKER_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_code_sandbox_wasm_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_WASM_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_dynamic_tool_execution_enabled: bool = Field(default=False, alias="AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_code_sandbox_network_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_NETWORK_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_code_sandbox_write_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_WRITE_ENABLED")
-
-    agent_tool_adapters_enabled: bool = Field(default=False, alias="AGENT_TOOL_ADAPTERS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_saas_connectors_enabled: bool = Field(default=False, alias="AGENT_SAAS_CONNECTORS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_mode: str = Field(default="mock", alias="AGENT_CONNECTOR_MODE")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_real_http_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_REAL_HTTP_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_github_connector_enabled: bool = Field(default=False, alias="AGENT_GITHUB_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_jira_connector_enabled: bool = Field(default=False, alias="AGENT_JIRA_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_slack_connector_enabled: bool = Field(default=False, alias="AGENT_SLACK_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_confluence_connector_enabled: bool = Field(default=False, alias="AGENT_CONFLUENCE_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_salesforce_connector_enabled: bool = Field(default=False, alias="AGENT_SALESFORCE_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_microsoft365_connector_enabled: bool = Field(default=False, alias="AGENT_MICROSOFT365_CONNECTOR_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_write_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_WRITE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_external_network_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_oauth_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_OAUTH_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_http_tool_enabled: bool = Field(default=False, alias="AGENT_HTTP_TOOL_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_db_read_tool_enabled: bool = Field(default=False, alias="AGENT_DB_READ_TOOL_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_shell_tool_enabled: bool = Field(default=False, alias="AGENT_SHELL_TOOL_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    agent_planner_real_execution_enabled: bool = Field(default=False, alias="AGENT_PLANNER_REAL_EXECUTION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_replan_enabled: bool = Field(default=True, alias="AGENT_REPLAN_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_approval_required_for_high_risk: bool = Field(default=True, alias="AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK")
-    agent_approval_timeout_seconds: int = Field(default=86400, alias="AGENT_APPROVAL_TIMEOUT_SECONDS")
-
-    # Owner: agent-platform
-    # Status: beta
-    agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_trace_export_enabled: bool = Field(default=False, alias="AGENT_TRACE_EXPORT_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    agent_evals_enabled: bool = Field(default=False, alias="AGENT_EVALS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_production_requires_eval_baseline: bool = Field(default=True, alias="AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE")
-    # Owner: agent-platform
-    # Status: beta
-    agent_regression_evals_required: bool = Field(default=True, alias="AGENT_REGRESSION_EVALS_REQUIRED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_eval_regression_gate_enabled: bool = Field(default=True, alias="AGENT_EVAL_REGRESSION_GATE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_eval_datasets_versioned: bool = Field(default=True, alias="AGENT_EVAL_DATASETS_VERSIONED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_eval_real_provider_enabled: bool = Field(default=False, alias="AGENT_EVAL_REAL_PROVIDER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_eval_provider: str = Field(default="mock", alias="AGENT_EVAL_PROVIDER")
-    # Owner: agent-platform
-    # Status: active
-    agent_real_provider_validation_enabled: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ENABLED")
-    # Owner: agent-platform
-    # Status: active
-    agent_real_provider_validation_allow_paid: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID")
-    # Owner: agent-platform
-    # Status: active
-    agent_real_provider_validation_budget_brl: float = Field(default=1.00, alias="AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL")
-    # Owner: agent-platform
-    # Status: active
-    agent_real_provider_validation_timeout_seconds: int = Field(default=60, alias="AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS")
-    # Owner: agent-platform
-    # Status: beta
-    agent_promotion_requires_evals: bool = Field(default=True, alias="AGENT_PROMOTION_REQUIRES_EVALS")
-
-    # SaaS Connectors Auth
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_token_storage_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_TOKEN_STORAGE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_connector_credential_rotation_enabled: bool = Field(default=True, alias="AGENT_CONNECTOR_CREDENTIAL_ROTATION_ENABLED")
-
-    # Agent Studio
-    # Owner: agent-platform
-    # Status: beta
-    agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_visual_builder_enabled: bool = Field(default=False, alias="AGENT_VISUAL_BUILDER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_debugger_enabled: bool = Field(default=False, alias="AGENT_DEBUGGER_ENABLED")
-
-    # Multi-Agent Orchestration
-    # Owner: agent-platform
-    # Status: beta
-    agent_hierarchical_teams_enabled: bool = Field(default=False, alias="AGENT_HIERARCHICAL_TEAMS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_debate_teams_enabled: bool = Field(default=False, alias="AGENT_DEBATE_TEAMS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_shared_workspace_enabled: bool = Field(default=False, alias="AGENT_SHARED_WORKSPACE_ENABLED")
-
-    # Reasoning Loops
-    # Owner: agent-platform
-    # Status: beta
-    agent_reasoning_loop_enabled: bool = Field(default=False, alias="AGENT_REASONING_LOOP_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_react_loop_enabled: bool = Field(default=False, alias="AGENT_REACT_LOOP_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_plan_and_solve_enabled: bool = Field(default=False, alias="AGENT_PLAN_AND_SOLVE_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_structured_output_retry_enabled: bool = Field(default=True, alias="AGENT_STRUCTURED_OUTPUT_RETRY_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_context_compression_enabled: bool = Field(default=False, alias="AGENT_CONTEXT_COMPRESSION_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_semantic_model_fallback_enabled: bool = Field(default=False, alias="AGENT_SEMANTIC_MODEL_FALLBACK_ENABLED")
-
-    # Stateful Workflows
-    # Owner: agent-platform
-    # Status: beta
-    agent_stateful_workflows_enabled: bool = Field(default=False, alias="AGENT_STATEFUL_WORKFLOWS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_workflow_timers_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_TIMERS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_workflow_webhooks_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_WEBHOOKS_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_workflow_polling_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_POLLING_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_workflow_distributed_locks_enabled: bool = Field(default=True, alias="AGENT_WORKFLOW_DISTRIBUTED_LOCKS_ENABLED")
-
-    # Owner: agent-platform
-    # Status: beta
-    # Agent Knowledge Graph Configuration
-    agent_knowledge_graph_enabled: bool = Field(default=False, alias="AGENT_KNOWLEDGE_GRAPH_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_graph_rag_enabled: bool = Field(default=False, alias="AGENT_GRAPH_RAG_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_graph_write_enabled: bool = Field(default=False, alias="AGENT_GRAPH_WRITE_ENABLED")
-    agent_kg_provider: str = Field(default="internal_sql", alias="AGENT_KG_PROVIDER")
-    # Owner: agent-platform
-    # Status: beta
-    agent_kg_external_provider_enabled: bool = Field(default=False, alias="AGENT_KG_EXTERNAL_PROVIDER_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_graph_external_db_enabled: bool = Field(default=False, alias="AGENT_GRAPH_EXTERNAL_DB_ENABLED")
-    # Owner: agent-platform
-    # Status: beta
-    agent_kg_write_enabled: bool = Field(default=False, alias="AGENT_KG_WRITE_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_mcp_enabled: bool = Field(default=False, alias="AGENT_MCP_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_mcp_client_enabled: bool = Field(default=False, alias="AGENT_MCP_CLIENT_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_mcp_server_enabled: bool = Field(default=False, alias="AGENT_MCP_SERVER_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_mcp_external_network_enabled: bool = Field(default=False, alias="AGENT_MCP_EXTERNAL_NETWORK_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_mcp_sampling_enabled: bool = Field(default=False, alias="AGENT_MCP_SAMPLING_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_cognitive_memory_enabled: bool = Field(default=False, alias="AGENT_COGNITIVE_MEMORY_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_episodic_memory_enabled: bool = Field(default=False, alias="AGENT_EPISODIC_MEMORY_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_semantic_memory_enabled: bool = Field(default=False, alias="AGENT_SEMANTIC_MEMORY_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_working_memory_enabled: bool = Field(default=False, alias="AGENT_WORKING_MEMORY_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_memory_summarization_enabled: bool = Field(default=False, alias="AGENT_MEMORY_SUMMARIZATION_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_approval_portal_enabled: bool = Field(default=False, alias="AGENT_APPROVAL_PORTAL_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_visual_debugger_enabled: bool = Field(default=False, alias="AGENT_VISUAL_DEBUGGER_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_template_install_enabled: bool = Field(default=False, alias="AGENT_TEMPLATE_INSTALL_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_cross_tenant_template_sharing_enabled: bool = Field(default=False, alias="AGENT_CROSS_TENANT_TEMPLATE_SHARING_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_otel_tracing_enabled: bool = Field(default=False, alias="AGENT_OTEL_TRACING_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_otel_export_enabled: bool = Field(default=False, alias="AGENT_OTEL_EXPORT_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_phoenix_export_enabled: bool = Field(default=False, alias="AGENT_PHOENIX_EXPORT_ENABLED")
-    # Owner: agent-platform
-    # Status: experimental
-    agent_langsmith_export_enabled: bool = Field(default=False, alias="AGENT_LANGSMITH_EXPORT_ENABLED")
-
-    # Owner: agent-platform
-    # Status: experimental
-    agent_optimizer_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_ENABLED")
-
 
     agent_memory_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_cognitive_memory_enabled: bool = Field(default=False, alias="AGENT_COGNITIVE_MEMORY_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_long_term_memory_enabled: bool = Field(default=False, alias="AGENT_LONG_TERM_MEMORY_ENABLED")
@@ -481,6 +108,30 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_plan_execution_enabled: bool = Field(default=False, alias="AGENT_PLAN_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_runtime_enabled: bool = Field(default=False, alias="AGENT_RUNTIME_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_execution_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_worker_enabled: bool = Field(default=False, alias="AGENT_WORKER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_embedded_worker_enabled: bool = Field(default=False, alias="AGENT_EMBEDDED_WORKER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_adapters_enabled: bool = Field(default=False, alias="AGENT_TOOL_ADAPTERS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_evals_enabled: bool = Field(default=False, alias="AGENT_EVALS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_real_provider_validation_enabled: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agentic_router_v2_enabled: bool = Field(default=False, alias="AGENTIC_ROUTER_V2_ENABLED")
     
     agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
     agent_task_mock_mode: bool = Field(default=False, alias="AGENT_TASK_MOCK_MODE")
@@ -499,6 +150,24 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_event_driven_enabled: bool = Field(default=False, alias="AGENT_EVENT_DRIVEN_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_cron_triggers_enabled: bool = Field(default=False, alias="AGENT_CRON_TRIGGERS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_pubsub_triggers_enabled: bool = Field(default=False, alias="AGENT_PUBSUB_TRIGGERS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_iam_enabled: bool = Field(default=False, alias="AGENT_IAM_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_saas_connectors_enabled: bool = Field(default=False, alias="AGENT_SAAS_CONNECTORS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_stateful_workflows_enabled: bool = Field(default=False, alias="AGENT_STATEFUL_WORKFLOWS_ENABLED")
 
     # Owner: agent-platform
     # Status: active
@@ -535,6 +204,18 @@ class Settings(BaseSettings):
 
     # Owner: agent-platform
     # Status: active
+    agent_telemetry_backpressure_enabled: bool = Field(default=True, alias="AGENT_TELEMETRY_BACKPRESSURE_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_telemetry_drop_debug_spans_enabled: bool = Field(default=True, alias="AGENT_TELEMETRY_DROP_DEBUG_SPANS_ENABLED")
+    # Owner: agent-platform
+    # Status: active
+    agent_telemetry_strict_export: bool = Field(default=False, alias="AGENT_TELEMETRY_STRICT_EXPORT")
+    # Owner: agent-platform
+    # Status: beta
+    agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
+    # Owner: agent-platform
+    # Status: active
     agent_strict_budgets: bool = Field(default=False, alias="AGENT_STRICT_BUDGETS")
     # Owner: agent-platform
     # Status: active
@@ -548,6 +229,102 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: active
     agent_tenant_isolation_strict: bool = Field(default=False, alias="AGENT_TENANT_ISOLATION_STRICT")
+    # Owner: agent-platform
+    # Status: beta
+    agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_approval_portal_enabled: bool = Field(default=False, alias="AGENT_APPROVAL_PORTAL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_code_interpreter_enabled: bool = Field(default=False, alias="AGENT_CODE_INTERPRETER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_code_sandbox_provider: str = Field(default="mock", alias="AGENT_CODE_SANDBOX_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_code_sandbox_docker_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_DOCKER_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_code_sandbox_firecracker_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_code_sandbox_gvisor_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_GVISOR_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_code_sandbox_microvm_required: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_MICROVM_REQUIRED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_code_sandbox_wasm_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_WASM_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_code_sandbox_network_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_NETWORK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_code_sandbox_write_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_dynamic_tool_execution_enabled: bool = Field(default=False, alias="AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_mcp_enabled: bool = Field(default=False, alias="AGENT_MCP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_mcp_client_enabled: bool = Field(default=False, alias="AGENT_MCP_CLIENT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_mcp_server_enabled: bool = Field(default=False, alias="AGENT_MCP_SERVER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_mcp_external_network_enabled: bool = Field(default=False, alias="AGENT_MCP_EXTERNAL_NETWORK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_mcp_sampling_enabled: bool = Field(default=False, alias="AGENT_MCP_SAMPLING_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_mcp_oauth_token_exchange_enabled: bool = Field(default=False, alias="AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_mcp_user_delegation_required: bool = Field(default=False, alias="AGENT_MCP_USER_DELEGATION_REQUIRED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_mcp_global_credentials_allowed: bool = Field(default=False, alias="AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_knowledge_graph_enabled: bool = Field(default=False, alias="AGENT_KNOWLEDGE_GRAPH_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_graph_rag_enabled: bool = Field(default=False, alias="AGENT_GRAPH_RAG_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_graph_write_enabled: bool = Field(default=False, alias="AGENT_GRAPH_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_graph_external_db_enabled: bool = Field(default=False, alias="AGENT_GRAPH_EXTERNAL_DB_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_kg_provider: str = Field(default="internal_sql", alias="AGENT_KG_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_kg_external_provider_enabled: bool = Field(default=False, alias="AGENT_KG_EXTERNAL_PROVIDER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_kg_write_enabled: bool = Field(default=False, alias="AGENT_KG_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_adjacency_cache_enabled: bool = Field(default=False, alias="AGENT_KG_ADJACENCY_CACHE_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_postgres_graph_enabled: bool = Field(default=False, alias="AGENT_KG_POSTGRES_GRAPH_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_pgvector_enabled: bool = Field(default=False, alias="AGENT_KG_PGVECTOR_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_pgrouting_enabled: bool = Field(default=False, alias="AGENT_KG_PGROUTING_ENABLED")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -586,6 +363,10 @@ class Settings(BaseSettings):
     queue_timeout_seconds: int = Field(default=30, alias="QUEUE_TIMEOUT_SECONDS")
     max_concurrent_generations: int = Field(default=1, alias="MAX_CONCURRENT_GENERATIONS")
     max_queue_size: int = Field(default=8, alias="MAX_QUEUE_SIZE")
+
+    @property
+    def cors_origins(self) -> str:
+        return self.cors_allow_origins
 
     # QoS Phase 25
     commercial_qos_fairness_enabled: bool = Field(default=True, alias="COMMERCIAL_QOS_FAIRNESS_ENABLED")

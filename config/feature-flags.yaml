@@ -1085,6 +1085,42 @@
   conflicts: []
   safe_default_reason: Embedded worker mode stays disabled so the control plane does
     not silently start local background execution.
+- name: AGENT_TELEMETRY_BACKPRESSURE_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: low
+  dependencies:
+  - AGENT_OBSERVABILITY_ENABLED
+  conflicts: []
+  safe_default_reason: Telemetry backpressure stays enabled to prevent span floods
+    from overwhelming async exporters during execution peaks.
+- name: AGENT_TELEMETRY_DROP_DEBUG_SPANS_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: low
+  dependencies:
+  - AGENT_TELEMETRY_BACKPRESSURE_ENABLED
+  conflicts: []
+  safe_default_reason: Dropping debug spans is safe because they carry no
+    critical observability data and are the first to be sampled out under pressure.
+- name: AGENT_TELEMETRY_STRICT_EXPORT
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_TELEMETRY_BACKPRESSURE_ENABLED
+  conflicts: []
+  safe_default_reason: Strict export stays disabled so a failing exporter never
+    blocks agent runtime execution; warnings are logged instead.
 - name: AGENT_QUEUE_BACKPRESSURE_ENABLED
   default: true
   owner: agent-platform
@@ -3502,6 +3538,39 @@
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   conflicts: []
   safe_default_reason: Applying optimization candidates remains disabled until an operator explicitly allows production changes.
+- name: AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_AUTO_OPTIMIZATION_ENABLED
+  conflicts: []
+  safe_default_reason: Tournament-based candidate evaluation stays disabled until the deployment explicitly enables parallel comparison workflows.
+- name: AGENT_OPTIMIZER_PARALLEL_EVALS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
+  conflicts: []
+  safe_default_reason: Parallel eval execution stays disabled to prevent unintended concurrency pressure on eval infrastructure.
+- name: AGENT_OPTIMIZER_APPLY_WINNER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
+  conflicts: []
+  safe_default_reason: Automatic winner application stays disabled to enforce human-in-the-loop approval before any candidate is promoted.
 - name: AGENTIC_ROUTER_V2_ENABLED
   default: false
   owner: agent-platform
@@ -3589,6 +3658,39 @@
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
   safe_default_reason: Docker-backed code execution stays disabled until operators opt in to a real sandbox provider.
+- name: AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Firecracker MicroVM isolation remains disabled until operators explicitly provision and validate the provider.
+- name: AGENT_CODE_SANDBOX_GVISOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: gVisor sandboxing remains disabled until runsc and runtime compatibility are explicitly validated.
+- name: AGENT_CODE_SANDBOX_MICROVM_REQUIRED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Hard MicroVM enforcement stays disabled so existing mock and Docker-backed local development flows remain available by default.
 - name: AGENT_CODE_SANDBOX_WASM_ENABLED
   default: false
   owner: agent-platform
@@ -3687,6 +3789,51 @@
   - AGENT_KNOWLEDGE_GRAPH_ENABLED
   conflicts: []
   safe_default_reason: Ingestion writes to Knowledge Graph stay disabled by default to control database storage growth.
+- name: AGENT_KG_ADJACENCY_CACHE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_GRAPH_RAG_ENABLED
+  conflicts: []
+  safe_default_reason: Graph adjacency caching remains disabled until operators confirm cache sizing and invalidation posture for their tenant scale.
+- name: AGENT_KG_POSTGRES_GRAPH_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  - AGENT_GRAPH_RAG_ENABLED
+  conflicts: []
+  safe_default_reason: PostgreSQL-backed graph persistence remains opt-in until operators provision a production graph store.
+- name: AGENT_KG_PGVECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_KG_POSTGRES_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: pgvector search remains disabled until the extension and embedding supply chain are explicitly enabled.
+- name: AGENT_KG_PGROUTING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_KG_POSTGRES_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: pgRouting traversal remains disabled until the graph store is provisioned for routing workloads.
 - name: AGENT_LANGSMITH_EXPORT_ENABLED
   default: false
   owner: agent-platform
@@ -3742,6 +3889,40 @@
   - AGENT_MCP_ENABLED
   conflicts: []
   safe_default_reason: Internal tools exposure via MCP Server is disabled by default.
+- name: AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  - AGENT_MCP_CLIENT_ENABLED
+  conflicts: []
+  safe_default_reason: Delegated OAuth token exchange remains disabled until tenant identity policies and upstream trust are configured.
+- name: AGENT_MCP_USER_DELEGATION_REQUIRED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED
+  conflicts: []
+  safe_default_reason: Strict per-user delegation remains opt-in because some tenants still require service-principal fallback during bootstrap.
+- name: AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.1-agentic-scale-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  conflicts: []
+  safe_default_reason: Global fallback credentials stay disabled until operators explicitly accept shared-credential risk for MCP bootstrap flows.
 - name: AGENT_MEMORY_SUMMARIZATION_ENABLED
   default: false
   owner: agent-platform

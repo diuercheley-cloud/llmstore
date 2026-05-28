@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 
+from .graph_cache import adjacency_cache
 from .graph_models import Entity, GraphQueryRequest, GraphQueryResult, Relation
 from .graph_policy import graph_policy
 from .providers.falkordb_graph import FalkorDBGraphProvider
@@ -25,6 +26,12 @@ class GraphStore:
             return Neo4jGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled)
         if provider_name == "falkordb":
             return FalkorDBGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled)
+        if provider_name == "postgres" or self.settings.agent_kg_postgres_graph_enabled:
+            try:
+                from .providers.postgres_graph import PostgresGraphProvider
+                return PostgresGraphProvider(self.db)
+            except Exception:
+                pass  # fall through to internal_sql
         return InternalSQLGraphProvider(self.db)
 
     async def add_entity(self, tenant_id: str, name: str, entity_type: str, source_id: uuid.UUID | None = None) -> Entity:
@@ -36,6 +43,8 @@ class GraphStore:
             source_id=source_id,
             provenance={"provider": self.settings.agent_kg_provider},
         )
+        # Invalidate adjacency cache for this tenant on any write
+        adjacency_cache.invalidate(tenant_id)
         return self._entity_to_model(record)
 
     async def add_relation(
@@ -56,6 +65,9 @@ class GraphStore:
             provenance=provenance,
             source_id=source_id,
         )
+        # Invalidate adjacency cache for both endpoints on any write
+        adjacency_cache.invalidate(tenant_id, src_id)
+        adjacency_cache.invalidate(tenant_id, tgt_id)
         return self._relation_to_model(record)
 
     async def create_source(self, tenant_id: str, uri: str, raw_text: str) -> uuid.UUID:

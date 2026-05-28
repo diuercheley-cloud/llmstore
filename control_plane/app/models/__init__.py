@@ -886,5 +886,18 @@ from app.models.agent_optimization import (
     AgentPolicyCandidate,
     AgentToolSelectionCandidate,
 )
+from app.models.agent_optimization_tournament import (
+    AgentOptimizationTournament,
+    AgentOptimizationTournamentCandidate,
+    AgentOptimizationTournamentResult,
+    AgentOptimizationPairwiseResult,
+)
+from app.models.agent_mcp_oauth import (
+    AgentMCPOAuthClient,
+    AgentMCPDelegatedGrant,
+    AgentMCPTokenExchange,
+    AgentMCPScopePolicy,
+)
+
 
 

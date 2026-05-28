@@ -1,5 +1,25 @@
 # Changelog
 
+## [v2.1.1-agentic-scale-hardening] - 2026-05-28
+
+### Added
+- **MicroVM sandbox providers**: Firecracker and gVisor providers, MicroVM policy enforcement, and sandbox attestation/readiness controls are now available as opt-in hardening paths for agent code execution.
+- **MCP delegated identity**: OAuth client registry, delegated grant storage, token exchange, and MCP identity resolution now support tenant and user delegation flows with audit evidence.
+- **Production GraphRAG acceleration**: Graph adjacency cache and PostgreSQL-backed graph retrieval with pgvector and pgRouting support are available behind explicit feature flags.
+- **Optimizer tournaments**: Parallel tournament evaluation, pairwise scoring, winner approval, and rollback capture are now part of the governed optimization workflow.
+- **Telemetry backpressure**: Leaky-bucket admission control and priority-based span shedding protect exporter paths during agent execution bursts.
+- **Release evidence line**: `docs/releases/V2_1_1_AGENTIC_SCALE_HARDENING.md` and release artifacts formalize the scale-hardening criteria and validation flow.
+
+### Changed
+- **Safe defaults preserved for scale features**: Firecracker, gVisor, MCP OAuth token exchange, delegated user enforcement, external KG providers, PostgreSQL graph acceleration, optimizer winner application, and parallel evals remain opt-in.
+- **Surface governance expanded**: `.env.example`, feature flags, supported surface, API surface, and script manifest now cover the scale-hardening controls exposed by the codebase.
+- **Telemetry posture tightened**: backpressure remains enabled by default while strict export remains optional, preserving runtime liveness under load.
+
+### Security
+- **No privileged sandbox by default**: code interpreter continues to start on `mock` and cannot silently escalate into MicroVM providers.
+- **No delegated identity without explicit enablement**: MCP token exchange is disabled until operators turn it on and provision grants.
+- **No production GraphRAG provider by default**: PostgreSQL/pgvector/pgRouting remain disabled until operators explicitly provision the stack.
+
 ## [v2.1.0-agentic-platform-expansion] - 2026-05-28
 
 ### Added

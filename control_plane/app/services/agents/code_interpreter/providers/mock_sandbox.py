@@ -30,6 +30,9 @@ class MockSandboxProvider:
                 "provider": self.name,
                 "simulated": True,
                 "mock": True,
+                "kernel_isolation_level": "simulated",
+                "network_mode": "none",
+                "filesystem_mode": "simulated-read-only",
                 "artifacts": [],
             }
         return {
@@ -40,5 +43,8 @@ class MockSandboxProvider:
             "provider": self.name,
             "simulated": True,
             "mock": True,
+            "kernel_isolation_level": "simulated",
+            "network_mode": "none",
+            "filesystem_mode": "simulated-read-only",
             "artifacts": [],
         }
