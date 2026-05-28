@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EndpointType(str, Enum):
@@ -195,6 +195,8 @@ class CommercialCalibrationSimulateResponse(BaseModel):
     reason: str
 
 class CommercialConfigRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     scope_type: str
     provider: str | None
@@ -211,9 +213,6 @@ class CommercialConfigRead(BaseModel):
     updated_at: datetime
     created_by: str | None
     notes: str | None
-
-    class Config:
-        from_attributes = True
 
 class CommercialConfigApplyRequest(BaseModel):
     provider: str | None = None
@@ -237,6 +236,8 @@ class CommercialReportScheduleCreate(BaseModel):
 
 
 class CommercialReportScheduleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     enabled: bool
@@ -252,9 +253,6 @@ class CommercialReportScheduleRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     created_by: str | None
-
-    class Config:
-        from_attributes = True
 
 
 class CommercialReportScheduleRunResponse(BaseModel):
@@ -288,6 +286,8 @@ class CommercialQoSTierCreate(BaseModel):
     metadata_json: dict[str, Any] | None = None
 
 class CommercialQoSTierRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     enabled: bool
@@ -309,9 +309,6 @@ class CommercialQoSTierRead(BaseModel):
     metadata_json: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class CommercialQoSTierUpdate(BaseModel):
     enabled: bool | None = None
@@ -360,6 +357,8 @@ class CommercialQoSChargebackSummary(BaseModel):
 
 
 class CommercialReportDeliveryLogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     schedule_id: UUID | None
     report_format: str
@@ -373,9 +372,6 @@ class CommercialReportDeliveryLogRead(BaseModel):
     error_message: str | None = None
     created_at: datetime
     delivered_at: datetime | None = None
-
-    class Config:
-        from_attributes = True
 
 
 class CommercialReportDeliveryListResponse(BaseModel):
@@ -442,6 +438,8 @@ class CommercialQoSTierUpdate(BaseModel):
 
 
 class CommercialQoSTierRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     enabled: bool
@@ -464,9 +462,6 @@ class CommercialQoSTierRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class CommercialQoSSimulateRequest(BaseModel):
     client_id: UUID | None = None
@@ -485,4 +480,3 @@ class CommercialQoSSimulateResponse(BaseModel):
     degradation_path: str | None = None
     sla_pass: bool
     warnings: list[str] = Field(default_factory=list)
-

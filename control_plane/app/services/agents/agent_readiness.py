@@ -52,7 +52,7 @@ class AgentReadinessService:
             results["checks"].append({
                 "id": "runtime_enabled",
                 "name": "Agent Runtime Enabled",
-                "status": "pass",
+                "status": "fail",
                 "value": False,
                 "message": "Agentic runtime is disabled by configuration (opt-out)."
             })
@@ -70,6 +70,9 @@ class AgentReadinessService:
         deployment_mode = getattr(self.settings, "deployment_mode", "appliance")
         allow_mock_in_prod = getattr(self.settings, "agent_allow_mock_llm_in_production", False)
         require_real = getattr(self.settings, "agent_require_real_llm_for_production", True)
+        executor_mock_mode = bool(getattr(self.settings, "agent_executor_mock_mode", False))
+        executor_dry_run_mode = bool(getattr(self.settings, "agent_executor_dry_run_mode", False))
+        executor_simulation_mode = bool(getattr(self.settings, "agent_executor_allow_simulation", False))
 
         if llm_provider not in VALID_LLM_PROVIDERS:
             results["checks"].append({
@@ -133,6 +136,47 @@ class AgentReadinessService:
                 "message": "; ".join(messages) if messages else f"LLM provider '{llm_provider}' is valid for '{deployment_mode}' mode."
             })
 
+        # 1c. Executor Mock/Simulation Posture
+        executor_modes = []
+        if executor_mock_mode:
+            executor_modes.append("mock")
+        if executor_dry_run_mode:
+            executor_modes.append("dry_run")
+        if executor_simulation_mode:
+            executor_modes.append("simulation")
+
+        if not executor_modes:
+            results["checks"].append({
+                "id": "executor_modes",
+                "name": "Agent Executor Execution Mode",
+                "status": "pass",
+                "value": {"active_modes": [], "mode": deployment_mode},
+                "message": "AgentExecutor is configured for real execution only."
+            })
+        else:
+            message = (
+                f"AgentExecutor non-real modes active: {', '.join(executor_modes)}. "
+                "All simulated outputs must remain audit-visible."
+            )
+            check_status = "warn"
+            if deployment_mode in ("pilot", "production", "enterprise_managed"):
+                check_status = "fail"
+                results["blockers"].append(message)
+                if results["status"] != ReadinessStatus.DISABLED:
+                    results["status"] = ReadinessStatus.BLOCKED
+            else:
+                results["warnings"].append(message)
+                if results["status"] == ReadinessStatus.READY:
+                    results["status"] = ReadinessStatus.DEGRADED
+
+            results["checks"].append({
+                "id": "executor_modes",
+                "name": "Agent Executor Execution Mode",
+                "status": check_status,
+                "value": {"active_modes": executor_modes, "mode": deployment_mode},
+                "message": message
+            })
+
         # 2. Execution Plane Check
         plane_enabled = self.settings.agent_execution_plane_enabled
         results["checks"].append({
@@ -164,7 +208,7 @@ class AgentReadinessService:
                 results["status"] = ReadinessStatus.BLOCKED if results["status"] != ReadinessStatus.DISABLED else results["status"]
 
         # 4. Queue Depth and Stuck Runs
-        res_queue = await self.db.execute(select(func.count(AgentExecutionJob.id)).where(AgentExecutionJob.status == "queued"))
+        res_queue = await self.db.execute(select(func.count(AgentExecutionJob.id)).where(AgentExecutionJob.queue_status == "queued"))
         queue_depth = res_queue.scalar() or 0
         results["checks"].append({
             "id": "queue_depth",

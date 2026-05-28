@@ -1,6 +1,14 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List
-from app.services.agents.connectors.base import ConnectorAdapter, ConnectorCapability, RiskLevel, SideEffectLevel
+from typing import Any, Dict, List, Optional
+from app.services.agents.connectors.base import (
+    ConnectorAdapter,
+    ConnectorCapability,
+    RiskLevel,
+    SideEffectLevel,
+)
+from app.services.agents.connectors.connector_runtime import ConnectorRuntime
+from app.services.agents.connectors.connector_mode import ConnectorMode
+from app.services.agents.connectors.http_client import ConnectorHTTPClient
 
 class JiraConnector(ConnectorAdapter):
     @property
@@ -8,8 +16,12 @@ class JiraConnector(ConnectorAdapter):
         return "jira"
 
     @property
+    def mode(self) -> ConnectorMode:
+        return ConnectorRuntime.get_mode(self.connector_name)
+
+    @property
     def connector_version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     @property
     def provider(self) -> str:
@@ -59,7 +71,10 @@ class JiraConnector(ConnectorAdapter):
         return True
 
     async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        return {"status": "dry_run_success", "connector": self.connector_name, "action": kwargs.get("action")}
+        return self._with_execution_metadata(
+            {"status": "dry_run_success", "action": kwargs.get("action")},
+            mode="dry_run",
+        )
 
     async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         action = kwargs.get("action")
@@ -78,13 +93,120 @@ class JiraConnector(ConnectorAdapter):
         
         self._check_feature_flags(capability)
 
+        # Agent IAM Check
+        await self.check_iam(tenant_id, credentials, action)
+
+        # Audit event
+        await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
+
+        if self.mode == ConnectorMode.REAL:
+            return self._with_execution_metadata(
+                await self._execute_real(action, params, credentials),
+                mode="real",
+            )
+        return await self._execute_mock(action, params)
+
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+        ConnectorRuntime.ensure_real_allowed(self.connector_name)
+        ConnectorRuntime.validate_credentials(self.connector_name, credentials)
+
+        base_url = credentials.get("base_url")
+        if not base_url:
+            raise ValueError("base_url (Jira instance URL) is required in credentials for Jira real mode")
+
+        # Support Basic Auth or Bearer Token
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        
+        if credentials.get("token"):
+            headers["Authorization"] = f"Bearer {credentials['token']}"
+        elif credentials.get("username") and credentials.get("password"):
+            import base64
+            auth_str = f"{credentials['username']}:{credentials['password']}"
+            encoded_auth = base64.b64encode(auth_str.encode()).decode()
+            headers["Authorization"] = f"Basic {encoded_auth}"
+        else:
+            raise ValueError("Either token or username/password is required for Jira real mode")
+
+        client = ConnectorHTTPClient(base_url=base_url, headers=headers)
+
         if action == "search_issues":
-            return {"issues": [{"key": "PROJ-1", "summary": "Fix login bug"}]}
+            jql = params.get("jql")
+            if not jql:
+                raise ValueError("jql is required for search_issues")
+            return await client.request("GET", "/rest/api/3/search", params={"jql": jql})
+
         elif action == "get_issue":
-            return {"issue": {"key": params.get("issue_key"), "summary": "Mock Issue", "status": "To Do"}}
+            issue_key = params.get("issue_key")
+            if not issue_key:
+                raise ValueError("issue_key is required for get_issue")
+            return await client.request("GET", f"/rest/api/3/issue/{issue_key}")
+
         elif action == "add_comment":
-            return {"status": "success", "comment_id": "10001"}
+            issue_key = params.get("issue_key")
+            body = params.get("body")
+            if not issue_key or not body:
+                raise ValueError("issue_key and body are required for add_comment")
+            # Minimal Jira v3 comment format
+            payload = {"body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"text": body, "type": "text"}]}]}}
+            return await client.request("POST", f"/rest/api/3/issue/{issue_key}/comment", json_data=payload)
         elif action == "create_issue":
-            return {"status": "success", "issue_key": "PROJ-123"}
+            project_key = params.get("project_key")
+            summary = params.get("summary")
+            if not project_key or not summary:
+                raise ValueError("project_key and summary are required for create_issue")
+            payload = {
+                "fields": {
+                    "project": {"key": project_key},
+                    "summary": summary,
+                    "issuetype": {"name": params.get("issue_type", "Task")},
+                }
+            }
+            if params.get("description"):
+                payload["fields"]["description"] = {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [{"text": params["description"], "type": "text"}],
+                        }
+                    ],
+                }
+            return await client.request("POST", "/rest/api/3/issue", json_data=payload)
+
+        raise self._unsupported_action(
+            action,
+            mode="real",
+            supported_actions=["add_comment", "create_issue", "get_issue", "search_issues"],
+        )
+
+    async def _execute_mock(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        if action == "search_issues":
+            return self._with_execution_metadata(
+                {"issues": [{"key": "PROJ-1", "summary": "Fix login bug"}]},
+                mode="mock",
+            )
+        elif action == "get_issue":
+            return self._with_execution_metadata(
+                {"issue": {"key": params.get("issue_key"), "summary": "Mock Issue", "status": "To Do"}},
+                mode="mock",
+            )
+        elif action == "add_comment":
+            return self._with_execution_metadata(
+                {"status": "success", "comment_id": "10001"},
+                mode="mock",
+            )
+        elif action == "create_issue":
+            return self._with_execution_metadata(
+                {"status": "success", "issue_key": "PROJ-123"},
+                mode="mock",
+            )
             
-        return {"status": "error", "message": "Action not implemented"}
+        raise self._unsupported_action(
+            action,
+            mode="mock",
+            supported_actions=["add_comment", "create_issue", "get_issue", "search_issues"],
+        )

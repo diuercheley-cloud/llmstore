@@ -5,6 +5,9 @@ Revises: phase78_compatibility_contracts
 Create Date: 2026-05-16 14:00:00.000000
 """
 
+# Model class: PluginRuntimeActivation
+# Model class: PluginRuntimeExecution
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -126,7 +126,7 @@ async def trigger_rebuild_forecast(
 
 @router.get("/export")
 async def export_capacity_data(
-    format: str = Query("json", regex="^(json|csv|html)$"),
+    format: str = Query("json", pattern="^(json|csv|html)$"),
     db: AsyncSession = Depends(get_db),
     admin=Depends(get_admin_user),
     cluster_id: Optional[str] = None

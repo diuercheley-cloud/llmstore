@@ -316,22 +316,50 @@ class GAReadinessService:
         task_engine_content = task_engine.read_text(encoding="utf-8")
         agent_executor_content = agent_executor.read_text(encoding="utf-8")
         findings = []
+        settings = None
+        try:
+            from app.core.config import get_settings
 
-        if 'output["execution_mode"] = execution_mode' not in task_engine_content:
+            settings = get_settings()
+        except Exception:
+            settings = None
+
+        if 'output["execution_mode"] = ctx.execution_mode' not in task_engine_content:
             findings.append("task_engine.py can complete tasks without execution_mode")
-        if 'raise NotImplementedError("controlled_not_implemented")' not in task_engine_content:
-            findings.append("task_engine.py does not block unsupported simulation mode")
+        if 'simulation_mode_unsupported' not in task_engine_content:
+            findings.append("task_engine.py does not fail explicitly on AGENT_TASK_SIMULATION_MODE")
+        if 'controlled_not_implemented' in task_engine_content or 'NotImplementedError' in task_engine_content:
+            findings.append("task_engine.py still contains incomplete execution markers")
         if 'output.setdefault("execution_mode", "dry_run")' not in agent_executor_content:
             findings.append("agent_executor.py does not tag dry_run tool calls with execution_mode")
         if 'output.setdefault("execution_mode", "real")' not in agent_executor_content:
             findings.append("agent_executor.py does not tag real tool calls with execution_mode")
         if '"execution_mode": "mock"' not in agent_executor_content:
             findings.append("agent_executor.py does not tag mock tool calls with execution_mode")
-        if (
-            'elif getattr(self.settings, "agent_task_simulation_mode", False):' not in agent_executor_content
-            or 'raise NotImplementedError("controlled_not_implemented")' not in agent_executor_content
-        ):
-            findings.append("agent_executor.py still permits silent simulation mode")
+        if '"simulated": True' not in agent_executor_content:
+            findings.append("agent_executor.py does not tag simulated outputs with simulated=true")
+        if 'agent_executor_allow_simulation' not in agent_executor_content:
+            findings.append("agent_executor.py does not guard simulation behind AGENT_EXECUTOR_ALLOW_SIMULATION")
+        if 'agent_executor_mock_mode' not in agent_executor_content:
+            findings.append("agent_executor.py does not guard mock mode behind AGENT_EXECUTOR_MOCK_MODE")
+        if 'agent_executor_dry_run_mode' not in agent_executor_content:
+            findings.append("agent_executor.py does not guard dry-run mode behind AGENT_EXECUTOR_DRY_RUN_MODE")
+
+        if settings is not None:
+            mode = getattr(settings, "deployment_mode", "appliance")
+            active_modes = [
+                name
+                for name, enabled in (
+                    ("mock", getattr(settings, "agent_executor_mock_mode", False)),
+                    ("dry_run", getattr(settings, "agent_executor_dry_run_mode", False)),
+                    ("simulation", getattr(settings, "agent_executor_allow_simulation", False)),
+                )
+                if enabled
+            ]
+            if active_modes and mode in ("production", "enterprise_managed"):
+                findings.append(
+                    f"AgentExecutor non-real modes active in {mode}: {', '.join(active_modes)}"
+                )
 
         if findings:
             return False, "; ".join(findings)

@@ -44,6 +44,7 @@ async def setup_settings():
     orig_exec = settings.agent_execution_enabled
     orig_tool_exec = settings.agent_tool_execution_enabled
     orig_handoff = settings.agent_handoffs_enabled
+    orig_executor_mock = settings.agent_executor_mock_mode
     
     settings.agent_observability_enabled = True
     settings.agent_memory_enabled = True
@@ -51,6 +52,7 @@ async def setup_settings():
     settings.agent_execution_enabled = True
     settings.agent_tool_execution_enabled = True
     settings.agent_handoffs_enabled = True
+    settings.agent_executor_mock_mode = True
     
     yield
     
@@ -60,6 +62,7 @@ async def setup_settings():
     settings.agent_execution_enabled = orig_exec
     settings.agent_tool_execution_enabled = orig_tool_exec
     settings.agent_handoffs_enabled = orig_handoff
+    settings.agent_executor_mock_mode = orig_executor_mock
 
 @pytest.mark.asyncio
 async def test_tool_call_enforces_policy(test_db):

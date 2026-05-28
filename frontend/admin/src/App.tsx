@@ -71,6 +71,9 @@ const AgentApprovals = lazy(() => import('./pages/agents/AgentApprovals'))
 const AgentEvals = lazy(() => import('./pages/agents/AgentEvals'))
 const AgentPolicies = lazy(() => import('./pages/agents/AgentPolicies'))
 const AgentMarketplace = lazy(() => import('./pages/agents/AgentMarketplace'))
+const AgentWorkspaces = lazy(() => import('./pages/agents/AgentWorkspaces'))
+const AgentArtifactBrowser = lazy(() => import('./pages/agents/AgentArtifactBrowser'))
+const AgentArtifactDetail = lazy(() => import('./pages/agents/AgentArtifactDetail'))
 
 const queryClient = new QueryClient()
 
@@ -556,6 +559,9 @@ function App() {
             <Route path="/agents/evals" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentEvals /></Suspense></Layout></ProtectedRoute>} />
             <Route path="/agents/policies" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentPolicies /></Suspense></Layout></ProtectedRoute>} />
             <Route path="/agents/marketplace" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentMarketplace /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/workspaces" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentWorkspaces /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/workspaces/:id" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentArtifactBrowser /></Suspense></Layout></ProtectedRoute>} />
+            <Route path="/agents/workspaces/:id/artifacts/:artifactId" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoader />}><AgentArtifactDetail /></Suspense></Layout></ProtectedRoute>} />
 
             <Route path="*" element={<Layout><NotFound /></Layout>} />
 

@@ -208,6 +208,62 @@
   - logs/*
   is_destructive: false
   docs_url: null
+- path: scripts/agent-sandbox-security-test.sh
+  purpose: Runs the agent sandbox escape and hardening validation suite.
+  owner: agent-platform
+  category: security
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/security/*
+  is_destructive: false
+  docs_url: docs/security/agent-sandbox-hardening.md
+- path: scripts/agent-queue-drain.sh
+  purpose: Forces agent workers into drain mode for durable-queue maintenance and
+    release operations.
+  owner: agent-platform
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: docs/runtime/agentic-durable-queue.md
+- path: scripts/agent-queue-status.sh
+  purpose: Reports durable queue depth, lease posture, and worker recovery status.
+  owner: agent-platform
+  category: operations
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: docs/runtime/agentic-durable-queue.md
+- path: scripts/real-execution-readiness.sh
+  purpose: Executes the real-execution readiness gate and writes machine-readable
+    and markdown artifacts.
+  owner: platform-ops
+  category: release
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/runtime/*
+  is_destructive: false
+  docs_url: docs/runtime/real_execution_readiness.md
 - path: scripts/benchmark-model-local.sh
   purpose: Activate virtual environment if available
   owner: platform-ops
@@ -453,6 +509,20 @@
   - logs/*
   is_destructive: false
   docs_url: /docs/operations/script-governance.md
+- path: scripts/ga-readiness.sh
+  purpose: scripts/ga-readiness.sh Runs the GA readiness gate and writes release evidence.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/releases/*
+  is_destructive: false
+  docs_url: docs/releases/V2_0_2_AGENTIC_GA_READINESS.md
 - path: scripts/check-working-tree-clean.sh
   purpose: check-working-tree-clean.sh Ensures the working tree is clean and no sensitive
     data is present.
@@ -1585,6 +1655,20 @@
   - logs/*
   is_destructive: false
   docs_url: null
+- path: scripts/surface-area-audit.py
+  purpose: scripts/surface-area-audit.py Validates supported and API surface inventories against the current repository.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/releases/*
+  is_destructive: false
+  docs_url: docs/support/supported-surface-area.md
 - path: scripts/paid-implementation-checklist-local.sh
   purpose: scripts/paid-implementation-checklist-local.sh Generates a paid implementation
     checklist for a client deployment.
@@ -1850,8 +1934,9 @@
   requires_docker: false
   requires_network: false
   requires_gpu: false
-  writes_files: false
-  outputs: []
+  writes_files: true
+  outputs:
+  - artifacts/releases/*
   is_destructive: false
   docs_url: null
 - path: scripts/release-local-production.sh
@@ -5741,3 +5826,181 @@
   writes_files: true
   outputs:
   - artifacts/compliance/*
+- path: scripts/check-supported-surface.sh
+  purpose: Run supported surface validation.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-feature-flags-integrity.sh
+  purpose: Shell wrapper to execute feature flags integrity audit.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/run-real-provider-validation.sh
+  purpose: Execute validation of real LLM gateways and API connections.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/agent-worker-recovery-test.sh
+  purpose: Chaos and recovery test for background agent queue workers.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/audit-feature-flags.py
+  purpose: Governance audit utility to scan code and report flag anomalies.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/platform/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/check_supported_surface.py
+  purpose: Parse and audit supported-surface.yaml capabilities.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - config/supported-surface.yaml
+  is_destructive: false
+  docs_url: null
+- path: scripts/benchmark-knowledge-graph.sh
+  purpose: Benchmark graph query and ingestion latency for SQLite provider.
+  owner: agent-platform
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/benchmarks/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/rollback-agentic-runtime.sh
+  purpose: Operational script to rollback agent runtime configurations.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - config/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/activate-agentic-pilot.sh
+  purpose: Activate pilot mode for the agentic runtime.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - config/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/run-agent-real-provider-validation.sh
+  purpose: Run budget-checked validations of LLM models for agents.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-feature-flags-integrity.py
+  purpose: Programmatic audit of feature flag defaults, dependencies, and owners.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null
+- path: scripts/activate-agentic-production.sh
+  purpose: Activate production mode for the agentic runtime.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - config/*
+  is_destructive: false
+  docs_url: null
+- path: scripts/check-freeze-governance.sh
+  purpose: Validate architecture constraints and code freeze regulations.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: null

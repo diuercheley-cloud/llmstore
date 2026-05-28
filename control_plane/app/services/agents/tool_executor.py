@@ -24,7 +24,7 @@ from app.services.agents.tool_rollback import (
     register_rollback_action,
     rollback_invocation_side_effects,
 )
-from app.services.agents.tool_audit import log_audit_event
+from app.services.agents.tool_audit import log_audit_event, sanitize_payload
 from app.services.agents.tool_adapter_registry import adapter_registry
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,11 @@ async def execute_tool(
     effective_tenant = tenant_id or "default"
     effective_agent_id = agent_id or (agent.agent_id if agent else None)
     input_hash = hash_payload(parameters)
+
+    if not is_dry_run and not settings.agent_tool_execution_enabled:
+        raise ValueError("Tool execution is disabled by feature flag.")
+    if tool.side_effect_level == "destructive" and not settings.agent_destructive_tools_enabled:
+        raise ValueError("Destructive tool execution is disabled by feature flag.")
 
     # 0. Check Execution Limits (Calls)
     if run_id:
@@ -92,8 +97,19 @@ async def execute_tool(
     if resolved_secret:
         modified_parameters["api_key"] = resolved_secret
 
+    await check_and_increment_quota(
+        db=db,
+        tenant_id=effective_tenant,
+        agent_id=effective_agent_id,
+        tool_id=tool.id,
+        side_effect_level=tool.side_effect_level,
+    )
+
     start_time = time.monotonic()
     output = {}
+    side_effect = None
+    rollback_action = None
+    eff_rollback_callable = rollback_callable
 
     retry_policy = tool.retry_policy or {}
     max_retries = retry_policy.get("max_attempts", 1) - 1
@@ -153,12 +169,39 @@ async def execute_tool(
                     else:
                         output = eff_tool_callable(**modified_parameters)
                 else:
-                    output = {"status": "dry_run_success", "message": "Dry-run simulation completed successfully."}
+                    output = {
+                        "status": "dry_run_success",
+                        "message": "Dry-run simulation completed successfully.",
+                        "execution_mode": "dry_run",
+                        "simulated": True,
+                    }
                 invocation.status = "dry_run"
                 break
             else:
-                if not settings.agent_tool_execution_enabled:
-                    raise ValueError("Tool execution is disabled by feature flag.")
+                if tool.side_effect_level in ("write", "destructive", "external"):
+                    resource_id = parameters.get("resource_id")
+                    if resource_id is None:
+                        resource_id = parameters.get("id")
+                    side_effect = await register_side_effect(
+                        db=db,
+                        tenant_id=effective_tenant,
+                        invocation_id=invocation.id,
+                        side_effect_level=tool.side_effect_level,
+                        description=f"Tool {tool.name} invoked with side effects",
+                        resource_id=resource_id,
+                        change_payload=sanitize_payload(parameters),
+                    )
+                    if tool.rollback_supported:
+                        compensation_payload = {}
+                        if resource_id is not None:
+                            compensation_payload["resource_id"] = resource_id
+                        rollback_action = await register_rollback_action(
+                            db=db,
+                            tenant_id=effective_tenant,
+                            side_effect_id=side_effect.id,
+                            compensation_action=f"rollback:{tool.name}",
+                            compensation_payload=compensation_payload,
+                        )
 
                 if settings.agent_tool_sandbox_enabled:
                     output = await execute_in_sandbox(
@@ -166,7 +209,8 @@ async def execute_tool(
                         tool_name=tool.name, tool_category=tool.category,
                         parameters=modified_parameters, allowed_commands=["*"],
                         timeout_seconds=int(tool.timeout_seconds),
-                        tool_callable=eff_tool_callable
+                        tool_callable=eff_tool_callable,
+                        sandbox_type="real",
                     )
                 else:
                     if eff_tool_callable is not None:
@@ -175,10 +219,21 @@ async def execute_tool(
                         else:
                             output = await asyncio.wait_for(asyncio.to_thread(lambda: eff_tool_callable(**modified_parameters)), timeout=float(tool.timeout_seconds))
                     else:
-                        output = {"status": "success", "message": f"Simulated execution of tool {tool.name}"}
+                        raise ValueError(
+                            f"Real execution requested for tool '{tool.name}', but no concrete implementation is registered."
+                        )
                 break
 
         except Exception as e:
+            if side_effect is not None and tool.rollback_supported:
+                rolled_back = await rollback_invocation_side_effects(
+                    db=db,
+                    tenant_id=effective_tenant,
+                    invocation_id=invocation.id,
+                    rollback_callable=rollback_callable or eff_rollback_callable,
+                )
+                if rolled_back:
+                    invocation.status = "rolled_back"
             if attempt < max_retries:
                 attempt += 1
                 logger.warning(f"Retrying tool {tool.name} (attempt {attempt}/{max_retries}) due to: {e}")
@@ -187,7 +242,8 @@ async def execute_tool(
             
             latency_ms = int((time.monotonic() - start_time) * 1000)
             invocation.latency_ms = latency_ms
-            invocation.status = "failed"
+            if invocation.status != "rolled_back":
+                invocation.status = "failed"
             invocation.error_message = str(e)
             
             await log_audit_event(

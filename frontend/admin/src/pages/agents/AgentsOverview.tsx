@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Activity, ShieldCheck, Database, LayoutDashboard } from 'lucide-react';
+import { Bot, Activity, ShieldCheck, Database, LayoutDashboard, FolderOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AgentsOverview() {
@@ -8,6 +8,7 @@ export default function AgentsOverview() {
     { title: "Execuções 24h", value: "1,240", icon: Activity, link: "/agents/runs" },
     { title: "Aprovações Pendentes", value: "3", icon: ShieldCheck, link: "/agents/approvals" },
     { title: "Itens em Memória", value: "45K", icon: Database, link: "/agents/memory" },
+    { title: "Shared Workspaces", value: "—", icon: FolderOpen, link: "/agents/workspaces" },
   ];
 
   return (

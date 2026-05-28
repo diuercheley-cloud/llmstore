@@ -1,17 +1,12 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Owner: agent-platform
+# Status: beta
 
-DLQ_ID=$1
-
-if [ -z "$DLQ_ID" ]; then
-    echo "Usage: $0 <dlq_item_id>"
-    exit 1
-fi
-
-BASE_URL=${KLEBER_BASE_URL:-"http://localhost:18080"}
-API_KEY=${KLEBER_API_KEY}
-
-echo "Retrying DLQ item $DLQ_ID..."
-
-curl -s -H "X-Admin-Token: $API_KEY" \
-     -X POST "$BASE_URL/admin/agents/worker/dlq/$DLQ_ID/retry" | jq .
+echo "Re-enqueueing DLQ jobs..."
+docker compose exec -T postgres psql -U postgres -d app -c "
+UPDATE agent_execution_jobs
+SET queue_status = 'queued', attempt_count = 0, available_at = NOW(), locked_by = NULL, locked_until = NULL
+WHERE queue_status = 'dead_letter';
+DELETE FROM agent_execution_dead_letters;
+"
+echo "Jobs re-enqueued."

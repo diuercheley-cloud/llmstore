@@ -26,9 +26,13 @@ class WorkflowTimerManager:
         return timer
 
     async def get_fired_timers(self):
-        stmt = select(AgentWorkflowTimer).where(
-            AgentWorkflowTimer.status == "pending",
-            AgentWorkflowTimer.fire_at <= utc_now()
+        stmt = (
+            select(AgentWorkflowTimer)
+            .where(
+                AgentWorkflowTimer.status == "pending",
+                AgentWorkflowTimer.fire_at <= utc_now()
+            )
+            .with_for_update(skip_locked=True)
         )
         res = await self.db.execute(stmt)
         return res.scalars().all()

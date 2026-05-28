@@ -69,17 +69,36 @@ async def test_retry_logic(session):
     from app.core.config import get_settings
     settings = get_settings()
     settings.agent_auto_retry_enabled = True
+    settings.agent_plan_execution_enabled = True
+    settings.agent_planner_real_execution_enabled = True
+    settings.agent_task_mock_mode = False
+    settings.agent_task_dry_run_mode = False
+    settings.agent_task_simulation_mode = False
+    settings.agent_execution_enabled = True
     
     task = AgentTask(
-        plan_id=uuid.uuid4(), # fake
+        plan_id=uuid.uuid4(),
         title="Flaky Task",
         description_hash="hash",
         task_type="tool_call",
         status="pending",
-        max_attempts=2
+        max_attempts=2,
+        input_data={"tool_name": "missing_tool", "parameters": {}},
     )
-    # Since plan_id must exist, let's create a real plan
     agent_id = uuid.uuid4()
+    from app.models.agents import AgentDefinition
+    agent_def = AgentDefinition(
+        id=agent_id,
+        name="retry-agent",
+        version="1.0.0",
+        description="retry",
+        instructions="retry",
+        model_id="mock-model",
+        owner="owner",
+        status="active",
+    )
+    session.add(agent_def)
+    await session.commit()
     run = await agent_state.create_agent_run(session, agent_id, "t1", "goal")
     plan = AgentPlan(agent_run_id=run.id, goal_hash="h", status="draft")
     session.add(plan)
@@ -89,20 +108,8 @@ async def test_retry_logic(session):
     await session.commit()
     
     engine = TaskEngine(session)
-    
-    # Mock a failure
-    import unittest.mock
-    with unittest.mock.patch.object(TaskEngine, 'run_task', side_effect=Exception("Failed")):
-        # engine.run_task handles the exception internally in my actual impl? 
-        # No, wait, I implementation run_task with try-except
-        pass
-    
-    # Manual call to run_task to test my error handling
-    # I'll modify run_task in the service to throw to test this? 
-    # Actually my run_task already has try-except.
-    
     await engine.run_task(task.id)
     await session.refresh(task)
-    
-    # It completed in my mock implementation of run_task (it just marks completed)
-    assert task.status == "completed"
+
+    assert task.status == "failed"
+    assert task.attempt_count == 2

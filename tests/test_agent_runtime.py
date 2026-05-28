@@ -80,6 +80,7 @@ async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     # Create agent definition
@@ -181,10 +182,11 @@ async def test_execute_agent_runtime_disabled(admin_client: AsyncClient, admin_t
 
 
 @pytest.mark.asyncio
-async def test_execute_agent_execution_disabled_mocks_tool(session: AsyncSession, monkeypatch):
+async def test_execute_agent_execution_disabled_fails_without_simulation_override(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "false")  # execution disabled
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(
@@ -222,26 +224,9 @@ async def test_execute_agent_execution_disabled_mocks_tool(session: AsyncSession
         tool_runner=mock_tool_runner,
     )
 
-    assert run.status == "completed"
+    assert run.status == "failed"
     assert not tool_executed  # Real tool MUST NOT execute
-
-    steps = await agent_state.get_run_steps(session, run.id)
-    tool_step = next(s for s in steps if s.step_type == "tool_call")
-    
-    # Compute expected hash of the simulated output
-    expected_output = {
-        "result": "Simulated output for tool 'calculator' (AGENT_EXECUTION_ENABLED=false)"
-    }
-    expected_hash = agent_state.compute_sha256(expected_output)
-    
-    assert tool_step.output_hash == expected_hash
-
-    # Verify mock tool response is recorded in receipt
-    receipts_res = await session.execute(
-        select(AgentRunReceipt).where(AgentRunReceipt.run_id == run.id)
-    )
-    receipt = receipts_res.scalar_one()
-    assert receipt.receipt_data["tool_output_hash"] == expected_hash
+    assert "Agent execution is disabled" in run.failure_reason
 
 
 @pytest.mark.asyncio
@@ -249,6 +234,7 @@ async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(
@@ -339,6 +325,7 @@ async def test_replay_run(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     monkeypatch.setenv("AGENT_REPLAY_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(
@@ -390,6 +377,7 @@ async def test_max_steps_limit(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(
@@ -431,6 +419,7 @@ async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(
@@ -482,6 +471,7 @@ async def test_prompt_logs_masking(session: AsyncSession, monkeypatch):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     get_settings.cache_clear()
 
     agent_def = await agent_state.create_agent_definition(

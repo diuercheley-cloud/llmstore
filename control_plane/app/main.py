@@ -156,9 +156,17 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     # Agentic Platform Routers
     # Always include readiness for release gates
     from app.api.agent_readiness_admin import router as agent_readiness_admin_router
+    from app.api.agent_execution_admin import router as agent_execution_admin_router
+    from app.api.agent_tools_admin import router as agent_tools_admin_router
     from app.api.platform_ga_admin import router as platform_ga_admin_router
     app.include_router(agent_readiness_admin_router)
+    app.include_router(agent_execution_admin_router)
+    app.include_router(agent_tools_admin_router)
     app.include_router(platform_ga_admin_router)
+
+    if settings.agentic_router_v2_enabled:
+        from app.api.agent_routing_admin import router as agent_routing_admin_router
+        app.include_router(agent_routing_admin_router)
 
     if settings.agent_runtime_enabled or settings.agent_execution_enabled:
         from app.api.agents import router as agents_router
@@ -176,10 +184,6 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_worker_admin import router as agent_worker_admin_router
         app.include_router(agent_worker_admin_router)
 
-    if settings.agent_tool_registry_enabled:
-        from app.api.agent_tools_admin import router as agent_tools_admin_router
-        app.include_router(agent_tools_admin_router)
-
     if settings.agent_multi_agent_enabled:
         from app.api.agent_teams_admin import router as agent_teams_admin_router
         app.include_router(agent_teams_admin_router)
@@ -191,6 +195,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_human_approval_enabled:
         from app.api.agent_approvals_admin import router as agent_approvals_admin_router
         app.include_router(agent_approvals_admin_router)
+    if settings.agent_approval_portal_enabled:
+        from app.api.agent_approval_portal import router as agent_approval_portal_router
+        app.include_router(agent_approval_portal_router)
 
     if settings.agent_saas_connectors_enabled:
         from app.api.agent_connectors_admin import router as agent_connectors_admin_router
@@ -211,6 +218,10 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_memory_enabled:
         from app.api.agent_memory_admin import router as agent_memory_admin_router
         app.include_router(agent_memory_admin_router)
+
+    if settings.agent_cognitive_memory_enabled:
+        from app.api.agent_cognitive_memory_admin import router as agent_cognitive_memory_admin_router
+        app.include_router(agent_cognitive_memory_admin_router)
 
     if settings.agent_planning_enabled:
         from app.api.agent_tasks_admin import router as agent_tasks_admin_router
@@ -245,6 +256,34 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_marketplace_enabled:
         from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
         app.include_router(agent_marketplace_admin_router)
+
+    if settings.agent_event_driven_enabled:
+        from app.api.agent_events_admin import router as agent_events_admin_router
+        from app.api.agent_events import router as agent_events_router
+        app.include_router(agent_events_admin_router)
+        app.include_router(agent_events_router)
+
+    if settings.agent_iam_enabled:
+        from app.api.agent_iam_admin import router as agent_iam_admin_router
+        app.include_router(agent_iam_admin_router)
+
+    if settings.agent_code_interpreter_enabled:
+        from app.api.agent_code_interpreter_admin import router as agent_code_interpreter_admin_router
+        app.include_router(agent_code_interpreter_admin_router)
+
+    if settings.agent_mcp_enabled:
+        from app.api.agent_mcp_admin import admin_router as agent_mcp_admin_router, server_router as agent_mcp_server_router
+        app.include_router(agent_mcp_admin_router)
+        app.include_router(agent_mcp_server_router)
+
+    if settings.agent_auto_optimization_enabled:
+        from app.api.agent_optimization_admin import router as agent_optimization_admin_router
+        app.include_router(agent_optimization_admin_router)
+
+    # Agent Shared Workspace and Artifacts Routers
+    from app.api.agent_workspace_admin import router as agent_workspace_admin_router
+    app.include_router(agent_workspace_admin_router)
+
 
     # Enterprise/Commercial Optional Routers
     if getattr(settings, "commercial_qos_enabled", True):
@@ -286,6 +325,19 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if getattr(settings, "commercial_live_balancing_enabled", True):
         from app.api.commercial_live_balancing_admin import router as commercial_live_balancing_admin_router
         app.include_router(commercial_live_balancing_admin_router, prefix="/admin/routing/live-balancing", tags=["commercial_live_balancing"])
+
+    # Agent Tool Synthesis and Sandbox Routers
+    from app.api.agent_tool_synthesis_admin import admin_router as tool_synthesis_admin_router, sandbox_router as tool_synthesis_sandbox_router, public_router as tool_synthesis_public_router
+    app.include_router(tool_synthesis_admin_router, prefix="/admin/agents/tool-synthesis", tags=["agent_tool_synthesis"])
+    app.include_router(tool_synthesis_sandbox_router, prefix="/admin/agents/sandbox", tags=["agent_sandbox"])
+    app.include_router(tool_synthesis_public_router, prefix="/agents/tools/generated", tags=["agent_generated_tools"])
+
+    # Agent Knowledge Graph Routers
+    if settings.agent_knowledge_graph_enabled:
+        from app.api.agent_knowledge_graph_admin import admin_router as kg_admin_router, public_router as kg_public_router
+        app.include_router(kg_admin_router)
+        app.include_router(kg_public_router)
+
 
 
 async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
@@ -337,6 +389,20 @@ async def lifespan(_: FastAPI):
         workflow_scheduler_task = asyncio.create_task(scheduler.start())
         logger.info("Stateful Workflow Scheduler started")
 
+    # Agent Event-Driven Background Tasks
+    cron_task = None
+    pubsub_task = None
+    if settings.agent_event_driven_enabled:
+        if settings.agent_cron_triggers_enabled:
+            from app.services.agents.events.cron_triggers import evaluate_schedules
+            cron_task = asyncio.create_task(evaluate_schedules())
+            logger.info("Agent Cron Trigger Service started")
+        
+        if settings.agent_pubsub_triggers_enabled:
+            from app.services.agents.events.pubsub_triggers import start_pubsub_listener
+            pubsub_task = asyncio.create_task(start_pubsub_listener())
+            logger.info("Agent Pub/Sub Listener started")
+
     stop_event = asyncio.Event()
     billing_task = asyncio.create_task(billing_scheduler_loop(stop_event))
     analytics_task = asyncio.create_task(commercial_distributed_analytics_loop(stop_event))
@@ -351,6 +417,10 @@ async def lifespan(_: FastAPI):
         agent_worker_task.cancel()
     if workflow_scheduler_task:
         workflow_scheduler_task.cancel()
+    if cron_task:
+        cron_task.cancel()
+    if pubsub_task:
+        pubsub_task.cancel()
     billing_task.cancel()
     analytics_task.cancel()
     federation_task.cancel()

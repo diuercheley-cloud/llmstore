@@ -1,9 +1,11 @@
 from typing import List, Optional
 import uuid
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class EncryptionKeyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: uuid.UUID
     key_version: str
@@ -14,8 +16,6 @@ class EncryptionKeyResponse(BaseModel):
     created_at: datetime
     rotated_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
 
 class EncryptionKeyCreate(BaseModel):
     client_id: uuid.UUID
@@ -30,6 +30,8 @@ class EncryptRequest(BaseModel):
     key_purpose: str = "general"
 
 class EncryptedArtifactResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: Optional[uuid.UUID]
     artifact_type: str
@@ -41,8 +43,6 @@ class EncryptedArtifactResponse(BaseModel):
     key_id: Optional[uuid.UUID]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class DecryptRequest(BaseModel):
     artifact_id: uuid.UUID
@@ -51,6 +51,8 @@ class DecryptResponse(BaseModel):
     payload: str
 
 class AuditEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: Optional[uuid.UUID]
     event_type: str
@@ -60,8 +62,6 @@ class AuditEventResponse(BaseModel):
     success: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class ClassificationRequest(BaseModel):
     payload: str

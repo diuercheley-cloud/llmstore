@@ -1,6 +1,14 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List
-from app.services.agents.connectors.base import ConnectorAdapter, ConnectorCapability, RiskLevel, SideEffectLevel
+from typing import Any, Dict, List, Optional
+from app.services.agents.connectors.base import (
+    ConnectorAdapter,
+    ConnectorCapability,
+    RiskLevel,
+    SideEffectLevel,
+)
+from app.services.agents.connectors.connector_runtime import ConnectorRuntime
+from app.services.agents.connectors.connector_mode import ConnectorMode
+from app.services.agents.connectors.http_client import ConnectorHTTPClient
 
 class ConfluenceConnector(ConnectorAdapter):
     @property
@@ -8,8 +16,12 @@ class ConfluenceConnector(ConnectorAdapter):
         return "confluence"
 
     @property
+    def mode(self) -> ConnectorMode:
+        return ConnectorRuntime.get_mode(self.connector_name)
+
+    @property
     def connector_version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     @property
     def provider(self) -> str:
@@ -58,7 +70,10 @@ class ConfluenceConnector(ConnectorAdapter):
         return True
 
     async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        return {"status": "dry_run_success", "connector": self.connector_name, "action": kwargs.get("action")}
+        return self._with_execution_metadata(
+            {"status": "dry_run_success", "action": kwargs.get("action")},
+            mode="dry_run",
+        )
 
     async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         action = kwargs.get("action")
@@ -76,11 +91,94 @@ class ConfluenceConnector(ConnectorAdapter):
         
         self._check_feature_flags(capability)
 
-        if action == "search_pages":
-            return {"pages": [{"id": "123", "title": "Design Doc"}]}
-        elif action == "get_page":
-            return {"page": {"id": params.get("page_id"), "title": "Mock Page", "content": "Body text"}}
+        # Agent IAM Check
+        await self.check_iam(tenant_id, credentials, action)
+
+        # Audit event
+        await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
+
+        if self.mode == ConnectorMode.REAL:
+            return self._with_execution_metadata(
+                await self._execute_real(action, params, credentials),
+                mode="real",
+            )
+        return await self._execute_mock(action, params)
+
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+        ConnectorRuntime.ensure_real_allowed(self.connector_name)
+        ConnectorRuntime.validate_credentials(self.connector_name, credentials)
+
+        base_url = credentials.get("base_url")
+        if not base_url:
+            raise ValueError("base_url is required for Confluence real mode")
+
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if credentials.get("token"):
+            headers["Authorization"] = f"Bearer {credentials['token']}"
+        elif credentials.get("username") and credentials.get("password"):
+            import base64
+            auth_str = f"{credentials['username']}:{credentials['password']}"
+            encoded_auth = base64.b64encode(auth_str.encode()).decode()
+            headers["Authorization"] = f"Basic {encoded_auth}"
+
+        client = ConnectorHTTPClient(base_url=base_url, headers=headers)
+
+        if action == "get_page":
+            page_id = params.get("page_id")
+            if not page_id:
+                raise ValueError("page_id is required for get_page")
+            return await client.request("GET", f"/wiki/rest/api/content/{page_id}")
+        elif action == "search_pages":
+            cql = params.get("cql")
+            if not cql:
+                raise ValueError("cql is required for search_pages")
+            return await client.request("GET", "/wiki/rest/api/content/search", params={"cql": cql})
         elif action == "create_page":
-            return {"status": "success", "page_id": "456"}
+            space_key = params.get("space_key")
+            title = params.get("title")
+            body = params.get("body")
+            if not space_key or not title or not body:
+                raise ValueError("space_key, title, and body are required for create_page")
+            payload = {
+                "type": "page",
+                "title": title,
+                "space": {"key": space_key},
+                "body": {
+                    "storage": {
+                        "value": body,
+                        "representation": "storage",
+                    }
+                },
+            }
+            if params.get("parent_id"):
+                payload["ancestors"] = [{"id": params["parent_id"]}]
+            return await client.request("POST", "/wiki/rest/api/content", json_data=payload)
+
+        raise self._unsupported_action(
+            action,
+            mode="real",
+            supported_actions=["create_page", "get_page", "search_pages"],
+        )
+
+    async def _execute_mock(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        if action == "search_pages":
+            return self._with_execution_metadata(
+                {"pages": [{"id": "123", "title": "Design Doc"}]},
+                mode="mock",
+            )
+        elif action == "get_page":
+            return self._with_execution_metadata(
+                {"page": {"id": params.get("page_id"), "title": "Mock Page", "content": "Body text"}},
+                mode="mock",
+            )
+        elif action == "create_page":
+            return self._with_execution_metadata(
+                {"status": "success", "page_id": "456"},
+                mode="mock",
+            )
             
-        return {"status": "error", "message": "Action not implemented"}
+        raise self._unsupported_action(
+            action,
+            mode="mock",
+            supported_actions=["create_page", "get_page", "search_pages"],
+        )

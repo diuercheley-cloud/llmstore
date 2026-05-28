@@ -43,11 +43,13 @@ async def setup_settings():
     orig_sandbox = settings.agent_tool_sandbox_enabled
     orig_exec = settings.agent_execution_enabled
     orig_tool_exec = settings.agent_tool_execution_enabled
+    orig_executor_mock = settings.agent_executor_mock_mode
     
     settings.agent_observability_enabled = True
     settings.agent_tool_sandbox_enabled = False
     settings.agent_execution_enabled = True
     settings.agent_tool_execution_enabled = True
+    settings.agent_executor_mock_mode = True
     
     yield
     
@@ -55,6 +57,7 @@ async def setup_settings():
     settings.agent_tool_sandbox_enabled = orig_sandbox
     settings.agent_execution_enabled = orig_exec
     settings.agent_tool_execution_enabled = orig_tool_exec
+    settings.agent_executor_mock_mode = orig_executor_mock
 
 pytest_mark_asyncio = pytest.mark.asyncio
 

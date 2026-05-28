@@ -23,7 +23,7 @@ Every action taken by the executor is logged in the `agent_run_steps` database t
 
 A critical requirement of the architecture is that **checkpoints are written immediately before and after tool calls**.
 1. **Before tool call**: Save snapshot of the runtime memory and context to `agent_run_checkpoints` with status `before_tool_call`.
-2. **Execute tool**: Retrieve outputs. If `AGENT_EXECUTION_ENABLED=false`, a mock result is simulated, guaranteeing side effects do not execute.
+2. **Execute tool**: Retrieve outputs. If `AGENT_TOOL_EXECUTION_ENABLED=false`, a mock or dry-run result is produced, guaranteeing side effects do not execute.
 3. **After tool call**: Save snapshot of runtime memory and output hashes with status `after_tool_call`.
 
 ## Prompt Privacy

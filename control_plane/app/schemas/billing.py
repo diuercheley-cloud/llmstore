@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BillingDisputeOpen(BaseModel):
@@ -17,6 +17,8 @@ class BillingDisputeOpen(BaseModel):
 
 
 class BillingDisputeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: uuid.UUID
     dispute_type: str
@@ -28,6 +30,3 @@ class BillingDisputeRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True

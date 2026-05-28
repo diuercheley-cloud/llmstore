@@ -38,6 +38,7 @@ def setup_approval_flags(monkeypatch):
     monkeypatch.setenv("AGENT_DESTRUCTIVE_TOOLS_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "true")
     monkeypatch.setenv("AGENT_HUMAN_APPROVAL_ENABLED", "true")
     monkeypatch.setenv("AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK", "true")
     monkeypatch.setenv("AGENT_APPROVAL_TIMEOUT_SECONDS", "86400")

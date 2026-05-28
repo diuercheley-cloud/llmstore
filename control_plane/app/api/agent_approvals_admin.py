@@ -2,7 +2,7 @@
 import uuid
 from typing import List, Optional, Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
@@ -25,6 +25,8 @@ class DecisionRequest(BaseModel):
 
 
 class ApprovalRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     agent_run_id: uuid.UUID
     task_id: Optional[str] = None
@@ -41,9 +43,6 @@ class ApprovalRequestResponse(BaseModel):
     decided_at: Optional[str] = None
     created_at: str
     updated_at: str
-
-    class Config:
-        from_attributes = True
 
 
 def to_approval_response(req) -> ApprovalRequestResponse:

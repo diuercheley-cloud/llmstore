@@ -360,6 +360,106 @@
   conflicts: []
   safe_default_reason: External connector traffic stays off until operators intentionally
     accept outbound network reachability.
+- name: AGENT_CONNECTOR_MODE
+  default: mock
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  conflicts: []
+  safe_default_reason: Connector mode remains explicitly `mock` by default so no
+    real SaaS side effect can occur accidentally.
+- name: AGENT_CONNECTOR_REAL_HTTP_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Global real HTTP is disabled by default to prevent accidental
+    outbound calls even when a connector is enabled.
+- name: AGENT_GITHUB_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: GitHub real mode remains off until the operator enables it explicitly.
+- name: AGENT_JIRA_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Jira real mode remains off until the operator enables it explicitly.
+- name: AGENT_SLACK_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Slack real mode remains off until the operator enables it explicitly.
+- name: AGENT_CONFLUENCE_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Confluence real mode remains off until the operator enables
+    it explicitly.
+- name: AGENT_SALESFORCE_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Salesforce real mode remains off until the operator enables
+    it explicitly.
+- name: AGENT_MICROSOFT365_CONNECTOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_SAAS_CONNECTORS_ENABLED
+  - AGENT_CONNECTOR_MODE
+  conflicts: []
+  safe_default_reason: Microsoft 365 real mode remains off until the operator enables
+    it explicitly.
 - name: AGENT_CONNECTOR_OAUTH_ENABLED
   default: false
   owner: agent-platform
@@ -846,6 +946,41 @@
   conflicts: []
   safe_default_reason: Dry-run task execution is disabled by default and must emit
     explicit execution_mode when used.
+- name: AGENT_EXECUTOR_MOCK_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Mock executor mode is test-only and stays disabled in release posture.
+- name: AGENT_EXECUTOR_DRY_RUN_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Dry-run executor mode stays disabled until operators intentionally
+    request an auditable simulation path.
+- name: AGENT_EXECUTOR_ALLOW_SIMULATION
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.0.3-agentic-real-execution-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_EXECUTION_ENABLED
+  conflicts: []
+  safe_default_reason: Silent simulation is blocked by default; explicit enablement
+    is limited to test and development posture.
 - name: AGENT_REPLAN_ENABLED
   default: true
   owner: agent-platform
@@ -3113,7 +3248,7 @@
   safe_default_reason: Paid provider calls remain blocked until operators explicitly
     accept provider billing risk.
 - name: AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL
-  default: 1.00
+  default: 1.0
   owner: agent-platform
   area: Agentic AI Platform
   status: active
@@ -3134,3 +3269,564 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default 60-second timeout prevents hanging validations.
+- name: AGENT_TOOL_SYNTHESIS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Tool synthesis allows executing auto-generated code, disabled
+    by default.
+- name: AGENT_CODE_INTERPRETER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Code interpreter runs arbitrary python code, disabled by default.
+- name: AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_TOOL_SYNTHESIS_ENABLED
+  conflicts: []
+  safe_default_reason: Executing dynamically generated tools is dangerous, opt-in
+    only.
+- name: AGENT_CODE_SANDBOX_NETWORK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Network access from sandbox is restricted.
+- name: AGENT_CODE_SANDBOX_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Disk write access from sandbox is restricted.
+- name: AGENT_KNOWLEDGE_GRAPH_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Knowledge graph disabled by default until explicitly enabled
+    by operator.
+- name: AGENT_GRAPH_RAG_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: Graph RAG disabled by default.
+- name: AGENT_GRAPH_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: Graph writing disabled by default to prevent uncontrolled data
+    ingestion.
+- name: AGENT_GRAPH_EXTERNAL_DB_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: External DB connection disabled by default.
+- name: AGENT_EVENT_DRIVEN_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Event-driven agents disabled by default.
+- name: AGENT_EVENT_HOOKS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_EVENT_DRIVEN_ENABLED
+  conflicts: []
+  safe_default_reason: Event hooks disabled by default.
+- name: AGENT_CRON_TRIGGERS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_EVENT_DRIVEN_ENABLED
+  conflicts: []
+  safe_default_reason: Cron triggers disabled by default.
+- name: AGENT_PUBSUB_TRIGGERS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_EVENT_DRIVEN_ENABLED
+  conflicts: []
+  safe_default_reason: PubSub triggers disabled by default.
+- name: AGENT_IAM_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Agent IAM remains disabled until operators intentionally enable governed identity flows.
+- name: AGENT_SERVICE_PRINCIPALS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_IAM_ENABLED
+  conflicts: []
+  safe_default_reason: Service principals remain disabled until connector identity governance is configured.
+- name: AGENT_DELEGATED_TOKENS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_IAM_ENABLED
+  conflicts: []
+  safe_default_reason: Delegated token exchange stays disabled until explicit operator approval and auditing are in place.
+- name: AGENT_OAUTH_ON_BEHALF_OF_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_DELEGATED_TOKENS_ENABLED
+  conflicts: []
+  safe_default_reason: OBO connector flows remain disabled until the deployment is ready for delegated identity.
+- name: AGENT_AUTO_OPTIMIZATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Optimization experiments stay disabled until operators intentionally enable autonomous tuning workflows.
+- name: AGENT_DSPY_OPTIMIZER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: medium
+  dependencies:
+  - AGENT_AUTO_OPTIMIZATION_ENABLED
+  conflicts: []
+  safe_default_reason: DSPy-like optimization remains opt-in to avoid unreviewed prompt or policy mutation.
+- name: AGENT_AUTO_PROMOTE_OPTIMIZATIONS
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_AUTO_OPTIMIZATION_ENABLED
+  conflicts: []
+  safe_default_reason: Auto-promotion remains disabled so optimization never silently changes active agent behavior.
+- name: AGENT_OPTIMIZATION_APPLY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-autonomy
+  risk_level: high
+  dependencies:
+  - AGENT_AUTO_OPTIMIZATION_ENABLED
+  conflicts: []
+  safe_default_reason: Applying optimization candidates remains disabled until an operator explicitly allows production changes.
+- name: AGENTIC_ROUTER_V2_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Agentic Router V2 is a new feature and should be opt-in.
+- name: AGENT_STEP_MODEL_ROUTING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: medium
+  dependencies:
+  - AGENTIC_ROUTER_V2_ENABLED
+  conflicts: []
+  safe_default_reason: Per-step routing should be opt-in.
+- name: AGENT_COST_OPTIMIZED_ROUTING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: low
+  dependencies:
+  - AGENTIC_ROUTER_V2_ENABLED
+  conflicts: []
+  safe_default_reason: Cost-optimized routing should be opt-in.
+- name: AGENT_SHARED_WORKSPACE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Shared workspaces are a new collaborative feature and should be opt-in.
+- name: AGENT_SHARED_ARTIFACTS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: medium
+  dependencies:
+  - AGENT_SHARED_WORKSPACE_ENABLED
+  conflicts: []
+  safe_default_reason: Shared artifacts are part of the workspace feature set.
+- name: AGENT_COLLABORATIVE_EDITING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.0.0
+  risk_level: medium
+  dependencies:
+  - AGENT_SHARED_ARTIFACTS_ENABLED
+  conflicts: []
+  safe_default_reason: Collaborative editing requires shared artifacts.
+- name: AGENT_EXTERNAL_WEBHOOK_TRIGGERS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_EVENT_DRIVEN_ENABLED
+  conflicts: []
+  safe_default_reason: External webhook triggers disabled by default due to exposure
+    risk.
+- name: AGENT_CODE_SANDBOX_DOCKER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Docker-backed code execution stays disabled until operators opt in to a real sandbox provider.
+- name: AGENT_CODE_SANDBOX_WASM_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: WASM sandbox execution remains disabled until a vetted WASI runtime is configured.
+- name: AGENT_MCP_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies: []
+  conflicts: []
+  safe_default_reason: MCP interoperability remains disabled until administrators allowlist and approve each tenant integration.
+- name: AGENT_COGNITIVE_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Advanced cognitive memory remains opt-in to avoid unexpected retention or recall.
+- name: AGENT_OTEL_TRACING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_OBSERVABILITY_ENABLED
+  conflicts: []
+  safe_default_reason: Rich GenAI tracing and exporters remain disabled until operators intentionally enable sanitized tracing.
+- name: AGENT_APPROVAL_PORTAL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_STUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: Approvals portal remains disabled until visual reviews are required by the operator.
+- name: AGENT_CROSS_TENANT_TEMPLATE_SHARING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MARKETPLACE_ENABLED
+  conflicts: []
+  safe_default_reason: Cross-tenant sharing of templates is disabled by default to maintain isolation.
+- name: AGENT_EPISODIC_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Episodic memories stay disabled until long-term session analysis is allowed.
+- name: AGENT_KG_EXTERNAL_PROVIDER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: External graph store connections remain disabled until connection configurations are supplied.
+- name: AGENT_KG_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: Ingestion writes to Knowledge Graph stay disabled by default to control database storage growth.
+- name: AGENT_LANGSMITH_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_OTEL_TRACING_ENABLED
+  conflicts: []
+  safe_default_reason: External export to LangSmith is disabled by default to avoid sharing logs externally.
+- name: AGENT_MCP_CLIENT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  conflicts: []
+  safe_default_reason: MCP Client integrations remain disabled until tools are explicitly allowlisted.
+- name: AGENT_MCP_EXTERNAL_NETWORK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_CLIENT_ENABLED
+  conflicts: []
+  safe_default_reason: External server connections remain disabled by default to prevent data leakage.
+- name: AGENT_MCP_SAMPLING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  conflicts: []
+  safe_default_reason: Prompt sampling from external servers remains blocked by default.
+- name: AGENT_MCP_SERVER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  conflicts: []
+  safe_default_reason: Internal tools exposure via MCP Server is disabled by default.
+- name: AGENT_MEMORY_SUMMARIZATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Automatic session context compression and summarization are disabled by default.
+- name: AGENT_OPTIMIZER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Prompt and selection tuning remains opt-in only.
+- name: AGENT_OTEL_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_OTEL_TRACING_ENABLED
+  conflicts: []
+  safe_default_reason: Export of OTEL spans to external endpoints stays disabled by default.
+- name: AGENT_PHOENIX_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_OTEL_TRACING_ENABLED
+  conflicts: []
+  safe_default_reason: Export of GenAI traces to Phoenix is disabled by default.
+- name: AGENT_SEMANTIC_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Long-term semantic facts memory remains disabled by default.
+- name: AGENT_TEMPLATE_INSTALL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_MARKETPLACE_ENABLED
+  conflicts: []
+  safe_default_reason: Interactive templates installation is disabled by default.
+- name: AGENT_VISUAL_DEBUGGER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_STUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: Live debugging panels stay disabled by default.
+- name: AGENT_WORKING_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Temporary session scratchpads remain opt-in.

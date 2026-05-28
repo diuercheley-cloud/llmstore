@@ -1,4 +1,5 @@
 # Owner: platform-ops
+# Classification: admin
 import json
 from typing import Any
 from uuid import UUID
@@ -12,7 +13,9 @@ from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.plugin_runtime import (
     DeterministicExtensionLoadPlan,
     PluginABIContract,
+    PluginRuntimeActivation,
     PluginCapabilityBoundary,
+    PluginRuntimeExecution,
     PluginFederationCompatibility,
     PluginIsolationPolicy,
     PluginLifecycleEvent,
@@ -27,6 +30,7 @@ from app.services.operations.plugin_runtime.audit_events import build_plugin_run
 from app.services.operations.plugin_runtime.capability_boundaries import PluginCapabilityBoundaryService
 from app.services.operations.plugin_runtime.compatibility_enforcer import PluginRuntimeCompatibilityEnforcer
 from app.services.operations.plugin_runtime.extension_loader import DeterministicExtensionLoader
+from app.services.operations.plugin_runtime.execution_runtime import GovernedPluginRuntime, PluginExecutionError
 from app.services.operations.plugin_runtime.federation_compatibility import PluginFederationCompatibilityService
 from app.services.operations.plugin_runtime.isolation_policy import PluginIsolationPolicyService
 from app.services.operations.plugin_runtime.lifecycle import PluginLifecycleService
@@ -50,6 +54,7 @@ ISOLATION_SERVICE = PluginIsolationPolicyService()
 LIFECYCLE_SERVICE = PluginLifecycleService()
 REPLAY_VERIFIER = PluginReplayVerifier()
 FEDERATION_SERVICE = PluginFederationCompatibilityService()
+EXECUTION_RUNTIME = GovernedPluginRuntime
 
 
 class ContractCreateRequest(BaseModel):
@@ -104,6 +109,18 @@ class FederationRequest(BaseModel):
 class ReceiptRequest(BaseModel):
     client_id: UUID
     receipt_type: str = "abi_contract_receipt"
+
+
+class PluginActivationRequest(BaseModel):
+    client_id: UUID
+    load_plan_id: str | None = None
+
+
+class PluginExecutionRequest(BaseModel):
+    client_id: UUID
+    payload: dict[str, Any] = Field(default_factory=dict)
+    activation_id: str | None = None
+    timeout_seconds: int = Field(default=30, ge=1, le=300)
 
 
 def _serialize_contract(item: PluginABIContract) -> dict[str, Any]:
@@ -217,6 +234,35 @@ def _serialize_receipt(item: PluginRuntimeReceipt) -> dict[str, Any]:
     }
 
 
+def _serialize_activation(item: PluginRuntimeActivation) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "client_id": str(item.client_id),
+        "abi_contract_id": item.abi_contract_id,
+        "load_plan_id": item.load_plan_id,
+        "activation_status": item.activation_status,
+        "runtime_mode": item.runtime_mode,
+        "artifact_locator": json.loads(item.artifact_locator),
+        "immutable_hash": item.immutable_hash,
+    }
+
+
+def _serialize_execution(item: PluginRuntimeExecution) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "client_id": str(item.client_id),
+        "abi_contract_id": item.abi_contract_id,
+        "activation_id": item.activation_id,
+        "execution_status": item.execution_status,
+        "runtime_mode": item.runtime_mode,
+        "input_payload": item.input_payload,
+        "output_payload": item.output_payload,
+        "output_hash": item.output_hash,
+        "error_message": item.error_message,
+        "immutable_hash": item.immutable_hash,
+    }
+
+
 async def _get_contract(db: AsyncSession, contract_id: str, client_id: UUID) -> PluginABIContract:
     item = (
         await db.execute(
@@ -242,6 +288,20 @@ async def _get_load_plan(db: AsyncSession, load_plan_id: str, client_id: UUID) -
     ).scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Load plan not found")
+    return item
+
+
+async def _get_activation(db: AsyncSession, activation_id: str, client_id: UUID) -> PluginRuntimeActivation:
+    item = (
+        await db.execute(
+            select(PluginRuntimeActivation).where(
+                PluginRuntimeActivation.id == activation_id,
+                PluginRuntimeActivation.client_id == client_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Plugin activation not found")
     return item
 
 
@@ -406,6 +466,75 @@ async def simulate_load(
             "plugin_load_simulated",
             str(request.client_id),
             {"load_plan_id": load_plan.id, "dry_run": True},
+        ),
+    }
+
+
+@router.post("/admin/operations/plugin-runtime/contracts/{contract_id}/activate")
+async def activate_plugin_runtime(
+    contract_id: str,
+    request: PluginActivationRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin: Any = Depends(get_current_admin),
+):
+    contract = await _get_contract(db, contract_id, request.client_id)
+    load_plan = None
+    if request.load_plan_id:
+        load_plan = await _get_load_plan(db, request.load_plan_id, request.client_id)
+        if load_plan.abi_contract_id != contract.id:
+            raise HTTPException(status_code=400, detail="Load plan does not belong to requested contract")
+    runtime = EXECUTION_RUNTIME(db)
+    try:
+        activation = await runtime.activate(contract, load_plan)
+    except PluginExecutionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await db.commit()
+    return {
+        "activation": _serialize_activation(activation),
+        "audit_event": build_plugin_runtime_audit_event(
+            "plugin_runtime_activated",
+            str(contract.client_id),
+            {"contract_id": contract.id, "activation_id": activation.id},
+        ),
+    }
+
+
+@router.post("/admin/operations/plugin-runtime/contracts/{contract_id}/execute")
+async def execute_plugin_runtime(
+    contract_id: str,
+    request: PluginExecutionRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin: Any = Depends(get_current_admin),
+):
+    contract = await _get_contract(db, contract_id, request.client_id)
+    runtime = EXECUTION_RUNTIME(db)
+    activation = None
+    if request.activation_id:
+        activation = await _get_activation(db, request.activation_id, request.client_id)
+        if activation.abi_contract_id != contract.id:
+            raise HTTPException(status_code=400, detail="Activation does not belong to requested contract")
+    else:
+        try:
+            activation = await runtime.activate(contract)
+        except PluginExecutionError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    try:
+        execution = await runtime.execute(
+            contract,
+            request.payload,
+            activation=activation,
+            timeout_seconds=request.timeout_seconds,
+        )
+    except PluginExecutionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await db.commit()
+    return {
+        "activation": _serialize_activation(activation),
+        "execution": _serialize_execution(execution),
+        "audit_event": build_plugin_runtime_audit_event(
+            "plugin_runtime_executed",
+            str(contract.client_id),
+            {"contract_id": contract.id, "activation_id": activation.id, "execution_id": execution.id},
         ),
     }
 
@@ -613,6 +742,8 @@ async def plugin_runtime_summary(
         return (await db.execute(select(func.count()).select_from(model).where(model.client_id == client_id))).scalar_one()
     compatibility_count = await _count(PluginRuntimeCompatibilityCheck)
     load_plan_count = await _count(DeterministicExtensionLoadPlan)
+    activation_count = await _count(PluginRuntimeActivation)
+    execution_count = await _count(PluginRuntimeExecution)
     replay_count = await _count(PluginReplayVerificationResult)
     federation_count = await _count(PluginFederationCompatibility)
     receipt_count = await _count(PluginRuntimeReceipt)
@@ -626,14 +757,17 @@ async def plugin_runtime_summary(
         "contract_statuses": {status: count for status, count in contract_counts},
         "compatibility_checks": compatibility_count,
         "load_plans": load_plan_count,
+        "activations": activation_count,
+        "executions": execution_count,
         "replay_verifications": replay_count,
         "federation_compatibility": federation_count,
         "receipts": receipt_count,
         "lifecycle_events": lifecycle_count,
         "isolation_policy_status": ISOLATION_SERVICE.validate_policy(policy) if policy else {"valid": False},
         "notice": {
-            "no_real_plugin_execution": True,
+            "no_real_plugin_execution": execution_count == 0,
+            "sandboxed_plugin_execution_available": True,
             "placeholder_certification_only": True,
-            "deterministic_load_simulation_only": True,
+            "deterministic_load_simulation_only": execution_count == 0,
         },
     }

@@ -4,6 +4,11 @@ import os
 from typing import Any, Dict, List, Optional
 from enum import Enum
 
+
+class UnsupportedConnectorActionError(ValueError):
+    """Raised when a connector action is unavailable in the requested mode."""
+
+
 class ConnectorCapability(str, Enum):
     READ = "read"
     WRITE = "write"
@@ -105,6 +110,56 @@ class ConnectorAdapter(abc.ABC):
             return {"status": "error", "message": "Rollback not supported for this connector"}
         raise NotImplementedError("Rollback must be implemented if rollback_supported is True")
 
+    def _with_execution_metadata(self, result: Dict[str, Any], *, mode: str) -> Dict[str, Any]:
+        payload = dict(result)
+        payload["connector"] = self.connector_name
+        payload["mode"] = mode
+        if mode == "mock":
+            payload["mock"] = True
+        return payload
+
+    def _unsupported_action(self, action: str, *, mode: str, supported_actions: List[str]) -> UnsupportedConnectorActionError:
+        return UnsupportedConnectorActionError(
+            f"Action '{action}' is not supported by connector '{self.connector_name}' in {mode} mode. "
+            f"Supported actions: {sorted(supported_actions)}"
+        )
+
+    async def audit_connector_call(
+        self,
+        tenant_id: str,
+        credentials: Dict[str, Any],
+        action: str,
+        details: Dict[str, Any]
+    ):
+        """
+        Logs a connector execution event to the IAM audit trail.
+        """
+        from app.db.session import SessionLocal
+        from app.services.agents.iam.iam_audit import IAMAuditService
+        import uuid
+
+        agent_id_str = credentials.get("agent_id")
+        agent_id = None
+        if agent_id_str:
+            try:
+                agent_id = uuid.UUID(str(agent_id_str))
+            except ValueError:
+                pass
+
+        async with SessionLocal() as db:
+            audit = IAMAuditService(db)
+            await audit.log_event(
+                tenant_id=tenant_id,
+                event_type=f"connector_{self.connector_name}_{action}",
+                agent_id=agent_id,
+                details={
+                    "connector": self.connector_name,
+                    "action": action,
+                    **details
+                }
+            )
+            await db.commit()
+
     def _check_feature_flags(self, capability: ConnectorCapability):
         """
         Enforces governance via feature flags.
@@ -125,3 +180,49 @@ class ConnectorAdapter(abc.ABC):
         if capability in write_capabilities:
             if not settings.agent_connector_write_enabled:
                 raise PermissionError(f"Write capability '{capability.value}' is disabled (AGENT_CONNECTOR_WRITE_ENABLED=false)")
+
+    async def check_iam(self, tenant_id: str, credentials: Dict[str, Any], action: str):
+        """
+        Enforces Agent IAM logic using CredentialBroker.
+        """
+        from app.core.config import get_settings
+        settings = get_settings()
+        if not settings.agent_iam_enabled:
+            return
+
+        import uuid
+        from app.services.agents.iam.credential_broker import CredentialBroker
+        from app.db.session import SessionLocal
+
+        token_string = credentials.get("token") or credentials.get("agent_token")
+        agent_id_str = credentials.get("agent_id")
+        agent_id = None
+        if agent_id_str:
+            try:
+                agent_id = uuid.UUID(str(agent_id_str))
+            except ValueError:
+                pass
+
+        async with SessionLocal() as db:
+            broker = CredentialBroker(db)
+            if not agent_id and token_string:
+                token = await broker.token_service.verify_token(token_string)
+                if token:
+                    agent_id = token.agent_id
+
+            if not agent_id and not token_string:
+                if os.getenv("ENV") != "production":
+                    return
+                else:
+                    raise PermissionError("Access denied: No agent identity specified in context.")
+
+            if not agent_id:
+                raise PermissionError("Access denied: No agent identity specified in context.")
+
+            await broker.validate_access(
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                connector_name=self.connector_name,
+                action=action,
+                token_string=token_string
+            )

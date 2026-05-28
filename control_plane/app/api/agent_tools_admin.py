@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -61,6 +61,8 @@ class AgentToolUpdate(BaseModel):
     data_boundary: Optional[str] = Field(None, max_length=64)
 
 class AgentToolResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     name: str
     version: str
@@ -82,10 +84,9 @@ class AgentToolResponse(BaseModel):
     created_at: str
     updated_at: str
 
-    class Config:
-        from_attributes = True
-
 class AgentToolInvocationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     agent_tool_id: uuid.UUID
     run_id: Optional[uuid.UUID] = None
@@ -99,9 +100,6 @@ class AgentToolInvocationResponse(BaseModel):
     is_dry_run: bool
     is_rollback: bool
     created_at: str
-
-    class Config:
-        from_attributes = True
 
 
 class ToolExecuteRequest(BaseModel):
@@ -119,6 +117,8 @@ class CredentialCreate(BaseModel):
 
 
 class CredentialResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     tenant_id: str
     name: str
@@ -129,11 +129,10 @@ class CredentialResponse(BaseModel):
     expires_at: Optional[str] = None
     revoked: bool
 
-    class Config:
-        from_attributes = True
-
 
 class SideEffectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     invocation_id: uuid.UUID
     tenant_id: str
@@ -143,11 +142,10 @@ class SideEffectResponse(BaseModel):
     change_payload: Optional[Dict[str, Any]] = None
     created_at: str
 
-    class Config:
-        from_attributes = True
-
 
 class QuotaCounterResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     tenant_id: str
     agent_id: Optional[uuid.UUID] = None
@@ -157,9 +155,6 @@ class QuotaCounterResponse(BaseModel):
     window_end: str
     invocation_count: int
     max_limit: int
-
-    class Config:
-        from_attributes = True
 
 
 # Helpers

@@ -2,7 +2,7 @@
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.db.session import get_db_session
@@ -58,6 +58,8 @@ class AgentDefinitionUpdate(BaseModel):
     agent_class: Optional[str] = None
 
 class AgentDefinitionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     name: str
     version: str
@@ -78,9 +80,6 @@ class AgentDefinitionResponse(BaseModel):
     agent_class: Optional[str] = None
     created_at: str
     updated_at: str
-
-    class Config:
-        from_attributes = True
 
 def format_datetime(dt) -> str:
     return dt.isoformat() if dt else ""

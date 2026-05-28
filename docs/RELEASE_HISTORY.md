@@ -2,7 +2,7 @@
 
 Historico consolidado das versoes estaveis do LLM Inference Stack.
 
-**Gerado em:** 2026-05-19 16:27:18
+**Gerado em:** 2026-05-24 06:03:46
 
 ## Visao Geral
 
@@ -70,8 +70,18 @@ timeline
     2026-05-18 : 1.9.2-platform-hardening : Legacy
     2026-05-18 : 1.9.3-platform-hardening : Legacy
     2026-05-19 : 1.9.3-stabilization-hardening : Legacy
+    2026-05-19 : 1.9.4-enterprise-runtime : Legacy
     2026-05-19 : 1.9.4-platform-hardening : Legacy
+    2026-05-19 : 1.9.5-operational-experience : Legacy
+    2026-05-19 : 1.9.6-ci-chaos : Legacy
+    2026-05-19 : 1.9.7-compliance-readiness : Legacy
+    2026-05-20 : 1.9.8-platform-consolidation : Legacy
+    2026-05-21 : 1.9.8-platform-consolidation-final : Legacy
+    2026-05-20 : 1.9.9-admin-tests-hardening : Legacy
+    2026-05-20 : 1.9.10-free-model-runner : Legacy
     2026-05-16 : 1.10.0-v1-rc1 : Legacy
+    2026-05-22 : 2.0.0-agentic-ai-platform : Legacy
+    2026-05-23 : 2.0.1-api-key-management : Legacy
 ```
 
 ## Releases
@@ -131,9 +141,19 @@ timeline
 | 1.9.2-admin-v2-modular-ui | `v1.9.2-admin-v2-modular-ui` | — | `6a024f2` | 2026-05-18 | Legacy | archived | — |
 | 1.9.2-platform-hardening | `v1.9.2-platform-hardening` | — | `4b53b5d` | 2026-05-18 | Legacy | archived | — |
 | 1.9.3-platform-hardening | `v1.9.3-platform-hardening` | — | `51d6f3b` | 2026-05-18 | Legacy | archived | — |
-| 1.9.3-stabilization-hardening | `v1.9.3-stabilization-hardening` | — | `259ba7a` | 2026-05-19 | Legacy | current | — |
+| 1.9.3-stabilization-hardening | `v1.9.3-stabilization-hardening` | — | `259ba7a` | 2026-05-19 | Legacy | archived | — |
+| 1.9.4-enterprise-runtime | `v1.9.4-enterprise-runtime` | — | `2a15463` | 2026-05-19 | Legacy | archived | — |
 | 1.9.4-platform-hardening | `v1.9.4-platform-hardening` | — | `acb4f86` | 2026-05-19 | Legacy | archived | — |
+| 1.9.5-operational-experience | `v1.9.5-operational-experience` | — | `c51b6dc` | 2026-05-19 | Legacy | archived | — |
+| 1.9.6-ci-chaos | `v1.9.6-ci-chaos` | — | `dc86324` | 2026-05-19 | Legacy | archived | 2026-05-20; **GitHub Actions & GitLab CI**: Pipelines modula |
+| 1.9.7-compliance-readiness | `v1.9.7-compliance-readiness` | — | `0c25240` | 2026-05-19 | Legacy | archived | 2026-05-20; **Compliance Readiness Framework**: Estrutura pa |
+| 1.9.8-platform-consolidation | `v1.9.8-platform-consolidation` | — | `cf361de` | 2026-05-20 | Legacy | archived | 2026-05-20; **Supportability Pack**: Sanitized diagnostic bu |
+| 1.9.8-platform-consolidation-final | `v1.9.8-platform-consolidation-final` | — | `83b0a2e` | 2026-05-21 | Legacy | archived | — |
+| 1.9.9-admin-tests-hardening | `v1.9.9-admin-tests-hardening` | — | `18c1906` | 2026-05-20 | Legacy | archived | — |
+| 1.9.10-free-model-runner | `v1.9.10-free-model-runner` | — | `e8a32eb` | 2026-05-20 | Legacy | archived | — |
 | 1.10.0-v1-rc1 | `v1.10.0-v1-rc1` | — | `4fe31f7` | 2026-05-16 | Legacy | archived | — |
+| 2.0.0-agentic-ai-platform | `v2.0.0-agentic-ai-platform` | — | `1460aca` | 2026-05-22 | Legacy | archived | 2026-05-22; **Gateway LLM Provider**: `AgentExecutor` can us |
+| 2.0.1-api-key-management | `v2.0.1-api-key-management` | — | `19c8eeb` | 2026-05-23 | Legacy | archived | — |
 
 ## Releases Recomendadas
 

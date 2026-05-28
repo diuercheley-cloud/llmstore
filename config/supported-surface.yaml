@@ -11,6 +11,7 @@ capabilities:
   limitations: Supports chat completions and models list; no fine-tuning or assistants
     endpoint yet.
   test_coverage: 92%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: admin-rbac
   name: Admin RBAC
   area: internal APIs
@@ -22,6 +23,7 @@ capabilities:
   since_version: v1.2.0
   limitations: Role assignments are static and config-defined.
   test_coverage: 85%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: billing
   name: Billing
   area: admin legacy
@@ -33,6 +35,7 @@ capabilities:
   limitations: Manual billing and cycle enforcement only; webhook auto-chargeback
     is advisory.
   test_coverage: 88%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: rag
   name: RAG
   area: connectors
@@ -44,6 +47,7 @@ capabilities:
   limitations: Supports standard pdf, txt, md processing. Large context routing is
     experimental.
   test_coverage: 90%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: tts
   name: TTS
   area: connectors
@@ -54,6 +58,7 @@ capabilities:
   since_version: v1.3.0
   limitations: Single-speaker offline synthesis.
   test_coverage: 80%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: multi-provider-routing
   name: Multi-provider routing
   area: operations
@@ -64,6 +69,7 @@ capabilities:
   since_version: v1.4.0
   limitations: Supports local, LMStudio, OpenAI, Anthropic, DeepSeek, OpenRouter.
   test_coverage: 91%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: hot-swap-gguf
   name: Hot swap GGUF
   area: operations
@@ -74,17 +80,21 @@ capabilities:
   since_version: v1.5.0
   limitations: Requires local disk path and llama.cpp restart.
   test_coverage: 84%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: kubernetes
   name: Kubernetes
   area: operations
-  status: deprecated
+  status: beta
   owner: cloud-team
-  support_level: none
+  support_level: pilot
   docs_url: docs/kubernetes
   feature_flag: KUBERNETES_MODE
   since_version: v1.6.0
-  limitations: Mock validation-only; no actual orchestration occurs.
-  test_coverage: 0%
+  limitations: Minimal operator reconciliation is supported for Deployments, Services,
+    provider secret references, and status conditions. Advanced fleet orchestration
+    remains out of scope.
+  test_coverage: 62%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: distributed-runtime
   name: Distributed runtime
   area: operations
@@ -96,6 +106,7 @@ capabilities:
   since_version: v1.6.0
   limitations: Mock validation-only; no actual mesh routing occurs.
   test_coverage: 0%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: gpu-orchestration
   name: GPU orchestration
   area: operations
@@ -107,6 +118,7 @@ capabilities:
   since_version: v1.6.0
   limitations: Advisory-first recommendation only.
   test_coverage: 0%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: marketplace
   name: Marketplace
   area: agent tools
@@ -118,6 +130,7 @@ capabilities:
   since_version: v1.7.0
   limitations: No real plugins marketplace is active.
   test_coverage: 0%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: managed-control-plane
   name: Managed control-plane
   area: operations
@@ -129,6 +142,51 @@ capabilities:
   since_version: v1.7.0
   limitations: Metadata exchange is strictly validation-only.
   test_coverage: 0%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-real-connectors
+  name: Agent real connectors
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/connectors-real-mode.md
+  feature_flag: AGENT_CONNECTOR_MODE
+  additional_flags:
+  - AGENT_CONNECTOR_REAL_HTTP_ENABLED
+  - AGENT_GITHUB_CONNECTOR_ENABLED
+  - AGENT_JIRA_CONNECTOR_ENABLED
+  - AGENT_SLACK_CONNECTOR_ENABLED
+  - AGENT_CONFLUENCE_CONNECTOR_ENABLED
+  - AGENT_SALESFORCE_CONNECTOR_ENABLED
+  - AGENT_MICROSOFT365_CONNECTOR_ENABLED
+  since_version: v2.0.3-agentic-real-execution-hardening
+  limitations: Real SaaS side effects require explicit per-connector enablement and
+    do not fall back into mock payloads on failure.
+  test_coverage: 78%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+  associated_services:
+  - connector_mode
+  - connector_runtime
+  - http_client
+- id: agent-execution-plane
+  name: Agent execution plane
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/runtime/agentic-durable-queue.md
+  feature_flag: AGENT_EXECUTION_PLANE_ENABLED
+  additional_flags:
+  - AGENT_WORKER_ENABLED
+  - AGENT_CRON_TRIGGERS_ENABLED
+  - AGENT_TOOL_SANDBOX_ENABLED
+  since_version: v2.0.3-agentic-real-execution-hardening
+  limitations: Durable queue, lease recovery, and scheduler safety are supported;
+    production-like posture still requires readiness gate approval.
+  test_coverage: 80%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+  associated_services:
+  - agent_scheduler
 - id: multi-cluster
   name: Multi-cluster
   area: operations
@@ -139,6 +197,7 @@ capabilities:
   since_version: v1.8.0
   limitations: Mock/placeholder validation only.
   test_coverage: 0%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: ci-cd
   name: CI/CD
   area: internal APIs
@@ -149,6 +208,7 @@ capabilities:
   since_version: v1.0.0
   limitations: Internal pipeline orchestrations.
   test_coverage: 100%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: chaos-engineering
   name: Chaos engineering
   area: operations
@@ -159,6 +219,7 @@ capabilities:
   since_version: v1.8.0
   limitations: Runs synthetic load drops and provider delays for testing.
   test_coverage: 75%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: compliance-readiness
   name: Compliance readiness
   area: compliance
@@ -169,6 +230,7 @@ capabilities:
   since_version: v1.9.0
   limitations: Self-attested advisory frameworks.
   test_coverage: 82%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agentic-runtime
   name: Agentic runtime
   area: agent runtime
@@ -193,11 +255,15 @@ capabilities:
   - agent_queue
   - agent_execution_plane
   - agent_cancellation
+  - replay_runner
+  - deterministic_state_graph
+  - runtime_reconstruction
   since_version: v2.0.0-agentic-ai-platform
   limitations: Operational runtime is available behind opt-in flags. `/agents` remains
     as a deprecated admin legacy surface; `/v1/agents` is the canonical tenant API,
     and background execution still requires explicit worker enablement.
   test_coverage: 72%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-registry
   name: Agent registry
   area: agent runtime
@@ -219,6 +285,7 @@ capabilities:
   limitations: Administrative registry and lifecycle workflows are beta and do not
     imply autonomous production activation.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-tool-governance
   name: Agent tool governance
   area: agent tools
@@ -243,11 +310,13 @@ capabilities:
   - tool_rollback
   - tool_audit
   - tool_quota
+  - sandbox_escape_analysis
   since_version: v1.10.0-agentic-runtime
   limitations: Tool registration is gated off by default, real execution is separately
     disabled, destructive tools remain blocked without approval, and adapter I/O is
     governed by versioned tool contracts.
   test_coverage: 74%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-memory
   name: Agent memory
   area: agent memory
@@ -275,6 +344,7 @@ capabilities:
     semantic reinjection stays off until explicitly enabled, and memory payloads remain
     bound to versioned contracts.
   test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-planning
   name: Agent planning
   area: agent workflows
@@ -291,6 +361,7 @@ capabilities:
   limitations: Plans can execute real tasks through the governed task engine only
     when plan execution and planner real execution are both explicitly enabled.
   test_coverage: 61%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-hitl
   name: Agent human approval
   area: agent workflows
@@ -307,6 +378,7 @@ capabilities:
   limitations: Approval remains the default posture for high-risk operations; raw
     prompts are not shown to reviewers.
   test_coverage: 78%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-observability
   name: Agent observability
   area: operations
@@ -334,6 +406,7 @@ capabilities:
     disabled unless explicitly enabled, and end-to-end run auditability is mandatory
     for the supported surface.
   test_coverage: 76%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-evals
   name: Agent evals
   area: agent evals
@@ -359,6 +432,7 @@ capabilities:
   limitations: Evals are opt-in, real provider evals are separately gated, and promotion
     remains blocked when required eval evidence fails or baselines are missing.
   test_coverage: 66%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-worker-operations
   name: Agent worker operations
   area: agent runtime
@@ -375,6 +449,7 @@ capabilities:
   limitations: Worker control, DLQ inspection, and retry tooling are official operator
     surfaces, but background execution remains opt-in.
   test_coverage: 69%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-worker-autoscaling
   name: Agent worker autoscaling
   area: operations
@@ -389,6 +464,7 @@ capabilities:
   limitations: Autoscaling is only part of the supported posture in production and
     enterprise managed modes.
   test_coverage: 64%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-slo-enforcement
   name: Agent SLO enforcement
   area: operations
@@ -403,6 +479,7 @@ capabilities:
   limitations: SLO enforcement is an operator control and only becomes meaningful
     after runtime activation.
   test_coverage: 64%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-enterprise-observability
   name: Agent enterprise observability
   area: operations
@@ -417,6 +494,7 @@ capabilities:
   limitations: Enhanced enterprise observability is only part of the enterprise managed
     posture.
   test_coverage: 63%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-readiness
   name: Agent readiness
   area: operations
@@ -431,10 +509,223 @@ capabilities:
   - tenant_agentic_readiness
   - agent_budget
   - agent_incident_playbooks
+  - real_execution_readiness
   since_version: v2.0.0-agentic-ai-platform
   limitations: Readiness is advisory while the runtime is disabled, and becomes a
     blocking operational control once agent execution is enabled.
   test_coverage: 71%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+  additional_flags: []
+- id: agent-tool-synthesis
+  name: Agent tool synthesis
+  area: agent tools
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/tool-synthesis.md
+  api_prefix: /admin/agents/tool-synthesis
+  feature_flag: agent_tool_synthesis_enabled
+  additional_flags:
+  - agent_dynamic_tool_execution_enabled
+  - agent_code_sandbox_network_enabled
+  - agent_code_sandbox_write_enabled
+  associated_services:
+  - tool_synthesizer
+  - generated_tool_registry
+  - generated_tool_validator
+  - sandbox_policy
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Generated tools remain disabled by default, approval is required before
+    public execution, and dynamic execution stays blocked unless explicitly enabled.
+  test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-code-interpreter
+  name: Agent code interpreter
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/code-interpreter.md
+  api_prefix: /admin/agents/sandbox
+  feature_flag: agent_code_interpreter_enabled
+  additional_flags:
+  - agent_code_sandbox_network_enabled
+  - agent_code_sandbox_write_enabled
+  associated_services:
+  - sandbox_runtime
+  - code_interpreter
+  - sandbox_artifacts
+  since_version: v2.1.0-agentic-autonomy
+  limitations: The interpreter is sandboxed; network and filesystem writes are disabled
+    by default and must remain explicitly opt-in.
+  test_coverage: 66%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-knowledge-graph
+  name: Agent knowledge graph
+  area: agent memory
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/knowledge-graph.md
+  api_prefix: /admin/agents/knowledge-graph
+  feature_flag: agent_knowledge_graph_enabled
+  additional_flags:
+  - agent_graph_rag_enabled
+  - agent_graph_write_enabled
+  - agent_graph_external_db_enabled
+  associated_services:
+  - knowledge_graph
+  - graph_store
+  - graph_retriever
+  - graph_policy
+  - graph_reasoner
+  - graph_extractor
+  - graph_models
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Graph ingestion and query remain tenant-isolated, graph writes stay
+    disabled by default, and external graph databases are opt-in only.
+  test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-event-driven
+  name: Agent event-driven runtime
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/event-driven-agents.md
+  api_prefix: /admin/agents/event-triggers
+  feature_flag: agent_event_driven_enabled
+  additional_flags:
+  - agent_event_hooks_enabled
+  - agent_cron_triggers_enabled
+  - agent_pubsub_triggers_enabled
+  - agent_external_webhook_triggers_enabled
+  associated_services:
+  - event_bus
+  - event_triggers
+  - event_deliveries
+  - event_subscriptions
+  - cron_triggers
+  - webhook_triggers
+  - pubsub_triggers
+  - event_policy
+  - event_hooks
+  - event_deduplication
+  - agent_events_admin
+  - agent_events
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Triggered execution is opt-in, webhook exposure is separately gated,
+    and supported operation assumes rate limit, budget, and dedup controls remain
+    active.
+  test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-iam
+  name: Agent IAM
+  area: security
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/service-principals.md
+  api_prefix: /admin/agents/iam
+  feature_flag: agent_iam_enabled
+  additional_flags:
+  - agent_service_principals_enabled
+  - agent_delegated_tokens_enabled
+  - agent_oauth_on_behalf_of_enabled
+  associated_services:
+  - service_principal_service
+  - token_exchange
+  - iam_audit
+  - delegated_tokens
+  - service_principal
+  - agent_identity
+  - agent_scopes
+  - credential_broker
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Identity delegation remains opt-in, service principals are governed
+    operator credentials, and raw secrets are never re-emitted after creation.
+  test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-auto-optimization
+  name: Agent auto-optimization
+  area: agent evals
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/auto-optimization.md
+  api_prefix: /admin/agents/optimization
+  feature_flag: agent_auto_optimization_enabled
+  additional_flags:
+  - agent_dspy_optimizer_enabled
+  - agent_auto_promote_optimizations
+  - agent_optimization_apply_enabled
+  associated_services:
+  - optimization_coordinator
+  - optimization_experiments
+  - optimization_candidates
+  - tool_selection_optimizer
+  - optimizer
+  - optimization_gate
+  - policy_optimizer
+  - prompt_optimizer
+  - agent_optimization_admin
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Candidate generation and evaluation are supported under governance,
+    but automatic apply remains disabled by default and must not bypass approval controls.
+  test_coverage: 65%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-router-v2
+  name: Agent Router V2
+  area: operations
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/agentic-router-v2.md
+  api_prefix: /admin/agents/routing
+  feature_flag: agentic_router_v2_enabled
+  additional_flags:
+  - agent_step_model_routing_enabled
+  - agent_cost_optimized_routing_enabled
+  associated_services:
+  - agentic_router_v2
+  - step_classifier
+  - routing_policy
+  - routing_decision_log
+  - agentic_router
+  - cost_quality_policy
+  - routing_explainer
+  - model_capability_registry
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Per-step routing is opt-in, cost optimization remains optional, and
+    supported posture requires explanations for routing decisions.
+  test_coverage: 66%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: agent-shared-artifacts
+  name: Agent shared artifacts
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/shared-artifacts.md
+  api_prefix: /admin/agents/workspaces
+  feature_flag: agent_shared_workspace_enabled
+  additional_flags:
+  - agent_shared_artifacts_enabled
+  - agent_collaborative_editing_enabled
+  associated_services:
+  - shared_artifact_registry
+  - artifact_versioning
+  - artifact_locks
+  - artifact_reviews
+  - artifact_diff
+  - artifact_permissions
+  - agent_workspace_admin
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Shared collaboration is disabled by default, artifacts are tenant-scoped,
+    and concurrency depends on version checks plus explicit locks instead of implicit
+    last-write-wins behavior.
+  test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: ga-readiness
   name: Platform GA readiness
   area: operations
@@ -449,6 +740,7 @@ capabilities:
   limitations: GA readiness is evidence-driven and only as current as the latest generated
     artifacts.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: deployment-modes
   name: Deployment modes
   area: operations
@@ -462,6 +754,7 @@ capabilities:
   limitations: Deployment modes govern posture defaults but can still be overridden;
     readiness catches incoherent overrides.
   test_coverage: 72%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: surface-audit
   name: Surface audit
   area: operations
@@ -475,6 +768,7 @@ capabilities:
   limitations: Surface audit is a governance report, not a runtime enforcement plane
     by itself.
   test_coverage: 69%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: feature-flag-audit
   name: Feature flag audit
   area: operations
@@ -488,6 +782,7 @@ capabilities:
   limitations: The audit validates registry hygiene but does not remove flags automatically
     unless invoked with cleanup mode.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: provider-validation
   name: Provider validation
   area: agent evals
@@ -502,6 +797,7 @@ capabilities:
   limitations: Provider validation is opt-in and designed to run with synthetic data
     and constrained budgets.
   test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: tenant-agentic-readiness
   name: Tenant agentic readiness
   area: operations
@@ -518,6 +814,7 @@ capabilities:
   limitations: Tenant readiness reports are operator-facing and do not override global
     safe defaults or tenant isolation policy.
   test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-multi-agent-governance
   name: Agent multi-agent governance
   area: multi-agent
@@ -532,6 +829,7 @@ capabilities:
   limitations: Delegation and shared-memory governance are defined, but multi-agent
     execution remains disabled by default.
   test_coverage: 60%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-saas-connectors
   name: Agent SaaS connectors
   area: connectors
@@ -555,6 +853,7 @@ capabilities:
   limitations: Connectors are governed and mock-friendly by default; external network
     access and writes remain disabled until explicitly enabled.
   test_coverage: 73%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-connector-oauth
   name: Agent connector OAuth
   area: connectors
@@ -575,6 +874,7 @@ capabilities:
   limitations: OAuth bootstrap and token persistence remain disabled until explicitly
     enabled and governed.
   test_coverage: 69%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-stateful-workflows
   name: Agent stateful workflows
   area: agent workflows
@@ -600,6 +900,7 @@ capabilities:
   limitations: Workflows persist state and support wake-up via timers, webhooks, and
     polling, but the entire execution plane remains opt-in by default.
   test_coverage: 71%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-workflow-webhooks
   name: Agent workflow webhooks
   area: agent workflows
@@ -616,6 +917,7 @@ capabilities:
   limitations: Webhook wake-up remains disabled until operators explicitly enable
     inbound workflow callbacks.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-workflow-polling
   name: Agent workflow polling
   area: agent workflows
@@ -636,6 +938,7 @@ capabilities:
   limitations: Polling wake-up remains disabled until operators explicitly allow external
     check loops.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-reasoning-loop
   name: Agent reasoning loop
   area: agent runtime
@@ -658,6 +961,7 @@ capabilities:
   limitations: Loop repair, context compression, and fallback logic are available
     when enabled, but iterative reasoning remains disabled by default.
   test_coverage: 70%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-context-compression
   name: Agent context compression
   area: agent memory
@@ -673,6 +977,7 @@ capabilities:
   limitations: Compression remains disabled until operators explicitly enable context
     budget shaping.
   test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-structured-output-repair
   name: Agent structured output repair
   area: agent runtime
@@ -688,6 +993,7 @@ capabilities:
   limitations: Repair and retry are bounded by policy and remain part of the disabled-by-default
     reasoning surface.
   test_coverage: 69%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-semantic-fallback
   name: Agent semantic fallback
   area: agent runtime
@@ -702,6 +1008,7 @@ capabilities:
   limitations: Fallback remains disabled until operators explicitly allow semantic
     recovery across models.
   test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-react-loop
   name: Agent ReAct loop
   area: agent runtime
@@ -718,6 +1025,7 @@ capabilities:
   limitations: Iterative reasoning/acting remains disabled until operators explicitly
     enable loop execution.
   test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-studio
   name: Agent Studio
   area: agent studio
@@ -737,6 +1045,7 @@ capabilities:
   limitations: Visual builder and debugger are operator-facing and remain disabled
     until Studio is explicitly enabled.
   test_coverage: 68%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-visual-builder
   name: Agent visual builder
   area: agent studio
@@ -753,6 +1062,7 @@ capabilities:
   limitations: Graph authoring remains disabled until operators explicitly enable
     the Studio builder.
   test_coverage: 67%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-debugger
   name: Agent debugger
   area: agent studio
@@ -767,6 +1077,7 @@ capabilities:
   limitations: Interactive debugging remains disabled until operators explicitly enable
     debugger access.
   test_coverage: 66%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-marketplace
   name: Agent marketplace
   area: agent tools
@@ -789,6 +1100,7 @@ capabilities:
   limitations: Marketplace workflows are offline-first; remote fetching is disabled
     by default.
   test_coverage: 65%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-rbac
   name: Agentic RBAC
   area: internal APIs
@@ -803,6 +1115,7 @@ capabilities:
   since_version: v2.0.0
   limitations: Granular roles enforced at service level.
   test_coverage: 80%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-admin-ui
   name: Agent admin UI
   area: admin legacy
@@ -814,6 +1127,7 @@ capabilities:
   limitations: The administrative UI is operator-facing and must not be used to imply
     unrestricted agent autonomy.
   test_coverage: 63%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-multi-agent-topologies
   name: Agent multi-agent topologies
   area: multi-agent
@@ -831,11 +1145,13 @@ capabilities:
   - team_registry
   - hierarchical_runtime
   - debate_runtime
+  - dynamic_runtime
   - team_observability
   since_version: v2.0.0-agentic-ai-platform
   limitations: Hierarchical and debate topologies are available behind explicit flags
     and remain disabled by default.
   test_coverage: 64%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-hierarchical-teams
   name: Agent hierarchical teams
   area: multi-agent
@@ -855,6 +1171,7 @@ capabilities:
   limitations: Hierarchical delegation remains disabled until operators explicitly
     enable the topology.
   test_coverage: 63%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-debate-teams
   name: Agent debate teams
   area: multi-agent
@@ -870,6 +1187,7 @@ capabilities:
   limitations: Debate topology remains disabled until operators explicitly enable
     adjudicated multi-agent collaboration.
   test_coverage: 63%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: support-bundle
   name: Support bundle
   area: internal APIs
@@ -882,6 +1200,7 @@ capabilities:
   limitations: Operator-only diagnostic surface; bundles must stay sanitized and exclude
     prompts, documents, .env files, and real secrets.
   test_coverage: 78%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: pki
   name: PKI
   area: compliance
@@ -893,6 +1212,7 @@ capabilities:
   since_version: v1.9.5
   limitations: Local self-signed keys and verification only.
   test_coverage: 60%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: attestation
   name: Attestation
   area: compliance
@@ -904,6 +1224,7 @@ capabilities:
   since_version: v1.9.5
   limitations: Advisory-first signature validation only.
   test_coverage: 55%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: hardware-trust
   name: Hardware trust
   area: compliance
@@ -915,3 +1236,190 @@ capabilities:
   since_version: v1.9.6
   limitations: Advisory local validation only.
   test_coverage: 40%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+- id: plugin-runtime
+  name: Plugin Runtime
+  area: operations
+  status: supported
+  owner: platform-ops
+  support_level: production
+  docs_url: docs/plugins
+  feature_flag: PLUGIN_MARKETPLACE_ENABLED
+  since_version: v2.1.0-agentic-autonomy
+  limitations: Standard plugin runtime controls.
+  test_coverage: 80%
+  rollback_story: Standard feature flag deactivation or deployment rollback.
+  associated_services:
+  - execution_runtime
+- id: agent-code-sandbox
+  name: Agent code sandbox
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/code-interpreter.md
+  feature_flag: AGENT_CODE_INTERPRETER_ENABLED
+  additional_flags:
+  - AGENT_CODE_SANDBOX_DOCKER_ENABLED
+  - AGENT_CODE_SANDBOX_WASM_ENABLED
+  - AGENT_CODE_SANDBOX_NETWORK_ENABLED
+  - AGENT_CODE_SANDBOX_WRITE_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Mock sandbox is the default; real Docker and WASM providers remain opt-in.
+  test_coverage: 75%
+  rollback_story: Disable the interpreter or force the provider back to mock mode.
+  associated_services:
+  - agents/code_interpreter/sandbox_audit.py
+  - agents/code_interpreter/sandbox_limits.py
+  - agents/code_interpreter/providers/docker_sandbox.py
+  - agents/code_interpreter/providers/mock_sandbox.py
+  - agents/code_interpreter/providers/wasm_sandbox.py
+- id: knowledge-graph
+  name: Knowledge Graph and GraphRAG
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/knowledge-graph.md
+  feature_flag: AGENT_KNOWLEDGE_GRAPH_ENABLED
+  additional_flags:
+  - AGENT_GRAPH_RAG_ENABLED
+  - AGENT_GRAPH_WRITE_ENABLED
+  - AGENT_GRAPH_EXTERNAL_DB_ENABLED
+  - AGENT_KG_EXTERNAL_PROVIDER_ENABLED
+  - AGENT_KG_WRITE_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Internal SQL provider is the supported default; external graph providers are opt-in only.
+  test_coverage: 72%
+  rollback_story: Disable graph writes and revert to vector-only retrieval.
+  associated_services:
+  - agents/knowledge_graph/providers/neo4j_graph.py
+  - agents/knowledge_graph/providers/internal_sql_graph.py
+  - agents/knowledge_graph/providers/falkordb_graph.py
+- id: mcp-interoperability
+  name: MCP client/server
+  area: agent runtime
+  status: experimental
+  owner: agent-platform
+  support_level: development
+  docs_url: docs/agents/mcp.md
+  feature_flag: AGENT_MCP_ENABLED
+  additional_flags:
+  - AGENT_MCP_CLIENT_ENABLED
+  - AGENT_MCP_SERVER_ENABLED
+  - AGENT_MCP_EXTERNAL_NETWORK_ENABLED
+  - AGENT_MCP_SAMPLING_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: External network and sampling remain disabled until explicitly allowed.
+  test_coverage: 55%
+  rollback_story: Disable MCP flags and continue using internal tool adapters only.
+  api_prefix: /admin/agents/mcp
+  associated_services:
+  - agents/mcp/mcp_audit.py
+  - agents/mcp/mcp_server.py
+  - agents/mcp/mcp_registry.py
+  - agents/mcp/mcp_tool_adapter.py
+  - agents/mcp/mcp_resource_adapter.py
+  - agents/mcp/mcp_security.py
+  - agents/mcp/mcp_prompt_adapter.py
+  - agents/mcp/mcp_client.py
+  - agent_mcp_admin.py
+- id: cognitive-memory
+  name: Advanced Cognitive Memory
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/cognitive-memory.md
+  feature_flag: AGENT_COGNITIVE_MEMORY_ENABLED
+  additional_flags:
+  - AGENT_EPISODIC_MEMORY_ENABLED
+  - AGENT_SEMANTIC_MEMORY_ENABLED
+  - AGENT_WORKING_MEMORY_ENABLED
+  - AGENT_MEMORY_SUMMARIZATION_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Memory summarization is advisory by default.
+  test_coverage: 70%
+  rollback_story: Revert to standard memory context injection or disable the memory flags.
+  api_prefix: /admin/agents/memory
+  associated_services:
+  - agents/cognitive_memory/memory_quality.py
+  - agents/cognitive_memory/working_memory.py
+  - agents/cognitive_memory/memory_explainability.py
+  - agents/cognitive_memory/memory_summarizer.py
+  - agents/cognitive_memory/episodic_memory.py
+  - agents/cognitive_memory/semantic_memory.py
+  - agent_cognitive_memory_admin.py
+- id: agent-studio-approvals
+  name: Agent Studio and Approval Portal
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/agent-studio.md
+  feature_flag: AGENT_STUDIO_ENABLED
+  additional_flags:
+  - AGENT_APPROVAL_PORTAL_ENABLED
+  - AGENT_VISUAL_DEBUGGER_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Visual DAG builder runs client-side only; execution is bound to control plane validation rules.
+  test_coverage: 70%
+  rollback_story: Disable studio and approvals flags and revert to code-defined agents only.
+  api_prefix: /admin/agents/approval-portal
+  associated_services:
+  - agents/studio/studio_debugger.py
+  - agents/studio/flow_schema.py
+  - agent_approval_portal.py
+- id: agent-marketplace
+  name: Internal Agent Marketplace
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/internal-marketplace.md
+  feature_flag: AGENT_MARKETPLACE_ENABLED
+  additional_flags:
+  - AGENT_TEMPLATE_INSTALL_ENABLED
+  - AGENT_CROSS_TENANT_TEMPLATE_SHARING_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Template installations generate disabled draft agents by default.
+  test_coverage: 70%
+  rollback_story: Revert to local directory catalog imports and disable the marketplace flag.
+- id: agent-otel-tracing
+  name: Agent OpenTelemetry Tracing
+  area: agent runtime
+  status: experimental
+  owner: agent-platform
+  support_level: development
+  docs_url: docs/observability/agent-otel.md
+  feature_flag: AGENT_OTEL_TRACING_ENABLED
+  additional_flags:
+  - AGENT_OTEL_EXPORT_ENABLED
+  - AGENT_PHOENIX_EXPORT_ENABLED
+  - AGENT_LANGSMITH_EXPORT_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Exporters are disabled by default to prevent credential leakages.
+  test_coverage: 65%
+  rollback_story: Disable OTEL flags and revert to standard console logs.
+  associated_services:
+  - agents/telemetry/phoenix_exporter.py
+  - agents/telemetry/trace_sanitizer.py
+  - agents/telemetry/otel_semconv_mapper.py
+  - agents/telemetry/langsmith_exporter.py
+  - agents/telemetry/trace_exporter.py
+  - agents/telemetry/agent_tracer.py
+- id: agent-optimizer
+  name: Agent Auto-Optimization
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/auto-optimization.md
+  feature_flag: AGENT_OPTIMIZER_ENABLED
+  additional_flags:
+  - AGENT_AUTO_OPTIMIZATION_ENABLED
+  - AGENT_OPTIMIZATION_APPLY_ENABLED
+  since_version: v2.1.0-agentic-platform-expansion
+  limitations: Optimization is purely advisory and requires manual candidate promotion.
+  test_coverage: 68%
+  rollback_story: Revert candidate promotions back to baseline configurations.

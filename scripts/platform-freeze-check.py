@@ -298,7 +298,15 @@ def check_capability_classification(rules):
     capabilities = data.get("capabilities", [])
     
     # Extract all classified identifiers
-    classified_flags = {c.get("feature_flag") for c in capabilities if c.get("feature_flag")}
+    classified_flags = set()
+    for c in capabilities:
+        ff = c.get("feature_flag")
+        if ff:
+            classified_flags.add(ff.lower())
+        for add_ff in c.get("additional_flags", []) or []:
+            if add_ff:
+                classified_flags.add(add_ff.lower())
+                
     classified_prefixes = {c.get("api_prefix") for c in capabilities if c.get("api_prefix")}
     
     violations = []
@@ -317,8 +325,8 @@ def check_capability_classification(rules):
                     flag_name = match.group(1)
                     if flag_name not in allowed_flags:
                         # This is a new feature flag. Is it classified?
-                        if flag_name not in classified_flags:
-                            violations.append(f"New feature flag '{flag_name}' must be classified under a capability in {yaml_path} (using the 'feature_flag' field).")
+                        if flag_name.lower() not in classified_flags:
+                            violations.append(f"New feature flag '{flag_name}' must be classified under a capability in {yaml_path} (using the 'feature_flag' or 'additional_flags' fields).")
 
     # 2. Check API routers
     api_dir = "control_plane/app/api"
@@ -345,9 +353,12 @@ def check_capability_classification(rules):
                     
                     # Check ID or name match
                     router_base = r.replace(".py", "").replace("_admin", "").replace("_portal", "").replace("_", "-")
+                    router_name_no_ext = r.replace(".py", "")
                     for c in capabilities:
                         cap_id = c.get("id", "")
-                        if cap_id == router_base or router_base in cap_id or cap_id in router_base:
+                        assoc_services = c.get("associated_services", []) or []
+                        if (cap_id == router_base or router_base in cap_id or cap_id in router_base or
+                                router_name_no_ext in assoc_services or router_base in assoc_services):
                             classified = True
                             break
                     
@@ -365,10 +376,14 @@ def check_capability_classification(rules):
                     if rel_path not in allowed_services:
                         # New service. Check if it's classified
                         service_base = file.replace(".py", "").replace("_", "-")
+                        service_name_no_ext = file.replace(".py", "")
                         classified = False
                         for c in capabilities:
                             cap_id = c.get("id", "")
-                            if cap_id == service_base or service_base in cap_id or cap_id in service_base:
+                            assoc_services = c.get("associated_services", []) or []
+                            if (cap_id == service_base or service_base in cap_id or cap_id in service_base or
+                                    service_name_no_ext in assoc_services or service_base in assoc_services or
+                                    file in assoc_services or rel_path in assoc_services):
                                 classified = True
                                 break
                         if not classified:

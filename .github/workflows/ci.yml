@@ -125,6 +125,12 @@ jobs:
         uses: ./.github/actions/setup-python-project
       - name: Platform Freeze Check
         run: make platform-freeze-check
+      - name: Feature Flag Integrity Check
+        run: make check-feature-flags-integrity
+      - name: Supported Surface Check
+        run: make check-supported-surface
+      - name: Platform Freeze Governance Check
+        run: make check-freeze-governance
       - name: Alembic Integrity
         run: bash scripts/check-alembic-integrity.sh
       - name: Secrets Check

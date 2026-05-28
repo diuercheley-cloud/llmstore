@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -35,6 +35,8 @@ ENGINE = AdapterRegistryPolicyEngine()
 # --- Schemas ---
 
 class RegistryEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: uuid.UUID
     adapter_name: str
@@ -47,23 +49,19 @@ class RegistryEntryResponse(BaseModel):
     signature_placeholder: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class RegistryEntryRegisterRequest(BaseModel):
     client_id: uuid.UUID
     manifest_id: uuid.UUID
 
 class DecisionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     decision_type: str
     decision_status: str
     reason: Optional[str]
     decided_by: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class PolicyCreateRequest(BaseModel):
     client_id: uuid.UUID
@@ -76,15 +74,14 @@ class PolicyCreateRequest(BaseModel):
     allow_offline_only: bool = True
 
 class ListEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     adapter_name: str
     adapter_version: str
     manifest_hash: str
     reason: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class RegistryEntryRegisterResponse(BaseModel):
     entry: RegistryEntryResponse

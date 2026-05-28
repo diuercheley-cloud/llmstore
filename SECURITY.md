@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.0.2-agentic-ga-readiness` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.1.0-agentic-platform-expansion` line.
 
 ## Defaults
 
@@ -22,11 +22,22 @@
 - In `enterprise_managed` mode, the same production gates apply, supplemented by strict cryptographic tenant isolation (`AGENT_TENANT_ISOLATION_STRICT=true`), managed control plane constraints, and enterprise observability.
 - `AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=false` is the expected GA posture. Any production override is a release blocker.
 - Unsupported task simulation paths must fail closed. Completed task outputs must carry explicit `execution_mode`.
+- `AGENT_EXECUTOR_MOCK_MODE=false`, `AGENT_EXECUTOR_DRY_RUN_MODE=false`, and `AGENT_EXECUTOR_ALLOW_SIMULATION=false` are the expected release posture for production-like execution.
+- `AGENT_CONNECTOR_MODE` must be explicitly set to `mock` or `real`; invalid values are treated as misconfiguration, not downgraded silently.
+- `AGENT_CONNECTOR_REAL_HTTP_ENABLED=false` remains the safe default. Real connector traffic requires both the global HTTP gate and the connector-specific enablement flag.
+- Real sandbox execution has no implicit mock fallback. If no concrete tool callable exists, execution fails closed.
+- `OPERATOR_MODE=real` is required for production-like Kubernetes reconciliation. `mock` and `dry_run` are test-only modes.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
+- Enterprise autonomy features stay disabled by default, including tool synthesis, code interpreter, event-driven hooks, IAM service principals, optimization apply, Router V2, and shared artifacts.
+- Code interpreter sandbox access starts with `AGENT_CODE_SANDBOX_NETWORK_ENABLED=false` and `AGENT_CODE_SANDBOX_WRITE_ENABLED=false`.
+- Generated tool execution is blocked unless `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=true`.
+- Connector side effects remain blocked by default with `AGENT_CONNECTOR_WRITE_ENABLED=false` and `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false`.
+- Real execution readiness must also pass the durable queue, scheduler prerequisite, operator mode, and code-integrity gates before release.
 
 ## Agentic release controls
 
 - Governed SaaS connectors require explicit enablement before any external network use or write action is possible.
+- Service principals and delegated token exchange are operator-governed and audit-logged; raw secrets are returned once and redacted thereafter.
 - Stateful workflows must wake from persisted timers, signals, webhooks, or polling instead of pinning a worker for the entire wait period.
 - Reasoning loops must repair malformed structured output and compress context before escalating to fallback behavior.
 - Multi-agent orchestration must remain bounded by topology flags and governance controls for hierarchical and debate teams.
@@ -36,6 +47,11 @@
 - Promotion remains blocked on failed or missing eval evidence even if runtime APIs are enabled.
 - SLOs, metrics, readiness checks, and incident playbooks are required operator controls for the agentic surface.
 - Provider validation is opt-in, budgeted, and must use synthetic data. GA evidence only counts when a non-mock provider/gateway actually answers a passing `basic_model_call`.
+- Event-driven executions must remain bounded by trigger-level rate limits, budgets, and deduplication keys.
+- Knowledge graph extraction and Graph RAG must remain tenant-scoped; cross-tenant querying is outside the supported posture.
+- Optimization candidates may be generated and evaluated, but cannot be applied safely without explicit `AGENT_OPTIMIZATION_APPLY_ENABLED=true`.
+- Router V2 decisions must be persisted with explanations so step-level model selection stays auditable.
+- Shared artifacts must preserve immutable versions and lock semantics to prevent concurrent overwrite races.
 
 ## Secrets Handling
 
@@ -98,10 +114,12 @@ No cross-cluster operations exfiltrate user prompts or RAG documents by default.
 ## Agentic Data Boundaries
 - Agent memory is tenant-scoped and disabled by default.
 - Cross-tenant memory sharing is not supported.
+- Knowledge graph entities and relations are tenant-scoped; external graph databases remain opt-in.
 - `/v1/agents` is the canonical tenant runtime API and `/agents` is deprecated for admin-only legacy compatibility.
 - Destructive tools remain disabled unless explicitly enabled and separately approval-gated.
 - Agent marketplace installs are offline-first and disabled by default.
 - Multi-agent delegation remains disabled by default and is outside the default-supported posture for this release.
+- Shared workspaces and artifacts remain disabled by default; when enabled, collaborative editing uses lock and version checks instead of last-write-wins behavior.
 
 ## Observability Privacy
 Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.

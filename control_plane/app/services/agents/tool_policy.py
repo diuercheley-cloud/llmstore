@@ -31,6 +31,16 @@ async def evaluate_tool_policy(
     run_id: Optional[uuid.UUID] = None
 ) -> PolicyDecision:
     """Evaluates tool execution using the unified Policy Engine v2."""
+    if not agent and not agent_id:
+        requires_approval = False if is_dry_run else bool(getattr(tool, "requires_approval", False))
+        if not is_dry_run and getattr(tool, "side_effect_level", "none") == "destructive":
+            requires_approval = True
+        return PolicyDecision(
+            allowed=True,
+            reason="No agent context; applying direct tool policy path",
+            requires_approval=requires_approval,
+        )
+
     from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
     
     policy_engine = AgentPolicyEngine(db)

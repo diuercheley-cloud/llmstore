@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -28,6 +28,8 @@ class PolicyCreate(BaseModel):
     region: Optional[str] = None
 
 class PolicyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     enabled: bool
@@ -48,10 +50,9 @@ class PolicyResponse(BaseModel):
     activated_at: Optional[datetime]
     rolled_back_at: Optional[datetime]
 
-    class Config:
-        orm_mode = True
-
 class DecisionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     policy_id: Optional[str]
     correlation_id: Optional[str]
@@ -66,9 +67,6 @@ class DecisionResponse(BaseModel):
     traffic_percent: int
     reason: Optional[str]
     created_at: datetime
-
-    class Config:
-        orm_mode = True
 
 class SimulateRequest(BaseModel):
     tenant_id: Optional[str] = None

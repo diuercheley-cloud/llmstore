@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import uuid
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, func
 from app.main import app as main_app
 import app.db.session
@@ -30,6 +30,7 @@ async def test_db():
     
     orig_engine = app.db.session.engine
     orig_session = app.db.session.SessionLocal
+    orig_worker_session = app.services.agents.agent_worker.SessionLocal
     
     app.db.session.engine = engine
     app.db.session.SessionLocal = session_factory
@@ -47,6 +48,7 @@ async def test_db():
         
     app.db.session.engine = orig_engine
     app.db.session.SessionLocal = orig_session
+    app.services.agents.agent_worker.SessionLocal = orig_worker_session
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_settings():
@@ -83,7 +85,7 @@ async def test_worker_drain_prevents_pickup(test_db):
         # Create a job
         job = AgentExecutionJob(
             id=uuid.uuid4(), agent_run_id=uuid.uuid4(), agent_id=uuid.uuid4(),
-            tenant_id="t1", status="queued", scheduled_at=datetime.utcnow()
+            tenant_id="t1", status="queued", scheduled_at=datetime.now(timezone.utc)
         )
         db.add(job)
         await db.commit()
@@ -101,12 +103,12 @@ async def test_orphan_lease_recovery(test_db):
         job_id = uuid.uuid4()
         job = AgentExecutionJob(
             id=job_id, agent_run_id=uuid.uuid4(), agent_id=uuid.uuid4(),
-            tenant_id="t1", status="running", scheduled_at=datetime.utcnow()
+            tenant_id="t1", status="running", scheduled_at=datetime.now(timezone.utc)
         )
         # Create an expired lease
         lease = AgentExecutionLease(
             job_id=job_id, worker_id="dead-worker", 
-            expires_at=datetime.utcnow() - timedelta(minutes=5)
+            expires_at=datetime.now(timezone.utc) - timedelta(minutes=5)
         )
         db.add(job)
         db.add(lease)

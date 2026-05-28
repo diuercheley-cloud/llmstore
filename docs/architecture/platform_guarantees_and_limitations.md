@@ -34,25 +34,25 @@
 
 ## Explicit Limitations
 
-### No Real Execution
-- No real runtime execution — runtime abstractions are advisory placeholders
-- Plugin ABI defines contracts but does not execute plugins
-- Adapter sandbox validates manifests, not real execution
+### Bounded Real Execution
+- Agent runtime execution exists, but is feature-gated and disabled by default
+- Plugin ABI defines contracts and now supports local sandboxed execution for installed plugins under explicit isolation policy
+- Several enterprise/control-plane surfaces remain advisory, simulated, or operator-gated
 
-### No Real PKI
-- Certificate operations are simulated
-- No CA integration or real certificate issuance
-- Cryptographic receipts use placeholder signing
+### Local-Only PKI
+- Local PKI issuance and certificate verification exist when explicitly enabled
+- No external CA integration, formal trust anchor distribution, or certified key ceremony is implied
+- Some cryptographic receipt and attestation surfaces still use placeholder signing outside the local PKI path
 
 ### No Hardware-Backed Trust
-- Attestation framework is policy-only
-- No TPM, SEV, or SGX integration
-- Trust decisions are advisory and operator-gated
+- Hardware-backed trust is not guaranteed by default
+- No universal TPM, SEV, or SGX enforcement path exists across the platform
+- Trust decisions remain advisory or operator-gated unless the operator enables and validates the underlying trust stack
 
-### No Real Plugin Execution
-- Plugin ABI defines interface contracts only
-- Extension loader validates metadata, not runtime behavior
-- No sandboxed process execution
+### Bounded Plugin Execution
+- Plugin runtime can execute installed plugin code locally in sandboxed mode
+- Extension loader validates metadata, checksums, signatures, compatibility, and deterministic load ordering before activation
+- Strong isolation via container/VM and distributed plugin execution are still not provided by default
 
 ### No Formal Certification
 - Validation is advisory and self-attested
@@ -73,7 +73,7 @@ The following claims must never appear in documentation:
 - `certified` or `formally certified` without explicit evidence
 - `unbreakable` or `impenetrable`
 - Any suggestion of real PKI or hardware trust
-- Any suggestion of real plugin execution
+- Any suggestion of unrestricted or cluster-wide third-party plugin code execution
 - Any suggestion of mandatory cloud/SaaS
 
 ## Advisory Nature
@@ -84,4 +84,4 @@ Unless explicitly stated as "guaranteed," all platform behaviors are advisory:
 - Policy decisions are advisory (default mode)
 - Attestation is advisory (no hardware root of trust)
 - Compatibility verification is advisory
-- All "runs" are dry-runs unless operator explicitly approves
+- High-risk runs and side effects remain approval-gated by policy

@@ -114,7 +114,7 @@ async def list_qos_billing_records(
 
 @router.get("/export")
 async def export_qos_billing_records(
-    format: str = Query("json", regex="^(json|csv)$"),
+    format: str = Query("json", pattern="^(json|csv)$"),
     hours: int = Query(24, ge=1, le=8760),
     db: AsyncSession = Depends(get_db),
     _token: str = Depends(get_admin_token)

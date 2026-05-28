@@ -9,6 +9,8 @@ from sqlalchemy import select, func, desc
 from app.api.deps import require_admin, get_db_session
 from app.models.agents import AgentRun, AgentRunStep, AgentRunEvent, AgentDefinition
 from app.services.agents.agent_observability import AgentObservabilityService
+from app.core.config import get_settings, Settings
+
 
 router = APIRouter(prefix="/admin/agents/observability", tags=["agent-observability"])
 
@@ -172,3 +174,40 @@ async def get_metrics_summary(
         "total_tokens": int(total_tokens),
         "total_cost_brl": float(total_cost),
     }
+
+@router.get("/traces/{run_id}")
+async def get_run_trace_compat(
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+    admin: Any = Depends(require_admin),
+):
+    if not settings.agent_otel_tracing_enabled:
+        raise HTTPException(status_code=400, detail="OpenTelemetry tracing is disabled")
+    return await get_run_trace(run_id, db, admin)
+
+@router.post("/traces/export")
+async def export_trace(
+    payload: dict,
+    settings: Settings = Depends(get_settings),
+    admin: Any = Depends(require_admin),
+):
+    if not settings.agent_otel_export_enabled:
+        raise HTTPException(status_code=400, detail="OpenTelemetry trace export is disabled")
+    
+    from app.services.agents.telemetry.trace_exporter import TraceExporter
+    exporter = TraceExporter()
+    return exporter.export(payload)
+
+@router.get("/telemetry/status")
+async def get_telemetry_status(
+    settings: Settings = Depends(get_settings),
+    admin: Any = Depends(require_admin),
+):
+    return {
+        "otel_tracing_enabled": settings.agent_otel_tracing_enabled,
+        "otel_export_enabled": settings.agent_otel_export_enabled,
+        "phoenix_export_enabled": settings.agent_phoenix_export_enabled,
+        "langsmith_export_enabled": settings.agent_langsmith_export_enabled,
+    }
+

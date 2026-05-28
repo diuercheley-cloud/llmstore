@@ -1,14 +1,31 @@
-# Shared Workspace
+# Shared Workspaces for Human-Agent Collaboration
 
-The Shared Workspace allows agents within a multi-agent team to collaborate by sharing structured data.
+The collaborative workspace environment provides a shared context where human operators and autonomous agents can create, update, review, and exchange structured artifacts.
 
-## Features
+## Feature Flags
 
-- **Key-Value Store**: Agents can `put` and `get` JSON objects using specific keys.
-- **Run Isolation**: Each team run has its own workspace. Data is not shared between different runs or different teams.
-- **Tenant Boundary**: Strict enforcement of tenant isolation for all shared data.
+Workspaces are controlled by the following feature flag:
+- `AGENT_SHARED_WORKSPACE_ENABLED`: Set to `true` to enable workspace creation, listing, and artifact isolation scopes. Defaults to `false`.
 
-## Usage
+## Architecture & Data Scope
 
-Agents can use the workspace to store intermediate results, shared state, or shared configuration that is too large for prompt injection.
-Raw workspace data is also captured in the team trace for debugging.
+- **Isolation**: Workspaces are isolated per tenant (`tenant_id`). Cross-tenant requests are strictly blocked.
+- **Ownership**: Each workspace is owned by a specific owner (`owner_id`) and belongs to a single tenant.
+- **Artifacts Registry**: Workspaces group related artifacts (such as prompts, code, plans, and reports) that humans and agents collaborate on.
+
+## API Endpoints
+
+- **Create Workspace**
+  `POST /admin/agents/workspaces`
+  Payload:
+  ```json
+  {
+    "name": "Production Workspace",
+    "description": "Shared workspace for prompt deployment",
+    "tenant_id": "default"
+  }
+  ```
+
+- **List Workspaces**
+  `GET /admin/agents/workspaces?tenant_id=default`
+  Returns all workspaces for the requested tenant.

@@ -86,6 +86,6 @@ class PluginABIContractService:
             "notes": [
                 "blocked/revoked cannot be loaded",
                 "placeholder_certified is not real certification",
-                "no real plugin execution",
+                "plugin execution requires explicit activation plus isolation policy",
             ],
         }

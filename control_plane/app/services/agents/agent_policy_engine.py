@@ -94,6 +94,24 @@ class AgentPolicyEngine:
     async def _check_tool_rules(self, agent: AgentDefinition, req: PolicyRequest) -> Tuple[PolicyDecision, str]:
         tool_name = req.subject
         
+        # 0. Candidate Policy override check
+        if agent.policy_id and agent.policy_id.startswith("policy-opt-"):
+            try:
+                candidate_id = uuid.UUID(agent.policy_id.replace("policy-opt-", ""))
+                from app.models.agent_optimization import AgentPolicyCandidate
+                res_pol = await self.db.execute(select(AgentPolicyCandidate).where(AgentPolicyCandidate.candidate_id == candidate_id))
+                pol_detail = res_pol.scalar_one_or_none()
+                if pol_detail:
+                    denied_tools = pol_detail.policy_rules.get("denied_tools", [])
+                    if tool_name in denied_tools:
+                        return PolicyDecision.DENY, f"Tool '{tool_name}' denied by candidate policy."
+                    
+                    approval_tools = pol_detail.policy_rules.get("approval_tools", [])
+                    if tool_name in approval_tools:
+                        return PolicyDecision.REQUIRE_APPROVAL, f"Tool '{tool_name}' requires approval under candidate policy."
+            except Exception as e:
+                logger.error(f"Error evaluating candidate policy rules: {e}")
+
         # 1. Allowlist Check
         if agent.allowed_tools and tool_name not in agent.allowed_tools and "*" not in agent.allowed_tools:
             return PolicyDecision.DENY, f"Tool '{tool_name}' not in agent's allowlist."

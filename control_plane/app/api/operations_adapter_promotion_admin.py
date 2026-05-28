@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -36,6 +36,8 @@ STAGING_SERVICE = AdapterStagingSimulationService()
 # --- Schemas ---
 
 class WorkflowResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     client_id: uuid.UUID
     registry_entry_id: uuid.UUID
@@ -47,9 +49,6 @@ class WorkflowResponse(BaseModel):
     immutable_hash: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class WorkflowCreateRequest(BaseModel):
     client_id: uuid.UUID
     registry_entry_id: uuid.UUID
@@ -57,6 +56,8 @@ class WorkflowCreateRequest(BaseModel):
     context: Optional[Dict[str, Any]] = {}
 
 class GateResultResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     gate_name: str
     gate_status: str
@@ -64,28 +65,23 @@ class GateResultResponse(BaseModel):
     required: bool
     blocking: bool
 
-    class Config:
-        from_attributes = True
-
 class TransitionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     from_stage: str
     to_stage: str
     transition_status: str
     reason: Optional[str]
 
-    class Config:
-        from_attributes = True
-
 class RollbackResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     from_stage: str
     rollback_to_stage: str
     reason: str
     rollback_status: str
-
-    class Config:
-        from_attributes = True
 
 class PromotionResultResponse(BaseModel):
     workflow: WorkflowResponse

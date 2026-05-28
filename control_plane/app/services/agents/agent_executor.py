@@ -30,6 +30,10 @@ from app.services.agents.reasoning.reasoning_loop import ReasoningLoop
 
 logger = logging.getLogger(__name__)
 
+
+class ExecutorSimulationError(RuntimeError):
+    pass
+
 class AgentExecutor:
     def __init__(
         self,
@@ -64,6 +68,7 @@ class AgentExecutor:
             self.llm_provider = get_agent_llm_provider(db, proxy)
         
         self.reasoning_loop = ReasoningLoop(self.llm_provider)
+        self.deployment_mode = getattr(self.settings, "deployment_mode", "appliance")
 
     async def execute_step(self) -> bool:
         run = await agent_state.get_agent_run(self.db, self.run_id)
@@ -76,7 +81,9 @@ class AgentExecutor:
             await self.db.commit()
 
         agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
-        if not agent_def:
+        if agent_def:
+            agent_def = await self._apply_candidate_overrides_if_evaluating(run, agent_def)
+        else:
             await self._fail_run("Agent definition not found")
             await self.db.commit()
             return False
@@ -210,6 +217,7 @@ class AgentExecutor:
                 await self.obs.record_memory_op_detailed(self.run_id, "read", "short_term", True)
         
         try:
+            self._assert_llm_provider_mode_allowed()
             decision = await self.reasoning_loop.execute(agent_def=agent_def, run=run, allowed_tools=agent_def.allowed_tools or [])
             latency_ms = int((time.time() - start_time) * 1000)
             await self.obs.record_model_call(self.run_id, "completed", latency_ms, decision.get("usage"))
@@ -239,6 +247,22 @@ class AgentExecutor:
             await agent_state.log_run_step(self.db, self.run_id, step_number, "model_call", {"input_hash": run.input_hash}, {}, "failed", latency_ms, error=str(e))
             await self._fail_run(f"LLM failure: {str(e)}")
             return None
+
+    def _assert_llm_provider_mode_allowed(self) -> None:
+        provider_type = getattr(self.llm_provider, "provider_type", None)
+        provider_value = getattr(provider_type, "value", provider_type)
+        if provider_value != "mock":
+            return
+        if self.settings.agent_executor_mock_mode:
+            return
+        if self.deployment_mode in ("pilot", "production", "enterprise_managed"):
+            raise MockProviderError(
+                f"Mock LLM provider blocked by AgentExecutor in deployment mode '{self.deployment_mode}'. "
+                "Set AGENT_EXECUTOR_MOCK_MODE=true for explicit test-only override."
+            )
+        raise MockProviderError(
+            "Mock LLM provider blocked by AgentExecutor. Set AGENT_EXECUTOR_MOCK_MODE=true for explicit test-only use."
+        )
 
     async def _update_usage(self, run, decision):
         if isinstance(decision, ProviderResponse):
@@ -302,37 +326,51 @@ class AgentExecutor:
                     return await self.tool_runner(tool_name, kwargs)
                 tool_callable = runner_wrapper
 
-            if getattr(self.settings, "agent_task_mock_mode", False):
-                output = {
-                    "status": "mock",
-                    "message": f"Mocked tool {tool_name}",
-                    "mock": True,
-                    "execution_mode": "mock",
-                }
-            elif getattr(self.settings, "agent_task_dry_run_mode", False):
+            policy_decision_id = None
+            exec_mode = self._resolve_executor_tool_mode()
+            if exec_mode == "mock":
+                output = self._build_simulated_output(
+                    mode="mock",
+                    tool_name=tool_name,
+                    reason="AGENT_EXECUTOR_MOCK_MODE=true",
+                    policy_decision_id=policy_decision_id,
+                )
+            elif exec_mode == "dry_run":
                 output = await execute_tool(
-                    self.db, tool, tool_input, self.run_id, 
+                    self.db, tool, tool_input, self.run_id,
                     agent_id=run.agent_id,
-                    tenant_id=run.tenant_id, 
+                    tenant_id=run.tenant_id,
                     is_dry_run=True,
                     tool_callable=tool_callable
                 )
                 if isinstance(output, dict):
                     output.setdefault("execution_mode", "dry_run")
-            elif getattr(self.settings, "agent_task_simulation_mode", False):
-                raise NotImplementedError("controlled_not_implemented")
-            elif not self.settings.agent_execution_enabled:
-                raise NotImplementedError("controlled_not_implemented")
+                    output["simulated"] = True
+                    output.setdefault("reason", "AGENT_EXECUTOR_DRY_RUN_MODE=true")
+                    output["policy_decision_id"] = policy_decision_id
+            elif exec_mode == "simulation":
+                output = self._build_simulated_output(
+                    mode="simulation",
+                    tool_name=tool_name,
+                    reason="AGENT_EXECUTOR_ALLOW_SIMULATION=true and real execution disabled",
+                    policy_decision_id=policy_decision_id,
+                )
             else:
+                if not self.settings.agent_execution_enabled:
+                    raise ExecutorSimulationError(
+                        "Agent execution is disabled. Enable AGENT_EXECUTION_ENABLED=true or AGENT_EXECUTOR_ALLOW_SIMULATION=true."
+                    )
                 output = await execute_tool(
-                    self.db, tool, tool_input, self.run_id, 
+                    self.db, tool, tool_input, self.run_id,
                     agent_id=run.agent_id,
-                    tenant_id=run.tenant_id, 
+                    tenant_id=run.tenant_id,
                     is_dry_run=False,
                     tool_callable=tool_callable
                 )
                 if isinstance(output, dict):
                     output.setdefault("execution_mode", "real")
+                    output.setdefault("simulated", False)
+                    output["policy_decision_id"] = policy_decision_id
             error = None
         except Exception as e:
             output, error = {"error": str(e)}, str(e)
@@ -341,8 +379,46 @@ class AgentExecutor:
         await self.obs.record_tool_call_result(self.run_id, tool_name, "failed" if error else "completed", latency, error)
         i_hash, o_hash = agent_state.compute_sha256(tool_input), agent_state.compute_sha256(output)
         await self.receipts.create_receipt(self.run_id, step_number, "tool_execution", i_hash, o_hash, success=not error, failure_reason=error)
-        await agent_state.log_run_step(self.db, self.run_id, step_number, "tool_call", {"tool_name": tool_name, "input_hash": i_hash}, {"output_hash": o_hash, "result": output}, "success" if not error else "failed", latency, error)
+        await agent_state.log_run_step(
+            self.db,
+            self.run_id,
+            step_number,
+            "tool_call",
+            {"tool_name": tool_name, "input_hash": i_hash},
+            {"output_hash": o_hash, "result": output},
+            "success" if not error else "failed",
+            latency_ms=latency,
+            error=error,
+        )
+        if error:
+            await self._fail_run(f"Tool execution failed: {error}")
+            return False
         return True
+
+    def _resolve_executor_tool_mode(self) -> str:
+        mock_enabled = bool(getattr(self.settings, "agent_executor_mock_mode", False))
+        dry_run_enabled = bool(getattr(self.settings, "agent_executor_dry_run_mode", False))
+        simulation_enabled = bool(getattr(self.settings, "agent_executor_allow_simulation", False))
+
+        if mock_enabled:
+            return "mock"
+        if dry_run_enabled:
+            return "dry_run"
+        if not self.settings.agent_execution_enabled:
+            if simulation_enabled:
+                return "simulation"
+            return "real"
+        return "real"
+
+    def _build_simulated_output(self, *, mode: str, tool_name: str, reason: str, policy_decision_id: Optional[str]) -> Dict[str, Any]:
+        return {
+            "status": mode,
+            "message": f"Simulated execution for tool {tool_name}",
+            "execution_mode": mode,
+            "simulated": True,
+            "reason": reason,
+            "policy_decision_id": policy_decision_id,
+        }
 
     async def _handle_planning_decision(self, run, decision, step_number):
         goal, tasks = decision.get("goal", run.input_text), decision.get("tasks", [])
@@ -386,3 +462,61 @@ class AgentExecutor:
         await agent_state.update_run(self.db, self.run_id, status="completed", output_hash=o_hash, completed_at=utc_now())
         await self.obs.record_run_completion(run.agent_id, run.id)
         return False
+
+    async def _apply_candidate_overrides_if_evaluating(self, run, agent_def):
+        if not run.correlation_id or not run.correlation_id.startswith("eval-"):
+            return agent_def
+
+        eval_run_id_str = run.correlation_id.replace("eval-", "")
+        try:
+            eval_run_id = uuid.UUID(eval_run_id_str)
+        except ValueError:
+            return agent_def
+
+        from app.models.agents import AgentEvalRun
+        res_eval = await self.db.execute(select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id))
+        eval_run = res_eval.scalar_one_or_none()
+        if not eval_run or not eval_run.metadata_json:
+            return agent_def
+
+        candidate_id_str = eval_run.metadata_json.get("candidate_id")
+        if not candidate_id_str:
+            return agent_def
+
+        try:
+            candidate_id = uuid.UUID(candidate_id_str)
+        except ValueError:
+            return agent_def
+
+        from app.models.agent_optimization import (
+            AgentOptimizationCandidate,
+            AgentPromptCandidate,
+            AgentPolicyCandidate,
+            AgentToolSelectionCandidate,
+        )
+        res_cand = await self.db.execute(select(AgentOptimizationCandidate).where(AgentOptimizationCandidate.id == candidate_id))
+        candidate = res_cand.scalar_one_or_none()
+        if not candidate:
+            return agent_def
+
+        if candidate.candidate_type == "prompt":
+            res_prompt = await self.db.execute(select(AgentPromptCandidate).where(AgentPromptCandidate.candidate_id == candidate_id))
+            prompt_detail = res_prompt.scalar_one_or_none()
+            if prompt_detail:
+                # Modifying the in-memory object attributes to prevent database persistence
+                agent_def.instructions = prompt_detail.prompt_text
+
+        elif candidate.candidate_type == "tool_selection":
+            res_tools = await self.db.execute(select(AgentToolSelectionCandidate).where(AgentToolSelectionCandidate.candidate_id == candidate_id))
+            tools_detail = res_tools.scalar_one_or_none()
+            if tools_detail:
+                agent_def.allowed_tools = tools_detail.allowed_tools
+
+        elif candidate.candidate_type == "policy":
+            res_policy = await self.db.execute(select(AgentPolicyCandidate).where(AgentPolicyCandidate.candidate_id == candidate_id))
+            policy_detail = res_policy.scalar_one_or_none()
+            if policy_detail:
+                # Set temporary policy_id to let the policy engine load custom rules
+                agent_def.policy_id = f"policy-opt-{candidate_id}"
+
+        return agent_def

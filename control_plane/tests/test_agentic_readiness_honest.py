@@ -1,21 +1,12 @@
-import os
-import pytest
-import pytest_asyncio
-import uuid
-from pathlib import Path
-from datetime import datetime, timedelta
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-
-import os
-import pytest
-import pytest_asyncio
-import uuid
 import asyncio
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+import os
+import pytest
+import pytest_asyncio
+import uuid
 
 from app.main import app as main_app
 import app.db.session
@@ -114,7 +105,7 @@ async def test_readiness_stuck_runs(async_client, test_db):
             agent_id=uuid.uuid4(),
             tenant_id="test-tenant",
             status="running",
-            started_at=datetime.utcnow() - timedelta(hours=2),
+            started_at=datetime.now(timezone.utc) - timedelta(hours=2),
             total_steps=1,
             total_tokens=0,
             estimated_cost_brl=0.0

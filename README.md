@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
 
-> Current build: `v2.0.2-agentic-ga-readiness`  
-> Previous stable: [`v2.0.0-agentic-ai-platform`](docs/releases/V2_0_0_AGENTIC_AI_PLATFORM.md)  
-> Release notes: [`docs/releases/V2_0_2_AGENTIC_GA_READINESS.md`](docs/releases/V2_0_2_AGENTIC_GA_READINESS.md)  
+> Current build: `v2.1.0-agentic-platform-expansion`  
+> Previous stable: [`v2.0.3-agentic-real-execution-hardening`](docs/releases/V2_0_3_AGENTIC_REAL_EXECUTION_HARDENING.md)  
+> Release notes: [`docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md`](docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Enterprise Agentic Autonomy (v2.1.0)**: Adds governed code interpretation, graph-native RAG, event-driven agents, agent IAM, agentic CI/CD optimization controls, per-step router decisions, and shared artifact collaboration under explicit opt-in gates.
 - **GA Readiness (v2.0.2)**: Tightens surface governance, explicit execution modes, production mock posture, and opt-in provider validation into the final GA gate.
 - **Operational Maturity (v2.0.1)**: Consolidates deployment modes, GA scoring, feature-flag hygiene, surface reduction, security warning governance, activation playbooks, and provider validation into an operator-ready release line.
 - **Platform Consolidation (v1.9.8)**: Supportability and operational consolidation inside existing platform domains, plus lazy-loaded routers, endpoint cleanup, and release governance tightening.
@@ -149,15 +150,18 @@ make validate-platform-documentation
 
 ### Explicit Limitations
 
-- **No real plugin execution.** Plugin ABI defines contracts but does not execute plugins. Adapter sandbox validates manifests, not runtime behavior.
-- **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior.
+- **Plugin code execution is local and sandboxed, not unrestricted.** Plugin ABI and plugin runtime surfaces now support governed local execution for installed plugins under isolation policy, but do not provide unrestricted third-party plugin execution or distributed plugin orchestration.
+- **PKI, attestation and hardware trust are config-gated.** Default local installs keep `PKI_ENABLED=false`, `HARDWARE_TRUST_ENABLED=false` and advisory attestation behavior. When enabled, PKI can issue and verify local certificates, but hardware-backed trust still requires explicit platform support.
 - **Plugin signature enforcement is opt-in.** `PLUGIN_SIGNATURE_REQUIRED=false` preserves legacy loading behavior until operators enable signing policy.
 - **Enterprise runtime surfaces are opt-in.** `KUBERNETES_MODE=false`, `DISTRIBUTED_RUNTIME_ENABLED=false`, `GPU_AUTOSCALING_ENABLED=false`, `PLUGIN_MARKETPLACE_ENABLED=false` and `MANAGED_CONTROL_PLANE_ENABLED=false` preserve the local/offline appliance by default.
 - **Agentic surfaces are opt-in and safe-by-default.** `AGENT_RUNTIME_ENABLED=false`, `AGENT_REAL_LLM_ENABLED=false`, `AGENT_LLM_PROVIDER=mock`, `AGENT_TOOL_ADAPTERS_ENABLED=false`, `AGENT_TOOL_EXECUTION_ENABLED=false`, `AGENT_MEMORY_ENABLED=false`, `AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false`, `AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false`, `AGENT_WORKER_ENABLED=false`, `AGENT_EVALS_ENABLED=false`, `AGENT_MULTI_AGENT_ENABLED=false`, and `AGENT_MARKETPLACE_ENABLED=false` preserve the non-agentic default posture.
+- **Enterprise autonomy controls stay disabled until explicitly enabled.** `AGENT_TOOL_SYNTHESIS_ENABLED=false`, `AGENT_CODE_INTERPRETER_ENABLED=false`, `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=false`, `AGENT_CODE_SANDBOX_NETWORK_ENABLED=false`, `AGENT_CODE_SANDBOX_WRITE_ENABLED=false`, `AGENT_KNOWLEDGE_GRAPH_ENABLED=false`, `AGENT_GRAPH_RAG_ENABLED=false`, `AGENT_GRAPH_WRITE_ENABLED=false`, `AGENT_GRAPH_EXTERNAL_DB_ENABLED=false`, `AGENT_EVENT_DRIVEN_ENABLED=false`, `AGENT_IAM_ENABLED=false`, `AGENT_SERVICE_PRINCIPALS_ENABLED=false`, `AGENT_AUTO_OPTIMIZATION_ENABLED=false`, `AGENT_OPTIMIZATION_APPLY_ENABLED=false`, `AGENTIC_ROUTER_V2_ENABLED=false`, `AGENT_STEP_MODEL_ROUTING_ENABLED=false`, `AGENT_COST_OPTIMIZED_ROUTING_ENABLED=false`, `AGENT_SHARED_WORKSPACE_ENABLED=false`, `AGENT_SHARED_ARTIFACTS_ENABLED=false`, and `AGENT_COLLABORATIVE_EDITING_ENABLED=false` preserve the governed appliance posture.
 - **GA does not accept implicit production fallbacks.** `AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=false` and `AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION=true` preserve a fail-closed production posture; any real provider validation remains opt-in and budgeted.
 - **Human approval stays on for sensitive agent actions.** `AGENT_HUMAN_APPROVAL_ENABLED=true` and `AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK=true` keep high-risk execution approval-gated by default.
+- **Code interpreter remains sandboxed unless operators expand the policy.** The sandbox starts without network, write access, or dynamic tool execution enabled.
 - **Raw prompts are not surfaced by default in agentic flows.** Observability, approvals, replay, and memory workflows use hashes and sanitized payloads rather than exposing raw prompts.
 - **No cross-tenant agent memory is supported.** Agent memory is tenant-scoped and disabled by default until operators explicitly enable it.
+- **Knowledge graph remains tenant-isolated.** Graph entities, relations, and Graph RAG are disabled by default and cannot operate cross-tenant.
 - **Managed control-plane metadata is restricted.** Heartbeats accept operational metadata only; prompt/document payloads are rejected by schema validation.
 - **No unrestricted agent autonomy.** Real runtime execution exists behind explicit feature gates, policy evaluation, and approval controls; the platform never enables that path by default.
 - **No formal certification.** Validation is advisory and self-attested. No external audit body.
@@ -202,19 +206,35 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 
 > [!WARNING]
 > **Capacidades Advisory, Experimental e Placeholders**:
-> - Recursos como orquestração Kubernetes, Distributed control-plane mesh, GPU autoscaling, Plugin marketplace, Managed control-plane e Multi-cluster operam estritamente como **placeholders** de validação sem execução física ou efeitos reais de cluster por padrão.
-> - Recursos avançados de segurança como PKI, Attestation e Hardware trust são puramente **advisory** por padrão, servindo apenas para análise e verificação local sem certificação formal ou aplicação coercitiva (enforcement).
+> - Recursos como orquestração Kubernetes, Distributed control-plane mesh, GPU autoscaling, Plugin marketplace e Multi-cluster permanecem **advisory/simulados** por padrão, sem orquestração física de cluster nem execução distribuída externa.
+> - O Managed control-plane, mesh local, PKI local e attestation local possuem execução funcional no escopo do appliance e dos testes, mas não devem ser vendidos como equivalentes a um fleet manager global, uma CA externa certificada ou hardware root of trust.
+> - O plugin runtime agora possui execução local sandboxed de plugins instalados, porém isso não equivale a um ecossistema de execução distribuída de plugins, nem a isolamento forte por container/VM.
 > - O recurso de Chaos Engineering é classificado como **experimental**.
 > - A superfície **Agentic AI Platform** é operacional, porém estritamente **opt-in**. Por padrão, nenhum agente usa provider real, nenhuma tool adapter roda com side effects e nenhuma memória semântica é reinjetada sem habilitação explícita.
 >
 > Para uma matriz de suporte detalhada, consulte a [Política de Supported Surface Area](docs/support/supported-surface-area.md).
 
-### Release v2.0.2 scope
+### Release v2.0.3 scope
 
-- **Surface governance is declarative**: GA uses versioned API/support-surface inventories and script manifests instead of broad filesystem heuristics.
-- **Task execution is explicit**: task and tool execution paths must emit `execution_mode`, and unsupported simulation paths fail closed instead of completing implicitly.
+- **TaskEngine is real-path safe**: task output validation uses the contract layer correctly, so successful executions do not fall back into retry/failure loops that repeat side effects.
+- **AgentExecutor has no silent simulation**: disabled real execution now fails closed unless an explicit mock or dry-run mode is enabled and audit-visible.
+- **Connector execution mode is explicit**: connectors run in `mock` or `real` mode only, with per-connector real enablement and no silent fallback from failed real calls into mock payloads.
+- **Queue and scheduler are durable-first**: lease expiry, DLQ routing, idempotency, deduplication, and scheduler prerequisites are part of the hardened readiness posture.
+- **Sandbox real execution is fail-closed**: real sandbox runs require a concrete implementation; only explicit `mock` or `dry_run` modes can emit simulated output.
+- **Operator reconciliation is minimally real**: the Kubernetes operator now distinguishes `real`, `mock`, and `dry_run` modes while reconciling Deployments, Services, provider secret references, and status conditions.
+- **Readiness gate is code-aware**: `make real-execution-readiness` now blocks production-like release posture on connector placeholders, implicit tool fallbacks, disabled durable queue, or non-real operator mode.
 - **Provider validation evidence is stricter**: GA only counts a recent non-mock provider/gateway validation when `basic_model_call` actually passes.
 - **Production mock posture is fail-closed for GA**: mock provider usage remains acceptable for appliance development, but is not counted as production-safe evidence.
+
+### Release v2.1.0 scope
+
+- **Governed code execution**: Agent tool synthesis and code interpreter are available behind dedicated flags with sandbox network/write access disabled by default.
+- **Graph-native RAG 2.0**: Knowledge graph extraction and Graph RAG are added as tenant-isolated extensions to memory and retrieval, with graph writes and external graph databases opt-in only.
+- **Proactive agents**: Event-driven triggers, deliveries, and webhook/cron/pubsub hooks are available under rate limit, budget, and dedup governance.
+- **Agent IAM**: Service principals, delegated token grants, and IAM audit trails provide governed connector identity for agents.
+- **Agentic CI/CD optimization**: Optimization experiments, candidate evaluation, approval, and apply flows are now part of the platform, with automatic apply disabled by default.
+- **Per-step Router 2.0**: Agentic Router V2 can classify steps, simulate policies, and persist auditable routing decisions.
+- **Shared artifacts**: Collaborative workspaces and artifact registries add immutable versions, locks, reviews, and diffs, while shared workspace remains disabled by default.
 
 ### Release v2.0.1 scope
 

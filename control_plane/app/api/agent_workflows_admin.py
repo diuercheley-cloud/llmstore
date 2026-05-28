@@ -49,6 +49,11 @@ class SignalRequest(BaseModel):
     signal_name: str
     payload: Dict[str, Any] = Field(default_factory=dict)
 
+
+class WorkflowRunRequest(BaseModel):
+    tenant_id: str = "default"
+    input_data: Dict[str, Any] = Field(default_factory=dict)
+
 # Endpoints
 @router.post("", response_model=WorkflowResponse)
 async def create_workflow(payload: WorkflowCreate, db: AsyncSession = Depends(get_db_session)):
@@ -63,9 +68,9 @@ async def create_workflow(payload: WorkflowCreate, db: AsyncSession = Depends(ge
     return workflow
 
 @router.post("/{id}/run", response_model=WorkflowRunResponse)
-async def run_workflow(id: uuid.UUID, tenant_id: str = "default", db: AsyncSession = Depends(get_db_session)):
+async def run_workflow(id: uuid.UUID, payload: WorkflowRunRequest, db: AsyncSession = Depends(get_db_session)):
     engine = WorkflowEngine(db)
-    run = await engine.create_run(id, tenant_id, {})
+    run = await engine.create_run(id, payload.tenant_id, payload.input_data)
     return run
 
 @router.get("/{id}/run/{run_id}", response_model=WorkflowRunResponse)

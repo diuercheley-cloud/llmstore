@@ -9,6 +9,7 @@ from app.db.session import get_db_session
 from app.services.agents.multi_agent.team_registry import TeamRegistry
 from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
 from app.services.agents.multi_agent.debate_runtime import DebateRuntime
+from app.services.agents.multi_agent.dynamic_runtime import DynamicRoutingRuntime
 from app.models.multi_agent import AgentTeam, AgentTeamRun, AgentTeamTrace
 
 router = APIRouter(prefix="/admin/agents/teams", tags=["agent-multi-agent-admin"])
@@ -21,7 +22,7 @@ class TeamMemberCreate(BaseModel):
 
 class TeamCreate(BaseModel):
     name: str
-    topology: str # hierarchical|debate
+    topology: str # hierarchical|debate|dynamic
     owner_user_id: str
     description: Optional[str] = None
     members: List[TeamMemberCreate] = Field(default_factory=list)
@@ -35,6 +36,7 @@ class TeamResponse(BaseModel):
 
 class TeamRunRequest(BaseModel):
     goal: str
+    work_items: List[Dict[str, Any]] = Field(default_factory=list)
 
 # Endpoints
 @router.post("", response_model=TeamResponse)
@@ -73,6 +75,9 @@ async def run_team(id: uuid.UUID, payload: TeamRunRequest, db: AsyncSession = De
     elif team.topology == "debate":
         runtime = DebateRuntime(db)
         result = await runtime.execute(team.id, payload.goal)
+    elif team.topology == "dynamic":
+        runtime = DynamicRoutingRuntime(db)
+        result = await runtime.execute(team.id, payload.goal, work_items=payload.work_items)
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported topology: {team.topology}")
         

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.commercial_control_plane_mesh import CommercialMeshPartitionEvent, CommercialMeshNode
 import uuid
 from typing import List
+from app.core.time import utc_now
 
 class MeshFailoverService:
     def __init__(self, db: Session):
@@ -44,8 +45,7 @@ class MeshFailoverService:
     def resolve_partition(self, partition_id: str, resolution_details: dict):
         event = self.db.query(CommercialMeshPartitionEvent).filter(CommercialMeshPartitionEvent.partition_id == partition_id).first()
         if event:
-            from datetime import datetime
-            event.resolved_at = datetime.utcnow()
+            event.resolved_at = utc_now()
             event.resolution_details = resolution_details
             
             isolated_node_ids = event.isolated_nodes.get("nodes", [])

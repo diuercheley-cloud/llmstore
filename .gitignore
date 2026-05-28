@@ -64,7 +64,6 @@ config/branding.local.json
 # Models (IMPORTANT)
 /bin
 /models/
-models/
 *.gguf
 *.safetensors
 *.so*

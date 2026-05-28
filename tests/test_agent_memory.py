@@ -2,6 +2,7 @@ import pytest
 import uuid
 import json
 import math
+from unittest.mock import patch
 from app.services.agents.agent_memory import AgentMemoryService, MemoryDisabledError, SecretFoundError, ConsentRequiredError
 from app.services.agents.memory_policy import MemoryPolicyService
 from app.services.agents.memory_retention import MemoryRetentionService
@@ -13,6 +14,26 @@ from app.services.agents import agent_state
 from app.core.config import get_settings
 from app.core.time import utc_now
 from datetime import timedelta
+from app.services.agents.agent_policy_engine import AgentPolicyEngine
+from app.models.agents import AgentPolicyDecision
+
+@pytest.fixture(autouse=True)
+def mock_agent_policy_engine():
+    async def mock_evaluate_action_v2(self, request):
+        return AgentPolicyDecision(
+            run_id=request.run_id,
+            action_type=request.action_type,
+            subject=request.subject,
+            tenant_id=request.tenant_id,
+            agent_id=request.agent_id,
+            risk_level="low",
+            result="allow",
+            reason="Mock allow for memory tests",
+            policy_version="1.1.0",
+            created_at=utc_now()
+        )
+    with patch.object(AgentPolicyEngine, "evaluate_action_v2", mock_evaluate_action_v2):
+        yield
 
 @pytest.mark.asyncio
 async def test_memory_tenant_isolation(session):

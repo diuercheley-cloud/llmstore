@@ -58,7 +58,7 @@ class FeatureFlagRegistryService:
                 
             # 3. Status validation
             status = f.get("status")
-            if status not in ("active", "deprecated", "experimental", "internal"):
+            if status not in ("active", "deprecated", "experimental", "internal", "beta"):
                 errors.append(f"Flag '{name}' has invalid status: {status}.")
                 
             # 4. Deprecated validation (must have replacement or remove_after)

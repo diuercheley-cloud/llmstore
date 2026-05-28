@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class SalesLeadNoteBase(BaseModel):
     content: str
@@ -10,12 +10,11 @@ class SalesLeadNoteCreate(SalesLeadNoteBase):
     pass
 
 class SalesLeadNote(SalesLeadNoteBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     lead_id: uuid.UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class SalesLeadBase(BaseModel):
     company_name: str
@@ -46,13 +45,12 @@ class SalesLeadUpdate(BaseModel):
     next_follow_up_at: Optional[datetime] = None
 
 class SalesLead(SalesLeadBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
     timeline_notes: List[SalesLeadNote] = []
-
-    class Config:
-        from_attributes = True
 
 class LeadAdvanceStage(BaseModel):
     new_status: str

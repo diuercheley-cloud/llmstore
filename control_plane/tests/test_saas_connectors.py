@@ -14,6 +14,18 @@ def patch_settings(env_dict):
     get_settings.cache_clear()
     return patcher
 
+import pytest_asyncio
+from app.db.base import Base
+from app.db.session import engine
+
+@pytest_asyncio.fixture(autouse=True)
+async def setup_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
 @pytest.fixture(autouse=True)
 def setup_connectors():
     get_settings.cache_clear()
@@ -23,6 +35,7 @@ def setup_connectors():
     yield
     connector_registry.clear()
     get_settings.cache_clear()
+
 
 @pytest.mark.asyncio
 async def test_connector_registry_lists_connectors():

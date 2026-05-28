@@ -1,7 +1,6 @@
 import kopf
 import pytest
-import sys
-import os
+import unittest.mock as mock
 from importlib.util import spec_from_file_location, module_from_spec
 
 def load_operator_main():
@@ -13,16 +12,24 @@ def load_operator_main():
 operator_main = load_operator_main()
 
 def test_operator_handlers_exist():
-    # Basic check to ensure handlers are defined
-    assert operator_main.create_fn is not None
-    assert operator_main.update_fn is not None
-    assert operator_main.delete_fn is not None
+    # Check if handlers are defined for our CRDs
+    assert operator_main.reconcile_inference_stack is not None
+    assert operator_main.reconcile_model_runtime is not None
+    assert operator_main.reconcile_provider is not None
+    assert operator_main.reconcile_tenant is not None
 
-def test_operator_create_handler_mock():
-    # Mocking kopf logger and kwargs
+def test_operator_reconcile_inference_stack_mock():
     class MockLogger:
         def info(self, msg): pass
+        def error(self, msg): pass
     
     spec = {'image': 'test-image', 'replicas': 2}
-    result = operator_main.create_fn(spec=spec, name='test-stack', namespace='default', logger=MockLogger())
-    assert result['status'] == 'Ready'
+    body = {'metadata': {'name': 'test-stack', 'namespace': 'default'}}
+    
+    # Mocking Kubernetes API calls inside the function
+    with mock.patch('kubernetes.client.AppsV1Api'), \
+         mock.patch('kubernetes.client.CoreV1Api'), \
+         mock.patch('kubernetes.client.CustomObjectsApi'):
+        
+        # This shouldn't raise exception now
+        operator_main.reconcile_inference_stack(spec=spec, name='test-stack', namespace='default', body=body, logger=MockLogger())

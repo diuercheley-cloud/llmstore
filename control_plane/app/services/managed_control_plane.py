@@ -21,6 +21,7 @@ from app.schemas.managed_control_plane import (
     ApplianceEnrollRequest,
     ApplianceHeartbeatPayload,
 )
+from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class ManagedControlPlaneService:
 
     async def generate_enrollment_token(self, workspace_id: uuid.UUID, expires_in_hours: int = 24) -> ApplianceEnrollment:
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+        expires_at = utc_now() + timedelta(hours=expires_in_hours)
         
         db_enrollment = ApplianceEnrollment(
             workspace_id=workspace_id,
@@ -68,7 +69,7 @@ class ManagedControlPlaneService:
         stmt = select(ApplianceEnrollment).where(
             ApplianceEnrollment.enrollment_token == enroll_in.enrollment_token,
             ApplianceEnrollment.is_used == False,
-            ApplianceEnrollment.expires_at > datetime.utcnow()
+            ApplianceEnrollment.expires_at > utc_now()
         )
         result = await self.session.execute(stmt)
         enrollment = result.scalar_one_or_none()
@@ -89,7 +90,7 @@ class ManagedControlPlaneService:
         
         # 3. Mark token as used
         enrollment.is_used = True
-        enrollment.used_at = datetime.utcnow()
+        enrollment.used_at = utc_now()
         enrollment.used_by_appliance_id = db_appliance.id
         
         await self.session.commit()
@@ -122,7 +123,7 @@ class ManagedControlPlaneService:
         appliance.version = payload.version
         appliance.health_status = payload.health_status
         appliance.readiness = payload.readiness
-        appliance.last_heartbeat_at = datetime.utcnow()
+        appliance.last_heartbeat_at = utc_now()
         appliance.capacity_summary = payload.capacity_summary
         appliance.enabled_providers = payload.enabled_providers
         appliance.available_models = payload.available_models
@@ -134,7 +135,7 @@ class ManagedControlPlaneService:
         return True
 
     async def revoke_appliance(self, appliance_id: uuid.UUID) -> bool:
-        stmt = update(ManagedAppliance).where(ManagedAppliance.id == appliance_id).values(status="revoked", updated_at=datetime.utcnow())
+        stmt = update(ManagedAppliance).where(ManagedAppliance.id == appliance_id).values(status="revoked", updated_at=utc_now())
         await self.session.execute(stmt)
         await self.session.commit()
         return True

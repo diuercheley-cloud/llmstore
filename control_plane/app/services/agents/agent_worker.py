@@ -39,6 +39,8 @@ from app.core.metrics import (
 
 logger = logging.getLogger(__name__)
 
+import signal
+
 class AgentWorkerService:
     def __init__(self, worker_id: str | None = None):
         self.settings = get_settings()
@@ -47,6 +49,18 @@ class AgentWorkerService:
         self.is_draining = False
         self._heartbeat_task = None
         self._recovery_task = None
+        self._setup_signal_handlers()
+
+    def _setup_signal_handlers(self):
+        try:
+            loop = asyncio.get_running_loop()
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                loop.add_signal_handler(sig, lambda: asyncio.create_task(self.stop()))
+            # SIGUSR1 for DRAIN mode
+            loop.add_signal_handler(signal.SIGUSR1, self.drain)
+        except RuntimeError:
+            # Not in an event loop (e.g. during init in some contexts)
+            pass
 
     async def register_heartbeat(self, db: AsyncSession) -> None:
         now = utc_now()
@@ -101,6 +115,15 @@ class AgentWorkerService:
 
     async def stop(self) -> None:
         self.is_running = False
+        self.is_draining = True
+        logger.info(f"Worker {self.worker_id} stopping. Entering drain mode for graceful shutdown.")
+        
+        # Give some time for current jobs to finish
+        for i in range(30):
+            # We don't have a direct count of THIS worker's leases here easily without DB call,
+            # but we can assume if we are draining, we just wait a bit for any active tasks to complete.
+            await asyncio.sleep(1)
+
         if self._heartbeat_task:
             self._heartbeat_task.cancel()
         if self._recovery_task:
@@ -153,25 +176,51 @@ class AgentWorkerService:
         """Identifies expired leases and puts jobs back in queue. Also identifies stuck runs."""
         now = utc_now()
         
-        # 1. Recover orphan leases
-        stmt = select(AgentExecutionLease).where(AgentExecutionLease.expires_at <= now)
-        res = await db.execute(stmt)
-        expired = res.scalars().all()
+        # 1. Recover orphan jobs based on locked_until
+        stmt_stale = (
+            select(AgentExecutionJob)
+            .where(
+                AgentExecutionJob.queue_status == "leased",
+                AgentExecutionJob.locked_until <= now
+            )
+            .with_for_update(skip_locked=True)
+        )
+        res_stale = await db.execute(stmt_stale)
+        stale_jobs = res_stale.scalars().all()
         
         count = 0
-        for lease in expired:
+        for job in stale_jobs:
+            logger.warning(f"Recovering orphan job {job.id} from expired lock (locked until {job.locked_until}).")
+            job.queue_status = "queued"
+            job.locked_by = None
+            job.locked_until = None
+            job.updated_at = now
+            count += 1
+            
+            # Delete any associated lease record for consistency
+            stmt_del_lease = delete(AgentExecutionLease).where(AgentExecutionLease.job_id == job.id)
+            await db.execute(stmt_del_lease)
+        
+        # 2. Recover orphan leases from lease table (legacy cleanup)
+        stmt_leases = select(AgentExecutionLease).where(AgentExecutionLease.expires_at <= now)
+        res_leases = await db.execute(stmt_leases)
+        expired_leases = res_leases.scalars().all()
+        
+        for lease in expired_leases:
             stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == lease.job_id).with_for_update()
             res_job = await db.execute(stmt_job)
             job = res_job.scalar_one_or_none()
-            if job and job.status == "running":
-                logger.warning(f"Recovering orphan job {job.id} from expired lease.")
-                job.status = "queued"
+            if job and job.queue_status == "leased":
+                logger.warning(f"Recovering orphan job {job.id} from expired lease table.")
+                job.queue_status = "queued"
+                job.locked_by = None
+                job.locked_until = None
                 job.updated_at = now
                 count += 1
             
             await db.delete(lease)
         
-        # 2. Monitor stuck runs (running for > 2 hours with no recent update)
+        # 3. Monitor stuck runs (running for > 2 hours with no recent update)
         stmt_stuck = select(func.count(AgentRun.id)).where(
             AgentRun.status == "running",
             AgentRun.updated_at <= now - timedelta(hours=2)
@@ -182,7 +231,7 @@ class AgentWorkerService:
         
         if count > 0:
             await db.commit()
-            logger.info(f"Recovered {count} orphan leases.")
+            logger.info(f"Recovered {count} orphan execution jobs/leases.")
         return count
 
     async def run_once(self) -> bool:
@@ -214,7 +263,7 @@ class AgentWorkerService:
                 stmt = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
                 res = await db.execute(stmt)
                 db_job = res.scalar_one()
-                db_job.status = "running"
+                db_job.queue_status = "running"
                 db_job.updated_at = utc_now()
                 
                 # Check run status, set to running if currently queued
@@ -238,7 +287,7 @@ class AgentWorkerService:
                             stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
                             res_job = await db_cancel.execute(stmt_job)
                             j = res_job.scalar_one()
-                            j.status = "cancelled"
+                            j.queue_status = "cancelled"
                             j.updated_at = utc_now()
                             await delete_lease_by_job_id(db_cancel, job_id)
                             await db_cancel.commit()
@@ -276,28 +325,28 @@ class AgentWorkerService:
 
                     if run:
                         if run.status == "completed":
-                            db_job.status = "completed"
+                            db_job.queue_status = "completed"
                             LLM_AGENT_JOBS_COMPLETED_TOTAL.labels(tenant_id=tenant_id, agent_id=str(agent_id)).inc()
                         elif run.status == "failed":
-                            db_job.status = "failed"
+                            db_job.queue_status = "failed"
                             LLM_AGENT_JOBS_FAILED_TOTAL.labels(tenant_id=tenant_id, agent_id=str(agent_id)).inc()
                         elif run.status == "cancelled":
-                            db_job.status = "cancelled"
+                            db_job.queue_status = "cancelled"
                             LLM_AGENT_JOBS_CANCELLED_TOTAL.labels(tenant_id=tenant_id, agent_id=str(agent_id)).inc()
                         elif run.status == "waiting_approval":
-                            db_job.status = "waiting_approval"
+                            db_job.queue_status = "waiting_approval"
                         else:
-                            db_job.status = "completed"  # fallback
+                            db_job.queue_status = "completed"  # fallback
                             LLM_AGENT_JOBS_COMPLETED_TOTAL.labels(tenant_id=tenant_id, agent_id=str(agent_id)).inc()
                     else:
-                        db_job.status = "completed"
+                        db_job.queue_status = "completed"
                         LLM_AGENT_JOBS_COMPLETED_TOTAL.labels(tenant_id=tenant_id, agent_id=str(agent_id)).inc()
 
                     db_job.updated_at = utc_now()
                     await delete_lease_by_job_id(db, job_id)
                     await db.commit()
                     await update_queue_metrics(db, tenant_id, agent_id)
-                    logger.info(f"Finished job {job_id} with status {db_job.status}")
+                    logger.info(f"Finished job {job_id} with status {db_job.queue_status}")
                 LLM_AGENT_ACTIVE_LEASES.dec()
 
             else:
@@ -314,19 +363,28 @@ class AgentWorkerService:
         return True
 
     async def _lease_renewer_loop(self, job_id: uuid.UUID) -> None:
-        while True:
+        while self.is_running:
             try:
                 await asyncio.sleep(15)
                 async with SessionLocal() as db:
-                    stmt = select(AgentExecutionLease).where(AgentExecutionLease.job_id == job_id).with_for_update()
-                    res = await db.execute(stmt)
-                    lease = res.scalar_one_or_none()
-                    if lease:
-                        lease.expires_at = utc_now() + timedelta(seconds=60)
+                    # Update both AgentExecutionJob and AgentExecutionLease
+                    stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
+                    res_job = await db.execute(stmt_job)
+                    job = res_job.scalar_one_or_none()
+                    
+                    if job and job.locked_by == self.worker_id:
+                        job.locked_until = utc_now() + timedelta(seconds=60)
+                        
+                        stmt_lease = select(AgentExecutionLease).where(AgentExecutionLease.job_id == job_id).with_for_update()
+                        res_lease = await db.execute(stmt_lease)
+                        lease = res_lease.scalar_one_or_none()
+                        if lease:
+                            lease.expires_at = job.locked_until
+                        
                         await db.commit()
-                        logger.debug(f"Renewed lease for job {job_id} until {lease.expires_at}")
+                        logger.debug(f"Renewed lease for job {job_id} until {job.locked_until}")
                     else:
-                        logger.warning(f"Lease not found for job {job_id} during renewal")
+                        logger.warning(f"Job {job_id} not found or owned by another worker during renewal")
                         break
             except asyncio.CancelledError:
                 break
@@ -343,24 +401,24 @@ class AgentWorkerService:
             if not job:
                 return
 
-            job.attempts += 1
+            job.attempt_count += 1
             
             # Record retry record
             retry_record = AgentExecutionRetry(
                 job_id=job.id,
-                attempt=job.attempts,
+                attempt=job.attempt_count,
                 error_message=error_message,
                 attempted_at=now,
                 next_attempt_at=now
             )
 
-            if job.attempts < job.max_attempts:
-                delay = job.initial_delay_seconds * (job.backoff_factor ** (job.attempts - 1))
+            if job.attempt_count < job.max_attempts:
+                delay = job.initial_delay_seconds * (job.backoff_factor ** (job.attempt_count - 1))
                 next_attempt = now + timedelta(seconds=delay)
                 retry_record.next_attempt_at = next_attempt
 
-                job.status = "queued"
-                job.scheduled_at = next_attempt
+                job.queue_status = "queued"
+                job.available_at = next_attempt
                 job.updated_at = now
 
                 # Also update run status to queued so worker picks it up
@@ -369,15 +427,15 @@ class AgentWorkerService:
                 )
                 await agent_state.log_run_event(
                     db, job.agent_run_id, "retry_scheduled", {
-                        "attempt": job.attempts,
+                        "attempt": job.attempt_count,
                         "next_attempt_at": next_attempt.isoformat(),
                         "reason": error_message
                     }
                 )
                 LLM_AGENT_JOB_RETRIES_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
-                logger.warn(f"Job {job_id} failed. Re-enqueued for attempt {job.attempts + 1} at {next_attempt}. Error: {error_message}")
+                logger.warning(f"Job {job_id} failed. Re-enqueued for attempt {job.attempt_count + 1} at {next_attempt}. Error: {error_message}")
             else:
-                job.status = "dead_letter"
+                job.queue_status = "dead_letter"
                 job.updated_at = now
 
                 dlq = AgentExecutionDeadLetter(
@@ -400,6 +458,7 @@ class AgentWorkerService:
                 LLM_AGENT_JOBS_FAILED_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
                 LLM_AGENT_DEAD_LETTERS_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
                 logger.error(f"Job {job_id} exceeded max attempts ({job.max_attempts}) and moved to DLQ. Error: {error_message}")
+
 
             db.add(retry_record)
             await delete_lease_by_job_id(db, job_id)

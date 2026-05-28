@@ -3,7 +3,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,6 +71,8 @@ class BundleImportRequest(BaseModel):
 
 
 class AttestationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     client_id: UUID
     attestation_type: str
@@ -87,11 +89,10 @@ class AttestationResponse(BaseModel):
     offline_verifiable: bool
     immutable_hash: str
 
-    class Config:
-        from_attributes = True
-
 
 class BundleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     client_id: UUID
     bundle_name: str
@@ -103,9 +104,6 @@ class BundleResponse(BaseModel):
     replay_verifiable: bool
     offline_verifiable: bool
     immutable_hash: str
-
-    class Config:
-        from_attributes = True
 
 
 def _serialize_attestation(attestation: SovereignExecutionAttestation) -> dict[str, Any]:

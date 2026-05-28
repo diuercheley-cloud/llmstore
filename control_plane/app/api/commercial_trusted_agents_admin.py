@@ -5,7 +5,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,6 +33,8 @@ policy_engine = ToolPolicyEngine()
 
 
 class ToolRegistryPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     tool_name: str = Field(min_length=1, max_length=128)
     tenant_id: str | None = None
     enabled: bool = True
@@ -45,7 +47,7 @@ class ToolRegistryPayload(BaseModel):
     quota_limit_per_day: int = 5000
     signer_identity: str | None = None
     policy_scope_json: dict[str, Any] | None = None
-    schema_json: dict[str, Any] | None = None
+    schema_definition: dict[str, Any] | None = Field(default=None, alias="schema_json")
     metadata_json: dict[str, Any] | None = None
 
 
@@ -159,9 +161,10 @@ async def list_trusted_tools(
 
 @router.post("/admin/agents/tools")
 async def register_trusted_tool(payload: ToolRegistryPayload, db: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:
+    payload_data = payload.model_dump(by_alias=True)
     row = CommercialToolRegistry(
-        **payload.model_dump(),
-        provenance_hash=sha256_hex(canonical_json(payload.model_dump())),
+        **payload_data,
+        provenance_hash=sha256_hex(canonical_json(payload_data)),
         provenance_signature=f"placeholder_sig_{sha256_hex(payload.tool_name)[:24]}",
     )
     db.add(row)

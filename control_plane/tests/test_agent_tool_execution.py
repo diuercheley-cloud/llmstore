@@ -2,13 +2,15 @@ import pytest
 import pytest_asyncio
 import uuid
 import asyncio
+import importlib
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from fastapi import status
 
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
+import app.db.session
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
@@ -39,15 +41,29 @@ from app.services.agents.tool_rollback import rollback_invocation_side_effects
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
+    db_file = Path(f"/tmp/test-agent-tool-exec-{uuid.uuid4()}.db")
+    db_url = f"sqlite+aiosqlite:///{db_file}"
+    engine = create_async_engine(db_url, pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+    orig_engine = app.db.session.engine
+    orig_session = app.db.session.SessionLocal
+    app.db.session.engine = engine
+    app.db.session.SessionLocal = session_factory
+
     async with engine.begin() as conn:
-        # Import all models to ensure they are registered on Base
-        import app.models.agents  # noqa
-        import app.models.agent_tool_execution  # noqa
+        importlib.import_module("app.models.agents")
+        importlib.import_module("app.models.agent_tool_execution")
         await conn.run_sync(Base.metadata.create_all)
-    yield
-    # Clean up tables after each test
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+
+    yield session_factory
+
+    await engine.dispose()
+    if db_file.exists():
+        db_file.unlink()
+
+    app.db.session.engine = orig_engine
+    app.db.session.SessionLocal = orig_session
 
 
 @pytest.fixture
@@ -135,7 +151,7 @@ async def create_mock_agent(db: AsyncSession, surface_status: str = "internal") 
 async def test_disabled_tool_execution_flag_blocks_execution(run_settings):
     run_settings.agent_tool_execution_enabled = False
     
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "test_tool")
         
         with pytest.raises(ValueError, match="Tool execution is disabled by feature flag"):
@@ -149,7 +165,7 @@ async def test_disabled_tool_execution_flag_blocks_execution(run_settings):
 
 @pytest.mark.asyncio
 async def test_sandbox_mock_execution(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "test_tool")
         
         output = await execute_tool(
@@ -173,7 +189,7 @@ async def test_sandbox_mock_execution(run_settings):
 
 @pytest.mark.asyncio
 async def test_sandbox_runtime_timeout(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "slow_tool", timeout_seconds=1)
         
         async def slow_callable(**kwargs):
@@ -198,7 +214,7 @@ async def test_sandbox_runtime_timeout(run_settings):
 
 @pytest.mark.asyncio
 async def test_sandbox_output_truncation(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         # We need a small output limit. We pass output_limit_bytes to the test by wrapping/mocking, or we can use tool execution sandbox helper directly or mock size.
         # Let's customize execute_in_sandbox call in executor, or we can just call execute_in_sandbox directly to verify truncation logic.
         from app.services.agents.tool_sandbox import execute_in_sandbox
@@ -236,7 +252,7 @@ async def test_sandbox_output_truncation(run_settings):
 async def test_shell_command_blocking_default(run_settings):
     run_settings.agent_destructive_tools_enabled = False
     
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "shell_tool", category="shell_command")
         
         with pytest.raises(ValueError, match="Shell commands are disabled by default"):
@@ -252,7 +268,7 @@ async def test_shell_command_blocking_default(run_settings):
 async def test_destructive_tools_flag_blocks(run_settings):
     run_settings.agent_destructive_tools_enabled = False
     
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "format_drive", side_effect_level="destructive")
         
         with pytest.raises(ValueError, match="Destructive tool execution is disabled by feature flag"):
@@ -266,7 +282,7 @@ async def test_destructive_tools_flag_blocks(run_settings):
 
 @pytest.mark.asyncio
 async def test_human_approval_requirement(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "write_tool", side_effect_level="write", requires_approval=True)
         
         # 1. Blocks execution without approval
@@ -316,7 +332,7 @@ async def test_human_approval_requirement(run_settings):
 
 @pytest.mark.asyncio
 async def test_credential_delegation_resolution(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "cred_tool")
         
         # Register a credential
@@ -367,7 +383,7 @@ async def test_credential_delegation_resolution(run_settings):
 
 @pytest.mark.asyncio
 async def test_revoked_credential_blocks(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "secret_tool")
         
         cred = await register_credential(
@@ -398,7 +414,7 @@ async def test_revoked_credential_blocks(run_settings):
 
 @pytest.mark.asyncio
 async def test_expired_credential_blocks(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "secret_tool")
         
         cred = await register_credential(
@@ -424,7 +440,7 @@ async def test_expired_credential_blocks(run_settings):
 
 @pytest.mark.asyncio
 async def test_quota_limits(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "test_tool")
         
         # We can update the limit of a counter manually in the DB to test
@@ -456,7 +472,7 @@ async def test_quota_limits(run_settings):
 
 @pytest.mark.asyncio
 async def test_dry_run_no_side_effects(run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "write_tool", side_effect_level="write")
         
         output = await execute_tool(
@@ -485,7 +501,7 @@ async def test_rollback_execution(run_settings):
         rollback_called = True
         rollback_params = kwargs
         
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(
             db=db,
             name="write_tool",
@@ -527,7 +543,7 @@ async def test_rollback_execution(run_settings):
 
 @pytest.mark.asyncio
 async def test_api_endpoints(async_client, admin_token_headers, run_settings):
-    async with SessionLocal() as db:
+    async with app.db.session.SessionLocal() as db:
         tool = await create_mock_tool(db, "api_tool", side_effect_level="write")
         tool_id = tool.id
         

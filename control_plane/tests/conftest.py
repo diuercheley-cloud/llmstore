@@ -5,6 +5,14 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import JSONB
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+
 TEST_TMP = Path("/tmp/llm-inference-stack-control-plane-tests")
 TEST_TMP.mkdir(parents=True, exist_ok=True)
 TEST_DB_FILE = TEST_TMP / "managed-control-plane.db"
@@ -13,6 +21,25 @@ os.environ.setdefault("ADMIN_TOKEN", "test-admin-token")
 os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{TEST_DB_FILE}")
 os.environ.setdefault("REDIS_URL", "redis://test.invalid:6379/0")
 os.environ.setdefault("DATA_PLANE_BASE_URL", "http://localhost:8081")
+os.environ.setdefault("AGENT_EVENT_DRIVEN_ENABLED", "true")
+os.environ.setdefault("AGENT_EVENT_HOOKS_ENABLED", "true")
+os.environ.setdefault("AGENT_CRON_TRIGGERS_ENABLED", "true")
+os.environ.setdefault("AGENT_PUBSUB_TRIGGERS_ENABLED", "true")
+os.environ.setdefault("AGENT_EXTERNAL_WEBHOOK_TRIGGERS_ENABLED", "true")
+os.environ.setdefault("AGENT_ASYNC_EXECUTION_ENABLED", "true")
+os.environ.setdefault("AGENT_EXECUTION_PLANE_ENABLED", "true")
+os.environ.setdefault("AGENT_RUNTIME_ENABLED", "true")
+os.environ.setdefault("AGENT_IAM_ENABLED", "true")
+os.environ.setdefault("AGENT_SERVICE_PRINCIPALS_ENABLED", "true")
+os.environ.setdefault("AGENT_DELEGATED_TOKENS_ENABLED", "true")
+os.environ.setdefault("AGENT_OAUTH_ON_BEHALF_OF_ENABLED", "true")
+os.environ.setdefault("AGENT_AUTO_OPTIMIZATION_ENABLED", "true")
+os.environ.setdefault("AGENT_DSPY_OPTIMIZER_ENABLED", "true")
+os.environ.setdefault("AGENT_AUTO_PROMOTE_OPTIMIZATIONS", "true")
+os.environ.setdefault("AGENT_OPTIMIZATION_APPLY_ENABLED", "true")
+
+
+
 
 from app.main import app
 from app.core.config import get_settings

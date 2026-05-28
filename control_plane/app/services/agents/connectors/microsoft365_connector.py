@@ -1,6 +1,14 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List
-from app.services.agents.connectors.base import ConnectorAdapter, ConnectorCapability, RiskLevel, SideEffectLevel
+from typing import Any, Dict, List, Optional
+from app.services.agents.connectors.base import (
+    ConnectorAdapter,
+    ConnectorCapability,
+    RiskLevel,
+    SideEffectLevel,
+)
+from app.services.agents.connectors.connector_runtime import ConnectorRuntime
+from app.services.agents.connectors.connector_mode import ConnectorMode
+from app.services.agents.connectors.http_client import ConnectorHTTPClient
 
 class Microsoft365Connector(ConnectorAdapter):
     @property
@@ -8,8 +16,12 @@ class Microsoft365Connector(ConnectorAdapter):
         return "microsoft365"
 
     @property
+    def mode(self) -> ConnectorMode:
+        return ConnectorRuntime.get_mode(self.connector_name)
+
+    @property
     def connector_version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     @property
     def provider(self) -> str:
@@ -58,7 +70,10 @@ class Microsoft365Connector(ConnectorAdapter):
         return True
 
     async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        return {"status": "dry_run_success", "connector": self.connector_name, "action": kwargs.get("action")}
+        return self._with_execution_metadata(
+            {"status": "dry_run_success", "action": kwargs.get("action")},
+            mode="dry_run",
+        )
 
     async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         action = kwargs.get("action")
@@ -76,11 +91,79 @@ class Microsoft365Connector(ConnectorAdapter):
         
         self._check_feature_flags(capability)
 
+        # Agent IAM Check
+        await self.check_iam(tenant_id, credentials, action)
+
+        # Audit event
+        await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
+
+        if self.mode == ConnectorMode.REAL:
+            return self._with_execution_metadata(
+                await self._execute_real(action, params, credentials),
+                mode="real",
+            )
+        return await self._execute_mock(action, params)
+
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+        ConnectorRuntime.ensure_real_allowed(self.connector_name)
+        ConnectorRuntime.validate_credentials(self.connector_name, credentials)
+
+        token = credentials.get("token") or credentials.get("api_key")
+        if not token:
+            raise ValueError("token is required for Microsoft 365 real mode")
+
+        client = ConnectorHTTPClient(
+            base_url="https://graph.microsoft.com/v1.0",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+
         if action == "search_mail_metadata":
-            return {"emails": [{"subject": "Welcome", "from": "support@microsoft.com"}]}
+            q = params.get("q", "")
+            return await client.request("GET", "/me/messages", params={"$search": f'"{q}"'})
         elif action == "get_calendar_events_metadata":
-            return {"events": [{"subject": "Sprint Planning", "start": "2026-05-22T10:00:00Z"}]}
+            return await client.request("GET", "/me/events")
         elif action == "create_calendar_draft":
-            return {"status": "success", "event_id": "EVT999"}
+            subject = params.get("subject")
+            start = params.get("start")
+            end = params.get("end")
+            if not subject or not start or not end:
+                raise ValueError("subject, start, and end are required for create_calendar_draft")
+            payload = {
+                "subject": subject,
+                "start": {"dateTime": start, "timeZone": params.get("time_zone", "UTC")},
+                "end": {"dateTime": end, "timeZone": params.get("time_zone", "UTC")},
+                "body": {
+                    "contentType": "text",
+                    "content": params.get("body", ""),
+                },
+            }
+            return await client.request("POST", "/me/events", json_data=payload)
+
+        raise self._unsupported_action(
+            action,
+            mode="real",
+            supported_actions=["create_calendar_draft", "get_calendar_events_metadata", "search_mail_metadata"],
+        )
+
+    async def _execute_mock(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        if action == "search_mail_metadata":
+            return self._with_execution_metadata(
+                {"emails": [{"subject": "Welcome", "from": "support@microsoft.com"}]},
+                mode="mock",
+            )
+        elif action == "get_calendar_events_metadata":
+            return self._with_execution_metadata(
+                {"events": [{"subject": "Sprint Planning", "start": "2026-05-22T10:00:00Z"}]},
+                mode="mock",
+            )
+        elif action == "create_calendar_draft":
+            return self._with_execution_metadata(
+                {"status": "success", "event_id": "EVT999"},
+                mode="mock",
+            )
             
-        return {"status": "error", "message": "Action not implemented"}
+        raise self._unsupported_action(
+            action,
+            mode="mock",
+            supported_actions=["create_calendar_draft", "get_calendar_events_metadata", "search_mail_metadata"],
+        )

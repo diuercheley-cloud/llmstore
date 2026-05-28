@@ -1,3 +1,13 @@
+
+from app.models.agent_tool_synthesis import (
+    AgentGeneratedTool,
+    AgentGeneratedToolVersion,
+    AgentCodeInterpreterRun,
+    AgentSandboxSession,
+    AgentSandboxArtifact,
+    AgentSandboxPolicyEvent,
+)
+
 from app.models.plugins.marketplace import (
     PluginMarketplaceEntry,
     PluginVersion,
@@ -402,6 +412,15 @@ from app.models.agents import (
     AgentTraceSpan,
     AgentTimelineEvent,
 )
+from app.models.agent_workspace import (
+    AgentWorkspace,
+    AgentSharedArtifact,
+    AgentArtifactVersion,
+    AgentArtifactLock,
+    AgentArtifactReview,
+    AgentArtifactComment,
+    AgentArtifactEvent,
+)
 from app.models.agent_tool_execution import (
     AgentToolCredential,
     AgentToolCredentialGrant,
@@ -756,6 +775,23 @@ __all__ = [
     "PluginPermission",
     "PluginTrustReport",
     "PluginReview",
+    "AgentModelCapability",
+    "AgentRoutingPolicy",
+    "AgentCostQualityProfile",
+    "AgentStepRoutingDecision",
+    "AgentWorkspace",
+    "AgentSharedArtifact",
+    "AgentArtifactVersion",
+    "AgentArtifactLock",
+    "AgentArtifactReview",
+    "AgentArtifactComment",
+    "AgentArtifactEvent",
+    "AgentGeneratedTool",
+    "AgentGeneratedToolVersion",
+    "AgentCodeInterpreterRun",
+    "AgentSandboxSession",
+    "AgentSandboxArtifact",
+    "AgentSandboxPolicyEvent",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 
@@ -819,3 +855,36 @@ from app.models.agent_workflows_external import (
     AgentWorkflowPollingJob,
     AgentWorkflowExternalEvent
 )
+
+from app.models.agent_knowledge_graph import (
+    AgentKGEntity,
+    AgentKGRelation,
+    AgentKGSource,
+    AgentKGExtractionRun,
+    AgentKGQueryEvent,
+)
+from app.models.agent_events import ( AgentEventSource, AgentEventTrigger, AgentEventDelivery, AgentEventDedupKey, AgentEventSubscription, AgentScheduledTrigger, AgentWebhookTrigger )
+from app.models.agent_iam import (
+    AgentServicePrincipal,
+    AgentDelegatedToken,
+    AgentTokenGrant,
+    AgentScopePolicy,
+    AgentCredentialAuditEvent,
+    AgentIdentityBinding,
+)
+from app.models.agent_routing import (
+    AgentModelCapability,
+    AgentRoutingPolicy,
+    AgentCostQualityProfile,
+    AgentStepRoutingDecision,
+)
+from app.models.agent_optimization import (
+    AgentOptimizationExperiment,
+    AgentOptimizationCandidate,
+    AgentOptimizationResult,
+    AgentPromptCandidate,
+    AgentPolicyCandidate,
+    AgentToolSelectionCandidate,
+)
+
+

@@ -2,7 +2,7 @@
 import uuid
 from typing import List, Optional, Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, status, Body
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
@@ -54,6 +54,8 @@ class AgentDeprecationRequest(BaseModel):
     replacement_agent_id: Optional[uuid.UUID] = None
 
 class AgentRegistryEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     agent_id: uuid.UUID
     name: str
@@ -75,10 +77,9 @@ class AgentRegistryEntryResponse(BaseModel):
     created_at: str
     updated_at: str
 
-    class Config:
-        from_attributes = True
-
 class AgentVersionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     agent_registry_id: uuid.UUID
     semantic_version: str
@@ -86,9 +87,6 @@ class AgentVersionResponse(BaseModel):
     allowed_tools: Optional[List[str]] = None
     allowed_models: Optional[List[str]] = None
     created_at: str
-
-    class Config:
-        from_attributes = True
 
 
 # Helpers

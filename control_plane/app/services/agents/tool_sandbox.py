@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agent_tool_execution import AgentToolExecutionSandbox
+from app.services.agents.sandbox_escape_analysis import SandboxEscapeAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,13 @@ async def execute_in_sandbox(
     blocks unauthorized shell commands, and registers execution records.
     """
     settings = get_settings()
+
+    # 1. Static Analysis & Escape Detection
+    analyzer = SandboxEscapeAnalyzer()
+    is_safe, reason = analyzer.analyze_parameters(tool_name, parameters)
+    if not is_safe:
+        logger.warning(f"Sandbox escape attempt blocked: {reason} for tool {tool_name}")
+        raise ValueError(f"Security Policy Violation: {reason}")
 
     # Enforce shell command flag
     if tool_category == "shell_command":
@@ -85,11 +93,25 @@ async def execute_in_sandbox(
                     timeout=float(timeout_seconds)
                 )
         else:
-            # Default mock simulation
-            output = {
-                "status": "success",
-                "message": f"Sandbox execution mock output for command '{command_to_run}'."
-            }
+            if sandbox_type == "mock":
+                output = {
+                    "status": "success",
+                    "message": f"Sandbox execution mock output for command '{command_to_run}'.",
+                    "execution_mode": "mock",
+                    "simulated": True,
+                }
+            elif sandbox_type == "dry_run":
+                output = {
+                    "status": "dry_run_success",
+                    "message": f"Sandbox dry-run completed for command '{command_to_run}'.",
+                    "execution_mode": "dry_run",
+                    "simulated": True,
+                }
+            else:
+                raise ValueError(
+                    f"Real sandbox execution for tool '{tool_name}' requires an explicit callable implementation. "
+                    "Implicit mock fallback is blocked."
+                )
 
         # Handle output serialization and truncation
         import json

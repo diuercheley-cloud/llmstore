@@ -16,11 +16,14 @@ def mock_settings(monkeypatch):
     monkeypatch.setattr(settings, "rag_enabled", True)
     monkeypatch.setattr(settings, "tts_enabled", True)
     monkeypatch.setattr(settings, "lmstudio_enabled", True)
+    monkeypatch.setattr(settings, "agent_runtime_enabled", False)
     return settings
 
 class MockResult:
     def __init__(self, data):
         self.data = data
+    def scalar(self):
+        return self.data[0] if self.data else None
     def scalars(self):
         class MockScalars:
             def __init__(self, items):

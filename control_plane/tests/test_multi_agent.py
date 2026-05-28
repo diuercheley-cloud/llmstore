@@ -1,13 +1,16 @@
 import pytest
 import pytest_asyncio
 import uuid
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
 from app.models.agents import AgentDefinition
+from app.models.multi_agent import AgentTeamRun, AgentSharedWorkspace, AgentTeamDelegation, AgentTeamMessage
 from app.services.agents.multi_agent.team_registry import TeamRegistry
 from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
 from app.services.agents.multi_agent.debate_runtime import DebateRuntime
+from app.services.agents.multi_agent.dynamic_runtime import DynamicRoutingRuntime
 from app.services.agents.multi_agent.loop_guard import LoopGuard
 from app.services.agents.multi_agent.shared_workspace import SharedWorkspace
 
@@ -38,7 +41,7 @@ async def test_hierarchical_team_execution(db_session: AsyncSession):
     registry = TeamRegistry(db_session)
     team = await registry.create_team("t1", "H-Team", "hierarchical", "user1")
     await registry.add_member(team.id, manager.id, "manager")
-    await registry.add_member(team.id, spec1.id, "specialist")
+    await registry.add_member(team.id, spec1.id, "specialist", {"task_description": "Review auth flow"})
     await db_session.commit()
     
     # 3. Run
@@ -46,7 +49,30 @@ async def test_hierarchical_team_execution(db_session: AsyncSession):
     result = await runtime.execute(team.id, "Find vulnerabilities")
     
     assert "Aggregated analysis" in result
-    assert "completed task" in result
+    assert "Review auth flow" in result
+
+    run = (
+        await db_session.execute(select(AgentTeamRun).where(AgentTeamRun.team_id == team.id))
+    ).scalar_one()
+    assert run.status == "completed"
+
+    workspace_rows = (
+        await db_session.execute(select(AgentSharedWorkspace).where(AgentSharedWorkspace.team_run_id == run.id))
+    ).scalars().all()
+    assert any(row.key == "manager:summary" for row in workspace_rows)
+    assert any(row.key.startswith("specialist:") for row in workspace_rows)
+
+    delegations = (
+        await db_session.execute(select(AgentTeamDelegation).where(AgentTeamDelegation.run_id == run.id))
+    ).scalars().all()
+    assert len(delegations) == 1
+    assert delegations[0].status == "completed"
+
+    messages = (
+        await db_session.execute(select(AgentTeamMessage).where(AgentTeamMessage.run_id == run.id))
+    ).scalars().all()
+    assert any(msg.message_type == "instruction" for msg in messages)
+    assert any(msg.message_type == "result" for msg in messages)
 
 @pytest.mark.asyncio
 async def test_debate_team_execution(db_session: AsyncSession):
@@ -70,6 +96,58 @@ async def test_debate_team_execution(db_session: AsyncSession):
     result = await runtime.execute(team.id, "Optimal budget", max_rounds=2)
     
     assert "Final synthesized answer" in result
+    assert "2 rounds" in result
+
+    run = (
+        await db_session.execute(select(AgentTeamRun).where(AgentTeamRun.team_id == team.id))
+    ).scalar_one()
+    workspace_rows = (
+        await db_session.execute(select(AgentSharedWorkspace).where(AgentSharedWorkspace.team_run_id == run.id))
+    ).scalars().all()
+    keys = {row.key for row in workspace_rows}
+    assert {"round:1", "round:2", "synthesizer:summary"}.issubset(keys)
+
+@pytest.mark.asyncio
+async def test_dynamic_team_routing_with_recovery(db_session: AsyncSession):
+    failing = AgentDefinition(id=uuid.uuid4(), name="Failing", version="1.0.0", instructions="F", owner="test", model_id="gpt-4o")
+    backup = AgentDefinition(id=uuid.uuid4(), name="Backup", version="1.0.0", instructions="B", owner="test", model_id="gpt-4o")
+    general = AgentDefinition(id=uuid.uuid4(), name="General", version="1.0.0", instructions="G", owner="test", model_id="gpt-4o")
+    db_session.add_all([failing, backup, general])
+    await db_session.commit()
+
+    registry = TeamRegistry(db_session)
+    team = await registry.create_team(
+        "t1",
+        "Dyn-Team",
+        "dynamic",
+        "user1",
+        config={"work_items": [{"task_id": "auth", "description": "Review auth", "required_capability": "security"}]},
+    )
+    await registry.add_member(team.id, failing.id, "specialist", {"capabilities": ["security"], "priority": 10, "simulate_failure": True})
+    await registry.add_member(team.id, backup.id, "specialist", {"capabilities": ["security"], "priority": 5})
+    await registry.add_member(team.id, general.id, "worker", {"capabilities": ["general"], "priority": 1})
+    await db_session.commit()
+
+    runtime = DynamicRoutingRuntime(db_session)
+    result = await runtime.execute(team.id, "Assess auth posture")
+
+    assert "Dynamic team completed" in result
+    assert str(backup.id) in result
+
+    run = (
+        await db_session.execute(select(AgentTeamRun).where(AgentTeamRun.team_id == team.id))
+    ).scalars().all()[-1]
+    workspace_rows = (
+        await db_session.execute(select(AgentSharedWorkspace).where(AgentSharedWorkspace.team_run_id == run.id))
+    ).scalars().all()
+    keys = {row.key for row in workspace_rows}
+    assert "dynamic:auth" in keys
+    assert "dynamic:summary" in keys
+
+    traces = (
+        await db_session.execute(select(AgentTeamMessage).where(AgentTeamMessage.run_id == run.id))
+    ).scalars().all()
+    assert any(str(backup.id) in msg.content for msg in traces if msg.message_type == "result")
 
 @pytest.mark.asyncio
 async def test_loop_detection(db_session: AsyncSession):

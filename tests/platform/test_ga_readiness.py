@@ -4,6 +4,7 @@ import sys
 import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../control_plane"))
+from app.core.config import get_settings
 from app.services.platform.ga_readiness import GAReadinessService
 
 
@@ -86,7 +87,7 @@ def test_task_simulation_blocks_ga(service):
     state = get_perfect_state()
     state["no_silent_task_simulation"] = False
     state["_reasons"]["no_silent_task_simulation"] = (
-        "task_engine.py still contains AGENT_TASK_SIMULATION_MODE execution path"
+        "task_engine.py still contains incomplete execution markers"
     )
 
     result = service.evaluate_readiness(state)
@@ -94,7 +95,7 @@ def test_task_simulation_blocks_ga(service):
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
     assert result["details"]["no_silent_task_simulation"] == (
-        "failed: task_engine.py still contains AGENT_TASK_SIMULATION_MODE execution path"
+        "failed: task_engine.py still contains incomplete execution markers"
     )
 
 
@@ -109,3 +110,26 @@ def test_report_generation(service, tmpdir):
         assert "GA_READY" in content
         assert "12 / 12" in content
         assert "Platform is GA_READY 12/12." in content
+
+
+def test_executor_mock_active_in_production_blocks_ga_runtime_check(service):
+    settings = get_settings()
+    original_mode = settings.deployment_mode
+    original_mock = settings.agent_executor_mock_mode
+    original_dry_run = settings.agent_executor_dry_run_mode
+    original_simulation = settings.agent_executor_allow_simulation
+    try:
+        settings.deployment_mode = "production"
+        settings.agent_executor_mock_mode = True
+        settings.agent_executor_dry_run_mode = False
+        settings.agent_executor_allow_simulation = False
+
+        ok, reason = service._no_silent_task_simulation(service._resolve_base_dir())
+
+        assert ok is False
+        assert "AgentExecutor non-real modes active in production: mock" in reason
+    finally:
+        settings.deployment_mode = original_mode
+        settings.agent_executor_mock_mode = original_mock
+        settings.agent_executor_dry_run_mode = original_dry_run
+        settings.agent_executor_allow_simulation = original_simulation

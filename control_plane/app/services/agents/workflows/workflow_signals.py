@@ -26,7 +26,7 @@ class WorkflowSignalManager:
         stmt = select(AgentWorkflowRun).where(AgentWorkflowRun.id == run_id)
         res = await self.db.execute(stmt)
         run = res.scalar_one_or_none()
-        if run and run.status == "waiting_signal":
+        if run and run.status in {"waiting_signal", "sleeping", "waiting_approval", "waiting_webhook"}:
             run.status = "running"
             run.next_execution_at = utc_now()
             

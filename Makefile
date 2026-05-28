@@ -196,6 +196,18 @@ platform-freeze-check: ## Verify architectural freeze rules
 	@chmod +x scripts/platform-freeze-check.sh scripts/platform-freeze-check.py
 	@bash scripts/platform-freeze-check.sh
 
+check-feature-flags-integrity: ## Validate feature flags integrity
+	@chmod +x scripts/check-feature-flags-integrity.sh scripts/check-feature-flags-integrity.py
+	@bash scripts/check-feature-flags-integrity.sh
+
+check-supported-surface: ## Reconcile and audit supported surface capabilities
+	@chmod +x scripts/check-supported-surface.sh scripts/check_supported_surface.py
+	@bash scripts/check-supported-surface.sh
+
+check-freeze-governance: ## Run platform freeze and governance checks
+	@chmod +x scripts/check-freeze-governance.sh
+	@bash scripts/check-freeze-governance.sh
+
 test-smoke-resilience: ## Run smoke tests for resilience
 	@cd control_plane && PYTHONPATH=. ../venv/bin/pytest tests/smoke/test_smoke.py
 
@@ -235,8 +247,28 @@ agentic-readiness: ## Run Agentic Runtime Readiness Checks
 	@chmod +x scripts/agentic-readiness.sh
 	@./scripts/agentic-readiness.sh
 
-agent-worker-status: ## Show agent worker and queue status
-	@./scripts/agent-worker-status.sh
+agent-security-tests: ## Run agent security and sandbox jailbreak tests
+	@echo "Running Agent security and jailbreak tests..."
+	@PYTHONPATH=.:control_plane .venv/bin/pytest tests/security/ -v
+
+agent-kg-benchmark: ## Generate the synthetic KG benchmark artifact
+	@echo "Running Knowledge Graph benchmark..."
+	@chmod +x scripts/benchmark-knowledge-graph.sh
+	@./scripts/benchmark-knowledge-graph.sh
+
+agent-e2e-tests: ## Run lightweight agentic E2E contract tests
+	@echo "Running Agentic E2E tests..."
+	@PYTHONPATH=.:control_plane .venv/bin/pytest tests/e2e/test_multi_agent_research_code_review_deploy.py tests/e2e/test_agent_studio_dry_run.py tests/e2e/test_mcp_tool_integration.py -v
+
+agent-platform-validation: ## Run the core agentic expansion validation pack
+	@echo "Running full Agentic Platform operational validation..."
+	@$(MAKE) agent-security-tests
+	@$(MAKE) agent-kg-benchmark
+	@$(MAKE) agent-e2e-tests
+
+real-execution-readiness: ## Run Real Execution Readiness Gate
+	@chmod +x scripts/real-execution-readiness.sh
+	@./scripts/real-execution-readiness.sh
 
 agent-dlq-inspect: ## Inspect agent dead letter queue
 	@./scripts/agent-dlq-inspect.sh
@@ -255,6 +287,10 @@ agent-worker-status: ## Show agent worker status and heartbeats
 agent-worker-drain: ## Drain agent worker (cancel queued jobs)
 	@chmod +x scripts/agent-worker-drain.sh
 	@./scripts/agent-worker-drain.sh
+
+agent-sandbox-security: ## Run Agent Sandbox Security checks
+	@chmod +x scripts/agent-sandbox-security-test.sh
+	@./scripts/agent-sandbox-security-test.sh
 
 agent-evals: ## Run Agent Evaluation suites
 	@echo "Running Agent Evaluations..."
@@ -885,6 +921,7 @@ demo: ## Run full demo (no build)
 	./scripts/demo-full-local.sh --no-build
 
 security: ## Generate security report
+	@$(MAKE) agent-sandbox-security
 	./scripts/security-report-local.sh
 
 security-cleanup-report: ## Generate security cleanup report
@@ -1468,3 +1505,9 @@ distributed-runtime-test: ## Test Distributed Runtime service and endpoints
 gpu-autoscaling-test: ## Test GPU Orchestration and Autoscaling
 	@echo "Testing GPU Orchestration and Autoscaling..."
 	@PYTHONPATH=. .venv/bin/pytest tests/runtime/test_gpu_orchestrator.py -v
+
+agent-optimization-check: ## Execute agent evals and verify safety/optimization constraints
+	@echo "Running Agentic CI/CD Optimization checks..."
+	@PYTHONPATH=control_plane .venv/bin/pytest control_plane/tests/test_agent_optimization.py -v
+
+

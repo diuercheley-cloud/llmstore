@@ -1,7 +1,7 @@
 ## Official Bounded Contexts
 
 `core_runtime`
-- deterministic runtime abstractions, local execution readiness boundaries, non-real runtime coordination
+- deterministic runtime abstractions, local execution readiness boundaries, governed runtime coordination
 
 `governance`
 - deterministic policy, approvals, governance review state, compliance decisions
@@ -10,7 +10,7 @@
 - offline-first federation contracts and deterministic exchange boundaries
 
 `plugin_runtime`
-- placeholder plugin loading boundaries without real plugin execution
+- deterministic plugin contract, compatibility, isolation, load-plan governance, and bounded local sandboxed plugin execution
 
 `supply_chain`
 - provenance, artifact lineage, reproducibility and integrity governance
@@ -19,7 +19,7 @@
 - deterministic operational workflows, events, recovery planning
 
 `security`
-- trust boundaries, crypto readiness planning, isolation rules, no real PKI or hardware trust
+- trust boundaries, local PKI, attestation policy, isolation rules, and no hardware-backed trust guarantee by default
 
 `financial`
 - billing and finance-specific governance contracts

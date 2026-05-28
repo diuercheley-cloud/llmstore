@@ -1,5 +1,59 @@
 # Changelog
 
+## [v2.1.0-agentic-platform-expansion] - 2026-05-28
+
+### Added
+- **Enterprise Code Sandbox (Code Interpreter)**: Secure Python code interpreter sandbox supporting Docker, mock, and WASM providers with resource limits (CPU/Memory/Time), syscall validation, and sanitization policies.
+- **Knowledge Graph & GraphRAG**: Fully functional SQLite-backed internal graph store fallback (and Neo4j support), relation provenance, strict tenant boundaries, and GraphRAG vector/sub-graph retrieval.
+- **Model Context Protocol (MCP)**: Client and server support for MCP. The client converts external MCP tools into local adapters, enforcing policy allowlists and attestation. The server exposes internal RAG/KG queries securely.
+- **Advanced Cognitive Memory**: Working memory sessions, episodic memories, and semantic preferences/concepts with context-aware summarization and consent controls.
+- **Agent Studio & Approval Portal**: React flows, visual nodes for memory/tools/policies, visual debugger panel, and multi-tenant approval gateway with risk sorting.
+- **Internal Agent Marketplace**: Catalog of reusable, semver-tracked templates with installation reviews and automated trust reports.
+- **Observability**: Sanitized GenAI-compatible OpenTelemetry spans mapping agent reasoning loops, step states, sandbox actions, and tool invocations.
+- **Auto-Optimization**: Advisory eval-driven auto-optimization candidates (prompts, tool selection, policies) with rollback safety.
+- **Comprehensive E2E Testing**: Validates jailbreaks, sandbox escapes, 10k entities graph performance, and multi-agent workflows.
+
+## [v2.0.3-agentic-real-execution-hardening] - 2026-05-28
+
+### Added
+- **Real execution readiness gate**: `RealExecutionReadinessService` now checks durable queue posture, explicit executor modes, connector mode validity, operator mode, sandbox posture, worker heartbeats, and code-integrity blockers.
+- **Release evidence line**: `docs/releases/V2_0_3_AGENTIC_REAL_EXECUTION_HARDENING.md` documents the hardening criteria, validation flow, and operator expectations for production-like autonomy.
+- **Operator mode model**: Kubernetes reconciliation now recognizes `real`, `mock`, and `dry_run` modes explicitly.
+
+### Changed
+- **TaskEngine success path fixed**: task output validation now uses the contract layer instead of failing operationally after a successful side effect.
+- **Tool execution is fail-closed**: real tool execution no longer emits implicit simulated output when no implementation is registered.
+- **Sandbox fallback is explicit**: `execute_in_sandbox` only emits simulated output for explicit `mock` or `dry_run` mode; `real` requires a concrete callable.
+- **Connector real mode is complete**: GitHub, Jira, Confluence, Microsoft 365, Salesforce, and Slack real paths no longer end in `NotImplementedError`, and Slack no longer downgrades failed real reads into mock payloads.
+- **Connector responses are mode-tagged**: mock responses carry explicit mock metadata, while real responses remain clearly marked as real mode without synthetic downgrade flags.
+
+### Security
+- **No silent simulation in production-like paths**: executor, connector, sandbox, and operator flows now reject implicit mock behavior.
+- **No placeholder real path in connectors**: unsupported real actions are reported explicitly as unsupported, not surfaced as unimplemented internals.
+- **Queue-backed execution remains mandatory**: production-like readiness blocks when the durable execution plane is disabled.
+
+## [v2.1.0-agentic-autonomy] - 2026-05-27
+
+### Added
+- **Governed code generation and execution**: Agent Tool Synthesis, generated-tool validation/approval, sandbox session inspection, and Code Interpreter execution are now part of the supported release line.
+- **Graph-native RAG 2.0**: Knowledge Graph extraction/query APIs and Graph RAG controls are formalized for tenant-isolated retrieval augmentation.
+- **Proactive agent runtime**: Event sources, triggers, subscriptions, webhook entrypoints, and delivery logs are added for governed event-driven execution.
+- **Agent IAM**: Service principals, delegated token grants, token exchange, and IAM audit endpoints are documented as supported autonomy controls.
+- **Agentic optimization workflow**: Optimization experiments, candidate evaluation, approval, and apply flows are now part of the platform surface.
+- **Router 2.0 evidence**: Per-step capability catalog, routing policies, simulation, and auditable routing decision history are included in the release line.
+- **Shared artifact collaboration**: Collaborative workspaces, artifact versioning, diffs, lock management, reviews, and event timelines are promoted into the supported surface.
+- **Release evidence line**: `docs/releases/V2_1_0_AGENTIC_AUTONOMY.md` and release artifacts formalize the Enterprise Agentic Autonomy criteria.
+
+### Changed
+- **Safe defaults extended to autonomy features**: tool synthesis, code interpreter, dynamic generated-tool execution, graph writes, event-driven hooks, IAM, optimization apply, Router V2, and shared workspace/artifacts all remain opt-in.
+- **Sandbox posture clarified**: code interpreter network and write access are disabled by default, preserving a governed local execution baseline.
+- **Surface governance expanded**: supported surface, API surface, feature flags, and script manifest now explicitly cover the autonomy features required by the release.
+
+### Security
+- **No autonomous side effects by default**: connector network/write access and dynamic generated-tool execution remain blocked until explicitly enabled.
+- **No silent optimization apply**: auto-promotion and candidate apply remain disabled unless separately turned on.
+- **Tenant isolation preserved for graph and artifact features**: knowledge graph and shared artifact collaboration are documented as tenant-scoped and auditable.
+
 ## [v2.0.2-agentic-ga-readiness] - 2026-05-23
 
 ### Added

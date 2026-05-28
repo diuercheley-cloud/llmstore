@@ -24,13 +24,12 @@ class ManagedOrganizationCreate(ManagedOrganizationBase):
     pass
 
 class ManagedOrganization(ManagedOrganizationBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     status: str
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class ManagedWorkspaceBase(BaseModel):
     name: str
@@ -40,12 +39,11 @@ class ManagedWorkspaceCreate(ManagedWorkspaceBase):
     organization_id: UUID
 
 class ManagedWorkspace(ManagedWorkspaceBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     organization_id: UUID
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class ManagedApplianceBase(BaseModel):
     name: str
@@ -55,6 +53,8 @@ class ManagedApplianceCreate(ManagedApplianceBase):
     appliance_external_id: str
 
 class ManagedAppliance(ManagedApplianceBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     workspace_id: UUID
     appliance_external_id: str
@@ -69,8 +69,6 @@ class ManagedAppliance(ManagedApplianceBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class ApplianceEnrollmentToken(BaseModel):
     enrollment_token: str
@@ -108,6 +106,8 @@ class ApplianceHeartbeatPayload(BaseModel):
         return value
 
 class ManagedBillingAccount(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     organization_id: UUID
     billing_email: str
@@ -116,8 +116,6 @@ class ManagedBillingAccount(BaseModel):
     balance_cents: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class ManagedSupportCaseBase(BaseModel):
     subject: str
@@ -130,6 +128,8 @@ class ManagedSupportCaseCreate(ManagedSupportCaseBase):
     appliance_id: Optional[UUID] = None
 
 class ManagedSupportCase(ManagedSupportCaseBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     organization_id: UUID
     workspace_id: Optional[UUID] = None
@@ -137,6 +137,3 @@ class ManagedSupportCase(ManagedSupportCaseBase):
     status: str
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

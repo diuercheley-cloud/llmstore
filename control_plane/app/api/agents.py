@@ -3,7 +3,7 @@
 import uuid
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.db.session import get_db_session
@@ -32,6 +32,8 @@ class AgentRunCreate(BaseModel):
     correlation_id: Optional[str] = Field(None, max_length=128)
 
 class AgentRunResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     agent_id: uuid.UUID
     tenant_id: str
@@ -47,10 +49,9 @@ class AgentRunResponse(BaseModel):
     failure_reason: Optional[str] = None
     correlation_id: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
 class AgentRunStepResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     run_id: uuid.UUID
     step_number: int
@@ -62,9 +63,6 @@ class AgentRunStepResponse(BaseModel):
     policy_result: Optional[dict] = None
     error: Optional[str] = None
     created_at: str
-
-    class Config:
-        from_attributes = True
 
 def format_datetime(dt) -> str:
     return dt.isoformat() if dt else ""

@@ -150,6 +150,7 @@ class PluginMarketplaceService:
             is_enabled=False,
         )
         self.db.add(install)
+        await self.db.flush()
 
         for perm_name in permissions:
             perm = PluginPermission(
