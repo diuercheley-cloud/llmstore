@@ -87,3 +87,59 @@ class PluginReview(Base):
     review_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+class PluginExecutionRecord(Base):
+    __tablename__ = "plugin_execution_records"
+    
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plugin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    invocation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    parameters: Mapped[dict] = mapped_column(JSON_DOCUMENT, default={})
+    status: Mapped[str] = mapped_column(String(64), nullable=False) # success, error
+    output: Mapped[Optional[dict]] = mapped_column(JSON_DOCUMENT, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+class PluginPermissionGrant(Base):
+    __tablename__ = "plugin_permission_grants"
+    
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plugin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    permission_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_granted: Mapped[bool] = mapped_column(Boolean, default=False)
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+class PluginVerificationResult(Base):
+    __tablename__ = "plugin_verification_results"
+    
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plugin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    checksum_valid: Mapped[bool] = mapped_column(Boolean, default=False)
+    signature_valid: Mapped[bool] = mapped_column(Boolean, default=False)
+    manifest_valid: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    details: Mapped[dict] = mapped_column(JSON_DOCUMENT, default={})
+
+class PluginDryRunResult(Base):
+    __tablename__ = "plugin_dry_run_results"
+    
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plugin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    is_success: Mapped[bool] = mapped_column(Boolean, default=False)
+    sandbox_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    output: Mapped[Optional[dict]] = mapped_column(JSON_DOCUMENT, nullable=True)
+    logs: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+class PluginExecutionReceipt(Base):
+    __tablename__ = "plugin_execution_receipts"
+    
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    execution_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("plugin_runtime_executions.id"), nullable=False, index=True)
+    receipt_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    signature: Mapped[str] = mapped_column(String(512), nullable=False)
+    signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    payload_json: Mapped[dict] = mapped_column(JSON_DOCUMENT, nullable=False)

@@ -188,21 +188,39 @@ AGENTIC_OUTPUT=$(bash scripts/agentic-readiness.sh 2>&1)
 AGENTIC_RC=$?
 echo "$AGENTIC_OUTPUT"
 
-# disabled is a safe default — never blocks
+IS_PRODUCTION_GATE=false
+if [[ "$TAG" =~ "agentic" || "$TAG" =~ "platform" || "$TAG" =~ "production" ]]; then
+    IS_PRODUCTION_GATE=true
+fi
+
 AGENTIC_STATUS=$(echo "$AGENTIC_OUTPUT" | grep -oP 'Status:\s*\K\S+' || echo "unknown")
-if echo "$AGENTIC_OUTPUT" | grep -q "disabled"; then
-    echo "━━━ [PASS] agentic-readiness (disabled — safe default) ━━━"
-    GATES_PASSED=$((GATES_PASSED+1))
-    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | PASS (disabled — safe default) |\n"
+if echo "$AGENTIC_OUTPUT" | grep -q "disabled" || [ "$AGENTIC_STATUS" = "disabled" ]; then
+    if [ "$IS_PRODUCTION_GATE" = "true" ]; then
+        echo "━━━ [FAIL] agentic-readiness (disabled NOT_VALID_FOR_PRODUCTION) ━━━"
+        GATES_FAILED=$((GATES_FAILED+1))
+        FAILED_GATES="$FAILED_GATES agentic-readiness"
+        GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | disabled NOT_VALID_FOR_PRODUCTION |\n"
+    else
+        echo "━━━ [PASS] agentic-readiness (safe-default PASS) ━━━"
+        GATES_PASSED=$((GATES_PASSED+1))
+        GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | safe-default PASS |\n"
+    fi
 elif [ $AGENTIC_RC -eq 0 ]; then
-    echo "━━━ [PASS] agentic-readiness ━━━"
+    echo "━━━ [PASS] agentic-readiness (production-on PASS) ━━━"
     GATES_PASSED=$((GATES_PASSED+1))
-    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | PASS |\n"
+    GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | production-on PASS |\n"
 else
     echo "━━━ [FAIL] agentic-readiness (status: $AGENTIC_STATUS) ━━━"
     GATES_FAILED=$((GATES_FAILED+1))
     FAILED_GATES="$FAILED_GATES agentic-readiness"
     GATE_RESULTS="${GATE_RESULTS}| agentic-readiness | FAIL (status: $AGENTIC_STATUS) |\n"
+fi
+
+if [ "$IS_PRODUCTION_GATE" = "true" ]; then
+    run_gate "real-execution-readiness" make real-execution-readiness TAG="$TAG"
+    run_gate "production-agentic-e2e" make production-agentic-e2e TAG="$TAG"
+    run_gate "working-tree-certification" make working-tree-certification TAG="$TAG"
+    run_gate "agentic-production-on-readiness" make agentic-production-on-readiness TAG="$TAG"
 fi
 
 # ---------------------------------------------------------------------------
@@ -258,6 +276,34 @@ cat > "$ARTIFACT_DIR/validation.md" << EOF
 |------|--------|
 $(echo -e "$GATE_RESULTS")
 EOF
+
+if [ "$IS_PRODUCTION_GATE" = "true" ]; then
+    real_execution_status=$(echo -e "$GATE_RESULTS" | grep "real-execution-readiness" | awk -F'|' '{print $3}' | xargs || echo "FAIL")
+    production_e2e_status=$(echo -e "$GATE_RESULTS" | grep "production-agentic-e2e" | awk -F'|' '{print $3}' | xargs || echo "FAIL")
+    working_tree_status=$(echo -e "$GATE_RESULTS" | grep "working-tree-certification" | awk -F'|' '{print $3}' | xargs || echo "FAIL")
+    prod_on_status=$(echo -e "$GATE_RESULTS" | grep "agentic-production-on-readiness" | awk -F'|' '{print $3}' | xargs || echo "FAIL")
+    agentic_readiness_status=$(echo -e "$GATE_RESULTS" | grep "agentic-readiness" | awk -F'|' '{print $3}' | xargs || echo "FAIL")
+
+    production_gate_overall="PASS"
+    if [ $GATES_FAILED -gt 0 ]; then
+        production_gate_overall="BLOCKED"
+    fi
+
+    cat > "$ARTIFACT_DIR/production-gate.md" << EOF
+# Production Release Gate Report
+
+**Tag:** $TAG
+**Timestamp:** $TIMESTAMP_NOW
+**Overall Status:** $production_gate_overall
+
+## Production Gate Checks
+- **real-execution-readiness**: $real_execution_status
+- **production-agentic-e2e**: $production_e2e_status
+- **working-tree-certification**: $working_tree_status
+- **agentic-production-on-readiness**: $prod_on_status
+- **agentic-readiness**: $agentic_readiness_status
+EOF
+fi
 
 if [ -f artifacts/platform/ga-readiness.md ]; then
     cp artifacts/platform/ga-readiness.md "$ARTIFACT_DIR/ga-readiness.md"

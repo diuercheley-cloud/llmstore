@@ -14,6 +14,10 @@ class PluginSBOMPlaceholderService:
         reproducible_build: bool = True,
         offline_verifiable: bool = True,
     ) -> PluginSBOMPlaceholder:
+        from app.core.config import get_settings
+        if get_settings().app_env == "production":
+            raise RuntimeError("Placeholder SBOM is blocked in production mode.")
+
         logical_payload = {
             "client_id": str(provenance_record.client_id),
             "provenance_record_id": provenance_record.id,
@@ -42,6 +46,10 @@ class PluginSBOMPlaceholderService:
         return placeholder
 
     def validate_sbom_placeholder(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
+        from app.core.config import get_settings
+        if get_settings().app_env == "production":
+            raise RuntimeError("Placeholder SBOM is blocked in production mode.")
+
         logical_payload = getattr(placeholder, "_logical_payload", None) or {
             "client_id": str(placeholder.client_id),
             "provenance_record_id": placeholder.provenance_record_id,

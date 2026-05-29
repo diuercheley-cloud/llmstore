@@ -20,7 +20,14 @@ def build_supply_chain_receipt(
         "payload_hash": payload_hash,
         "signature_scope": signature_scope,
     }
-    signature_placeholder = f"placeholder-signature:{receipt_type}:{payload_hash[:16]}"
+    from app.core.config import get_settings
+    is_prod = get_settings().app_env == "production"
+    if is_prod:
+        from app.services.inference.cryptographic_receipts import sign_payload
+        signature_placeholder = sign_payload(payload_hash)
+    else:
+        signature_placeholder = f"placeholder-signature:{receipt_type}:{payload_hash[:16]}"
+        
     receipt = PluginSupplyChainReceipt(
         id=sha256_hex({"kind": "plugin_supply_chain_receipt_id", **logical_payload}),
         client_id=provenance_record.client_id,

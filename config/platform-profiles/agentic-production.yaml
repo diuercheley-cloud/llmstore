@@ -2,6 +2,8 @@ name: agentic-production
 description: Production-ready agentic environment with full auditing and isolation.
 flags:
   AGENT_RUNTIME_ENABLED: true
+  AGENT_WORKER_ENABLED: true
+  AGENT_EVALS_ENABLED: true
   AGENT_CODE_INTERPRETER_ENABLED: true
   AGENT_CODE_SANDBOX_PROVIDER: gvisor
   AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER: false
@@ -10,3 +12,4 @@ flags:
   AGENT_ENTERPRISE_OBSERVABILITY_ENABLED: true
   AGENT_PLUGIN_SUPPLY_CHAIN_ENABLED: true
   PLUGIN_SIGNATURE_REQUIRED: true
+  CRYPTO_RECEIPTS_ENABLED: true

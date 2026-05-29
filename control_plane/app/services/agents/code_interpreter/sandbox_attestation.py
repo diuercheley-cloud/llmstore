@@ -29,7 +29,7 @@ class AttestationService:
         stderr: str,
         artifacts: List[str] = None
     ) -> SandboxAttestation:
-        return SandboxAttestation(
+        att = SandboxAttestation(
             provider=getattr(profile, "provider", "unknown"),
             isolation_level=getattr(profile, "kernel_isolation_level", "unknown"),
             runtime_version=getattr(profile, "runtime_version", None),
@@ -38,10 +38,47 @@ class AttestationService:
             resource_limits=getattr(profile, "limits", {}),
             artifact_hashes=artifacts or []
         )
+        # Sign the attestation payload using the real key
+        try:
+            from app.services.inference.cryptographic_receipts import sign_payload
+            import json
+            payload_data = att.model_dump(exclude={"signature"}, mode="json")
+            canonical_str = json.dumps(payload_data, sort_keys=True)
+            att.signature = sign_payload(canonical_str)
+        except Exception:
+            # Fallback if key infrastructure not initialized in test/dev
+            att.signature = "placeholder-signature-fallback"
+        return att
 
     @staticmethod
     def verify_attestation(attestation: Dict[str, Any]) -> bool:
-        # Real verification would check signatures and hashes
         if not attestation.get("provider"):
             return False
-        return True
+        
+        from app.core.config import get_settings
+        settings = get_settings()
+        is_prod = settings.app_env == "production"
+        
+        sig = attestation.get("signature")
+        if is_prod:
+            if not sig:
+                return False
+            sig_lower = sig.lower()
+            if any(p in sig_lower for p in ["placeholder", "mock", "stub", "simulated", "fake"]):
+                return False
+        
+        if sig:
+            if sig == "placeholder-signature-fallback":
+                return not is_prod
+            
+            try:
+                from app.services.inference.cryptographic_receipts import verify_payload_signature
+                import json
+                payload_data = {k: v for k, v in attestation.items() if k != "signature"}
+                canonical_str = json.dumps(payload_data, sort_keys=True)
+                return verify_payload_signature(canonical_str, sig)
+            except Exception:
+                return False
+                
+        return not is_prod
+

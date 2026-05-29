@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.x-agentic-production-trust-hardening] - 2026-05-29
+
+### Added
+- Real plugin runtime sandbox execution and signature verification.
+- Cryptographic receipts verification API and public key export.
+- Real visual observability timeline and error budget.
+- Robust profile resolver with schema validation and conflict detection.
+- Real production agentic E2E tests covering worker, memory, fake MCP, and rollback.
+- Audit production placeholders script and clean-up of stubs.
+
 ## [v2.x-agentic-platform-complete-hardening] - 2026-05-29
 
 ### Added

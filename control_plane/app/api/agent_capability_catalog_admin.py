@@ -56,12 +56,32 @@ async def get_trust_report(entry_id: uuid.UUID, db: AsyncSession = Depends(get_d
 
 plugin_router = APIRouter(prefix="/admin/plugins", tags=["plugin_admin"])
 
-@plugin_router.post("/{entry_id}/verify-signature")
-async def verify_plugin_signature(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
-    # In a real impl, this would verify the cryptographic signature
-    return {"status": "verified", "entry_id": entry_id}
+class DryRunRequest(BaseModel):
+    code: str
+    parameters: dict
 
-@plugin_router.post("/{entry_id}/run-dry-run")
-async def run_plugin_dry_run(entry_id: uuid.UUID, parameters: dict, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
-    # This would use dry_run sandbox type
-    return {"status": "dry_run_success", "output": {"result": 42}}
+class ExecuteRequest(BaseModel):
+    code: str
+    parameters: dict
+    tenant_id: str
+
+@plugin_router.post("/{id}/verify")
+async def verify_plugin(id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
+    service = PluginRuntimeService(db)
+    return await service.verify_plugin(id)
+
+@plugin_router.post("/{id}/dry-run")
+async def dry_run_plugin(id: uuid.UUID, data: DryRunRequest, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
+    service = PluginRuntimeService(db)
+    return await service.dry_run_plugin(id, data.code, data.parameters)
+
+@plugin_router.post("/{id}/execute")
+async def execute_plugin(id: uuid.UUID, data: ExecuteRequest, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
+    service = PluginRuntimeService(db)
+    result = await service.run_plugin(id, data.code, data.parameters, data.tenant_id)
+    return {"status": "success", "result": result}
+
+@plugin_router.get("/{id}/trust-report")
+async def get_trust_report_endpoint(id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
+    service = PluginRuntimeService(db)
+    return await service.get_trust_report(id)

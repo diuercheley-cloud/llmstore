@@ -1282,9 +1282,9 @@ capabilities:
 - id: kubernetes
   name: Kubernetes
   area: operations
-  status: experimental
+  status: non-production
   owner: cloud-team
-  support_level: development
+  support_level: non-production
   docs_url: docs/kubernetes
   feature_flag: KUBERNETES_MODE
   since_version: v1.6.0
@@ -1296,9 +1296,9 @@ capabilities:
 - id: pki
   name: PKI
   area: compliance
-  status: internal
+  status: production_core
   owner: security-team
-  support_level: advisory
+  support_level: production
   docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md
   feature_flag: pki_enabled
   since_version: v1.9.5
@@ -1308,9 +1308,9 @@ capabilities:
 - id: attestation
   name: Attestation
   area: compliance
-  status: internal
+  status: production_core
   owner: security-team
-  support_level: advisory
+  support_level: production
   docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
   feature_flag: attestation_mode
   since_version: v1.9.5
@@ -1320,7 +1320,7 @@ capabilities:
 - id: hardware-trust
   name: Hardware trust
   area: compliance
-  status: internal
+  status: advisory
   owner: security-team
   support_level: advisory
   docs_url: docs/CRYPTOGRAPHIC_TRUST_INFRASTRUCTURE.md
@@ -1347,9 +1347,9 @@ capabilities:
 - id: gpu-orchestration
   name: GPU orchestration
   area: operations
-  status: deprecated
+  status: non-production
   owner: cloud-team
-  support_level: none
+  support_level: non-production
   docs_url: docs/HARDWARE_ATTESTATION_RUNTIME.md
   feature_flag: GPU_AUTOSCALING_ENABLED
   since_version: v1.6.0
@@ -1398,9 +1398,9 @@ capabilities:
 - id: capability-catalog
   name: Capability catalog
   area: agent tools
-  status: beta
+  status: production_core
   owner: platform-ops
-  support_level: pilot
+  support_level: production
   docs_url: docs/agents/capability-catalog.md
   api_prefix: /admin/agents/capability-catalog
   feature_flag: AGENT_CONNECTOR_CATALOG_ENABLED

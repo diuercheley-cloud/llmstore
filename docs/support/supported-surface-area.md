@@ -37,14 +37,14 @@ Abaixo estão listadas as áreas que exigem maior clareza nesta release:
 | **Kubernetes** | `non-production` | Cloud Team | Existe superfície opcional, mas não entra como core suportado nesta linha. |
 | **Distributed runtime** | `beta` | Cloud Team | Registro de nós, heartbeat, placement, lease e failover existem; ainda requer E2E real e operação validada para claim production. |
 | **GPU orchestration** | `non-production` | Cloud Team | Continua majoritariamente advisory. |
-| **Capability catalog / plugin supply chain** | `beta` | Product Team | Catálogo, checksum e assinatura existem, mas a esteira ainda é operator-only e draft-first. |
+| **Capability catalog / plugin supply chain** | `supported` | Product Team | Catálogo, checksum, sandbox e assinatura validados. |
 | **Managed control-plane** | `beta` | Cloud Team | Operacional apenas para metadados sanitizados; não é plano de dados distribuído. |
 | **Multi-cluster** | `beta` | Cloud Team | Administração e status existem; produção depende de gates reais e boundary checks. |
 | **CI/CD** | `internal` | Infra Team | Pipelines de teste, build e validação automatizados. |
 | **Chaos engineering** | `experimental` | QA Team | Injeção de latência e queda simulada de provedores em testes. |
 | **Compliance readiness** | `beta` | Compliance Team | Coleta de evidências e frameworks de auditoria SOC 2 / ISO 27001. |
-| **PKI** | `advisory` | Security Team | Assinatura e verificação de chaves locais sem cadeia de confiança externa. |
-| **Attestation** | `advisory` | Security Team | Validação de assinaturas de hardware em modo informativo. |
+| **PKI / Cryptographic Receipts** | `supported` | Security Team | Assinatura e verificação de chaves com Ed25519 real, sem placeholders em produção. |
+| **Attestation** | `supported` | Security Team | Validação real de assinaturas de sandbox de execução e testemunhas. |
 | **Hardware trust** | `advisory` | Security Team | Armazenamento seguro de chaves validado apenas localmente. |
 
 ---

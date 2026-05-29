@@ -47,7 +47,7 @@ status: consolidated
 ### Local PKI
 - Local PKI issuance and certificate verification exist when explicitly enabled
 - No external CA integration, formal trust anchor distribution, or formal key ceremony is implied
-- Some cryptographic receipt and attestation surfaces still use placeholder signing outside the local PKI path
+- Cryptographic receipt and sandbox attestation surfaces use real Ed25519 signing, and stubs/placeholders are strictly blocked in production.
 
 ### Policy-Based Attestation
 - Hardware-backed trust is not guaranteed by default

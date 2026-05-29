@@ -17,17 +17,16 @@ from app.services.inference.cryptographic_receipts import (
     _sha256,
     build_receipt_hash,
     summarize_receipt,
+    verify_payload_signature,
 )
 from app.services.inference.replay_verification import verify_replay
 from app.services.inference.reproducibility import compare_runtime_snapshots
 
 
 def _verify_detached_signature(receipt_hash: str, signature: str | None, algorithm: str | None) -> bool:
-    if not signature or not algorithm:
+    if not signature:
         return False
-    if algorithm == "ed25519_placeholder":
-        return signature.startswith("placeholder_ed25519_") and len(signature) > 40
-    return bool(signature and len(signature) > 20)
+    return verify_payload_signature(receipt_hash, signature)
 
 
 def verify_receipt_signature(receipt: CommercialInferenceReceipt) -> bool:

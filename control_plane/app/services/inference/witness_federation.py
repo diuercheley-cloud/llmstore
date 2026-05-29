@@ -48,9 +48,6 @@ async def request_witness_signature(
     timeline_id: uuid.UUID,
     witness_id: uuid.UUID
 ) -> Optional[CommercialWitnessSignature]:
-    # In a real scenario, this would call the witness endpoint
-    # For Phase 44, we simulate a local signature or a placeholder
-    
     timeline_result = await db.execute(select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == timeline_id))
     timeline = timeline_result.scalar_one_or_none()
     if not timeline or timeline.status != "sealed":
@@ -61,10 +58,18 @@ async def request_witness_signature(
     if not witness or witness.status != "active":
         return None
 
-    # Simulate signature (SHA256 of root + secret key placeholder)
     root = timeline.merkle_root
-    payload = f"{root}:{witness.id}:{get_settings().admin_token}"
-    signature = hashlib.sha256(payload.encode()).hexdigest()
+    is_prod = get_settings().app_env == "production"
+    
+    if is_prod:
+        from app.services.inference.cryptographic_receipts import sign_payload
+        # Real cryptographic signature of root and witness ID
+        payload = f"{root}:{witness.id}"
+        signature = sign_payload(payload)
+    else:
+        # Simulate signature for development/test
+        payload = f"{root}:{witness.id}:{get_settings().admin_token}"
+        signature = hashlib.sha256(payload.encode()).hexdigest()
     
     sig = CommercialWitnessSignature(
         timeline_id=timeline_id,
@@ -77,6 +82,13 @@ async def request_witness_signature(
     db.add(sig)
     await db.commit()
     await db.refresh(sig)
+    
+    # Verify signature immediately before storing or completing
+    is_valid = await verify_witness_signature(db, sig.id)
+    if not is_valid:
+        sig.verification_status = "invalid"
+        await db.commit()
+        return None
     
     await record_witness_audit_event(
         db,
@@ -95,7 +107,7 @@ async def verify_witness_signature(
         select(CommercialWitnessSignature).where(CommercialWitnessSignature.id == signature_id)
     )
     sig = sig_result.scalar_one_or_none()
-    if not sig:
+    if not sig or not sig.signature:
         return False
         
     witness_result = await db.execute(select(CommercialWitness).where(CommercialWitness.id == sig.witness_id))
@@ -103,16 +115,30 @@ async def verify_witness_signature(
     if not witness:
         return False
         
-    # Verification logic: in this demo, we recompute the simulated signature
     timeline_result = await db.execute(select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == sig.timeline_id))
     timeline = timeline_result.scalar_one_or_none()
     if not timeline:
         return False
-        
-    payload = f"{timeline.merkle_root}:{witness.id}:{get_settings().admin_token}"
-    expected = hashlib.sha256(payload.encode()).hexdigest()
+
+    is_prod = get_settings().app_env == "production"
+    sig_str = sig.signature.lower()
+    if is_prod:
+        if any(p in sig_str for p in ["placeholder", "mock", "stub", "simulated", "fake"]):
+            sig.verification_status = "invalid"
+            await db.commit()
+            return False
+            
+    # Verification logic: try real Ed25519 first, fallback to mock if not in prod
+    from app.services.inference.cryptographic_receipts import verify_payload_signature
+    real_payload = f"{timeline.merkle_root}:{witness.id}"
     
-    is_valid = sig.signature == expected
+    is_valid = verify_payload_signature(real_payload, sig.signature)
+    if not is_valid and not is_prod:
+        # Fallback to simulated signature in non-production
+        mock_payload = f"{timeline.merkle_root}:{witness.id}:{get_settings().admin_token}"
+        expected = hashlib.sha256(mock_payload.encode()).hexdigest()
+        is_valid = sig.signature == expected
+        
     if not is_valid:
         sig.verification_status = "invalid"
     else:
@@ -212,17 +238,51 @@ async def record_witness_audit_event(
     witness_id: Optional[uuid.UUID] = None,
     timeline_id: Optional[uuid.UUID] = None,
     summary: str = ""
-):
-    # Create immutable hash of the event
-    payload = f"{event_type}:{witness_id}:{timeline_id}:{summary}:{datetime.utcnow().isoformat()}"
-    immutable_hash = hashlib.sha256(payload.encode()).hexdigest()
+) -> CommercialWitnessAuditEvent:
+    # Use a fixed ISO string for consistent datetime parsing and validation
+    now_str = datetime.utcnow().isoformat()
+    payload = f"{event_type}:{witness_id}:{timeline_id}:{summary}:{now_str}"
+    
+    is_prod = get_settings().app_env == "production"
+    if is_prod:
+        from app.services.inference.cryptographic_receipts import sign_payload
+        immutable_hash = sign_payload(payload)
+    else:
+        immutable_hash = hashlib.sha256(payload.encode()).hexdigest()
     
     event = CommercialWitnessAuditEvent(
         event_type=event_type,
         witness_id=witness_id,
         timeline_id=timeline_id,
         summary=summary,
-        immutable_hash=immutable_hash
+        immutable_hash=immutable_hash,
+        created_at=datetime.fromisoformat(now_str)
     )
     db.add(event)
     await db.commit()
+    return event
+
+async def verify_witness_audit_event(
+    db: AsyncSession,
+    event_id: uuid.UUID
+) -> bool:
+    res = await db.execute(
+        select(CommercialWitnessAuditEvent).where(CommercialWitnessAuditEvent.id == event_id)
+    )
+    event = res.scalar_one_or_none()
+    if not event or not event.immutable_hash:
+        return False
+        
+    created_at_str = event.created_at.isoformat() if event.created_at else ""
+    payload = f"{event.event_type}:{event.witness_id}:{event.timeline_id}:{event.summary}:{created_at_str}"
+    
+    is_prod = get_settings().app_env == "production"
+    
+    from app.services.inference.cryptographic_receipts import verify_payload_signature
+    is_valid = verify_payload_signature(payload, event.immutable_hash)
+    
+    if not is_valid and not is_prod:
+        expected = hashlib.sha256(payload.encode()).hexdigest()
+        is_valid = event.immutable_hash == expected
+        
+    return is_valid

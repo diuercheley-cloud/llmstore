@@ -104,10 +104,29 @@ async def apply_retention_policy(
     profile: CommercialConfidentialRuntimeProfile
 ):
     retention = profile.max_retention_seconds or get_settings().commercial_confidential_default_retention_seconds
+    
+    # Generate cryptographic receipt proving cleanup action
+    from app.services.inference.cryptographic_receipts import sign_payload
+    import json
+    
+    cleanup_data = {
+        "session_id": str(session.id),
+        "client_id": session.client_id,
+        "action": "confidential_runtime_cleanup",
+        "retention_seconds": retention,
+        "cleanup_time": datetime.utcnow().isoformat()
+    }
+    
+    canonical_str = json.dumps(cleanup_data, sort_keys=True)
+    cleanup_receipt = sign_payload(canonical_str)
+    
     if retention == 0:
-        # Immediate cleanup hook (placeholder)
         session.retention_policy_applied = True
-        await log_confidential_audit(db, session.id, "retention_policy_applied", "Immediate cleanup applied")
+        summary = f"Immediate cleanup applied. Receipt: {cleanup_receipt}"
+    else:
+        summary = f"Cleanup scheduled. Receipt: {cleanup_receipt}"
+        
+    await log_confidential_audit(db, session.id, "retention_policy_applied", summary)
     
     session.completed_at = datetime.utcnow()
     await db.commit()
@@ -118,14 +137,50 @@ async def log_confidential_audit(
     event_type: str,
     summary: str
 ) -> CommercialConfidentialRuntimeAuditEvent:
+    now_str = datetime.utcnow().isoformat()
+    payload = f"{session_id}:{event_type}:{summary}:{now_str}"
+    
+    is_prod = get_settings().app_env == "production"
+    if is_prod:
+        from app.services.inference.cryptographic_receipts import sign_payload
+        immutable_hash = sign_payload(payload)
+    else:
+        immutable_hash = hashlib.sha256(payload.encode()).hexdigest()
+        
     event = CommercialConfidentialRuntimeAuditEvent(
         session_id=session_id,
         event_type=event_type,
-        summary=summary
+        summary=summary,
+        immutable_hash=immutable_hash,
+        created_at=datetime.fromisoformat(now_str)
     )
     db.add(event)
     await db.commit()
     return event
+
+async def verify_confidential_audit_event(
+    db: AsyncSession,
+    event_id: uuid.UUID
+) -> bool:
+    res = await db.execute(
+        select(CommercialConfidentialRuntimeAuditEvent).where(CommercialConfidentialRuntimeAuditEvent.id == event_id)
+    )
+    event = res.scalar_one_or_none()
+    if not event or not event.immutable_hash:
+        return False
+        
+    payload = f"{event.session_id}:{event.event_type}:{event.summary}:{event.created_at.isoformat()}"
+    
+    is_prod = get_settings().app_env == "production"
+    
+    from app.services.inference.cryptographic_receipts import verify_payload_signature
+    is_valid = verify_payload_signature(payload, event.immutable_hash)
+    
+    if not is_valid and not is_prod:
+        expected = hashlib.sha256(payload.encode()).hexdigest()
+        is_valid = event.immutable_hash == expected
+        
+    return is_valid
 
 async def summarize_confidential_runtime(db: AsyncSession) -> dict:
     profiles_res = await db.execute(select(CommercialConfidentialRuntimeProfile))

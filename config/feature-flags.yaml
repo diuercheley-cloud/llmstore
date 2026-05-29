@@ -4624,3 +4624,33 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Added during drift cleanup.
+- name: CRYPTO_RECEIPTS_ENABLED
+  default: false
+  owner: security-team
+  area: security
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default for standard offline operation.
+- name: CRYPTO_RECEIPTS_REQUIRE_SIGNATURE
+  default: false
+  owner: security-team
+  area: security
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: [CRYPTO_RECEIPTS_ENABLED]
+  conflicts: []
+  safe_default_reason: Signature requirement is optional by default.
+- name: CRYPTO_RECEIPTS_EXTERNAL_TIMESTAMP_ENABLED
+  default: false
+  owner: security-team
+  area: security
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: [CRYPTO_RECEIPTS_ENABLED]
+  conflicts: []
+  safe_default_reason: External timestamp is disabled by default to avoid online dependencies.

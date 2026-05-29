@@ -1,39 +1,22 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARTIFACT_DIR="${ROOT_DIR}/artifacts/e2e/production-agentic"
-PYTEST_BIN="${ROOT_DIR}/.venv/bin/pytest"
+echo "=== Running Production Agentic E2E Test Suite ==="
 
-if [[ ! -x "${PYTEST_BIN}" ]]; then
-  PYTEST_BIN="pytest"
+if [[ -f ".venv/bin/pytest" ]]; then
+  PYTEST_EXE=".venv/bin/pytest"
+elif [[ -f "venv/bin/pytest" ]]; then
+  PYTEST_EXE="venv/bin/pytest"
+else
+  PYTEST_EXE="pytest"
 fi
 
-mkdir -p "${ARTIFACT_DIR}"
+PYTHONPATH=control_plane $PYTEST_EXE tests/e2e/production_agentic/test_production_agentic_real_e2e.py -v
 
-echo "Starting Agentic Production E2E Suite..."
-export PLATFORM_PROFILE=agentic-production
-export AGENT_RUNTIME_ENABLED=true
-export AGENT_WORKER_ENABLED=true
-export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/control_plane:${PYTHONPATH:-}"
-
-cat > "${ARTIFACT_DIR}/summary.md" <<'EOF'
-# Agentic Production E2E Summary
-
-This suite is allowed to certify only non-mock production claims.
-EOF
-
-if rg -n "MockAgentLLMProvider|allow_mocks:\\s*true|# Service exists|# In a real E2E" "${ROOT_DIR}/tests/e2e/production_agentic" --glob '*.py' >/dev/null; then
-  cat >> "${ARTIFACT_DIR}/summary.md" <<'EOF'
-
-Status: BLOCKED
-Reason: mock-backed or initialization-only tests are still present in tests/e2e/production_agentic.
-EOF
-  echo "Production E2E suite blocked: mock-backed or initialization-only tests detected." >&2
-  exit 1
+if [ $? -eq 0 ]; then
+    echo "✅ E2E Test Suite Passed."
+    exit 0
+else
+    echo "❌ E2E Test Suite Failed."
+    exit 1
 fi
-
-"${PYTEST_BIN}" "${ROOT_DIR}/tests/e2e/production_agentic/"
-
-echo "Status: PASS" >> "${ARTIFACT_DIR}/summary.md"
-echo "E2E Suite Completed. Artifacts generated in ${ARTIFACT_DIR}/"

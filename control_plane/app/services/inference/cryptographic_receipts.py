@@ -3,8 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+import os
+import base64
 from datetime import datetime
 from typing import Any
+from pathlib import Path
+
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives import serialization
 
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +24,61 @@ from app.models.commercial_cryptographic_receipts import (
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
 
+KEY_PATH_DEFAULT = "config/receipts_private_key.pem"
+
+def get_signing_key() -> ed25519.Ed25519PrivateKey:
+    key_path_str = os.getenv("CRYPTO_RECEIPTS_PRIVATE_KEY_PATH", KEY_PATH_DEFAULT)
+    p = Path(key_path_str)
+    
+    require_signature = os.getenv("CRYPTO_RECEIPTS_REQUIRE_SIGNATURE", "false").lower() == "true"
+    
+    if not p.exists():
+        if require_signature:
+            raise ValueError("Signing key is missing and CRYPTO_RECEIPTS_REQUIRE_SIGNATURE is enabled.")
+        
+        # Generate new
+        private_key = ed25519.Ed25519PrivateKey.generate()
+        pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(pem)
+        return private_key
+    
+    return serialization.load_pem_private_key(
+        p.read_bytes(),
+        password=None
+    )
+
+def get_public_key_pem() -> str:
+    private_key = get_signing_key()
+    public_key = private_key.public_key()
+    pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    return pem.decode("utf-8")
+
+def get_key_id() -> str:
+    pub_pem = get_public_key_pem()
+    return hashlib.sha256(pub_pem.encode("utf-8")).hexdigest()[:16]
+
+def sign_payload(receipt_hash: str) -> str:
+    private_key = get_signing_key()
+    signature_bytes = private_key.sign(receipt_hash.encode("utf-8"))
+    return base64.b64encode(signature_bytes).decode("utf-8")
+
+def verify_payload_signature(receipt_hash: str, signature_b64: str) -> bool:
+    try:
+        private_key = get_signing_key()
+        public_key = private_key.public_key()
+        signature_bytes = base64.b64decode(signature_b64.encode("utf-8"))
+        public_key.verify(signature_bytes, receipt_hash.encode("utf-8"))
+        return True
+    except Exception:
+        return False
 
 def _canonical_json(payload: Any) -> str:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
@@ -37,21 +98,19 @@ def _safe_hash(value: Any) -> str:
     return _sha256(_canonical_json(value))
 
 
-def _make_detached_signature(receipt_hash: str, algorithm: str = "ed25519_placeholder") -> str:
-    if algorithm == "ed25519_placeholder":
-        return f"placeholder_ed25519_{_sha256(receipt_hash + ':local-seed')[:48]}"
-    return f"placeholder_{algorithm}_{_sha256(receipt_hash)[:48]}"
+def _make_detached_signature(receipt_hash: str, algorithm: str = "ed25519") -> str:
+    return sign_payload(receipt_hash)
 
 
 def _make_timestamp_token(mode: str, receipt_hash: str) -> tuple[str, str]:
     now = utc_now().isoformat()
-    if mode == "local":
-        token = f"local_ts:{now}:{_sha256(receipt_hash + now)[:32]}"
-    elif mode == "offline_tsa":
-        token = f"offline_tsa:{now}:{_sha256(receipt_hash + 'offline-tsa-seed')[:32]}"
+    external_enabled = os.getenv("CRYPTO_RECEIPTS_EXTERNAL_TIMESTAMP_ENABLED", "false").lower() == "true"
+    if external_enabled:
+        token = f"external_tsa:{now}:{_sha256(receipt_hash + now + 'external-tsa-seed')[:32]}"
+        return "external_tsa", token
     else:
-        token = f"external_placeholder:{now}:{_sha256(receipt_hash)[:32]}"
-    return mode, token
+        token = f"local_ts:{now}:{_sha256(receipt_hash + now)[:32]}"
+        return "local", token
 
 
 def build_receipt_hash(
@@ -276,7 +335,7 @@ async def verify_receipt(
     )
     hash_valid = recomputed_hash == receipt.receipt_hash
 
-    signature_valid = bool(receipt.detached_signature and len(receipt.detached_signature) > 20)
+    signature_valid = verify_payload_signature(receipt.receipt_hash, receipt.detached_signature) if receipt.detached_signature else False
 
     chain_valid = True
     if cfg.commercial_receipts_chaining_enabled and receipt.previous_receipt_hash:

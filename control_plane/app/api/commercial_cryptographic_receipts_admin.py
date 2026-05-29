@@ -177,3 +177,36 @@ async def list_verification_reports(
         stmt = stmt.where(CommercialInferenceReceiptVerificationReport.verification_result == verification_result)
     rows = (await db.execute(stmt)).scalars().all()
     return {"items": [_serialize_report(item) for item in rows]}
+
+
+@router.post("/admin/receipts/{id}/verify")
+async def verify_receipt_endpoint_new(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+):
+    item = await db.get(CommercialInferenceReceipt, id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="receipt not found")
+    report = await verify_receipt(db, item)
+    await db.commit()
+    return _serialize_report(report)
+
+
+@router.get("/admin/receipts/public-key")
+async def get_public_key_endpoint():
+    from app.services.inference.cryptographic_receipts import get_public_key_pem, get_key_id
+    try:
+        return {"public_key": get_public_key_pem(), "key_id": get_key_id()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/receipts/{id}")
+async def get_receipt_endpoint_new(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+):
+    item = await db.get(CommercialInferenceReceipt, id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="receipt not found")
+    return _serialize_receipt(item)

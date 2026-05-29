@@ -1,0 +1,73 @@
+valid_flags:
+  AGENT_RUNTIME_ENABLED:
+    type: boolean
+    description: Enables agent runtime execution core
+    override_allowed: true
+    high_risk: false
+  AGENT_WORKER_ENABLED:
+    type: boolean
+    description: Enables background worker to process agent tasks
+    override_allowed: true
+    high_risk: false
+  AGENT_EVALS_ENABLED:
+    type: boolean
+    description: Enables evaluation of runs
+    override_allowed: true
+    high_risk: false
+  AGENT_CODE_INTERPRETER_ENABLED:
+    type: boolean
+    description: Enables code interpreter tool execution
+    override_allowed: true
+    high_risk: false
+  AGENT_CODE_SANDBOX_PROVIDER:
+    type: string
+    description: Provider used for tool sandbox (docker, gvisor, firecracker, mock)
+    override_allowed: true
+    high_risk: true
+  AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER:
+    type: boolean
+    description: Allows simulated fallback sandbox
+    override_allowed: true
+    high_risk: true
+  AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION:
+    type: boolean
+    description: Enforces hardware attestation for sandboxes
+    override_allowed: true
+    high_risk: true
+  AGENT_READINESS_CHECKS_ENABLED:
+    type: boolean
+    description: Enforces platform readiness checks on startup
+    override_allowed: true
+    high_risk: false
+  AGENT_ENTERPRISE_OBSERVABILITY_ENABLED:
+    type: boolean
+    description: Enforces real enterprise observability
+    override_allowed: true
+    high_risk: false
+  AGENT_PLUGIN_SUPPLY_CHAIN_ENABLED:
+    type: boolean
+    description: Enforces plugin supply chain verification
+    override_allowed: true
+    high_risk: false
+  PLUGIN_SIGNATURE_REQUIRED:
+    type: boolean
+    description: Enforces cryptographic signature verification on plugins
+    override_allowed: true
+    high_risk: false
+  CRYPTO_RECEIPTS_ENABLED:
+    type: boolean
+    description: Enforces cryptographic receipts signing
+    override_allowed: true
+    high_risk: false
+
+dependencies:
+  - flag: AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION
+    requires:
+      AGENT_CODE_SANDBOX_PROVIDER: ["gvisor", "firecracker"]
+
+conflicts:
+  - flag1: AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER
+    flag2: AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION
+    value1: true
+    value2: true
+    message: Cannot allow simulated provider when attestation is required.

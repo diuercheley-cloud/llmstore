@@ -15,6 +15,11 @@ from app.models.plugins.marketplace import (
     PluginPermission,
     PluginTrustReport,
     PluginReview,
+    PluginExecutionRecord,
+    PluginPermissionGrant,
+    PluginVerificationResult,
+    PluginDryRunResult,
+    PluginExecutionReceipt,
 )
 
 from app.models.runtime.gpu_orchestration import (
@@ -775,6 +780,13 @@ __all__ = [
     "PluginPermission",
     "PluginTrustReport",
     "PluginReview",
+    "PluginRuntimeExecution",
+    "PluginExecutionRecord",
+    "PluginPermissionGrant",
+    "PluginVerificationResult",
+    "PluginDryRunResult",
+    "PluginRuntimeReceipt",
+    "PluginExecutionReceipt",
     "AgentModelCapability",
     "AgentRoutingPolicy",
     "AgentCostQualityProfile",

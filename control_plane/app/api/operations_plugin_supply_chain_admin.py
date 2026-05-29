@@ -281,8 +281,16 @@ async def generate_sbom_placeholder(
     db: AsyncSession = Depends(get_db),
     _admin: Any = Depends(get_current_admin),
 ):
+    from app.core.config import get_settings
+    if get_settings().app_env == "production":
+        raise HTTPException(status_code=400, detail="Placeholder SBOM is blocked in production mode.")
+        
     provenance = await _get_provenance(db, provenance_id, request.client_id)
-    placeholder = SBOM_SERVICE.generate_sbom_placeholder(provenance, **request.model_dump(exclude={"client_id"}))
+    try:
+        placeholder = SBOM_SERVICE.generate_sbom_placeholder(provenance, **request.model_dump(exclude={"client_id"}))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
     db.add(placeholder)
     event = build_plugin_supply_chain_audit_event("sbom_generated", str(request.client_id), {"provenance_id": provenance.id, "sbom_id": placeholder.id})
     await db.commit()
@@ -416,6 +424,10 @@ async def create_signature_placeholder(
     db: AsyncSession = Depends(get_db),
     _admin: Any = Depends(get_current_admin),
 ):
+    from app.core.config import get_settings
+    if get_settings().app_env == "production":
+        raise HTTPException(status_code=400, detail="Placeholder signatures are blocked in production mode.")
+        
     provenance = await _get_provenance(db, provenance_id, request.client_id)
     if request.signature_status not in PLUGIN_SIGNATURE_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported signature status")
