@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Model Supply Chain
 
 Phase 38 adds an internal, auditable model supply chain for local and API-backed models. This is not a formal third-party supply-chain attestation system. It implements internal controls for signed manifests, provenance capture, checksum verification, quarantine and offline promotion.

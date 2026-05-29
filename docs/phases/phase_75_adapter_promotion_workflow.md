@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 75: Adapter Promotion Workflow
 
 ## Overview

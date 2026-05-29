@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Readiness Cleanup v1.6.3
 
 ## Status Final

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # LLM Provider Modes
 
 This document describes the strict provider mode separation for the agent LLM provider layer.

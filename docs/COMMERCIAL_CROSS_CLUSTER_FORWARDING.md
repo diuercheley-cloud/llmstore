@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 18: Safe Cross-Cluster HTTP Forwarding Opt-in
 
 ## Visão Geral

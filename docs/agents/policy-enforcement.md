@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Ubiquitous Policy Enforcement
 
 O `llm-inference-stack` impõe a avaliação de políticas de governança antes de qualquer ação que possa causar efeitos colaterais ou expor dados sensíveis. O `AgentPolicyEngine` atua como um "sentinela" onipresente no runtime agentic.

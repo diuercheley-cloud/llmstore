@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Hardware Trust Provider
 
 The Stack abstracts hardware-based security via a pluggable provider interface.

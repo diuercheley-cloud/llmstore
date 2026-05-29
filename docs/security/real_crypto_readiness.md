@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Real Crypto Readiness
 
 Missing for production PKI deployment and hardware trust:

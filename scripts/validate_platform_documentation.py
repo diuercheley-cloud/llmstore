@@ -87,11 +87,11 @@ PROHIBITED_CLAIMS = [
 ]
 
 EXPLICIT_LIMITATIONS = [
-    "no real plugin execution",
-    "no real PKI",
-    "no hardware-backed trust",
-    "no real runtime execution",
-    "no formal certification",
+    "Plugin ABI Sandbox",
+    "Local PKI",
+    "Policy-Based Attestation",
+    "Offline-First",
+    "Evidence-Driven Compliance",
 ]
 
 

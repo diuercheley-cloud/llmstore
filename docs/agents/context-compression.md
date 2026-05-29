@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Context Compression
 
 As conversations grow, they may exceed the LLM's context window (token limit). The platform implements automatic context compression to maintain continuity.

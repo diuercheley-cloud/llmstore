@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Deterministic Event Architecture
 
 Phase 82 adds local deterministic event abstractions with:

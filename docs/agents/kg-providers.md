@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # KG Providers
 
 - `internal_sql`: supported default, no external dependency.

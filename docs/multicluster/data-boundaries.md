@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Data Boundaries & Sovereignty
 
 Garantir a soberania dos dados em operações multi-cluster é fundamental.

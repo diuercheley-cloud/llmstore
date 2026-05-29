@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Dependency Direction Rules
 
 Allowed:

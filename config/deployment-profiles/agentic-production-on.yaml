@@ -1,0 +1,55 @@
+profile_name: agentic-production-on
+version: v2.2.0-stable
+description: >
+  Hardened production profile with agentic runtime turned ON for live validation.
+  Runtime is fully enabled — workers, async execution, tool execution, evals,
+  MCP client (mock/offline), knowledge graph, reasoning loop. Safety guards
+  remain: destructive tools, external network, paid providers are disabled;
+  sandbox and human approval are enforced.
+
+flags:
+  # Runtime & Execution — all ON for live validation
+  AGENT_RUNTIME_ENABLED: true
+  AGENT_WORKER_ENABLED: true
+  AGENT_ASYNC_EXECUTION_ENABLED: true
+  AGENT_TOOL_EXECUTION_ENABLED: true
+  AGENT_EXECUTION_PLANE_ENABLED: true
+
+  # Agentic Features — fully enabled (mock/offline where needed)
+  AGENT_EVALS_ENABLED: true
+  AGENT_MCP_CLIENT_ENABLED: true
+  AGENT_MCP_MOCK_MODE: true
+  AGENT_KNOWLEDGE_GRAPH_ENABLED: true
+  AGENT_REASONING_LOOP_ENABLED: true
+  AGENT_MEMORY_ENABLED: true
+  AGENT_MEMORY_WRITE_ENABLED: true
+
+  # LLM — mock/gateway only, no real providers
+  AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION: true
+  AGENT_EXECUTOR_MOCK_MODE: true
+  AGENT_REAL_LLM_ENABLED: false
+  AGENT_REAL_EVAL_ENABLED: false
+
+  # Safety Guards — enforced, not relaxed
+  AGENT_DESTRUCTIVE_TOOLS_ENABLED: false
+  AGENT_MCP_EXTERNAL_NETWORK_ENABLED: false
+  AGENT_PAID_PROVIDERS_ENABLED: false
+  AGENT_TOOL_SANDBOX_ENABLED: true
+  AGENT_HUMAN_APPROVAL_ENABLED: true
+
+  # Tracing & Receipts — required for validation
+  AGENT_TRACE_ENABLED: true
+  AGENT_RECEIPT_ENABLED: true
+
+  # Governance — eval gate required
+  AGENT_PROMOTION_REQUIRES_EVALS: true
+  AGENT_EVAL_REGRESSION_GATE_ENABLED: true
+
+readiness_targets:
+  - "/admin/readiness/agent-runtime"
+  - "/admin/readiness/agent-worker"
+  - "/admin/readiness/tool-execution"
+  - "/admin/readiness/memory-governance"
+  - "/admin/readiness/agent-evals"
+  - "/admin/readiness/knowledge-graph"
+  - "/admin/readiness/trace-receipt"

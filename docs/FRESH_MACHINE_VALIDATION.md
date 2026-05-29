@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Fresh Machine / Clean WSL Validation
 
 ## Objetivo

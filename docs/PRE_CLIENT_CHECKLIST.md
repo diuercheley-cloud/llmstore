@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Pre-Client / Pre-Demo Checklist
 
 Este documento descreve o processo de validação automatizada antes de realizar uma demonstração para clientes ou instalar o sistema em um ambiente de produção local.

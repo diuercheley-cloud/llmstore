@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Fluxo Visual da Demonstração
 
 ## Fluxo Recomendado (30 min)

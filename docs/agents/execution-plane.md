@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Execution Plane
 
 The **Agent Execution Plane** is an asynchronous, isolated, and highly reliable execution environment designed to process agent runs outside the HTTP request lifecycle. By decoupling agent execution from incoming HTTP request handling, the system handles long-running, multi-step agent actions without risking timeouts or tying up web server resources.

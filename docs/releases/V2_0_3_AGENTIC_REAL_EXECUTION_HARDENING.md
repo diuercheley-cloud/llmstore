@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release v2.0.3 Agentic Real Execution Hardening
 
 ## Objective

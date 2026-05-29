@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # LLM Inference Stack — Documentation Index
 
 > *Sovereign, offline-first, deterministic AI inference platform*

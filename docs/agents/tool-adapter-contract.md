@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Adapter Contract
 
 All tool adapters must implement the `ToolAdapterContract` abstract base class.

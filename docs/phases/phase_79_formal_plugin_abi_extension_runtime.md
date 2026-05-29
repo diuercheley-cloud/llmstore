@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 79: Formal Plugin ABI & Extension Runtime
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Coverage Baseline
 
 Generated on: 2026-05-16

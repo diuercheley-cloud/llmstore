@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Phase Timeline — Phases 69–82
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent LLM Provider Integration
 
 This document describes how the Agent Executor integrates with LLM providers in the `llm-inference-stack`.

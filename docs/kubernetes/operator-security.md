@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Kubernetes Operator: Security Architecture
 
 The operator is designed with a "security-first" approach to manage LLM infrastructure safely.

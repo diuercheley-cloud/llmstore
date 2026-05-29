@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # ADR 0003: Cryptographic Receipts
 
 ## Status

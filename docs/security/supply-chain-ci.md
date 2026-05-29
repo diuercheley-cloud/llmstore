@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supply Chain Security
 
 O `llm-inference-stack` implementa práticas de segurança de supply chain para garantir que o software que você executa é exatamente o software que nós construímos.

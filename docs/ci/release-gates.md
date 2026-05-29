@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Gates
 
 Para atingir o estado "Ready for Release", os seguintes critérios devem ser satisfeitos:

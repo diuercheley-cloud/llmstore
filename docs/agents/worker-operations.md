@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Worker Operations
 
 O `agent-worker` é o componente responsável pela execução assíncrona de agentes no `llm-inference-stack`. Ele processa tarefas da fila, gerencia leases de execução e reporta saúde periodicamente.

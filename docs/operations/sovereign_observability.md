@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Sovereign Observability
 
 Observability in Phase 82 is:

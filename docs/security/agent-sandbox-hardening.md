@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Sandbox Hardening
 
 The Agent Execution Plane implements multi-layered security to prevent sandbox escapes and unauthorized resource access during tool execution.

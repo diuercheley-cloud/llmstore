@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Production Activation Playbook
 
 This playbook outlines the steps to transition the Agentic Runtime from Pilot to Production mode.

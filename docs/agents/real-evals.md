@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Real Agent Evaluations with Controlled Providers
 
 This document describes how the Agent Evaluation Framework supports running evaluations against real, controlled language model providers instead of mock providers, and how safety guarantees are enforced.

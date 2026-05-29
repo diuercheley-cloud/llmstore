@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operational Readiness Pack
 
 Este pacote fornece ferramentas para validar se o `llm-inference-stack` está pronto para demonstrações, pilotos ou produção.

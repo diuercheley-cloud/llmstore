@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Memory Poisoning Playbook
 
 ## Descrição

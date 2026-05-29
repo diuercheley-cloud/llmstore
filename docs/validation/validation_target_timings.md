@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Validation Target Timings
 
 | Target | Status | Time (s) |

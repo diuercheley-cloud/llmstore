@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial QoS / SLA-Aware Routing
 
 This document describes Phase 20: Adaptive SLA-Aware Routing with QoS Tiers.

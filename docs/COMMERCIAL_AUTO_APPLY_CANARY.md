@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Auto Apply Canary (Phase 8)
 
 ## Overview

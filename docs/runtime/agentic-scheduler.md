@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Secure Scheduler
 
 The Agentic Scheduler is responsible for triggering agent runs based on time (cron) or events, ensuring that these triggers are fired reliably and exactly once.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Roteiro de Apresentação (Demo Script)
 
 Este documento fornece um guia passo a passo para realizar uma apresentação comercial ou técnica do `llm-inference-stack`.

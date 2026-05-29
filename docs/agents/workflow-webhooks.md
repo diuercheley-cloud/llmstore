@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflow Webhooks
 
 Stateful workflows can be configured to wait for external HTTP callbacks (webhooks). This allows agents to pause execution until an external event occurs (e.g., an external process completes, or a human provides feedback via a dedicated system).

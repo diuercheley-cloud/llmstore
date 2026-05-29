@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Advanced Visual Observability
 
 O `llm-inference-stack` fornece uma experiência de observabilidade avançada baseada em Grafana, Prometheus e métricas nativas do Control Plane.

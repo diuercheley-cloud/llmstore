@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Auditoria da Linha v1.6.x — Summary
 
 **Documento versionavel de auditoria da release line v1.6.x.**

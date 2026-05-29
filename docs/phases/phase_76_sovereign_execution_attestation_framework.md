@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 76: Sovereign Execution Attestation Framework
 
 ## Overview

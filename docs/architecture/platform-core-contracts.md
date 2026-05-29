@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Core Contracts
 
 This document describes the explicit and testable contracts implemented in the `llm-inference-stack` to prevent architectural drift between core components.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Admin UI
 
 A interface administrativa (Admin v2) fornece um painel de controle centralizado para operar e governar o ecossistema de agentes inteligentes.

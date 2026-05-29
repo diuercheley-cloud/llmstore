@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Global Routing (Dry-Run) - Phase 16
 
 This document describes the Global Traffic Routing implementation in dry-run mode.

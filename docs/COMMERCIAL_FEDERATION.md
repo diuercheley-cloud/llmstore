@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Federation
 
 Fase 15 adiciona federação multi-cluster para commercial routing sem quebrar o modo single-cluster. Cada cluster continua independente, exporta aggregates comerciais locais e pode consolidar visão federada de requests, custo, margem, latência e anomalias.

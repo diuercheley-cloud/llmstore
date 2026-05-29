@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Security Model: Agent Delegated Identity
 
 This document defines the security boundaries, feature flags, and token life cycle of the Agent Delegated Identity system.

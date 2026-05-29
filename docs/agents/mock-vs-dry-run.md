@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Mock vs Dry-Run Execution Modes
 
 When operating the Agent Platform, it is crucial to understand the difference between **Mock Mode** and **Dry-Run Mode**.

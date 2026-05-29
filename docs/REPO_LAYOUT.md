@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Repository Layout Policy
 
 This document defines the organization of files and directories in the `llm-inference-stack` repository.

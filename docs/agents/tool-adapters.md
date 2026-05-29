@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Adapters
 
 Tool Adapters provide a standardized layer for real, versioned, and executable tools in the agentic runtime.

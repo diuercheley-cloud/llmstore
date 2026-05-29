@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Stabilization Summary
 
 Este documento resume a revisao das mudancas de estabilizacao arquitetural realizadas antes da Phase 66.

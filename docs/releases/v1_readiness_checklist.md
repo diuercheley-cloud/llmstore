@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1 Readiness Checklist
 
 ## Operational Readiness

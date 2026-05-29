@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Security Questionnaire (Common Responses)
 
 ## Data Privacy

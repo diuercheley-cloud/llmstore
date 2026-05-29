@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # ADR 0002: Offline-First Sovereign Mode
 
 ## Status

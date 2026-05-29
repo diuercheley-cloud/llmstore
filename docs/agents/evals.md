@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Evaluation Framework
 
 The Agent Evaluation Framework allows you to define test suites and cases to ensure agent quality, safety, and performance before deploying to production.

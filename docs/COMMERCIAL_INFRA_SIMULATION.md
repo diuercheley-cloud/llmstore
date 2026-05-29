@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Infrastructure Simulation & Safety Gates (Phase 21.1)
 
 This module provides a simulation and protection layer for all infrastructure-impacting actions. Before any scaling, rerouting, or failover occurs, it must pass through a simulation and be validated against safety policies.

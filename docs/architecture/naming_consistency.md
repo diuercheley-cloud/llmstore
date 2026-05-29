@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Naming & API Consistency
 
 ## Standardized Terminology

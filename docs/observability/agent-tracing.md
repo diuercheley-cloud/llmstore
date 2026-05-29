@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Tracing (OpenTelemetry)
 
 The platform follows OpenTelemetry GenAI semantic conventions for agent tracing.

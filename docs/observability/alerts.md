@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Alerting Strategy
 
 Nossa estratégia de alertas foca em sintomas que afetam o usuário final.

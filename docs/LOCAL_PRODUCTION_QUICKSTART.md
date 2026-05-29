@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Local Production Quickstart
 
 > **Novo Instalador (Recomendado):** Use os comandos abaixo para uma configuração guiada e instalação completa:

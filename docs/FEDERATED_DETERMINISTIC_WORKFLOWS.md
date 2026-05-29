@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Federated Deterministic Workflows
 
 Phase 57 extends deterministic workflows to a federated multi-cluster model without relying on external SaaS services.

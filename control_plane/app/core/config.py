@@ -128,10 +128,70 @@ class Settings(BaseSettings):
     agent_evals_enabled: bool = Field(default=False, alias="AGENT_EVALS_ENABLED")
     # Owner: agent-platform
     # Status: beta
+    agent_eval_provider: str = Field(default="mock", alias="AGENT_EVAL_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_allow_mock_for_promotion: bool = Field(default=False, alias="AGENT_EVAL_ALLOW_MOCK_FOR_PROMOTION")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_real_provider_enabled: bool = Field(default=False, alias="AGENT_EVAL_REAL_PROVIDER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_gate_strict: bool = Field(default=True, alias="AGENT_EVAL_GATE_STRICT")
+    # Owner: agent-platform
+    # Status: beta
+    agent_production_requires_eval_baseline: bool = Field(default=True, alias="AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_promotion_requires_evals: bool = Field(default=False, alias="AGENT_PROMOTION_REQUIRES_EVALS")
+    # Owner: agent-platform
+    # Status: beta
+    agent_eval_regression_gate_enabled: bool = Field(default=True, alias="AGENT_EVAL_REGRESSION_GATE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_real_provider_validation_enabled: bool = Field(default=False, alias="AGENT_REAL_PROVIDER_VALIDATION_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agentic_router_v2_enabled: bool = Field(default=False, alias="AGENTIC_ROUTER_V2_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_reasoning_loop_enabled: bool = Field(default=False, alias="AGENT_REASONING_LOOP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_plan_and_solve_enabled: bool = Field(default=False, alias="AGENT_PLAN_AND_SOLVE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_react_loop_enabled: bool = Field(default=False, alias="AGENT_REACT_LOOP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_execution_enabled: bool = Field(default=False, alias="AGENT_TOOL_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_destructive_tools_enabled: bool = Field(default=False, alias="AGENT_DESTRUCTIVE_TOOLS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_async_execution_enabled: bool = Field(default=False, alias="AGENT_ASYNC_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_sandbox_enabled: bool = Field(default=True, alias="AGENT_TOOL_SANDBOX_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_credential_delegation_enabled: bool = Field(default=False, alias="AGENT_TOOL_CREDENTIAL_DELEGATION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_rollback_enabled: bool = Field(default=True, alias="AGENT_TOOL_ROLLBACK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_tool_registry_enabled: bool = Field(default=False, alias="AGENT_TOOL_REGISTRY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_execution_plane_enabled: bool = Field(default=False, alias="AGENT_EXECUTION_PLANE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_queue_backpressure_enabled: bool = Field(default=False, alias="AGENT_QUEUE_BACKPRESSURE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_context_compression_enabled: bool = Field(default=False, alias="AGENT_CONTEXT_COMPRESSION_ENABLED")
     
     agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
     agent_task_mock_mode: bool = Field(default=False, alias="AGENT_TASK_MOCK_MODE")
@@ -150,6 +210,15 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_multi_agent_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_multi_agent_arbitration_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_ARBITRATION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_multi_agent_critic_review_enabled: bool = Field(default=False, alias="AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_multi_agent_mock_arbitration: bool = Field(default=False, alias="AGENT_MULTI_AGENT_MOCK_ARBITRATION")
     # Owner: agent-platform
     # Status: beta
     agent_event_driven_enabled: bool = Field(default=False, alias="AGENT_EVENT_DRIVEN_ENABLED")
@@ -238,6 +307,7 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
+    agent_approval_required_for_high_risk: bool = Field(default=True, alias="AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK")
     # Owner: agent-platform
     # Status: beta
     agent_code_interpreter_enabled: bool = Field(default=False, alias="AGENT_CODE_INTERPRETER_ENABLED")
@@ -293,6 +363,22 @@ class Settings(BaseSettings):
     # Status: experimental
     agent_mcp_global_credentials_allowed: bool = Field(default=False, alias="AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED")
     # Owner: agent-platform
+    # Status: experimental
+    # Allow mock-only discovery (ONLY in test/staging). Production must be false.
+    agent_mcp_mock_mode: bool = Field(default=False, alias="AGENT_MCP_MOCK_MODE")
+    # Owner: agent-platform
+    # Status: experimental
+    # Enable real MCP server discovery (tools/resources/prompts via MCP protocol).
+    agent_mcp_real_discovery_enabled: bool = Field(default=False, alias="AGENT_MCP_REAL_DISCOVERY_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    # Timeout in ms for MCP transport calls (initialize, list_tools, call_tool).
+    agent_mcp_call_timeout_ms: int = Field(default=10000, alias="AGENT_MCP_CALL_TIMEOUT_MS")
+    # Owner: agent-platform
+    # Status: experimental
+    # Max retries for transient MCP transport errors.
+    agent_mcp_call_max_retries: int = Field(default=2, alias="AGENT_MCP_CALL_MAX_RETRIES")
+    # Owner: agent-platform
     # Status: beta
     agent_knowledge_graph_enabled: bool = Field(default=False, alias="AGENT_KNOWLEDGE_GRAPH_ENABLED")
     # Owner: agent-platform
@@ -325,6 +411,20 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: experimental
     agent_kg_pgrouting_enabled: bool = Field(default=False, alias="AGENT_KG_PGROUTING_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    # Set to true ONLY in test/staging environments to allow mock path returns.
+    # Production must keep this false so empty paths mean "no path found", not "not implemented".
+    agent_kg_mock_mode: bool = Field(default=False, alias="AGENT_KG_MOCK_MODE")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_pathfinding_max_depth: int = Field(default=6, alias="AGENT_KG_PATHFINDING_MAX_DEPTH")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_pathfinding_max_nodes: int = Field(default=500, alias="AGENT_KG_PATHFINDING_MAX_NODES")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_kg_pathfinding_timeout_ms: int = Field(default=5000, alias="AGENT_KG_PATHFINDING_TIMEOUT_MS")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

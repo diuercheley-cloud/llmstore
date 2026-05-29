@@ -62,9 +62,9 @@ def register_server(req: RegisterMCPServerRequest, settings: Settings = Depends(
 
 
 @admin_router.post("/servers/{server_id}/discover")
-def discover_server(server_id: str, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def discover_server(server_id: str, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
     try:
-        return MCPClient().discover(server_id)
+        return await MCPClient().discover(server_id)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -73,6 +73,29 @@ def discover_server(server_id: str, settings: Settings = Depends(get_settings), 
 def approve_tool(server_id: str, req: ApproveMCPToolRequest, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
     try:
         return MCPClient().approve_tool(server_id, req.tool_name)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@admin_router.post("/tools/{tool_name}/call")
+async def call_tool(
+    tool_name: str,
+    req: MCPCallRequest,
+    settings: Settings = Depends(get_settings),
+    _: dict = Depends(require_admin),
+):
+    if not settings.agent_mcp_enabled:
+        raise HTTPException(status_code=400, detail="MCP is not enabled")
+    # server_id must be supplied in the request body
+    server_id = req.arguments.pop("__server_id", None)
+    if not server_id:
+        raise HTTPException(status_code=422, detail="__server_id must be provided in arguments")
+    try:
+        return await MCPClient().call_tool(server_id, tool_name, req.arguments)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -92,10 +115,16 @@ def list_tools(settings: Settings = Depends(get_settings), _: dict = Depends(req
 
 
 @admin_router.get("/audit")
-def list_audit(settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+def list_audit(
+    event_type: str | None = None,
+    server_id: str | None = None,
+    limit: int = 200,
+    settings: Settings = Depends(get_settings),
+    _: dict = Depends(require_admin),
+):
     if not settings.agent_mcp_enabled:
         raise HTTPException(status_code=400, detail="MCP is not enabled")
-    return MCPAuditLog.events
+    return MCPAuditLog.list_events(event_type=event_type, server_id=server_id, limit=limit)
 
 
 @server_router.get("")

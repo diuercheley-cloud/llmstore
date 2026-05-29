@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Guardrails
 
 Camada admin-only para observabilidade financeira/comercial da operação híbrida, sem chamadas externas e sem bloquear tráfego real nesta fase.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # ISMS Readiness (ISO 27001)
 
 Este guia descreve o progresso da stack em direção a um **Sistema de Gestão de Segurança da Informação (SGSI)** aderente à ISO 27001.

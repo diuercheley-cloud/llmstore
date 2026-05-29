@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Sandbox Execution
 
 The execution sandbox ensures all agent tools execute inside a controlled, isolated runtime boundary with strict limits on resources, execution duration, and output volume.

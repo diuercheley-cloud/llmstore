@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Cognitive Memory
 
 Advanced memory introduces episodic, semantic, and working memory views on top of the existing memory store.

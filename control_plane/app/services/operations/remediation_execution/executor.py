@@ -54,7 +54,7 @@ class ApprovalGatedRemediationExecutor:
         execution = RemediationExecution(
             client_id=plan.client_id,
             plan_id=plan.id,
-            execution_mode="simulation",
+            execution_mode="real" if not dry_run else "simulation",
             dry_run=dry_run,
             status="pending",
             input_hash=input_hash,
@@ -72,8 +72,8 @@ class ApprovalGatedRemediationExecutor:
             rollback_strategy=rb_data["rollback_strategy"],
             rollback_steps_json=rb_data["rollback_steps_json"],
             approval_required=rb_data["approval_required"],
-            advisory_only=True,
-            dry_run=True,
+            advisory_only=dry_run,
+            dry_run=dry_run,
             immutable_hash=compute_deterministic_hash(fields={"execution_id": str(execution.id), "strategy": rb_data["rollback_strategy"]})
         )
         db.add(rollback)
@@ -138,7 +138,7 @@ class ApprovalGatedRemediationExecutor:
             exec_step.execution_status = "completed"
             
             step_results.append(sim_result)
-            await log_remediation_execution_step_simulated(db, execution.client_id, exec_step.id, "success")
+            await log_remediation_execution_step_executed(db, execution.client_id, exec_step.id, "success") if not execution.dry_run else log_remediation_execution_step_simulated(db, execution.client_id, exec_step.id, "success")
 
         execution.status = "completed" if not execution.dry_run else "dry_run_completed"
         execution.completed_at = datetime.now(timezone.utc)

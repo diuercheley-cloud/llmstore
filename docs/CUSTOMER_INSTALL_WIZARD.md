@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Customer Installation Wizard
 
 Este guia descreve como utilizar o instalador profissional para implantação do LLM Inference Stack em clientes.

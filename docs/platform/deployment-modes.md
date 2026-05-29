@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operational Deployment Modes
 
 This document details the controlled operational deployment modes introduced in `v2.0.1-agentic-operational-maturity` to govern features and security boundaries in the Agentic AI Platform.

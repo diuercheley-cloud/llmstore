@@ -14,7 +14,7 @@
 - Correlation IDs are propagated through request handling and responses.
 - Security headers are added by the API/proxy layer.
 - `PKI_ENABLED=false` and `HARDWARE_TRUST_ENABLED=false` do not block startup; PKI issuance and hardware trust checks remain disabled until explicitly enabled.
-- Attestation defaults to advisory behavior, and plugin signature enforcement is opt-in.
+- Attestation and hardware trust (PKI, TPM, TEE) follow an advisory-first pattern and require explicit operator configuration for enforcement.
 - The security posture and active features are partially driven by `DEPLOYMENT_MODE`.
 - In `appliance` mode (default), the agentic runtime is completely disabled and SaaS external connectors are blocked.
 - In `pilot` mode, the agentic runtime is active but SaaS connectors are read-only (writes blocked), and any mutating tool or memory action strictly requires human operator approval (`AGENT_HUMAN_APPROVAL_ENABLED=true`). Strict resource budgets are enforced.
@@ -76,7 +76,7 @@
 ## Trust Controls
 
 - PKI is local-only and operator-managed. Do not commit files from `PKI_STORAGE_PATH`, especially `*.key`, `*.pem`, `*.crt`, or CRLs generated during tests.
-- Hardware trust and attestation should be treated as non-enforcing unless the corresponding config gates are enabled and validated in the target environment.
+- Hardware trust and attestation should be treated as advisory unless the corresponding config gates are enabled and validated in the target environment.
 
 ## Logging Policy
 

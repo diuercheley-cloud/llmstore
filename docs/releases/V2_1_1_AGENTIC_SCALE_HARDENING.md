@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v2.1.1 Agentic Scale Hardening
 
 ## Objective

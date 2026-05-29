@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Support Bundle
 
 The Support Bundle is a diagnostic tool designed to help the support team troubleshoot issues with your LLM Inference Stack installation without exposing sensitive data.

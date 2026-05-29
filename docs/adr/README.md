@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # ADRs
 
 Este diretorio centraliza Architectural Decision Records da plataforma.

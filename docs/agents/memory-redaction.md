@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Memory Redaction
 
 Before any agent memory is stored in the database, the system executes redaction protocols (if enabled by the corresponding retention policy).

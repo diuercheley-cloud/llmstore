@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Validation Strategy
 
 ## Smoke vs Full

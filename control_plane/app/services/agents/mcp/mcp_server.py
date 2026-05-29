@@ -33,5 +33,5 @@ class MCPServer:
         if tool_name not in self.tools:
             raise KeyError("MCP tool not found")
         result = self.tools[tool_name](arguments)
-        MCPAuditLog.record("mcp_call", {"tool_name": tool_name})
+        MCPAuditLog.record("mcp_call", {"tool_name": tool_name}, tenant_id=None, server_id=None)
         return result

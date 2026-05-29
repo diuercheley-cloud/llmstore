@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Shared Workspaces for Human-Agent Collaboration
 
 The collaborative workspace environment provides a shared context where human operators and autonomous agents can create, update, review, and exchange structured artifacts.

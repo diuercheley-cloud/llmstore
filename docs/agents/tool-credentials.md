@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Delegated Tool Credentials
 
 To invoke authenticated third-party services securely without exposing global admin credentials to agents, the platform implements a Delegated Credentials mechanism.

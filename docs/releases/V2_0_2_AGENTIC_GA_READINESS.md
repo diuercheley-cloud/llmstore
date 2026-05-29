@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v2.0.2 Agentic GA Readiness
 
 ## Objective

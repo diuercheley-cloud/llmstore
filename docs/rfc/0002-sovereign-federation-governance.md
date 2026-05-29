@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # RFC 0002: Sovereign Federation Governance
 
 ## Status

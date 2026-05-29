@@ -74,8 +74,6 @@ def eval_settings():
     orig = {
         "agent_evals_enabled": settings.agent_evals_enabled,
         "agent_production_requires_eval_baseline": settings.agent_production_requires_eval_baseline,
-        "agent_regression_evals_required": settings.agent_regression_evals_required,
-        "agent_eval_datasets_versioned": settings.agent_eval_datasets_versioned,
     }
     yield settings
     for k, v in orig.items():
@@ -168,6 +166,7 @@ async def _create_eval_suite_and_run(
         passed_count=passed_count,
         failed_count=failed_count,
         total_count=total_count,
+        metadata_json={"provider": "gateway"},
     )
     db.add(eval_run)
     await db.flush()
@@ -266,7 +265,6 @@ async def test_regression_blocks_promotion_gate(eval_settings):
     """A quality regression must cause the promotion gate to fail."""
     eval_settings.agent_evals_enabled = True
     eval_settings.agent_production_requires_eval_baseline = True
-    eval_settings.agent_regression_evals_required = True
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
@@ -296,7 +294,6 @@ async def test_cost_threshold_violation_fails_gate(eval_settings):
     """Exceeding cost threshold must fail the gate."""
     eval_settings.agent_evals_enabled = True
     eval_settings.agent_production_requires_eval_baseline = False
-    eval_settings.agent_regression_evals_required = False
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
@@ -321,7 +318,6 @@ async def test_secret_leak_detection_fails_gate(eval_settings):
     """Secret markers in assertion results must fail the gate."""
     eval_settings.agent_evals_enabled = True
     eval_settings.agent_production_requires_eval_baseline = False
-    eval_settings.agent_regression_evals_required = False
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
@@ -355,6 +351,7 @@ async def test_secret_leak_detection_fails_gate(eval_settings):
             passed_count=1,
             failed_count=0,
             total_count=1,
+            metadata_json={"provider": "gateway"},
         )
         db.add(eval_run)
         await db.flush()
@@ -409,7 +406,6 @@ async def test_mock_provider_default(eval_settings):
 @pytest.mark.asyncio
 async def test_dataset_version_immutability(eval_settings):
     """Creating a duplicate dataset version must raise ValueError."""
-    eval_settings.agent_eval_datasets_versioned = True
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
@@ -432,7 +428,6 @@ async def test_dataset_version_immutability(eval_settings):
 @pytest.mark.asyncio
 async def test_dataset_creation_and_versioned_run(eval_settings):
     """Creating a dataset, a version, and running an eval from it must work end-to-end."""
-    eval_settings.agent_eval_datasets_versioned = True
 
     async with SessionLocal() as db:
         agent_def = await _create_agent_definition(db)
@@ -484,7 +479,6 @@ async def test_baseline_set_and_non_stale(eval_settings):
 async def test_promotion_gate_passes_all_green(eval_settings):
     """When all checks pass, the promotion gate result must pass."""
     eval_settings.agent_production_requires_eval_baseline = True
-    eval_settings.agent_regression_evals_required = True
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
@@ -512,7 +506,6 @@ async def test_promotion_gate_passes_all_green(eval_settings):
 async def test_audit_override_bypasses_failed_gate(eval_settings):
     """Audit override must make the promotion gate pass even when checks fail."""
     eval_settings.agent_production_requires_eval_baseline = True
-    eval_settings.agent_regression_evals_required = True
 
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)

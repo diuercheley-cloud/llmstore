@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 63: Distributed Sovereign Control Plane Mesh
 
 ## Overview

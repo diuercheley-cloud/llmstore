@@ -80,7 +80,7 @@ class PluginLoader(PluginContract):
             if not signature:
                 error_msg = f"Signature required but not provided for plugin {name}"
                 await self._log_security_event("plugin_load_error", error_msg, {})
-                if self.settings.attestation_mode == "enforcing":
+                if self.settings.attestation_mode == "enforcing" or self.settings.deployment_mode == "production":
                     raise ValueError(error_msg)
                 else:
                     logger.warning(f"[ADVISORY] {error_msg}")

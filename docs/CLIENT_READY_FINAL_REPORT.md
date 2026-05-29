@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Client Ready Final Report — v1.7.0-local-ai-appliance
 
 **Documento versionavel — Resumo seguro para cliente.**

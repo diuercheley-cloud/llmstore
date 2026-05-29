@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Context Lineage
 
 Phase 49 adds explainable context lineage for regulated retrieval.

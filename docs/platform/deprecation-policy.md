@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # API Deprecation & Sunset Policy
 
 To minimize operational complexity, the platform regularly consolidates redundant endpoints and retires legacy APIs. This policy defines the deprecation headers, notification periods, and transition rules.

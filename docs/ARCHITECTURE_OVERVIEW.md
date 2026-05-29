@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Architecture Overview: LLM Inference Stack
 
 The LLM Inference Stack is a high-performance, multi-tenant, and verifiable platform for deploying and managing Large Language Models at scale. It combines OpenAI-compatible inference with advanced commercial features for routing, billing, and compliance.

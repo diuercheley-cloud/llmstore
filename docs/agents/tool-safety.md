@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Safety and Policy Enforcement
 
 This document covers execution governance, feature flags, permissions matching, dry-runs, and rollbacks.

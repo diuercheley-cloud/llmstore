@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Multi-Cluster Operations
 
 O `llm-inference-stack` suporta a operação de múltiplos clusters ou appliances de forma unificada através do Control Plane.

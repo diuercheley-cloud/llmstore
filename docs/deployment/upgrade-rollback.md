@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Upgrades e Rollbacks
 
 Garantir que atualizações sejam seguras e reversíveis é uma prioridade do LLM Inference Stack.

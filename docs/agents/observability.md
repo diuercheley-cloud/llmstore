@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Observability
 
 Observability for LLM Agents allows operators to monitor, audit, and debug agentic workflows within the platform.

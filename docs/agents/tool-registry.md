@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Governed Tool Registry
 
 The Governed Tool Registry is a system designed to catalogue, validate, version, and control the capability of agents to execute tool calls in a secure manner. It integrates with RBAC permission policies, risk management, and audit trailing.

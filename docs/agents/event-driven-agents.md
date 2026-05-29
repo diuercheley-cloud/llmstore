@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Proactive and Event-Driven Agents
 
 The LLM Inference Stack supports proactive execution of agents triggered by external and internal events. This enables agents to run autonomously in response to cron schedules, system metrics, database notifications, webhooks, or pub/sub messages.

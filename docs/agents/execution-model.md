@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Execution Model
 
 The execution model guarantees that agent steps are deterministic, auditable, and trace-isolated.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Real Execution Readiness
 
 The real-execution readiness gate blocks production-like posture when any of these conditions are true:

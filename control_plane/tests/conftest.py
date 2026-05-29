@@ -37,6 +37,9 @@ os.environ.setdefault("AGENT_AUTO_OPTIMIZATION_ENABLED", "true")
 os.environ.setdefault("AGENT_DSPY_OPTIMIZER_ENABLED", "true")
 os.environ.setdefault("AGENT_AUTO_PROMOTE_OPTIMIZATIONS", "true")
 os.environ.setdefault("AGENT_OPTIMIZATION_APPLY_ENABLED", "true")
+os.environ.setdefault("AGENT_MULTI_AGENT_ARBITRATION_ENABLED", "true")
+os.environ.setdefault("AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED", "true")
+os.environ.setdefault("AGENT_MULTI_AGENT_MOCK_ARBITRATION", "true")
 
 
 

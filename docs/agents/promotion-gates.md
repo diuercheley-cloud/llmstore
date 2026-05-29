@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Promotion Gates
 
 O `llm-inference-stack` utiliza um processo rigoroso de **Promotion Gates** para garantir que agentes, adapters e prompts só cheguem ao ambiente de produção após validação técnica, de segurança e de conformidade.

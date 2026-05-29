@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Sovereign Disaster Recovery
 
 Phase 82 introduces deterministic backup manifests and dry-run recovery plans.

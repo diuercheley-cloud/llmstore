@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Capability Matrix
 
 Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente e backend.

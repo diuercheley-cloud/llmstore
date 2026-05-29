@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SaaS Connector OAuth
 
 The Agentic AI Platform provides a secure foundation for managing SaaS credentials using OAuth 2.0.

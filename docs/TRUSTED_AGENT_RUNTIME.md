@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Trusted Agent Runtime
 
 Phase 54 adds a tenant-scoped, policy-constrained agent execution layer for tools and actions that need to be auditable, replayable and approval-governed.

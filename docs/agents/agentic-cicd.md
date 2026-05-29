@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic CI/CD
 
 This document details the Agentic CI/CD workflow implemented in the Agentic AI Platform, allowing automated validation, evaluation, and promotion of optimization candidates.

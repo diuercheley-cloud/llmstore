@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase Index: Development History (1-43)
 
 This document provides a chronological index of the development phases that built the LLM Inference Stack.

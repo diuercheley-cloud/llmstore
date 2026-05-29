@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Bundle Manifest
 
 O arquivo `manifest.json` é o coração de um Agent Bundle. Ele segue o seguinte esquema:

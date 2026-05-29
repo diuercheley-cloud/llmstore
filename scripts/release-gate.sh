@@ -51,7 +51,7 @@ run_gate() {
 # ---------------------------------------------------------------------------
 echo ""
 echo "━━━ Gate: tag-format ━━━"
-if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9-]+)?$ ]]; then
+if [[ ! $TAG =~ ^v([0-9]+|[0-9]+\.x)(\.[0-9]+)?(-[a-z0-9-]+)?$ ]]; then
     echo "Erro: Tag '$TAG' não segue o padrão vX.Y.Z-name"
     exit 1
 fi
@@ -103,6 +103,11 @@ fi
 # 4. Feature Flags Governance
 # ---------------------------------------------------------------------------
 run_gate "feature-flags" bash scripts/check-feature-flags.sh
+
+# ---------------------------------------------------------------------------
+# 4a. Working Tree Certification
+# ---------------------------------------------------------------------------
+run_gate "working-tree-certification" bash scripts/working-tree-certification.sh
 
 # ---------------------------------------------------------------------------
 # 5. check-secrets

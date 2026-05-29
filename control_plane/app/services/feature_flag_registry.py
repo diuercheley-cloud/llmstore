@@ -61,12 +61,14 @@ class FeatureFlagRegistryService:
             if status not in ("active", "deprecated", "experimental", "internal", "beta"):
                 errors.append(f"Flag '{name}' has invalid status: {status}.")
                 
-            # 4. Deprecated validation (must have replacement or remove_after)
+            # 4. Deprecated validation (must have replacement AND remove_after)
             if status == "deprecated":
                 remove_after = f.get("remove_after")
                 replacement = f.get("replacement")
-                if not remove_after and not replacement:
-                    errors.append(f"Deprecated flag '{name}' must have a 'remove_after' date or a 'replacement' flag.")
+                if not remove_after or str(remove_after).strip() == "":
+                    errors.append(f"Deprecated flag '{name}' must have a 'remove_after' date.")
+                if not replacement or str(replacement).strip() == "":
+                    errors.append(f"Deprecated flag '{name}' must have a 'replacement' flag or 'none'.")
                     
             # 5. Experimental validation (must be opt-in, default false)
             if status == "experimental":
@@ -206,15 +208,33 @@ class FeatureFlagRegistryService:
             normalized_code_keys.add(alias_to_field.get(key, key))
         code_keys = normalized_code_keys
 
+        # 2.5 Scan docs for mentions
+        doc_keys = set()
+        docs_dir = os.path.join(base_dir, "docs")
+        if os.path.exists(docs_dir):
+            for root, dirs, files in os.walk(docs_dir):
+                for file in files:
+                    if not file.endswith(".md"): continue
+                    path = os.path.join(root, file)
+                    try:
+                        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                            content = f.read()
+                            # Find uppercase flags like AGENT_... or COMMERCIAL_...
+                            for m in re.finditer(r"\b([A-Z][A-Z0-9_]{10,})\b", content):
+                                flag = m.group(1)
+                                if "ENABLED" in flag or "MODE" in flag or "PROVIDER" in flag:
+                                    doc_keys.add(flag.upper())
+                    except Exception: pass
+
         # 3. Load registered flags
         flags = self.load_registry()
         registered_keys = {f.get("name", "").upper() for f in flags if f.get("name")}
 
         # 4. Calculate orphans and missing
-        # Registered but not in code or env
+        # Registered but not in code, env or docs
         orphans = []
         for r_key in sorted(registered_keys):
-            if r_key not in code_keys and r_key not in env_keys:
+            if r_key not in code_keys and r_key not in env_keys and r_key not in doc_keys:
                 orphans.append(r_key)
 
         # In env/code but not registered
@@ -229,10 +249,17 @@ class FeatureFlagRegistryService:
                 if e_key not in missing_registration:
                     missing_registration.append(e_key)
 
+        for d_key in sorted(doc_keys):
+            if d_key not in registered_keys and d_key not in missing_registration:
+                # Basic check if it's likely a flag
+                if d_key in settings_keys or d_key.startswith("AGENT_") or d_key.startswith("COMMERCIAL_"):
+                    missing_registration.append(d_key)
+
         return {
             "orphans": orphans,
             "missing_registration": missing_registration,
             "code_references_count": len(code_keys),
             "env_references_count": len(env_keys),
+            "doc_references_count": len(doc_keys),
             "registered_count": len(registered_keys)
         }

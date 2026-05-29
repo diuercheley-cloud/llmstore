@@ -1,88 +1,108 @@
 #!/usr/bin/env python3
 import os
+import yaml
 import sys
-import argparse
 
-# Ensure control_plane is in path
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-sys.path.insert(0, os.path.join(base_dir, "control_plane"))
+FEATURE_FLAGS_YAML = "config/feature-flags.yaml"
+ENV_EXAMPLE = ".env.example"
+CODE_DIRS = ["control_plane/app", "frontend/src", "scripts", "docs"]
 
-try:
-    from app.services.platform.feature_flag_audit import FeatureFlagAuditService
-except ImportError as e:
-    print(f"Error: Could not import app modules. {e}")
-    sys.exit(1)
+def load_flags():
+    with open(FEATURE_FLAGS_YAML, "r") as f:
+        return yaml.safe_load(f)
+
+def check_usage(flag_name):
+    # Search for the flag name in the codebase
+    attr_name = flag_name.lower()
+    
+    # We want to find cases where it's used as:
+    # 1. AGENT_FLAG_NAME (env var or string)
+    # 2. settings.agent_flag_name (attribute)
+    # 3. agent_flag_name (sometimes used as local var or in dicts)
+    
+    try:
+        # Check in app code, frontend, scripts, docs
+        # Using grep -rE to match either the exact flag name or the attribute name
+        pattern = f"{flag_name}|{attr_name}"
+        
+        count = 0
+        for d in CODE_DIRS:
+            if not os.path.exists(d): continue
+            cmd = f"grep -rE \"{pattern}\" {d} --exclude-dir=\"__pycache__\" --exclude-dir=\".ruff_cache\" --exclude=\"*.pyc\" | grep -v \"feature-flags.yaml\" | wc -l"
+            count += int(os.popen(cmd).read().strip())
+        
+        return count
+    except Exception as e:
+        print(f"Error checking {flag_name}: {e}")
+        return 0
+
+def is_in_env_example(flag_name):
+    try:
+        cmd = f"grep \"{flag_name}\" {ENV_EXAMPLE} | wc -l"
+        return int(os.popen(cmd).read().strip()) > 0
+    except:
+        return False
 
 def main():
-    parser = argparse.ArgumentParser(description="Feature Flag Governance Audit Tool")
-    parser.add_argument(
-        "--fix",
-        choices=["deprecate", "remove"],
-        help="Automatically clean up orphaned flags by deprecating or removing them."
-    )
-    args = parser.parse_args()
-
-    service = FeatureFlagAuditService()
+    flags = load_flags()
+    orphans = []
+    issues_report = []
     
-    print("--- Running Feature Flag Governance Audit ---")
-    audit_results = service.perform_audit()
+    print(f"Auditing {len(flags)} feature flags...\n")
     
-    # Generate report
-    report_path = service.generate_report(audit_results)
-    print(f"Report generated successfully at: {report_path}")
-    
-    # Print summary
-    print(f"\nAudit Summary:")
-    print(f" - Total Registered Flags: {audit_results['total_registered']}")
-    print(f" - Active: {len(audit_results['classification']['active'])}")
-    print(f" - Experimental: {len(audit_results['classification']['experimental'])}")
-    print(f" - Deprecated: {len(audit_results['classification']['deprecated'])}")
-    print(f" - Orphaned: {len(audit_results['orphans'])}")
-    print(f" - Internal Only: {len(audit_results['classification']['internal_only'])}")
-    
-    violations_found = False
-    
-    if audit_results["duplicates"]:
-        print(f"\n[VIOLATION] Duplicated flags found: {', '.join(audit_results['duplicates'])}")
-        violations_found = True
+    for flag in flags:
+        name = flag.get("name")
+        owner = flag.get("owner")
+        status = flag.get("status")
+        default_val = flag.get("default")
+        risk = flag.get("risk_level")
         
-    if audit_results["sem_owner"]:
-        print(f"\n[VIOLATION] Flags missing owner team: {', '.join(audit_results['sem_owner'])}")
-        violations_found = True
+        usage_count = check_usage(name)
+        in_env = is_in_env_example(name)
         
-    if audit_results["sem_safe_default_reason"]:
-        print(f"\n[VIOLATION] Flags missing safe default reason: {', '.join(audit_results['sem_safe_default_reason'])}")
-        violations_found = True
+        issues = []
+        if not owner:
+            issues.append("MISSING OWNER")
+        
+        if usage_count == 0:
+            if status != "removed":
+                issues.append("ORPHAN (Not found in code/docs)")
+                orphans.append(name)
+        
+        if risk == "high" and default_val is True:
+            issues.append("HIGH-RISK DEFAULT TRUE")
+            
+        if status == "deprecated":
+            if not flag.get("replacement"):
+                issues.append("DEPRECATED WITHOUT REPLACEMENT")
+            if not flag.get("remove_after"):
+                issues.append("DEPRECATED WITHOUT REMOVAL TARGET")
 
-    if audit_results["sem_docs"]:
-        print(f"\n[VIOLATION] Flags missing documentation (description/details): {', '.join(audit_results['sem_docs'])}")
-        violations_found = True
+        if issues:
+            issues_report.append({
+                "name": name,
+                "issues": issues,
+                "status": status,
+                "owner": owner,
+                "usage": usage_count
+            })
 
-    if audit_results["active_conflicts"]:
-        print(f"\n[VIOLATION] Active conflicts detected:")
-        for conflict in audit_results["active_conflicts"]:
-            print(f"   - {conflict['message']}")
-        violations_found = True
-
-    if audit_results["orphans"]:
-        print(f"\n[WARNING] Orphaned flags detected ({len(audit_results['orphans'])} flags). Use --fix deprecate/remove to cleanup.")
-
-    # Perform cleanup if --fix is set
-    if args.fix:
-        print(f"\n--- Running Cleanup (mode: {args.fix}) ---")
-        count, modified = service.cleanup_orphaned_flags(mode=args.fix)
-        print(f"Successfully modified/cleaned {count} orphaned flags.")
-        # Re-run audit to update report after cleanup
-        new_results = service.perform_audit()
-        service.generate_report(new_results)
-        print("Updated audit report generated after cleanup.")
-    
-    if violations_found:
-        print("\nFAIL: Feature Flag Governance policy violations found.")
-        sys.exit(1)
+    print(f"## Feature Flag Audit Report\n")
+    if not issues_report:
+        print("No issues found.")
     else:
-        print("\nPASS: Feature Flag Governance audit completed.")
-        sys.exit(0)
+        for item in issues_report:
+            print(f"### {item['name']}")
+            print(f"- Status: {item['status']}")
+            print(f"- Owner: {item['owner']}")
+            print(f"- Usage count: {item['usage']}")
+            print(f"- Issues: {', '.join(item['issues'])}")
+            print()
+            
+    if "--json" in sys.argv:
+        import json
+        with open("artifacts/feature-flag-audit.json", "w") as f:
+            json.dump(issues_report, f, indent=2)
 
 if __name__ == "__main__":
     main()

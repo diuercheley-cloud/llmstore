@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Debate Agents
 
 Debate orchestration uses the power of conflicting perspectives to improve the quality of agentic solutions.

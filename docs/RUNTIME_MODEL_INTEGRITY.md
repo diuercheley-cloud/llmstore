@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Runtime Model Integrity
 
 Phase 39 adds continuous runtime integrity monitoring for signed model artifacts already managed by the supply-chain controls.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Function Calling
 
 O stack agora aceita payloads compatíveis com OpenAI para function calling em:

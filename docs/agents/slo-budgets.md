@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SLOs e Budgets por Classe de Agente
 
 Este documento descreve como o LLM Inference Stack gerencia Service Level Objectives (SLOs) e orçamentos operacionais para diferentes classes de agentes.

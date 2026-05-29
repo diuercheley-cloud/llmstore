@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Comandos de Captura de Screenshots
 
 ## Captura Automática (Recomendado)

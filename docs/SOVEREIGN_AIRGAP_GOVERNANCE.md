@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Sovereign AI Guardrails + Air-Gapped Governance
 
 Phase 37 adds sovereign governance controls for offline and air-gapped environments.

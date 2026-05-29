@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Adapter Promotion Workflow - Operational Guide
 
 ## Promotion Process

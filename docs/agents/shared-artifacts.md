@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Shared Artifacts & Collaborative Editing
 
 Artifacts are versioned assets created and updated dynamically by humans and agents in a workspace.

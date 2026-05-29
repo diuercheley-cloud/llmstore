@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Versioning and Baselines
 
 ## Versioning Strategy

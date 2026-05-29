@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Runtime Contracts
 
 O `llm-inference-stack` utiliza contratos versionados para garantir a estabilidade e previsibilidade das interações entre os componentes do runtime agentic (planner, executor, ferramentas e memória).

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Deterministic Agent Execution
 
 O `llm-inference-stack` garante que toda execução de agentes seja determinística, auditável e livre de efeitos colaterais em modos de simulação (replay).

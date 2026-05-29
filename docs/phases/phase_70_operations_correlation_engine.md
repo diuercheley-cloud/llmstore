@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 70: Deterministic Operations Correlation Engine
 
 Este documento define o escopo e as garantias da Phase 70.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Canary Auto-Promotion (Phase 9)
 
 ## Visão Geral

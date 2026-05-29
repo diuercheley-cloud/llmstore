@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supported Deployment Matrix
 
 This document defines the supported deployment configurations, hardware limits, and system software prerequisites for the `llm-inference-stack` platform.

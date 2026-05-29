@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Benchmark de Modelos Locais
 
 Este documento descreve como utilizar os scripts de benchmark para avaliar a performance de modelos rodando localmente (ex: via llama.cpp ou LM Studio).

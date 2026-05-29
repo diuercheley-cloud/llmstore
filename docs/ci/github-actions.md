@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # CI/CD com GitHub Actions
 
 O `llm-inference-stack` utiliza GitHub Actions para garantir a qualidade, segurança e reprodutibilidade de cada mudança na plataforma.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SEO do Frontend Público
 
 Esta documentação resume as meta tags e os dados estruturados aplicados às páginas públicas servidas por `control_plane/app/api/public.py`.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SaaS Connector Credentials
 
 Beyond OAuth, the platform supports various credential types for SaaS connectors.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Global Traffic Shifting (Phase 17)
 
 ## Objetivo

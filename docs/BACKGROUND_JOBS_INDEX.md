@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Background Jobs Index: Asynchronous Workers
 
 This document lists the background loops and periodic tasks responsible for system maintenance, billing, and security.

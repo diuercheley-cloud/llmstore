@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Rollback via CI/CD
 
 A segurança da operação é baseada na capacidade de voltar atrás rapidamente.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Managed Control Plane (SaaS Mode)
 
 ## Overview

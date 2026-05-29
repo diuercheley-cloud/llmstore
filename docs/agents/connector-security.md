@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Connector Security
 
 Security and governance are central to the SaaS Connector design.

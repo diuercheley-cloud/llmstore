@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Hybrid AI Platform
 
 ## Visão Geral

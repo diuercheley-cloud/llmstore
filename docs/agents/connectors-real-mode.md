@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SaaS Connectors: Real Mode
 
 This document describes the "Real Mode" for SaaS connectors in the Agentic AI Platform.
@@ -19,11 +24,6 @@ Connectors can operate in two modes:
 
 Each connector must be explicitly enabled for real mode:
 - `AGENT_GITHUB_CONNECTOR_ENABLED=true`
-- `AGENT_JIRA_CONNECTOR_ENABLED=true`
-- `AGENT_SLACK_CONNECTOR_ENABLED=true`
-- `AGENT_CONFLUENCE_CONNECTOR_ENABLED=true`
-- `AGENT_SALESFORCE_CONNECTOR_ENABLED=true`
-- `AGENT_MICROSOFT365_CONNECTOR_ENABLED=true`
 
 ## Security and Governance
 

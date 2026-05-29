@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Fase de Estabilização do Projeto (Formal Stabilization Phase)
 
 Esta fase formaliza o compromisso com a estabilidade e confiabilidade da plataforma `llm-inference-stack` antes da introdução de novos módulos ou grandes alterações arquiteturais.

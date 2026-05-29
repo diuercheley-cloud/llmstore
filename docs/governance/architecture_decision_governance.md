@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Architecture Decision Governance
 
 ## Purpose

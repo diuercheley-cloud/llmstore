@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Internal PKI (Public Key Infrastructure)
 
 The LLM Inference Stack includes an internal PKI service to manage cryptographic identities for components and plugins.

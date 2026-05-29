@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Alembic Migrations Governance & Graph Integrity
 
 This document outlines the design principles, workflow requirements, and automated validation gates for database migrations in the LLM Inference Stack.

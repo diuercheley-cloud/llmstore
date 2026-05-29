@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # State Machine Contracts
 
 ## Execution State Machine

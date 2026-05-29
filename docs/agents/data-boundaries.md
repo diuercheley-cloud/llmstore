@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Data Boundaries and Multi-Tenancy
 
 O isolamento de dados é um pilar fundamental da arquitetura de agentes da plataforma.

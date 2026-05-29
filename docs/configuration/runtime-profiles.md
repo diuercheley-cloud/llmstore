@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Runtime Profiles Configuration
 
 Runtime Profiles permit operators to quickly toggle and configure clusters using preset operation modes rather than modifying hundreds of discrete environment variables.

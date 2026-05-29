@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Compatibility Policy
 
 Para garantir a estabilidade do `llm-inference-stack`, especialmente em ambientes de missão crítica e multi-tenant, seguimos uma política rigorosa de compatibilidade para contratos de agentes.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # RFC 0000: RFC Process
 
 ## Status

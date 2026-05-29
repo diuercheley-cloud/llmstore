@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Capacity Planning & Predictive Autoscaling (Phase 21)
 
 ## Overview

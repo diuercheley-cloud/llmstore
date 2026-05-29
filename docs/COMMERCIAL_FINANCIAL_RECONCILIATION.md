@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Financial Reconciliation & Dispute Management (Phase 27)
 
 ## Overview

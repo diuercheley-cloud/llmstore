@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Node Attestation
 
 The system provides verifiable attestation reports to ensure the integrity of the running node.

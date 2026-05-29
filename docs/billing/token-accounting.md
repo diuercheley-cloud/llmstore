@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Token Accounting
 
 Token accounting is the process of tracking and recording token usage for billing and quota purposes.

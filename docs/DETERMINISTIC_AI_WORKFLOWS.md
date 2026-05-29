@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Deterministic AI Workflow Execution
 
 ## Overview

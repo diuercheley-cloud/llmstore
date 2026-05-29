@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Durable Queue
 
 The Agent Execution Plane uses a durable queue backed by Postgres to ensure that agent runs are executed reliably even in the face of worker crashes or system restarts.

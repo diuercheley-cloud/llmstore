@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GraphRAG Production Optimizations
 
 > **Owner:** agent-platform  

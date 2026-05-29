@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Studio
 
 Agent Studio is a low-code visual environment for building, testing, and debugging intelligent agents and multi-agent workflows.
@@ -29,4 +34,3 @@ Agent Studio enforces all platform security rules:
 
 - `AGENT_STUDIO_ENABLED`: Global toggle for the studio features.
 - `AGENT_VISUAL_BUILDER_ENABLED`: Enables the DAG editor.
-- `AGENT_DEBUGGER_ENABLED`: Enables the execution tracer and inspector.

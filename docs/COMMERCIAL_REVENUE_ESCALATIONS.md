@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Revenue Escalations
 
 Revenue Protection Escalations adiciona um plano de notificacao para eventos financeiros/comerciais criticos sem habilitar integracoes reais por padrao.

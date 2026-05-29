@@ -23,7 +23,7 @@ from app.services.governance.airgap_sync import (
     validate_chain_of_custody,
 )
 from app.services.security.hardware_attestation import (
-    collect_attestation_placeholder,
+    collect_attestation_evidence,
     summarize_attestation_status,
     verify_attestation_record,
 )
@@ -205,7 +205,7 @@ async def list_hardware_attestations(db: AsyncSession = Depends(get_db_session))
 
 @router.post("/admin/security/hardware-attestation/collect", status_code=201)
 async def post_collect_attestation(payload: AttestationCollectPayload, db: AsyncSession = Depends(get_db_session)):
-    item = await collect_attestation_placeholder(db, **payload.model_dump())
+    item = await collect_attestation_evidence(db, **payload.model_dump())
     await db.commit()
     await db.refresh(item)
     return item

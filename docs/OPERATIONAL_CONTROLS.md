@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operational Controls
 
 Os `Operational Controls` adicionam governança operacional auditável inspirada em controles SOC2-style, sem declarar certificação oficial. O objetivo é manter biblioteca de controles, ownership, revisões periódicas, SLA de evidências, score de efetividade, linkage de exceções e trilha auditável para operação contínua.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Prepaid Wallet BRL
 
 ## Visão Geral

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Feature Flag Governance and Lifecycle Policy
 
 This document defines the governance rules, classifications, and audit processes for feature flags in the Agentic AI Platform.

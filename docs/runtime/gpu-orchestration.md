@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GPU Orchestration
 
 O LLM Inference Stack gerencia de forma inteligente os recursos de GPU para otimizar a alocação de modelos e garantir alta disponibilidade.

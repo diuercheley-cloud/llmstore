@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Sandboxed and Restricted Tools
 
 O `llm-inference-stack` implementa camadas rigorosas de isolamento para ferramentas de alto risco, como execução de shell, requisições HTTP e leitura de banco de dados. Estas ferramentas operam sob o princípio do menor privilégio e contenção máxima.

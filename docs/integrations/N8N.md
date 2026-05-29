@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Integração com n8n
 
 O `llm-inference-stack` pode ser utilizado como provedor de LLM em workflows do n8n.

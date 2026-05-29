@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Data Governance
 
 Phase 82 data governance remains advisory and deterministic.

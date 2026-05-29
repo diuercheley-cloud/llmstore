@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Deterministic Workflows
 
 Fase 55 adiciona um orquestrador determinístico de workflows AI multi-stage com DAGs verificáveis, checkpoints reproduzíveis, receipts de pipeline e lineage criptográfico ponta a ponta.

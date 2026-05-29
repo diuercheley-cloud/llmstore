@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Memory Context Injection
 
 ## Overview
@@ -95,3 +100,17 @@ Each injected memory also gets a `memory_read` access event logged.
 - `test_secret_like_memory_not_reinjected` — secrets are excluded
 - `test_memory_ids_appear_in_step_metadata` — memory_ids tracked
 - `test_context_injection_disabled_by_default` — feature flag off returns empty
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_MEMORY_ENABLED=true`.
+
+### Monitor
+Monitor memory indexing backlog.
+
+### Troubleshoot
+Check memory policy engine logs.
+
+### Rollback
+Disable the memory flag.

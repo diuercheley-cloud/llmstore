@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Predictive AIOps & Failure Forecasting (Phase 66)
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Pilot Activation Playbook
 
 This playbook outlines the steps to activate the Agentic Runtime in Pilot mode.

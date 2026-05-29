@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Node Registration
 
 Nodes can register themselves with the control plane using the registration endpoint.

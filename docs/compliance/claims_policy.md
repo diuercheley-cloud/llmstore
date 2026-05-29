@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Claims Policy
 
 Este documento define o guardrail de documentacao contra claims proibidas sobre seguranca, certificacao e attestation.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 70 Correlation Engine Summary
 
 ## Arquivos criados

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Code Sandbox
 
 The sandbox posture is opt-in and offline-first.

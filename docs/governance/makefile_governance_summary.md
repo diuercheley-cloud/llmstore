@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Makefile Governance Summary
 
 ## Problems Found

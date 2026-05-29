@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Memory in Production
 
 To securely deploy Agent Memory in a production environment, several configurations and checks have been introduced to ensure data safety, isolation, and compliance.

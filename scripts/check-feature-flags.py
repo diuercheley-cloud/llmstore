@@ -42,11 +42,12 @@ def main():
     orphans = scan_results.get("orphans", [])
     print(f"\n--- Orphaned Flags Report ({len(orphans)} flags) ---")
     if orphans:
-        print("[WARNING] Orphaned flags detected! The following registered flags are not referenced in python code or env:")
+        print("\nOrphaned flags detected! The following registered flags are not referenced in python code, env or docs:")
         for flag in sorted(orphans):
             print(f" - [ORPHAN] {flag}")
+        failed = True
     else:
-        print("No orphaned flags detected.")
+        print("OK: No orphaned flags detected.")
         
     print(f"\nSummary:")
     print(f" - Registered: {scan_results.get('registered_count')}")

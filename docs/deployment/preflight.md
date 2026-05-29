@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Preflight Checks
 
 Antes de realizar qualquer deployment ou upgrade, é essencial garantir que o ambiente atende aos requisitos mínimos de sistema.

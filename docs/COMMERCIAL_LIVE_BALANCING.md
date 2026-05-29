@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Cost-Aware Live Balancing
 
 Phase 19 introduces adaptive traffic rebalancing based on real-time margin and latency.

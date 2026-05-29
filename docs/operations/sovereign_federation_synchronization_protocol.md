@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Sovereign Federation Synchronization Protocol
 
 ## Overview

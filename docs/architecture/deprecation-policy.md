@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Política de Depreciação de Arquitetura
 
 Este documento define o ciclo de vida de componentes no `llm-inference-stack`.

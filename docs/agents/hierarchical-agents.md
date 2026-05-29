@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Hierarchical Agents
 
 Hierarchical orchestration is suitable for tasks that can be naturally decomposed into sub-problems handled by specialists.

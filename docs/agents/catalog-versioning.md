@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Catálogo e Versionamento Agentic
 
 O LLM Inference Stack implementa um sistema de catálogo centralizado e versionamento explícito para todos os componentes do ecossistema agentic. Isso garante reprodutibilidade, auditabilidade e capacidade de recuperação rápida (rollback).

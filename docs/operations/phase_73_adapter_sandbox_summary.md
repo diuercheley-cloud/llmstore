@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 73: Controlled Adapter Sandbox Summary
 
 ## Status: Implemented & Verified

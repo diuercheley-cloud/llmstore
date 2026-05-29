@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Multi-Agent Orchestration
 
 The Agentic AI Platform supports advanced multi-agent patterns, allowing multiple specialized agents to collaborate on complex goals.
@@ -29,6 +34,4 @@ Agente collaborate through structured cycles of proposals and critiques.
 ## Configuration Flags
 
 - `AGENT_MULTI_AGENT_ENABLED`: Global toggle for multi-agent features.
-- `AGENT_HIERARCHICAL_TEAMS_ENABLED`: Enables hierarchical orchestration.
-- `AGENT_DEBATE_TEAMS_ENABLED`: Enables debate-based collaboration.
 - `AGENT_SHARED_WORKSPACE_ENABLED`: Enables the shared workspace for agents.

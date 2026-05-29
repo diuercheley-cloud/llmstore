@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Integração com Open WebUI
 
 O `llm-inference-stack` é compatível com o Open WebUI através da sua API OpenAI-compatible.

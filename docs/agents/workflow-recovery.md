@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflow Recovery
 
 The Workflow Engine is designed to handle worker failures gracefully.

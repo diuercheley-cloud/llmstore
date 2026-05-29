@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Marketplace
 
 O Agent Marketplace permite a descoberta, instalação e gestão de templates de agentes pré-configurados (Agent Bundles).

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise RAG
 
 ## Visão Geral

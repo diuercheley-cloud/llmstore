@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Overview
 
 ## What It Is
@@ -68,7 +73,7 @@ The platform is organized into bounded contexts with explicit contracts between 
 - **core_runtime** — deterministic runtime abstractions, local execution readiness
 - **governance** — policy engine, approvals, compliance decisions
 - **federation** — offline-first federation contracts and sync
-- **plugin_runtime** — placeholder plugin loading, ABI sandbox
+- **plugin_runtime** — hardened plugin loading, ABI sandbox
 - **supply_chain** — provenance, artifact lineage, reproducibility
 - **operations** — deterministic workflows, events, recovery
 - **security** — trust boundaries, crypto readiness, isolation
@@ -112,11 +117,11 @@ make validate-platform-documentation
 
 ## Explicit Limitations
 
-- No real plugin execution — plugin ABI is a sandbox placeholder
-- No real PKI — certificate operations are simulated
-- No hardware-backed trust — attestation is policy-only
-- No mandatory cloud services — all operations are offline-first
-- No formal certification — advisory validation only
+- Plugin ABI Sandbox — Plugin execution is governed by sandboxed ABI contracts and explicit isolation policy.
+- Local PKI — Certificate operations use local issuance; no external CA integration is provided by default.
+- Policy-Based Attestation — Attestation and trust decisions are advisory-first and operator-enforced.
+- Offline-First — All operations are designed for air-gapped environments.
+- Evidence-Driven Compliance — Validation is based on cryptographic evidence, not formal third-party certification.
 
 ## Navigation
 

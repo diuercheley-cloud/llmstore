@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Localhost Mode
 
 This document explains how to run the LLM Inference Stack in a standardized local environment using `http://localhost`.

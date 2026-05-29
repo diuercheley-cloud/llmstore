@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Real Provider Validation — v1.8.1
 
 ## Visão Geral

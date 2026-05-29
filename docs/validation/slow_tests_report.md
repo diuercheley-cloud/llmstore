@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Slow Tests Report — tests/build
 
 Top 3 slowest durations (min 1.0s):

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Mock And Simulation Governance
 
 ## Scope

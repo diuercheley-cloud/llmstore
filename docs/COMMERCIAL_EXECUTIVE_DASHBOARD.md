@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Painel Executivo de Lucratividade e Drift (Fase 10)
 
 O Painel Executivo fornece uma visão consolidada e de alto nível sobre a saúde financeira e operacional do stack de inferência. Ele foca em métricas de lucro real vs. estimado, detecção de drifts (desvios) e anomalias proativas.

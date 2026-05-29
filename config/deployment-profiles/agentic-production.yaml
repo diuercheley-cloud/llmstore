@@ -1,0 +1,59 @@
+profile_name: agentic-production
+version: v2.2.0-stable
+description: Hardened production profile for the Agentic AI platform.
+
+flags:
+  # Runtime & Execution
+  AGENT_RUNTIME_ENABLED: true
+  AGENT_WORKER_ENABLED: true
+  AGENT_ASYNC_EXECUTION_ENABLED: true
+  AGENT_QUEUE_BACKPRESSURE_ENABLED: true
+  AGENT_AUTO_RETRY_ENABLED: true
+  AGENT_EXECUTION_PLANE_ENABLED: true
+  
+  # Storage & GraphRAG
+  AGENT_MEMORY_ENABLED: true
+  AGENT_KNOWLEDGE_GRAPH_ENABLED: true
+  AGENT_GRAPH_RAG_ENABLED: true
+  AGENT_GRAPH_STORE_PROVIDER: "postgres-vector"
+  
+  # Connectors & Extensions
+  AGENT_SAAS_CONNECTORS_ENABLED: true
+  AGENT_CONNECTOR_OAUTH_ENABLED: true
+  AGENT_MCP_ENABLED: true
+  AGENT_MCP_TRUST_REQUIRED: true
+  
+  # Security & Governance
+  AGENT_IAM_ENABLED: true
+  AGENT_SERVICE_PRINCIPALS_ENABLED: true
+  AGENT_TOOL_REGISTRY_ENABLED: true
+  AGENT_TOOL_SANDBOX_ENABLED: true
+  AGENT_TOOL_SANDBOX_PROVIDER: "gvisor"
+  AGENT_PROMOTION_REQUIRES_EVALS: true
+  AGENT_EVAL_REGRESSION_GATE_ENABLED: true
+  MULTI_TENANT_ISOLATION_ENABLED: true
+  
+  # Observability & Reliability
+  AGENT_OBSERVABILITY_ENABLED: true
+  AGENT_SLO_ENABLED: true
+  AGENT_INCIDENT_RESPONSE_ENABLED: true
+  
+dependencies:
+  postgres:
+    min_version: "15.0"
+    extensions: ["vector"]
+  redis:
+    min_version: "6.2"
+    durable_queues: true
+  sandbox:
+    runtime: "runsc" # gVisor
+
+readiness_targets:
+  - "/admin/readiness/agent-runtime"
+  - "/admin/readiness/stateful-workflows"
+  - "/admin/readiness/agent-iam"
+  - "/admin/readiness/saas-connectors"
+  - "/admin/readiness/graphrag"
+  - "/admin/readiness/observability"
+  - "/admin/readiness/tool-execution"
+  - "/admin/readiness/memory-governance"

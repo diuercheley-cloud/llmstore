@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Provider Validation Matrix
 
 ## Purpose

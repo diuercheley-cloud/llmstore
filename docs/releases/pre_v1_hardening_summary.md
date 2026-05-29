@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Pre-v1 Hardening & Stabilization Summary
 
 ## Overview

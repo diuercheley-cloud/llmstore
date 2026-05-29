@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Custom Resource Definitions (CRDs)
 
 ## LLMInferenceStack

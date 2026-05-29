@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Trust Chain: Verifiable AI Execution
 
 The LLM Inference Stack implements a multi-layered trust chain to ensure the integrity, reproducibility, and auditability of every inference request.

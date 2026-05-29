@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Shared Kernel Policy
 
 The shared kernel must stay minimal.

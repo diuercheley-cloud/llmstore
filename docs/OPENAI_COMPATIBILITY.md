@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # OpenAI API Compatibility
 
 A llm-inference-stack visa oferecer alta compatibilidade com a API da OpenAI para facilitar a migração de aplicações existentes e integração com ferramentas do ecossistema (como LangChain, LlamaIndex, etc.).

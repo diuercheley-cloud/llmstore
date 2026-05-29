@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Revenue Forecasting & Financial Anomaly Detection
 
 Phase 28 implements statistical tools to predict future financial performance and detect anomalies in real-time.

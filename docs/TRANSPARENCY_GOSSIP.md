@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Transparency Gossip & Consistency Checks
 
 Mecanismo de detecção de divergência e auditoria descentralizada para garantir a integridade global das provas de execução.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 77 Federation Sync Summary
 
 ## Files Created or Updated

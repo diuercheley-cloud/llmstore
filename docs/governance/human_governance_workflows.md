@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Human Governance Workflows
 
 Deterministic review workflows provide:

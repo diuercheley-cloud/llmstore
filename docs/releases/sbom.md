@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Entendendo o SBOM (Software Bill of Materials)
 
 O SBOM é o "rótulo de ingredientes" do nosso software. Ele é gerado automaticamente durante o processo de release e armazenado em:

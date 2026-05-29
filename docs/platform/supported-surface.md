@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supported Surface Areas & Lifecycle Policies
 
 This document defines the platform capabilities, surface area boundaries, and lifecycle classifications.

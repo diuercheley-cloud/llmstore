@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Queue Backpressure & Multi-Tenant Isolation
 
 To prevent resource exhaustion, noisy neighbor problems, and system degradation, the Agent Execution Plane implements a multi-tier backpressure system and strict multi-tenant isolation.

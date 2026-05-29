@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Public Verifier CLI + Offline Verification Tool
 
 ## Overview

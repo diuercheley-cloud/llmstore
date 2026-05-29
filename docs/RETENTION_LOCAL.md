@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Política de Retenção Local
 
 Este documento descreve a política de retenção para limpeza de dados temporários no ambiente `llm-inference-stack`.

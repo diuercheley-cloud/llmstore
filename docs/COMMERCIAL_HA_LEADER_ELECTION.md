@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial HA / Leader Election
 
 `llm-inference-stack` Phase 14 adds database-backed commercial high availability without Redis, Kafka or ZooKeeper.

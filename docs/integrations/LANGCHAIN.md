@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Integração com LangChain
 
 O `llm-inference-stack` integra-se nativamente com LangChain via classe `ChatOpenAI`.

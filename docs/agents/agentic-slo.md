@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Service Level Objectives (SLOs)
 
 ## Critical SLOs

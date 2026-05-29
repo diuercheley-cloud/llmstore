@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Runtime Rollback Playbook
 
 This playbook outlines the steps to rollback the Agentic Runtime, effectively shutting down agent operations gracefully.

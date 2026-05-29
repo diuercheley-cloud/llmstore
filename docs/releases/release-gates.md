@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Gates
 
 Os **Release Gates** são as barreiras de qualidade finais que garantem que uma versão do `llm-inference-stack` está pronta para ser promovida para produção.

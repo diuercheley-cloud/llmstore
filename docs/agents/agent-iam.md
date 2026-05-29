@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent IAM Architectural Overview
 
 The Agentic AI Platform secures access to SaaS tools and database connectors by providing each agent with a sovereign identity, service principal, and connector-scoped delegated tokens. This design completely eliminates the need for agents to share or access a user's master API key.

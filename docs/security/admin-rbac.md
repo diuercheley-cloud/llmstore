@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Admin RBAC
 
 `RBAC_ADMIN_ENABLED=false` preserves the legacy administrative flow based on `X-Admin-Token`. In this mode, the existing token-based behavior remains active and no administrative user lookup is required.

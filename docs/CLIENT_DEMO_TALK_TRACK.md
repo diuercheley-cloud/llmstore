@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Talk Track — Falas Prontas para Demonstração Comercial
 
 > **Use este guia durante a demo para garantir consistência na comunicação.**

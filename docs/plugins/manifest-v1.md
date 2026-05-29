@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Manifest v1 — Plugin Package Manifest
 
 Every plugin distributed through the marketplace must include a `manifest.json` at the root of the archive.

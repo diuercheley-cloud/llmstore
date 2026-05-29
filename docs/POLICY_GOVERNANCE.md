@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise Policy-as-Code Governance
 
 This framework provides a declarative way to manage governance across the LLM inference stack. It allows administrators to define, version, simulate, and enforce policies for routing, billing, QoS, and more.

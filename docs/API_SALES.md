@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Venda de API de Inferência (LM Studio + Billing)
 
 Este documento descreve como configurar e operar a plataforma de venda de acesso à API de inferência LLM utilizando o LM Studio como backend primário e o Control Plane existente como Gateway de Autenticação e Billing.

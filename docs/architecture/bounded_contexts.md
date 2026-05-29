@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Official Bounded Contexts
 
 `core_runtime`

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Upgrade e Rollback Local
 
 Este documento descreve os procedimentos para atualizar e reverter versões da stack `llm-inference-stack` em ambiente de produção local.

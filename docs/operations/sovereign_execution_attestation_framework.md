@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Sovereign Execution Attestation Framework
 
 ## Overview

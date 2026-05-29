@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Compliance Readiness Framework
 
 O módulo de **Compliance Readiness** do `llm-inference-stack` foi projetado para auxiliar organizações na preparação para auditorias de segurança e privacidade, como SOC 2 e ISO 27001.

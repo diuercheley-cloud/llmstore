@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tokenization
 
 The LLM Inference Stack uses a centralized `TokenizerService` to count tokens for various operations.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.8.1 Real Provider Validation
 
 ## Objetivo

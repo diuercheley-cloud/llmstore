@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Human-in-the-Loop (HITL) for Agents
 
 This document describes the Human-in-the-Loop (HITL) architecture and policies in the `llm-inference-stack`, designed to pause agent executions at critical or high-risk moments and await human reviewer decisions.

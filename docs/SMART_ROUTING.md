@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Smart Routing Engine - v1.8.0
 
 ## Visão Geral

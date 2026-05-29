@@ -5,6 +5,7 @@ Status: implementation
 import enum
 import logging
 import os
+import socket
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable
@@ -92,7 +93,9 @@ class RealExecutionReadinessService:
             exec_message,
         )
 
-        queue_enabled = bool(self.settings.agent_execution_plane_enabled)
+        queue_enabled = bool(
+            getattr(self.settings, "agent_execution_plane_enabled", self.settings.agent_execution_enabled)
+        )
         queue_status = "pass" if queue_enabled else "fail"
         queue_message = "Durable execution queue is enabled." if queue_enabled else "Durable execution queue is disabled."
         if not queue_enabled and (production_like or pilot_like):
@@ -111,19 +114,31 @@ class RealExecutionReadinessService:
                 results["warnings"].append(scheduler_message)
         add_check("scheduler_safety", "Scheduler Safety", scheduler_status, {"cron_enabled": scheduler_enabled, "queue_enabled": queue_enabled}, scheduler_message)
 
-        res_workers = await self.db.execute(
-            select(func.count(AgentWorkerHeartbeat.worker_id))
-            .where(AgentWorkerHeartbeat.last_heartbeat >= utc_now() - timedelta(minutes=5))
-            .where(AgentWorkerHeartbeat.status == "active")
-        )
-        active_workers = res_workers.scalar() or 0
-        worker_status = "pass" if active_workers > 0 or not self.settings.agent_worker_enabled else "warn"
-        worker_message = f"{active_workers} active workers observed in the last 5 minutes."
-        if active_workers == 0 and self.settings.agent_worker_enabled and (production_like or pilot_like):
-            worker_status = "fail"
-            results["blockers"].append("No active worker heartbeats detected in the last 5 minutes.")
-        elif active_workers == 0 and self.settings.agent_worker_enabled:
-            results["warnings"].append("No active workers detected.")
+        active_workers = 0
+        worker_status = "pass"
+        worker_message = "Worker heartbeat check skipped because workers are disabled."
+        try:
+            res_workers = await self.db.execute(
+                select(func.count(AgentWorkerHeartbeat.worker_id))
+                .where(AgentWorkerHeartbeat.last_heartbeat >= utc_now() - timedelta(minutes=5))
+                .where(AgentWorkerHeartbeat.status == "active")
+            )
+            active_workers = res_workers.scalar() or 0
+            worker_status = "pass" if active_workers > 0 or not self.settings.agent_worker_enabled else "warn"
+            worker_message = f"{active_workers} active workers observed in the last 5 minutes."
+            if active_workers == 0 and self.settings.agent_worker_enabled and (production_like or pilot_like):
+                worker_status = "fail"
+                results["blockers"].append("No active worker heartbeats detected in the last 5 minutes.")
+            elif active_workers == 0 and self.settings.agent_worker_enabled:
+                results["warnings"].append("No active workers detected.")
+        except Exception as exc:
+            worker_status = "warn"
+            worker_message = f"Worker heartbeat check unavailable: {exc.__class__.__name__}"
+            if production_like or pilot_like:
+                worker_status = "fail"
+                results["blockers"].append("Worker heartbeat store is unreachable.")
+            else:
+                results["warnings"].append("Worker heartbeat store is unreachable in non-production mode.")
         add_check("active_workers", "Active Worker Presence", worker_status, active_workers, worker_message)
 
         sandbox_enabled = bool(getattr(self.settings, "agent_tool_sandbox_enabled", False))

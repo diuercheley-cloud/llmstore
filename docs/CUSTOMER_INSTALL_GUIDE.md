@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Guia de Instalação (Cliente Final)
 
 Bem-vindo ao guia de instalação do LLM Inference Stack. Este guia foi projetado para ajudá-lo a implantar o sistema no seu próprio ambiente de forma simples e direta, operando em `LOCAL_APPLIANCE_MODE` (Modo Appliance Local).

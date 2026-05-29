@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Providers - Multi-Provider Layer
 
 ## ProviderAdapter Interface

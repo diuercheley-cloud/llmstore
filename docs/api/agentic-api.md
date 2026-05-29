@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Unified Agentic API (v1)
 
 A API v1 (`/v1/agents`) é a superfície canônica para integração de fluxos agentic no `llm-inference-stack`. Ela unifica o runtime de execução sob um contrato único, garantindo isolamento de tenant e aplicação rigorosa de políticas.

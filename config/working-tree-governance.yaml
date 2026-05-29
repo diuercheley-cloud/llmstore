@@ -1,0 +1,101 @@
+# =============================================================================
+# Working Tree Governance Policy — v2.x-agentic-consolidation-hardening
+# =============================================================================
+# Define o que é permitido, bloqueado ou tolerado no working tree durante uma
+# release. Política aplicada por scripts/check-working-tree-governance.sh.
+# =============================================================================
+
+metadata:
+  name: working-tree-governance
+  version: "1.0.0"
+  owner: platform-ops
+  last_review: 2026-05-28
+  status: active
+
+# ---------------------------------------------------------------------------
+# Categorias de arquivos no working tree
+# ---------------------------------------------------------------------------
+
+# Artefatos de release explicitamente permitidos no working tree (non-blocking)
+allowed_artifacts:
+  - "artifacts/releases/*"
+  - "artifacts/runtime/*"
+  - "artifacts/platform/*"
+  - "artifacts/security/*"
+  - "artifacts/operational-readiness/*"
+
+# Arquivos gerados por runtime que NUNCA devem estar no working tree
+forbidden_runtime_files:
+  - "*.pyc"
+  - "__pycache__/"
+  - ".pytest_cache/"
+  - ".ruff_cache/"
+  - "*.egg-info/"
+  - "*.db"
+  - "*.sqlite"
+  - "*.gguf"
+  - "*.bin"
+  - "*.pt"
+  - "*.pth"
+  - "node_modules/"
+  - ".venv/"
+  - "venv/"
+  - ".terraform/"
+  - "*.tfstate"
+
+# Debug leftovers que NUNCA devem estar no working tree
+forbidden_debug_files:
+  - "core.*"
+  - "*.log"
+  - "*.dump"
+  - "*.stacktrace"
+  - "hs_err_*.log"
+  - "nohup.out"
+  - "*.pid"
+  - "*.trace"
+  - "*.prof"
+  - "*.lprof"
+  - "*.valgrind"
+
+# Arquivos de ambiente local explicitamente permitidos
+allowed_local_env:
+  - ".env.local"
+  - ".env.production"
+  - "docker-compose.override.yml"
+
+# ---------------------------------------------------------------------------
+# Comportamento esperado
+# ---------------------------------------------------------------------------
+
+# dirty_allowed_runtime: working tree sujo APENAS com allowed_artifacts
+# dirty_blocking: working tree sujo com forbidden_* ou unclassified
+# clean: zero dirty files
+
+expected_state_for_release: "clean"
+
+# ---------------------------------------------------------------------------
+# Classes de sujeira
+# ---------------------------------------------------------------------------
+
+dirt_classes:
+  dirty_allowed_runtime:
+    description: >
+      Apenas artefatos explícitos de runtime/artifacts presentes.
+      Release pode prosseguir.
+    gate_behaviour: pass
+
+  dirty_blocking:
+    description: >
+      Arquivos forbidden ou não classificados presentes.
+      Release BLOQUEADA até reconciliação.
+    gate_behaviour: fail
+
+  clean:
+    description: "Working tree perfeitamente limpo."
+    gate_behaviour: pass
+
+  clean_with_allowed_local:
+    description: >
+      Working tree limpo exceto por allowed_local_env.
+      Release pode prosseguir.
+    gate_behaviour: pass

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 78: Compatibility Contracts & Version Negotiation
 
 ## Overview

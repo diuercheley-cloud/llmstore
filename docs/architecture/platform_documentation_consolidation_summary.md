@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Documentation Consolidation Summary
 
 > Consolidation after technical freeze of Phases 69–82.

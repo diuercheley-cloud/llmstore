@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Wallet Top-ups via PSP/PIX
 
 ## Objetivo

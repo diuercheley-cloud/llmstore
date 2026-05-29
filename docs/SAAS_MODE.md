@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SaaS Deployment Mode
 
 Este documento descreve o funcionamento e os requisitos do modo de implantação **SaaS** do LLM Inference Stack.

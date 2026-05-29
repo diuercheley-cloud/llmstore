@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Memory Layer
 
 A Camada de Memória para Agentes permite a persistência de informações entre diferentes execuções, respeitando rigorosamente o isolamento multi-tenant e políticas de governança de dados.

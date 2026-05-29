@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # ISO 27001 Readiness Guide
 
 A stack suporta a implementação de um ISMS (SGSI) aderente à ISO 27001:2022.

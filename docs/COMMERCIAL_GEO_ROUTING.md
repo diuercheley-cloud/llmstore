@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Geo-Aware Latency Routing
 
 Phase 19 introduces geographical awareness to the Global Router.

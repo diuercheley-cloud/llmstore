@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Technical Freeze — Validation Summary
 
 ## Arquivos criados/alterados

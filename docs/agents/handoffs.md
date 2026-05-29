@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Handoffs
 
 Handoffs permitem a delegação de autoridade de execução entre agentes especializados.

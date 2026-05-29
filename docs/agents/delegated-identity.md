@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Delegated Identity and Token Exchange
 
 Sovereign delegated identities and user grants form the backbone of security boundaries for proactive agents.

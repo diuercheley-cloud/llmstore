@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Task Execution
 
 The `TaskEngine` is responsible for the reliable execution of individual tasks within an `AgentPlan`.

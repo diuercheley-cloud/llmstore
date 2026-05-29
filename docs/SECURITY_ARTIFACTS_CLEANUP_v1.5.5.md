@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SECURITY_ARTIFACTS_CLEANUP_v1.5.5
 
 - status: closed

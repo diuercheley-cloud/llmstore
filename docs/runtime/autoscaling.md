@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Autoscaling de Runtimes
 
 O Autoscaling permite que a plataforma ajuste automaticamente o número de instâncias de modelos com base na demanda.

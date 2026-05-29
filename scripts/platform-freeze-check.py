@@ -4,6 +4,54 @@ import sys
 import json
 import re
 import subprocess
+from typing import Iterable, Set
+
+
+def git_status_paths(prefix: str) -> Set[str]:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--", prefix],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except Exception:
+        return set()
+
+    changed = set()
+    for line in result.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:].strip()
+        if path.startswith(prefix):
+            changed.add(path)
+    return changed
+
+
+def find_test_for_service(service_rel_path: str) -> str | None:
+    service_name = os.path.basename(service_rel_path).replace(".py", "")
+    module_hint = service_rel_path.replace("/", ".").replace(".py", "")
+    test_roots = ("tests", "control_plane/tests")
+
+    for test_root in test_roots:
+        if not os.path.isdir(test_root):
+            continue
+        for root, _, files in os.walk(test_root):
+            for file in files:
+                if not file.endswith(".py"):
+                    continue
+                test_path = os.path.join(root, file)
+                file_lower = file.lower()
+                if f"test_{service_name.lower()}" in file_lower:
+                    return test_path
+                try:
+                    with open(test_path, "r", encoding="utf-8") as handle:
+                        content = handle.read()
+                except OSError:
+                    continue
+                if module_hint in content or service_name in content:
+                    return test_path
+    return None
 
 def load_rules():
     config_path = "config/platform-freeze-rules.json"
@@ -20,7 +68,12 @@ def check_top_level_dirs(rules):
     allowed = set(rules.get("allowed_top_level_dirs", []))
     allowed.update(rules.get("approved_exceptions", []))
 
-    current_dirs = [d for d in os.listdir(".") if os.path.isdir(d)]
+    changed_dirs = {
+        path.split("/", 1)[0]
+        for path in git_status_paths(".")
+        if "/" in path and os.path.isdir(path.split("/", 1)[0])
+    }
+    current_dirs = sorted(changed_dirs)
     violations = []
 
     # Ignore common development and cache directories that might exist locally but are not part of repository state
@@ -69,7 +122,17 @@ def check_api_routers(rules):
     allowed_routers = set(rules.get("allowed_api_routers", []))
     exceptions = set(rules.get("approved_exceptions", []))
 
-    current_routers = [f for f in os.listdir(api_dir) if f.endswith(".py") and f not in ["__init__.py", "dependencies.py", "deps.py"]]
+    changed_router_paths = {
+        os.path.basename(path)
+        for path in git_status_paths(api_dir)
+        if path.endswith(".py")
+    }
+    current_routers = [
+        f for f in os.listdir(api_dir)
+        if f.endswith(".py")
+        and f not in ["__init__.py", "dependencies.py", "deps.py"]
+        and f in changed_router_paths
+    ]
     
     for r in current_routers:
         is_new = r not in allowed_routers
@@ -104,10 +167,14 @@ def check_new_services(rules):
     exceptions = set(rules.get("approved_exceptions", []))
 
     violations = []
+    changed_service_paths = git_status_paths(services_dir)
     for root, _, files in os.walk(services_dir):
         for file in files:
             if file.endswith(".py") and file != "__init__.py":
                 rel_path = os.path.relpath(os.path.join(root, file), services_dir)
+                repo_rel_path = os.path.join(services_dir, rel_path)
+                if repo_rel_path not in changed_service_paths:
+                    continue
                 is_new = rel_path not in allowed_services
                 is_approved = rel_path in exceptions
 
@@ -115,6 +182,11 @@ def check_new_services(rules):
                     if not is_approved:
                         violations.append(f"New service file '{rel_path}' is blocked under freeze rules. Add to approved_exceptions.")
                     
+                    # Check for test coverage
+                    service_name = file.replace(".py", "")
+                    if not find_test_for_service(rel_path):
+                        violations.append(f"New service file '{rel_path}' has no corresponding test in tests/. All new services must have tests.")
+
                     path = os.path.join(root, file)
                     with open(path, "r") as f:
                         content = f.read()
@@ -138,6 +210,9 @@ def check_feature_flags(rules):
 
     allowed_flags = set(rules.get("allowed_feature_flags", []))
     exceptions = set(rules.get("approved_exceptions", []))
+
+    if config_file not in git_status_paths(config_file):
+        return True
 
     with open(config_file, "r") as f:
         lines = f.readlines()
@@ -192,10 +267,13 @@ def check_models_and_migrations(rules):
                 with open(os.path.join(migrations_dir, f), "r") as m_file:
                     migration_contents += m_file.read() + "\n"
 
+    changed_model_paths = git_status_paths(models_dir)
     for root, _, files in os.walk(models_dir):
         for file in files:
             if file.endswith(".py") and file != "__init__.py":
                 path = os.path.join(root, file)
+                if path not in changed_model_paths:
+                    continue
                 with open(path, "r") as f:
                     content = f.read()
 
@@ -332,8 +410,15 @@ def check_capability_classification(rules):
     api_dir = "control_plane/app/api"
     if os.path.exists(api_dir):
         allowed_routers = set(rules.get("allowed_api_routers", []))
+        changed_router_paths = {
+            os.path.basename(path)
+            for path in git_status_paths(api_dir)
+            if path.endswith(".py")
+        }
         for r in os.listdir(api_dir):
             if r.endswith(".py") and r not in ["__init__.py", "dependencies.py", "deps.py"]:
+                if r not in changed_router_paths:
+                    continue
                 if r not in allowed_routers:
                     # New router. Check if its filename, prefix, or id matches any capability
                     path = os.path.join(api_dir, r)
@@ -369,10 +454,14 @@ def check_capability_classification(rules):
     services_dir = "control_plane/app/services"
     if os.path.exists(services_dir):
         allowed_services = set(rules.get("allowed_services", []))
+        changed_service_paths = git_status_paths(services_dir)
         for root, _, files in os.walk(services_dir):
             for file in files:
                 if file.endswith(".py") and file != "__init__.py":
                     rel_path = os.path.relpath(os.path.join(root, file), services_dir)
+                    repo_rel_path = os.path.join(services_dir, rel_path)
+                    if repo_rel_path not in changed_service_paths:
+                        continue
                     if rel_path not in allowed_services:
                         # New service. Check if it's classified
                         service_base = file.replace(".py", "").replace("_", "-")

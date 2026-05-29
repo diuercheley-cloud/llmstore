@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Exportação e Deleção de Tenant (Local)
 
 Este guia descreve como realizar a exportação segura de dados de um cliente (tenant) e como proceder com a deleção segura de seus dados no `llm-inference-stack`.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Paid Implementation Checklist — Local AI Appliance
 
 > **AVISO:** Este checklist é uma ferramenta operacional para implantação do LLM Inference Stack em modo Local Appliance. Não substitui o SOW, contrato de prestação de serviços ou assessoria jurídica. Não processa pagamentos reais via PSP/PIX — o módulo de faturamento opera exclusivamente em modo simulado/local.

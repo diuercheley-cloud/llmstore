@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Revenue Protection
 
 `Commercial Revenue Protection` converte anomalias financeiras em ações comerciais seguras e reversíveis.

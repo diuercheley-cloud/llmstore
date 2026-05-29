@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # RFC 0001: Extension Runtime Governance
 
 ## Status

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflows de Operação
 
 Guia prático para operadores do LLM Inference Stack.

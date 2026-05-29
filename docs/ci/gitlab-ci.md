@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GitLab CI/CD
 
 O `llm-inference-stack` fornece suporte nativo ao GitLab CI através do arquivo `.gitlab-ci.yml`. A configuração é modular e segue os mesmos princípios de segurança e qualidade do GitHub Actions.

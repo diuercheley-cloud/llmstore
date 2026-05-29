@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise Audit Portal
 
 O Enterprise Audit Portal expõe visibilidade segura para clientes enterprise acompanharem approval chains, evidence packages, attestations, exceptions, relatórios de auditoria e eventos financeiros/compliance sem sair do portal do cliente.

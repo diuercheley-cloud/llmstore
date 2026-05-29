@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Benchmarking Guide
 
 O benchmarking no llm-inference-stack pode ser feito via UI ou CLI.

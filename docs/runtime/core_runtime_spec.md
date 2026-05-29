@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Core Runtime Spec
 
 ## Objetivo

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Pilot vs. Production Deployment Modes
 
 This document provides a detailed comparison between `pilot` and `production` modes to help operators safely transition agentic platform workloads.

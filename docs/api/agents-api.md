@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agents Public API (v1)
 
 A API v1 permite que aplicações externas integrem fluxos agentic da plataforma de forma segura e multi-tenant.

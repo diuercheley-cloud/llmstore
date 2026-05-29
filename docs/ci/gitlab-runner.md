@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Configuração de GitLab Runners
 
 Para rodar a pipeline do `llm-inference-stack` de forma eficiente:

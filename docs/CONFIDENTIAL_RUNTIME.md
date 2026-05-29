@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Confidential Inference Runtime
 
 ## Overview

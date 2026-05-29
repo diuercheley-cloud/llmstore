@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Local Configuration Wizard
 
 The `configure-local-wizard.sh` script provides a guided, interactive way to configure the LLM Inference Stack for local appliance mode. It helps you set up the environment without manually editing `.env` files.

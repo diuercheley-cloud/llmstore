@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Local Infra Adapters (Phase 23)
 
 This phase adds opt-in support for local infrastructure management, specifically for Proxmox VE and local GPU nodes.

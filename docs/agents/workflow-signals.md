@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflow Signals
 
 Signals are asynchronous messages sent to a running workflow. They are the primary mechanism for waking up a workflow that is in `waiting_signal` state.

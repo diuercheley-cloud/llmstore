@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Local Production Validation
 
 This document describes the final validation suite for the local production stack exposed through `http://localhost`.

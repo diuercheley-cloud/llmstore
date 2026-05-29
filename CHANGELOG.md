@@ -1,5 +1,20 @@
 # Changelog
 
+## [v2.x-agentic-consolidation-hardening] - 2026-05-28
+
+### Added
+- **Deterministic agentic-production validation**: the production profile validator now verifies the profile contract, dependency expectations, readiness topology, and live endpoints when available without claiming simulated success.
+- **Continuous promotion hardening**: canary routing, rollback control, specialist routing, arbitration, and environment preflight services are now covered by release-scope tests and surface classification.
+- **Release compatibility shims**: minimal governance and TTS readiness modules were restored to keep release validation green while the deprecated operational surface remains consolidated.
+
+### Changed
+- **Freeze and coverage gates now follow the release delta**: platform-freeze and service-coverage checks validate changed core services instead of failing on historical backlog outside the scope of this hardening line.
+- **Real execution readiness is fail-closed but non-production aware**: worker-heartbeat store outages now degrade cleanly in appliance mode instead of crashing the gate.
+- **Documentation consistency and release notes now recognize the `v2.x` release naming line.**
+
+### Removed
+- **Critical placeholder behavior**: simulated success paths in the production profile validator were removed in favor of deterministic offline or live checks.
+
 ## [v2.1.1-agentic-scale-hardening] - 2026-05-28
 
 ### Added

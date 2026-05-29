@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Semantic Layer
 
 The Semantic Layer provides abstraction over raw text, structuring knowledge so agents can systematically reason about dependencies and hierarchies.

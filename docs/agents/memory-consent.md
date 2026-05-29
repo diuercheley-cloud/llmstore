@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Memory Consent Management
 
 When the system is running with `AGENT_MEMORY_CONSENT_REQUIRED=true`, the platform expects an active consent record from users before saving long-term memories.

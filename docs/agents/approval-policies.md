@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Approval Policies for Agentic HITL
 
 Approval Policies allow administrators to configure dynamic checks and rules that intercept agent tool calls. This document details policy schemas, evaluation orders, and trigger types.

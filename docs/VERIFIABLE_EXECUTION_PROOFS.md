@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Verifiable AI Execution Proofs + Merkle Audit Timelines
 
 ## Overview

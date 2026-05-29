@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Runtime Canonical API Architecture
 
 O `llm-inference-stack` utiliza uma arquitetura de runtime unificada para garantir que todos os agentes, independentemente da porta de entrada da API, sigam o mesmo ciclo de vida e regras de governança.
@@ -33,3 +38,17 @@ O runtime garante a integridade das transições de estado:
 - `running` -> `completed` | `failed` | `cancelled`
 - `running` -> `paused` (via `/pause`)
 - `paused` -> `running` (via `/resume`)
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_RUNTIME_ENABLED=true` in your environment configuration.
+
+### Monitor
+Monitor metrics via `/admin/agents/observability/metrics`. Look for `agent_execution_latency` and `agent_error_rate`.
+
+### Troubleshoot
+Check logs for `agent-runtime` prefix. Use `/admin/readiness/agent-runtime` to check sub-service health.
+
+### Rollback
+Set `AGENT_RUNTIME_ENABLED=false` to fallback to legacy execution or revert deployment to previous stable tag.

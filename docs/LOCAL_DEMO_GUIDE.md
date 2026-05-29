@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Guia de Demonstração Local - llm-inference-stack
 
 Este guia descreve como preparar e executar uma demonstração completa do produto em um ambiente local (como um notebook com WSL2), sem dependência de nuvem, domínios públicos ou gateways de pagamento reais.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Module Relationships
 
 ## Module Dependency Graph

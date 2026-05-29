@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SDK de Adapters Agentic
 
 O SDK do KleberAI fornece as classes base e tipos necessários para construir extensões compatíveis com o ecossistema agentic.

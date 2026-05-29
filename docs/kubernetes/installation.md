@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Kubernetes Installation Guide
 
 This guide describes how to install the LLM Inference Stack on Kubernetes.

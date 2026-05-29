@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial QoS: Priority Queue & Rate Limiting (Phase 24)
 
 This phase implements a Redis Sorted Set-based priority queue for asynchronous jobs and advanced rate limiting per QoS tier.

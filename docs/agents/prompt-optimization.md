@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Prompt, Tool, and Policy Optimizers (DSPy-like Optimizer)
 
 The optimization engine features three specialized optimizer components designed to learn from execution history. It acts like a DSPy compiler to refine agent prompts, tool permissions, and policy engine rules.

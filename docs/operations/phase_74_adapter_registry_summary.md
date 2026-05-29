@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 74: Signed Adapter Registry - Summary
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Adapter ABI (V1)
 
 Este documento define a Application Binary Interface (ABI) estável para estender as capacidades do LLM Inference Stack sem modificar o código core.

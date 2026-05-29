@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise Multi-Region Governance Federation
 
 ## Architecture

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Semantic Version Governance Policy
 
 ## Purpose

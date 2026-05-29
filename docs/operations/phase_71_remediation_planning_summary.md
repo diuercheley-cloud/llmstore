@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 71: Deterministic Remediation Planning Summary
 
 ## Status: Implemented & Verified

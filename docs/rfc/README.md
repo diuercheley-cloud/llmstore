@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # RFC Repository
 
 This repository defines the formal RFC workflow for architecture, governance, compatibility, federation, security, and supply-chain changes.

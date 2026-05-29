@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release v1.9.5 - Operational Experience
 
 Esta release transforma o `llm-inference-stack` em uma plataforma operacional madura, focada na redução de atrito para operadores e na excelência em deployments enterprise.

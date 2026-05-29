@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Planner and Runtime Integration
 
 This document describes how the Agentic Planning Engine integrates with the real Agent Runtime for task execution.

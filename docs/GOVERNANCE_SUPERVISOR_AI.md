@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Autonomous Governance Supervisor AI
 
 ## Overview

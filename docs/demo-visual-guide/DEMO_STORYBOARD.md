@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Demo Storyboard — Local AI Appliance
 
 ## 1. Landing Page

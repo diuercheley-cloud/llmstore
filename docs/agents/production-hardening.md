@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Platform Production Hardening Guide
 
 Operating autonomous agents in production requires mitigating risks related to privilege escalation, data leakage, and denial of service. Follow these policies to harden your stack:

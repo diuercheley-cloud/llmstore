@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Memory Retention Policies
 
 Políticas de retenção garantem que a memória do agente não cresça indefinidamente e respeite regulamentações de privacidade (como LGPD/GDPR).

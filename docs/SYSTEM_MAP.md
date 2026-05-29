@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # System Map: Module Locations
 
 This document maps logical system modules to their physical locations in the codebase.

@@ -73,18 +73,6 @@
   conflicts: []
   safe_default_reason: Background execution stays disabled until operators explicitly
     opt in.
-- name: AGENT_RUNTIME_ADVISORY_MODE
-  default: true
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v1.10.0-agentic-runtime
-  risk_level: low
-  dependencies:
-  - AGENT_RUNTIME_ENABLED
-  conflicts: []
-  safe_default_reason: Advisory mode defaults to enabled so operators can stage the
-    runtime without enforcement.
 - name: AGENT_AUTO_RETRY_ENABLED
   default: true
   owner: agent-platform
@@ -286,7 +274,7 @@
   safe_default_reason: Remote marketplace fetching is disabled by default to prevent
     unauthorized code execution.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_MEMORY_ENABLED
   default: false
   owner: agent-platform
@@ -370,8 +358,8 @@
   dependencies:
   - AGENT_SAAS_CONNECTORS_ENABLED
   conflicts: []
-  safe_default_reason: Connector mode remains explicitly `mock` by default so no
-    real SaaS side effect can occur accidentally.
+  safe_default_reason: Connector mode remains explicitly `mock` by default so no real
+    SaaS side effect can occur accidentally.
 - name: AGENT_CONNECTOR_REAL_HTTP_ENABLED
   default: false
   owner: agent-platform
@@ -396,70 +384,8 @@
   - AGENT_SAAS_CONNECTORS_ENABLED
   - AGENT_CONNECTOR_MODE
   conflicts: []
-  safe_default_reason: GitHub real mode remains off until the operator enables it explicitly.
-- name: AGENT_JIRA_CONNECTOR_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.3-agentic-real-execution-hardening
-  risk_level: medium
-  dependencies:
-  - AGENT_SAAS_CONNECTORS_ENABLED
-  - AGENT_CONNECTOR_MODE
-  conflicts: []
-  safe_default_reason: Jira real mode remains off until the operator enables it explicitly.
-- name: AGENT_SLACK_CONNECTOR_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.3-agentic-real-execution-hardening
-  risk_level: medium
-  dependencies:
-  - AGENT_SAAS_CONNECTORS_ENABLED
-  - AGENT_CONNECTOR_MODE
-  conflicts: []
-  safe_default_reason: Slack real mode remains off until the operator enables it explicitly.
-- name: AGENT_CONFLUENCE_CONNECTOR_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.3-agentic-real-execution-hardening
-  risk_level: medium
-  dependencies:
-  - AGENT_SAAS_CONNECTORS_ENABLED
-  - AGENT_CONNECTOR_MODE
-  conflicts: []
-  safe_default_reason: Confluence real mode remains off until the operator enables
-    it explicitly.
-- name: AGENT_SALESFORCE_CONNECTOR_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.3-agentic-real-execution-hardening
-  risk_level: medium
-  dependencies:
-  - AGENT_SAAS_CONNECTORS_ENABLED
-  - AGENT_CONNECTOR_MODE
-  conflicts: []
-  safe_default_reason: Salesforce real mode remains off until the operator enables
-    it explicitly.
-- name: AGENT_MICROSOFT365_CONNECTOR_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.3-agentic-real-execution-hardening
-  risk_level: medium
-  dependencies:
-  - AGENT_SAAS_CONNECTORS_ENABLED
-  - AGENT_CONNECTOR_MODE
-  conflicts: []
-  safe_default_reason: Microsoft 365 real mode remains off until the operator enables
-    it explicitly.
+  safe_default_reason: GitHub real mode remains off until the operator enables it
+    explicitly.
 - name: AGENT_CONNECTOR_OAUTH_ENABLED
   default: false
   owner: agent-platform
@@ -485,7 +411,7 @@
   safe_default_reason: Connector token storage remains disabled until operators explicitly
     accept persisted delegated credentials.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_CONNECTOR_CREDENTIAL_ROTATION_ENABLED
   default: true
   owner: agent-platform
@@ -499,7 +425,7 @@
   safe_default_reason: Rotation logic may remain enabled safely while token storage
     itself is still disabled by default.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_STATEFUL_WORKFLOWS_ENABLED
   default: false
   owner: agent-platform
@@ -584,30 +510,6 @@
   conflicts: []
   safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration
     policies are approved.
-- name: AGENT_HIERARCHICAL_TEAMS_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: experimental
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_MULTI_AGENT_ENABLED
-  conflicts: []
-  safe_default_reason: Hierarchical teams stay disabled until delegation and escalation
-    policies are explicitly reviewed.
-- name: AGENT_DEBATE_TEAMS_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: experimental
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_MULTI_AGENT_ENABLED
-  conflicts: []
-  safe_default_reason: Debate teams remain opt-in until arbitration cost, latency,
-    and conflict resolution policies are accepted.
 - name: AGENT_STUDIO_ENABLED
   default: false
   owner: agent-platform
@@ -620,30 +522,6 @@
   conflicts: []
   safe_default_reason: Agent Studio remains off until operators intentionally expose
     visual authoring surfaces.
-- name: AGENT_VISUAL_BUILDER_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_STUDIO_ENABLED
-  conflicts: []
-  safe_default_reason: Visual graph editing stays disabled until Studio governance
-    is explicitly enabled.
-- name: AGENT_DEBUGGER_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_STUDIO_ENABLED
-  conflicts: []
-  safe_default_reason: Interactive debugging remains off until operators explicitly
-    allow richer execution introspection.
 - name: AGENT_WORKFLOW_TIMERS_ENABLED
   default: false
   owner: agent-platform
@@ -657,7 +535,7 @@
   safe_default_reason: Timer wake-ups remain off until operators explicitly enable
     persistent workflow scheduling.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_WORKFLOW_WEBHOOKS_ENABLED
   default: false
   owner: agent-platform
@@ -695,7 +573,7 @@
   safe_default_reason: Lock coordination can be enabled safely while workflows themselves
     remain disabled by default.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_INCIDENT_RESPONSE_ENABLED
   default: true
   owner: agent-platform
@@ -743,30 +621,6 @@
   conflicts: []
   safe_default_reason: Plan execution is disabled by default so generated plans cannot
     act without explicit enablement.
-- name: AGENT_REGRESSION_EVALS_REQUIRED
-  default: true
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_EVALS_ENABLED
-  conflicts: []
-  safe_default_reason: Regression evals are required by default to prevent quality
-    degradation.
-- name: AGENT_EVAL_DATASETS_VERSIONED
-  default: true
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: active
-  introduced_in: v2.0.0-agentic-ai-platform
-  risk_level: medium
-  dependencies:
-  - AGENT_EVALS_ENABLED
-  conflicts: []
-  safe_default_reason: Dataset versioning defaults to enabled to track immutable evaluation
-    sets.
 - name: AGENT_REPLAY_ENABLED
   default: true
   owner: agent-platform
@@ -956,7 +810,8 @@
   dependencies:
   - AGENT_EXECUTION_ENABLED
   conflicts: []
-  safe_default_reason: Mock executor mode is test-only and stays disabled in release posture.
+  safe_default_reason: Mock executor mode is test-only and stays disabled in release
+    posture.
 - name: AGENT_EXECUTOR_DRY_RUN_MODE
   default: false
   owner: agent-platform
@@ -1107,8 +962,8 @@
   dependencies:
   - AGENT_TELEMETRY_BACKPRESSURE_ENABLED
   conflicts: []
-  safe_default_reason: Dropping debug spans is safe because they carry no
-    critical observability data and are the first to be sampled out under pressure.
+  safe_default_reason: Dropping debug spans is safe because they carry no critical
+    observability data and are the first to be sampled out under pressure.
 - name: AGENT_TELEMETRY_STRICT_EXPORT
   default: false
   owner: agent-platform
@@ -1119,8 +974,8 @@
   dependencies:
   - AGENT_TELEMETRY_BACKPRESSURE_ENABLED
   conflicts: []
-  safe_default_reason: Strict export stays disabled so a failing exporter never
-    blocks agent runtime execution; warnings are logged instead.
+  safe_default_reason: Strict export stays disabled so a failing exporter never blocks
+    agent runtime execution; warnings are logged instead.
 - name: AGENT_QUEUE_BACKPRESSURE_ENABLED
   default: true
   owner: agent-platform
@@ -1174,7 +1029,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: CLOUD_PROVIDERS_ENABLED
   default: false
   owner: platform-ops
@@ -1236,7 +1091,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_APPLIANCE_MODE_ENABLED
   default: false
   owner: platform-ops
@@ -1288,7 +1143,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_CALIBRATION_USE_TRIMMED_MEAN
   default: false
   owner: platform-ops
@@ -1400,7 +1255,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED
   default: false
   owner: platform-ops
@@ -1412,7 +1267,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_DISTRIBUTED_ANALYTICS_ENABLED
   default: false
   owner: platform-ops
@@ -1484,7 +1339,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_FEDERATION_ALLOW_PUSH
   default: false
   owner: platform-ops
@@ -1526,7 +1381,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_FINANCIAL_AUDIT_CHAIN_ENABLED
   default: false
   owner: platform-ops
@@ -1538,7 +1393,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_FINANCIAL_DISPUTE_ENABLED
   default: false
   owner: platform-ops
@@ -1550,7 +1405,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_FINANCIAL_MANUAL_CREDIT_ENABLED
   default: false
   owner: platform-ops
@@ -1572,7 +1427,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_GEO_ROUTING_ALLOW_CROSS_OCEAN
   default: false
   owner: platform-ops
@@ -1935,7 +1790,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_MODEL_QUARANTINE_ON_CHECKSUM_MISMATCH
   default: false
   owner: platform-ops
@@ -2047,7 +1902,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_POLICY_GOVERNANCE_ENABLED
   default: true
   owner: platform-ops
@@ -2059,7 +1914,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_POLICY_REQUIRE_APPROVAL_FOR_ENFORCE
   default: true
   owner: platform-ops
@@ -2071,7 +1926,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_POLICY_REQUIRE_SIGNATURE
   default: false
   owner: platform-ops
@@ -2083,7 +1938,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_PROXMOX_DRY_RUN
   default: true
   owner: platform-ops
@@ -2165,7 +2020,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_QOS_FAIRNESS_ENABLED
   default: false
   owner: platform-ops
@@ -2177,7 +2032,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED
   default: false
   owner: platform-ops
@@ -2400,7 +2255,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_REVENUE_PAGERDUTY_ENABLED
   default: false
   owner: platform-ops
@@ -2562,7 +2417,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_WITNESS_FEDERATION_ENABLED
   default: false
   owner: platform-ops
@@ -2574,7 +2429,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMMERCIAL_WITNESS_REQUIRE_EXTERNAL
   default: false
   owner: platform-ops
@@ -2606,7 +2461,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMPLIANCE_EVIDENCE_COLLECTION_ENABLED
   default: false
   owner: platform-ops
@@ -2618,7 +2473,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMPLIANCE_EXTERNAL_EXPORT_ENABLED
   default: false
   owner: platform-ops
@@ -2630,7 +2485,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: COMPLIANCE_READINESS_ENABLED
   default: false
   owner: platform-ops
@@ -2642,7 +2497,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: DEBUG
   default: false
   owner: platform-ops
@@ -2684,7 +2539,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: DISTRIBUTED_RUNTIME_ENABLED
   default: false
   owner: platform-ops
@@ -2716,7 +2571,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: GLOBAL_CLOUD_KILL_SWITCH
   default: false
   owner: platform-ops
@@ -2768,7 +2623,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: LLAMA_FLASH_ATTN
   default: false
   owner: platform-ops
@@ -2780,7 +2635,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: LMSTUDIO_ENABLED
   default: false
   owner: platform-ops
@@ -2862,7 +2717,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: MULTI_CLUSTER_ENABLED
   default: false
   owner: platform-ops
@@ -2874,7 +2729,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: OBSERVABILITY_ENABLED
   default: false
   owner: platform-ops
@@ -2886,7 +2741,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: OPENAI_PROVIDER_ENABLED
   default: false
   owner: platform-ops
@@ -2918,7 +2773,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: PAYMENT_REAL_ENABLED
   default: false
   owner: platform-ops
@@ -3114,7 +2969,7 @@
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: TEST_TOOLS_ENABLED
   default: false
   owner: platform-ops
@@ -3166,7 +3021,7 @@
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_MEMORY_SEARCH_ENABLED
   default: false
   owner: agent-platform
@@ -3202,7 +3057,7 @@
   safe_default_reason: Encryption is disabled by default to simplify setup but available
     for compliance.
   remove_after: v2.2.0
-  replacement: ''
+  replacement: consolidated_core_v2
 - name: AGENT_STRICT_BUDGETS
   default: false
   owner: agent-platform
@@ -3460,7 +3315,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Agent IAM remains disabled until operators intentionally enable governed identity flows.
+  safe_default_reason: Agent IAM remains disabled until operators intentionally enable
+    governed identity flows.
 - name: AGENT_SERVICE_PRINCIPALS_ENABLED
   default: false
   owner: agent-platform
@@ -3471,7 +3327,8 @@
   dependencies:
   - AGENT_IAM_ENABLED
   conflicts: []
-  safe_default_reason: Service principals remain disabled until connector identity governance is configured.
+  safe_default_reason: Service principals remain disabled until connector identity
+    governance is configured.
 - name: AGENT_DELEGATED_TOKENS_ENABLED
   default: false
   owner: agent-platform
@@ -3482,7 +3339,8 @@
   dependencies:
   - AGENT_IAM_ENABLED
   conflicts: []
-  safe_default_reason: Delegated token exchange stays disabled until explicit operator approval and auditing are in place.
+  safe_default_reason: Delegated token exchange stays disabled until explicit operator
+    approval and auditing are in place.
 - name: AGENT_OAUTH_ON_BEHALF_OF_ENABLED
   default: false
   owner: agent-platform
@@ -3493,7 +3351,8 @@
   dependencies:
   - AGENT_DELEGATED_TOKENS_ENABLED
   conflicts: []
-  safe_default_reason: OBO connector flows remain disabled until the deployment is ready for delegated identity.
+  safe_default_reason: OBO connector flows remain disabled until the deployment is
+    ready for delegated identity.
 - name: AGENT_AUTO_OPTIMIZATION_ENABLED
   default: false
   owner: agent-platform
@@ -3504,7 +3363,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Optimization experiments stay disabled until operators intentionally enable autonomous tuning workflows.
+  safe_default_reason: Optimization experiments stay disabled until operators intentionally
+    enable autonomous tuning workflows.
 - name: AGENT_DSPY_OPTIMIZER_ENABLED
   default: false
   owner: agent-platform
@@ -3515,7 +3375,8 @@
   dependencies:
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   conflicts: []
-  safe_default_reason: DSPy-like optimization remains opt-in to avoid unreviewed prompt or policy mutation.
+  safe_default_reason: DSPy-like optimization remains opt-in to avoid unreviewed prompt
+    or policy mutation.
 - name: AGENT_AUTO_PROMOTE_OPTIMIZATIONS
   default: false
   owner: agent-platform
@@ -3526,7 +3387,8 @@
   dependencies:
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   conflicts: []
-  safe_default_reason: Auto-promotion remains disabled so optimization never silently changes active agent behavior.
+  safe_default_reason: Auto-promotion remains disabled so optimization never silently
+    changes active agent behavior.
 - name: AGENT_OPTIMIZATION_APPLY_ENABLED
   default: false
   owner: agent-platform
@@ -3537,7 +3399,8 @@
   dependencies:
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   conflicts: []
-  safe_default_reason: Applying optimization candidates remains disabled until an operator explicitly allows production changes.
+  safe_default_reason: Applying optimization candidates remains disabled until an
+    operator explicitly allows production changes.
 - name: AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
   default: false
   owner: agent-platform
@@ -3548,7 +3411,8 @@
   dependencies:
   - AGENT_AUTO_OPTIMIZATION_ENABLED
   conflicts: []
-  safe_default_reason: Tournament-based candidate evaluation stays disabled until the deployment explicitly enables parallel comparison workflows.
+  safe_default_reason: Tournament-based candidate evaluation stays disabled until
+    the deployment explicitly enables parallel comparison workflows.
 - name: AGENT_OPTIMIZER_PARALLEL_EVALS_ENABLED
   default: false
   owner: agent-platform
@@ -3559,7 +3423,8 @@
   dependencies:
   - AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
   conflicts: []
-  safe_default_reason: Parallel eval execution stays disabled to prevent unintended concurrency pressure on eval infrastructure.
+  safe_default_reason: Parallel eval execution stays disabled to prevent unintended
+    concurrency pressure on eval infrastructure.
 - name: AGENT_OPTIMIZER_APPLY_WINNER_ENABLED
   default: false
   owner: agent-platform
@@ -3570,7 +3435,8 @@
   dependencies:
   - AGENT_OPTIMIZER_TOURNAMENTS_ENABLED
   conflicts: []
-  safe_default_reason: Automatic winner application stays disabled to enforce human-in-the-loop approval before any candidate is promoted.
+  safe_default_reason: Automatic winner application stays disabled to enforce human-in-the-loop
+    approval before any candidate is promoted.
 - name: AGENTIC_ROUTER_V2_ENABLED
   default: false
   owner: agent-platform
@@ -3581,28 +3447,6 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Agentic Router V2 is a new feature and should be opt-in.
-- name: AGENT_STEP_MODEL_ROUTING_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.0.0
-  risk_level: medium
-  dependencies:
-  - AGENTIC_ROUTER_V2_ENABLED
-  conflicts: []
-  safe_default_reason: Per-step routing should be opt-in.
-- name: AGENT_COST_OPTIMIZED_ROUTING_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.0.0
-  risk_level: low
-  dependencies:
-  - AGENTIC_ROUTER_V2_ENABLED
-  conflicts: []
-  safe_default_reason: Cost-optimized routing should be opt-in.
 - name: AGENT_SHARED_WORKSPACE_ENABLED
   default: false
   owner: agent-platform
@@ -3612,7 +3456,8 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Shared workspaces are a new collaborative feature and should be opt-in.
+  safe_default_reason: Shared workspaces are a new collaborative feature and should
+    be opt-in.
 - name: AGENT_SHARED_ARTIFACTS_ENABLED
   default: false
   owner: agent-platform
@@ -3657,7 +3502,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: Docker-backed code execution stays disabled until operators opt in to a real sandbox provider.
+  safe_default_reason: Docker-backed code execution stays disabled until operators
+    opt in to a real sandbox provider.
 - name: AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED
   default: false
   owner: agent-platform
@@ -3668,7 +3514,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: Firecracker MicroVM isolation remains disabled until operators explicitly provision and validate the provider.
+  safe_default_reason: Firecracker MicroVM isolation remains disabled until operators
+    explicitly provision and validate the provider.
 - name: AGENT_CODE_SANDBOX_GVISOR_ENABLED
   default: false
   owner: agent-platform
@@ -3679,7 +3526,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: gVisor sandboxing remains disabled until runsc and runtime compatibility are explicitly validated.
+  safe_default_reason: gVisor sandboxing remains disabled until runsc and runtime
+    compatibility are explicitly validated.
 - name: AGENT_CODE_SANDBOX_MICROVM_REQUIRED
   default: false
   owner: agent-platform
@@ -3690,7 +3538,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: Hard MicroVM enforcement stays disabled so existing mock and Docker-backed local development flows remain available by default.
+  safe_default_reason: Hard MicroVM enforcement stays disabled so existing mock and
+    Docker-backed local development flows remain available by default.
 - name: AGENT_CODE_SANDBOX_WASM_ENABLED
   default: false
   owner: agent-platform
@@ -3701,7 +3550,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: WASM sandbox execution remains disabled until a vetted WASI runtime is configured.
+  safe_default_reason: WASM sandbox execution remains disabled until a vetted WASI
+    runtime is configured.
 - name: AGENT_MCP_ENABLED
   default: false
   owner: agent-platform
@@ -3711,7 +3561,8 @@
   risk_level: high
   dependencies: []
   conflicts: []
-  safe_default_reason: MCP interoperability remains disabled until administrators allowlist and approve each tenant integration.
+  safe_default_reason: MCP interoperability remains disabled until administrators
+    allowlist and approve each tenant integration.
 - name: AGENT_COGNITIVE_MEMORY_ENABLED
   default: false
   owner: agent-platform
@@ -3722,7 +3573,8 @@
   dependencies:
   - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Advanced cognitive memory remains opt-in to avoid unexpected retention or recall.
+  safe_default_reason: Advanced cognitive memory remains opt-in to avoid unexpected
+    retention or recall.
 - name: AGENT_OTEL_TRACING_ENABLED
   default: false
   owner: agent-platform
@@ -3733,7 +3585,8 @@
   dependencies:
   - AGENT_OBSERVABILITY_ENABLED
   conflicts: []
-  safe_default_reason: Rich GenAI tracing and exporters remain disabled until operators intentionally enable sanitized tracing.
+  safe_default_reason: Rich GenAI tracing and exporters remain disabled until operators
+    intentionally enable sanitized tracing.
 - name: AGENT_APPROVAL_PORTAL_ENABLED
   default: false
   owner: agent-platform
@@ -3744,29 +3597,8 @@
   dependencies:
   - AGENT_STUDIO_ENABLED
   conflicts: []
-  safe_default_reason: Approvals portal remains disabled until visual reviews are required by the operator.
-- name: AGENT_CROSS_TENANT_TEMPLATE_SHARING_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: high
-  dependencies:
-  - AGENT_MARKETPLACE_ENABLED
-  conflicts: []
-  safe_default_reason: Cross-tenant sharing of templates is disabled by default to maintain isolation.
-- name: AGENT_EPISODIC_MEMORY_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_COGNITIVE_MEMORY_ENABLED
-  conflicts: []
-  safe_default_reason: Episodic memories stay disabled until long-term session analysis is allowed.
+  safe_default_reason: Approvals portal remains disabled until visual reviews are
+    required by the operator.
 - name: AGENT_KG_EXTERNAL_PROVIDER_ENABLED
   default: false
   owner: agent-platform
@@ -3777,7 +3609,8 @@
   dependencies:
   - AGENT_KNOWLEDGE_GRAPH_ENABLED
   conflicts: []
-  safe_default_reason: External graph store connections remain disabled until connection configurations are supplied.
+  safe_default_reason: External graph store connections remain disabled until connection
+    configurations are supplied.
 - name: AGENT_KG_WRITE_ENABLED
   default: false
   owner: agent-platform
@@ -3788,7 +3621,8 @@
   dependencies:
   - AGENT_KNOWLEDGE_GRAPH_ENABLED
   conflicts: []
-  safe_default_reason: Ingestion writes to Knowledge Graph stay disabled by default to control database storage growth.
+  safe_default_reason: Ingestion writes to Knowledge Graph stay disabled by default
+    to control database storage growth.
 - name: AGENT_KG_ADJACENCY_CACHE_ENABLED
   default: false
   owner: agent-platform
@@ -3799,7 +3633,8 @@
   dependencies:
   - AGENT_GRAPH_RAG_ENABLED
   conflicts: []
-  safe_default_reason: Graph adjacency caching remains disabled until operators confirm cache sizing and invalidation posture for their tenant scale.
+  safe_default_reason: Graph adjacency caching remains disabled until operators confirm
+    cache sizing and invalidation posture for their tenant scale.
 - name: AGENT_KG_POSTGRES_GRAPH_ENABLED
   default: false
   owner: agent-platform
@@ -3811,7 +3646,8 @@
   - AGENT_KNOWLEDGE_GRAPH_ENABLED
   - AGENT_GRAPH_RAG_ENABLED
   conflicts: []
-  safe_default_reason: PostgreSQL-backed graph persistence remains opt-in until operators provision a production graph store.
+  safe_default_reason: PostgreSQL-backed graph persistence remains opt-in until operators
+    provision a production graph store.
 - name: AGENT_KG_PGVECTOR_ENABLED
   default: false
   owner: agent-platform
@@ -3822,7 +3658,8 @@
   dependencies:
   - AGENT_KG_POSTGRES_GRAPH_ENABLED
   conflicts: []
-  safe_default_reason: pgvector search remains disabled until the extension and embedding supply chain are explicitly enabled.
+  safe_default_reason: pgvector search remains disabled until the extension and embedding
+    supply chain are explicitly enabled.
 - name: AGENT_KG_PGROUTING_ENABLED
   default: false
   owner: agent-platform
@@ -3833,7 +3670,8 @@
   dependencies:
   - AGENT_KG_POSTGRES_GRAPH_ENABLED
   conflicts: []
-  safe_default_reason: pgRouting traversal remains disabled until the graph store is provisioned for routing workloads.
+  safe_default_reason: pgRouting traversal remains disabled until the graph store
+    is provisioned for routing workloads.
 - name: AGENT_LANGSMITH_EXPORT_ENABLED
   default: false
   owner: agent-platform
@@ -3844,7 +3682,8 @@
   dependencies:
   - AGENT_OTEL_TRACING_ENABLED
   conflicts: []
-  safe_default_reason: External export to LangSmith is disabled by default to avoid sharing logs externally.
+  safe_default_reason: External export to LangSmith is disabled by default to avoid
+    sharing logs externally.
 - name: AGENT_MCP_CLIENT_ENABLED
   default: false
   owner: agent-platform
@@ -3855,7 +3694,8 @@
   dependencies:
   - AGENT_MCP_ENABLED
   conflicts: []
-  safe_default_reason: MCP Client integrations remain disabled until tools are explicitly allowlisted.
+  safe_default_reason: MCP Client integrations remain disabled until tools are explicitly
+    allowlisted.
 - name: AGENT_MCP_EXTERNAL_NETWORK_ENABLED
   default: false
   owner: agent-platform
@@ -3866,7 +3706,8 @@
   dependencies:
   - AGENT_MCP_CLIENT_ENABLED
   conflicts: []
-  safe_default_reason: External server connections remain disabled by default to prevent data leakage.
+  safe_default_reason: External server connections remain disabled by default to prevent
+    data leakage.
 - name: AGENT_MCP_SAMPLING_ENABLED
   default: false
   owner: agent-platform
@@ -3900,7 +3741,8 @@
   - AGENT_MCP_ENABLED
   - AGENT_MCP_CLIENT_ENABLED
   conflicts: []
-  safe_default_reason: Delegated OAuth token exchange remains disabled until tenant identity policies and upstream trust are configured.
+  safe_default_reason: Delegated OAuth token exchange remains disabled until tenant
+    identity policies and upstream trust are configured.
 - name: AGENT_MCP_USER_DELEGATION_REQUIRED
   default: false
   owner: agent-platform
@@ -3911,7 +3753,8 @@
   dependencies:
   - AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED
   conflicts: []
-  safe_default_reason: Strict per-user delegation remains opt-in because some tenants still require service-principal fallback during bootstrap.
+  safe_default_reason: Strict per-user delegation remains opt-in because some tenants
+    still require service-principal fallback during bootstrap.
 - name: AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED
   default: false
   owner: agent-platform
@@ -3922,18 +3765,8 @@
   dependencies:
   - AGENT_MCP_ENABLED
   conflicts: []
-  safe_default_reason: Global fallback credentials stay disabled until operators explicitly accept shared-credential risk for MCP bootstrap flows.
-- name: AGENT_MEMORY_SUMMARIZATION_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_COGNITIVE_MEMORY_ENABLED
-  conflicts: []
-  safe_default_reason: Automatic session context compression and summarization are disabled by default.
+  safe_default_reason: Global fallback credentials stay disabled until operators explicitly
+    accept shared-credential risk for MCP bootstrap flows.
 - name: AGENT_OPTIMIZER_ENABLED
   default: false
   owner: agent-platform
@@ -3945,69 +3778,653 @@
   - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Prompt and selection tuning remains opt-in only.
-- name: AGENT_OTEL_EXPORT_ENABLED
+- name: AGENT_CODE_SANDBOX_PROVIDER
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: experimental
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_OTEL_TRACING_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Export of OTEL spans to external endpoints stays disabled by default.
-- name: AGENT_PHOENIX_EXPORT_ENABLED
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_CUSTOM_OPENAI_MODEL
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: experimental
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_OTEL_TRACING_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Export of GenAI traces to Phoenix is disabled by default.
-- name: AGENT_SEMANTIC_MEMORY_ENABLED
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_EVAL_PROVIDER
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_COGNITIVE_MEMORY_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Long-term semantic facts memory remains disabled by default.
-- name: AGENT_TEMPLATE_INSTALL_ENABLED
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_KG_PROVIDER
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_MARKETPLACE_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Interactive templates installation is disabled by default.
-- name: AGENT_VISUAL_DEBUGGER_ENABLED
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_LLM_STREAMING_ENABLED
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_STUDIO_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Live debugging panels stay disabled by default.
-- name: AGENT_WORKING_MEMORY_ENABLED
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_LOCAL_GATEWAY_MODEL
   default: false
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
-  introduced_in: v2.1.0-agentic-platform-expansion
-  risk_level: medium
-  dependencies:
-  - AGENT_COGNITIVE_MEMORY_ENABLED
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
   conflicts: []
-  safe_default_reason: Temporary session scratchpads remain opt-in.
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_LOCAL_LLAMA_CPP_MODEL
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_MEMORY_EMBEDDINGS_PROVIDER
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_OPENROUTER_MODEL
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_SANDBOX_FIRECRACKER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_SANDBOX_GVISOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_SANDBOX_PROVIDER
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_STRUCTURED_OUTPUT_RETRY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_VISUAL_BUILDER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: ANTHROPIC_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: ATTESTATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_AGENT_GOVERNANCE_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_AUTOSCALING_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_CALIBRATION_AUTO_APPLY_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_CALIBRATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_CANARY_AUTO_PROMOTION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_COMPLIANCE_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_CONFIDENTIAL_RUNTIME_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_CROSS_CLUSTER_FORWARDING_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_FEDERATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_GEO_RO_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_GLOBAL_ROUTING_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_GOVERNANCE_FEDERATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_INFRA_EXECUTION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_MODEL_INTEGRITY_SCAN_INTERVAL_SECONDS
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_MODEL_TRUST_ENFORCEMENT_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_PUBLIC_ATTESTATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_QOS_BILLING_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_QOS_PRIORITY_QUEUE_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_QOS_RATE_LIMIT_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_RAG_POLICY_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_RECEIPTS_TIMESTAMP_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_REPORT_EMAIL_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_REPORT_EMAIL_PROVIDER
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_RUNTIME_ATTESTATION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_TENANT_ENCRYPTION_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: COMMERCIAL_TRANSPARENCY_GOSSIP_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: DEEPSEEK_CHAT_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: DEFAULT_EMBEDDING_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: DEPLOYMENT_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: HARDWARE_TRUST_PROVIDER
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: LMSTUDIO_DEFAULT_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: LOCAL_BILLING_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MAX_CLIENT_PROVIDER_COST_PER_DAY_BRL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MAX_GLOBAL_PROVIDER_COST_PER_DAY_BRL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MAX_PROVIDER_COST_PER_DAY_BRL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MODEL_LOAD_TIMEOUT_SECONDS
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MODEL_RUNTIME_PORT_END
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: MODEL_RUNTIME_PORT_START
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: NEGATIVE_MARGIN_BLOCK_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: OPENAI_CHAT_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: OPENAI_EMBEDDINGS_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: PAYMENT_PROVIDER
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: PUBLIC_ANALYTICS_PROVIDER
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: RAG_EMBEDDING_MODEL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: RAG_EMBEDDING_PROVIDER
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: REAL_PROVIDER_MAX_COST_BRL
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: REAL_PROVIDER_TIMEOUT_SECONDS
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: TOKENIZER_MODE
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: TOKENIZER_MODEL_PATH
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.

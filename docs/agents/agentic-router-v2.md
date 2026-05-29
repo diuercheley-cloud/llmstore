@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Router V2
 
 ## Overview
@@ -20,5 +25,3 @@ The system consists of the following components:
 ## Usage
 Enable the feature via flags:
 - `AGENTIC_ROUTER_V2_ENABLED=true`
-- `AGENT_STEP_MODEL_ROUTING_ENABLED=true`
-- `AGENT_COST_OPTIMIZED_ROUTING_ENABLED=true`

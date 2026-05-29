@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # MicroVM and gVisor Sandbox
 
 The Code Interpreter sandbox supports multiple isolation providers with Docker as the default runtime and Firecracker or gVisor as opt-in hardened providers.

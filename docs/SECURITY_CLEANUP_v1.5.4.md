@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Security Cleanup v1.5.4
 
 ## Final Status

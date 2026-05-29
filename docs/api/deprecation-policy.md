@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # API Deprecation Policy
 
 This document defines the official API deprecation lifecycle and versioning policy for the `llm-inference-stack` platform.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Queue Recovery
 
 O runtime agentic utiliza um sistema de fila persistente com mecanismos de recuperação automática para lidar com falhas de infraestrutura, crashes de workers e instabilidades de rede.

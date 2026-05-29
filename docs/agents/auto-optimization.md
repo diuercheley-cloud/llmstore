@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Auto-Optimization and Optimizer Coordination
 
 The Auto-Optimization service utilizes historical execution runs and evaluation failures to generate candidate optimizations for agents, evaluates them against baselines, and presents recommendations to administrators for approval.

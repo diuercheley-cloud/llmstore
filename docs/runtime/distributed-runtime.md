@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Distributed Runtime
 
 The LLM Inference Stack supports a real multi-node distributed runtime mode. This allows you to have multiple data plane nodes running on different physical or virtual machines, edge devices, or Kubernetes pods, all managed by a single control plane.

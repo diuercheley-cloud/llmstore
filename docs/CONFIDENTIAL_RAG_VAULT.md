@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Regulated RAG Vault + Confidential Retrieval Fabric
 
 ## Overview

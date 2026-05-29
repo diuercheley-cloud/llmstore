@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Customer Portal
 
 O portal do cliente fica em `http://localhost:18080/client-portal` e usa autenticação por API key do próprio cliente.

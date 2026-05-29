@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Guia de Comandos do Operador
 
 Este documento descreve os comandos disponíveis via `Makefile` para operação e manutenção do **LLM Inference Stack** em ambiente local.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Phase 82 Platform Modularization
 
 Phase 82 formalizes the control plane into bounded contexts with deterministic boundaries, minimal shared kernel usage, and explicit public contracts.

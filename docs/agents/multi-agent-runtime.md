@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Multi-Agent Runtime Governed
 
 Este documento detalha o framework de orquestração multi-agente do LLM Inference Stack, focando em segurança, governança e rastreabilidade.

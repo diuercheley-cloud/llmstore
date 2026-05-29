@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Pipelines de Deploy
 
 O `llm-inference-stack` utiliza pipelines de deploy controladas para garantir que nenhuma mudança chegue em ambientes críticos sem validação e aprovação explícita.

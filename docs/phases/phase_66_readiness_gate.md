@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 66 Readiness Gate
 
 Este documento define o gate de readiness que deve passar antes de qualquer implementacao da Phase 66.

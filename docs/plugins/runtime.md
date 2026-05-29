@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Plugin Runtime Security
 
 The plugin system enforces strict security controls on loaded extensions.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Service Level Objectives (SLOs)
 
 Este documento define os SLOs de plataforma para o `llm-inference-stack`.

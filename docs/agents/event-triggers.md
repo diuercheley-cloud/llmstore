@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Event Triggers Configuration
 
 Event Triggers define the binding between an event source and the execution of a specific agent.

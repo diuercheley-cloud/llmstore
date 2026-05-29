@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Production Readiness for Agentic Runtime
 
 ## Overview

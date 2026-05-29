@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.10.0 Agentic Runtime
 
 ## Summary

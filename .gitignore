@@ -1,4 +1,6 @@
 # Env / secrets
+# Local runtime
+validation.db
 .env
 .env.*
 !.env.example

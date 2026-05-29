@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 69: Predictive Failure Signals + Deterministic Forecasting
 
 Este documento define o escopo e as garantias da Phase 69.

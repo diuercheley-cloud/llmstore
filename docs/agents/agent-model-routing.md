@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Model Routing
 
 This document explains how agents select and route requests to LLM backends.

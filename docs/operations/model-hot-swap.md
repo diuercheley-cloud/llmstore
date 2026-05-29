@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Model Hot Swap
 
 The LLM Inference Stack supports dynamic loading, unloading, and switching of GGUF models without restarting the data plane container.

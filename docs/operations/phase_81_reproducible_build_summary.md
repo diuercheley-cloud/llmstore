@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 81 Summary
 
 ## Arquivos criados/alterados

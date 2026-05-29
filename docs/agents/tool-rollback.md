@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Rollback & Compensation
 
 To guarantee execution integrity across complex agent plans, the system records side effects and registers compensation actions to reverse changes when a plan fails.

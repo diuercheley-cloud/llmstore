@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Infrastructure Execution (Phase 22)
 
 Allows the LLM Inference Stack to execute real infrastructure actions (like scaling) on Kubernetes and Nomad clusters after approval.

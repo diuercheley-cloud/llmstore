@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Governança de Artefatos
 
 Este documento descreve as regras de limpeza e integridade para os artefatos gerados em cada release.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operações de Controle SOC 2
 
 O `llm-inference-stack` implementa rotinas operacionais para garantir a eficácia contínua dos controles SOC 2.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # agentctl CLI
 
 The `agentctl` tool is the command-line interface for managing agents on the Kleber AI Platform.

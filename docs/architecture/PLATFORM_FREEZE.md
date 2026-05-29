@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Architectural Freeze Policy
 
 Este documento estabelece as regras e diretrizes formais para a fase de congelamento arquitetural (Architectural Freeze) do `llm-inference-stack`, com o objetivo de estabilizar o core do sistema, evitar a expansão horizontal descontrolada e garantir a prontidão para conformidade (compliance readiness).

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.7.0 Local AI Appliance
 
 ## Resumo Executivo

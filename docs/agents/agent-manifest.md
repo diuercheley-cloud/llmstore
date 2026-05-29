@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Manifest (agent.yaml)
 
 The `agent.yaml` file is the primary configuration for an agent.

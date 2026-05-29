@@ -562,7 +562,7 @@
   requires_gpu: false
   writes_files: false
   outputs: []
-  is_destructive: true
+  is_destructive: false
   docs_url: null
 - path: scripts/clean-sensitive-artifacts-local.sh
   purpose: scripts/clean-sensitive-artifacts-local.sh Safely cleans or redacts sensitive
@@ -6004,3 +6004,17 @@
   outputs: []
   is_destructive: false
   docs_url: null
+- path: scripts/validate-agentic-production-on.sh
+  purpose: 'Validate agentic production-on readiness. Runtime must be live (not safe-default disabled). Exercises agent creation, run start, worker processing, tool echo, memory R/W, KG query, eval gateway, trace/receipt, and run finalization.'
+  owner: platform-ops
+  category: validation
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/readiness/*
+  is_destructive: false
+  docs_url: docs/operations/agentic-production-on-validation.md

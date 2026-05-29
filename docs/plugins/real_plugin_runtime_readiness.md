@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Real Plugin Runtime Readiness
 
 Missing for a real plugin runtime:

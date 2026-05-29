@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Compatibility Contracts And Version Negotiation
 
 ## Overview

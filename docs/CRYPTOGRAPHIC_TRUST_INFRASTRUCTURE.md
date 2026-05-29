@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Cryptographic Trust Infrastructure (Phase 62)
 
 ## Overview

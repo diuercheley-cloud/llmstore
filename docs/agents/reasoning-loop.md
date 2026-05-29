@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Reasoning Loops
 
 The Agentic AI Platform supports advanced reasoning strategies to improve task execution accuracy and reliability. These loops extend the standard direct LLM call with structured cycles like ReAct and Plan-and-Solve.

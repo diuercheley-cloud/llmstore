@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Memory Isolation
 
 Multi-tenant environments require strict data isolation to prevent cross-tenant data leakage. 

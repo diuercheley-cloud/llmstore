@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Cryptographic Inference Receipts + Non-Repudiation (Phase 41)
 
 ## Overview

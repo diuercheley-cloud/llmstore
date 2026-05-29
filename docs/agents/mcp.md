@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # MCP
 
 Model Context Protocol support is available in opt-in mode only.

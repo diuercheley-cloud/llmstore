@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Roteiro de Apresentação Comercial — Local AI Appliance
 
 > **Aviso importante:** Esta demonstração utiliza **dados fictícios** para fins ilustrativos. Nenhuma informação exibida representa dados reais de pacientes, clientes ou operações financeiras. O sistema opera em **modo appliance local** — toda inferência, armazenamento e processamento ocorrem dentro da infraestrutura do cliente. O billing é **local/manual** e **não inclui PSP/PIX real**. Este material não substitui análise jurídica ou de compliance.

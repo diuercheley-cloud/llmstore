@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tool Cascade Failure Playbook
 
 ## Descrição

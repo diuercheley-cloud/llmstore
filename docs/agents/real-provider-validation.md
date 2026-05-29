@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Real Provider Validation for Agentic Runtime
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Safe-by-Default Posture
 
 The `llm-inference-stack` is built with a **safe-by-default** security philosophy. Every feature in the agentic expansion is disabled by default (opt-in), requires strict authorization boundaries, and undergoes automated policy validation before execution.

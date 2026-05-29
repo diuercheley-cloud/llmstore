@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Governance
 
 A governança de agentes é centralizada através de um motor de políticas baseado em código (Policy-as-Code), permitindo a aplicação consistente de regras de segurança, custo e conformidade.

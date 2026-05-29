@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Retrieval Proofs
 
 Phase 49 adds verifiable retrieval proofs for regulated RAG.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Plano de Simplificação de Arquitetura
 
 Este documento descreve a estratégia para reduzir a duplicação e complexidade no `llm-inference-stack`.

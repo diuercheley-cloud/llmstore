@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supply-Chain Risk Register
 
 | Risk ID | Category | Description | Impact | Likelihood | Mitigation | Offline Compatibility | Determinism | Tenant Isolation | Status |

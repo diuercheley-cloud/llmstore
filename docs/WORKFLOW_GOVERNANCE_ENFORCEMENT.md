@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflow Governance Enforcement
 
 Phase 56 extends deterministic workflows with persistent policy enforcement, immutable governance records, replay governance and stage-level approval chains.

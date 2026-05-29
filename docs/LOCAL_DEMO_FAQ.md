@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Perguntas Frequentes (FAQ) - Demo Local
 
 ### Isso roda totalmente sem internet?

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Tool Governance
 
 O `llm-inference-stack` impõe uma governança rigorosa sobre todas as ferramentas (tools) executáveis por agentes. Nenhuma ferramenta pode ser registrada ou executada sem metadados de segurança, limites operacionais e políticas de aprovação claros.
@@ -29,3 +34,17 @@ O runtime suporta retentativas automáticas (`retry_policy`) apenas para ferrame
 2.  **Policy Check**: Validação de RBAC e permissões de tenant no `tool_policy`.
 3.  **Audit**: Cada tentativa, sucesso ou falha é registrada com hashes de payload no `tool_audit`.
 4.  **Sandbox**: Execução em ambiente isolado (se habilitado) com monitoramento de recursos.
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_TOOL_REGISTRY_ENABLED=true`.
+
+### Monitor
+Monitor tool execution success/failure.
+
+### Troubleshoot
+Check tool audit logs.
+
+### Rollback
+Disable the tool registry flag.

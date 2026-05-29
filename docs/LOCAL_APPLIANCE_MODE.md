@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # LOCAL_APPLIANCE_MODE
 
 `LOCAL_APPLIANCE_MODE` is a specialized operational profile for the LLM Inference Stack, designed for secure, self-contained local operation (Local Appliance).

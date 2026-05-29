@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operational Guide: Signed Adapter Registry
 
 ## Introduction

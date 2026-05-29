@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operations Center
 
 The Operations Center builds a deterministic, cryptographically verifiable Trust Graph across governance, runtime fabric, workflows, receipts, federation, sovereign controls, confidential runtime, and model supply chain state.

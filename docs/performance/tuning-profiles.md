@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tuning Profiles Reference
 
 | Perfil | Objetivo | Configurações Típicas |

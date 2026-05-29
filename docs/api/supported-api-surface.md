@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supported API Surface Document
 
 This document outlines the API surface classifications for the `llm-inference-stack` platform, establishing clear support levels for all client and administrative endpoints.

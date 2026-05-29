@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Reproducible Build & Artifact Verification Framework
 
 ## Overview

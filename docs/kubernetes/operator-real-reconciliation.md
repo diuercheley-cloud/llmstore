@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Kubernetes Operator: Real Reconciliation
 
 The LLM Inference Stack operator has evolved from a simple logger to a real minimal reconciler. It manages the lifecycle of Custom Resources (CRs) by ensuring the desired state in Kubernetes matches the specification.

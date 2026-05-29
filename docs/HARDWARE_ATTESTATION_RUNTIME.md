@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Hardware-backed Attestation Runtime (Phase 58)
 
 ## Overview

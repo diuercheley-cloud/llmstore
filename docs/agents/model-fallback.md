@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Semantic Model Fallback
 
 To increase resilience against provider failures or specific model weaknesses, the platform supports semantic model fallback.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Kubernetes Operator
 
  The LLM Inference Stack Operator automates the management of the stack components.

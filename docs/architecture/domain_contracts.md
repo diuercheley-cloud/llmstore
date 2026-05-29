@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Domain Contracts
 
 Este documento define contratos minimos para os dominios candidatos a modularizacao forte em `app.domains`.

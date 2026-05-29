@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Supported Surface Area Policy
 
 Este documento define e classifica formalmente todas as capacidades e recursos do `llm-inference-stack` de acordo com o seu nível de suporte, maturidade e estabilidade.

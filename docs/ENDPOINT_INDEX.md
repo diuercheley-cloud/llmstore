@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Endpoint Index: API Catalog
 
 This document lists the primary API endpoints categorized by module and access level.

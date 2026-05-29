@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Multi-Agent Systems and Collaboration
 
 A plataforma permite que múltiplos agentes trabalhem em conjunto através de sessões de colaboração controladas e deleguem tarefas uns aos outros (handoffs).

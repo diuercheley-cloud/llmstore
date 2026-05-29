@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Execution Replay
 
 Replaying an agent execution allows administrators and compliance officers to trace steps, audit history, and diagnose failures without triggering real-world actions.

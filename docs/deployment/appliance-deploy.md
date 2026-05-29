@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Deployment como Local Appliance
 
 O modo *Appliance* é ideal para instalações *on-premises* ou máquinas dedicadas onde o controle total da infraestrutura é necessário.

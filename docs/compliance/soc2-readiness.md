@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SOC 2 Readiness Guide
 
 O `llm-inference-stack` auxilia na prontidão para o SOC 2 (Type 1 e Type 2) através dos seguintes pilares:

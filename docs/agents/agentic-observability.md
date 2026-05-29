@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Observability
 
 Este documento descreve as métricas e dashboards nativos para monitoramento de agentes no LLM Inference Stack.
@@ -52,3 +57,17 @@ agent_trace_export_enabled: true
 ## Segurança
 
 O sistema de observabilidade sanitiza automaticamente payloads, removendo strings que contenham padrões de segredos (`SECRET_`, `KEY_`, `TOKEN_`) e campos de `prompt` para evitar vazamento de dados sensíveis em logs e eventos de timeline.
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_OBSERVABILITY_ENABLED=true`.
+
+### Monitor
+Standard Prometheus/Grafana stack.
+
+### Troubleshoot
+Check observability service logs.
+
+### Rollback
+Disable the observability flag.

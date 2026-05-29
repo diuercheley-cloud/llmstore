@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Artifacts Security Policy
 
 This document defines the security standards for files located in the `releases/` directory. These files are versioned and must not contain any sensitive information.

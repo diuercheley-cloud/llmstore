@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Governance Documentation Foundation Summary
 
 ## Files Created

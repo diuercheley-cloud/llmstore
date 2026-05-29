@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.7.0 Release Checklist
 
 Checklist formal para promover a linha v1.6.x para **v1.7.0-local-ai-appliance**.

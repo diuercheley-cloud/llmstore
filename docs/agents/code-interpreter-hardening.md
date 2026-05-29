@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Code Interpreter Hardening
 
 The Code Interpreter now enforces a stronger sandbox contract for dynamic execution.

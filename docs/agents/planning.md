@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Planning
 
 O planejamento permite que agentes decomponham objetivos complexos em uma série de tarefas estruturadas antes da execução.

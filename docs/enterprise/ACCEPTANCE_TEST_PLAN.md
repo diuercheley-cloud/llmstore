@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Acceptance Test Plan (ATP)
 
 ## 1. Functional Testing

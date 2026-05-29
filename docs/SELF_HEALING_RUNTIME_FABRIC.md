@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 65: Self-Healing Deterministic Runtime Fabric
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operations Correlation Engine (Phase 70)
 
 ## Architecture Overview

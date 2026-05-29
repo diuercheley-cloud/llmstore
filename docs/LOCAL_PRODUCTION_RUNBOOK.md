@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Local Production Runbook
 
 This document describes the steps to set up, validate, and maintain the local production environment.

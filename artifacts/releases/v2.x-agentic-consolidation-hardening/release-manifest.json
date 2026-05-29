@@ -1,0 +1,56 @@
+{
+  "manifest_version": "1.0.0",
+  "release": "v2.x-agentic-consolidation-hardening",
+  "timestamp": "2026-05-28T20:50:48Z",
+  "git": {
+    "sha": "0b207e2cbd34ac28d57efb5337ca25ffc8fe35e8",
+    "branch": "release/v2.0.0",
+    "tags": ""
+  },
+  "migrations": {
+    "count": 135,
+    "directory": "control_plane/alembic/versions/"
+  },
+  "feature_flags": {
+    "total": 100,
+    "enabled": 24,
+    "enabled_list": ["default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default","default"]
+  },
+  "api_surface": {
+    "endpoints": 1,
+    "config_file": "config/api-surface.yaml"
+  },
+  "supported_surface": {
+    "capabilities": 1,
+    "config_file": "config/supported-surface.yaml"
+  },
+  "dependencies": {
+    "python": "1 packages",
+    "node": "1 packages"
+  },
+  "runtime_providers": [""],
+  "freeze_rules": [
+  "forbid_new_bounded_contexts",
+  "forbid_new_top_level_dirs",
+  "forbid_new_api_routers_without_approval",
+  "forbid_new_feature_flags_without_owner",
+  "forbid_new_models_without_migration_and_owner",
+  "require_supported_surface_classification",
+  "allowed_top_level_dirs",
+  "allowed_bounded_contexts",
+  "allowed_api_routers",
+  "allowed_models",
+  "allowed_services",
+  "allowed_feature_flags",
+  "approved_exceptions"
+],
+  "reproducibility": {
+    "git_clean_required": true,
+    "working_tree_state": "994 dirty files",
+    "artifacts": {
+      "summary": "artifacts/releases/v2.x-agentic-consolidation-hardening/summary.md",
+      "validation": "artifacts/releases/v2.x-agentic-consolidation-hardening/validation.md",
+      "certification": "artifacts/releases/v2.x-agentic-consolidation-hardening/working-tree-certification.md"
+    }
+  }
+}

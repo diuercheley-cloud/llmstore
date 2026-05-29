@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Registry
 
 The Agent Registry provides a versioned catalog of all agents executing within the system. It governs metadata, permissions, resource boundaries, and compliance properties.

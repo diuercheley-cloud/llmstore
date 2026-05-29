@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.8.0 Hybrid AI Platform
 
 ## Resumo Executivo

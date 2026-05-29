@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GPU Support in Kubernetes
 
 To enable GPU support, ensure your cluster has the NVIDIA Device Plugin installed.

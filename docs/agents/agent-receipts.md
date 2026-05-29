@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Execution Receipts
 
 Os recibos de execução (`AgentRunReceipt`) são artefatos de auditoria gerados para cada execução de ferramenta bem-sucedida ou falha no runtime de agentes.

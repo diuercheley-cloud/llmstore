@@ -20,6 +20,12 @@ VALIDATE_PHASE_TARGETS := \
 	validate-phase-81-reproducible-builds \
 	validate-phase-82-platform-sustainability
 
+service-coverage-report:
+	python3 scripts/check-service-test-coverage.py
+
+service-coverage-gate:
+	python3 scripts/check-service-test-coverage.py --gate
+
 # Official deterministic validation groups. These lists are the source of truth
 # for aggregate targets and for Makefile governance checks.
 CORE_VALIDATION_TARGETS := \
@@ -246,6 +252,10 @@ agentic-up: ## Start stack with agentic profile (includes agent-worker)
 agentic-readiness: ## Run Agentic Runtime Readiness Checks
 	@chmod +x scripts/agentic-readiness.sh
 	@./scripts/agentic-readiness.sh
+
+agentic-production-on-readiness: ## Validate Agentic Production-ON readiness (runtime live, not safe-default)
+	@chmod +x scripts/validate-agentic-production-on.sh
+	@AGENTIC_PRODUCTION_ON_VALIDATION=true ./scripts/validate-agentic-production-on.sh
 
 agent-security-tests: ## Run agent security and sandbox jailbreak tests
 	@echo "Running Agent security and jailbreak tests..."
@@ -595,6 +605,7 @@ validate-compatibility: ## Run compatibility validation targets in deterministic
 # --- Documentation Validation ---
 validate-platform-documentation: ## Validate platform documentation completeness and consistency
 	python3 ./scripts/validate_platform_documentation.py
+	python3 ./scripts/check-doc-consistency.py
 	.venv/bin/python -m pytest tests/docs/test_platform_documentation.py -q --tb=short
 
 validate-documentation: ## Run documentation validation targets in deterministic order
@@ -982,15 +993,24 @@ check-secrets: ## Scan for secrets in the codebase
 	./scripts/check-secrets.sh --all
 
 stabilization-check: ## Run formal stabilization phase checks
-	chmod +x ./scripts/stabilization-check.sh ./scripts/check-working-tree-clean.sh ./scripts/check-feature-flags.sh
+	chmod +x ./scripts/stabilization-check.sh ./scripts/check-working-tree-clean.sh ./scripts/check-feature-flags.sh ./scripts/working-tree-certification.sh
 	./scripts/check-working-tree-clean.sh
 	./scripts/check-feature-flags.sh
+	$(MAKE) working-tree-certification
 	@make platform-freeze-check
 	./scripts/stabilization-check.sh
 
 complexity-report: ## Generate platform complexity analysis and recommendations
 	chmod +x ./scripts/complexity-report.sh
 	./scripts/complexity-report.sh
+
+working-tree-certification: ## Certify working tree is clean for release (Requires TAG=vX.Y.Z)
+	@chmod +x scripts/working-tree-certification.sh
+	@bash scripts/working-tree-certification.sh $(TAG)
+
+working-tree-governance: ## Check working tree governance (non-blocking vs blocking dirt)
+	@chmod +x scripts/check-working-tree-governance.sh
+	@bash scripts/check-working-tree-governance.sh
 
 
 release-risk-report: ## Generate stabilization risk report

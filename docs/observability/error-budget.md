@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Error Budget Guide
 
 O Error Budget representa a quantidade de erros que podemos tolerar em um período (janela de 30 dias) sem violar o SLO.

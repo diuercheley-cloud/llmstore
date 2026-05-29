@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # White-Label Local — Branding Personalizado
 
 Este módulo permite personalizar a identidade visual e textual do **LLM Inference Stack** em modo **Local Appliance** sem alterar código-fonte.

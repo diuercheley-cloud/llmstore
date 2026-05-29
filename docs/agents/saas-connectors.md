@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SaaS Connectors
 
 The Agentic AI Platform supports governed, enterprise-grade connectors for popular SaaS platforms. These connectors evolve the `tool_adapters` beyond local capabilities, providing a secure way for agents to interact with external services.
@@ -26,3 +31,17 @@ All SaaS connectors respect the following feature flags:
 - [Confluence](connectors/confluence.md)
 - [Salesforce](connectors/salesforce.md)
 - [Microsoft 365](connectors/microsoft365.md)
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_SAAS_CONNECTORS_ENABLED=true`.
+
+### Monitor
+Monitor connector API error rates.
+
+### Troubleshoot
+Check connector registry status via `/admin/agents/connectors`.
+
+### Rollback
+Disable connectors or individual provider flags.

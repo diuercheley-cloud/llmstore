@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Jira Connector
 
 The Jira connector allows agents to interact with Jira issues and comments.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Promotion Readiness Checklist
 
 ## Overview

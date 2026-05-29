@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Disaster Recovery Local
 
 Este fluxo cobre backup, restore e teste de desastre para o `llm-inference-stack` em ambiente local.

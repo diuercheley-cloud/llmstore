@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Domain Boundaries
 
 ## Regras Gerais

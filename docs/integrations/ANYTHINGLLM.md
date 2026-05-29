@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Integração com AnythingLLM
 
 O `llm-inference-stack` pode servir como backend para o AnythingLLM Desktop ou Docker.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operations Guide: Runtime Profile Selection
 
 This guide assists operators in choosing and applying the appropriate operational profiles for their deployment environment.

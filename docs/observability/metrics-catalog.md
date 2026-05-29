@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Catálogo de Métricas Prometheus
 
 Este catálogo lista as métricas padronizadas expostas pelo `llm-inference-stack` para monitoramento e SLOs.

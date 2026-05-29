@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Complexity Management Architecture
 
 This document outlines the architectural strategy for managing, monitoring, and reducing complexity within the `llm-inference-stack` platform.

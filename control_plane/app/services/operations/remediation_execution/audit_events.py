@@ -53,6 +53,12 @@ async def log_remediation_execution_started(session: AsyncSession, client_id: uu
         session, "remediation_execution_started", client_id, {"execution_id": str(execution_id)}
     )
 
+
+async def log_remediation_execution_step_executed(session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str):
+    return await log_remediation_execution_audit_event(
+        session, "remediation_execution_step_executed", client_id, {"step_id": str(step_id), "status": status}
+    )
+
 async def log_remediation_execution_step_simulated(session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str):
     return await log_remediation_execution_audit_event(
         session, "remediation_execution_step_simulated", client_id, {"step_id": str(step_id), "status": status}

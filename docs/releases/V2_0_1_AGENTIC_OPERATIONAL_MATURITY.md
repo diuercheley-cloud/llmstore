@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v2.0.1 Agentic Operational Maturity
 
 `v2.0.1-agentic-operational-maturity` consolidates the `v2.0.0` agentic platform into an operator-ready release line. The focus shifts from proving architectural capability to proving operational discipline: controlled activation, explicit rollout modes, objective GA scoring, surface reduction, feature-flag cleanup, security warning governance, and reproducible release evidence.

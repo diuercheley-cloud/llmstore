@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Hermetic Preflight Check
+bash scripts/preflight-hermetic.sh || exit 1
+
 BASE_URL=${KLEBER_BASE_URL:-"http://localhost:18080"}
 API_KEY=${KLEBER_API_KEY}
 MODE=${AGENTIC_READINESS_MODE:-"advisory"} # advisory | release

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Inference Reproducibility
 
 Phase 40 adds deterministic inference audit controls with a strict caveat: this stack only offers best-effort reproducibility. It does not promise mathematically exact or bit-perfect replay across different hardware, model builds, quantization formats, backends or tokenizer revisions.

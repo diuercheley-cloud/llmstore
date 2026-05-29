@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Controle de Mapeamento de Compliance
 
 O `llm-inference-stack` mapeia suas funcionalidades técnicas diretamente para os controles exigidos por frameworks de mercado.

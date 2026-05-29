@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Report Email
 
 Fase 12 adiciona envio opt-in de relatórios executivos comerciais por SMTP seguro, com `disabled` por padrão, `dry_run` seguro, allowlist obrigatória para envio real, auditoria persistida e scanner de segredos antes de qualquer entrega.

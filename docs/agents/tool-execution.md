@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Tool Execution
 
 The Agent Tool Execution framework provides a secure, audited, and controlled execution layer for executing tools called by agents.

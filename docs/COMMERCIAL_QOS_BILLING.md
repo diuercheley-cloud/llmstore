@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial QoS Billing & Financial Integration
 
 Phase 26 introduces the integration of QoS Priority Queue usage with the billing and wallet systems. This allows for automated or manual financial reconciliation based on the operational costs of providing priority access.

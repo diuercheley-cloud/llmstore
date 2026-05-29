@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Chaos Engineering
 
 O `llm-inference-stack` adota o **Chaos Engineering** como uma prática formal para validar e melhorar a resiliência da plataforma frente a falhas inevitáveis em ambientes distribuídos.

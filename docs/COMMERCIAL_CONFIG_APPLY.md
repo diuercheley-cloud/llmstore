@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Manual Commercial Configuration Application
 
 This document describes the system for manually applying commercial routing configurations, such as cost multipliers and weights, typically following calibration recommendations.

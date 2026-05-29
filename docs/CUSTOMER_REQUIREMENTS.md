@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Requisitos do Sistema
 
 Este documento detalha os requisitos para instalação e execução do LLM Inference Stack em ambiente local do cliente.

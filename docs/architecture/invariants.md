@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Invariants
 
 Este documento define um framework leve de invariants para validacao deterministica e advisory da plataforma.

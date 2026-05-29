@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Task Engine
 
 O Task Engine é o orquestrador responsável por executar as tarefas definidas em um plano, gerenciando estados, retentativas e concorrência.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Production Readiness Local
 
 Este relatório avalia se a stack está pronta para operar em `local-production` com base em evidências locais e artefatos reproduzíveis.

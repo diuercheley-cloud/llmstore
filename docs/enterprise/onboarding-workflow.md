@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise Onboarding Workflow
 
 Este guia descreve o processo padronizado de onboarding para clientes enterprise do `llm-inference-stack`.

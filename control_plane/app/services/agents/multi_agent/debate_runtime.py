@@ -3,6 +3,8 @@ import uuid
 import logging
 from typing import List, Dict, Any, Optional
 from app.services.agents.multi_agent.team_runtime import TeamRuntime
+from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
+from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +12,11 @@ class DebateRuntime(TeamRuntime):
     """
     Implements Debate topology: Proposers -> Critics -> Synthesizer.
     """
+    def __init__(self, db):
+        super().__init__(db)
+        self.arbitrator = ArbitrationEngine(db)
+        self.policy = MultiAgentPolicyService(db)
+
     async def execute(self, team_id: uuid.UUID, goal: str, max_rounds: int = 3):
         team = await self.get_team(team_id)
         members = await self.get_members(team_id)
@@ -25,6 +32,10 @@ class DebateRuntime(TeamRuntime):
         workspace = self.get_workspace(team.tenant_id)
         
         try:
+            # Policy check: Shared budget
+            if not await self.policy.check_shared_budget(run.id, 0.01): # Initial cost estimate
+                 raise ValueError("Shared budget exceeded for debate run")
+
             round_summaries = []
             for round_num in range(1, max_rounds + 1):
                 run.current_round = round_num
@@ -65,11 +76,30 @@ class DebateRuntime(TeamRuntime):
                     },
                 )
             
-            final_answer = (
-                f"Debate concluded for '{goal}'. "
-                f"Final synthesized answer based on {max_rounds} rounds, "
-                f"{len(proposers)} proposers and {len(critics)} critics."
+            # Arbitration and Synthesis at the end of rounds
+            outputs_for_arbitration = []
+            for rs in round_summaries:
+                for prop in rs["proposals"]:
+                    outputs_for_arbitration.append({
+                        "result": prop,
+                        "confidence": 0.7 # Base confidence for round proposals
+                    })
+
+            arbitration_res = await self.arbitrator.arbitrate(
+                outputs_for_arbitration,
+                {
+                    "goal": goal,
+                    "topology": "debate",
+                    "rounds_count": max_rounds,
+                    "critics": critics,
+                    "tenant_id": team.tenant_id
+                }
             )
+            synthesis = arbitration_res["final_synthesis"]
+            
+            # Critic Review
+            final_answer, safety_score = await self.arbitrator.run_critic_review(synthesis, critics)
+            
             await workspace.put(
                 run.id,
                 "synthesizer:summary",
@@ -78,6 +108,7 @@ class DebateRuntime(TeamRuntime):
                     "goal": goal,
                     "rounds": round_summaries,
                     "final_answer": final_answer,
+                    "safety_score": safety_score
                 },
             )
             await self.obs.record_message(run.id, synthesizer.agent_id, None, final_answer, "result")

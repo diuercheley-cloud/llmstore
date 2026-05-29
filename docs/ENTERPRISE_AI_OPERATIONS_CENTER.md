@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise AI Operations Center
 
 Unified command center for governance, workflows, compliance, receipts, attestation, fairness, billing, sovereign runtime, and supervisor AI.

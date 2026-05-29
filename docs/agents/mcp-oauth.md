@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # MCP OAuth Identity Delegation
 
 This document describes how agents call external Model Context Protocol (MCP) servers using delegated OAuth2 user/tenant identities instead of global stack credentials.

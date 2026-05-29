@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 69 Failure Forecasting Summary
 
 ## Arquivos criados/alterados

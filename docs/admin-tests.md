@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Admin Tests Dashboard
 
 A página `Admin Tests` é um painel de testes operacionais integrado ao LLM Inference Stack. Ela permite a execução rápida e visual de validações contra a API e componentes do sistema.

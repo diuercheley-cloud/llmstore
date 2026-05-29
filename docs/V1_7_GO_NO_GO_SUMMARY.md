@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # v1.7.0 Go/No-Go Summary
 
 **Documento versionavel — Resumo seguro para tomada de decisao.**

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Policy-as-Code para Agentes
 
 A plataforma utiliza o paradigma de Policy-as-Code para definir o comportamento aceitável de agentes inteligentes.

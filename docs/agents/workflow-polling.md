@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Workflow Polling
 
 For external systems that do not support webhooks, stateful workflows can use resilient polling.

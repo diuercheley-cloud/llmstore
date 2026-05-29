@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Troubleshooting Guide
 
 This guide provides steps to diagnose and resolve common issues with the LLM Inference Stack.

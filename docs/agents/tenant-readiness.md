@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tenant Agentic Readiness
 
 Este documento descreve o processo de validação de prontidão (readiness) para agentes em um ambiente multi-tenant. Cada tenant no LLM Inference Stack possui seu próprio relatório de prontidão, garantindo isolamento e conformidade antes da execução de cargas de trabalho agentic.

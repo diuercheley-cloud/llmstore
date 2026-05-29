@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Deterministic Policy Engine
 
 Phase 82 introduces a deterministic, tenant-scoped, offline-first policy engine.

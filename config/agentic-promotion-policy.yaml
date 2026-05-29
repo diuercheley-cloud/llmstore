@@ -1,0 +1,26 @@
+promotion_thresholds:
+  min_confidence_score: 0.85
+  min_eval_pass_rate: 0.95
+  max_cost_increase_percent: 10.0
+  max_latency_increase_percent: 20.0
+  forbid_safety_failures: true
+  forbid_policy_denials: true
+
+canary_config:
+  initial_traffic_percent: 5
+  step_increase_percent: 10
+  step_duration_minutes: 60
+  min_canary_runs: 50
+  auto_rollback_on_slo_breach: true
+
+approval_policy:
+  require_human_approval_for_production: true
+  approved_by_roles: ["admin", "tech-lead", "security-officer"]
+  evidence_required: ["eval_report", "security_scan", "canary_metrics"]
+
+rollback_policy:
+  retention_days: 30
+  auto_rollback_conditions:
+    error_rate_increase_absolute: 0.02
+    latency_p95_increase_percent: 50.0
+    safety_incident_count: 1

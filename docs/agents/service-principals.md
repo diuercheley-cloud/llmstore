@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Service Principals
 
 Agent Service Principals act as the secure system credentials for agent integrations. In production environments, a Service Principal is required before any connector execution is authorized.
@@ -63,3 +68,17 @@ Every IAM action (service principal creation, token exchanges, access approvals,
   ```
 
 All raw secrets are automatically redacted from audit logs and outputs.
+
+## Operational Guide (Production Ready)
+
+### Activate
+Ensure `AGENT_IAM_ENABLED=true`.
+
+### Monitor
+Audit logs available at `/admin/agents/iam/audit`.
+
+### Troubleshoot
+Verify service principal status via `/admin/agents/{id}/service-principal`.
+
+### Rollback
+Revoke service principals or disable the IAM flag.

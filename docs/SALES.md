@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Sales - LLM Inference Stack
 
 ## Enterprise RAG — Casos de Uso

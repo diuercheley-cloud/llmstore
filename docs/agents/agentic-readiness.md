@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Runtime Readiness
 
 O Agentic Runtime Readiness é uma ferramenta de diagnóstico "honesta" projetada para refletir o estado real e operacional do runtime de agentes no `llm-inference-stack`. Seu objetivo é eliminar falsos positivos e fornecer uma visão clara de bloqueios, degradações e necessidades de manutenção.

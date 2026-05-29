@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # FAQ — Demonstração Comercial llm-inference-stack
 
 > **Aviso:** Este documento responde perguntas frequentes sobre o appliance local.

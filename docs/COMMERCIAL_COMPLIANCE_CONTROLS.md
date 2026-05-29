@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Compliance Controls
 
 Fase 31 adiciona controles financeiros internos auditáveis inspirados em SOX para ações administrativas críticas. O objetivo é aumentar rastreabilidade, segregação de funções e evidência operacional. Não é certificação SOX oficial nem declaração de compliance regulatório.

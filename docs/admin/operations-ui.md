@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Interface de Operações (Admin v2)
 
 A nova camada de UX Operacional permite que administradores gerenciem a stack sem a necessidade de ferramentas de linha de comando (CLI) para tarefas cotidianas.

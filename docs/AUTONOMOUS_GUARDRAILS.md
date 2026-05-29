@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Autonomous Guardrails
 
 O módulo de Autonomous Guardrails impede ações autônomas perigosas antes de qualquer execução material. O fluxo é determinístico e offline-capable:

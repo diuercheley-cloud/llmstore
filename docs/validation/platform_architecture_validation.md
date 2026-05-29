@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Architecture Validation
 
 Este documento descreve a suite unificada de validacao arquitetural da plataforma.

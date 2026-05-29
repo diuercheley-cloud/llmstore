@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Artifact Versioning, Diff, and Provenance
 
 All changes to artifacts are registered as immutable history versions, facilitating trace history, version comparison, and promotion gates.

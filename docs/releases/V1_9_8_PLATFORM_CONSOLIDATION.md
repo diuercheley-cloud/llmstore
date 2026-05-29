@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Notes: v1.9.8-platform-consolidation
 
 ## Status: Freeze, Consolidation, Optimization

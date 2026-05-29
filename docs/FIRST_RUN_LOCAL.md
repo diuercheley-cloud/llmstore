@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # First Run Local
 
 O script `first-run-local.sh` é desenhado para ajudar operadores técnicos a instanciar, configurar e validar o sistema localmente numa máquina nova (frequentemente com WSL2/Ubuntu) de maneira segura e automatizada.

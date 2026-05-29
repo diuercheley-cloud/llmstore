@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Objeções Comuns e Respostas — Demonstração Comercial
 
 > **Uso:** Este documento ajuda o time de vendas a responder objeções com confiança e transparência.

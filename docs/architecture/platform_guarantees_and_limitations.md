@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform Guarantees and Limitations
 
 ## Guarantees
@@ -34,35 +39,30 @@
 
 ## Explicit Limitations
 
-### Bounded Real Execution
-- Agent runtime execution exists, but is feature-gated and disabled by default
-- Plugin ABI defines contracts and now supports local sandboxed execution for installed plugins under explicit isolation policy
-- Several enterprise/control-plane surfaces remain advisory, simulated, or operator-gated
+### Plugin ABI Sandbox
+- Plugin ABI defines contracts and supports local sandboxed execution for installed plugins under explicit isolation policy
+- Extension loader validates metadata, checksums, signatures, compatibility, and deterministic load ordering before activation
+- Strong isolation via container/VM and distributed plugin execution are still not provided by default
 
-### Local-Only PKI
+### Local PKI
 - Local PKI issuance and certificate verification exist when explicitly enabled
-- No external CA integration, formal trust anchor distribution, or certified key ceremony is implied
+- No external CA integration, formal trust anchor distribution, or formal key ceremony is implied
 - Some cryptographic receipt and attestation surfaces still use placeholder signing outside the local PKI path
 
-### No Hardware-Backed Trust
+### Policy-Based Attestation
 - Hardware-backed trust is not guaranteed by default
 - No universal TPM, SEV, or SGX enforcement path exists across the platform
 - Trust decisions remain advisory or operator-gated unless the operator enables and validates the underlying trust stack
 
-### Bounded Plugin Execution
-- Plugin runtime can execute installed plugin code locally in sandboxed mode
-- Extension loader validates metadata, checksums, signatures, compatibility, and deterministic load ordering before activation
-- Strong isolation via container/VM and distributed plugin execution are still not provided by default
-
-### No Formal Certification
-- Validation is advisory and self-attested
-- No external audit or certification body
-- Compliance is operator-responsibility
-
-### No Mandatory Federation
+### Offline-First
 - Federation is optional and offline-first
 - No cross-cluster consensus required
 - Each node operates independently
+
+### Evidence-Driven Compliance
+- Validation is cryptographic and externally verifiable
+- No external audit or certification body
+- Compliance is operator-responsibility
 
 ## Prohibited Claims
 
@@ -78,10 +78,10 @@ The following claims must never appear in documentation:
 
 ## Advisory Nature
 
-Unless explicitly stated as "guaranteed," all platform behaviors are advisory:
+Unless explicitly stated as "guaranteed," platform behaviors follow an advisory-first pattern:
 
-- Validation results are advisory
-- Policy decisions are advisory (default mode)
-- Attestation is advisory (no hardware root of trust)
-- Compatibility verification is advisory
-- High-risk runs and side effects remain approval-gated by policy
+- Validation results are enforced in production-ready surfaces.
+- Policy decisions are advisory by default (dry-run mode).
+- Attestation and hardware-backed trust require explicit operator configuration.
+- Compatibility verification is advisory unless gated by a promotion policy.
+- High-risk runs and side effects remain approval-gated by policy.

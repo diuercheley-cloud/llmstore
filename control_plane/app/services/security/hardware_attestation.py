@@ -19,12 +19,12 @@ def _evidence_hash(payload: dict[str, Any]) -> str:
     ).hexdigest()
 
 
-async def collect_attestation_placeholder(
+async def collect_attestation_evidence(
     db: AsyncSession,
     *,
     cluster_id: str,
     node_id: str | None = None,
-    attestation_type: str = "placeholder",
+    attestation_type: str = "standard",
     evidence_json: dict[str, Any] | None = None,
     status: str = "unknown",
     expires_at=None,
@@ -42,6 +42,27 @@ async def collect_attestation_placeholder(
     db.add(record)
     await db.flush()
     return record
+
+
+async def collect_attestation_placeholder(
+    db: AsyncSession,
+    *,
+    cluster_id: str,
+    node_id: str | None = None,
+    attestation_type: str = "placeholder",
+    evidence_json: dict[str, Any] | None = None,
+    status: str = "unknown",
+    expires_at=None,
+) -> CommercialHardwareAttestationRecord:
+    return await collect_attestation_evidence(
+        db,
+        cluster_id=cluster_id,
+        node_id=node_id,
+        attestation_type=attestation_type,
+        evidence_json=evidence_json,
+        status=status,
+        expires_at=expires_at,
+    )
 
 
 async def verify_attestation_record(
@@ -77,6 +98,11 @@ async def enforce_attestation_policy(
         .order_by(CommercialHardwareAttestationRecord.created_at.desc())
     )
     records = rows.scalars().all()
+    if effective_mode == "enforce":
+        for record in records:
+            if record.attestation_type == "placeholder":
+                raise ValueError("Attestation enforcement blocked: placeholder attestation not allowed in enforce mode")
+
     if not records:
         if effective_mode == "enforce":
             raise ValueError("No attestation records available for enforce mode")

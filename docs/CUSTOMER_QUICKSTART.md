@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Quickstart de Instalação (Cliente Final)
 
 Implante o LLM Inference Stack em menos de 10 minutos usando nossa automação simplificada. Este documento cobre os passos rápidos de instalação.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Modelo de Segurança de Chaos
 
 O modelo de segurança do `llm-inference-stack` chaos framework é baseado em camadas de proteção:

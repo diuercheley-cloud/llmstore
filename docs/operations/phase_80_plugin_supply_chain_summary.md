@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 80 Plugin Supply-Chain Summary
 
 ## Files Created

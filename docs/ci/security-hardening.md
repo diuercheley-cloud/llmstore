@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Security Hardening no CI/CD
 
 ## Prevenção de Exposição de Dados

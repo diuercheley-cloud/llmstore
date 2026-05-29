@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Platform GA Readiness Framework
 
 This framework is the canonical GA gate for `v2.0.1-agentic-operational-maturity`.

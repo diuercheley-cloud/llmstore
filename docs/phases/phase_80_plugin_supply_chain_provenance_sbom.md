@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 80: Plugin Supply-Chain Provenance & SBOM Placeholder Framework
 
 Phase 80 adds a deterministic and offline-first plugin supply-chain framework on top of the Phase 79 plugin runtime. The implementation records provenance, emits SBOM placeholders, tracks artifact lineage, validates dependency governance policies, supports replay verification, and generates deterministic receipts without executing real plugins.

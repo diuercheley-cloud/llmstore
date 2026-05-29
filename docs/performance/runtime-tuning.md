@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Runtime Tuning & Performance Dashboard
 
 A nova camada de Performance Tuning permite monitorar, analisar e otimizar o comportamento da stack em tempo real.

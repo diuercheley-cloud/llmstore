@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Working Tree Governance
 
 This document defines the policies and procedures for maintaining a clean and audit-ready working tree for the LLM Inference Stack releases.

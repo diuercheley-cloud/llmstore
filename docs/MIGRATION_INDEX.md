@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Migration Index: Database Evolution
 
 This document tracks the database schema evolution through Alembic migrations.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Tenant Encryption Controls & Confidential Computing (Phase 36)
 
 ## Overview

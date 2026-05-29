@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Profit Routing (Phase 4)
 
 ## Objetivo

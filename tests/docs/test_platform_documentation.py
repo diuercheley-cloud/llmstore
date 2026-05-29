@@ -71,11 +71,11 @@ class TestReadmeSections:
 
     def test_has_explicit_limitations(self):
         content = read("README.md").lower()
-        assert "no real plugin execution" in content
-        assert "no real pki" in content
-        assert "no hardware-backed trust" in content
-        assert "no real runtime execution" in content
-        assert "no formal certification" in content
+        assert "plugin abi sandbox" in content
+        assert "local pki" in content
+        assert "policy-based attestation" in content
+        assert "offline-first" in content
+        assert "evidence-driven compliance" in content
 
     def test_has_validation_commands(self):
         content = read("README.md")

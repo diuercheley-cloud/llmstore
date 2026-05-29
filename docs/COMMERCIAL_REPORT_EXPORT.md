@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Report Export
 
 Fase 11 adiciona exportação do relatório executivo comercial em `json`, `csv` e `html`, com `pdf` opcional quando uma dependência compatível estiver instalada. Também adiciona schedules `monthly|weekly` com execução segura em modo `disabled` ou `dry_run` por padrão.

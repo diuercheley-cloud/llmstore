@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Commercial Guardrails Enforcement
 
 Integra os commercial guardrails ao roteamento híbrido real, com enforcement controlado apenas para providers cloud e fallback local-first preservado.

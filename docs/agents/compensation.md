@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Compensation Logic
 
 Ações de compensação são usadas para desfazer ou mitigar os efeitos de tarefas que falharam em um fluxo complexo (padrão Saga).

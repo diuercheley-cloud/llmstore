@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Guia Visual de Demonstração — Local AI Appliance
 
 Este diretório contém o guia visual para demonstração comercial do **llm-inference-stack (Local AI Appliance)**.

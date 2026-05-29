@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Local AI Appliance - Branding & Identity
 
 ## Nome da Release/Produto Padrão

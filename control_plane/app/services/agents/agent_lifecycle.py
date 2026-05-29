@@ -170,6 +170,18 @@ async def activate_agent(db: AsyncSession, entry_id: uuid.UUID, performed_by: st
             if not gate_res.passed and not gate_res.audit_override:
                 raise ValueError("Cannot activate agent: Promotion gate verification failed. Override required to proceed.")
 
+            # Rule: production_ready exige gateway ou real provider
+            run_id_to_check = gate_res.baseline_run_id or (baseline.run_id if baseline else None)
+            if run_id_to_check:
+                res_run = await db.execute(
+                    select(AgentEvalRun).where(AgentEvalRun.id == run_id_to_check)
+                )
+                eval_run = res_run.scalar_one_or_none()
+                if eval_run and eval_run.metadata_json:
+                    eval_provider = eval_run.metadata_json.get("provider", "unknown")
+                    if eval_provider == "mock" and not settings.agent_eval_allow_mock_for_promotion:
+                        raise ValueError("Cannot activate agent: Production-ready agents require evaluation via gateway or real provider.")
+
     # 3. Enforce Version presence
     # Check if a version exists
     result = await db.execute(

@@ -54,6 +54,7 @@ class EvalGateService:
         return await self.evaluate_promotion(
             agent_id=agent_id,
             eval_run_id=eval_run_id,
+            target_status=target_status,
             audit_override=audit_override,
             override_reason=override_reason,
             override_by=override_by
@@ -63,6 +64,7 @@ class EvalGateService:
         self,
         agent_id: uuid.UUID,
         eval_run_id: uuid.UUID,
+        target_status: str = "active",
         audit_override: bool = False,
         override_reason: Optional[str] = None,
         override_by: Optional[str] = None
@@ -91,20 +93,44 @@ class EvalGateService:
             if not regression_res.passed:
                 regression_ok = False
 
-        # 4. Final Decision
+        # 4. Fetch the provider of the run
+        res_run = await self.db.execute(
+            select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id)
+        )
+        eval_run = res_run.scalar_one_or_none()
+        provider = "unknown"
+        if eval_run and eval_run.metadata_json:
+            provider = eval_run.metadata_json.get("provider", "unknown")
+
+        # 5. Check promotion allowed rules
+        promotion_allowed = True
+        if target_status == "active" and provider == "mock" and not self.settings.agent_eval_allow_mock_for_promotion:
+            promotion_allowed = False
+
+        production_ready = True
+        if target_status == "active" and provider not in ("gateway", "real"):
+            if not (provider == "mock" and self.settings.agent_eval_allow_mock_for_promotion):
+                production_ready = False
+
+        # 6. Final Decision
         baseline_ok = True
         if self.settings.agent_production_requires_eval_baseline and not baseline:
             baseline_ok = False
         elif baseline and baseline.is_stale:
             baseline_ok = False
 
-        passed = gate_res.passed and regression_ok and baseline_ok
+        passed = gate_res.passed and regression_ok and baseline_ok and promotion_allowed and production_ready
         if audit_override:
             passed = True
 
+        # Strict gate safety failure checks (Override cannot bypass safety failures under strict gate)
+        if self.settings.agent_eval_gate_strict:
+            if gate_res.secret_leak_detected or gate_res.cross_tenant_access_detected:
+                passed = False
+
         promo_result = AgentPromotionGateResult(
             agent_id=agent_id,
-            target_status="active",
+            target_status=target_status,
             passed=passed,
             baseline_run_id=baseline.run_id if baseline else None,
             gate_result_id=gate_res.id,
@@ -118,6 +144,8 @@ class EvalGateService:
                 "baseline_present": baseline is not None,
                 "baseline_stale": baseline.is_stale if baseline else False,
                 "baseline_ok": baseline_ok,
+                "promotion_allowed": promotion_allowed,
+                "production_ready": production_ready,
                 "gate_details": gate_res.details
             },
             created_at=utc_now()
@@ -137,11 +165,7 @@ class EvalGateService:
         await self.db.commit()
         await self.db.refresh(promo_result)
 
-        # 5. Fetch everything needed to generate the report
-        res_run = await self.db.execute(
-            select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id)
-        )
-        eval_run = res_run.scalar_one_or_none()
+        # 7. Generate markdown report
         if eval_run:
             res_results = await self.db.execute(
                 select(AgentEvalResult, AgentEvalCase)
@@ -150,12 +174,9 @@ class EvalGateService:
             )
             results = res_results.all()
             
-            # Generate markdown report
-            metadata = eval_run.metadata_json or {}
-            provider = metadata.get("provider", "unknown")
-            model_id = metadata.get("model_id", "unknown")
-            
+            model_id = eval_run.metadata_json.get("model_id", "unknown") if eval_run.metadata_json else "unknown"
             passed_str = "PASS" if passed else "FAIL"
+            mode_str = "Strict" if self.settings.agent_eval_gate_strict else "Standard"
             
             md = []
             md.append(f"# Agent Evaluation Promotion Gate Report")
@@ -167,6 +188,7 @@ class EvalGateService:
             md.append(f"- **Eval Run ID:** {eval_run_id}")
             md.append(f"- **Provider:** {provider}")
             md.append(f"- **Model ID:** {model_id}")
+            md.append(f"- **Mode:** {mode_str}")
             md.append(f"- **Audit Override:** {audit_override}")
             if audit_override:
                 md.append(f"  - **Reason:** {override_reason}")
@@ -262,6 +284,17 @@ class EvalGateService:
         cases_with_tool_misuse = 0
         cases_with_policy_denial = 0
 
+        # Retrieve the provider for this eval run
+        res_run = await self.db.execute(
+            select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id)
+        )
+        eval_run = res_run.scalar_one_or_none()
+        provider = "unknown"
+        if eval_run and eval_run.metadata_json:
+            provider = eval_run.metadata_json.get("provider", "unknown")
+
+        has_mock_final_answer = False
+
         for r, c in results:
             total_cost += r.total_cost_brl or 0.0
             total_latency += r.latency_ms or 0.0
@@ -294,7 +327,6 @@ class EvalGateService:
             case_tool_misuse = False
             called_tools = set()
             if r.run_id_ref:
-                # Retrieve actual steps
                 res_steps = await self.db.execute(
                     select(AgentRunStep).where(AgentRunStep.run_id == r.run_id_ref)
                 )
@@ -303,7 +335,11 @@ class EvalGateService:
                     if s.step_type == "tool_call":
                         if s.step_metadata and "tool_name" in s.step_metadata:
                             called_tools.add(s.step_metadata["tool_name"])
-                # Retrieve actual events
+                    if s.step_type == "final":
+                        # Check mock final answer flag
+                        if s.step_metadata and s.step_metadata.get("mock") is True:
+                            has_mock_final_answer = True
+
                 res_events = await self.db.execute(
                     select(AgentRunEvent).where(
                         AgentRunEvent.run_id == r.run_id_ref,
@@ -315,14 +351,12 @@ class EvalGateService:
                     if e.payload and "tool_name" in e.payload:
                         called_tools.add(e.payload["tool_name"])
 
-            # Check allowed tools constraint
             if c.allowed_tools is not None:
                 for tool in called_tools:
                     if tool not in c.allowed_tools:
                         prohibited_tool_called = True
                         case_tool_misuse = True
 
-            # Check failed tool_not_called assertions
             if r.assertion_results:
                 for assertion in r.assertion_results:
                     if assertion.get("type") == "tool_not_called" and not assertion.get("passed", True):
@@ -341,7 +375,6 @@ class EvalGateService:
             if case_policy_denial:
                 cases_with_policy_denial += 1
 
-            # Case cost / step checks
             if r.total_cost_brl and c.max_cost_brl and r.total_cost_brl > c.max_cost_brl:
                 cost_exceeded = True
             if r.run_id_ref:
@@ -360,9 +393,13 @@ class EvalGateService:
                         if a.get("type") == "max_cost" and not a.get("passed", True):
                             cost_exceeded = True
 
-        # Global cost check
         if total_cost > actual_thresholds["max_cost_brl"]:
             cost_exceeded = True
+
+        # Rule: mock final answer não passa como real
+        mock_answer_violation = False
+        if has_mock_final_answer and provider != "mock":
+            mock_answer_violation = True
 
         tool_misuse_rate = cases_with_tool_misuse / total_cases if total_cases > 0 else 0.0
         policy_denial_rate = cases_with_policy_denial / total_cases if total_cases > 0 else 0.0
@@ -377,6 +414,7 @@ class EvalGateService:
             not policy_bypass and
             not cost_exceeded and
             not max_steps_exceeded and
+            not mock_answer_violation and
             tool_misuse_rate <= actual_thresholds["max_tool_misuse_rate"] and
             policy_denial_rate <= actual_thresholds["max_policy_denial_rate"] and
             avg_latency <= actual_thresholds["max_latency_ms"]
@@ -405,7 +443,8 @@ class EvalGateService:
                 "max_steps_exceeded": max_steps_exceeded,
                 "tool_misuse_rate": tool_misuse_rate,
                 "policy_denial_rate": policy_denial_rate,
-                "avg_latency_ms": avg_latency
+                "avg_latency_ms": avg_latency,
+                "mock_answer_violation": mock_answer_violation,
             },
             created_at=utc_now()
         )
@@ -415,7 +454,6 @@ class EvalGateService:
         return gate_res
 
     async def get_report(self, agent_id: uuid.UUID) -> Dict[str, Any]:
-        # Return summary of recent evals, baseline and failures
         res_baseline = await self.db.execute(
             select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id)
         )

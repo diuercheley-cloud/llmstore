@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Operational Script Governance
 
 This document establishes the official governance policy for operational and management scripts in the `llm-inference-stack` platform.

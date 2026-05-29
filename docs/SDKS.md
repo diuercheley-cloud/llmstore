@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Kleber AI SDKs
 
 Facilitando a integração com o stack de inferência Kleber AI.

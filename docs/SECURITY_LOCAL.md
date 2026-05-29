@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # SECURITY LOCAL - Appliance Local de IA
 
 ## Enterprise RAG Security

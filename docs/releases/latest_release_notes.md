@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Notes - v1.9.0-release-engineering-baseline
 
 **Baseline Hash**: `2cf137bbf9ab68639bb09c830e889830cec402d6f69c2ea389e1e4c11df4563b`

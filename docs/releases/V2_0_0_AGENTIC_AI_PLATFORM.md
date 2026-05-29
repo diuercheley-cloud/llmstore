@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # V2.0.0 Agentic AI Platform
 
 ## Summary
@@ -59,11 +64,8 @@
 - `AGENT_EVALS_ENABLED=false`
 - `AGENT_HUMAN_APPROVAL_ENABLED=true`
 - `AGENT_MULTI_AGENT_ENABLED=false`
-- `AGENT_HIERARCHICAL_TEAMS_ENABLED=false`
-- `AGENT_DEBATE_TEAMS_ENABLED=false`
 - `AGENT_STUDIO_ENABLED=false`
 - `AGENT_VISUAL_BUILDER_ENABLED=false`
-- `AGENT_DEBUGGER_ENABLED=false`
 - `AGENT_MARKETPLACE_ENABLED=false`
 
 ## Operational scope
@@ -76,8 +78,6 @@
 - Stateful workflow path: `AGENT_STATEFUL_WORKFLOWS_ENABLED=true` with timers, webhook, and polling sub-flags as needed
 - Reasoning loop path: `AGENT_REASONING_LOOP_ENABLED=true` and `AGENT_REACT_LOOP_ENABLED=true` with structured output repair and context compression controls
 - Memory reinjection path: `AGENT_MEMORY_ENABLED=true` plus semantic/context flags
-- Multi-agent path: `AGENT_MULTI_AGENT_ENABLED=true` with `AGENT_HIERARCHICAL_TEAMS_ENABLED=true` or `AGENT_DEBATE_TEAMS_ENABLED=true`
-- Studio path: `AGENT_STUDIO_ENABLED=true` with optional `AGENT_VISUAL_BUILDER_ENABLED=true` and `AGENT_DEBUGGER_ENABLED=true`
 - Worker deployment: Docker Compose `agentic` profile or Kubernetes `deploy/kubernetes/agent-worker.yaml`
 - Promotion path: eval baseline and promotion gate must pass before production status changes
 

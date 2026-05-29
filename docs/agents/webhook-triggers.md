@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Webhook Triggers and Security
 
 Webhook triggers allow external systems (e.g. GitHub, GitLab, custom HTTP clients) to initiate agent runs. Because webhook endpoints are exposed publicly, strict signature validation is required.

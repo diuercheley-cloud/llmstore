@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GPU Autoscaling em Kubernetes
 
 Em clusters Kubernetes, o LLM Inference Stack integra-se com o Horizontal Pod Autoscaler (HPA) ou utiliza seu próprio controlador customizado.

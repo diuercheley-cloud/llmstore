@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Bundle Local
 
 This document describes how to generate a secure, distributable release bundle of the `llm-inference-stack`.

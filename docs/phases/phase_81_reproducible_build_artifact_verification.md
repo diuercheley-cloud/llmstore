@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Phase 81: Reproducible Build & Artifact Verification Framework
 
 Phase 81 adiciona um framework determinístico e offline-first para manifests de build reproduzível, verificação de artifacts, lineage source-to-artifact, constraints de ambiente, replay verification, receipts e integração conceitual com provenance/SBOM placeholder da Phase 80.

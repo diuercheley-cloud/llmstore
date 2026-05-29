@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Confidential Multi-Agent Governance
 
 ## Overview

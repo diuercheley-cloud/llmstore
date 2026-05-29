@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Plugin Supply-Chain Provenance & SBOM Placeholder Framework
 
 This operations document describes the Phase 80 framework for deterministic plugin supply-chain provenance and SBOM placeholders.

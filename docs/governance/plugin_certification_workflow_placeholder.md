@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Plugin Certification Workflow Placeholder
 
 ## Purpose

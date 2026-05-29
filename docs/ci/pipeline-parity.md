@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Paridade de Pipelines (GitHub vs GitLab)
 
 Mantemos paridade funcional entre as duas plataformas para garantir que a stack possa ser operada em qualquer ecossistema enterprise.

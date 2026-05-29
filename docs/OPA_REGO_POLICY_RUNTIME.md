@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # OPA/Rego Policy Runtime (Phase 61)
 
 ## Visão Geral

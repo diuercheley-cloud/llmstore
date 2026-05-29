@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Margin Dashboard
 
 Este documento detalha o funcionamento e a validação do Painel de Margem Executivo em Tempo Real (Margin Dashboard).

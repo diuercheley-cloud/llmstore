@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Runtime Core
 
 The Agentic Runtime Core is a platform consolidated feature adding opt-in execution of LLM-based autonomous agents on top of the existing `llm-inference-stack` core. It enables auditing, step-by-step state checkpointing, and run controls (pause/resume/cancel).
@@ -12,7 +17,6 @@ All features in the Agentic Runtime are fully opt-in and controlled via environm
 | `AGENT_EXECUTION_ENABLED` | `false` | Controls whether tools are physically executed. If `false`, tools return mock simulations. |
 | `AGENT_ASYNC_EXECUTION_ENABLED` | `false` | Enables background async loop execution. If `false`, runs execute synchronously block-by-block. |
 | `AGENT_REPLAY_ENABLED` | `true` | Allows read-only replays of past executions using step records/checkpoints. |
-| `AGENT_RUNTIME_ADVISORY_MODE` | `true` | Runs in log/warning-only mode without strictly blocking unauthorized executions. |
 
 ## Quick Start Configuration
 

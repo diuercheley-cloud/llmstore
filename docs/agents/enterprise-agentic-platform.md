@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Enterprise Agentic Platform Architecture
 
 The `llm-inference-stack` provides a high-reliability, enterprise-grade runtime for executing AI agents. This document describes the runtime guarantees, multi-agent coordination, and underlying architecture patterns.

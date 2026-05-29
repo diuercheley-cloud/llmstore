@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Guia de Solução de Problemas (Troubleshooting)
 
 Este guia cobre os problemas mais comuns encontrados por clientes durante ou após a instalação do sistema no modo Appliance Local.

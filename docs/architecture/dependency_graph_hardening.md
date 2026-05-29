@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Dependency Graph Hardening
 
 ## Architecture Rules

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release History
 
 Historico consolidado das versoes estaveis do LLM Inference Stack.

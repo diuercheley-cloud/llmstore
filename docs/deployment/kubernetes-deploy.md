@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Deployment em Kubernetes (Helm)
 
 O deployment em Kubernetes é recomendado para ambientes escaláveis e enterprise pilots.

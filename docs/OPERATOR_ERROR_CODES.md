@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Catálogo de Códigos de Erro para Operadores
 
 Este documento descreve os códigos de erro padronizados utilizados nos scripts do LLM Inference Stack.

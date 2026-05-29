@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Lifecycle Governance
 
 This system manages the promotion and deprecation lifecycle of agents, providing safety gates and an audit trail of all lifecycle events.

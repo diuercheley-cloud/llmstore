@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Phase 82 Summary
 
 Created and updated artifacts:

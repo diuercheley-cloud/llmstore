@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # AI Agentic Platform: Platform Overview
 
 The Agentic AI Platform is an enterprise-grade runtime environment designed to run autonomous agents securely, reliably, and with strict compliance boundaries. It transforms the core inference stack into a fully orchestrated agent execution plane.

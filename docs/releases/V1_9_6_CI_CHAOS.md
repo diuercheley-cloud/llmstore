@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Release Notes: v1.9.6-ci-chaos
 
 ## Visão Geral

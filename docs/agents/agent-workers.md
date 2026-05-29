@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Background Workers
 
 Agent Background Workers (`AgentWorkerService`) are dedicated processes responsible for pulling queued jobs from the queue, leasing them, and orchestrating their execution safely and reliably.

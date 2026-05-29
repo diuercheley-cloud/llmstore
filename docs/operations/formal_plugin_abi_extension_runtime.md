@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Formal Plugin ABI & Extension Runtime
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Failover and Reliability
 
 The distributed runtime is designed to be resilient to node failures.

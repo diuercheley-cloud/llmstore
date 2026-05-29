@@ -192,9 +192,9 @@ async def export_trace(
     settings: Settings = Depends(get_settings),
     admin: Any = Depends(require_admin),
 ):
-    if not settings.agent_otel_export_enabled:
+    if not settings.agent_otel_tracing_enabled:
         raise HTTPException(status_code=400, detail="OpenTelemetry trace export is disabled")
-    
+
     from app.services.agents.telemetry.trace_exporter import TraceExporter
     exporter = TraceExporter()
     return exporter.export(payload)
@@ -206,8 +206,5 @@ async def get_telemetry_status(
 ):
     return {
         "otel_tracing_enabled": settings.agent_otel_tracing_enabled,
-        "otel_export_enabled": settings.agent_otel_export_enabled,
-        "phoenix_export_enabled": settings.agent_phoenix_export_enabled,
         "langsmith_export_enabled": settings.agent_langsmith_export_enabled,
     }
-

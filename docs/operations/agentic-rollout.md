@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agentic Rollout Strategy
 
 This document outlines the high-level strategy for rolling out the Agentic Runtime platform. The rollout is executed in structured phases to minimize risk and ensure system stability, compliance, and readiness.

@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # GitHub Connector
 
 The GitHub connector allows agents to interact with GitHub repositories, issues, and comments.

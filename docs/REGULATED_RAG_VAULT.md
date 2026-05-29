@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Regulated RAG Vault
 
 Phase 48 adds a governed retrieval layer for regulated workloads without breaking the existing OpenAI-compatible APIs.

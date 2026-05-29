@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # RAG (Retrieval-Augmented Generation) MVP
 
 Este módulo permite que os clientes façam upload de documentos PDF e realizem consultas baseadas no conteúdo desses documentos.

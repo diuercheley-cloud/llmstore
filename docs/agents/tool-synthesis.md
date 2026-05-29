@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Agent Tool Synthesis
 
 The Tool Synthesis system allows agents to dynamically generate Python-based tools based on a provided schema and natural language prompt.

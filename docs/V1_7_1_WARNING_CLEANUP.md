@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # V1.7.1 Warning Cleanup Report
 
 Este documento detalha o processo de diagnóstico e limpeza de warnings não bloqueantes após a release v1.7.0.

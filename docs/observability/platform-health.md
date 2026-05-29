@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 # Saúde da Plataforma
 
 Este documento descreve como o status de saúde da plataforma é calculado e interpretado.

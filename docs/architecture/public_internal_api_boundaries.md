@@ -1,3 +1,8 @@
+---
+owner: platform-ops
+status: consolidated
+---
+
 ## Public And Internal API Boundaries
 
 Public domain APIs:
