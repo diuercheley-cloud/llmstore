@@ -11,7 +11,7 @@ else
   PYTEST_EXE="pytest"
 fi
 
-PYTHONPATH=control_plane $PYTEST_EXE tests/e2e/production_agentic/test_production_agentic_real_e2e.py -v
+PYTHONPATH=.:control_plane $PYTEST_EXE tests/e2e/production_agentic/test_production_agentic_real_e2e.py -v
 
 if [ $? -eq 0 ]; then
     echo "✅ E2E Test Suite Passed."
