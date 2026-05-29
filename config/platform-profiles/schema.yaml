@@ -59,6 +59,68 @@ valid_flags:
     description: Enforces cryptographic receipts signing
     override_allowed: true
     high_risk: false
+  AGENT_MCP_ENABLED:
+    type: boolean
+    description: Master toggle for MCP tool integration
+    override_allowed: true
+    high_risk: false
+  AGENT_PROMOTION_REQUIRES_EVALS:
+    type: boolean
+    description: Enforces agent definition promotion to require evaluation passes
+    override_allowed: true
+    high_risk: false
+  AGENT_LLM_PROVIDER:
+    type: string
+    description: Configured agent execution LLM provider (mock, gateway, real)
+    override_allowed: true
+    high_risk: false
+  ABUSE_DETECTION_ENABLED:
+    type: boolean
+    description: Enable abuse detection checks
+    override_allowed: true
+    high_risk: false
+  DISTRIBUTED_RUNTIME_ENABLED:
+    type: boolean
+    description: Enables distributed runtime configuration
+    override_allowed: true
+    high_risk: false
+  MULTI_CLUSTER_ENABLED:
+    type: boolean
+    description: Enable multi-cluster orchestrator controls
+    override_allowed: true
+    high_risk: false
+  MANAGED_CONTROL_PLANE_ENABLED:
+    type: boolean
+    description: Enable managed control plane components
+    override_allowed: true
+    high_risk: false
+  AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED:
+    type: boolean
+    description: Enables agents to dynamically invoke tools
+    override_allowed: true
+    high_risk: false
+  AGENT_CONNECTOR_CATALOG_ENABLED:
+    type: boolean
+    description: Enables agent connector registration
+    override_allowed: true
+    high_risk: false
+  AGENT_DISTRIBUTED_RUNTIME_ENABLED:
+    type: boolean
+    description: Enables agentic workflow runs distributed processing
+    override_allowed: true
+    high_risk: false
+  AGENT_CLUSTER_FEDERATION_ENABLED:
+    type: boolean
+    description: Enables cluster federation features for agents
+    override_allowed: true
+    high_risk: false
+  AGENT_EXECUTION_PLANE_ENABLED:
+    type: boolean
+    description: Enforces agent execution plane activity
+    override_allowed: true
+    high_risk: false
+
+
 
 dependencies:
   - flag: AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION

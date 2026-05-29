@@ -116,7 +116,7 @@ class ProfileResolver:
                         raise ValueError(f"Invalid integer value '{value}' for override '{key}'.")
                 else:
                     overrides[key] = value
-            elif key.isupper() and (key.endswith("_ENABLED") or "AGENT_" in key):
+            elif key.isupper() and key.startswith(("AGENT_", "PLUGIN_", "CRYPTO_", "ABUSE_", "DISTRIBUTED_", "MULTI_", "MANAGED_")):
                 # Unknown override attempt
                 raise ValueError(f"Unknown environment override '{key}' is blocked by schema validation.")
 
