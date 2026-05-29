@@ -109,6 +109,28 @@
   conflicts: []
   safe_default_reason: Signature enforcement is opt-in because marketplace installs
     are disabled by default.
+- name: AGENT_INTERNAL_BUNDLE_SIGNATURE_REQUIRED_IN_PRODUCTION
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_BUNDLE_SIGNATURE_REQUIRED
+  conflicts: []
+  safe_default_reason: Production posture requires signed internal bundles by default.
+- name: ALLOW_UNSIGNED_INTERNAL_BUNDLES
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies: []
+  conflicts:
+  - AGENT_INTERNAL_BUNDLE_SIGNATURE_REQUIRED_IN_PRODUCTION
+  safe_default_reason: Unsigned internal bundles stay disabled by default.
 - name: AGENT_DESTRUCTIVE_TOOLS_ENABLED
   default: false
   owner: agent-platform
@@ -3974,6 +3996,438 @@
   - AGENT_RUNTIME_ENABLED
   conflicts: []
   safe_default_reason: Prompt and selection tuning remains opt-in only.
+- name: AGENT_COGNITIVE_LOOPBACK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Cognitive loopback remains opt-in so the platform does not learn
+    from executions by default.
+- name: AGENT_FEWSHOT_AUTO_CURATOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_LOOPBACK_ENABLED
+  conflicts: []
+  safe_default_reason: Few-shot curation remains disabled until operators validate
+    privacy and quality policy.
+- name: AGENT_FEEDBACK_LEARNING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_COGNITIVE_LOOPBACK_ENABLED
+  conflicts: []
+  safe_default_reason: Feedback-driven learning is off by default to preserve operator
+    review before new behavior is learned.
+- name: AGENT_AUTO_APPLY_LEARNINGS
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_COGNITIVE_LOOPBACK_ENABLED
+  - AGENT_FEEDBACK_LEARNING_ENABLED
+  conflicts: []
+  safe_default_reason: Learned changes are never auto-applied by default.
+- name: AGENT_UNCERTAINTY_DETECTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Uncertainty scoring remains opt-in until operators calibrate
+    thresholds and escalation paths.
+- name: AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_UNCERTAINTY_DETECTION_ENABLED
+  conflicts: []
+  safe_default_reason: Auto-research is disabled by default to prevent uncontrolled
+    tool expansion during low-confidence runs.
+- name: AGENT_UNCERTAINTY_HITL_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: low
+  dependencies:
+  - AGENT_UNCERTAINTY_DETECTION_ENABLED
+  conflicts: []
+  safe_default_reason: Human escalation remains enabled when uncertainty workflows
+    are turned on.
+- name: AGENT_META_REVIEWER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Meta-review remains opt-in until operators choose the review
+    path and latency budget.
+- name: AGENT_META_REVIEWER_BLOCKING_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_META_REVIEWER_ENABLED
+  conflicts: []
+  safe_default_reason: Blocking review is disabled by default to avoid silently changing
+    delivery semantics.
+- name: AGENT_META_REVIEWER_PARALLEL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: low
+  dependencies:
+  - AGENT_META_REVIEWER_ENABLED
+  conflicts: []
+  safe_default_reason: Parallel reviewer execution remains opt-in until operators
+    accept the added cost.
+- name: AGENT_STUDIO_GA_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_STUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: Studio GA controls remain operator-gated and disabled by default.
+- name: AGENT_VISUAL_FLOW_EDITOR_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_STUDIO_GA_ENABLED
+  conflicts: []
+  safe_default_reason: Flow authoring stays disabled until operators explicitly enable
+    the visual surface.
+- name: AGENT_FLOW_COMPILER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_STUDIO_GA_ENABLED
+  conflicts: []
+  safe_default_reason: Flow compilation is disabled by default with the rest of the
+    studio authoring surface.
+- name: AGENT_TIME_TRAVEL_DEBUGGER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Debug replay stays disabled until operators explicitly opt
+    in to the debugging surface.
+- name: AGENT_REPLAY_FROM_STEP_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_TIME_TRAVEL_DEBUGGER_ENABLED
+  conflicts: []
+  safe_default_reason: Replay from intermediate state is disabled by default to keep
+    debug semantics tightly controlled.
+- name: AGENT_DEBUG_STATE_EDITING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_TIME_TRAVEL_DEBUGGER_ENABLED
+  conflicts: []
+  safe_default_reason: State editing remains disabled by default because it changes
+    replayed execution state.
+- name: AGENT_SHADOW_MODE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_CANARY_AGENTS_ENABLED
+  conflicts: []
+  safe_default_reason: Shadow execution remains disabled until rollout governance
+    is explicitly enabled.
+- name: AGENT_CANARY_AGENTS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Canary routing is off by default so new agents receive no
+    production traffic automatically.
+- name: AGENT_CANARY_AUTO_PROMOTE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_CANARY_AGENTS_ENABLED
+  conflicts: []
+  safe_default_reason: Auto-promotion is disabled by default to preserve manual promotion
+    review.
+- name: AGENT_WALLETS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Wallet capabilities remain disabled until operators provision
+    budgets and approval policies.
+- name: AGENT_WALLET_STRIPE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_WALLETS_ENABLED
+  conflicts: []
+  safe_default_reason: External payment rails stay disabled by default.
+- name: AGENT_WALLET_WEB3_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_WALLETS_ENABLED
+  conflicts: []
+  safe_default_reason: Web3 spend paths stay disabled by default.
+- name: AGENT_WALLET_EXTERNAL_SPEND_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_WALLETS_ENABLED
+  conflicts: []
+  safe_default_reason: External spend is disabled by default.
+- name: AGENT_DIGITAL_TWINS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Digital twin integration remains disabled until operators provision
+    the twin registry and safety policy.
+- name: AGENT_IOT_CONNECTORS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_DIGITAL_TWINS_ENABLED
+  conflicts: []
+  safe_default_reason: IoT connector access stays disabled by default.
+- name: AGENT_PHYSICAL_ACTUATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_DIGITAL_TWINS_ENABLED
+  - AGENT_HUMAN_APPROVAL_ENABLED
+  conflicts: []
+  safe_default_reason: Physical actuation is disabled by default.
+- name: AGENT_SAB_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_BUNDLE_INSTALL_ENABLED
+  conflicts: []
+  safe_default_reason: Standardized bundle portability remains opt-in.
+- name: AGENT_SAB_IMPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_SAB_ENABLED
+  conflicts: []
+  safe_default_reason: SAB import stays disabled until operators accept external
+    definition ingestion.
+- name: AGENT_SAB_EXPORT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_SAB_ENABLED
+  conflicts: []
+  safe_default_reason: SAB export stays disabled until portability is explicitly desired.
+- name: AGENT_FEDERATED_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Federated memory remains disabled until sovereignty and retention
+    policies are configured.
+- name: AGENT_FEDERATED_MEMORY_SYNC_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_FEDERATED_MEMORY_ENABLED
+  conflicts: []
+  safe_default_reason: Federated sync is disabled by default to keep memory local.
+- name: AGENT_FEDERATED_MEMORY_RAW_DATA_SYNC
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: high
+  dependencies:
+  - AGENT_FEDERATED_MEMORY_SYNC_ENABLED
+  conflicts: []
+  safe_default_reason: Raw federated memory sync is disabled by default.
+- name: AGENT_MCTS_REASONING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: MCTS reasoning remains opt-in due to compute cost and behavior
+    change.
+- name: AGENT_MCTS_SANDBOX_SIMULATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_MCTS_REASONING_ENABLED
+  conflicts: []
+  safe_default_reason: High-fidelity MCTS simulation is disabled by default.
+- name: AGENT_CONSTRAINT_REASONING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_REASONING_LOOP_ENABLED
+  conflicts: []
+  safe_default_reason: Constraint solving remains opt-in until operators explicitly
+    enable specialized reasoning.
+- name: AGENT_Z3_SOLVER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_CONSTRAINT_REASONING_ENABLED
+  conflicts: []
+  safe_default_reason: Formal solver execution stays disabled by default.
+- name: AGENT_GLPK_SOLVER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.x-agentic-evolutionary-intelligence
+  risk_level: medium
+  dependencies:
+  - AGENT_CONSTRAINT_REASONING_ENABLED
+  conflicts: []
+  safe_default_reason: Optimization solver execution stays disabled by default.
 - name: AGENT_CODE_SANDBOX_PROVIDER
   default: false
   owner: agent-platform

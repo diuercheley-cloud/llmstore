@@ -270,7 +270,7 @@ capabilities:
   status: production_core
   owner: platform-ops
   support_level: production
-  docs_url: docs/agents/memory-context-injection.md
+  docs_url: docs/compliance/right-to-be-forgotten.md
   api_prefix: /admin/agent-memory
   feature_flag: agent_memory_enabled
   additional_flags:
@@ -280,6 +280,8 @@ capabilities:
   - agent_memory_context_injection_enabled
   - agent_memory_encryption_enabled
   - agent_memory_embeddings_provider
+  - agent_memory_erasure_enabled
+  - agent_memory_retention_policy
   associated_services:
   - agent_memory
   - memory_policy
@@ -287,11 +289,11 @@ capabilities:
   - memory_redaction
   - memory_consent
   - memory_retention
-  since_version: v1.10.0-agentic-runtime
-  limitations: Memory governance core (R/W, policy, consent, retention, encryption)
-    is production. Embeddings provider defaults to mock for semantic search. Cross-tenant
-    sharing not supported.
-  test_coverage: 68%
+  - memory_erasure
+  since_version: v2.2.0-memory-ga
+  limitations: Full support for Right to be Forgotten (RTBF) via explicit erasure
+    and tombstones.
+  test_coverage: 95%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-stateful-workflows
   name: Agent stateful workflows
@@ -761,25 +763,27 @@ capabilities:
 - id: agent-marketplace
   name: Agent marketplace
   area: agent tools
-  status: beta
+  status: production_core
   owner: agent-platform
-  support_level: pilot
-  docs_url: docs/agents/marketplace.md
+  support_level: production
+  docs_url: docs/security/capability-signing-policy.md
   api_prefix: /admin/agent-marketplace
   feature_flag: agent_marketplace_enabled
   additional_flags:
   - agent_remote_marketplace_enabled
   - agent_bundle_signature_required
+  - agent_internal_bundle_signature_required_in_production
+  - allow_unsigned_internal_bundles
   associated_services:
   - agent_marketplace
   - agent_supply_chain
   - agent_bundle_signing
   - agent_bundle_verifier
   - agent_compatibility
-  since_version: v1.10.0-agentic-runtime
-  limitations: Marketplace workflows are offline-first. Remote fetching disabled by
-    default.
-  test_coverage: 65%
+  since_version: v2.2.0-supply-chain-ga
+  limitations: Mandatory cryptographic signing for all external packages. Internal
+    packages require signing in production.
+  test_coverage: 90%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-rbac
   name: Agentic RBAC
@@ -889,6 +893,57 @@ capabilities:
     Limited dedicated test coverage.
   test_coverage: 70%
   rollback_story: Revert to standard memory context injection.
+- id: agent-cognitive-loopback
+  name: Cognitive Loopback
+  area: agent learning
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/cognitive-loopback.md
+  api_prefix: /admin/agents
+  feature_flag: AGENT_COGNITIVE_LOOPBACK_ENABLED
+  additional_flags:
+  - AGENT_FEWSHOT_AUTO_CURATOR_ENABLED
+  - AGENT_FEEDBACK_LEARNING_ENABLED
+  - AGENT_AUTO_APPLY_LEARNINGS
+  since_version: v2.x-agentic-evolutionary-intelligence
+  limitations: Learning candidates remain draft-first. Auto-apply stays disabled by
+    default and requires explicit human approval.
+  test_coverage: 84%
+  rollback_story: Disable loopback flags and keep existing few-shot set fixed.
+- id: agent-uncertainty-detection
+  name: Epistemic Uncertainty Detection
+  area: agent safety
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/uncertainty-detection.md
+  api_prefix: /admin/agents
+  feature_flag: AGENT_UNCERTAINTY_DETECTION_ENABLED
+  additional_flags:
+  - AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED
+  - AGENT_UNCERTAINTY_HITL_ENABLED
+  since_version: v2.x-agentic-evolutionary-intelligence
+  limitations: Confidence thresholds require calibration. Auto-research stays disabled
+    by default.
+  test_coverage: 83%
+  rollback_story: Disable uncertainty gates and revert to standard runtime delivery.
+- id: agent-meta-reviewer
+  name: Meta-Reviewer
+  area: agent safety
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/meta-reviewer.md
+  feature_flag: AGENT_META_REVIEWER_ENABLED
+  additional_flags:
+  - AGENT_META_REVIEWER_BLOCKING_MODE
+  - AGENT_META_REVIEWER_PARALLEL_ENABLED
+  since_version: v2.x-agentic-evolutionary-intelligence
+  limitations: Advisory-first by default. Blocking mode requires explicit operator
+    enablement and policy tuning.
+  test_coverage: 80%
+  rollback_story: Disable reviewer flags and keep approval-first controls only.
 - id: agent-studio-approvals
   name: Agent Studio and approval portal
   area: agent runtime
@@ -905,6 +960,26 @@ capabilities:
     validation rules.
   test_coverage: 70%
   rollback_story: Disable studio and approvals flags.
+- id: agent-studio-ga
+  name: Agent Studio GA Flow Lifecycle
+  area: agent runtime
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/agent-studio-ga.md
+  api_prefix: /admin/agents/studio
+  feature_flag: AGENT_STUDIO_GA_ENABLED
+  additional_flags:
+  - AGENT_VISUAL_FLOW_EDITOR_ENABLED
+  - AGENT_FLOW_COMPILER_ENABLED
+  associated_services:
+  - flow_runtime_adapter
+  - flow_versioning
+  since_version: v2.x-agentic-evolutionary-intelligence
+  limitations: Authoring, validation, compilation, and dry-run are operator-only and
+    disabled by default.
+  test_coverage: 86%
+  rollback_story: Disable GA studio flags and retain the earlier studio surface only.
 - id: agent-real-connectors
   name: Agent real connectors
   area: agent runtime
@@ -1096,10 +1171,10 @@ capabilities:
 - id: agent-code-sandbox
   name: Agent code sandbox
   area: agent runtime
-  status: beta
+  status: production_optional
   owner: agent-platform
-  support_level: pilot
-  docs_url: docs/security/microvm-sandbox.md
+  support_level: production
+  docs_url: docs/security/sandbox-ga-hardening.md
   feature_flag: AGENT_CODE_INTERPRETER_ENABLED
   additional_flags:
   - AGENT_CODE_SANDBOX_DOCKER_ENABLED
@@ -1109,11 +1184,11 @@ capabilities:
   - AGENT_CODE_SANDBOX_WASM_ENABLED
   - AGENT_CODE_SANDBOX_NETWORK_ENABLED
   - AGENT_CODE_SANDBOX_WRITE_ENABLED
-  since_version: v2.1.1-agentic-scale-hardening
-  limitations: Mock sandbox is the default. Docker, Firecracker, gVisor, Wasm are
-    opt-in providers. MicroVM enforcement is explicit.
-  test_coverage: 75%
-  rollback_story: Disable the interpreter or force provider back to mock mode.
+  since_version: v2.2.0-sandbox-ga
+  limitations: Mock success is strictly blocked in production. Real gVisor/runsc or
+    Firecracker required for GA hardening.
+  test_coverage: 88%
+  rollback_story: Revert to mock mode in development or pilot environments only.
   associated_services:
   - agents/code_interpreter/sandbox_audit.py
   - agents/code_interpreter/sandbox_limits.py
@@ -1169,13 +1244,137 @@ capabilities:
     is test-only and disabled by default.
   test_coverage: 60%
   rollback_story: Standard feature flag deactivation or deployment rollback.
-- id: agent-multi-agent-topologies
-  name: Agent multi-agent topologies
-  area: multi-agent
+- id: agent-constraint-reasoning
+  name: Constraint-Based Reasoning
+  area: agent reasoning
   status: experimental
   owner: agent-platform
   support_level: development
-  docs_url: docs/agents/multi-agent-orchestration.md
+  docs_url: docs/agents/constraint-reasoning.md
+  feature_flag: AGENT_CONSTRAINT_REASONING_ENABLED
+  additional_flags:
+  - AGENT_Z3_SOLVER_ENABLED
+  - AGENT_GLPK_SOLVER_ENABLED
+  since_version: v2.2.0-constraints-experimental
+  limitations: Requires formal solvers for proofing. Fallback to rule-based validation
+    if solvers are disabled.
+  test_coverage: 85%
+  rollback_story: Revert to standard Plan-and-Solve or manual validation.
+- id: agent-mcts-reasoning
+  name: MCTS Reasoning Runtime
+  area: agent reasoning
+  status: experimental
+  owner: agent-platform
+  support_level: development
+  docs_url: docs/agents/mcts-reasoning.md
+  feature_flag: AGENT_MCTS_REASONING_ENABLED
+  additional_flags:
+  - AGENT_MCTS_SANDBOX_SIMULATION_ENABLED
+  since_version: v2.2.0-mcts-experimental
+  limitations: Computationally expensive. Requires simulation sandbox for high-fidelity.
+  test_coverage: 82%
+  rollback_story: Revert to standard ReAct or Plan-and-Solve loops.
+- id: agent-federated-memory
+  name: Federated Memory & Sovereign Sync
+  area: agent memory
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/federated-memory.md
+  feature_flag: AGENT_FEDERATED_MEMORY_ENABLED
+  additional_flags:
+  - AGENT_FEDERATED_MEMORY_SYNC_ENABLED
+  - AGENT_FEDERATED_MEMORY_RAW_DATA_SYNC
+  since_version: v2.2.0-federation-beta
+  limitations: Sanitized summaries only by default. Raw sync requires sovereign trust.
+    Data residency policies enforced.
+  test_coverage: 88%
+  rollback_story: Delete federated records or disable sync flag.
+- id: agent-sab-portability
+  name: Standardized Agent Bundle (SAB)
+  area: agent portability
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/standardized-agent-bundle.md
+  feature_flag: AGENT_SAB_ENABLED
+  additional_flags:
+  - AGENT_SAB_IMPORT_ENABLED
+  - AGENT_SAB_EXPORT_ENABLED
+  since_version: v2.2.0-sab-beta
+  limitations: Import creates draft definitions. Mandatory signature verification in production.
+  test_coverage: 90%
+  rollback_story: Revert to manual agent definition or delete imported drafts.
+- id: agent-digital-twins
+  name: Digital Twin Connectors & IoT
+  area: agent iot
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/digital-twins.md
+  feature_flag: AGENT_DIGITAL_TWINS_ENABLED
+  additional_flags:
+  - AGENT_IOT_CONNECTORS_ENABLED
+  - AGENT_PHYSICAL_ACTUATION_ENABLED
+  since_version: v2.2.0-iot-beta
+  limitations: Read-only state by default. Actuation requires explicit opt-in and
+    HITL. Safety interlocks active.
+  test_coverage: 88%
+  rollback_story: Disable actuation flag or delete twin registry entries.
+- id: agent-wallets
+  name: Agent Wallets & Autonomous Budgets
+  area: agent finance
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/agent-wallets.md
+  feature_flag: AGENT_WALLETS_ENABLED
+  additional_flags:
+  - AGENT_WALLET_EXTERNAL_SPEND_ENABLED
+  - AGENT_WALLET_STRIPE_ENABLED
+  - AGENT_WALLET_WEB3_ENABLED
+  since_version: v2.2.0-wallets-beta
+  limitations: Internal ledger by default. External spend requires explicit opt-in.
+  test_coverage: 92%
+  rollback_story: Revert to internal-only wallets or disable subsystem.
+- id: agent-shadow-canary
+  name: Agent Shadow & Canary Deployment
+  area: agent deployment
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/shadow-mode.md
+  feature_flag: AGENT_CANARY_AGENTS_ENABLED
+  additional_flags:
+  - AGENT_SHADOW_MODE_ENABLED
+  - AGENT_CANARY_AUTO_PROMOTE
+  since_version: v2.2.0-canary-beta
+  limitations: Shadow runs block destructive tools. Canary traffic splitting is random-sampled.
+  test_coverage: 80%
+  rollback_story: Revert traffic split or delete canary assignment.
+- id: agent-time-travel-debugger
+  name: Agent Time-Travel Debugger
+  area: agent debugging
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/time-travel-debugger.md
+  feature_flag: AGENT_TIME_TRAVEL_DEBUGGER_ENABLED
+  additional_flags:
+  - AGENT_REPLAY_FROM_STEP_ENABLED
+  - AGENT_DEBUG_STATE_EDITING_ENABLED
+  since_version: v2.2.0-debugger-beta
+  limitations: Snapshots capture state at step level. CoT is masked. Original runs
+    remain immutable.
+  test_coverage: 85%
+  rollback_story: Replays are ephemeral; no direct impact on production storage.
+- id: agent-multi-agent-topologies
+  name: Agent multi-agent topologies
+  area: multi-agent
+  status: beta
+  owner: agent-platform
+  support_level: pilot
+  docs_url: docs/agents/multi-agent-ga-readiness.md
   api_prefix: /admin/agents/teams
   feature_flag: agent_multi_agent_enabled
   additional_flags:
@@ -1190,11 +1389,10 @@ capabilities:
   - team_observability
   - arbitration_engine
   - specialist_routing_runtime
-  since_version: v2.0.0-agentic-ai-platform
-  limitations: Hierarchical, debate, and dynamic topologies are behind flags and still
-    experimental. Arbitration is fail-closed in real mode and mock arbitration is
-    test-only.
-  test_coverage: 64%
+  since_version: v2.2.0-multi-agent-ga
+  limitations: Hierarchical and debate topologies are now beta with formal governance.
+    Arbitration produces receipts. Loop detection is active.
+  test_coverage: 78%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: agent-hierarchical-teams
   name: Agent hierarchical teams
@@ -1232,10 +1430,10 @@ capabilities:
 - id: mcp-interoperability
   name: MCP client/server
   area: agent runtime
-  status: experimental
+  status: beta
   owner: agent-platform
-  support_level: development
-  docs_url: docs/agents/mcp.md
+  support_level: pilot
+  docs_url: docs/agents/mcp-ga-readiness.md
   feature_flag: agent_mcp_enabled
   additional_flags:
   - agent_mcp_client_enabled
@@ -1247,11 +1445,10 @@ capabilities:
   - agent_mcp_global_credentials_allowed
   - agent_mcp_mock_mode
   - agent_mcp_real_discovery_enabled
-  since_version: v2.1.1-agentic-scale-hardening
-  limitations: Real discovery and tool execution paths exist, but the capability remains
-    experimental. Mock discovery is explicit test-only mode; external network, sampling,
-    and delegated OAuth remain disabled by default.
-  test_coverage: 55%
+  since_version: v2.2.0-mcp-ga
+  limitations: Requires explicit tool approval. Mock mode blocked in production.
+    Tenant isolation enforced.
+  test_coverage: 82%
   rollback_story: Disable MCP flags and continue using internal tool adapters only.
   api_prefix: /admin/agents/mcp
   associated_services:

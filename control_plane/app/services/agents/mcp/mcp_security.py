@@ -62,6 +62,8 @@ class MCPSecurity:
             )
 
     def is_mock_mode(self) -> bool:
+        if self.settings.app_env == "production" and self.settings.agent_mcp_mock_mode:
+            raise PermissionError("MCP mock mode is not allowed in production environments.")
         return self.settings.agent_mcp_mock_mode
 
     # ------------------------------------------------------------------

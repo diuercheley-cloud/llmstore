@@ -36,19 +36,7 @@ class FirecrackerSandboxProvider:
 
         self.policy.validate_provider(self.name, is_simulated=False)
 
-        started_at = time.time()
-        # Real firecracker implementation would involve starting a MicroVM via API
-        # ...
-
-        return {
-            "stdout": "Firecracker MicroVM execution completed successfully\n",
-            "stderr": "",
-            "exit_code": 0,
-            "execution_time_ms": int((time.time() - started_at) * 1000),
-            "provider": self.name,
-            "mock": False,
-            "kernel_isolation_level": "microvm",
-            "network_mode": "none",
-            "filesystem_mode": "read-only-rootfs",
-            "artifacts": [],
-        }
+        raise NotImplementedError(
+            "Real Firecracker MicroVM execution is not fully implemented. "
+            "Simulated success is blocked in production."
+        )

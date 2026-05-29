@@ -60,13 +60,14 @@ class AttestationService:
         is_prod = settings.app_env == "production"
         
         sig = attestation.get("signature")
-        if is_prod:
+        
+        if settings.agent_sandbox_production_requires_attestation and is_prod:
             if not sig:
                 return False
             sig_lower = sig.lower()
             if any(p in sig_lower for p in ["placeholder", "mock", "stub", "simulated", "fake"]):
                 return False
-        
+                
         if sig:
             if sig == "placeholder-signature-fallback":
                 return not is_prod

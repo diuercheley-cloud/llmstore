@@ -1,9 +1,10 @@
-# Plugin Supply Chain Security
+# Plugin Supply Chain
 
-We ensure the integrity of the plugin ecosystem through a rigorous supply chain verification process.
+## Security Model
+Plugins extend the platform's core capabilities and must adhere to strict supply chain security standards.
 
-## Verification Steps
-1. **Checksum Verification**: Every plugin download is verified against a SHA-256 checksum.
-2. **Signature Verification**: Production plugins must be cryptographically signed by an approved identity.
-3. **Provenance**: We track the origin and build history of each plugin.
-4. **Compatibility Matrix**: Plugins are verified against specific platform versions.
+- **Mandatory Manifests**: Every plugin must include a JSON manifest defining its version, entrypoint, and required permissions.
+- **Permission Boundaries**: Plugins are restricted to a whitelist of allowed permissions (`read_data`, `write_data`, `network_out`, `execute_sandbox`). Any attempt to request broader access results in a load error.
+- **Audit Trails**: Installation and activation of plugins generate security events in the audit log.
+- **Compatibility Matrix**: Verification ensures that plugins are compatible with the current platform version.
+- **Cryptographic Provenance**: Signatures ensure that the plugin originates from a trusted author and has not been tampered with in transit.

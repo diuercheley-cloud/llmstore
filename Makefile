@@ -172,7 +172,7 @@ help: ## Show this help message
 operational-readiness: ## Run the Operational Readiness Pack validation
 	@bash scripts/operational-readiness-pack.sh
 
-release-gate: ## Run the release gate validator (Requires TAG=vX.Y.Z)
+release-gate: agentic-ga-hardening ## Run the release gate validator (Requires TAG=vX.Y.Z)
 	@bash scripts/release-gate.sh $(TAG)
 
 verify-release-artifacts: ## Verify artifact governance and generate checksums (Requires TAG=vX.Y.Z)
@@ -1497,6 +1497,50 @@ validate-confidential-rag-vault:
 validate-control-plane-mesh: ## Validate Distributed Sovereign Control Plane Mesh (Phase 63)
 	chmod +x scripts/validate-control-plane-mesh.sh
 	./scripts/validate-control-plane-mesh.sh
+
+sandbox-ga-test: ## Validate Sandbox GA Hardening policies
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_sandbox_ga.py -v
+
+mcp-ga-test: ## Validate MCP GA Hardening policies
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_mcp_ga.py -v
+
+memory-erasure-test: ## Validate Memory Erasure/Right to be Forgotten policies
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_memory_erasure.py -v
+
+capability-signature-gate: ## Validate Bundle/Capability Signing and supply chain policies
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_capability_signing.py -v
+
+multi-agent-ga-test: ## Validate Multi-Agent GA Path policies
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_multi_agent_ga.py -v
+
+agent-studio-ga-test: ## Validate Agent Studio GA and Visual Flow Editor logic
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_agent_studio_ga.py -v
+
+agent-debugger-test: ## Validate Time-Travel Debugger and Replay logic
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_agent_debugger.py -v
+
+agent-canary-test: ## Validate Shadow Mode and Canary Agents logic
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_agent_canary.py -v
+
+agent-wallet-test: ## Validate Agent Wallets and Spend Controls
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_agent_wallet.py -v
+
+agent-digital-twins-test: ## Validate Digital Twin Connectors and Safety Interlocks
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_digital_twins.py -v
+
+agent-sab-test: ## Validate Standardized Agent Bundle (SAB) portability
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_agent_sab.py -v
+
+agent-federated-memory-test: ## Validate Federated Memory and Sovereign Sync
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_federated_memory.py -v
+
+agent-mcts-test: ## Validate MCTS Reasoning Runtime
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_mcts_reasoning.py -v
+
+agent-constraints-test: ## Validate Constraint-Based Reasoning Runtime
+	PYTHONPATH=control_plane .venv/bin/python -m pytest tests/test_constraint_reasoning.py -v
+
+agentic-ga-hardening: sandbox-ga-test mcp-ga-test memory-erasure-test capability-signature-gate multi-agent-ga-test agent-studio-ga-test agent-debugger-test agent-canary-test agent-wallet-test agent-digital-twins-test agent-sab-test agent-federated-memory-test agent-mcts-test agent-constraints-test ## Run all Agentic AI GA Hardening tests
 
 # --- Kubernetes & Operator Mode ---
 

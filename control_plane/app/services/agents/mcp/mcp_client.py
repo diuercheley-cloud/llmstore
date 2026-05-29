@@ -87,7 +87,7 @@ class MCPClient:
     # Discovery
     # ------------------------------------------------------------------
 
-    async def discover(self, server_id: str) -> dict[str, Any]:
+    async def discover(self, server_id: str, tenant_id: str | None = None) -> dict[str, Any]:
         """
         Discover tools/resources/prompts from an MCP server.
 
@@ -100,7 +100,7 @@ class MCPClient:
         the exception propagates so callers know why.
         """
         self.security.require_client_enabled()
-        server = self._get_server(server_id)
+        server = self._get_server(server_id, tenant_id)
 
         # ---- Mock mode (test/staging only) ----
         if self.security.is_mock_mode():
@@ -225,9 +225,9 @@ class MCPClient:
     # Tool approval
     # ------------------------------------------------------------------
 
-    def approve_tool(self, server_id: str, tool_name: str) -> dict[str, Any]:
+    def approve_tool(self, server_id: str, tool_name: str, tenant_id: str | None = None) -> dict[str, Any]:
         """Add tool_name to the server's approved set."""
-        server = self._get_server(server_id)
+        server = self._get_server(server_id, tenant_id)
         # Sanitize before adding to approved list
         safe_name = self.security.sanitize_tool({"name": tool_name, "description": ""})["name"]
         server.approved_tools.add(safe_name)
@@ -265,7 +265,7 @@ class MCPClient:
           - mcp_call_error    (on failure, exception re-raised)
         """
         self.security.require_client_enabled()
-        server = self._get_server(server_id)
+        server = self._get_server(server_id, tenant_id)
         self.security.require_tool_approved(tool_name, server.approved_tools)
 
         MCPAuditLog.record(
@@ -327,8 +327,10 @@ class MCPClient:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get_server(self, server_id: str) -> MCPServerRecord:
+    def _get_server(self, server_id: str, tenant_id: str | None = None) -> MCPServerRecord:
         server = self.registry.get(server_id)
         if not server:
             raise KeyError(f"MCP server '{server_id}' not found")
+        if tenant_id and server.tenant_id != tenant_id:
+            raise PermissionError(f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'")
         return server

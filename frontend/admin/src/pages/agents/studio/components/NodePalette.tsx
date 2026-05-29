@@ -1,50 +1,23 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText,
-  Paper 
-} from '@mui/material';
-import { 
-  SmartToy as AgentIcon,
-  Build as ToolIcon,
-  Storage as MemoryIcon,
-  Verified as ApprovalIcon,
-  AltRoute as ConditionIcon,
-  Forward as HandoffIcon,
-  Flag as FinalIcon
-} from '@mui/icons-material';
 
 const nodeTypes = [
-  { label: 'Agent', icon: <AgentIcon />, type: 'agent' },
-  { label: 'Tool Call', icon: <ToolIcon />, type: 'tool_call' },
-  { label: 'Memory', icon: <MemoryIcon />, type: 'memory' },
-  { label: 'Approval', icon: <ApprovalIcon />, type: 'approval' },
-  { label: 'Condition', icon: <ConditionIcon />, type: 'condition' },
-  { label: 'Handoff', icon: <HandoffIcon />, type: 'handoff' },
-  { label: 'Final', icon: <FinalIcon />, type: 'final' },
+  'agent', 'llm_call', 'tool_call', 'memory_read', 
+  'approval', 'condition', 'handoff', 'workflow_timer', 
+  'webhook_wait', 'final_response'
 ];
 
 const NodePalette: React.FC = () => {
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="overline" color="text.secondary">Nodes</Typography>
-      <List dense>
-        {nodeTypes.map((n) => (
-          <ListItem 
-            key={n.type} 
-            component={Paper} 
-            sx={{ mb: 1, cursor: 'grab', '&:hover': { bgcolor: 'action.hover' } }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>{n.icon}</ListItemIcon>
-            <ListItemText primary={n.label} />
-          </ListItem>
+    <div>
+      <h3 className="text-sm font-bold uppercase text-gray-500 mb-4">Node Palette</h3>
+      <div className="space-y-2">
+        {nodeTypes.map(type => (
+          <div key={type} className="p-3 bg-white border rounded shadow-sm cursor-move hover:border-blue-500 transition-colors">
+            {type.replace('_', ' ')}
+          </div>
         ))}
-      </List>
-    </Box>
+      </div>
+    </div>
   );
 };
 

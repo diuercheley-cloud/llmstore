@@ -2,9 +2,9 @@
 
 **Sovereign, offline-first, deterministic AI platform with governed agentic runtime.**
 
-> Current build: `v2.x-agentic-platform-complete-hardening`  
-> Previous stable: [`v2.1.0-agentic-platform-expansion`](docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md)  
-> Release notes: [`docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md`](docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md)  
+> Current build: `v2.x-agentic-evolutionary-intelligence`  
+> Previous stable: [`v2.x-agentic-platform-complete-hardening`](docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md)  
+> Release notes: [`docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md`](docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Evolutionary Intelligence (v2.x)**: Promotes the platform from governed execution engine to safe-by-default evolutionary intelligence ecosystem with cognitive loopback, uncertainty controls, meta-reviewing, studio GA, debugger replay, shadow/canary agents, wallets, digital twins, standardized bundles, federated memory, and specialized reasoning primitives.
 - **Platform Complete Hardening (v2.x)**: Formalizes profile-driven operations, real distributed-runtime primitives, metadata-safe managed control plane sync, capability catalog governance, and stricter production-claim rules.
 - **Scale Hardening (v2.1.1)**: Adds opt-in Firecracker/gVisor sandbox providers, MCP delegated OAuth token exchange, PostgreSQL/pgvector/pgRouting GraphRAG, optimizer tournaments, and telemetry leaky-bucket backpressure without weakening defaults.
 - **Enterprise Agentic Autonomy (v2.1.0)**: Adds governed code interpretation, graph-native RAG, event-driven agents, agent IAM, agentic CI/CD optimization controls, per-step router decisions, and shared artifact collaboration under explicit opt-in gates.
@@ -199,6 +200,16 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 
 > [!WARNING]
 > **Production claims are narrower than code presence.** Features such as distributed runtime, multi-cluster, managed control plane, capability catalog, Firecracker/gVisor, and MCP/plugin supply-chain controls are implemented behind explicit flags and profiles, but only count as production-safe when non-mock gates and environment prerequisites pass. Do not represent code presence or unit coverage alone as production evidence. See the [Supported Surface Area](docs/support/supported-surface-area.md) policy for details.
+
+### Release v2.x scope
+
+- **Cognitive loopback remains gated**: post-run feedback mining, learning candidates, and few-shot activation exist, but `AGENT_COGNITIVE_LOOPBACK_ENABLED=false` and `AGENT_AUTO_APPLY_LEARNINGS=false` preserve HITL-first learning.
+- **Uncertainty and review are explicit**: uncertainty detection, optional auto-research, and meta-reviewer controls are available behind dedicated flags and remain advisory-first by default.
+- **Studio becomes governable GA surface**: visual flow authoring, validation, compilation, and dry-run flows are operator-gated, auditable, and disabled by default.
+- **Replay and rollout controls expand**: time-travel debugger, shadow mode, and canary promotion are available for agent debugging and promotion without changing the safe default posture.
+- **Economic and physical side effects stay blocked**: wallets default to internal-only, external spend is disabled, digital twins are read-oriented, and physical actuation is disabled.
+- **Federation and portability are bounded**: SAB import/export and federated memory sync are explicit opt-ins; raw federated sync remains disabled by default.
+- **Reasoning broadens without weakening runtime posture**: MCTS and constraint-based reasoning are added as specialized, opt-in reasoning runtimes.
 
 ### Release v2.0.3 scope
 

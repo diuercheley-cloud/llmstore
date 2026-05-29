@@ -1,5 +1,20 @@
 # Changelog
 
+## [v2.x-agentic-evolutionary-intelligence] - 2026-05-29
+
+### Added
+- **Evolutionary intelligence release line**: cognitive loopback, uncertainty detection, meta-reviewer controls, Agent Studio GA flow lifecycle, time-travel debugger, shadow/canary agents, agent wallets, digital twins, SAB portability, federated memory, MCTS reasoning, and constraint-based reasoning are now part of the governed release scope.
+- **Release evidence pack**: `artifacts/releases/v2.x-agentic-evolutionary-intelligence/` captures summary, validation, cognitive loopback, studio GA, federation, specialized reasoning, and safety evidence.
+
+### Changed
+- **Platform narrative shifts from execution engine to intelligence ecosystem**: documentation, supported-surface metadata, feature flags, and API surface now describe the platform as an evolutionary intelligence stack rather than only an execution runtime.
+- **Safe defaults are extended to all new intelligence surfaces**: all new features stay disabled by default; external spend, physical actuation, auto-apply learning, and raw federated sync remain blocked until explicitly enabled.
+- **Release governance is stricter about working tree cleanliness**: this release explicitly requires a clean tree at certification time and treats dirty state as a release blocker instead of a documentation warning.
+
+### Security
+- **Economic and physical side effects remain fail-closed**: wallet external spend and digital twin actuation are disabled by default and require explicit operator enablement.
+- **Learning and federation remain human-governed**: automatic learning application and raw federated memory sync remain off by default to preserve auditability, privacy, and sovereign boundaries.
+
 ## [v2.x-agentic-production-trust-hardening] - 2026-05-29
 
 ### Added

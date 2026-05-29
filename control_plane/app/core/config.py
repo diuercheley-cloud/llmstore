@@ -48,11 +48,128 @@ class Settings(BaseSettings):
     commercial_appliance_mode_enabled: bool = False
     commercial_appliance_id: str = "appliance-000"
     commercial_appliance_deployment_tier: str = "regulated"
+
+    # Owner: agent-platform
+    # Status: beta
+    agent_bundle_signature_required: bool = Field(default=True, alias="AGENT_BUNDLE_SIGNATURE_REQUIRED")
+    agent_internal_bundle_signature_required_in_production: bool = Field(default=True, alias="AGENT_INTERNAL_BUNDLE_SIGNATURE_REQUIRED_IN_PRODUCTION")
+    allow_unsigned_internal_bundles: bool = Field(default=False, alias="ALLOW_UNSIGNED_INTERNAL_BUNDLES")
     commercial_appliance_require_removable_media: bool = False
 
     # Owner: agent-platform
     # Status: beta
     agent_optimizer_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_cognitive_loopback_enabled: bool = Field(default=False, alias="AGENT_COGNITIVE_LOOPBACK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_fewshot_auto_curator_enabled: bool = Field(default=False, alias="AGENT_FEWSHOT_AUTO_CURATOR_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_feedback_learning_enabled: bool = Field(default=False, alias="AGENT_FEEDBACK_LEARNING_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_auto_apply_learnings: bool = Field(default=False, alias="AGENT_AUTO_APPLY_LEARNINGS")
+    # Owner: agent-platform
+    # Status: beta
+    agent_uncertainty_detection_enabled: bool = Field(default=False, alias="AGENT_UNCERTAINTY_DETECTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_uncertainty_auto_research_enabled: bool = Field(default=False, alias="AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_uncertainty_hitl_enabled: bool = Field(default=True, alias="AGENT_UNCERTAINTY_HITL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_meta_reviewer_enabled: bool = Field(default=False, alias="AGENT_META_REVIEWER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_meta_reviewer_blocking_mode: bool = Field(default=False, alias="AGENT_META_REVIEWER_BLOCKING_MODE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_meta_reviewer_parallel_enabled: bool = Field(default=False, alias="AGENT_META_REVIEWER_PARALLEL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_studio_ga_enabled: bool = Field(default=False, alias="AGENT_STUDIO_GA_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_visual_flow_editor_enabled: bool = Field(default=False, alias="AGENT_VISUAL_FLOW_EDITOR_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_flow_compiler_enabled: bool = Field(default=False, alias="AGENT_FLOW_COMPILER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_time_travel_debugger_enabled: bool = Field(default=False, alias="AGENT_TIME_TRAVEL_DEBUGGER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_replay_from_step_enabled: bool = Field(default=False, alias="AGENT_REPLAY_FROM_STEP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_debug_state_editing_enabled: bool = Field(default=False, alias="AGENT_DEBUG_STATE_EDITING_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_shadow_mode_enabled: bool = Field(default=False, alias="AGENT_SHADOW_MODE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_canary_agents_enabled: bool = Field(default=False, alias="AGENT_CANARY_AGENTS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_canary_auto_promote: bool = Field(default=False, alias="AGENT_CANARY_AUTO_PROMOTE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_wallets_enabled: bool = Field(default=False, alias="AGENT_WALLETS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_wallet_stripe_enabled: bool = Field(default=False, alias="AGENT_WALLET_STRIPE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_wallet_web3_enabled: bool = Field(default=False, alias="AGENT_WALLET_WEB3_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_wallet_external_spend_enabled: bool = Field(default=False, alias="AGENT_WALLET_EXTERNAL_SPEND_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_digital_twins_enabled: bool = Field(default=False, alias="AGENT_DIGITAL_TWINS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_iot_connectors_enabled: bool = Field(default=False, alias="AGENT_IOT_CONNECTORS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_physical_actuation_enabled: bool = Field(default=False, alias="AGENT_PHYSICAL_ACTUATION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_sab_enabled: bool = Field(default=False, alias="AGENT_SAB_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_sab_import_enabled: bool = Field(default=False, alias="AGENT_SAB_IMPORT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_sab_export_enabled: bool = Field(default=False, alias="AGENT_SAB_EXPORT_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_federated_memory_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_federated_memory_sync_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_SYNC_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_federated_memory_raw_data_sync: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_RAW_DATA_SYNC")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_mcts_reasoning_enabled: bool = Field(default=False, alias="AGENT_MCTS_REASONING_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_mcts_sandbox_simulation_enabled: bool = Field(default=False, alias="AGENT_MCTS_SANDBOX_SIMULATION_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_constraint_reasoning_enabled: bool = Field(default=False, alias="AGENT_CONSTRAINT_REASONING_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_z3_solver_enabled: bool = Field(default=False, alias="AGENT_Z3_SOLVER_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    agent_glpk_solver_enabled: bool = Field(default=False, alias="AGENT_GLPK_SOLVER_ENABLED")
     # Owner: agent-platform
     # Status: experimental
     agent_optimizer_tournaments_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_TOURNAMENTS_ENABLED")

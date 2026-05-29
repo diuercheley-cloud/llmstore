@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.x-agentic-platform-complete-hardening` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.x-agentic-evolutionary-intelligence` line.
 
 ## Defaults
 
@@ -30,6 +30,7 @@
 - `OPERATOR_MODE=real` is required for production-like Kubernetes reconciliation. `mock` and `dry_run` are test-only modes.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
 - Enterprise autonomy features stay disabled by default, including tool synthesis, code interpreter, event-driven hooks, IAM service principals, optimization apply, Router V2, and shared artifacts.
+- Evolutionary intelligence features also stay disabled by default, including cognitive loopback, uncertainty auto-research, meta-reviewer blocking, studio GA authoring, time-travel replay editing, shadow/canary automation, agent wallets, digital twin actuation, SAB import/export, federated memory sync, MCTS reasoning, and constraint solver execution.
 - Code interpreter sandbox access starts with `AGENT_CODE_SANDBOX_NETWORK_ENABLED=false` and `AGENT_CODE_SANDBOX_WRITE_ENABLED=false`.
 - Firecracker and gVisor sandbox providers remain opt-in with `AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED=false` and `AGENT_CODE_SANDBOX_GVISOR_ENABLED=false`; MicroVM enforcement is also opt-in.
 - Generated tool execution is blocked unless `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=true`.
@@ -37,6 +38,10 @@
 - Connector/MCP/plugin catalog flows remain operator-only and draft-first. Catalog installation does not by itself make a capability production-supported.
 - MCP delegated OAuth and token exchange remain disabled by default with `AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED=false`; user-delegation enforcement is explicit and audit-logged when enabled.
 - GraphRAG production provider controls remain disabled by default with `AGENT_KG_EXTERNAL_PROVIDER_ENABLED=false`, `AGENT_KG_POSTGRES_GRAPH_ENABLED=false`, `AGENT_KG_PGVECTOR_ENABLED=false`, and `AGENT_KG_PGROUTING_ENABLED=false`.
+- External spend remains blocked by default with `AGENT_WALLET_EXTERNAL_SPEND_ENABLED=false`.
+- Physical actuation remains blocked by default with `AGENT_PHYSICAL_ACTUATION_ENABLED=false`.
+- Auto-applied learning remains blocked by default with `AGENT_AUTO_APPLY_LEARNINGS=false`.
+- Raw federated memory replication remains blocked by default with `AGENT_FEDERATED_MEMORY_RAW_DATA_SYNC=false`.
 - Telemetry backpressure stays enabled with `AGENT_TELEMETRY_BACKPRESSURE_ENABLED=true` so tracing bursts cannot overwhelm exporter paths during agent execution spikes.
 - Real execution readiness must also pass the durable queue, scheduler prerequisite, operator mode, and code-integrity gates before release.
 
@@ -49,6 +54,9 @@
 - Reasoning loops must repair malformed structured output and compress context before escalating to fallback behavior.
 - Multi-agent orchestration must remain bounded by topology flags and governance controls for hierarchical and debate teams.
 - Agent Studio visual authoring and debugger surfaces remain operator-only and disabled until explicitly enabled.
+- Time-travel debugger snapshots must keep internal reasoning masked; replay and state edits are debugging tools, not production mutation shortcuts.
+- Digital twin connectors must default to read/state sync posture. Any command path requires explicit enablement, approval, and domain interlocks.
+- Wallet authorizations must preserve tenant budgets, ledger auditability, and explicit approval before any non-internal spend path.
 - Runtime, tool, and memory contracts are versioned and validated before promotion.
 - Worker and queue execution are official but opt-in; no background worker starts unless `AGENT_WORKER_ENABLED=true`.
 - Promotion remains blocked on failed or missing eval evidence even if runtime APIs are enabled.
@@ -129,6 +137,7 @@ No cross-cluster operations exfiltrate user prompts or RAG documents by default.
 - Agent marketplace installs are offline-first and disabled by default.
 - Multi-agent delegation remains disabled by default and is outside the default-supported posture for this release.
 - Shared workspaces and artifacts remain disabled by default; when enabled, collaborative editing uses lock and version checks instead of last-write-wins behavior.
+- Federated memory is tenant-scoped and summary-first by default; raw cross-boundary synchronization is outside the default-supported posture.
 
 ## Observability Privacy
 Metrics and dashboards (Grafana/Prometheus) are strictly audited to ensure no sensitive data (prompts, completions, API keys) is leaked into observability pipelines.
