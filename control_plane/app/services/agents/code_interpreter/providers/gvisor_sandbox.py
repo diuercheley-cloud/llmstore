@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import get_settings
+from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine
 
 
 class GVisorSandboxProvider:
@@ -16,13 +17,28 @@ class GVisorSandboxProvider:
 
     def __init__(self):
         self.settings = get_settings()
+        self.policy = SandboxPolicyEngine()
 
     async def run(self, code: str, limits: Any, session_id: uuid.UUID | None = None) -> dict[str, Any]:
         if not self.settings.agent_code_sandbox_gvisor_enabled:
             raise RuntimeError("gVisor sandbox provider is disabled")
 
-        if shutil.which("runsc") is None or shutil.which("docker") is None:
-            raise RuntimeError("gVisor provider requires both docker and runsc")
+        runsc_path = shutil.which("runsc")
+        docker_path = shutil.which("docker")
+        
+        if runsc_path is None or docker_path is None:
+            if self.settings.agent_code_sandbox_microvm_required:
+                raise RuntimeError("gVisor provider is required but runsc/docker is not available")
+            return {
+                "status": "provider_unavailable",
+                "error": "runsc or docker binary not found",
+                "provider": self.name,
+                "kernel_isolation_level": "user-space-kernel",
+                "network_mode": "none",
+                "filesystem_mode": "read-only-rootfs",
+            }
+
+        self.policy.validate_provider(self.name, is_simulated=False)
 
         started_at = time.time()
 

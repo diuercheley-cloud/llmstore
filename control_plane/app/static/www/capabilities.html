@@ -137,6 +137,7 @@
           <tr><td>Tools / Function Calling</td><td class="cap-status partial">Parcial</td><td>`openai_compatible` nativo; local sem suporte retorna erro explicito</td></tr>
           <tr><td>RAG</td><td class="cap-status supported">Suportado</td><td>GA — indexacao e consulta de documentos internos</td></tr>
           <tr><td>TTS</td><td class="cap-status supported">Suportado</td><td>GA — via pocket-tts local</td></tr>
+          <tr><td>Plugin Runtime</td><td class="cap-status supported">Suportado</td><td>Producao — execucao isolada em sandbox</td></tr>
           <tr><td>Client Portal</td><td class="cap-status supported">Suportado</td><td>GA — autogerenciamento de chaves e consumo</td></tr>
           <tr><td>Admin Dashboard</td><td class="cap-status supported">Suportado</td><td>GA — monitoria em tempo real</td></tr>
           <tr><td>Admin Lab</td><td class="cap-status supported">Suportado</td><td>GA — gestao de modelos, clientes e financeiro</td></tr>
@@ -156,6 +157,7 @@
           <li><strong>PSP/PIX real opt-in</strong> — O modo padrao permanece desabilitado/offline; mock local disponivel para testes.</li>
           <li><strong>Tools / Function Calling parcial</strong> — Suporte limitado, depende do backend e modelo local.</li>
           <li><strong>Modelos dependem do hardware local</strong> — Qualidade e performance variam conforme GPU/CPU disponivel.</li>
+          <li><strong>Plugin Runtime local</strong> — Execucao isolada em sandbox; nao e um ecossistema distribuido.</li>
           <li><strong>HTTPS opcional em localhost</strong> — Por padrao a demo usa HTTP. Producao deve configurar TLS via Caddy.</li>
           <li><strong>Nao prometemos seguranca absoluta</strong> — Relatorios de readiness e security sao insumos, nao substituem auditoria.</li>
         </ul>

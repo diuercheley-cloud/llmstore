@@ -1,0 +1,9 @@
+profile: agentic-production
+e2e_settings:
+  allow_mocks: false
+  require_real_worker: true
+  require_real_sandbox: true
+  require_real_graph_store: true
+  artifact_path: artifacts/e2e/production-agentic
+  fake_server_port: 19090
+  mcp_server_port: 19091

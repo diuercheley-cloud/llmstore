@@ -1,10 +1,10 @@
 # LLM Inference Stack & Agentic AI Platform
 
-**Sovereign, offline-first, deterministic AI platform — multi-tenant, multi-provider, white-label ready.**
+**Sovereign, offline-first, deterministic AI platform with governed agentic runtime.**
 
-> Current build: `v2.1.1-agentic-scale-hardening`  
+> Current build: `v2.x-agentic-platform-complete-hardening`  
 > Previous stable: [`v2.1.0-agentic-platform-expansion`](docs/releases/V2_1_0_AGENTIC_PLATFORM_EXPANSION.md)  
-> Release notes: [`docs/releases/V2_1_1_AGENTIC_SCALE_HARDENING.md`](docs/releases/V2_1_1_AGENTIC_SCALE_HARDENING.md)  
+> Release notes: [`docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md`](docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
 > Documentation Index: [`docs/index.md`](docs/index.md)
 
@@ -22,6 +22,7 @@
 | **Sovereign** | Operators retain full control over data, models, policies, and execution. No vendor lock-in, no mandatory telemetry. |
 | **Advisory-First** | Validation, policy, and governance run in advisory/dry-run mode by default. Enforcement is explicit and operator-gated. |
 - **Local-First, Hybrid-Ready**: Opt-in to cloud providers when local capacity is saturated.
+- **Platform Complete Hardening (v2.x)**: Formalizes profile-driven operations, real distributed-runtime primitives, metadata-safe managed control plane sync, capability catalog governance, and stricter production-claim rules.
 - **Scale Hardening (v2.1.1)**: Adds opt-in Firecracker/gVisor sandbox providers, MCP delegated OAuth token exchange, PostgreSQL/pgvector/pgRouting GraphRAG, optimizer tournaments, and telemetry leaky-bucket backpressure without weakening defaults.
 - **Enterprise Agentic Autonomy (v2.1.0)**: Adds governed code interpretation, graph-native RAG, event-driven agents, agent IAM, agentic CI/CD optimization controls, per-step router decisions, and shared artifact collaboration under explicit opt-in gates.
 - **GA Readiness (v2.0.2)**: Tightens surface governance, explicit execution modes, production-ready capabilities, and opt-in provider validation into the final GA gate.
@@ -31,7 +32,7 @@
 - **Advanced Operational Experience (v1.9.5)**: Integrated performance tuning, enterprise onboarding, and visual observability dashboards.
 - **CI/CD & Chaos Engineering (v1.9.6)**: Fully modular GitHub/GitLab pipelines with automated fault injection and supply chain security.
 - **Enterprise-Grade Observability**: Full Grafana dashboards for GPU, Nodes, SLO, and Error Budgets.
-- **Multi-Cluster Orchestration**: Secure management of multiple appliances from a single Control Plane.
+- **Multi-Cluster Orchestration**: Real registration, heartbeat, placement, lease, and failover primitives exist, but enterprise distributed posture remains opt-in and release-gated.
 - **Deterministic Governance**: Audit receipts for every inference, configuration change, and administrative action.
 
 ### Architecture Summary
@@ -188,14 +189,16 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 | 🔵 | **Internal** | Internal tools only. |
 | ⚫ | **Deprecated** | No longer maintained. Will be removed. |
 
-**Production Core (14 items):** OpenAI API, Admin RBAC, Billing, RAG, TTS, Multi-provider routing, Hot-swap GGUF, Agent observability, Agent human approval, Agent readiness, Agent worker operations, Agentic runtime, Agent tool governance, Agent memory.
+**Production Core:** OpenAI API, Admin RBAC, Billing, RAG, TTS, multi-provider routing, hot-swap GGUF, agent observability, agent human approval, agent readiness, agent worker operations, agentic runtime, and agent tool governance.
 
-**Production Optional (10 items):** Agent stateful workflows, Agent IAM, Agent event-driven, Agent Router V2, Agent planning, Agent reasoning loop, Agent OTel tracing, Agent Studio, Agent SaaS connectors, Plugin runtime.
+**Production Optional:** Agent stateful workflows, agent IAM, event-driven agents, Router V2, planning, reasoning loop, OTel tracing, SaaS connectors, plugin runtime, and platform profiles.
+
+**Beta / Enterprise Opt-In:** Distributed runtime, multi-cluster operations, managed control plane, capability catalog, signed plugin supply chain, and production sandbox hardening.
 
 > See [Supported Surface Matrix](artifacts/platform/supported-surface-matrix.md) for the complete breakdown including all 74 capabilities across 6 tiers.
 
 > [!WARNING]
-> **Many agentic capabilities are opt-in with mock defaults.** The Agentic AI Platform is production-ready at its core (runtime, worker, tool governance, memory governance, readiness) but extended features like multi-agent, MCP, optimizer, code sandbox (Firecracker/gVisor), and some connectors require explicit enablement and may default to mock providers. Do not sell beta/experimental features as production. See the [Supported Surface Area](docs/support/supported-surface-area.md) policy for details.
+> **Production claims are narrower than code presence.** Features such as distributed runtime, multi-cluster, managed control plane, capability catalog, Firecracker/gVisor, and MCP/plugin supply-chain controls are implemented behind explicit flags and profiles, but only count as production-safe when non-mock gates and environment prerequisites pass. Do not represent code presence or unit coverage alone as production evidence. See the [Supported Surface Area](docs/support/supported-surface-area.md) policy for details.
 
 ### Release v2.0.3 scope
 

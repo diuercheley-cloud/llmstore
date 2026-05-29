@@ -49,6 +49,17 @@ async def execute_in_sandbox(
         if not settings.agent_destructive_tools_enabled:
             raise ValueError("Shell commands are disabled by default.")
 
+    # 2. Policy Check: Block simulation in production
+    if not settings.agent_sandbox_allow_simulated_provider and sandbox_type in ["mock", "dry_run"]:
+        logger.error(f"Simulated sandbox type '{sandbox_type}' is blocked in production.")
+        raise ValueError(f"Security Policy Violation: Simulated execution mode '{sandbox_type}' is not allowed.")
+    
+    if settings.agent_code_sandbox_microvm_required and sandbox_type not in ["gvisor", "firecracker"]:
+        # If microvm is required, tool_sandbox must also use a secure provider if available,
+        # or block if it's falling back to something weak.
+        if sandbox_type == "mock":
+             raise ValueError("MicroVM isolation is required; mock sandbox is insufficient.")
+
     # Resolve the command/operation name to check against allowlist
     command_to_run = parameters.get("command") or parameters.get("cmd") or parameters.get("operation") or tool_name
     if allowed_commands and "*" not in allowed_commands:

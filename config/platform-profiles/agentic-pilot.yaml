@@ -1,0 +1,9 @@
+name: agentic-pilot
+description: Pilot mode with agentic runtime enabled but limited external impact.
+flags:
+  AGENT_RUNTIME_ENABLED: true
+  AGENT_CODE_INTERPRETER_ENABLED: true
+  AGENT_CODE_SANDBOX_PROVIDER: docker
+  AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED: true
+  AGENT_CONNECTOR_CATALOG_ENABLED: true
+  DISTRIBUTED_RUNTIME_ENABLED: false

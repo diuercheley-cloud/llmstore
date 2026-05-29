@@ -257,6 +257,10 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_marketplace_enabled: bool = Field(default=False, alias="AGENT_MARKETPLACE_ENABLED")
+    agent_distributed_runtime_enabled: bool = Field(default=False, alias="AGENT_DISTRIBUTED_RUNTIME_ENABLED")
+    multi_cluster_enabled: bool = Field(default=False, alias="MULTI_CLUSTER_ENABLED")
+    agent_cluster_federation_enabled: bool = Field(default=False, alias="AGENT_CLUSTER_FEDERATION_ENABLED")
+
     # Owner: agent-platform
     # Status: beta
     agent_remote_marketplace_enabled: bool = Field(default=False, alias="AGENT_REMOTE_MARKETPLACE_ENABLED")
@@ -297,7 +301,8 @@ class Settings(BaseSettings):
     agent_enterprise_observability_enabled: bool = Field(default=False, alias="AGENT_ENTERPRISE_OBSERVABILITY_ENABLED")
     # Owner: agent-platform
     # Status: active
-    agent_tenant_isolation_strict: bool = Field(default=False, alias="AGENT_TENANT_ISOLATION_STRICT")
+    platform_profile: str = Field(default="appliance", alias="PLATFORM_PROFILE")
+    # Owner: platform-ops
     # Owner: agent-platform
     # Status: beta
     agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
@@ -314,6 +319,14 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_code_sandbox_provider: str = Field(default="mock", alias="AGENT_CODE_SANDBOX_PROVIDER")
+    # Owner: agent-platform
+    # Status: production-ready
+    # Set to False to block any mock/simulated sandbox path in production.
+    agent_sandbox_allow_simulated_provider: bool = Field(default=False, alias="AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER")
+    # Owner: agent-platform
+    # Status: production-ready
+    # If True, every sandbox execution must have a valid cryptographical or behavioral attestation.
+    agent_sandbox_production_requires_attestation: bool = Field(default=False, alias="AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION")
     # Owner: agent-platform
     # Status: beta
     agent_code_sandbox_docker_enabled: bool = Field(default=False, alias="AGENT_CODE_SANDBOX_DOCKER_ENABLED")
@@ -378,6 +391,21 @@ class Settings(BaseSettings):
     # Status: experimental
     # Max retries for transient MCP transport errors.
     agent_mcp_call_max_retries: int = Field(default=2, alias="AGENT_MCP_CALL_MAX_RETRIES")
+    # Owner: agent-platform
+    # Status: production-ready
+    agent_connector_catalog_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_CATALOG_ENABLED")
+    # Owner: agent-platform
+    # Status: production-ready
+    agent_mcp_catalog_enabled: bool = Field(default=False, alias="AGENT_MCP_CATALOG_ENABLED")
+    # Owner: agent-platform
+    # Status: production-ready
+    plugin_runtime_enabled: bool = Field(default=False, alias="PLUGIN_RUNTIME_ENABLED")
+    # Owner: agent-platform
+    # Status: production-ready
+    plugin_signature_required: bool = Field(default=False, alias="PLUGIN_SIGNATURE_REQUIRED")
+    # Owner: agent-platform
+    # Status: production-ready
+    agent_plugin_supply_chain_enabled: bool = Field(default=False, alias="AGENT_PLUGIN_SUPPLY_CHAIN_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_knowledge_graph_enabled: bool = Field(default=False, alias="AGENT_KNOWLEDGE_GRAPH_ENABLED")

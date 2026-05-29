@@ -1531,3 +1531,7 @@ agent-optimization-check: ## Execute agent evals and verify safety/optimization 
 	@PYTHONPATH=control_plane .venv/bin/pytest control_plane/tests/test_agent_optimization.py -v
 
 
+
+production-agentic-e2e: ## Run non-mock E2E tests for production agentic claims
+	@echo "Running Agentic Production E2E Suite..."
+	@./scripts/run-production-agentic-e2e.sh

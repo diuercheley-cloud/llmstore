@@ -2,7 +2,7 @@
 
 ## Scope
 
-`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.1.1-agentic-scale-hardening` line.
+`llm-inference-stack` is intended for local and controlled deployments. This document covers the default security posture, operational expectations, and release hardening checks for the `v2.x-agentic-platform-complete-hardening` line.
 
 ## Defaults
 
@@ -26,6 +26,7 @@
 - `AGENT_CONNECTOR_MODE` must be explicitly set to `mock` or `real`; invalid values are treated as misconfiguration, not downgraded silently.
 - `AGENT_CONNECTOR_REAL_HTTP_ENABLED=false` remains the safe default. Real connector traffic requires both the global HTTP gate and the connector-specific enablement flag.
 - Real sandbox execution has no implicit mock fallback. If no concrete tool callable exists, execution fails closed.
+- `PLATFORM_PROFILE` is the primary operator contract. Per-flag overrides still exist, but supported production posture is profile-driven instead of assembled ad hoc from large flag combinations.
 - `OPERATOR_MODE=real` is required for production-like Kubernetes reconciliation. `mock` and `dry_run` are test-only modes.
 - Managed control-plane routes are not mounted unless `MANAGED_CONTROL_PLANE_ENABLED=true` and `DEPLOYMENT_MODE=enterprise_managed`.
 - Enterprise autonomy features stay disabled by default, including tool synthesis, code interpreter, event-driven hooks, IAM service principals, optimization apply, Router V2, and shared artifacts.
@@ -33,6 +34,7 @@
 - Firecracker and gVisor sandbox providers remain opt-in with `AGENT_CODE_SANDBOX_FIRECRACKER_ENABLED=false` and `AGENT_CODE_SANDBOX_GVISOR_ENABLED=false`; MicroVM enforcement is also opt-in.
 - Generated tool execution is blocked unless `AGENT_DYNAMIC_TOOL_EXECUTION_ENABLED=true`.
 - Connector side effects remain blocked by default with `AGENT_CONNECTOR_WRITE_ENABLED=false` and `AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false`.
+- Connector/MCP/plugin catalog flows remain operator-only and draft-first. Catalog installation does not by itself make a capability production-supported.
 - MCP delegated OAuth and token exchange remain disabled by default with `AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED=false`; user-delegation enforcement is explicit and audit-logged when enabled.
 - GraphRAG production provider controls remain disabled by default with `AGENT_KG_EXTERNAL_PROVIDER_ENABLED=false`, `AGENT_KG_POSTGRES_GRAPH_ENABLED=false`, `AGENT_KG_PGVECTOR_ENABLED=false`, and `AGENT_KG_PGROUTING_ENABLED=false`.
 - Telemetry backpressure stays enabled with `AGENT_TELEMETRY_BACKPRESSURE_ENABLED=true` so tracing bursts cannot overwhelm exporter paths during agent execution spikes.
@@ -87,13 +89,14 @@
 - Agent approvals, traces, replays, and memory workflows must not expose raw prompts by default; sanitized payloads and hashes are the baseline expectation.
 - Agent runs must remain audit-reconstructable end to end: plan, tool call, memory access, approval, and terminal status all require durable timeline evidence.
 - Managed control-plane heartbeats are limited to operational metadata. Prompt bodies, document content, and similar payload fields are rejected before persistence.
+- Managed control-plane and multi-cluster posture are supported only for metadata-safe coordination. Prompt or document replication is outside the supported surface.
 - **Supportability Pack Redaction**: Diagnostic bundles generated via `/admin/support/bundle` are automatically processed through a redaction engine. Regex patterns for `sk-...`, `ADMIN_TOKEN=...`, `JWT_SECRET=...`, and `Bearer ...` are intended to prevent sensitive keys, tokens, or PII from being exported in diagnostic logs or metadata.
 
 ## Managed Data Boundaries
 
 - Local/offline Docker Compose remains the baseline deployment and does not require Kubernetes, operator mode, or managed SaaS services.
 - Kubernetes/operator mode is optional and must be explicitly enabled out-of-band; no local/offline path depends on it.
-- The plugin marketplace works offline with operator-supplied archives. No remote marketplace sync is required by default.
+- The plugin marketplace works offline with operator-supplied archives. Any unsigned or unverified plugin flow must be treated as non-production until checksum/signature policy passes.
 - GPU autoscaling defaults to advisory recommendations and is automatically disabled when distributed runtime is disabled.
 
 ## Network Exposure

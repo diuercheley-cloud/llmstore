@@ -509,6 +509,46 @@
   - logs/*
   is_destructive: false
   docs_url: /docs/operations/script-governance.md
+- path: scripts/apply-platform-profile.sh
+  purpose: Validates and applies the selected platform profile contract.
+  owner: platform-ops
+  category: operations
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: docs/platform/platform-profiles.md
+- path: scripts/validate-platform-profile.sh
+  purpose: Resolves and prints the effective platform profile and overrides.
+  owner: platform-ops
+  category: compliance
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: false
+  outputs: []
+  is_destructive: false
+  docs_url: docs/platform/platform-profiles.md
+- path: scripts/run-production-agentic-e2e.sh
+  purpose: Runs the production agentic E2E suite and writes release artifacts.
+  owner: platform-ops
+  category: testing
+  status: supported
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: false
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - artifacts/e2e/production-agentic/*
+  is_destructive: false
+  docs_url: docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md
 - path: scripts/ga-readiness.sh
   purpose: scripts/ga-readiness.sh Runs the GA readiness gate and writes release evidence.
   owner: platform-ops

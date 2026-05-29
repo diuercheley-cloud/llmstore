@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.x-agentic-platform-complete-hardening] - 2026-05-29
+
+### Added
+- **Profile-driven platform posture**: platform profiles for `appliance`, `agentic-pilot`, `agentic-production`, and `enterprise-distributed` are now part of the release contract and governance surface.
+- **Enterprise agentic control surfaces**: distributed fabric, capability catalog, plugin signature records, and managed control-plane metadata models/routes are now represented in release governance.
+- **Release evidence pack**: `artifacts/releases/v2.x-agentic-platform-complete-hardening/` captures summary, validation, distributed runtime, sandbox, capability catalog, profile posture, E2E posture, and supported surface evidence.
+
+### Changed
+- **Supported surface is stricter and smaller**: distributed runtime, multi-cluster, managed control plane, production sandbox, and capability catalog are no longer treated as placeholders, but they remain opt-in and do not count as production core without passing non-mock gates.
+- **Security posture is profile-first**: production guidance now points operators to `PLATFORM_PROFILE` instead of combinatorial flag assembly.
+- **Production-claim policy is explicit**: code presence, mock-backed E2E, or initialization-only tests are not sufficient evidence for production marketing claims.
+
+### Security
+- **Metadata-safe control plane boundary**: managed control-plane posture is documented as metadata-only and rejects prompt/document payload classes.
+- **Sandbox hardening remains fail-closed**: simulated providers are explicitly blocked when production sandbox controls require attestation or MicroVM isolation.
+
 ## [v2.x-agentic-production-maturity] - 2026-05-28
 
 ### Added

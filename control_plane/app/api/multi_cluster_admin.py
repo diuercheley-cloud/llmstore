@@ -41,6 +41,15 @@ async def list_clusters(
     service = MultiClusterOperationsService(db)
     return await service.list_clusters()
 
+@router.get("/status")
+async def get_multi_cluster_status(
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(get_current_admin)
+):
+    service = MultiClusterOperationsService(db)
+    clusters = await service.list_clusters()
+    return {"status": "operational", "clusters": clusters}
+
 @router.get("/{id}")
 async def get_cluster(
     id: str,

@@ -111,6 +111,29 @@ class SandboxPolicyEngine:
             if pattern.search(decoded):
                 raise SandboxPolicyViolation("Artifact contains secret-like content", {"pattern": pattern.pattern})
 
+    def validate_provider(self, provider_name: str, is_simulated: bool = False) -> None:
+        from app.core.config import get_settings
+        settings = get_settings()
+
+        # 1. Block simulated providers in production if restricted
+        if not settings.agent_sandbox_allow_simulated_provider and is_simulated:
+            raise SandboxPolicyViolation(
+                f"Security Policy Violation: Simulated provider '{provider_name}' is not allowed in production mode.",
+                {"provider": provider_name}
+            )
+
+        # 2. Enforce MicroVM if required
+        if settings.agent_code_sandbox_microvm_required:
+            if provider_name not in ["firecracker", "gvisor"]:
+                raise SandboxPolicyViolation(
+                    f"Security Policy Violation: MicroVM isolation is required. '{provider_name}' is insufficient.",
+                    {"provider": provider_name}
+                )
+
+        # 3. Block mock in production-like environments
+        if provider_name == "mock" and not settings.agent_sandbox_allow_simulated_provider:
+             raise SandboxPolicyViolation("Mock sandbox is blocked in this environment.")
+
     def truncate_output(self, output: str, max_bytes: int) -> tuple[str, bool]:
         encoded = output.encode("utf-8")
         if len(encoded) <= max_bytes:

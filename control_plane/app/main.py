@@ -156,12 +156,15 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     # Agentic Platform Routers
     # Always include readiness for release gates
     from app.api.agent_readiness_admin import router as agent_readiness_admin_router
+    from app.api.agent_capability_catalog_admin import router as capability_catalog_admin_router, plugin_router as plugin_admin_router
     from app.api.admin_readiness import router as admin_readiness_router
     from app.api.agent_execution_admin import router as agent_execution_admin_router
     from app.api.agent_tools_admin import router as agent_tools_admin_router
     from app.api.platform_ga_admin import router as platform_ga_admin_router
     app.include_router(agent_readiness_admin_router)
     app.include_router(admin_readiness_router)
+    app.include_router(capability_catalog_admin_router)
+    app.include_router(plugin_admin_router)
     app.include_router(agent_execution_admin_router)
     app.include_router(agent_tools_admin_router)
     app.include_router(platform_ga_admin_router)

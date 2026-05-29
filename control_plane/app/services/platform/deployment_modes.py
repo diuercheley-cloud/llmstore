@@ -5,6 +5,7 @@ import os
 import yaml
 import logging
 from typing import Dict, Any, List, Tuple, Optional
+from .profile_resolver import ProfileResolver
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ class DeploymentModeService:
     _modes_config: Optional[Dict[str, Any]] = None
 
     def __init__(self, config_path: Optional[str] = None):
+        self.profile_resolver = ProfileResolver()
         if config_path is None:
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
             config_path = os.path.join(base_dir, "config/deployment-modes.yaml")
@@ -204,6 +206,7 @@ class DeploymentModeService:
         Logs a detailed startup banner to standard loggers with information about the deployment mode.
         """
         mode = getattr(settings, "deployment_mode", "appliance")
+        profile = getattr(settings, "platform_profile", "appliance")
         posture = self.get_governance_posture(mode)
         mode_cfg = self.get_mode_config(mode)
         name = mode_cfg.get("name", mode)
@@ -220,6 +223,7 @@ class DeploymentModeService:
                   AGENTIC AI PLATFORM INITIALIZATION
 ======================================================================
   [Deployment Mode]    {name} ({mode})
+  [Platform Profile]   {profile}
   [Governance Posture] {posture}
   
   [Enabled Feature Flags]

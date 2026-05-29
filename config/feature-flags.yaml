@@ -965,6 +965,72 @@
   conflicts: []
   safe_default_reason: External trace export stays off so sanitized observability
     remains local by default.
+- name: AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Simulation is disabled by default so production-like posture cannot silently downgrade to a mock sandbox.
+- name: AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_CODE_INTERPRETER_ENABLED
+  conflicts: []
+  safe_default_reason: Attestation enforcement stays opt-in until operators provision and validate the target sandbox provider.
+- name: AGENT_CONNECTOR_CATALOG_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Catalog workflows remain opt-in until operators define approval and credential governance.
+- name: AGENT_PLUGIN_SUPPLY_CHAIN_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_CONNECTOR_CATALOG_ENABLED
+  conflicts: []
+  safe_default_reason: Plugin provenance enforcement stays disabled until operators provision signing and verification policy.
+- name: AGENT_DISTRIBUTED_RUNTIME_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - DISTRIBUTED_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Distributed agent execution stays disabled until operators validate the enterprise topology and routing posture.
+- name: AGENT_CLUSTER_FEDERATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - MULTI_CLUSTER_ENABLED
+  conflicts: []
+  safe_default_reason: Cross-cluster coordination stays off until metadata boundaries and operational ownership are explicitly defined.
 - name: AGENT_EXECUTION_PLANE_ENABLED
   default: false
   owner: agent-platform
@@ -2782,14 +2848,34 @@
   default: false
   owner: platform-ops
   area: core
-  status: deprecated
-  introduced_in: v1.9.0
-  risk_level: low
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - DISTRIBUTED_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Multi-cluster coordination stays disabled until operators intentionally provision and validate enterprise distributed topology.
+- name: PLATFORM_PROFILE
+  default: appliance
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Default value is safe for standard installations.
-  remove_after: v2.2.0
-  replacement: consolidated_core_v2
+  safe_default_reason: Appliance remains the safest default profile and keeps the local/offline posture intact.
+- name: PLUGIN_RUNTIME_ENABLED
+  default: false
+  owner: platform-ops
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: high
+  dependencies:
+  - AGENT_RUNTIME_ENABLED
+  conflicts: []
+  safe_default_reason: Plugin execution stays disabled until operators explicitly enable the runtime and its sandbox policy.
 - name: OBSERVABILITY_ENABLED
   default: false
   owner: platform-ops
@@ -3781,6 +3867,18 @@
   conflicts: []
   safe_default_reason: MCP Client integrations remain disabled until tools are explicitly
     allowlisted.
+- name: AGENT_MCP_CATALOG_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.x-agentic-platform-complete-hardening
+  risk_level: medium
+  dependencies:
+  - AGENT_MCP_ENABLED
+  - AGENT_CONNECTOR_CATALOG_ENABLED
+  conflicts: []
+  safe_default_reason: MCP catalog governance stays disabled until operators explicitly enable governed registration and review.
 - name: AGENT_MCP_REAL_DISCOVERY_ENABLED
   default: false
   owner: agent-platform

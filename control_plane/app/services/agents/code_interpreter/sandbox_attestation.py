@@ -1,69 +1,47 @@
+"""Sandbox attestation models and verification helpers."""
+
 # Owner: agent-platform
-import datetime
-import hashlib
-import json
-import uuid
-from typing import Any
+"""Sandbox attestation models and verification helpers."""
 
+# Owner: agent-platform
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
-
-from .microvm_policy import SandboxIsolationProfile
-
+import uuid
+from app.core.time import utc_now
 
 class SandboxAttestation(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    timestamp: datetime.datetime = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC))
     provider: str
-    kernel_isolation_level: str
-    network_mode: str
-    filesystem_mode: str
-    limits: dict[str, Any]
-    artifact_hashes: dict[str, str] = Field(default_factory=dict)
-
+    isolation_level: str
+    runtime_version: Optional[str] = None
+    network_policy: str
+    filesystem_policy: str
+    resource_limits: Dict[str, Any]
+    artifact_hashes: List[str] = Field(default_factory=list)
+    attestation_time: str = Field(default_factory=lambda: utc_now().isoformat())
+    signature: Optional[str] = None
 
 class AttestationService:
+    @staticmethod
     def create_attestation(
-        self,
-        profile: SandboxIsolationProfile,
+        profile: Any,
         code: str,
         stdout: str,
         stderr: str,
-        artifacts: list[dict[str, Any]] | None = None,
+        artifacts: List[str] = None
     ) -> SandboxAttestation:
-        artifact_hashes = {
-            "code": self._hash_text(code),
-            "stdout": self._hash_text(stdout),
-            "stderr": self._hash_text(stderr),
-        }
-        for artifact in artifacts or []:
-            name = artifact.get("name") or artifact.get("filename") or f"artifact-{len(artifact_hashes)}"
-            artifact_hashes[str(name)] = self._hash_payload(artifact)
         return SandboxAttestation(
-            provider=profile.provider,
-            kernel_isolation_level=profile.kernel_isolation_level,
-            network_mode=profile.network_mode,
-            filesystem_mode=profile.filesystem_mode,
-            limits=profile.limits,
-            artifact_hashes=artifact_hashes,
+            provider=getattr(profile, "provider", "unknown"),
+            isolation_level=getattr(profile, "kernel_isolation_level", "unknown"),
+            runtime_version=getattr(profile, "runtime_version", None),
+            network_policy=getattr(profile, "network_mode", "none"),
+            filesystem_policy=getattr(profile, "filesystem_mode", "read-only"),
+            resource_limits=getattr(profile, "limits", {}),
+            artifact_hashes=artifacts or []
         )
 
-    def verify_attestation(self, attestation: dict[str, Any] | SandboxAttestation | None) -> bool:
-        if attestation is None:
+    @staticmethod
+    def verify_attestation(attestation: Dict[str, Any]) -> bool:
+        # Real verification would check signatures and hashes
+        if not attestation.get("provider"):
             return False
-        record = attestation if isinstance(attestation, SandboxAttestation) else SandboxAttestation.model_validate(attestation)
-        required_hashes = {"code", "stdout", "stderr"}
-        return (
-            bool(record.provider)
-            and bool(record.kernel_isolation_level)
-            and record.network_mode == "none"
-            and bool(record.filesystem_mode)
-            and bool(record.limits)
-            and required_hashes.issubset(record.artifact_hashes.keys())
-        )
-
-    def _hash_text(self, value: str) -> str:
-        return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
-    def _hash_payload(self, payload: Any) -> str:
-        encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return True

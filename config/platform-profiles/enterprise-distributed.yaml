@@ -1,0 +1,10 @@
+name: enterprise-distributed
+description: Distributed enterprise deployment across multiple clusters.
+flags:
+  AGENT_RUNTIME_ENABLED: true
+  DISTRIBUTED_RUNTIME_ENABLED: true
+  AGENT_DISTRIBUTED_RUNTIME_ENABLED: true
+  MULTI_CLUSTER_ENABLED: true
+  AGENT_CLUSTER_FEDERATION_ENABLED: true
+  MANAGED_CONTROL_PLANE_ENABLED: true
+  AGENT_CODE_SANDBOX_PROVIDER: firecracker

@@ -50,6 +50,11 @@ class MicroVMPolicy:
 
     def resolve_provider_name(self) -> str:
         provider = self.settings.agent_code_sandbox_provider or "docker"
+        
+        # In production-like environments, block 'mock' if simulation is not allowed
+        if provider == "mock" and not self.settings.agent_sandbox_allow_simulated_provider:
+            raise RuntimeError("Mock sandbox is blocked in production-like environments")
+
         if provider == "mock":
             for candidate, enabled in (
                 ("firecracker", self.settings.agent_code_sandbox_firecracker_enabled),
@@ -60,8 +65,10 @@ class MicroVMPolicy:
                 if enabled:
                     provider = candidate
                     break
-        if self.settings.agent_code_sandbox_microvm_required and provider == "docker":
-            raise RuntimeError("Docker sandbox is blocked because MicroVM isolation is required")
+
+        if self.settings.agent_code_sandbox_microvm_required and provider not in MICROVM_PROVIDERS:
+            raise RuntimeError(f"Provider '{provider}' is blocked because MicroVM isolation is required")
+        
         return provider
 
     def ensure_provider_enabled(self, provider: str) -> None:

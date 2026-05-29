@@ -901,3 +901,6 @@ from app.models.agent_mcp_oauth import (
 
 
 
+
+from app.models.managed_control_plane import *
+from app.models.agent_catalog import *

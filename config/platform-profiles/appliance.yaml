@@ -1,0 +1,9 @@
+name: appliance
+description: Safe local-only mode with minimal features.
+flags:
+  ABUSE_DETECTION_ENABLED: true
+  AGENT_RUNTIME_ENABLED: false
+  AGENT_CODE_INTERPRETER_ENABLED: false
+  DISTRIBUTED_RUNTIME_ENABLED: false
+  MULTI_CLUSTER_ENABLED: false
+  MANAGED_CONTROL_PLANE_ENABLED: false
