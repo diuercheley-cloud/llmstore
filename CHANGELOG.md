@@ -1,5 +1,24 @@
 # Changelog
 
+## [v2.x-agentic-production-maturity] - 2026-05-28
+
+### Added
+- **Production-on evidence path**: `make agentic-production-on-readiness` now delegates to the maintained Python validator, seeds the required eval tenant policies, and verifies runtime, worker, memory, KG, eval, receipts, and finalization without relying on dead admin endpoints.
+- **Fail-closed multi-agent arbitration tests**: real arbitration now has explicit regression coverage for critic-review requirement, reviewer-provider failure, conflict handling, and consensus semantics.
+- **Release evidence pack**: production maturity artifacts under `artifacts/releases/v2.x-agentic-production-maturity/` capture validation, supported surface, MCP, graph reasoning, eval provider modes, working-tree posture, and arbitration posture.
+
+### Changed
+- **Multi-agent arbitration is now fail-closed in real mode**: heuristic-only or silent fallback review paths are blocked unless mock arbitration is explicitly enabled for test posture.
+- **Feature-flag governance is current**: eval, KG mock mode, MCP discovery, and multi-agent arbitration flags are now registered and classified against the supported surface.
+- **Supported surface is more honest**: MCP and knowledge-graph capabilities now reference the real runtime flag names and document experimental/opt-in posture accurately.
+- **Working-tree certification is stricter**: the release certification script now checks full `git status --porcelain`, emits a tag-scoped report, and no longer allows staged drift to pass as clean.
+- **Supported-surface audit is non-mutating**: governance validation now fails on missing rollback metadata instead of rewriting the inventory during the check.
+
+### Fixed
+- **Agentic production-on shell wrapper**: no longer aborts on missing `KLEBER_API_KEY` due to `set -u` and no longer increments counters unsafely under `set -e`.
+- **Production-on eval validation**: the validator now uses the actual eval service contract, checks pass/fail counts, and queries receipts by the correct `run_id` field.
+- **Consensus detection**: identical multi-agent answers are no longer mislabeled as conflicts just because more than one candidate responded.
+
 ## [v2.x-agentic-consolidation-hardening] - 2026-05-28
 
 ### Added

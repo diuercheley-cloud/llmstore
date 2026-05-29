@@ -24,7 +24,6 @@ def main():
         print("FAIL: 'capabilities' root key must be a list.")
         sys.exit(1)
 
-    modified = False
     errors = []
     
     # Validation loop
@@ -43,20 +42,9 @@ def main():
         if not cap.get("docs_url"):
             errors.append(f"Capability '{cap_id}' has no 'docs_url' defined.")
             
-        # 4. Rollback Story check - Auto-populate standard rollback posture if missing
+        # 4. Rollback Story check
         if not cap.get("rollback_story"):
-            cap["rollback_story"] = "Standard feature flag deactivation or deployment rollback."
-            modified = True
-
-    if modified:
-        print("INFO: Auto-populating missing rollback stories in supported-surface.yaml...")
-        try:
-            with open(yaml_path, "w", encoding="utf-8") as f:
-                yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-            print("INFO: successfully updated supported-surface.yaml.")
-        except Exception as e:
-            print(f"FAIL: Failed to update supported-surface.yaml: {e}")
-            sys.exit(1)
+            errors.append(f"Capability '{cap_id}' has no 'rollback_story' defined.")
 
     if errors:
         print("\nPolicy Violations Found in supported-surface.yaml:")

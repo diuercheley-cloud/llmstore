@@ -145,6 +145,30 @@
   conflicts: []
   safe_default_reason: Real eval provider calls stay disabled until operators explicitly
     accept provider cost and data-flow risk.
+- name: AGENT_EVAL_ALLOW_MOCK_FOR_PROMOTION
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: high
+  dependencies:
+  - AGENT_EVALS_ENABLED
+  conflicts: []
+  safe_default_reason: Mock-backed eval promotion remains blocked by default so active
+    posture requires real or gateway evidence.
+- name: AGENT_EVAL_GATE_STRICT
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.0-agentic-ai-platform
+  risk_level: medium
+  dependencies:
+  - AGENT_EVALS_ENABLED
+  conflicts: []
+  safe_default_reason: Strict eval gate stays enabled by default to keep safety failures
+    non-overridable.
 - name: AGENT_PROMOTION_REQUIRES_EVALS
   default: true
   owner: agent-platform
@@ -510,6 +534,42 @@
   conflicts: []
   safe_default_reason: Multi-agent coordination remains disabled until bounded collaboration
     policies are approved.
+- name: AGENT_MULTI_AGENT_ARBITRATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: medium
+  dependencies:
+  - AGENT_MULTI_AGENT_ENABLED
+  conflicts: []
+  safe_default_reason: Arbitration remains disabled until operators explicitly enable
+    governed multi-agent resolution flows.
+- name: AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MULTI_AGENT_ARBITRATION_ENABLED
+  conflicts: []
+  safe_default_reason: Real critic review remains off until operators intentionally
+    provision model-backed arbitration evidence.
+- name: AGENT_MULTI_AGENT_MOCK_ARBITRATION
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MULTI_AGENT_ARBITRATION_ENABLED
+  conflicts: []
+  safe_default_reason: Mock arbitration is test-only and disabled by default so release
+    posture cannot silently simulate consensus.
 - name: AGENT_STUDIO_ENABLED
   default: false
   owner: agent-platform
@@ -3228,6 +3288,18 @@
   conflicts: []
   safe_default_reason: Knowledge graph disabled by default until explicitly enabled
     by operator.
+- name: AGENT_KG_MOCK_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_KNOWLEDGE_GRAPH_ENABLED
+  conflicts: []
+  safe_default_reason: Mock graph pathfinding is test-only and disabled by default
+    so production posture cannot silently replace real traversal.
 - name: AGENT_GRAPH_RAG_ENABLED
   default: false
   owner: agent-platform
@@ -3563,6 +3635,19 @@
   conflicts: []
   safe_default_reason: MCP interoperability remains disabled until administrators
     allowlist and approve each tenant integration.
+- name: AGENT_MCP_MOCK_MODE
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  - AGENT_MCP_CLIENT_ENABLED
+  conflicts: []
+  safe_default_reason: Mock MCP discovery is test-only and disabled by default so
+    runtime cannot silently replace real server discovery.
 - name: AGENT_COGNITIVE_MEMORY_ENABLED
   default: false
   owner: agent-platform
@@ -3696,6 +3781,19 @@
   conflicts: []
   safe_default_reason: MCP Client integrations remain disabled until tools are explicitly
     allowlisted.
+- name: AGENT_MCP_REAL_DISCOVERY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: high
+  dependencies:
+  - AGENT_MCP_ENABLED
+  - AGENT_MCP_CLIENT_ENABLED
+  conflicts: []
+  safe_default_reason: Real MCP discovery remains disabled until operators intentionally
+    enable external protocol negotiation.
 - name: AGENT_MCP_EXTERNAL_NETWORK_ENABLED
   default: false
   owner: agent-platform

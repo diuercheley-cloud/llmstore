@@ -598,6 +598,13 @@ capabilities:
     - agent_graph_rag_enabled
     - agent_graph_write_enabled
     - agent_graph_external_db_enabled
+    - agent_kg_mock_mode
+    - agent_kg_external_provider_enabled
+    - agent_kg_write_enabled
+    - agent_kg_adjacency_cache_enabled
+    - agent_kg_postgres_graph_enabled
+    - agent_kg_pgvector_enabled
+    - agent_kg_pgrouting_enabled
     associated_services:
     - knowledge_graph
     - graph_store
@@ -607,7 +614,7 @@ capabilities:
     - graph_extractor
     - graph_models
     since_version: v2.1.0-agentic-autonomy
-    limitations: Explicit mock mode flag (agent_kg_mock_mode) for test/staging only. Real providers exist (internal_sql, postgres, neo4j, falkordb). Disabled by default.
+    limitations: Explicit mock mode flag (agent_kg_mock_mode) is test-only. Real pathfinding is implemented through internal SQL today; external providers and Postgres acceleration remain opt-in and beta.
     test_coverage: 67%
     rollback_story: Disable graph writes and revert to vector-only retrieval.
 
@@ -1169,11 +1176,15 @@ capabilities:
     support_level: development
     docs_url: docs/agents/multi-agent-runtime.md
     feature_flag: agent_multi_agent_enabled
+    additional_flags:
+    - agent_multi_agent_arbitration_enabled
+    - agent_multi_agent_critic_review_enabled
+    - agent_multi_agent_mock_arbitration
     associated_services:
     - multi_agent_governance
     - governance_policy
     since_version: v2.0.0-agentic-ai-platform
-    limitations: Delegation and shared-memory governance defined but multi-agent execution disabled by default. Mock arbitration path exists.
+    limitations: Delegation and shared-memory governance are implemented, but runtime remains experimental. Real arbitration requires critic review; mock arbitration is test-only and disabled by default.
     test_coverage: 60%
     rollback_story: Standard feature flag deactivation or deployment rollback.
 
@@ -1188,6 +1199,8 @@ capabilities:
     feature_flag: agent_multi_agent_enabled
     additional_flags:
     - agent_shared_workspace_enabled
+    - agent_multi_agent_arbitration_enabled
+    - agent_multi_agent_critic_review_enabled
     associated_services:
     - team_registry
     - hierarchical_runtime
@@ -1197,7 +1210,7 @@ capabilities:
     - arbitration_engine
     - specialist_routing_runtime
     since_version: v2.0.0-agentic-ai-platform
-    limitations: Hierarchical, debate, and dynamic topologies available behind flags. Mock arbitration mode exists. Disabled by default.
+    limitations: Hierarchical, debate, and dynamic topologies are behind flags and still experimental. Arbitration is fail-closed in real mode and mock arbitration is test-only.
     test_coverage: 64%
     rollback_story: Standard feature flag deactivation or deployment rollback.
 
@@ -1242,18 +1255,19 @@ capabilities:
     owner: agent-platform
     support_level: development
     docs_url: docs/agents/mcp.md
-    feature_flag: AGENT_MCP_ENABLED
+    feature_flag: agent_mcp_enabled
     additional_flags:
-    - AGENT_MCP_CLIENT_ENABLED
-    - AGENT_MCP_SERVER_ENABLED
-    - AGENT_MCP_EXTERNAL_NETWORK_ENABLED
-    - AGENT_MCP_SAMPLING_ENABLED
-    - AGENT_MCP_OAUTH_TOKEN_EXCHANGE_ENABLED
-    - AGENT_MCP_USER_DELEGATION_REQUIRED
-    - AGENT_MCP_GLOBAL_CREDENTIALS_ALLOWED
-    - AGENT_MCP_MOCK_MODE
+    - agent_mcp_client_enabled
+    - agent_mcp_server_enabled
+    - agent_mcp_external_network_enabled
+    - agent_mcp_sampling_enabled
+    - agent_mcp_oauth_token_exchange_enabled
+    - agent_mcp_user_delegation_required
+    - agent_mcp_global_credentials_allowed
+    - agent_mcp_mock_mode
+    - agent_mcp_real_discovery_enabled
     since_version: v2.1.1-agentic-scale-hardening
-    limitations: Heavy mock usage — mock discovery returns static catalog. No dedicated test files found. External network, sampling, delegated OAuth disabled by default.
+    limitations: Real discovery and tool execution paths exist, but the capability remains experimental. Mock discovery is explicit test-only mode; external network, sampling, and delegated OAuth remain disabled by default.
     test_coverage: 55%
     rollback_story: Disable MCP flags and continue using internal tool adapters only.
     api_prefix: /admin/agents/mcp

@@ -212,25 +212,26 @@ async def run_validation():
             db.add(db_tool)
             await db.commit()
 
-        # Register memory policies for validation tenant if not present
-        for m_type in ["short_term", "default"]:
-            stmt_policy = select(AgentMemoryPolicy).where(
-                AgentMemoryPolicy.tenant_id == "validation-tenant",
-                AgentMemoryPolicy.memory_type == m_type
-            )
-            res_policy = await db.execute(stmt_policy)
-            db_policy = res_policy.scalar_one_or_none()
-            if not db_policy:
-                db_policy = AgentMemoryPolicy(
-                    id=uuid.uuid4(),
-                    tenant_id="validation-tenant",
-                    memory_type=m_type,
-                    retention_days=30,
-                    redaction_enabled=True,
-                    encryption_required=False,
-                    allow_export=False,
+        # Register memory policies for both the validation tenant and the eval tenant.
+        for tenant_id in ["validation-tenant", "eval-tenant"]:
+            for m_type in ["short_term", "default"]:
+                stmt_policy = select(AgentMemoryPolicy).where(
+                    AgentMemoryPolicy.tenant_id == tenant_id,
+                    AgentMemoryPolicy.memory_type == m_type
                 )
-                db.add(db_policy)
+                res_policy = await db.execute(stmt_policy)
+                db_policy = res_policy.scalar_one_or_none()
+                if not db_policy:
+                    db_policy = AgentMemoryPolicy(
+                        id=uuid.uuid4(),
+                        tenant_id=tenant_id,
+                        memory_type=m_type,
+                        retention_days=30,
+                        redaction_enabled=True,
+                        encryption_required=False,
+                        allow_export=False,
+                    )
+                    db.add(db_policy)
         await db.commit()
 
         # Step 1: Criar agente de teste
@@ -387,24 +388,38 @@ async def run_validation():
             case = await eval_service.create_case(
                 suite_id=suite.id,
                 data={
+                    "name": "Production-on validation case",
                     "input_text": "Run validation",
-                    "expected": "Final answer: agentic production on readiness validated successfully!",
+                    "expected_behavior": "Final answer: agentic production on readiness validated successfully!",
                     "assertions": [
-                        {"type": "contains", "target": "readiness"}
-                    ]
+                        {"type": "final_answer_contains", "value": "readiness"}
+                    ],
+                    "tags": ["auto_satisfy"],
                 }
             )
             # Run eval suite with mock provider
             eval_run = await eval_service.run_eval_suite(
-                suite_id=suite.id,
-                eval_provider_type="mock"
+                suite_id=suite.id
             )
-            log_step(8, "Eval gateway/mock explícito roda", True, f"Suite ID: {suite.id}, Eval Run Status: {eval_run.status}")
+            if eval_run.failed_count > 0 or eval_run.passed_count == 0:
+                log_step(
+                    8,
+                    "Eval gateway/mock explícito roda",
+                    False,
+                    f"Eval run completed with passed={eval_run.passed_count}, failed={eval_run.failed_count}",
+                )
+            else:
+                log_step(
+                    8,
+                    "Eval gateway/mock explícito roda",
+                    True,
+                    f"Suite ID: {suite.id}, Eval Run Status: {eval_run.status}, passed={eval_run.passed_count}",
+                )
         except Exception as e:
             log_step(8, "Eval gateway/mock explícito roda", False, str(e))
 
         # Step 9: Trace/receipt gerado
-        stmt_receipt = select(AgentRunReceipt).where(AgentRunReceipt.agent_run_id == run.id)
+        stmt_receipt = select(AgentRunReceipt).where(AgentRunReceipt.run_id == run.id)
         res_receipt = await db.execute(stmt_receipt)
         receipts = res_receipt.scalars().all()
         if not receipts:

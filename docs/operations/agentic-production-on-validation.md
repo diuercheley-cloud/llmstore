@@ -36,7 +36,6 @@ Key flags:
 | `AGENT_KNOWLEDGE_GRAPH_ENABLED` | `true` | KG queries work |
 | `AGENT_REASONING_LOOP_ENABLED` | `true` | Reasoning loop active |
 | `AGENT_REAL_LLM_ENABLED` | `false` | No real provider calls |
-| `AGENT_PAID_PROVIDERS_ENABLED` | `false` | No paid provider calls |
 | `AGENT_DESTRUCTIVE_TOOLS_ENABLED` | `false` | Destructive tools blocked |
 | `AGENT_MCP_EXTERNAL_NETWORK_ENABLED` | `false` | External network blocked |
 | `AGENT_TOOL_SANDBOX_ENABLED` | `true` | Sandbox enforced |
@@ -101,7 +100,7 @@ bash scripts/validate-agentic-production-on.sh
 3. Expected: FAIL (check 6)
 
 ### TC-5: missing receipts fail
-1. Disable tracing (`AGENT_TRACE_ENABLED=false`)
+1. Break observability/receipt generation for the run
 2. Run `make agentic-production-on-readiness`
 3. Expected: FAIL (check 10)
 

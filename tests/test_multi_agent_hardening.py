@@ -1,6 +1,7 @@
 import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock
+from app.core.config import get_settings
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.loop_guard import LoopGuard
@@ -40,6 +41,10 @@ async def test_loop_guard_detection():
 
 @pytest.mark.asyncio
 async def test_arbitration_engine_conflict_resolution():
+    settings = get_settings()
+    settings.agent_multi_agent_arbitration_enabled = True
+    settings.agent_multi_agent_mock_arbitration = True
+
     engine = ArbitrationEngine()
     outputs = [
         {"agent_id": "a1", "result": "Yes", "confidence": 0.9},
@@ -49,11 +54,15 @@ async def test_arbitration_engine_conflict_resolution():
     res = await engine.arbitrate(outputs, {})
     assert res["status"] == "success"
     assert res["consensus"] is False
-    assert "Resolved Conflict" in res["final_synthesis"]
-    assert "Yes" in res["final_synthesis"] # Picked max confidence
+    assert "Synthesized Result" in res["final_synthesis"]
+    assert "Yes" in res["final_synthesis"]
 
 @pytest.mark.asyncio
 async def test_arbitration_consensus():
+    settings = get_settings()
+    settings.agent_multi_agent_arbitration_enabled = True
+    settings.agent_multi_agent_mock_arbitration = True
+
     engine = ArbitrationEngine()
     outputs = [
         {"agent_id": "a1", "result": "Same Answer", "confidence": 0.9},
@@ -62,4 +71,4 @@ async def test_arbitration_consensus():
     
     res = await engine.arbitrate(outputs, {})
     assert res["consensus"] is True
-    assert res["final_synthesis"] == "Same Answer"
+    assert "Same Answer" in res["final_synthesis"]

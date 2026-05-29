@@ -1,23 +1,30 @@
 #!/bin/bash
 # working-tree-certification.sh — Verifies that the working tree is clean and classified.
 
-set -e
+set -euo pipefail
+
+TAG="${1:-current}"
+REPORT_DIR="artifacts/releases/${TAG}"
+REPORT_FILE="${REPORT_DIR}/working-tree-certification.md"
 
 echo "🔍 Starting Working Tree Certification..."
 
-# 1. Check for untracked files
-UNTRACKED=$(git ls-files --others --exclude-standard)
-if [ -n "$UNTRACKED" ]; then
-    echo "❌ FAILED: Untracked files found in working tree:"
-    echo "$UNTRACKED"
-    echo "Every file must be either committed, ignored via .gitignore, or classified in working-tree-audit.md"
-    exit 1
-fi
+mkdir -p "$REPORT_DIR"
 
-# 2. Check for unstaged changes
-if ! git diff --quiet; then
-    echo "❌ FAILED: Unstaged changes found in working tree."
-    echo "Please stage or stash your changes before certification."
+STATUS="$(git status --porcelain)"
+if [ -n "$STATUS" ]; then
+    {
+        echo "# Working Tree Certification"
+        echo
+        echo "**Status:** FAIL"
+        echo
+        echo "## Findings"
+        echo '```'
+        echo "$STATUS"
+        echo '```'
+    } > "$REPORT_FILE"
+    echo "❌ FAILED: Working tree is not clean."
+    echo "$STATUS"
     exit 1
 fi
 
@@ -27,6 +34,16 @@ if [ ! -f "$AUDIT_FILE" ]; then
     echo "❌ FAILED: Working tree audit report not found at $AUDIT_FILE"
     exit 1
 fi
+
+{
+    echo "# Working Tree Certification"
+    echo
+    echo "**Status:** PASS"
+    echo
+    echo "- Tag: ${TAG}"
+    echo "- Audit file: ${AUDIT_FILE}"
+    echo "- Git status: clean"
+} > "$REPORT_FILE"
 
 echo "✅ SUCCESS: Working tree is clean and certified."
 echo "Hardened release line can be declared."

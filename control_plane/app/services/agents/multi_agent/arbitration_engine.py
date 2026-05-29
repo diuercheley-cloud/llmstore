@@ -12,6 +12,10 @@ from app.models.agents import AgentDefinition, AgentRun
 
 logger = logging.getLogger(__name__)
 
+
+class ArbitrationExecutionError(RuntimeError):
+    """Raised when real arbitration cannot complete without falling back."""
+
 class CandidateResponse(BaseModel):
     agent_id: str
     content: str
@@ -69,6 +73,12 @@ class ArbitrationEngine:
         self.db = db
         self.settings = get_settings()
 
+    def _real_arbitration_required(self) -> bool:
+        return bool(
+            self.settings.agent_multi_agent_arbitration_enabled
+            and not self.settings.agent_multi_agent_mock_arbitration
+        )
+
     async def arbitrate(self, outputs: List[Dict[str, Any] | CandidateResponse], context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Synthesizes multiple agent outputs into a single coherent result.
@@ -80,6 +90,11 @@ class ArbitrationEngine:
         # Heuristic-only / disabled in production check
         if not enabled and not mock_mode:
             raise PermissionError("Multi-agent arbitration is disabled by feature flag")
+        if enabled and not mock_mode and not self.settings.agent_multi_agent_critic_review_enabled:
+            raise ArbitrationExecutionError(
+                "Real multi-agent arbitration requires AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED=true. "
+                "Heuristic-only arbitration is not allowed in real mode."
+            )
 
         # 2. Candidate Parsing
         candidates: List[CandidateResponse] = []
@@ -106,7 +121,7 @@ class ArbitrationEngine:
 
         # Conflict Detection
         contents = [c.content.strip() for c in candidates]
-        is_conflict = len(set(contents)) > 1 or len(candidates) > 1
+        is_conflict = len(set(contents)) > 1
 
         case = ArbitrationCase(
             case_id=case_id,
@@ -227,40 +242,13 @@ class ArbitrationEngine:
                             critic_reviews.append(review)
                         except Exception as e:
                             logger.error(f"Error in LLM critic review call: {e}")
-                            # Fallback review
-                            has_evidence = bool(cand.evidence or cand.tool_calls)
-                            review = CriticReview(
-                                reviewer_id=critic_id,
-                                correctness=0.8 if cand.safety_passed else 0.0,
-                                completeness=0.8,
-                                tool_evidence=1.0 if has_evidence else 0.0,
-                                policy_compliance=1.0,
-                                cost=1.0,
-                                latency=1.0,
-                                confidence=cand.confidence,
-                                safety=1.0 if cand.safety_passed else 0.0,
-                                reasoning=f"Fallback review due to LLM error: {e}",
-                                recommendation="approve" if (cand.safety_passed and has_evidence) else "reject"
-                            )
-                            critic_reviews.append(review)
+                            raise ArbitrationExecutionError(
+                                "Real critic review failed; silent heuristic fallback is blocked."
+                            ) from e
                 else:
-                    # Critic review enabled false (but arbitration enabled) -> use properties heuristic
-                    for cand in candidates:
-                        has_evidence = bool(cand.evidence or cand.tool_calls)
-                        review = CriticReview(
-                            reviewer_id=critic_id,
-                            correctness=0.8 if cand.safety_passed else 0.0,
-                            completeness=0.8,
-                            tool_evidence=1.0 if has_evidence else 0.0,
-                            policy_compliance=1.0,
-                            cost=1.0,
-                            latency=1.0,
-                            confidence=cand.confidence,
-                            safety=1.0 if cand.safety_passed else 0.0,
-                            reasoning="Local review fallback.",
-                            recommendation="approve" if (cand.safety_passed and has_evidence) else "reject"
-                        )
-                        critic_reviews.append(review)
+                    raise ArbitrationExecutionError(
+                        "Real multi-agent arbitration requires critic review; local review fallback is blocked."
+                    )
 
         case.critic_reviews = critic_reviews
 
@@ -445,9 +433,13 @@ class ArbitrationEngine:
                             rejection = True
                     except Exception as e:
                         logger.error(f"Error in LLM critic review check: {e}")
-                        final_score *= 0.95
+                        raise ArbitrationExecutionError(
+                            "Final critic review failed; silent fallback is blocked in real mode."
+                        ) from e
                 else:
-                    final_score *= 0.95
+                    raise ArbitrationExecutionError(
+                        "Final critic review requires AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED=true in real mode."
+                    )
 
         if rejection or final_score < 0.5:
             return f"{synthesis}\n\n[Final Review: REJECTED with score {final_score:.2f}]", final_score

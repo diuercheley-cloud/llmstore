@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 from app.core.config import get_settings
 from app.services.agents.multi_agent.arbitration_engine import (
     ArbitrationEngine,
+    ArbitrationExecutionError,
     CandidateResponse,
     CriticReview,
     ArbitrationDecision,
@@ -112,6 +113,38 @@ async def test_heuristic_only_disabled_in_production():
     with pytest.raises(PermissionError) as exc_info:
         await engine.arbitrate(candidates, {"goal": "test"})
     assert "Multi-agent arbitration is disabled by feature flag" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_real_arbitration_requires_critic_review_flag():
+    settings = get_settings()
+    settings.agent_multi_agent_arbitration_enabled = True
+    settings.agent_multi_agent_mock_arbitration = False
+    settings.agent_multi_agent_critic_review_enabled = False
+
+    engine = ArbitrationEngine()
+    with pytest.raises(ArbitrationExecutionError, match="requires AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED=true"):
+        await engine.arbitrate([CandidateResponse(agent_id="a1", content="res")], {"goal": "test"})
+
+
+@pytest.mark.asyncio
+async def test_real_arbitration_blocks_silent_fallback_on_llm_error():
+    settings = get_settings()
+    settings.agent_multi_agent_arbitration_enabled = True
+    settings.agent_multi_agent_mock_arbitration = False
+    settings.agent_multi_agent_critic_review_enabled = True
+
+    mock_provider = MagicMock()
+    from unittest.mock import AsyncMock
+    mock_provider.generate = AsyncMock(side_effect=RuntimeError("provider down"))
+
+    with patch("app.services.agents.multi_agent.arbitration_engine.get_agent_llm_provider", return_value=mock_provider):
+        engine = ArbitrationEngine()
+        with pytest.raises(ArbitrationExecutionError, match="silent heuristic fallback is blocked"):
+            await engine.arbitrate(
+                [CandidateResponse(agent_id="agent-1", content="Optimized query", evidence="Executed EXPLAIN ANALYZE", confidence=0.9)],
+                {"goal": "Optimize query", "critics": ["critic-1"], "tenant_id": "test-tenant"},
+            )
 
 @pytest.mark.asyncio
 async def test_safety_failure_loses():

@@ -6,11 +6,24 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
+if [[ -f "${ROOT_DIR}/.venv/bin/python3" ]]; then
+  PYTHON_EXE="${ROOT_DIR}/.venv/bin/python3"
+elif [[ -f "${ROOT_DIR}/venv/bin/python3" ]]; then
+  PYTHON_EXE="${ROOT_DIR}/venv/bin/python3"
+else
+  PYTHON_EXE="python3"
+fi
+
+# The Python validator is the maintained production-on path. It validates the
+# runtime internally and writes the canonical readiness artifact.
+PYTHONPATH=control_plane "${PYTHON_EXE}" scripts/validate_agentic_production_on.py
+exit $?
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 BASE_URL="${KLEBER_BASE_URL:-http://localhost:18080}"
-API_KEY="${KLEBER_API_KEY}"
+API_KEY="${KLEBER_API_KEY:-}"
 ARTIFACT_DIR="artifacts/readiness"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 PASS=0
@@ -36,8 +49,8 @@ check() {
   local name="$1" status="$2" detail="$3"
   RESULTS+=("${status}|${name}|${detail}")
   case "${status}" in
-    PASS) ((PASS++)) ;;
-    FAIL) ((FAIL++)) ;;
+    PASS) PASS=$((PASS + 1)) ;;
+    FAIL) FAIL=$((FAIL + 1)) ;;
   esac
   printf "  %-8s %-55s %s\n" "${status}" "${name}" "${detail}"
 }
@@ -59,6 +72,11 @@ echo "  Runtime live — no safe-default pass-through"
 echo "  ${TIMESTAMP}"
 echo "==============================================================="
 echo ""
+
+if [ -z "${API_KEY}" ]; then
+  echo "FAIL: No admin API key available. Set KLEBER_API_KEY or ADMIN_TOKEN in .env/.env.local."
+  exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # Check 1: Profile flag validation — runtime must be ON

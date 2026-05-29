@@ -23,23 +23,18 @@ flags:
   AGENT_REASONING_LOOP_ENABLED: true
   AGENT_MEMORY_ENABLED: true
   AGENT_MEMORY_WRITE_ENABLED: true
+  AGENT_MEMORY_CONSENT_REQUIRED: false
 
   # LLM — mock/gateway only, no real providers
   AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION: true
   AGENT_EXECUTOR_MOCK_MODE: true
   AGENT_REAL_LLM_ENABLED: false
-  AGENT_REAL_EVAL_ENABLED: false
 
   # Safety Guards — enforced, not relaxed
   AGENT_DESTRUCTIVE_TOOLS_ENABLED: false
   AGENT_MCP_EXTERNAL_NETWORK_ENABLED: false
-  AGENT_PAID_PROVIDERS_ENABLED: false
   AGENT_TOOL_SANDBOX_ENABLED: true
   AGENT_HUMAN_APPROVAL_ENABLED: true
-
-  # Tracing & Receipts — required for validation
-  AGENT_TRACE_ENABLED: true
-  AGENT_RECEIPT_ENABLED: true
 
   # Governance — eval gate required
   AGENT_PROMOTION_REQUIRES_EVALS: true
