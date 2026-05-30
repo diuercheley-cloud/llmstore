@@ -336,36 +336,32 @@ async def run_validation():
             log_step(3, "Worker processa job (heartbeat)", False, "Heartbeat not registered")
 
         # Step 3: Worker processa job
-        if is_offline or "sqlite" in settings.database_url:
-            print("Check 3: Worker processa job - SKIPPED (SQLite/Mock Mode)")
-            log_step(3, "Worker processa job", True, "Skipped for SQLite/Mock validation")
-        else:
-            try:
-                # Process job steps (we run multiple times because our response sequence has 4 steps)
-                processed_steps = 0
-                for i in range(5):
-                    try:
-                        processed = await worker.run_once()
-                        if processed:
-                            processed_steps += 1
-                    except Exception as e:
-                        print(f"DEBUG: worker.run_once() failed at iteration {i}: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        raise
-                    await asyncio.sleep(0.1)
+        try:
+            # Process job steps (we run multiple times because our response sequence has 4 steps)
+            processed_steps = 0
+            for i in range(5):
+                try:
+                    processed = await worker.run_once()
+                    if processed:
+                        processed_steps += 1
+                except Exception as e:
+                    print(f"DEBUG: worker.run_once() failed at iteration {i}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    raise
+                await asyncio.sleep(0.1)
 
-                await worker.stop()
-                await db.refresh(run)
-                await db.refresh(job)
+            await worker.stop()
+            await db.refresh(run)
+            await db.refresh(job)
 
-                if job.queue_status != "completed" or run.status != "completed":
-                    log_step(3, "Worker processa job", False, f"Job status: {job.queue_status}, Run status: {run.status}")
-                else:
-                    log_step(3, "Worker processa job", True, f"Job finished in status '{job.queue_status}'")
-            except Exception as e:
-                await worker.stop()
-                log_step(3, "Worker processa job", False, str(e))
+            if job.queue_status != "completed" or run.status != "completed":
+                log_step(3, "Worker processa job", False, f"Job status: {job.queue_status}, Run status: {run.status}")
+            else:
+                log_step(3, "Worker processa job", True, f"Job finished in status '{job.queue_status}'")
+        except Exception as e:
+            await worker.stop()
+            log_step(3, "Worker processa job", False, str(e))
 
         # Step 4: LLM provider mock/gateway explícito
         # Provider must be resolved correctly to the Mock LLM Provider

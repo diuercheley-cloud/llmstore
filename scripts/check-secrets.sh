@@ -159,6 +159,14 @@ is_allowed_fixture() {
     local path="$1"
     local file="$2"
 
+    # Allow test files under control_plane/tests/ with explicit fixture markers
+    if [[ "$path" == control_plane/tests/* ]]; then
+        if grep -qF "FAKE TEST KEY - DO NOT USE" "$file" 2>/dev/null || grep -qF "FAKE SECRET FOR TESTS ONLY" "$file" 2>/dev/null; then
+            return 0
+        fi
+        return 1
+    fi
+
     if [[ "$path" == releases/* ]] || [[ "$path" == docs/* ]] || [[ "$path" == control_plane/* ]]; then
         return 1
     fi
