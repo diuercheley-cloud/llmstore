@@ -95,22 +95,27 @@ async def test_production_requires_eval_baseline(session):
     # Try to activate without baseline - should fail if settings enforce it
     from app.core.config import get_settings
     settings = get_settings()
+    orig = settings.agent_eval_allow_mock_for_promotion
+    settings.agent_eval_allow_mock_for_promotion = True
     
-    with pytest.raises(ValueError, match="Evaluation baseline is missing"):
+    try:
+        with pytest.raises(ValueError, match="Evaluation baseline is missing"):
+            await activate_agent(session, entry.id)
+            
+        # Create a baseline
+        suite = await AgentEvalService(session).create_suite(entry.id, "Baseline Suite")
+        await AgentEvalService(session).create_case(suite.id, {"name": "Test", "input_text": "test", "assertions": []})
+        run = await AgentEvalService(session).run_eval_suite(suite.id)
+        await AgentEvalService(session).set_baseline(entry.id, run.id, "admin")
+        
+        # Run Promotion Gate Check
+        from app.services.agents.eval_gate import EvalGateService
+        await EvalGateService(session).evaluate_promotion(entry.id, run.id)
+        
+        # Now try to activate - should succeed
         await activate_agent(session, entry.id)
         
-    # Create a baseline
-    suite = await AgentEvalService(session).create_suite(entry.id, "Baseline Suite")
-    await AgentEvalService(session).create_case(suite.id, {"name": "Test", "input_text": "test", "assertions": []})
-    run = await AgentEvalService(session).run_eval_suite(suite.id)
-    await AgentEvalService(session).set_baseline(entry.id, run.id, "admin")
-    
-    # Run Promotion Gate Check
-    from app.services.agents.eval_gate import EvalGateService
-    await EvalGateService(session).evaluate_promotion(entry.id, run.id)
-    
-    # Now try to activate - should succeed
-    await activate_agent(session, entry.id)
-    
-    await session.refresh(entry)
-    assert entry.status == "active"
+        await session.refresh(entry)
+        assert entry.status == "active"
+    finally:
+        settings.agent_eval_allow_mock_for_promotion = orig

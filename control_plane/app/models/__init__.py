@@ -806,6 +806,14 @@ __all__ = [
     "AgentSandboxSession",
     "AgentSandboxArtifact",
     "AgentSandboxPolicyEvent",
+    "AgentDebugSession",
+    "AgentFlowDebugSession",
+    "AgentFlowDebugEvent",
+    "AgentRunSnapshot",
+    "AgentDebugReplay",
+    "AgentDebugStateEdit",
+    "AgentBreakpoint",
+    "AgentDebugStepEvent",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 
@@ -850,13 +858,21 @@ from app.models.multi_agent import (
     AgentSharedWorkspace,
     AgentTeamTrace
 )
+from app.models.agent_debugger import (
+    AgentRunSnapshot,
+    AgentDebugReplay,
+    AgentDebugStateEdit,
+    AgentDebugSession,
+    AgentBreakpoint,
+    AgentDebugStepEvent,
+)
 from app.models.agent_studio import (
     AgentFlowDefinition,
     AgentFlowVersion,
     AgentFlowNode,
     AgentFlowEdge,
-    AgentDebugSession,
-    AgentDebugEvent
+    AgentFlowDebugSession,
+    AgentFlowDebugEvent,
 )
 from app.models.connector_auth import (
     ConnectorOAuthClient,
@@ -925,6 +941,7 @@ from app.models.multimodal import (
     MultimodalRequest,
     MultimodalUsageEvent,
     MultimodalPolicyEvent,
+    MultimodalAnalysisEvent,
 )
 
 from app.models.web_search import (
@@ -943,3 +960,18 @@ from app.models.mlops import (
     MLModelLineage,
     MLEvalArtifact,
 )
+
+from app.models.agent_notifications import (
+    NotificationChannel,
+    NotificationPreference,
+    PushDevice,
+    NotificationEvent,
+)
+
+from app.models.agent_environments import (
+    AgentEnvironment,
+    AgentEnvironmentVersion,
+    AgentPromotionRequest,
+)
+
+

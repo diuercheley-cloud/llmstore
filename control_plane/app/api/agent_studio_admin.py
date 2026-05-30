@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.session import get_db_session
-from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion, AgentDebugSession, AgentDebugEvent
+from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion, AgentFlowDebugSession, AgentFlowDebugEvent
 from app.services.agents.studio.flow_validator import FlowValidator
 from app.services.agents.studio.flow_compiler import FlowCompiler
 
@@ -101,7 +101,7 @@ async def compile_flow(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
 
 @router.get("/debug/{run_id}")
 async def get_debug_session(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
-    stmt = select(AgentDebugSession).where(AgentDebugSession.run_id == run_id)
+    stmt = select(AgentFlowDebugSession).where(AgentFlowDebugSession.run_id == run_id)
     res = await db.execute(stmt)
     session = res.scalar_one_or_none()
     if not session:

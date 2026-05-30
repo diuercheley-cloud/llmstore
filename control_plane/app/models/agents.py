@@ -678,6 +678,7 @@ class AgentPlan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     tasks = relationship("AgentTask", back_populates="plan", cascade="all, delete-orphan")
+    cost_estimates = relationship("AgentPlanCostEstimate", back_populates="plan", cascade="all, delete-orphan")
 
 
 class AgentTask(Base):
@@ -1406,4 +1407,36 @@ class AgentA2ARegistration(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     agent = relationship("AgentDefinition")
+
+
+class AgentStepCacheEntry(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_step_cache_entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    step_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    input_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    output_data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    model_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    tool_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class AgentPlanCostEstimate(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_plan_cost_estimates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plan_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_plans.id", ondelete="CASCADE"), nullable=False, index=True)
+    estimated_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_tool_cost_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    estimated_runtime_seconds: Mapped[float] = mapped_column(Float, default=0.0)
+    estimated_approval_cost_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    total_estimated_cost_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    plan = relationship("AgentPlan", back_populates="cost_estimates")
 

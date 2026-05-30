@@ -28,6 +28,8 @@ class MultimodalAsset(Base):
     provenance: Mapped[str | None] = mapped_column(
         String(256), nullable=True
     )  # e.g., "generated_mock", "uploaded"
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, default="default", index=True)
+    redaction_status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
     exif_sanitized: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -128,3 +130,31 @@ class MultimodalPolicyEvent(Base):
     )
 
     client = relationship("Client")
+
+
+class MultimodalAnalysisEvent(Base):
+    __tablename__ = "multimodal_analysis_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        sa.UUID(as_uuid=True),
+        ForeignKey("clients.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, default="default", index=True)
+    asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.UUID(as_uuid=True),
+        ForeignKey("multimodal_assets.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    analysis_type: Mapped[str] = mapped_column(String(64), nullable=False) # e.g. "vision", "document_vision", "speech-to-text"
+    results: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
+
+    client = relationship("Client")
+    asset = relationship("MultimodalAsset")

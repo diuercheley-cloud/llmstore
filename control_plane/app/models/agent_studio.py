@@ -59,8 +59,8 @@ class AgentFlowEdge(Base):
 
     flow_version = relationship("AgentFlowVersion", back_populates="edges")
 
-class AgentDebugSession(Base):
-    __tablename__ = "agent_debug_sessions"
+class AgentFlowDebugSession(Base):
+    __tablename__ = "agent_flow_debug_sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
@@ -69,11 +69,11 @@ class AgentDebugSession(Base):
     status: Mapped[str] = mapped_column(String(32), default="active") # active|completed
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
-class AgentDebugEvent(Base):
-    __tablename__ = "agent_debug_events"
+class AgentFlowDebugEvent(Base):
+    __tablename__ = "agent_flow_debug_events"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_debug_sessions.id", ondelete="CASCADE"), index=True)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_flow_debug_sessions.id", ondelete="CASCADE"), index=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     node_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)

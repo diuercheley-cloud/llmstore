@@ -11,3 +11,6 @@ tools:
     actions: ["post_message"]
   - name: jira
     actions: ["create_issue"]
+eval_suite_file: "eval_suite.json"
+risk_level: "low"
+owner: "support-team"

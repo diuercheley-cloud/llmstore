@@ -239,6 +239,7 @@ async def test_memory_read_chama_agent_memory(session, task_engine_settings):
 
 @pytest.mark.asyncio
 async def test_memory_write_respeita_consent_e_policy(session, task_engine_settings):
+    import unittest.mock
     task_engine_settings.agent_memory_enabled = True
     task_engine_settings.agent_memory_write_enabled = True
     task_engine_settings.agent_long_term_memory_enabled = True
@@ -274,8 +275,10 @@ async def test_memory_write_respeita_consent_e_policy(session, task_engine_setti
         },
     )
 
-    engine = TaskEngine(session)
-    await engine.run_task(task.id)
+    # Mock the indexing service to prevent PGVector syntax errors on SQLite
+    with unittest.mock.patch("app.services.agents.agent_memory.SemanticMemoryRetriever.index_item", return_value=None):
+        engine = TaskEngine(session)
+        await engine.run_task(task.id)
 
     items = (
         await session.execute(select(AgentMemoryItem).where(AgentMemoryItem.source_run_id == run.id))

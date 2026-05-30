@@ -3,7 +3,7 @@ import uuid
 import time
 import logging
 import json
-from typing import Any, Dict, Optional, List, Callable
+from typing import Any, Dict, Optional, List, Callable, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
@@ -24,6 +24,7 @@ from app.services.agents.agent_llm_provider import (
 from app.services.agents.agent_handoffs import AgentHandoffService
 from app.models.agents import AgentPlan
 from app.services.agents.agent_planner import AgentPlanner
+from app.services.agents.planning.step_cache import StepCache
 from app.services.agents.task_engine import TaskEngine
 from app.services.agents.agent_receipts import AgentReceiptsService
 from app.services.agents.reasoning.reasoning_loop import ReasoningLoop
@@ -56,6 +57,7 @@ class AgentExecutor:
         self.planner = AgentPlanner(db)
         self.task_engine = TaskEngine(db)
         self.budget_svc = AgentBudgetService()
+        self.step_cache = StepCache(db)
         
         if llm_provider:
             self.llm_provider = llm_provider
@@ -75,8 +77,7 @@ class AgentExecutor:
 
     async def _check_input_guardrails(self, run) -> bool:
         """Checks input guardrails and returns True if blocked."""
-        # We check the original prompt in the context or the latest user message
-        prompt = run.context.get("prompt", "") or run.context.get("input_text", "")
+        prompt = getattr(run, "input_text", "") or ""
         if not prompt: return False
 
         decision, reason = await self.guardrails.check_input(run.id, run.tenant_id, prompt)
@@ -106,11 +107,10 @@ class AgentExecutor:
             return False
 
         # --- Debugger Integration ---
-        from app.services.agents.debugger.live_stepper import LiveStepper
-        from app.services.agents.debugger.debug_sessions import DebugSessionManager
-        from app.services.agents.debugger.breakpoints import BreakpointManager
-        
         if self.settings.agent_debugger_enabled:
+            from app.services.agents.debugger.live_stepper import LiveStepper
+            from app.services.agents.debugger.debug_sessions import DebugSessionManager
+            from app.services.agents.debugger.breakpoints import BreakpointManager
             stepper = LiveStepper(
                 self.db, 
                 DebugSessionManager(self.db), 
@@ -134,7 +134,7 @@ class AgentExecutor:
             return False
         # ----------------------
 
-        agent_def = await agent_registry.get_agent_definition(self.db, run.agent_id)
+        agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
 
         if agent_def:
             agent_def = await self._apply_candidate_overrides_if_evaluating(run, agent_def)
@@ -151,6 +151,13 @@ class AgentExecutor:
         is_within_budget, reason = await self.budget_svc.validate_run_budget(agent_def, run)
         if not is_within_budget:
             await self._fail_run(f"Budget exceeded: {reason}")
+            await self.db.commit()
+            return False
+
+        # --- Hard Cost Cap Enforcement ---
+        from app.services.agents.budgets.hard_cost_cap import HardCostCapService
+        is_within_hard_cap = await HardCostCapService.check_cost_cap(self.db, agent_def, run)
+        if not is_within_hard_cap:
             await self.db.commit()
             return False
 
@@ -265,6 +272,11 @@ class AgentExecutor:
         return True
 
     async def _get_llm_decision(self, run, agent_def, step_number: int) -> Optional[Dict]:
+        # --- Hard Cost Cap check before LLM call ---
+        from app.services.agents.budgets.hard_cost_cap import HardCostCapService
+        if not await HardCostCapService.check_cost_cap(self.db, agent_def, run):
+            return None
+
         start_time = time.time()
         
         # Context Compression
@@ -277,10 +289,22 @@ class AgentExecutor:
 
         if self.settings.agent_memory_enabled:
             mem = await self.memory.build_memory_context(tenant_id=run.tenant_id, agent_id=run.agent_id, query=run.input_text or "")
-            if mem.get("context_block"): 
+            if mem.get("context_block"):
                 agent_def.instructions += f"\n\n{mem['context_block']}"
                 await self.obs.record_memory_op_detailed(self.run_id, "read", "short_term", True)
-        
+
+        # Check Cache
+        cached_decision = await self.step_cache.get_cached_step(
+            agent_id=run.agent_id,
+            tenant_id=run.tenant_id,
+            step_type="model_call",
+            input_data={"instructions": agent_def.instructions, "input_text": run.input_text, "steps": run.total_steps},
+            model_version=agent_def.model_id
+        )
+        if cached_decision:
+            logger.info(f"Using cached decision for run {run.id} step {step_number}")
+            return cached_decision
+
         try:
             self._assert_llm_provider_mode_allowed()
             decision = await self.reasoning_loop.execute(agent_def=agent_def, run=run, allowed_tools=agent_def.allowed_tools or [])
@@ -291,7 +315,19 @@ class AgentExecutor:
                 await self._record_provider_metadata(run, decision)
 
             await self._update_usage(run, decision)
+
+            # Set Cache
+            await self.step_cache.set_cached_step(
+                agent_id=run.agent_id,
+                tenant_id=run.tenant_id,
+                step_type="model_call",
+                input_data={"instructions": agent_def.instructions, "input_text": run.input_text, "steps": run.total_steps},
+                output_data=decision,
+                model_version=agent_def.model_id
+            )
+
             return decision
+
         except MockProviderError as e:
             latency_ms = int((time.time() - start_time) * 1000)
             logger.error(f"Mock provider blocked in production: {e}")
@@ -374,6 +410,13 @@ class AgentExecutor:
         return await self._execute_tool_and_process(run, tool_name, tool_input, step_number + 1)
 
     async def _execute_tool_and_process(self, run, tool_name, tool_input, step_number):
+        # --- Hard Cost Cap check before Tool execution ---
+        agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
+        if agent_def:
+            from app.services.agents.budgets.hard_cost_cap import HardCostCapService
+            if not await HardCostCapService.check_cost_cap(self.db, agent_def, run):
+                return False
+
         if self.is_replay: return False
         await self.obs.record_tool_call_start(self.run_id, tool_name)
         start_time = time.time()

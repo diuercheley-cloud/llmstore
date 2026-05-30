@@ -69,6 +69,21 @@ export default defineConfig({
           }]
         }
       }
+    },
+    {
+      extends: true,
+      test: {
+        name: 'unit',
+        include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        browser: {
+          enabled: true,
+          headless: true,
+          provider: playwright({}),
+          instances: [{
+            browser: 'chromium'
+          }]
+        }
+      }
     }]
   }
 });

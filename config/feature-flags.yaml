@@ -5560,3 +5560,213 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Opt-in by default to ensure safety.
+- name: AGENT_ANOMALY_DETECTION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Anomaly detection is off until calibrated.
+- name: AGENT_BREAKPOINTS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Debugging feature, opt-in only.
+- name: AGENT_BROWSER_EXTERNAL_NETWORK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.2.0
+  risk_level: high
+  dependencies: [AGENT_BROWSER_TOOL_ENABLED]
+  conflicts: []
+  safe_default_reason: Restricted to local/internal network by default.
+- name: AGENT_BROWSER_SCREENSHOT_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: [AGENT_BROWSER_TOOL_ENABLED]
+  conflicts: []
+  safe_default_reason: Screenshots are safe for debugging.
+- name: AGENT_BROWSER_TOOL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Web browsing is disabled by default for security.
+- name: AGENT_DEBUGGER_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Interactive debugging is an opt-in feature.
+- name: AGENT_DISTRIBUTED_RATE_LIMITING_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Local rate limiting is standard; Redis-based is opt-in.
+- name: AGENT_EMAIL_NOTIFICATIONS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Notifications stay disabled until configured.
+- name: AGENT_FILE_DELETE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.2.0
+  risk_level: high
+  dependencies: [AGENT_FILE_TOOLS_ENABLED]
+  conflicts: []
+  safe_default_reason: Deletion is a high-risk operation.
+- name: AGENT_FILE_TOOLS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Workspace access is disabled by default.
+- name: AGENT_FILE_WRITE_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: [AGENT_FILE_TOOLS_ENABLED]
+  conflicts: []
+  safe_default_reason: Write operations are disabled by default.
+- name: AGENT_HARD_COST_CAP_ENABLED
+  default: true
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Enabled by default to prevent financial leakage.
+- name: AGENT_LIVE_STEPPING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Live stepping is a debugging feature.
+- name: AGENT_PUSH_NOTIFICATIONS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Notifications stay disabled until configured.
+- name: DOCUMENT_VISION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: [MULTIMODAL_ENABLED]
+  conflicts: []
+  safe_default_reason: Advanced vision features are opt-in.
+- name: EMAIL_PROVIDER
+  default: mock
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Defaulting to mock provider for safety.
+- name: JAEGER_EXPORT_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Observability exports are opt-in.
+- name: KB_URL_INGESTION_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Dynamic URL ingestion is disabled by default.
+- name: OTLP_EXPORT_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Observability exports are opt-in.
+- name: PUSH_PROVIDER
+  default: mock
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Defaulting to mock provider for safety.
+- name: ZIPKIN_EXPORT_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: experimental
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Observability exports are opt-in.

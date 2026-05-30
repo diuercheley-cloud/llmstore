@@ -93,6 +93,8 @@ async def create_agent_run(
     input_text: str,
     user_id: Optional[str] = None,
     correlation_id: Optional[str] = None,
+    parent_run_id: Optional[uuid.UUID] = None,
+    multimodal_asset_id: Optional[uuid.UUID] = None,
 ) -> AgentRun:
     input_hash = compute_sha256(input_text)
     run = AgentRun(
@@ -107,6 +109,8 @@ async def create_agent_run(
         estimated_cost_brl=0.0,
         started_at=utc_now(),
         correlation_id=correlation_id,
+        parent_run_id=parent_run_id,
+        multimodal_asset_id=multimodal_asset_id,
     )
     db.add(run)
     await db.commit()

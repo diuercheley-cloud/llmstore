@@ -20,7 +20,7 @@ class PromptTemplate(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
-    versions = relationship("PromptTemplateVersion", back_populates="template", cascade="all, delete-orphan")
+    versions = relationship("PromptTemplateVersion", foreign_keys="[PromptTemplateVersion.template_id]", back_populates="template", cascade="all, delete-orphan")
     active_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("prompt_template_versions.id", use_alter=True), nullable=True)
 
 class PromptTemplateVersion(Base):

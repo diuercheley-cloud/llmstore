@@ -11,6 +11,7 @@ from app.db.base import Base
 class AgentRunSnapshot(Base):
     # Owner: agent-platform
     __tablename__ = "agent_run_snapshots"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -28,6 +29,7 @@ class AgentRunSnapshot(Base):
 class AgentDebugReplay(Base):
     # Owner: agent-platform
     __tablename__ = "agent_debug_replays"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     original_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False)
@@ -43,6 +45,7 @@ class AgentDebugReplay(Base):
 class AgentDebugStateEdit(Base):
     # Owner: agent-platform
     __tablename__ = "agent_debug_state_edits"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     replay_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_debug_replays.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -57,6 +60,7 @@ class AgentDebugStateEdit(Base):
 class AgentDebugSession(Base):
     # Owner: agent-platform
     __tablename__ = "agent_debug_sessions"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
@@ -70,6 +74,7 @@ class AgentDebugSession(Base):
 class AgentBreakpoint(Base):
     # Owner: agent-platform
     __tablename__ = "agent_breakpoints"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -81,6 +86,7 @@ class AgentBreakpoint(Base):
 class AgentDebugStepEvent(Base):
     # Owner: agent-platform
     __tablename__ = "agent_debug_step_events"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_debug_sessions.id", ondelete="CASCADE"), nullable=False, index=True)

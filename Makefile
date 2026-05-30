@@ -310,6 +310,8 @@ agent-sandbox-security: ## Run Agent Sandbox Security checks
 agent-evals: ## Run Agent Evaluation suites
 	@echo "Running Agent Evaluations..."
 	@PYTHONPATH=control_plane .venv/bin/python -m pytest tests/agent_evals/
+	@chmod +x scripts/validate-agent-eval-datasets.sh
+	@./scripts/validate-agent-eval-datasets.sh
 
 agent-real-provider-validation: ## Run Agent real provider validation suite (opt-in, budgeted)
 	@echo "Running Agent Real Provider Validation..."

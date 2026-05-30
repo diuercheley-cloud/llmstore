@@ -8,6 +8,7 @@ from sqlalchemy.future import select
 from app.core.config import get_settings
 from app.models.agents import AgentPlan, AgentTask, AgentTaskDependency
 from app.services.agents import agent_state
+from app.services.agents.planning.cost_aware_planner import CostAwarePlanner
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class AgentPlanner:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
+        self.cost_planner = CostAwarePlanner(db)
 
     async def create_plan(self, run_id: uuid.UUID, goal: str, tasks_data: List[dict]) -> AgentPlan:
         if not self.settings.agent_planning_enabled:
@@ -69,6 +71,14 @@ class AgentPlanner:
                         depends_on_task_id=task_map[d_ref].id
                     )
                     self.db.add(dep)
+
+        await self.db.flush()
+        
+        # --- Cost Aware Planning ---
+        try:
+            await self.cost_planner.estimate_plan_cost(plan.id)
+        except Exception as e:
+            logger.error(f"Failed to generate cost estimate for plan {plan.id}: {e}")
 
         await self.db.commit()
         await self.db.refresh(plan)

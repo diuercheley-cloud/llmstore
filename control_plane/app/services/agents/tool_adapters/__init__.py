@@ -8,6 +8,24 @@ from app.services.agents.tool_adapters.compliance_evidence_tool import Complianc
 from app.services.agents.tool_adapters.database_read_tool import DatabaseReadToolAdapter
 from app.services.agents.tool_adapters.shell_command_tool import ShellCommandToolAdapter
 from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
+from app.services.agents.tool_adapters.filesystem_tools import (
+    ReadFileToolAdapter,
+    WriteFileToolAdapter,
+    ListDirectoryToolAdapter,
+    DeleteFileToolAdapter,
+    StatFileToolAdapter,
+)
+from app.services.agents.browser.browser_tool import (
+    BrowserOpenToolAdapter,
+    BrowserClickToolAdapter,
+    BrowserExtractTextToolAdapter,
+    BrowserScreenshotToolAdapter,
+    BrowserCloseToolAdapter,
+)
+from app.services.agents.tool_adapters.notification_tools import (
+    NotifyEmailToolAdapter,
+    NotifyPushToolAdapter,
+)
 
 
 def register_all_adapters():
@@ -21,3 +39,15 @@ def register_all_adapters():
     adapter_registry.register(DatabaseReadToolAdapter())
     adapter_registry.register(ShellCommandToolAdapter())
     adapter_registry.register(WebSearchToolAdapter())
+    adapter_registry.register(ReadFileToolAdapter())
+    adapter_registry.register(WriteFileToolAdapter())
+    adapter_registry.register(ListDirectoryToolAdapter())
+    adapter_registry.register(DeleteFileToolAdapter())
+    adapter_registry.register(StatFileToolAdapter())
+    adapter_registry.register(BrowserOpenToolAdapter())
+    adapter_registry.register(BrowserClickToolAdapter())
+    adapter_registry.register(BrowserExtractTextToolAdapter())
+    adapter_registry.register(BrowserScreenshotToolAdapter())
+    adapter_registry.register(BrowserCloseToolAdapter())
+    adapter_registry.register(NotifyEmailToolAdapter())
+    adapter_registry.register(NotifyPushToolAdapter())

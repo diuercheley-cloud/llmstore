@@ -13,6 +13,7 @@ from app.services.auth import (
     require_admin_role,
     require_superadmin,
     require_admin,
+    require_client,
 )
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
@@ -73,3 +74,36 @@ async def get_admin_user(
     if isinstance(admin, dict):
         return admin
     return {"role": "superadmin"}
+
+
+class AdminUserContext:
+    def __init__(self, tenant_id: str = "default", email: str = "admin@example.com", role: str = "superadmin"):
+        self.tenant_id = tenant_id
+        self.email = email
+        self.role = role
+
+
+async def get_current_admin_user(
+    admin=Depends(require_superadmin),
+) -> AdminUserContext:
+    email = "admin@example.com"
+    tenant_id = "default"
+    if isinstance(admin, dict):
+        email = admin.get("email", email)
+        tenant_id = admin.get("tenant_id", tenant_id)
+    else:
+        # AuthenticatedAdmin
+        email = getattr(admin.user, "email", email) or email
+        # If there's username or username has tenant info
+        tenant_id = getattr(admin.user, "tenant_id", "default")
+    return AdminUserContext(tenant_id=tenant_id, email=email)
+
+
+async def get_current_user(
+    client=Depends(require_client),
+):
+    if not hasattr(client, "tenant_id"):
+        client.tenant_id = client.name
+    return client
+
+

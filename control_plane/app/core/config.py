@@ -148,6 +148,18 @@ class Settings(BaseSettings):
     agent_sab_export_enabled: bool = Field(default=False, alias="AGENT_SAB_EXPORT_ENABLED")
     # Owner: agent-platform
     # Status: beta
+    agent_planner_real_execution_enabled: bool = Field(default=False, alias="AGENT_PLANNER_REAL_EXECUTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_task_mock_mode: bool = Field(default=False, alias="AGENT_TASK_MOCK_MODE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_task_dry_run_mode: bool = Field(default=False, alias="AGENT_TASK_DRY_RUN_MODE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
+    # Owner: agent-platform
+    # Status: beta
     agent_federated_memory_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_ENABLED")
     # Owner: agent-platform
     # Status: beta
@@ -194,6 +206,7 @@ class Settings(BaseSettings):
     image_generation_enabled: bool = Field(default=False, alias="IMAGE_GENERATION_ENABLED")
     speech_to_text_enabled: bool = Field(default=False, alias="SPEECH_TO_TEXT_ENABLED")
     realtime_audio_enabled: bool = Field(default=False, alias="REALTIME_AUDIO_ENABLED")
+    document_vision_enabled: bool = Field(default=False, alias="DOCUMENT_VISION_ENABLED")
 
     agent_web_search_enabled: bool = Field(default=False, alias="AGENT_WEB_SEARCH_ENABLED")
     agent_web_search_external_network_enabled: bool = Field(default=False, alias="AGENT_WEB_SEARCH_EXTERNAL_NETWORK_ENABLED")
@@ -504,6 +517,22 @@ class Settings(BaseSettings):
     agent_a2a_external_enabled: bool = Field(default=False, alias="AGENT_A2A_EXTERNAL_ENABLED")
     agent_websocket_streaming_enabled: bool = Field(default=False, alias="AGENT_WEBSOCKET_STREAMING_ENABLED")
 
+    agent_email_notifications_enabled: bool = Field(default=False, alias="AGENT_EMAIL_NOTIFICATIONS_ENABLED")
+    agent_push_notifications_enabled: bool = Field(default=False, alias="AGENT_PUSH_NOTIFICATIONS_ENABLED")
+    email_provider: str = Field(default="mock", alias="EMAIL_PROVIDER")
+    push_provider: str = Field(default="mock", alias="PUSH_PROVIDER")
+
+    smtp_host: str = Field(default="localhost", alias="SMTP_HOST")
+    smtp_port: int = Field(default=1025, alias="SMTP_PORT")
+    smtp_username: str = Field(default="", alias="SMTP_USERNAME")
+    smtp_password: str = Field(default="", alias="SMTP_PASSWORD")
+    sendgrid_api_key: str = Field(default="", alias="SENDGRID_API_KEY")
+    fcm_api_key: str = Field(default="", alias="FCM_API_KEY")
+    apns_key_id: str = Field(default="", alias="APNS_KEY_ID")
+
+    agent_distributed_rate_limiting_enabled: bool = Field(default=False, alias="AGENT_DISTRIBUTED_RATE_LIMITING_ENABLED")
+    agent_hard_cost_cap_enabled: bool = Field(default=True, alias="AGENT_HARD_COST_CAP_ENABLED")
+
 
 
     # Owner: agent-platform
@@ -646,6 +675,18 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: experimental
     agent_kg_pathfinding_timeout_ms: int = Field(default=5000, alias="AGENT_KG_PATHFINDING_TIMEOUT_MS")
+
+    # Owner: agent-platform
+    agent_shell_tool_enabled: bool = Field(default=False, alias="AGENT_SHELL_TOOL_ENABLED")
+    agent_http_tool_enabled: bool = Field(default=False, alias="AGENT_HTTP_TOOL_ENABLED")
+    agent_db_read_tool_enabled: bool = Field(default=False, alias="AGENT_DB_READ_TOOL_ENABLED")
+    agent_file_tools_enabled: bool = Field(default=False, alias="AGENT_FILE_TOOLS_ENABLED")
+    agent_file_write_enabled: bool = Field(default=False, alias="AGENT_FILE_WRITE_ENABLED")
+    agent_file_delete_enabled: bool = Field(default=False, alias="AGENT_FILE_DELETE_ENABLED")
+    agent_browser_tool_enabled: bool = Field(default=False, alias="AGENT_BROWSER_TOOL_ENABLED")
+    agent_browser_external_network_enabled: bool = Field(default=False, alias="AGENT_BROWSER_EXTERNAL_NETWORK_ENABLED")
+    agent_browser_screenshot_enabled: bool = Field(default=False, alias="AGENT_BROWSER_SCREENSHOT_ENABLED")
+    agent_browser_allowlist: str = Field(default="example.com,wikipedia.org", alias="AGENT_BROWSER_ALLOWLIST")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

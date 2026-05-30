@@ -149,6 +149,14 @@ async def check_approval_required(
     if tool_requires_approval:
         return True, max_risk_str, f"Tool '{tool_name}' requires approval", "admin_write"
 
+    # Notification sensitive keywords approval policy
+    if tool_name in ("notify_email", "notify_push"):
+        from app.services.notifications.notification_policy import has_sensitive_keywords
+        title = tool_input.get("title", "")
+        body = tool_input.get("body", "")
+        if has_sensitive_keywords(title, body):
+            return True, "medium", f"Notification tool '{tool_name}' has sensitive keywords", "admin_write"
+
     # 3. High risk threshold rule
     if settings.agent_approval_required_for_high_risk:
         if max_risk_str in ("high", "critical"):

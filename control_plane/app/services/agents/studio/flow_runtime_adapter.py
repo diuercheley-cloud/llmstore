@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from .flow_compiler import FlowCompiler
 from .flow_validator import FlowValidator
-from app.models.agent_studio import AgentFlowVersion, AgentDebugSession, AgentDebugEvent
+from app.models.agent_studio import AgentFlowVersion, AgentFlowDebugSession, AgentFlowDebugEvent
 from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class FlowRuntimeAdapter:
         plan = self.compiler.compile(version)
         
         # 3. Create Debug Session
-        session = AgentDebugSession(
+        session = AgentFlowDebugSession(
             flow_version_id=version_id,
             tenant_id="dry-run-tenant",
             status="active"
@@ -44,7 +44,7 @@ class FlowRuntimeAdapter:
         # 4. Simulate steps
         debug_events = []
         for task in plan["tasks"]:
-            event = AgentDebugEvent(
+            event = AgentFlowDebugEvent(
                 session_id=session.id,
                 event_type="node_execution_simulated",
                 node_id=task["node_id"],

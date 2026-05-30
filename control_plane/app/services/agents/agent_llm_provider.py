@@ -307,13 +307,41 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
 
         effective_input = input_override if input_override is not None else run.input_text
         multimodal_asset_id = getattr(run, "multimodal_asset_id", None)
+        
+        asset_info = ""
+        settings = get_settings()
+        if settings.multimodal_enabled and multimodal_asset_id:
+            try:
+                from app.services.multimodal.asset_store import AssetStore
+                from app.services.multimodal.vision_service import VisionService
+                from app.services.multimodal.document_vision_service import DocumentVisionService
+                from app.services.multimodal.speech_to_text_service import SpeechToTextService
+
+                store = AssetStore(self.db)
+                asset = await store.get_asset(multimodal_asset_id, run.tenant_id)
+                if asset:
+                    if asset.asset_type == "image" and settings.vision_input_enabled:
+                        vision = VisionService(self.db)
+                        res = await vision.analyze_image(asset.client_id, asset.tenant_id, asset.id, do_ocr=True)
+                        asset_info = f"\n[Asset Description: {res.get('description')}][Asset OCR: {res.get('ocr_text')}]"
+                    elif asset.asset_type == "document" and settings.document_vision_enabled:
+                        doc = DocumentVisionService(self.db)
+                        res = await doc.analyze_document(asset.client_id, asset.tenant_id, asset.id)
+                        asset_info = f"\n[Document Content: {res.get('extracted_text')}]"
+                    elif asset.asset_type == "audio" and settings.speech_to_text_enabled:
+                        stt = SpeechToTextService(self.db)
+                        res = await stt.transcribe_audio(asset.client_id, asset.tenant_id, asset.id)
+                        asset_info = f"\n[Audio Transcription: {res.get('text')}]"
+            except Exception as e:
+                asset_info = f"\n[Asset Reference Error: {str(e)}]"
+
         if effective_input and (not history or history[-1].get("content") != effective_input):
             content = effective_input
             if multimodal_asset_id:
-                content = f"{content}\n[Asset Reference: {multimodal_asset_id}]"
+                content = f"{content}\n[Asset Reference: {multimodal_asset_id}]{asset_info}"
             messages.append({"role": "user", "content": content})
         elif multimodal_asset_id:
-            messages.append({"role": "user", "content": f"[Asset Reference: {multimodal_asset_id}]"})
+            messages.append({"role": "user", "content": f"[Asset Reference: {multimodal_asset_id}]{asset_info}"})
 
         payload = {
             "model": selected_model.model_id,

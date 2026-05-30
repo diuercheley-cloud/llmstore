@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.2.0-agentic-critical-gaps] - 2026-05-30
+
+### Added
+- **Step Caching & Cost-Aware Planning**: Implemented context-aware reasoning cache and financial estimation for agent plans.
+- **File System & Browser Tools**: Robust, secured tools for workspace interaction and lightweight headless web browsing.
+- **Advanced Agent Analytics**: Multi-tenant metrics for success rates, P95 latencies, and tool usage trends.
+- **Eval Datasets**: Fully populated baseline datasets for regression testing and CI/CD validation.
+- **Frontend Streaming**: Connected React playground to real WebSocket execution streams.
+
+### Fixed
+- **Model Conflict**: Consolidated duplicate `AgentDebugSession` definitions between Studio and Debugger into `AgentFlowDebugSession`.
+- **Feature Flag Drift**: Registered 21 missing platform governance flags in `config/feature-flags.yaml`.
+
+### Changed
+- **Multi-replica Safe Rate Limiting**: Redis-based rate limiter now uses atomic operations for global consistency.
+
 ## [v2.x-agentic-platform-gap-closure] - 2026-05-29
 
 ### Added

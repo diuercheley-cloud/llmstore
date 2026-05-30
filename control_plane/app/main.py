@@ -201,6 +201,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     from app.api.billing_payments import router as billing_payments_router
     app.include_router(billing_payments_router)
 
+    from app.api.multimodal import router as multimodal_router
+    app.include_router(multimodal_router)
+
     if settings.agentic_router_v2_enabled:
         from app.api.agent_routing_admin import router as agent_routing_admin_router
         app.include_router(agent_routing_admin_router)
@@ -211,11 +214,13 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_runtime_admin import router as agent_runtime_admin_router
         from app.api.agent_registry_admin import router as agent_registry_admin_router
         from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
+        from app.api.agent_environments_admin import router as agent_environments_admin_router
         app.include_router(agents_router)
         app.include_router(agents_v1_router)
         app.include_router(agent_runtime_admin_router)
         app.include_router(agent_registry_admin_router)
         app.include_router(tenant_agentic_readiness_admin_router)
+        app.include_router(agent_environments_admin_router)
 
     if settings.agent_assistants_api_enabled:
         from app.api.assistants_v1 import router as assistants_v1_router

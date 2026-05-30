@@ -45,10 +45,28 @@ if "postgresql" in settings.database_url:
 
 # Overwrite database session engine/SessionLocal if offline
 import app.db.session
+from unittest.mock import patch
+
 if is_offline or "sqlite" in settings.database_url:
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    
+    # Global patches
+    patcher = patch("app.db.session.SessionLocal", SessionLocal)
+    patcher.start()
+    
+    # Also patch in modules that might have already imported it
+    import app.services.agents.agent_worker
+    import app.services.agents.agent_executor
+    import app.services.agents.agent_queue
+    import app.services.agents.agent_state
+    
+    app.services.agents.agent_worker.SessionLocal = SessionLocal
+    app.services.agents.agent_executor.SessionLocal = SessionLocal
+    app.services.agents.agent_queue.SessionLocal = SessionLocal
+    app.services.agents.agent_state.SessionLocal = SessionLocal
+    
     app.db.session.engine = engine
     app.db.session.SessionLocal = SessionLocal
 else:
@@ -322,9 +340,15 @@ async def run_validation():
             # Process job steps (we run multiple times because our response sequence has 4 steps)
             processed_steps = 0
             for i in range(5):
-                processed = await worker.run_once()
-                if processed:
-                    processed_steps += 1
+                try:
+                    processed = await worker.run_once()
+                    if processed:
+                        processed_steps += 1
+                except Exception as e:
+                    print(f"DEBUG: worker.run_once() failed at iteration {i}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    raise
                 await asyncio.sleep(0.1)
 
             await worker.stop()
