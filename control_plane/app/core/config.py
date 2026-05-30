@@ -214,10 +214,46 @@ class Settings(BaseSettings):
     agent_memory_semantic_search_enabled: bool = Field(default=False, alias="AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_memory_context_injection_enabled: bool = Field(default=False, alias="AGENT_MEMORY_CONTEXT_INJECTION_ENABLED")
+    agent_semantic_memory_enabled: bool = Field(default=False, alias="AGENT_SEMANTIC_MEMORY_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_vector_provider: str = Field(default="mock", alias="AGENT_MEMORY_VECTOR_PROVIDER")
     # Owner: agent-platform
     # Status: beta
     agent_memory_embeddings_provider: str = Field(default="mock", alias="AGENT_MEMORY_EMBEDDINGS_PROVIDER")
+    # Owner: agent-platform
+    # Status: beta
+    agent_memory_context_injection_enabled: bool = Field(default=False, alias="AGENT_MEMORY_CONTEXT_INJECTION_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_saas_connectors_enabled: bool = Field(default=False, alias="AGENT_SAAS_CONNECTORS_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_mode: str = Field(default="mock", alias="AGENT_CONNECTOR_MODE")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_write_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_WRITE_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_external_network_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_connector_real_http_enabled: bool = Field(default=False, alias="AGENT_CONNECTOR_REAL_HTTP_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_github_connector_enabled: bool = Field(default=False, alias="AGENT_GITHUB_CONNECTOR_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_human_approval_enabled: bool = Field(default=False, alias="AGENT_HUMAN_APPROVAL_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_iam_enabled: bool = Field(default=False, alias="AGENT_IAM_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_assistants_api_enabled: bool = Field(default=False, alias="AGENT_ASSISTANTS_API_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_batch_api_enabled: bool = Field(default=False, alias="AGENT_BATCH_API_ENABLED")
 
     # Owner: agent-platform
     # Status: beta
@@ -404,6 +440,8 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
+    agent_otel_tracing_enabled: bool = Field(default=False, alias="AGENT_OTEL_TRACING_ENABLED")
+    agent_langsmith_export_enabled: bool = Field(default=False, alias="AGENT_LANGSMITH_EXPORT_ENABLED")
     # Owner: agent-platform
     # Status: active
     agent_strict_budgets: bool = Field(default=False, alias="AGENT_STRICT_BUDGETS")
@@ -430,6 +468,14 @@ class Settings(BaseSettings):
     # Status: beta
     agent_human_approval_enabled: bool = Field(default=True, alias="AGENT_HUMAN_APPROVAL_ENABLED")
     agent_approval_required_for_high_risk: bool = Field(default=True, alias="AGENT_APPROVAL_REQUIRED_FOR_HIGH_RISK")
+    agent_approval_timeout_seconds: int = Field(default=3600, alias="AGENT_APPROVAL_TIMEOUT_SECONDS")
+    agent_trace_export_enabled: bool = Field(default=False, alias="AGENT_TRACE_EXPORT_ENABLED")
+    agent_a2a_enabled: bool = Field(default=False, alias="AGENT_A2A_ENABLED")
+    agent_a2a_external_enabled: bool = Field(default=False, alias="AGENT_A2A_EXTERNAL_ENABLED")
+    agent_websocket_streaming_enabled: bool = Field(default=False, alias="AGENT_WEBSOCKET_STREAMING_ENABLED")
+
+
+
     # Owner: agent-platform
     # Status: beta
     agent_code_interpreter_enabled: bool = Field(default=False, alias="AGENT_CODE_INTERPRETER_ENABLED")
@@ -735,6 +781,13 @@ class Settings(BaseSettings):
     billing_invoice_day: int = Field(default=1, alias="BILLING_INVOICE_DAY")
     billing_due_days: int = Field(default=7, alias="BILLING_DUE_DAYS")
     billing_suspend_after_days: int = Field(default=15, alias="BILLING_SUSPEND_AFTER_DAYS")
+    payment_processing_enabled: bool = Field(default=False, alias="PAYMENT_PROCESSING_ENABLED")
+    payment_provider: str = Field(default="mock", alias="PAYMENT_PROVIDER")
+    stripe_payment_enabled: bool = Field(default=False, alias="STRIPE_PAYMENT_ENABLED")
+    stripe_secret_key: str = Field(default="", alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str = Field(default="", alias="STRIPE_WEBHOOK_SECRET")
+    token_counting_real_enabled: bool = Field(default=False, alias="TOKEN_COUNTING_REAL_ENABLED")
+    token_counting_fallback_allowed: bool = Field(default=True, alias="TOKEN_COUNTING_FALLBACK_ALLOWED")
     demo_client_name: str = Field(default="demo-client", alias="DEMO_CLIENT_NAME")
     demo_rate_limit_per_minute: int = Field(default=5, alias="DEMO_RATE_LIMIT_PER_MINUTE")
     demo_daily_token_quota: int = Field(default=20000, alias="DEMO_DAILY_TOKEN_QUOTA")

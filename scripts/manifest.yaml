@@ -427,8 +427,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/check-alembic-integrity.sh
-  purpose: 'scripts/check-alembic-integrity.sh Valida a integridade do histórico do
-    Alembic: - Único head linear'
+  purpose: "scripts/check-alembic-integrity.sh Valida a integridade do hist\xF3rico\
+    \ do Alembic: - \xDAnico head linear"
   owner: platform-ops
   category: compliance
   status: internal
@@ -634,8 +634,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/collect-compliance-evidence.sh
-  purpose: LLM Inference Stack - Compliance Evidence Collector Coleta evidências técnicas
-    sanitizadas para auditorias.
+  purpose: "LLM Inference Stack - Compliance Evidence Collector Coleta evid\xEAncias\
+    \ t\xE9cnicas sanitizadas para auditorias."
   owner: platform-ops
   category: operations
   status: internal
@@ -773,7 +773,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/customer-ready-report.sh
-  purpose: scripts/customer-ready-report.sh Validação única de prontidão para cliente.
+  purpose: "scripts/customer-ready-report.sh Valida\xE7\xE3o \xFAnica de prontid\xE3\
+    o para cliente."
   owner: platform-ops
   category: operations
   status: internal
@@ -902,8 +903,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/diagnose-readiness-warnings-local.sh
-  purpose: scripts/diagnose-readiness-warnings-local.sh Diagnóstico de warnings do
-    Production Readiness local.
+  purpose: "scripts/diagnose-readiness-warnings-local.sh Diagn\xF3stico de warnings\
+    \ do Production Readiness local."
   owner: platform-ops
   category: operations
   status: internal
@@ -916,7 +917,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/diagnose-v1.7-warnings.sh
-  purpose: diagnose-v1.7-warnings.sh Localiza relatórios v1.7, extrai warnings e classifica-os.
+  purpose: "diagnose-v1.7-warnings.sh Localiza relat\xF3rios v1.7, extrai warnings\
+    \ e classifica-os."
   owner: platform-ops
   category: operations
   status: internal
@@ -1012,8 +1014,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/expose-local.sh
-  purpose: Scripts para expor localmente usando ngrok ou cloudflared (tunnel) Requer
-    instalação prévia das ferramentas
+  purpose: "Scripts para expor localmente usando ngrok ou cloudflared (tunnel) Requer\
+    \ instala\xE7\xE3o pr\xE9via das ferramentas"
   owner: platform-ops
   category: operations
   status: internal
@@ -1139,8 +1141,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/generate-client-ready-report.sh
-  purpose: generate-client-ready-report.sh Gera relatório final consolidado de pronto
-    para cliente (Client Ready Report). Produz artifacts/ e docs/CLIENT_READY_FINAL_REPORT.md
+  purpose: "generate-client-ready-report.sh Gera relat\xF3rio final consolidado de\
+    \ pronto para cliente (Client Ready Report). Produz artifacts/ e docs/CLIENT_READY_FINAL_REPORT.md"
   owner: platform-ops
   category: reports
   status: internal
@@ -1154,8 +1156,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/generate-compliance-pack.sh
-  purpose: LLM Inference Stack - Compliance Pack Generator Consolida evidências e
-    gera o relatório de prontidão.
+  purpose: "LLM Inference Stack - Compliance Pack Generator Consolida evid\xEAncias\
+    \ e gera o relat\xF3rio de prontid\xE3o."
   owner: platform-ops
   category: reports
   status: internal
@@ -1696,7 +1698,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/surface-area-audit.py
-  purpose: scripts/surface-area-audit.py Validates supported and API surface inventories against the current repository.
+  purpose: scripts/surface-area-audit.py Validates supported and API surface inventories
+    against the current repository.
   owner: platform-ops
   category: operations
   status: internal
@@ -1851,9 +1854,9 @@
   is_destructive: false
   docs_url: null
 - path: scripts/prepare-demo-screenshots-local.sh
-  purpose: 'prepare-demo-screenshots-local.sh Gera screenshots da demonstração local
-    ou cria plano de captura manual. Uso: ./scripts/prepare-demo-screenshots-local.sh
-    [--placeholders-only] [--help]'
+  purpose: "prepare-demo-screenshots-local.sh Gera screenshots da demonstra\xE7\xE3\
+    o local ou cria plano de captura manual. Uso: ./scripts/prepare-demo-screenshots-local.sh\
+    \ [--placeholders-only] [--help]"
   owner: platform-ops
   category: operations
   status: experimental
@@ -1965,8 +1968,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/release-gate.sh
-  purpose: LLM Inference Stack - Release Gate Validator Garante que a release cumpre
-    os requisitos mínimos de governança.
+  purpose: "LLM Inference Stack - Release Gate Validator Garante que a release cumpre\
+    \ os requisitos m\xEDnimos de governan\xE7a."
   owner: platform-ops
   category: operations
   status: internal
@@ -2408,8 +2411,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/sign-release-artifacts.sh
-  purpose: LLM Inference Stack - Artifact Signer Assina os artefatos de release se
-    as chaves estiverem disponíveis.
+  purpose: "LLM Inference Stack - Artifact Signer Assina os artefatos de release se\
+    \ as chaves estiverem dispon\xEDveis."
   owner: platform-ops
   category: operations
   status: internal
@@ -2582,7 +2585,7 @@
   is_destructive: false
   docs_url: null
 - path: scripts/test-lmstudio.sh
-  purpose: Configuração do LM Studio (conforme informado pelo usuário)
+  purpose: "Configura\xE7\xE3o do LM Studio (conforme informado pelo usu\xE1rio)"
   owner: platform-ops
   category: testing
   status: internal
@@ -2714,7 +2717,7 @@
   is_destructive: false
   docs_url: null
 - path: scripts/test-openrouter-integration.sh
-  purpose: Configurações
+  purpose: "Configura\xE7\xF5es"
   owner: platform-ops
   category: testing
   status: internal
@@ -3968,8 +3971,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-demo-visual-guide.sh
-  purpose: 'validate-demo-visual-guide.sh Valida a integridade, segurança e completude
-    do guia visual de demo. Uso: ./scripts/validate-demo-visual-guide.sh'
+  purpose: "validate-demo-visual-guide.sh Valida a integridade, seguran\xE7a e completude\
+    \ do guia visual de demo. Uso: ./scripts/validate-demo-visual-guide.sh"
   owner: platform-ops
   category: validation
   status: experimental
@@ -4009,8 +4012,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-embeddings-local.sh
-  purpose: 'Script de validação para o endpoint de Embeddings Uso: ./scripts/validate-embeddings-local.sh
-    [API_KEY] [BASE_URL]'
+  purpose: "Script de valida\xE7\xE3o para o endpoint de Embeddings Uso: ./scripts/validate-embeddings-local.sh\
+    \ [API_KEY] [BASE_URL]"
   owner: platform-ops
   category: validation
   status: internal
@@ -4229,8 +4232,9 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-hybrid-platform-e2e-local.sh
-  purpose: validate-hybrid-platform-e2e-local.sh E2E validation of the Hybrid AI Platform
-    v1.8.0 Runs entirely locally — no real cloud providers, no real API keys required.
+  purpose: "validate-hybrid-platform-e2e-local.sh E2E validation of the Hybrid AI\
+    \ Platform v1.8.0 Runs entirely locally \u2014 no real cloud providers, no real\
+    \ API keys required."
   owner: platform-ops
   category: validation
   status: internal
@@ -4285,8 +4289,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-integrations-docs-local.sh
-  purpose: scripts/validate-integrations-docs-local.sh Valida documentação e exemplos
-    de integração
+  purpose: "scripts/validate-integrations-docs-local.sh Valida documenta\xE7\xE3o\
+    \ e exemplos de integra\xE7\xE3o"
   owner: platform-ops
   category: validation
   status: internal
@@ -4933,9 +4937,9 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-rate-limit-readiness-local.sh
-  purpose: scripts/validate-rate-limit-readiness-local.sh Prova segura de rate limit
-    para Production Readiness. Cria plano/cliente temporários com limite baixo e verifica
-    429.
+  purpose: "scripts/validate-rate-limit-readiness-local.sh Prova segura de rate limit\
+    \ para Production Readiness. Cria plano/cliente tempor\xE1rios com limite baixo\
+    \ e verifica 429."
   owner: platform-ops
   category: validation
   status: internal
@@ -5416,8 +5420,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-upgrade-migrations-local.sh
-  purpose: scripts/validate-upgrade-migrations-local.sh Simula e valida o processo
-    de upgrade de migrations com segurança.
+  purpose: "scripts/validate-upgrade-migrations-local.sh Simula e valida o processo\
+    \ de upgrade de migrations com seguran\xE7a."
   owner: platform-ops
   category: validation
   status: internal
@@ -5559,8 +5563,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-v1.7-warning-cleanup.sh
-  purpose: validate-v1.7-warning-cleanup.sh Valida se o processo de limpeza de warnings
-    foi concluído com sucesso.
+  purpose: "validate-v1.7-warning-cleanup.sh Valida se o processo de limpeza de warnings\
+    \ foi conclu\xEDdo com sucesso."
   owner: platform-ops
   category: validation
   status: internal
@@ -5670,8 +5674,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/verify-release-artifacts.sh
-  purpose: LLM Inference Stack - Artifact Governance Verifier Garante que os artefatos
-    de release estão limpos e íntegros.
+  purpose: "LLM Inference Stack - Artifact Governance Verifier Garante que os artefatos\
+    \ de release est\xE3o limpos e \xEDntegros."
   owner: platform-ops
   category: operations
   status: internal
@@ -5685,7 +5689,8 @@
   is_destructive: false
   docs_url: null
 - path: scripts/run_free_model.py
-  purpose: Interactive utility to configure and run a free external model against the local gateway.
+  purpose: Interactive utility to configure and run a free external model against
+    the local gateway.
   owner: platform-ops
   category: operations
   status: internal
@@ -5710,7 +5715,7 @@
   requires_network: true
   writes_files: true
   outputs:
-    - "./*" # Scaffolded agent directory
+  - ./*
 - path: scripts/agent-job-cancel.sh
   owner: agent-platform
   status: beta
@@ -5757,7 +5762,8 @@
 - path: scripts/agent-dlq-retry.sh
   owner: agent-platform
   status: beta
-  description: Retry a dead-lettered agent execution job through the admin worker API.
+  description: Retry a dead-lettered agent execution job through the admin worker
+    API.
   requires_network: true
 - path: scripts/agent-approval-expire.sh
   owner: agent-platform
@@ -5803,7 +5809,8 @@
 - path: scripts/agentic-readiness.sh
   owner: agent-platform
   status: beta
-  description: Check v2.0.0 agentic readiness across connectors, workflows, reasoning, multi-agent, and Studio surfaces.
+  description: Check v2.0.0 agentic readiness across connectors, workflows, reasoning,
+    multi-agent, and Studio surfaces.
   requires_network: true
 - path: scripts/tenant-agentic-readiness.sh
   owner: agent-platform
@@ -5813,7 +5820,8 @@
 - path: scripts/agentic-chaos-run.sh
   owner: agent-platform
   status: beta
-  description: Run controlled chaos scenarios against the agentic runtime, workflow wake-up, and multi-agent orchestration surfaces.
+  description: Run controlled chaos scenarios against the agentic runtime, workflow
+    wake-up, and multi-agent orchestration surfaces.
   requires_network: true
   writes_files: true
   outputs:
@@ -5845,7 +5853,8 @@
 - path: scripts/generate-compliance-gap-analysis.sh
   owner: compliance-team
   status: beta
-  description: Generate a compliance gap analysis artifact for the current workspace state.
+  description: Generate a compliance gap analysis artifact for the current workspace
+    state.
   requires_network: false
   writes_files: true
   outputs:
@@ -6045,7 +6054,9 @@
   is_destructive: false
   docs_url: null
 - path: scripts/validate-agentic-production-on.sh
-  purpose: 'Validate agentic production-on readiness. Runtime must be live (not safe-default disabled). Exercises agent creation, run start, worker processing, tool echo, memory R/W, KG query, eval gateway, trace/receipt, and run finalization.'
+  purpose: Validate agentic production-on readiness. Runtime must be live (not safe-default
+    disabled). Exercises agent creation, run start, worker processing, tool echo,
+    memory R/W, KG query, eval gateway, trace/receipt, and run finalization.
   owner: platform-ops
   category: validation
   status: supported
@@ -6058,3 +6069,17 @@
   - artifacts/readiness/*
   is_destructive: false
   docs_url: docs/operations/agentic-production-on-validation.md
+- path: scripts/load-test-agentic.sh
+  purpose: Executes agentic load tests.
+  owner: platform-ops
+  category: operations
+  status: internal
+  safe_to_run_local: true
+  requires_docker: false
+  requires_network: true
+  requires_gpu: false
+  writes_files: true
+  outputs:
+  - logs/*
+  is_destructive: false
+  docs_url: null

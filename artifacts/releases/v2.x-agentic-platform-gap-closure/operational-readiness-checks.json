@@ -1,0 +1,17 @@
+{
+"docker_compose": "ok",
+"postgres": "ok",
+"redis": "ok",
+"env_file": "exists",
+"env_ignored": "ok",
+"gpu_detected": "ok",
+"health_api": "ok",
+"ready_api": "ok",
+"metrics_api": "ok",
+"agentic_runtime_enabled": "true",
+"agentic_worker_enabled": "false",
+"agentic_readiness_status": "ready",
+"agentic_blockers": [],
+"agentic_warnings": [],
+"timestamp": "2026-05-30T01:40:42Z"
+}

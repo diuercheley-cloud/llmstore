@@ -1302,7 +1302,8 @@ capabilities:
   - AGENT_SAB_IMPORT_ENABLED
   - AGENT_SAB_EXPORT_ENABLED
   since_version: v2.2.0-sab-beta
-  limitations: Import creates draft definitions. Mandatory signature verification in production.
+  limitations: Import creates draft definitions. Mandatory signature verification
+    in production.
   test_coverage: 90%
   rollback_story: Revert to manual agent definition or delete imported drafts.
 - id: agent-digital-twins
@@ -1446,8 +1447,8 @@ capabilities:
   - agent_mcp_mock_mode
   - agent_mcp_real_discovery_enabled
   since_version: v2.2.0-mcp-ga
-  limitations: Requires explicit tool approval. Mock mode blocked in production.
-    Tenant isolation enforced.
+  limitations: Requires explicit tool approval. Mock mode blocked in production. Tenant
+    isolation enforced.
   test_coverage: 82%
   rollback_story: Disable MCP flags and continue using internal tool adapters only.
   api_prefix: /admin/agents/mcp
@@ -1538,7 +1539,8 @@ capabilities:
   additional_flags:
   - AGENT_DISTRIBUTED_RUNTIME_ENABLED
   since_version: v2.x-agentic-platform-complete-hardening
-  limitations: Real node registration, heartbeat, placement, lease, and failover primitives exist. Production claims require environment validation and non-mock E2E evidence.
+  limitations: Real node registration, heartbeat, placement, lease, and failover primitives
+    exist. Production claims require environment validation and non-mock E2E evidence.
   test_coverage: 55%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: gpu-orchestration
@@ -1575,7 +1577,8 @@ capabilities:
   docs_url: docs/managed/managed-control-plane.md
   feature_flag: MANAGED_CONTROL_PLANE_ENABLED
   since_version: v2.x-agentic-platform-complete-hardening
-  limitations: Supported only for metadata-safe synchronization and enterprise-managed posture. Prompt and document payload classes are out of scope.
+  limitations: Supported only for metadata-safe synchronization and enterprise-managed
+    posture. Prompt and document payload classes are out of scope.
   test_coverage: 48%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: multi-cluster
@@ -1589,7 +1592,8 @@ capabilities:
   additional_flags:
   - AGENT_CLUSTER_FEDERATION_ENABLED
   since_version: v2.x-agentic-platform-complete-hardening
-  limitations: Cluster inventory and status flows exist, but distributed production posture remains opt-in and release-gated.
+  limitations: Cluster inventory and status flows exist, but distributed production
+    posture remains opt-in and release-gated.
   test_coverage: 46%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: capability-catalog
@@ -1609,7 +1613,9 @@ capabilities:
   - plugin_signature
   - plugin_runtime
   since_version: v2.x-agentic-platform-complete-hardening
-  limitations: Operator-only catalog with draft/approval workflow. Installation and approval exist, but production support still depends on signature, sandbox, and test evidence.
+  limitations: Operator-only catalog with draft/approval workflow. Installation and
+    approval exist, but production support still depends on signature, sandbox, and
+    test evidence.
   test_coverage: 52%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: platform-profiles
@@ -1623,6 +1629,26 @@ capabilities:
   associated_services:
   - profile_resolver
   since_version: v2.x-agentic-platform-complete-hardening
-  limitations: Profiles are the supported operator contract. Per-flag overrides remain available but are not the preferred production posture.
+  limitations: Profiles are the supported operator contract. Per-flag overrides remain
+    available but are not the preferred production posture.
   test_coverage: 61%
   rollback_story: Revert to the previous profile or appliance defaults.
+- id: agent-a2a
+  name: Agent A2A & Streaming
+  area: agents
+  status: production_optional
+  owner: agent-team
+  support_level: production
+  docs_url: docs/api/agent-websocket-streaming.md
+  api_prefix: /agents
+  since_version: v2.0.0
+  associated_services:
+  - agents/a2a/a2a_security.py
+  - agents/a2a/a2a_server.py
+  - agents/a2a/a2a_registry.py
+  - agents/a2a/a2a_messages.py
+  - agents/a2a/a2a_client.py
+  - agents/streaming/stream_auth.py
+  - agents/streaming/run_event_stream.py
+  - agents/streaming/websocket_manager.py
+  - agent_a2a.py

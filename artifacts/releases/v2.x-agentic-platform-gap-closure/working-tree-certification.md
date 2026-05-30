@@ -1,0 +1,90 @@
+# Working Tree Certification
+
+**Status:** FAIL
+
+## Findings
+```
+ M CHANGELOG.md
+ M Makefile
+ M config/feature-flags.yaml
+ M config/platform-freeze-rules.json
+ M control_plane/app/api/agent_execution_admin.py
+ M control_plane/app/api/agent_worker_admin.py
+ M control_plane/app/api/client.py
+ M control_plane/app/core/config.py
+ M control_plane/app/main.py
+ M control_plane/app/models/__init__.py
+ M control_plane/app/models/agents.py
+ M control_plane/app/services/agents/agent_cancellation.py
+ M control_plane/app/services/agents/agent_execution_plane.py
+ M control_plane/app/services/agents/agent_llm_provider.py
+ M control_plane/app/services/agents/agent_runtime.py
+ M control_plane/app/services/agents/code_interpreter/providers/firecracker_sandbox.py
+ M control_plane/app/services/agents/code_interpreter/sandbox_policy.py
+ M control_plane/app/services/agents/connectors/audit.py
+ M control_plane/app/services/agents/connectors/base.py
+ M control_plane/app/services/agents/connectors/confluence_connector.py
+ M control_plane/app/services/agents/connectors/github_connector.py
+ M control_plane/app/services/agents/connectors/http_client.py
+ M control_plane/app/services/agents/connectors/jira_connector.py
+ M control_plane/app/services/agents/connectors/microsoft365_connector.py
+ M control_plane/app/services/agents/connectors/salesforce_connector.py
+ M control_plane/app/services/agents/connectors/slack_connector.py
+ M control_plane/app/services/agents/memory_indexing.py
+ M control_plane/app/services/inference_proxy.py
+ M control_plane/app/services/quota.py
+ M control_plane/app/services/tokenizer_service.py
+ M docs/agents/code-interpreter-production.md
+ M docs/cli/agentctl.md
+ M operator/main.py
+ M scripts/agentctl.py
+ M tests/conftest.py
+?? control_plane/app/api/agent_a2a.py
+?? control_plane/app/api/agents_ws.py
+?? control_plane/app/api/assistants_v1.py
+?? control_plane/app/api/batches_v1.py
+?? control_plane/app/api/billing_payments.py
+?? control_plane/app/models/assistants.py
+?? control_plane/app/models/batches.py
+?? control_plane/app/models/payments.py
+?? control_plane/app/services/agents/a2a/
+?? control_plane/app/services/agents/memory/
+?? control_plane/app/services/agents/streaming/
+?? control_plane/app/services/agents/tracing.py
+?? control_plane/app/services/assistants/
+?? control_plane/app/services/batches/
+?? control_plane/app/services/billing/payments/
+?? control_plane/app/services/plugins/dev_kit.py
+?? control_plane/app/services/token_counting/
+?? docs/agents/a2a-protocol.md
+?? docs/agents/connectors-production.md
+?? docs/agents/semantic-memory-retrieval.md
+?? docs/api/agent-websocket-streaming.md
+?? docs/api/assistants-compat.md
+?? docs/api/batch-api.md
+?? docs/billing/payment-processing.md
+?? docs/billing/token-counting.md
+?? docs/developers/
+?? docs/operations/agentic-scale.md
+?? docs/plugins/dev-kit.md
+?? docs/releases/V2_X_AGENTIC_PLATFORM_GAP_CLOSURE.md
+?? examples/agents/support-triage/
+?? examples/plugins/safe-tool/
+?? frontend/admin/src/pages/developers/
+?? scripts/load-test-agentic.sh
+?? tests/e2e/test_agent_a2a_protocol.py
+?? tests/e2e/test_agent_executor_real_flow.py
+?? tests/e2e/test_agent_websocket_streaming.py
+?? tests/e2e/test_payment_processing.py
+?? tests/e2e/test_token_counting.py
+?? tests/load/
+?? tests/test_agent_cancellation.py
+?? tests/test_assistants_v1.py
+?? tests/test_batches_v1.py
+?? tests/test_connector_mock_execution.py
+?? tests/test_connectors_production.py
+?? tests/test_developer_experience.py
+?? tests/test_distributed_maturity.py
+?? tests/test_sandbox_final.py
+?? tests/test_semantic_memory_final.py
+```

@@ -4508,6 +4508,76 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Added during drift cleanup.
+- name: AGENT_MEMORY_VECTOR_PROVIDER
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_SEMANTIC_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_A2A_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_A2A_EXTERNAL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_ASSISTANTS_API_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_BATCH_API_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: AGENT_WEBSOCKET_STREAMING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
 - name: AGENT_OPENROUTER_MODEL
   default: false
   owner: agent-platform
@@ -5008,6 +5078,16 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Added during drift cleanup.
+- name: PAYMENT_PROCESSING_ENABLED
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
 - name: PUBLIC_ANALYTICS_PROVIDER
   default: false
   owner: platform-ops
@@ -5069,6 +5149,36 @@
   conflicts: []
   safe_default_reason: Added during drift cleanup.
 - name: TOKENIZER_MODEL_PATH
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: TOKEN_COUNTING_REAL_ENABLED
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: TOKEN_COUNTING_FALLBACK_ALLOWED
+  default: false
+  owner: platform-ops
+  area: Core Platform
+  status: internal
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Added during drift cleanup.
+- name: STRIPE_PAYMENT_ENABLED
   default: false
   owner: platform-ops
   area: Core Platform

@@ -1,5 +1,24 @@
 # Changelog
 
+## [v2.x-agentic-platform-gap-closure] - 2026-05-29
+
+### Added
+- **Top 3 gap-closure priorities validated end-to-end**: real Agent Executor lifecycle coverage, Google-style A2A protocol flow, and tenant-authenticated WebSocket run streaming now have targeted E2E validation in the repository.
+- **Release evidence pack**: `artifacts/releases/v2.x-agentic-platform-gap-closure/` records validation, E2E, interoperability, developer experience, operational maturity, and security-hardening status for this release line.
+
+### Changed
+- **Semantic memory indexing no longer crashes on missing config**: `AGENT_MEMORY_EMBEDDINGS_PROVIDER` is restored in runtime settings, allowing the executor finalization path to complete instead of silently re-queuing the run.
+- **Feature-flag governance is current for the new platform surfaces**: A2A, WebSocket streaming, assistants, batches, payment processing, token counting, and semantic memory controls are now registered in the feature-flag inventory.
+- **Platform freeze governance reflects the expanded release baseline**: approved bounded contexts, routers, services, models, and changed-service coverage now match the current agentic platform closure scope.
+
+### Fixed
+- **`make validate-quick` regression**: feature-flag registration drift no longer blocks production validation.
+- **`make platform-freeze-check` regression**: freeze and changed-service coverage gates now pass for the newly introduced agentic platform closure surfaces.
+
+### Security
+- **No silent production mock claim for the top 3 priorities**: executor, A2A, and WebSocket flows are validated explicitly instead of relying on initialization-only evidence.
+- **Release remains blocked on repository hygiene**: working-tree cleanliness is still enforced by the release gate and must be resolved before certification can pass.
+
 ## [v2.x-agentic-evolutionary-intelligence] - 2026-05-29
 
 ### Added
