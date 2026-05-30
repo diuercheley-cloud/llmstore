@@ -88,5 +88,5 @@ classes:
     max_steps: 10
     max_tool_calls: 10
     max_approval_wait_seconds: 300
-    max_memory_reads: 50
+    max_memory_reads: 200
     max_replans: 2
