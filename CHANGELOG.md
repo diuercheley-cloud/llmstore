@@ -1,5 +1,25 @@
 # Changelog
 
+## [v2.x-agentic-ux-completion] - 2026-05-30
+
+### Added
+- **Persistent Sessions/Threads**: Agent session management with CRUD API, session models, and session-aware executor integration.
+- **Prompt Template Engine**: Versioned prompt templates with registry, renderer, validator, versioning, and interactive playground.
+- **End-User Chat**: Real chat interface with persistent sessions, streaming support, and mobile-responsive design.
+- **Orphan Frontend Routes**: Navigation system, layout components, command palette, and route definitions making all admin sections accessible.
+- **PWA/Mobile Foundation**: Service worker, web manifest, offline support, and mobile-optimized chat components.
+- **Voice & WebRTC Foundation**: Voice agent configuration, STT/TTS streaming flags, WebRTC audio and voice support.
+- **Agent-as-API Deployment**: Agent deployment API, facade service, and runtime management for standalone agent endpoints.
+- **Consistent Navigation**: Admin hub layout, sidebar navigation, command palette, and route-based code splitting.
+- **Bundle Developer Workflow**: Bundle init, sign, validate, test, and publish scripts with web UI management interface.
+
+### Fixed
+- **Feature Flag Drift**: Registered 5 missing feature flags (`AGENT_AS_API_ENABLED`, `VOICE_AGENT_ENABLED`, `VOICE_STT_STREAMING_ENABLED`, `VOICE_TTS_STREAMING_ENABLED`, `WEBRTC_VOICE_ENABLED`) in `config/feature-flags.yaml`.
+- **Release Gate Tag Regex**: Updated tag validation to accept `v2.x-*` format used by the agentic release line.
+
+### Changed
+- **Release scope expanded to UX completion**: sessions, prompts, chat, voice, PWA, agent-as-API, and bundle DX are now governed release surfaces.
+
 ## [v2.2.0-agentic-critical-gaps] - 2026-05-30
 
 ### Added

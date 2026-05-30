@@ -636,6 +636,12 @@ class Settings(BaseSettings):
     agent_graph_rag_enabled: bool = Field(default=False, alias="AGENT_GRAPH_RAG_ENABLED")
     # Owner: agent-platform
     # Status: beta
+    prompt_templates_enabled: bool = Field(default=False, alias="PROMPT_TEMPLATES_ENABLED")
+    # Owner: agent-platform
+    # Status: experimental
+    prompt_template_playground_enabled: bool = Field(default=False, alias="PROMPT_TEMPLATE_PLAYGROUND_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
     agent_graph_write_enabled: bool = Field(default=False, alias="AGENT_GRAPH_WRITE_ENABLED")
     # Owner: agent-platform
     # Status: beta
@@ -1316,6 +1322,15 @@ class Settings(BaseSettings):
 
     realtime_voice_enabled: bool = Field(default=False, alias="REALTIME_VOICE_ENABLED")
     webrtc_audio_enabled: bool = Field(default=False, alias="WEBRTC_AUDIO_ENABLED")
+
+    # Voice Agent (new)
+    voice_agent_enabled: bool = Field(default=False, alias="VOICE_AGENT_ENABLED")
+    voice_stt_streaming_enabled: bool = Field(default=False, alias="VOICE_STT_STREAMING_ENABLED")
+    voice_tts_streaming_enabled: bool = Field(default=False, alias="VOICE_TTS_STREAMING_ENABLED")
+    webrtc_voice_enabled: bool = Field(default=False, alias="WEBRTC_VOICE_ENABLED")
+
+    # Agent-as-API deployment
+    agent_as_api_enabled: bool = Field(default=False, alias="AGENT_AS_API_ENABLED")
 
     model_experiments_enabled: bool = Field(default=False, alias="MODEL_EXPERIMENTS_ENABLED")
     model_canary_enabled: bool = Field(default=False, alias="MODEL_CANARY_ENABLED")

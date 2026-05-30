@@ -143,6 +143,9 @@ class AgentExecutor:
             await self.db.commit()
             return False
 
+        if self.settings.prompt_templates_enabled and agent_def.prompt_template_id:
+            agent_def = await self._resolve_prompt_template(agent_def, run)
+
         if await self._check_limits(run, agent_def):
             await self.db.commit()
             return False
@@ -648,5 +651,79 @@ class AgentExecutor:
             if policy_detail:
                 # Set temporary policy_id to let the policy engine load custom rules
                 agent_def.policy_id = f"policy-opt-{candidate_id}"
+
+        return agent_def
+
+    async def _resolve_prompt_template(self, agent_def, run) -> Any:
+        try:
+            from app.models.prompts import PromptTemplateVersion
+            from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
+            from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
+
+            version_id = agent_def.prompt_template_version_id
+            if not version_id:
+                from app.models.prompts import PromptTemplate
+                tmpl_stmt = select(PromptTemplate).where(
+                    PromptTemplate.id == agent_def.prompt_template_id
+                )
+                tmpl_res = await self.db.execute(tmpl_stmt)
+                template = tmpl_res.scalar_one_or_none()
+                if template and template.active_version_id:
+                    version_id = template.active_version_id
+
+            if not version_id:
+                return agent_def
+
+            ver_stmt = select(PromptTemplateVersion).where(
+                PromptTemplateVersion.id == version_id
+            )
+            ver_res = await self.db.execute(ver_stmt)
+            version = ver_res.scalar_one_or_none()
+            if not version:
+                return agent_def
+
+            svc = PromptTemplateRegistryService(self.db)
+            declared = await svc.get_declared_variables(
+                agent_def.prompt_template_id
+            )
+            declared_list = [
+                {"name": v.name, "type": v.var_type, "required": v.required,
+                 "default": v.default, "description": v.description}
+                for v in declared
+            ]
+
+            variables = {
+                "input": run.input_text or "",
+                "agent_name": agent_def.name,
+                "agent_description": agent_def.description or "",
+                "tools": str(agent_def.allowed_tools or []),
+                "tenant_id": run.tenant_id,
+                "user_id": run.user_id or "",
+            }
+
+            renderer = PromptTemplateRenderer()
+            rendered, hashes = renderer.resolve_instructions(
+                template_str=version.content,
+                instructions=agent_def.instructions,
+                variables=variables,
+                declared_vars=declared_list,
+            )
+
+            agent_def.instructions = rendered
+
+            if hashes:
+                await svc.record_render_event(
+                    template_id=agent_def.prompt_template_id,
+                    version_id=version_id,
+                    tenant_id=run.tenant_id,
+                    variables_hash=hashes["variables_hash"],
+                    output_hash=hashes["output_hash"],
+                    rendered_content_hash=hashes["rendered_content_hash"],
+                    agent_run_id=run.id,
+                    agent_id=agent_def.id,
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve prompt template: {e}")
 
         return agent_def

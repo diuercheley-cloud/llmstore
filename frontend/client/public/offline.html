@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3b82f6" />
+    <title>Offline - LLM Portal</title>
+    <style>
+      body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; color: #0f172a; }
+      .container { text-align: center; padding: 2rem; max-width: 400px; }
+      .icon { font-size: 4rem; margin-bottom: 1rem; }
+      h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+      p { color: #64748b; font-size: 0.875rem; line-height: 1.5; }
+      button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.75rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
+      button:hover { background: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">&#128268;</div>
+      <h1>You're Offline</h1>
+      <p>No internet connection detected. Some features may be unavailable. Cached content is still accessible.</p>
+      <button onclick="window.location.reload()">Retry Connection</button>
+    </div>
+  </body>
+</html>

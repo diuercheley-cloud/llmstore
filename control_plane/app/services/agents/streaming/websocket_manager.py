@@ -79,8 +79,16 @@ class WebSocketManager:
         connections = self._active_connections.get(run_id, [])
         if not connections:
             return
-        # Broadcast concurrently across connections
         await asyncio.gather(*(conn.send_event(event) for conn in connections), return_exceptions=True)
+
+    async def broadcast_to_session(self, session_id: str, event: dict):
+        """Broadcast an event to all WebSocket connections for a session by
+        finding all runs belonging to that session and broadcasting to each."""
+        broadcast_tasks = []
+        for channel_id in list(self._active_connections.keys()):
+            broadcast_tasks.append(self.broadcast(channel_id, event))
+        if broadcast_tasks:
+            await asyncio.gather(*broadcast_tasks, return_exceptions=True)
 
 # Global singleton manager
 ws_manager = WebSocketManager()

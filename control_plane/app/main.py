@@ -160,6 +160,11 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     from app.api.agent_service import router as agent_service_router
     app.include_router(agent_service_router, prefix="/api/v1/agent-service", tags=["agent-as-a-service"])
 
+    from app.api.agent_deployments import admin_router as agent_deployments_admin_router
+    from app.api.agent_deployments import public_router as agent_deployments_public_router
+    app.include_router(agent_deployments_admin_router)
+    app.include_router(agent_deployments_public_router)
+
     if settings.distributed_runtime_enabled:
         from app.api.distributed_runtime import router as distributed_runtime_router
         app.include_router(distributed_runtime_router)
@@ -194,6 +199,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
 
     from app.api.agent_a2a import router as agent_a2a_router
     app.include_router(agent_a2a_router)
+
+    from app.api.agent_sessions import router as agent_sessions_router
+    app.include_router(agent_sessions_router)
 
     from app.api.agents_ws import router as agents_ws_router
     app.include_router(agents_ws_router)

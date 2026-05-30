@@ -19,6 +19,8 @@ from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunE
 from app.services.agents import agent_state, agent_api_facade
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
+from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
+from app.services.agents.sessions.agent_session_service import AgentSessionService
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +96,7 @@ async def get_agent(
 async def start_run(
     agent_id: uuid.UUID,
     input_text: str = Body(..., embed=True),
+    session_id: Optional[uuid.UUID] = Body(None, embed=True),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
 ) -> Dict[str, Any]:
@@ -106,6 +109,7 @@ async def start_run(
             agent_id=agent_id,
             tenant_id=str(client.id),
             input_text=input_text,
+            session_id=session_id,
             is_admin=False
         )
     except agent_api_facade.PolicyDenialError as e:
@@ -114,8 +118,22 @@ async def start_run(
         status_code = 404 if "not found" in str(e).lower() else 400
         raise HTTPException(status_code=status_code, detail=str(e))
     
+    if run.session_id:
+        thread_svc = ConversationThreadService(db)
+        await thread_svc.add_message(
+            session_id=run.session_id,
+            role="user",
+            content=input_text,
+            run_id=run.id,
+        )
+        session_svc = AgentSessionService(db)
+        await session_svc.link_run_to_session(run.session_id, run.id)
+        await session_svc.touch_session(run.session_id)
+        await db.commit()
+
     return {
         "id": str(run.id),
+        "session_id": str(run.session_id) if run.session_id else None,
         "status": run.status,
         "started_at": run.started_at.isoformat()
     }

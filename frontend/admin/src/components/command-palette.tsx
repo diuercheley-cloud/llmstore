@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Search, Command, Users, Box, Cpu, Activity, Shield, LogOut, X } from "lucide-react"
+import { Search, Command, Users, Box, Cpu, Activity, Shield, LogOut, X, Bot, Wrench, BarChart3, MessageSquare, Code2, Key } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "../store/useAuthStore"
 
@@ -8,7 +8,14 @@ const shortcuts = [
   { name: "Ver Clientes", keys: "G C", icon: <Users className="w-4 h-4" />, path: "/clients" },
   { name: "Ver Modelos", keys: "G M", icon: <Box className="w-4 h-4" />, path: "/models" },
   { name: "Ver Backends", keys: "G B", icon: <Cpu className="w-4 h-4" />, path: "/backends" },
-  { name: "Ver Operações", keys: "G O", icon: <Activity className="w-4 h-4" />, path: "/operations" },
+  { name: "Ver Operacoes", keys: "G O", icon: <Activity className="w-4 h-4" />, path: "/operations" },
+  { name: "Agentes - Overview", keys: "G A", icon: <Bot className="w-4 h-4" />, path: "/agents" },
+  { name: "Agent Studio", keys: "G S", icon: <Wrench className="w-4 h-4" />, path: "/agents/studio" },
+  { name: "Agent Analytics", keys: "G N", icon: <BarChart3 className="w-4 h-4" />, path: "/agents/analytics" },
+  { name: "Approval Portal", keys: "G P", icon: <Shield className="w-4 h-4" />, path: "/agents/approvals-portal" },
+  { name: "Chat Colaborativo", keys: "G T", icon: <MessageSquare className="w-4 h-4" />, path: "/agents/chat" },
+  { name: "Web IDE", keys: "G I", icon: <Code2 className="w-4 h-4" />, path: "/ide" },
+  { name: "Developer Portal", keys: "G D", icon: <Key className="w-4 h-4" />, path: "/developers" },
   { name: "Sair", keys: "L O", icon: <LogOut className="w-4 h-4" />, action: "logout" },
 ]
 
@@ -34,7 +41,7 @@ export function CommandPalette() {
 
   if (!isOpen) return null
 
-  const filtered = shortcuts.filter(s => 
+  const filtered = shortcuts.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -48,7 +55,7 @@ export function CommandPalette() {
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-start justify-center pt-[15vh] p-4"
       role="dialog"
       aria-modal="true"
@@ -57,10 +64,10 @@ export function CommandPalette() {
       <div className="w-full max-w-2xl bg-card border border-border rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="p-4 border-b border-border flex items-center gap-3">
           <Search className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
-          <input 
+          <input
             autoFocus
-            type="text" 
-            placeholder="Digite um comando ou busque..." 
+            type="text"
+            placeholder="Digite um comando ou busque..."
             className="flex-1 bg-transparent border-none outline-none text-lg text-foreground placeholder:text-muted-foreground"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -69,7 +76,7 @@ export function CommandPalette() {
           <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">ESC</span>
           </kbd>
-          <button 
+          <button
             onClick={() => setIsOpen(false)}
             className="p-1 hover:bg-secondary rounded-lg transition-colors"
             aria-label="Fechar"
@@ -79,7 +86,7 @@ export function CommandPalette() {
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto p-2">
-          <h2 id="command-palette-title" className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">Atalhos Disponíveis</h2>
+          <h2 id="command-palette-title" className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">Atalhos Disponiveis</h2>
           <div className="space-y-1">
             {filtered.map((shortcut) => (
               <button
@@ -104,7 +111,7 @@ export function CommandPalette() {
             ))}
             {filtered.length === 0 && (
               <div className="px-3 py-8 text-center text-muted-foreground">
-                Nenhum comando encontrado para "{search}"
+                Nenhum comando encontrado para &quot;{search}&quot;
               </div>
             )}
           </div>
@@ -115,7 +122,7 @@ export function CommandPalette() {
             <span className="flex items-center gap-1"><Command className="w-3 h-3" /> para selecionar</span>
             <span className="flex items-center gap-1"><kbd className="border border-border px-1 rounded">ESC</kbd> para fechar</span>
           </div>
-          <div>Comandos Rápidos</div>
+          <div>Comandos Rapidos</div>
         </div>
       </div>
     </div>

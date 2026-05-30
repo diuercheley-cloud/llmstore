@@ -94,6 +94,7 @@ async def create_agent_run(
     user_id: Optional[str] = None,
     correlation_id: Optional[str] = None,
     parent_run_id: Optional[uuid.UUID] = None,
+    session_id: Optional[uuid.UUID] = None,
     multimodal_asset_id: Optional[uuid.UUID] = None,
 ) -> AgentRun:
     input_hash = compute_sha256(input_text)
@@ -110,12 +111,13 @@ async def create_agent_run(
         started_at=utc_now(),
         correlation_id=correlation_id,
         parent_run_id=parent_run_id,
+        session_id=session_id,
         multimodal_asset_id=multimodal_asset_id,
     )
     db.add(run)
     await db.commit()
     await db.refresh(run)
-    logger.info(f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash})")
+    logger.info(f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash}, session_id: {session_id})")
     return run
 
 async def get_agent_run(db: AsyncSession, run_id: uuid.UUID) -> Optional[AgentRun]:

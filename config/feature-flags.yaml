@@ -3405,6 +3405,27 @@
   conflicts: []
   safe_default_reason: Knowledge graph disabled by default until explicitly enabled
     by operator.
+- name: PROMPT_TEMPLATES_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: beta
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Template engine disabled by default until explicitly enabled.
+- name: PROMPT_TEMPLATE_PLAYGROUND_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.1.0-agentic-platform-expansion
+  risk_level: low
+  dependencies:
+  - PROMPT_TEMPLATES_ENABLED
+  conflicts: []
+  safe_default_reason: Playground disabled by default; enables live LLM rendering.
 - name: AGENT_KG_MOCK_MODE
   default: false
   owner: agent-platform
@@ -5530,6 +5551,38 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Opt-in by default to ensure safety.
+- name: VOICE_AGENT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: experimental
+  introduced_in: v2.0.0-agentic-ux-completion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Voice agent is opt-in to avoid unintended audio processing.
+- name: VOICE_STT_STREAMING_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: experimental
+  introduced_in: v2.0.0-agentic-ux-completion
+  risk_level: low
+  dependencies:
+  - VOICE_AGENT_ENABLED
+  conflicts: []
+  safe_default_reason: STT streaming is opt-in; depends on voice agent being enabled.
+- name: VOICE_TTS_STREAMING_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: experimental
+  introduced_in: v2.0.0-agentic-ux-completion
+  risk_level: low
+  dependencies:
+  - VOICE_AGENT_ENABLED
+  conflicts: []
+  safe_default_reason: TTS streaming is opt-in; depends on voice agent being enabled.
 - name: WEAVIATE_ENABLED
   default: false
   owner: platform
@@ -5550,6 +5603,17 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Opt-in by default to ensure safety.
+- name: WEBRTC_VOICE_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: experimental
+  introduced_in: v2.0.0-agentic-ux-completion
+  risk_level: low
+  dependencies:
+  - WEBRTC_AUDIO_ENABLED
+  conflicts: []
+  safe_default_reason: WebRTC voice is opt-in; depends on WebRTC audio being enabled.
 - name: WEB_IDE_ENABLED
   default: false
   owner: platform
@@ -5570,6 +5634,16 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Anomaly detection is off until calibrated.
+- name: AGENT_AS_API_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v2.0.0-agentic-ux-completion
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Agent-as-API deployment is opt-in to avoid unintended exposure.
 - name: AGENT_BREAKPOINTS_ENABLED
   default: false
   owner: agent-platform

@@ -48,6 +48,8 @@ class AgentWorkerService:
         self.is_running = False
         self.is_draining = False
         self._heartbeat_task = None
+        print(f"DEBUG: AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
+        logger.info(f"DEBUG: AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
         self._recovery_task = None
         self._setup_signal_handlers()
 

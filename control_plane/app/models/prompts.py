@@ -21,6 +21,7 @@ class PromptTemplate(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     versions = relationship("PromptTemplateVersion", foreign_keys="[PromptTemplateVersion.template_id]", back_populates="template", cascade="all, delete-orphan")
+    declared_variables = relationship("PromptTemplateVariable", back_populates="template", cascade="all, delete-orphan")
     active_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("prompt_template_versions.id", use_alter=True), nullable=True)
 
 class PromptTemplateVersion(Base):
@@ -61,4 +62,34 @@ class PromptPlaygroundRun(Base):
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     token_usage: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class PromptTemplateVariable(Base):
+    __tablename__ = "prompt_template_variables"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    template_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("prompt_templates.id", ondelete="CASCADE"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    var_type: Mapped[str] = mapped_column(String(32), default="string")  # string|number|boolean|object|array|any
+    required: Mapped[bool] = mapped_column(Boolean, default=True)
+    default: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    template = relationship("PromptTemplate", back_populates="declared_variables")
+
+
+class PromptTemplateRenderEvent(Base):
+    __tablename__ = "prompt_template_render_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    template_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("prompt_templates.id", ondelete="SET NULL"), nullable=True, index=True)
+    version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("prompt_template_versions.id", ondelete="SET NULL"), nullable=True, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    variables_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    output_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    rendered_content_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    agent_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="SET NULL"), nullable=True, index=True)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)

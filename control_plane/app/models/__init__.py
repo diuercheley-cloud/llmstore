@@ -814,6 +814,17 @@ __all__ = [
     "AgentDebugStateEdit",
     "AgentBreakpoint",
     "AgentDebugStepEvent",
+    "AgentSession",
+    "AgentConversationThread",
+    "AgentThreadMessage",
+    "AgentSessionRun",
+    "AgentSessionSummary",
+    "PromptTemplate",
+    "PromptTemplateVersion",
+    "PromptTemplateVariable",
+    "PromptTemplateRenderEvent",
+    "PromptExperiment",
+    "PromptPlaygroundRun",
 ]
 from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
 
@@ -973,5 +984,19 @@ from app.models.agent_environments import (
     AgentEnvironmentVersion,
     AgentPromotionRequest,
 )
-
+from app.models.agent_sessions import (
+    AgentSession,
+    AgentConversationThread,
+    AgentThreadMessage,
+    AgentSessionRun,
+    AgentSessionSummary,
+)
+from app.models.prompts import (
+    PromptTemplate,
+    PromptTemplateVersion,
+    PromptTemplateVariable,
+    PromptTemplateRenderEvent,
+    PromptExperiment,
+    PromptPlaygroundRun,
+)
 
