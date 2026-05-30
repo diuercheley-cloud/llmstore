@@ -57,7 +57,23 @@ class DynamicRoutingRuntime(TeamRuntime):
                 )
 
                 try:
-                    result_text = self._execute_work_item(selected, item, goal)
+                    from app.services.agents import agent_runtime
+                    sub_run = await agent_runtime.start_run(
+                        db=self.db,
+                        agent_id=selected.agent_id,
+                        tenant_id=team.tenant_id,
+                        input_text=item.get("description", goal),
+                        parent_run_id=run.id,
+                        correlation_id=run.correlation_id
+                    )
+                    while sub_run.status not in ("completed", "failed", "cancelled"):
+                        await asyncio.sleep(1)
+                        await self.db.refresh(sub_run)
+
+                    if sub_run.status != "completed":
+                        raise RuntimeError(f"Agent {selected.agent_id} failed with status {sub_run.status}")
+
+                    result_text = f"Result from {selected.agent_id} (run {sub_run.id}): Task completed."
                     delegation.status = "completed"
                     chosen_agent = selected
                 except RuntimeError as exc:
@@ -68,31 +84,20 @@ class DynamicRoutingRuntime(TeamRuntime):
                     )
                     if fallback is None:
                         raise
-                    await self.obs.record_trace(
-                        run.id,
-                        "agent_recovery_triggered",
-                        {
-                            "failed_agent_id": str(selected.agent_id),
-                            "fallback_agent_id": str(fallback.agent_id),
-                            "reason": str(exc),
-                            "task_id": item.get("task_id", str(index)),
-                        },
+                    
+                    sub_run_fb = await agent_runtime.start_run(
+                        db=self.db,
+                        agent_id=fallback.agent_id,
+                        tenant_id=team.tenant_id,
+                        input_text=f"RECOVERY: {item.get('description', goal)}",
+                        parent_run_id=run.id,
+                        correlation_id=run.correlation_id
                     )
-                    recovery_delegation = AgentTeamDelegation(
-                        run_id=run.id,
-                        parent_agent_id=selected.agent_id,
-                        child_agent_id=fallback.agent_id,
-                        task_description=item.get("description", goal),
-                        status="completed",
-                    )
-                    self.db.add(recovery_delegation)
-                    await self.record_handoff(
-                        run.id,
-                        selected.agent_id,
-                        fallback.agent_id,
-                        f"Recovery handoff for task '{item.get('task_id', index)}'",
-                    )
-                    result_text = self._execute_work_item(fallback, item, goal, recovered_from=selected.agent_id)
+                    while sub_run_fb.status not in ("completed", "failed", "cancelled"):
+                        await asyncio.sleep(1)
+                        await self.db.refresh(sub_run_fb)
+
+                    result_text = f"Recovery result from {fallback.agent_id} (run {sub_run_fb.id}): Task completed after fallback."
                     chosen_agent = fallback
 
                 await workspace.put(

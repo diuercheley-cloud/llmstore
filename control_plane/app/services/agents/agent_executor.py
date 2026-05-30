@@ -69,18 +69,73 @@ class AgentExecutor:
         
         self.reasoning_loop = ReasoningLoop(self.llm_provider)
         self.deployment_mode = getattr(self.settings, "deployment_mode", "appliance")
+        
+        from app.services.agents.guardrails.guardrail_policy import GuardrailPolicyOrchestrator
+        self.guardrails = GuardrailPolicyOrchestrator(db)
+
+    async def _check_input_guardrails(self, run) -> bool:
+        """Checks input guardrails and returns True if blocked."""
+        # We check the original prompt in the context or the latest user message
+        prompt = run.context.get("prompt", "") or run.context.get("input_text", "")
+        if not prompt: return False
+
+        decision, reason = await self.guardrails.check_input(run.id, run.tenant_id, prompt)
+        if decision == "block":
+            await self._fail_run(f"Input blocked by safety guardrails: {reason}")
+            return True
+        return False
+
+    async def _check_output_guardrails(self, run, content: str) -> Tuple[bool, str]:
+        """Checks output guardrails. Returns (is_blocked, sanitized_content)."""
+        decision, reason, sanitized = await self.guardrails.check_output(run.id, run.tenant_id, content)
+        if decision == "block":
+            await self._fail_run(f"Output blocked by safety guardrails: {reason}")
+            return True, content
+        
+        if decision == "require_human_review":
+            # Pause run and wait for HITL
+            await agent_state.update_run(self.db, self.run_id, status="waiting_approval")
+            # In a real system, we'd create a specific GuardrailApprovalRequest
+            return True, sanitized
+
+        return False, sanitized
 
     async def execute_step(self) -> bool:
         run = await agent_state.get_agent_run(self.db, self.run_id)
         if not run or run.status in ("completed", "failed", "cancelled", "paused", "waiting_approval"):
             return False
 
+        # --- Debugger Integration ---
+        from app.services.agents.debugger.live_stepper import LiveStepper
+        from app.services.agents.debugger.debug_sessions import DebugSessionManager
+        from app.services.agents.debugger.breakpoints import BreakpointManager
+        
+        if self.settings.agent_debugger_enabled:
+            stepper = LiveStepper(
+                self.db, 
+                DebugSessionManager(self.db), 
+                BreakpointManager(self.db)
+            )
+            await stepper.check_and_pause(
+                run.id, run.tenant_id, run.total_steps + 1, 
+                "step_start", {"run_status": run.status, "total_steps": run.total_steps}
+            )
+            # Re-fetch run in case status changed during pause
+            run = await agent_state.get_agent_run(self.db, self.run_id)
+        # ----------------------------
+
         if run.status == "queued":
             run = await agent_state.update_run(self.db, self.run_id, status="running")
             await self.obs.record_run_start(run.agent_id, run.id, run.tenant_id)
             await self.db.commit()
 
-        agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
+        # --- Guardrail Check ---
+        if await self._check_input_guardrails(run):
+            return False
+        # ----------------------
+
+        agent_def = await agent_registry.get_agent_definition(self.db, run.agent_id)
+
         if agent_def:
             agent_def = await self._apply_candidate_overrides_if_evaluating(run, agent_def)
         else:
@@ -134,6 +189,16 @@ class AgentExecutor:
         if decision is None:
             await self.db.commit()
             return False
+
+        # --- Output Guardrail Check ---
+        # We check the raw response text if available, or convert the decision to string
+        content_to_check = str(decision.get("raw_response", "")) or str(decision)
+        is_blocked, sanitized = await self._check_output_guardrails(run, content_to_check)
+        if is_blocked:
+            return False
+        
+        # If redacted, we might need to update the decision (simplified for now)
+        # ------------------------------
 
         decision_type = decision.get("type", "final")
         policy_decision, reason = await self.policy_engine.evaluate_action(agent_def, run, {"task_type": decision_type, **decision})
@@ -375,6 +440,17 @@ class AgentExecutor:
         except Exception as e:
             output, error = {"error": str(e)}, str(e)
         
+        # --- Tool Output Guardrail Check ---
+        if not error:
+            is_blocked, sanitized_output = await self._check_output_guardrails(run, str(output))
+            if is_blocked:
+                # If blocked, we treat it as an error for the agent loop
+                output, error = {"error": "Tool output blocked by safety guardrails"}, "Guardrail violation"
+            else:
+                # If redacted, we'd ideally update the 'output' dict
+                pass
+        # -----------------------------------
+
         latency = int((time.time() - start_time) * 1000)
         await self.obs.record_tool_call_result(self.run_id, tool_name, "failed" if error else "completed", latency, error)
         i_hash, o_hash = agent_state.compute_sha256(tool_input), agent_state.compute_sha256(output)

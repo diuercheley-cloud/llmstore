@@ -1,0 +1,11 @@
+name: rag-research-agent
+version: 1.0.0
+description: "Blueprint for rag-research automation."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools: []
+memory_policy:
+  enabled: true
+eval_suite_file: "eval_suite.json"
+risk_level: "medium"
+owner: "platform-team"

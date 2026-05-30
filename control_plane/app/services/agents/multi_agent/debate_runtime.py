@@ -36,6 +36,7 @@ class DebateRuntime(TeamRuntime):
             if not await self.policy.check_shared_budget(run.id, 0.01): # Initial cost estimate
                  raise ValueError("Shared budget exceeded for debate run")
 
+            from app.services.agents import agent_runtime
             round_summaries = []
             for round_num in range(1, max_rounds + 1):
                 run.current_round = round_num
@@ -43,21 +44,40 @@ class DebateRuntime(TeamRuntime):
                 
                 proposals = []
                 for p in proposers:
-                    proposal = (
-                        f"Proposal from {p.agent_id} in round {round_num}: "
-                        f"approach {round_num} for goal '{goal}'."
+                    sub_run = await agent_runtime.start_run(
+                        db=self.db,
+                        agent_id=p.agent_id,
+                        tenant_id=team.tenant_id,
+                        input_text=f"Propose approach for goal: {goal}. Round {round_num}.",
+                        parent_run_id=run.id,
+                        correlation_id=run.correlation_id
                     )
+                    # wait for completion
+                    while sub_run.status not in ("completed", "failed", "cancelled"):
+                        await asyncio.sleep(1)
+                        await self.db.refresh(sub_run)
+                    
+                    proposal = f"Proposal from {p.agent_id} (run {sub_run.id}): {sub_run.failure_reason if sub_run.status == 'failed' else 'Proposal generated.'}"
                     await self.obs.record_message(run.id, p.agent_id, None, proposal, "proposal")
-                    proposals.append(proposal)
+                    proposals.append({"agent_id": str(p.agent_id), "run_id": str(sub_run.id), "content": proposal})
                 
                 critiques = []
                 for c in critics:
-                    critique = (
-                        f"Critique from {c.agent_id} in round {round_num}: "
-                        f"risk review for proposals on '{goal}'."
+                    sub_run = await agent_runtime.start_run(
+                        db=self.db,
+                        agent_id=c.agent_id,
+                        tenant_id=team.tenant_id,
+                        input_text=f"Critique proposals: {proposals}. Goal: {goal}. Round {round_num}.",
+                        parent_run_id=run.id,
+                        correlation_id=run.correlation_id
                     )
+                    while sub_run.status not in ("completed", "failed", "cancelled"):
+                        await asyncio.sleep(1)
+                        await self.db.refresh(sub_run)
+
+                    critique = f"Critique from {c.agent_id} (run {sub_run.id}): Review completed."
                     await self.obs.record_message(run.id, c.agent_id, None, critique, "critique")
-                    critiques.append(critique)
+                    critiques.append({"agent_id": str(c.agent_id), "run_id": str(sub_run.id), "content": critique})
 
                 round_summary = {
                     "round": round_num,

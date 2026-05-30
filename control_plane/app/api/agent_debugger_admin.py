@@ -1,58 +1,71 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db
-from app.services.agents.debugger.time_travel_debugger import TimeTravelDebugger
 
-router = APIRouter(prefix="/admin/agents", tags=["Agent Time-Travel Debugger"])
+from app.api import deps
+from app.models.agent_debugger import AgentDebugSession, AgentBreakpoint
+from app.services.agents.debugger.debug_sessions import DebugSessionManager
+from app.services.agents.debugger.breakpoints import BreakpointManager
 
-@router.get("/runs/{run_id}/snapshots")
-async def list_run_snapshots(
+router = APIRouter()
+
+@router.post("/sessions/{run_id}/pause")
+async def pause_session(
     run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_admin_user) # RBAC: Admin/Dev required
 ):
-    debugger = TimeTravelDebugger(db)
-    return await debugger.get_run_snapshots(run_id)
+    manager = DebugSessionManager(db)
+    session = await manager.get_or_create_session(run_id, current_user.tenant_id)
+    await manager.pause_session(session.id)
+    return {"status": "paused", "session_id": str(session.id)}
 
-@router.post("/runs/{run_id}/debug/replay-from-step")
-async def replay_from_step(
+@router.post("/sessions/{run_id}/resume")
+async def resume_session(
     run_id: uuid.UUID,
-    step_number: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_admin_user)
 ):
-    debugger = TimeTravelDebugger(db)
-    try:
-        return await debugger.start_replay(run_id, step_number)
-    except (ValueError, PermissionError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    manager = DebugSessionManager(db)
+    session = await manager.get_or_create_session(run_id, current_user.tenant_id)
+    await manager.resume_session(session.id)
+    return {"status": "active", "session_id": str(session.id)}
 
-@router.post("/debug/{debug_id}/state-edit")
-async def edit_debug_state(
-    debug_id: uuid.UUID,
-    edit_data: Dict[str, Any],
-    editor_id: str,
-    db: AsyncSession = Depends(get_db)
+@router.post("/breakpoints/{run_id}")
+async def add_breakpoint(
+    run_id: uuid.UUID,
+    type: str,
+    target: Optional[str] = None,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_admin_user)
 ):
-    debugger = TimeTravelDebugger(db)
-    try:
-        return await debugger.apply_edit(
-            debug_id, 
-            edit_data["field"], 
-            edit_data["value"], 
-            editor_id
-        )
-    except (ValueError, PermissionError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    manager = BreakpointManager(db)
+    bp = await manager.add_breakpoint(run_id, type, target)
+    return {"status": "created", "breakpoint_id": str(bp.id)}
 
-@router.get("/debug/{debug_id}/diff")
-async def get_debug_diff(
-    debug_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+@router.get("/sessions/{run_id}/state")
+async def get_session_state(
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_admin_user)
 ):
-    debugger = TimeTravelDebugger(db)
-    try:
-        return await debugger.get_comparison(debug_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    from sqlalchemy import select
+    from app.models.agent_debugger import AgentDebugStepEvent
+    
+    manager = DebugSessionManager(db)
+    session = await manager.get_or_create_session(run_id, current_user.tenant_id)
+    
+    stmt = select(AgentDebugStepEvent).where(
+        AgentDebugStepEvent.session_id == session.id
+    ).order_by(AgentDebugStepEvent.step_number.desc()).limit(1)
+    
+    res = await db.execute(stmt)
+    latest_event = res.scalar_one_or_none()
+    
+    return {
+        "session_status": session.status,
+        "current_step": session.current_step,
+        "latest_event": latest_event
+    }

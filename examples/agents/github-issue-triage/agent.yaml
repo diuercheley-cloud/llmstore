@@ -1,0 +1,18 @@
+name: github-issue-triage
+version: 1.0.0
+description: "Automatically triages GitHub issues by assigning labels, milestones, and priority."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "github.list_issues"
+  - "github.add_labels"
+  - "github.update_issue"
+  - "github.add_comment"
+memory_policy:
+  enabled: true
+  strategy: "summary"
+  retention_days: 30
+eval_suite_file: "eval_suite.json"
+risk_level: "low"
+owner: "dev-ops"
+tags: ["github", "triage", "automation"]

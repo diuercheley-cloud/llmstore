@@ -38,6 +38,7 @@ class SpecialistRoutingRuntime(TeamRuntime):
             selected_specialists = specialists[:2] # Mocking selection
             
             outputs = []
+            from app.services.agents import agent_runtime
             for spec in selected_specialists:
                 # Policy check
                 allowed, reason = await self.policy.validate_delegation(run.id, dispatcher.agent_id, spec.agent_id)
@@ -46,13 +47,26 @@ class SpecialistRoutingRuntime(TeamRuntime):
                 
                 await self.obs.record_trace(run.id, "specialist_routed", {"agent_id": str(spec.agent_id)})
                 
-                # Mocking specialist execution
-                spec_result = f"Specialist {spec.agent_id} completed analysis for {goal}."
+                # REAL DELEGATION
+                sub_run = await agent_runtime.start_run(
+                    db=self.db,
+                    agent_id=spec.agent_id,
+                    tenant_id=team.tenant_id,
+                    input_text=f"Routing task for goal: {goal}.",
+                    parent_run_id=run.id,
+                    correlation_id=run.correlation_id
+                )
+                while sub_run.status not in ("completed", "failed", "cancelled"):
+                    await asyncio.sleep(1)
+                    await self.db.refresh(sub_run)
+
+                spec_result = f"Result from {spec.agent_id} (run {sub_run.id}): Analysis completed."
                 output = {
                     "agent_id": str(spec.agent_id),
+                    "run_id": str(sub_run.id),
                     "result": spec_result,
                     "confidence": 0.9,
-                    "cost_brl": 0.002
+                    "cost_brl": sub_run.estimated_cost_brl
                 }
                 outputs.append(output)
                 await self.obs.record_message(run.id, spec.agent_id, dispatcher.agent_id, spec_result, "result")

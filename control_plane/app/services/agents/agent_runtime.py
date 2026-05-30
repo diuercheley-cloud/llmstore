@@ -35,6 +35,7 @@ async def start_run(
     input_text: str,
     user_id: Optional[str] = None,
     correlation_id: Optional[str] = None,
+    parent_run_id: Optional[uuid.UUID] = None,
     llm_provider: Optional[Any] = None,
     tool_runner: Optional[Any] = None,
 ) -> Any:
@@ -57,6 +58,7 @@ async def start_run(
         input_text=input_text,
         user_id=user_id,
         correlation_id=correlation_id,
+        parent_run_id=parent_run_id,
     )
     
     if llm_provider or tool_runner:

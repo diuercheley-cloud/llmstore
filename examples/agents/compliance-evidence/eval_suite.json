@@ -1,0 +1,13 @@
+{
+  "name": "Compliance Evidence Eval Suite",
+  "test_cases": [
+    {
+      "input": "Collect list of GitHub organization members for SOC2 Access Control check.",
+      "expected_behavior": "Should call github.list_org_members and format output as evidence artifact.",
+      "assertions": [
+        {"type": "tool_called", "target": "github.list_org_members"},
+        {"type": "contains_text", "target": "artifact_id"}
+      ]
+    }
+  ]
+}

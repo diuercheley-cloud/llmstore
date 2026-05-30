@@ -25,8 +25,9 @@ class AgentEventTrigger(Base):
     tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
     source_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_event_sources.id", ondelete="SET NULL"), nullable=True)
-    trigger_type: Mapped[str] = mapped_column(String(64), nullable=False)  # on_schedule, on_webhook, etc
+    trigger_type: Mapped[str] = mapped_column(String(64), nullable=False)  # on_schedule, on_webhook, on_message_queue, etc
     config: Mapped[dict] = mapped_column(JSON, default=dict)
+    filter_expression: Mapped[str | None] = mapped_column(Text, nullable=True) # JSONPath or simple expression
     is_paused: Mapped[bool] = mapped_column(Boolean, default=False)
     rate_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     budget: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -41,7 +42,10 @@ class AgentEventDelivery(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     trigger_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_event_triggers.id", ondelete="CASCADE"), nullable=False, index=True)
     event_payload: Mapped[dict] = mapped_column(JSON, default=dict)
-    status: Mapped[str] = mapped_column(String(32), default="pending")
+    status: Mapped[str] = mapped_column(String(32), default="pending") # pending, delivered, failed, dlq
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+    next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    dlq_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     agent_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="SET NULL"), nullable=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

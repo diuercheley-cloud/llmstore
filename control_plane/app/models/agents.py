@@ -44,6 +44,7 @@ class AgentRun(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    parent_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="SET NULL"), nullable=True, index=True)
     tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     user_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(32), default="queued", index=True)  # queued|running|waiting_approval|completed|failed|cancelled|paused
@@ -352,6 +353,12 @@ class AgentApprovalRequest(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     sanitized_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     raw_tool_input: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    
+    # Advanced HITL fields
+    escalation_status: Mapped[str] = mapped_column(String(32), default="none") # none, escalated
+    escalated_to_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_batch_eligible: Mapped[bool] = mapped_column(Boolean, default=False)
+    
     decision_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     decided_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -451,14 +458,59 @@ class AgentEvalBaseline(Base):
     version: Mapped[str] = mapped_column(String(64), nullable=False)
     set_by: Mapped[str] = mapped_column(String(128), nullable=False)
     is_stale: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+
+class AgentLLMJudgeRun(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_llm_judge_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    eval_result_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_eval_results.id", ondelete="CASCADE"), nullable=False, index=True)
+    judge_model: Mapped[str] = mapped_column(String(128), nullable=False)
+    rubric_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    is_mock: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
-    run = relationship("AgentEvalRun")
+class AgentRedTeamCase(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_red_team_cases"
 
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    attack_type: Mapped[str] = mapped_column(String(64), nullable=False) # jailbreak, injection, exfiltration, unsafe_tool
+    payload: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_denial: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
+class AgentABEvalRun(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_ab_eval_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    agent_a_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id"), nullable=False)
+    agent_b_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    winner_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+class AgentEvalPairwiseResult(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_eval_pairwise_results"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ab_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_ab_eval_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    input_text: Mapped[str] = mapped_column(Text, nullable=False)
+    response_a: Mapped[str] = mapped_column(Text, nullable=False)
+    response_b: Mapped[str] = mapped_column(Text, nullable=False)
+    preference: Mapped[str] = mapped_column(String(8), nullable=False) # A, B, Tie
+    rationale: Mapped[str] = mapped_column(Text, nullable=True)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict) # cost, latency, safety
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 class AgentEvalDataset(Base):
+
     # Owner: agent-platform
     __tablename__ = "agent_eval_datasets"
 
@@ -1040,6 +1092,32 @@ class AgentPolicyDecision(Base):
 
     run = relationship("AgentRun")
 
+
+class AgentGuardrailEvent(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_guardrail_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    guardrail_type: Mapped[str] = mapped_column(String(64), nullable=False) # jailbreak, pii, secret, etc.
+    detection_point: Mapped[str] = mapped_column(String(64), nullable=False) # input, model_output, tool_output
+    raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sanitized_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+class AgentGuardrailDecision(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_guardrail_decisions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    decision: Mapped[str] = mapped_column(String(32), nullable=False) # allow, redact, require_human_review, block
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    guardrail_version: Mapped[str] = mapped_column(String(32), default="1.0.0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 class AgentEvalFailure(Base):
     # Owner: agent-platform

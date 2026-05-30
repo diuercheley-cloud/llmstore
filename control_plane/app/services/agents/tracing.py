@@ -26,12 +26,25 @@ class TracingService:
         provider = TracerProvider(resource=resource)
         
         if settings.agent_otel_tracing_enabled:
-            otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4317")
-            exporter = OTLPSpanExporter(endpoint=otlp_endpoint, insecure=True)
-            provider.add_span_processor(BatchSpanProcessor(exporter))
-            logger.info(f"OTel tracing enabled, exporting to {otlp_endpoint}")
+            # Multi-exporter setup
+            from app.services.observability.otlp_exporter import OTLPExporter
+            from app.services.observability.jaeger_exporter import JaegerExporterService
+            from app.services.observability.zipkin_exporter import ZipkinExporterService
+            
+            if settings.otlp_export_enabled:
+                OTLPExporter().setup(provider)
+            
+            if settings.jaeger_export_enabled:
+                JaegerExporterService().setup(provider)
+                
+            if settings.zipkin_export_enabled:
+                ZipkinExporterService().setup(provider)
+
+            if not any([settings.otlp_export_enabled, settings.jaeger_export_enabled, settings.zipkin_export_enabled]):
+                # Default to console if none enabled but OTel is active
+                provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
         else:
-            # Local/Console only if enabled but no endpoint
+            # Console only
             provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
             
         trace.set_tracer_provider(provider)

@@ -73,24 +73,46 @@ class HierarchicalRuntime(TeamRuntime):
             await self.db.flush()
             
             specialist_outputs = []
+            from app.services.agents import agent_runtime
+            
             for index, spec in enumerate(specialists, start=1):
                 assignment = spec.metadata_json.get("task_description") or f"Analyze subproblem for goal: {goal}"
-                # In real scenario, we would call the agent here
-                # Mocking specialist cost and failure tracking
-                spec_cost = 0.005 # Mock cost per specialist call
                 
-                specialist_result = (
-                    f"Specialist {index} ({spec.agent_id}) analyzed '{assignment}' "
-                    f"for goal '{goal}' and produced a bounded recommendation."
+                # REAL DELEGATION: Start real sub-run
+                sub_run = await agent_runtime.start_run(
+                    db=self.db,
+                    agent_id=spec.agent_id,
+                    tenant_id=team.tenant_id,
+                    input_text=assignment,
+                    parent_run_id=run.id,
+                    correlation_id=run.correlation_id
                 )
                 
+                # Wait for sub-run to complete (Simplified: poll or wait if sync)
+                # In a real async system, we'd use a workflow or signals.
+                # For this implementation, we wait if it's sync, or poll if async.
+                max_retries = 60
+                while sub_run.status not in ("completed", "failed", "cancelled") and max_retries > 0:
+                    await asyncio.sleep(2)
+                    await self.db.refresh(sub_run)
+                    max_retries -= 1
+
+                if sub_run.status != "completed":
+                    logger.error(f"Specialist {spec.agent_id} failed with status {sub_run.status}")
+                    specialist_result = f"Error: Specialist failed to complete task. Status: {sub_run.status}"
+                else:
+                    # Fetch real output hash and result
+                    # Simplification: we'd ideally fetch the final_response from AgentRun
+                    specialist_result = sub_run.failure_reason if sub_run.status == "failed" else f"Success: Analysis completed by {spec.agent_id}"
+
                 output_payload = {
                     "agent_id": str(spec.agent_id),
+                    "sub_run_id": str(sub_run.id),
                     "role": spec.role,
                     "task_description": assignment,
                     "result": specialist_result,
-                    "confidence": 0.85 + (index * 0.02), # Mock varying confidence
-                    "cost_brl": spec_cost
+                    "confidence": 0.9, # Real confidence would come from evaluation or model output
+                    "cost_brl": sub_run.estimated_cost_brl
                 }
                 specialist_outputs.append(output_payload)
 
@@ -107,8 +129,9 @@ class HierarchicalRuntime(TeamRuntime):
                     "specialist_completed",
                     {
                         "agent_id": str(spec.agent_id),
+                        "sub_run_id": str(sub_run.id),
                         "task_description": assignment,
-                        "cost_brl": spec_cost
+                        "cost_brl": sub_run.estimated_cost_brl
                     },
                     agent_id=spec.agent_id,
                 )

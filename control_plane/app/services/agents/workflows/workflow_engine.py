@@ -8,11 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflow
+from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflow, AgentWorkflowDefinition
 from app.services.agents.workflows.workflow_state_machine import WorkflowStateMachine, WorkflowStatus
 from app.services.agents.workflows.workflow_locks import WorkflowLockManager
 from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
 from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
+from app.services.agents.workflows.workflow_dag import WorkflowDAG
+from app.services.agents.workflows.workflow_branching import WorkflowBranchingManager
+from app.services.agents.workflows.workflow_parallel import WorkflowParallelManager
+from app.services.agents.workflows.subworkflow_runtime import SubworkflowRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +24,7 @@ class WorkflowEngine:
     """
     Main orchestration engine for stateful workflows.
     Handles run lifecycle, persistence, and execution of workflow steps.
+    Supports both legacy state machines and modern DAGs.
     """
     
     def __init__(self, db: AsyncSession, worker_id: str = "default_worker"):
@@ -28,14 +33,15 @@ class WorkflowEngine:
         self.settings = get_settings()
         self.locks = WorkflowLockManager(db)
 
-    async def create_run(self, workflow_id: uuid.UUID, tenant_id: str, input_data: Dict[str, Any]) -> AgentWorkflowRun:
+    async def create_run(self, workflow_id: uuid.UUID | None = None, workflow_definition_id: uuid.UUID | None = None, tenant_id: str = "", input_data: Dict[str, Any] = None) -> AgentWorkflowRun:
         run = AgentWorkflowRun(
             workflow_id=workflow_id,
+            workflow_definition_id=workflow_definition_id,
             tenant_id=tenant_id,
             status=WorkflowStatus.CREATED.value,
             current_state="start",
             state_data={},
-            context=input_data,
+            context=input_data or {},
             next_execution_at=utc_now()
         )
         self.db.add(run)
@@ -230,7 +236,124 @@ class WorkflowEngine:
         finally:
             await self.locks.release_lock(lock_key, owner_id)
 
+    async def _execute_dag_logic(self, run: AgentWorkflowRun, sm: WorkflowStateMachine):
+        """
+        Executes logic for a DAG-based workflow.
+        """
+        from app.models.agent_workflows import AgentWorkflowNode # local import to avoid circular dependency if any
+        # Load definition
+        stmt = select(AgentWorkflowDefinition).where(AgentWorkflowDefinition.id == run.workflow_definition_id)
+        res = await self.db.execute(stmt)
+        definition = res.scalar_one_or_none()
+        if not definition:
+            raise ValueError(f"Workflow definition {run.workflow_definition_id} not found")
+
+        dag = WorkflowDAG(definition)
+        context = sm.get_context()
+        
+        # Determine current nodes to process
+        if run.current_state == "start":
+            current_node_keys = [n for n, d in dag.graph.in_degree() if d == 0]
+        else:
+            current_node_keys = (run.state_data or {}).get("active_nodes", [])
+
+        if not current_node_keys:
+            self.db.add(await sm.transition_to(WorkflowStatus.COMPLETED))
+            return
+
+        next_active_nodes = []
+        for node_key in current_node_keys:
+            node_data = dag.graph.nodes[node_key]
+            node_type = node_data["type"]
+            node_config = node_data.get("config", {})
+
+            if node_type == "task":
+                logger.info(f"Executing task node: {node_key}")
+                successors = dag.get_next_nodes(node_key, context)
+                next_active_nodes.extend(successors)
+
+            elif node_type == "condition":
+                branch_manager = WorkflowBranchingManager(run)
+                next_node = branch_manager.resolve_branch(node_config, context)
+                if next_node:
+                    next_active_nodes.append(next_node)
+
+            elif node_type == "parallel_fanout":
+                parallel_manager = WorkflowParallelManager(self.db, run)
+                successors = list(dag.graph.successors(node_key))
+                await parallel_manager.create_parallel_group(
+                    node=AgentWorkflowNode(node_key=node_key, node_type=node_type, config=node_config),
+                    branches_count=len(successors)
+                )
+                next_active_nodes.extend(successors)
+
+            elif node_type == "fanin_join":
+                parallel_manager = WorkflowParallelManager(self.db, run)
+                preds = dag.get_dependencies(node_key)
+                is_ready = True
+                completed_nodes = (run.state_data or {}).get("completed_nodes", [])
+                for pred in preds:
+                    if pred not in completed_nodes:
+                        is_ready = False
+                        break
+                
+                if is_ready:
+                    successors = list(dag.graph.successors(node_key))
+                    next_active_nodes.extend(successors)
+                else:
+                    next_active_nodes.append(node_key)
+
+            elif node_type == "subworkflow":
+                sub_runtime = SubworkflowRuntime(self.db, run)
+                if not await sub_runtime.is_subworkflow_complete(node_key):
+                    sub_def_id = uuid.UUID(node_config["subworkflow_definition_id"])
+                    await sub_runtime.start_subworkflow(node_key, sub_def_id, context)
+                    next_active_nodes.append(node_key)
+                else:
+                    results = await sub_runtime.get_subworkflow_results(node_key)
+                    sm.update_context({f"subworkflow_{node_key}": results})
+                    successors = list(dag.graph.successors(node_key))
+                    next_active_nodes.extend(successors)
+
+            elif node_type == "approval":
+                sm.update_state_data({"waiting_on": f"approval:{node_key}", "expected_signal": f"approval_{node_key}"})
+                self.db.add(await sm.transition_to(WorkflowStatus.WAITING_APPROVAL))
+                next_active_nodes.append(node_key)
+                break
+
+            elif node_type == "timer":
+                delay = node_config.get("seconds", 60)
+                run.next_execution_at = utc_now() + timedelta(seconds=delay)
+                self.db.add(await sm.transition_to(WorkflowStatus.SLEEPING))
+                next_active_nodes.append(node_key)
+                break
+
+            elif node_type == "webhook_wait":
+                webhook_id = node_config.get("webhook_id")
+                sm.update_state_data({"waiting_on": f"webhook:{webhook_id}"})
+                self.db.add(await sm.transition_to(WorkflowStatus.WAITING_WEBHOOK))
+                next_active_nodes.append(node_key)
+                break
+
+        next_active_nodes = list(set(next_active_nodes))
+        completed_nodes = list(set((run.state_data or {}).get("completed_nodes", []) + current_node_keys))
+        remaining_active = [n for n in next_active_nodes if n not in completed_nodes]
+        
+        sm.update_state_data({
+            "active_nodes": remaining_active,
+            "completed_nodes": completed_nodes
+        })
+
+        if not remaining_active:
+            self.db.add(await sm.transition_to(WorkflowStatus.COMPLETED))
+        else:
+            run.current_state = "processing"
+
     async def _execute_workflow_logic(self, run: AgentWorkflowRun, sm: WorkflowStateMachine):
+        if run.workflow_definition_id:
+            await self._execute_dag_logic(run, sm)
+            return
+
         await self._consume_next_signal(run, sm)
 
         context = sm.get_context()

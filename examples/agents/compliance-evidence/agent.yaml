@@ -1,0 +1,17 @@
+name: compliance-evidence-agent
+version: 1.0.0
+description: "Automatically collects and catalogs compliance evidence for SOC2/ISO27001."
+instructions_file: "instructions.md"
+model: "gpt-4o"
+tools:
+  - "aws.list_iam_policies"
+  - "github.list_org_members"
+  - "db.query_access_logs"
+  - "jira.list_access_requests"
+memory_policy:
+  enabled: true
+  strategy: "summary"
+eval_suite_file: "eval_suite.json"
+risk_level: "high"
+owner: "compliance-team"
+tags: ["compliance", "soc2", "audit"]

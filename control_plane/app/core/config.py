@@ -454,10 +454,15 @@ class Settings(BaseSettings):
     # Status: active
     agent_telemetry_strict_export: bool = Field(default=False, alias="AGENT_TELEMETRY_STRICT_EXPORT")
     # Owner: agent-platform
-    # Status: beta
+    # Status: production
     agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
     agent_otel_tracing_enabled: bool = Field(default=False, alias="AGENT_OTEL_TRACING_ENABLED")
-    agent_langsmith_export_enabled: bool = Field(default=False, alias="AGENT_LANGSMITH_EXPORT_ENABLED")
+    otlp_export_enabled: bool = Field(default=False, alias="OTLP_EXPORT_ENABLED")
+    jaeger_export_enabled: bool = Field(default=False, alias="JAEGER_EXPORT_ENABLED")
+    zipkin_export_enabled: bool = Field(default=False, alias="ZIPKIN_EXPORT_ENABLED")
+    agent_anomaly_detection_enabled: bool = Field(default=False, alias="AGENT_ANOMALY_DETECTION_ENABLED")
+    agent_trace_export_enabled: bool = Field(default=True, alias="AGENT_TRACE_EXPORT_ENABLED")
+
     # Owner: agent-platform
     # Status: active
     agent_strict_budgets: bool = Field(default=False, alias="AGENT_STRICT_BUDGETS")
@@ -477,6 +482,15 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_debugger_enabled: bool = Field(default=False, alias="AGENT_DEBUGGER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_live_stepping_enabled: bool = Field(default=False, alias="AGENT_LIVE_STEPPING_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_breakpoints_enabled: bool = Field(default=False, alias="AGENT_BREAKPOINTS_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_approval_portal_enabled: bool = Field(default=False, alias="AGENT_APPROVAL_PORTAL_ENABLED")
@@ -1234,6 +1248,9 @@ class Settings(BaseSettings):
     payment_real_enabled: bool = Field(default=False, alias="PAYMENT_REAL_ENABLED")
 
     # RAG Settings
+    # Owner: agent-platform
+    # Status: active
+    kb_url_ingestion_enabled: bool = Field(default=False, alias="KB_URL_INGESTION_ENABLED")
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
     vector_db_provider: str = Field(default="pgvector", alias="VECTOR_DB_PROVIDER")
     qdrant_enabled: bool = Field(default=False, alias="QDRANT_ENABLED")

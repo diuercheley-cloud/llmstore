@@ -144,6 +144,22 @@ except Exception as e:
 
 
 def include_optional_routers(app: FastAPI, settings) -> None:
+    if settings.agent_debugger_enabled:
+        from app.api.agent_debugger_admin import router as agent_debugger_admin_router
+        app.include_router(agent_debugger_admin_router, prefix="/api/v1/admin/debugger", tags=["agent-debugger"])
+
+    from app.api.prompt_admin import router as prompt_admin_router
+    app.include_router(prompt_admin_router, prefix="/api/v1/admin/prompts", tags=["prompt-management"])
+
+    from app.api.agent_analytics_admin import router as agent_analytics_admin_router
+    app.include_router(agent_analytics_admin_router, prefix="/api/v1/admin/agents/analytics", tags=["agent-analytics"])
+
+    from app.api.kb_admin import router as kb_admin_router
+    app.include_router(kb_admin_router, prefix="/api/v1/admin/kb", tags=["knowledge-base"])
+
+    from app.api.agent_service import router as agent_service_router
+    app.include_router(agent_service_router, prefix="/api/v1/agent-service", tags=["agent-as-a-service"])
+
     if settings.distributed_runtime_enabled:
         from app.api.distributed_runtime import router as distributed_runtime_router
         app.include_router(distributed_runtime_router)
