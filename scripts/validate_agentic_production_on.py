@@ -141,8 +141,8 @@ MockAgentLLMProvider.generate = custom_generate
 async def mock_index_item(*args, **kwargs):
     pass
 
-from app.services.agents.memory_indexing import AgentMemoryIndexingService
-AgentMemoryIndexingService.index_item = mock_index_item
+from app.services.agents.memory_indexing import MemoryIndexingService
+MemoryIndexingService.index_item = mock_index_item
 
 
 async def run_validation():
