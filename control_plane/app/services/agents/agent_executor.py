@@ -286,8 +286,6 @@ class AgentExecutor:
         if self.settings.agent_context_compression_enabled:
             from app.services.agents.reasoning.context_compressor import ContextCompressor
             compressor = ContextCompressor()
-            # This requires access to the full history, which might be in memory or db
-            # For this prototype, we simulate compression on instructions
             agent_def.instructions = compressor.redact_secrets(agent_def.instructions)
 
         if self.settings.agent_memory_enabled:
@@ -570,7 +568,7 @@ class AgentExecutor:
     async def _handle_memory_op(self, run, decision, step_number, op):
         if self.is_replay: return True
         await self.obs.record_memory_op_detailed(self.run_id, op, decision.get("memory_type", "short_term"), True)
-        # Log step logic omitted for brevity
+        await agent_state.log_run_step(self.db, self.run_id, step_number, f"memory_{op}", {"input_hash": run.input_hash}, {"op": op, "memory_type": decision.get("memory_type")})
         return True
 
     async def _handle_handoff(self, run, decision, step_number):

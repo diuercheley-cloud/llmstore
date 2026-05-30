@@ -123,6 +123,7 @@ current_idx = 0
 
 async def custom_generate(self, agent_def, run, allowed_tools, input_override=None):
     global current_idx
+    iteration = current_idx
     if current_idx < len(responses_sequence):
         res = responses_sequence[current_idx]
         current_idx += 1
@@ -131,6 +132,7 @@ async def custom_generate(self, agent_def, run, allowed_tools, input_override=No
             "type": "final",
             "output": "Fallback response",
         }
+
     
     usage = {"prompt_tokens": 12, "completion_tokens": 8}
     ret = ProviderResponse(

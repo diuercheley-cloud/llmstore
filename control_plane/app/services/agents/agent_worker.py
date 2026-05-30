@@ -48,8 +48,7 @@ class AgentWorkerService:
         self.is_running = False
         self.is_draining = False
         self._heartbeat_task = None
-        print(f"DEBUG: AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
-        logger.info(f"DEBUG: AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
+        logger.info(f"AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
         self._recovery_task = None
         self._setup_signal_handlers()
 
@@ -306,9 +305,6 @@ class AgentWorkerService:
                         # We must commit steps & changes
                         await db_step.commit()
                 except Exception as step_exc:
-                    print(f"DEBUG WORKER EXCEPTION: {step_exc}")
-                    import traceback
-                    traceback.print_exc()
                     logger.exception(f"Step execution threw exception for run {run_id}")
                     execution_failed = True
                     failure_reason = str(step_exc)

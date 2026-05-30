@@ -22,7 +22,6 @@ class ReasoningLoop:
 
     async def execute(self, agent_def: Any, run: Any, allowed_tools: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         if not self.settings.agent_reasoning_loop_enabled:
-            # Fallback to standard model call
             return await self.llm_provider.generate(agent_def, run, allowed_tools or [])
 
         try:
@@ -32,7 +31,6 @@ class ReasoningLoop:
             elif self.settings.agent_react_loop_enabled:
                 decision = await self.react.run(agent_def, run, allowed_tools or [])
             else:
-                # Default to standard model call
                 decision = await self.llm_provider.generate(agent_def, run, allowed_tools or [])
             
             # Sanitization of CoT for privacy

@@ -132,7 +132,7 @@ class StepCache:
                 if tool and tool.side_effect_level not in ("none", "read"):
                     return False
         
-        if decision_type in ("memory_write", "handoff"):
+        if decision_type in ("memory_write", "memory_read", "handoff"):
             return False
             
         return True
