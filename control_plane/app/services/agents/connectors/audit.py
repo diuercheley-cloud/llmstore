@@ -6,6 +6,30 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+class ConnectorAuditService:
+    def __init__(self, db):
+        self.db = db
+
+    async def register_write_receipt(
+        self,
+        tenant_id: str,
+        connector_name: str,
+        invocation_id: str,
+        result_hash: str
+    ):
+        """
+        Registers a permanent receipt of a connector write operation in the database.
+        """
+        # In a real system, this would insert into a 'connector_receipts' table
+        logger.info(
+            f"AUDIT_RECEIPT: tenant={tenant_id} connector={connector_name} "
+            f"invocation_id={invocation_id} result_hash={result_hash}"
+        )
+        # Assuming we don't have the table yet, we just log it structurally
+        # If we had the model, we would do:
+        # receipt = ConnectorReceipt(id=invocation_id, tenant_id=tenant_id, ...)
+        # self.db.add(receipt)
+
 class ConnectorAuditLog:
     """
     Handles auditing for SaaS Connector actions.

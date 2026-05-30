@@ -389,10 +389,11 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
 
                 await record_usage(
                     self.db,
-                    client=client,
-                    model_id=selected_model.model_id,
+                    client_id=client.id,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
+                    token_count_method=usage.get("tokenizer_used"),
+                    tokens_estimated=usage.get("fallback_used", True)
                 )
 
                 from decimal import Decimal

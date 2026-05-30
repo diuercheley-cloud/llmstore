@@ -98,13 +98,19 @@ class SalesforceConnector(ConnectorAdapter):
         await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
 
         if self.mode == ConnectorMode.REAL:
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -115,6 +121,9 @@ class SalesforceConnector(ConnectorAdapter):
 
         client = ConnectorHTTPClient(
             base_url=instance_url,
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
             headers={"Authorization": f"Bearer {token}"}
         )
 
@@ -130,6 +139,12 @@ class SalesforceConnector(ConnectorAdapter):
             # SOSL or SOQL
             return await client.request("GET", "/services/data/v60.0/query", params={"q": f"SELECT Id, Name FROM Account WHERE Name LIKE '%{q}%'"})
         elif action == "create_task":
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
             subject = params.get("subject")
             if not subject:
                 raise ValueError("subject is required for create_task")
@@ -143,7 +158,16 @@ class SalesforceConnector(ConnectorAdapter):
                 payload["WhatId"] = params["account_id"]
             if params.get("owner_id"):
                 payload["OwnerId"] = params["owner_id"]
-            return await client.request("POST", "/services/data/v60.0/sobjects/Task", json_data=payload)
+            
+            result = await client.request(
+                "POST", 
+                "/services/data/v60.0/sobjects/Task", 
+                json_data=payload,
+                idempotency_key=idempotency_key
+            )
+            
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         raise self._unsupported_action(
             action,

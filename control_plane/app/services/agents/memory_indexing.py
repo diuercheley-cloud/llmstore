@@ -34,7 +34,7 @@ def get_mock_embedding(text: str, dimensions: int = 384) -> List[float]:
             if len(embedding) >= dimensions:
                 break
             val = int.from_bytes(current_hash[i:i+4], "big")
-            float_val = (val / 0xFFFFFFFF) * 2 - 1
+            float_val = (val / 0xFFFFFFFF)  # [0, 1] range
             embedding.append(round(float(float_val), 6))
         if len(embedding) < dimensions:
             current_hash = hashlib.sha256(current_hash).digest()

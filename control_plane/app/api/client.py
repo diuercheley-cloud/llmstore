@@ -1211,7 +1211,12 @@ async def _process_chat_completion(
         )
         tool_calls = extract_tool_calls_from_chat_payload(response_payload)
         sanitized_tool_calls = enforce_tool_argument_limits(tool_calls)
-        completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
+        if tokenizer.settings.token_counting_real_enabled:
+            completion_tokens = result.completion_tokens
+            token_count_method = result.tokenizer_used
+            tokens_estimated = result.real_fallback_used
+        else:
+            completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
         await store_exact_cache(
             session,
             endpoint=endpoint,
@@ -1641,7 +1646,12 @@ async def completions(
             await session.commit()
             return result.response
         response_payload = json.loads(result.response.body.decode("utf-8"))
-        completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
+        if tokenizer.settings.token_counting_real_enabled:
+            completion_tokens = result.completion_tokens
+            token_count_method = result.tokenizer_used
+            tokens_estimated = result.real_fallback_used
+        else:
+            completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
         await store_exact_cache(
             session,
             endpoint="/v1/completions",

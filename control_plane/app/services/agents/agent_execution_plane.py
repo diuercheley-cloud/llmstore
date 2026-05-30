@@ -81,14 +81,14 @@ class AgentExecutionPlane:
         if tenant_id and job.tenant_id != tenant_id:
             raise PermissionError("Access denied to this job.")
 
-        if job.status not in ("failed", "dead_letter", "cancelled"):
-            logger.warning(f"Cannot retry job {job_id} in status {job.status}")
+        if job.queue_status not in ("failed", "dead_letter", "cancelled"):
+            logger.warning(f"Cannot retry job {job_id} in status {job.queue_status}")
             return False
 
         # Reset attempts, schedule to run immediately
-        job.attempts = 0
-        job.status = "queued"
-        job.scheduled_at = utc_now()
+        job.attempt_count = 0
+        job.queue_status = "queued"
+        job.available_at = utc_now()
         job.updated_at = utc_now()
 
         # Update run status to queued

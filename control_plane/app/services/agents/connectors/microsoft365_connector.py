@@ -98,13 +98,19 @@ class Microsoft365Connector(ConnectorAdapter):
         await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
 
         if self.mode == ConnectorMode.REAL:
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -114,6 +120,9 @@ class Microsoft365Connector(ConnectorAdapter):
 
         client = ConnectorHTTPClient(
             base_url="https://graph.microsoft.com/v1.0",
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
             headers={"Authorization": f"Bearer {token}"}
         )
 
@@ -123,6 +132,12 @@ class Microsoft365Connector(ConnectorAdapter):
         elif action == "get_calendar_events_metadata":
             return await client.request("GET", "/me/events")
         elif action == "create_calendar_draft":
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
             subject = params.get("subject")
             start = params.get("start")
             end = params.get("end")
@@ -137,7 +152,15 @@ class Microsoft365Connector(ConnectorAdapter):
                     "content": params.get("body", ""),
                 },
             }
-            return await client.request("POST", "/me/events", json_data=payload)
+            result = await client.request(
+                "POST", 
+                "/me/events", 
+                json_data=payload,
+                idempotency_key=idempotency_key
+            )
+            
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         raise self._unsupported_action(
             action,

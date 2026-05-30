@@ -60,7 +60,7 @@ class GitHubConnector(ConnectorAdapter):
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.MEDIUM
+        return RiskLevel.HIGH
 
     @property
     def side_effect_level(self) -> SideEffectLevel:
@@ -106,19 +106,29 @@ class GitHubConnector(ConnectorAdapter):
 
         # Mode-based execution
         if self.mode == ConnectorMode.REAL:
+            # Avoid duplicate arguments by popping action and params from kwargs
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
         token = credentials.get("token") or credentials.get("api_key")
         client = ConnectorHTTPClient(
             base_url=self.base_url,
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
             headers={
                 "Authorization": f"token {token}",
                 "Accept": "application/vnd.github.v3+json",
@@ -131,7 +141,20 @@ class GitHubConnector(ConnectorAdapter):
             repo = params.get("repo")
             if not owner or not repo:
                 raise ValueError("owner and repo are required for list_issues")
-            return await client.request("GET", f"/repos/{owner}/{repo}/issues")
+            
+            # Implementation of pagination for list_issues
+            all_issues = []
+            async for issue in client.paginate(
+                "GET", 
+                f"/repos/{owner}/{repo}/issues",
+                extract_list=lambda r: r if isinstance(r, list) else [],
+                next_page_params=lambda r, cp: {"page": cp.get("page", 1) + 1} if isinstance(r, list) and len(r) > 0 else None,
+                params=params
+            ):
+                all_issues.append(issue)
+                if len(all_issues) >= params.get("limit", 100):
+                    break
+            return {"issues": all_issues}
 
         elif action == "get_issue":
             owner = params.get("owner")
@@ -141,33 +164,52 @@ class GitHubConnector(ConnectorAdapter):
                 raise ValueError("owner, repo, and issue_number are required for get_issue")
             return await client.request("GET", f"/repos/{owner}/{repo}/issues/{issue_number}")
 
-        elif action == "create_issue_comment":
-            owner = params.get("owner")
-            repo = params.get("repo")
-            issue_number = params.get("issue_number")
-            body = params.get("body")
-            if not owner or not repo or not issue_number or not body:
-                raise ValueError("owner, repo, issue_number, and body are required for create_issue_comment")
-            
-            # Additional write guard if not already handled by _check_feature_flags
-            return await client.request("POST", f"/repos/{owner}/{repo}/issues/{issue_number}/comments", json_data={"body": body})
+        elif action in ["create_issue_comment", "create_issue"]:
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
+            if action == "create_issue_comment":
+                owner = params.get("owner")
+                repo = params.get("repo")
+                issue_number = params.get("issue_number")
+                body = params.get("body")
+                if not owner or not repo or not issue_number or not body:
+                    raise ValueError("owner, repo, issue_number, and body are required for create_issue_comment")
+                
+                result = await client.request(
+                    "POST", 
+                    f"/repos/{owner}/{repo}/issues/{issue_number}/comments", 
+                    json_data={"body": body},
+                    idempotency_key=idempotency_key
+                )
+            else: # create_issue
+                owner = params.get("owner")
+                repo = params.get("repo")
+                title = params.get("title")
+                if not owner or not repo or not title:
+                    raise ValueError("owner, repo, and title are required for create_issue")
+                payload = {"title": title}
+                if params.get("body"):
+                    payload["body"] = params["body"]
+                
+                result = await client.request(
+                    "POST", 
+                    f"/repos/{owner}/{repo}/issues", 
+                    json_data=payload,
+                    idempotency_key=idempotency_key
+                )
+
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         elif action == "search_repositories":
             q = params.get("q")
             if not q:
                 raise ValueError("query 'q' is required for search_repositories")
             return await client.request("GET", "/search/repositories", params={"q": q})
-
-        elif action == "create_issue":
-            owner = params.get("owner")
-            repo = params.get("repo")
-            title = params.get("title")
-            if not owner or not repo or not title:
-                raise ValueError("owner, repo, and title are required for create_issue")
-            payload = {"title": title}
-            if params.get("body"):
-                payload["body"] = params["body"]
-            return await client.request("POST", f"/repos/{owner}/{repo}/issues", json_data=payload)
 
         raise self._unsupported_action(
             action,

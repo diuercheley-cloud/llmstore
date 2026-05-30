@@ -39,6 +39,12 @@ class ForwardResult:
     attempts: int
     fallback_used: bool
     backend_errors: list[dict]
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    tokenizer_used: str = "fallback"
+    real_fallback_used: bool = True
+
 
 
 from app.contracts.queue import QueueContract
@@ -489,6 +495,25 @@ class InferenceProxy:
         if backend == "ollama":
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=False)
 
+        # Real token counting: count prompt tokens before call
+        from app.services.token_counting.token_counter import TokenCounter
+        token_counter = TokenCounter()
+
+        model_name = request_payload.get("model") or payload.get("model") or ""
+        messages = request_payload.get("messages") or request_payload.get("prompt") or payload.get("messages") or payload.get("prompt") or ""
+
+        real_prompt_tokens = 0
+        tokenizer_used = "fallback"
+        fallback_used = True
+        try:
+            counting_res = token_counter.count_tokens(messages, "", model_name, provider=backend)
+            real_prompt_tokens = counting_res.prompt_tokens
+            tokenizer_used = counting_res.tokenizer_used
+            fallback_used = counting_res.fallback_used
+        except Exception as e:
+            logger.warning(f"Error counting prompt tokens: {e}")
+
+
         # Secure debug log for payload
         logged_payload = self._sanitize_logged_payload(request_payload)
         logger.info(
@@ -572,6 +597,36 @@ class InferenceProxy:
                             }
                         },
                     )
+                # Real token counting: count completion tokens
+                completion_text = ""
+                if isinstance(response_payload, dict):
+                    choices = response_payload.get("choices", [])
+                    if choices and isinstance(choices[0], dict):
+                        msg = choices[0].get("message")
+                        if isinstance(msg, dict):
+                            completion_text = msg.get("content") or ""
+                        else:
+                            completion_text = choices[0].get("text") or ""
+
+                real_completion_tokens = 0
+                try:
+                    counting_res = token_counter.count_tokens("", completion_text, model_name, provider=backend)
+                    real_completion_tokens = counting_res.completion_tokens
+                    if counting_res.fallback_used:
+                        fallback_used = True
+                    if counting_res.tokenizer_used != "fallback":
+                        tokenizer_used = counting_res.tokenizer_used
+                except Exception as e:
+                    logger.warning(f"Error counting completion tokens: {e}")
+
+                if "usage" not in response_payload or not isinstance(response_payload["usage"], dict):
+                    response_payload["usage"] = {}
+                response_payload["usage"]["prompt_tokens"] = real_prompt_tokens
+                response_payload["usage"]["completion_tokens"] = real_completion_tokens
+                response_payload["usage"]["total_tokens"] = real_prompt_tokens + real_completion_tokens
+                response_payload["usage"]["tokenizer_used"] = tokenizer_used
+                response_payload["usage"]["fallback_used"] = fallback_used
+
                 if endpoint == "/v1/chat/completions":
                     self._validate_chat_response_payload(
                         response_payload,
@@ -585,6 +640,11 @@ class InferenceProxy:
                     attempts=1,
                     fallback_used=False,
                     backend_errors=[],
+                    prompt_tokens=real_prompt_tokens,
+                    completion_tokens=real_completion_tokens,
+                    total_tokens=real_prompt_tokens + real_completion_tokens,
+                    tokenizer_used=tokenizer_used,
+                    real_fallback_used=fallback_used,
                 )
             except (httpx.HTTPStatusError, httpx.TransportError) as exc:
                 last_error = exc
@@ -656,6 +716,25 @@ class InferenceProxy:
         )
         if backend == "ollama":
             target_endpoint, request_payload = self._translate_ollama_request(endpoint, payload, stream=True)
+
+        # Real token counting: count prompt tokens before call
+        from app.services.token_counting.token_counter import TokenCounter
+        token_counter = TokenCounter()
+
+        model_name = request_payload.get("model") or payload.get("model") or ""
+        messages = request_payload.get("messages") or request_payload.get("prompt") or payload.get("messages") or payload.get("prompt") or ""
+
+        real_prompt_tokens = 0
+        tokenizer_used = "fallback"
+        fallback_used = True
+        try:
+            counting_res = token_counter.count_tokens(messages, "", model_name, provider=backend)
+            real_prompt_tokens = counting_res.prompt_tokens
+            tokenizer_used = counting_res.tokenizer_used
+            fallback_used = counting_res.fallback_used
+        except Exception as e:
+            logger.warning(f"Error counting prompt tokens: {e}")
+
         
         # Secure debug log for payload
         logged_payload = self._sanitize_logged_payload(request_payload)
@@ -815,10 +894,76 @@ class InferenceProxy:
                     status_code=200,
                     latency_seconds=elapsed,
                 )
+                
+                # Real token counting: count completion tokens
+                completion_text = "".join(completion_fragments)
+                real_completion_tokens = 0
+                try:
+                    counting_res = token_counter.count_tokens("", completion_text, model_name, provider=backend)
+                    real_completion_tokens = counting_res.completion_tokens
+                    if counting_res.fallback_used:
+                        fallback_used = True
+                    if counting_res.tokenizer_used != "fallback":
+                        tokenizer_used = counting_res.tokenizer_used
+                except Exception as e:
+                    logger.warning(f"Error counting completion tokens: {e}")
+
                 logger.info(
                     "stream completed",
-                    extra={"extra_data": {"endpoint": endpoint, "completion_tokens_estimated": estimate_tokens_from_text(''.join(completion_fragments))}},
+                    extra={"extra_data": {
+                        "endpoint": endpoint,
+                        "completion_tokens_estimated": real_completion_tokens,
+                        "tokenizer_used": tokenizer_used,
+                        "fallback_used": fallback_used
+                    }},
                 )
+
+                # Update the database log and financials with actual values
+                from app.core.metrics import get_correlation_id
+                corr_id = get_correlation_id()
+                if corr_id:
+                    try:
+                        from app.db.session import SessionLocal
+                        from sqlalchemy import select
+                        from app.models.request_log import RequestLog
+                        from app.models.request_financial import RequestFinancial
+                        from app.services.quota import update_usage_with_real_tokens
+
+                        async with SessionLocal() as db_session:
+                            stmt_log = select(RequestLog).where(RequestLog.correlation_id == corr_id)
+                            res_log = await db_session.execute(stmt_log)
+                            req_log = res_log.scalar_one_or_none()
+
+                            if req_log:
+                                est_prompt = req_log.prompt_tokens_estimated or 0
+                                est_completion = req_log.completion_tokens_estimated or 0
+                                
+                                req_log.prompt_tokens_estimated = real_prompt_tokens
+                                req_log.completion_tokens_estimated = real_completion_tokens
+                                
+                                await update_usage_with_real_tokens(
+                                    db_session,
+                                    client_id=req_log.client_id,
+                                    estimated_prompt=est_prompt,
+                                    estimated_completion=est_completion,
+                                    real_prompt=real_prompt_tokens,
+                                    real_completion=real_completion_tokens,
+                                    token_count_method=tokenizer_used,
+                                )
+
+                                stmt_fin = select(RequestFinancial).where(RequestFinancial.request_log_id == req_log.id)
+                                res_fin = await db_session.execute(stmt_fin)
+                                req_fin = res_fin.scalar_one_or_none()
+                                if req_fin:
+                                    req_fin.prompt_tokens = real_prompt_tokens
+                                    req_fin.completion_tokens = real_completion_tokens
+                                    req_fin.total_tokens = real_prompt_tokens + real_completion_tokens
+                                    req_fin.token_count_method = tokenizer_used
+                                    req_fin.tokens_estimated = fallback_used
+                                    
+                                await db_session.commit()
+                    except Exception as db_exc:
+                        logger.warning(f"Error updating stream real tokens in DB: {db_exc}")
 
         return ForwardResult(
             response=StreamingResponse(event_stream(), media_type="text/event-stream"),
@@ -826,6 +971,11 @@ class InferenceProxy:
             attempts=1,
             fallback_used=False,
             backend_errors=[],
+            prompt_tokens=real_prompt_tokens,
+            completion_tokens=0,
+            total_tokens=real_prompt_tokens,
+            tokenizer_used=tokenizer_used,
+            real_fallback_used=fallback_used,
         )
 
     def _translate_ollama_request(self, endpoint: str, payload: dict, stream: bool) -> tuple[str, dict]:

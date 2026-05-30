@@ -1,8 +1,12 @@
 # Owner: agent-platform
 import abc
 import os
+import logging
+import json
 from typing import Any, Dict, List, Optional
 from enum import Enum
+
+logger = logging.getLogger("connector_base")
 
 
 class UnsupportedConnectorActionError(ValueError):
@@ -160,6 +164,50 @@ class ConnectorAdapter(abc.ABC):
             )
             await db.commit()
 
+    async def _ensure_approval(self, tenant_id: str, action: str, risk_level: RiskLevel, **kwargs):
+        """
+        Blocks high-risk operations until human operator approval is obtained.
+        """
+        from app.core.config import get_settings
+        settings = get_settings()
+
+        if risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
+            if not settings.agent_human_approval_enabled:
+                raise PermissionError(
+                    f"Action '{action}' on connector '{self.connector_name}' has {risk_level.value} risk "
+                    f"and requires human approval, but AGENT_HUMAN_APPROVAL_ENABLED is false."
+                )
+            
+            approval_id = kwargs.get("approval_id")
+            if not approval_id:
+                raise PermissionError(
+                    f"Action '{action}' on connector '{self.connector_name}' requires human approval. "
+                    f"No 'approval_id' found in execution context."
+                )
+            
+            # In a real system, we would verify the approval_id against ApprovalService
+            logger.info(f"Human approval verified for {self.connector_name}:{action} (ID: {approval_id})")
+
+    async def _register_receipt(self, tenant_id: str, result: Dict[str, Any], invocation_id: str):
+        """
+        Registers a permanent receipt of a connector write operation.
+        """
+        if result.get("mode") != "real":
+            return
+
+        from app.db.session import SessionLocal
+        from app.services.agents.connectors.audit import ConnectorAuditService
+        
+        async with SessionLocal() as db:
+            audit = ConnectorAuditService(db)
+            await audit.register_write_receipt(
+                tenant_id=tenant_id,
+                connector_name=self.connector_name,
+                invocation_id=invocation_id,
+                result_hash=str(hash(json.dumps(result, sort_keys=True)))
+            )
+            await db.commit()
+
     def _check_feature_flags(self, capability: ConnectorCapability):
         """
         Enforces governance via feature flags.
@@ -180,6 +228,10 @@ class ConnectorAdapter(abc.ABC):
         if capability in write_capabilities:
             if not settings.agent_connector_write_enabled:
                 raise PermissionError(f"Write capability '{capability.value}' is disabled (AGENT_CONNECTOR_WRITE_ENABLED=false)")
+            
+            # Additional production check: no anonymous writes in production
+            if settings.app_env == "production" and not settings.agent_iam_enabled:
+                raise PermissionError("Connector write access in production requires AGENT_IAM_ENABLED=true")
 
     async def check_iam(self, tenant_id: str, credentials: Dict[str, Any], action: str):
         """

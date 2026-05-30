@@ -1311,3 +1311,20 @@ class AgentSharedMemoryPolicy(Base):
     can_read: Mapped[bool] = mapped_column(Boolean, default=True)
     can_write: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class AgentA2ARegistration(Base):
+    __tablename__ = "agent_a2a_registrations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_url: Mapped[str | None] = mapped_column(String(512), nullable=True) # remote A2A endpoint
+    auth_token: Mapped[str] = mapped_column(String(256), nullable=False) # Authorization token for incoming/outgoing A2A calls
+    capabilities: Mapped[dict] = mapped_column(JSON, default=dict) # discovery info (e.g. tools, description)
+    is_external: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    agent = relationship("AgentDefinition")
+

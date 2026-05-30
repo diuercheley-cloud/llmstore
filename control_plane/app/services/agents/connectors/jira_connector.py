@@ -57,7 +57,7 @@ class JiraConnector(ConnectorAdapter):
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.MEDIUM
+        return RiskLevel.HIGH
 
     @property
     def side_effect_level(self) -> SideEffectLevel:
@@ -100,13 +100,19 @@ class JiraConnector(ConnectorAdapter):
         await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
 
         if self.mode == ConnectorMode.REAL:
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -130,7 +136,13 @@ class JiraConnector(ConnectorAdapter):
         else:
             raise ValueError("Either token or username/password is required for Jira real mode")
 
-        client = ConnectorHTTPClient(base_url=base_url, headers=headers)
+        client = ConnectorHTTPClient(
+            base_url=base_url,
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
+            headers=headers
+        )
 
         if action == "search_issues":
             jql = params.get("jql")
@@ -144,38 +156,58 @@ class JiraConnector(ConnectorAdapter):
                 raise ValueError("issue_key is required for get_issue")
             return await client.request("GET", f"/rest/api/3/issue/{issue_key}")
 
-        elif action == "add_comment":
-            issue_key = params.get("issue_key")
-            body = params.get("body")
-            if not issue_key or not body:
-                raise ValueError("issue_key and body are required for add_comment")
-            # Minimal Jira v3 comment format
-            payload = {"body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"text": body, "type": "text"}]}]}}
-            return await client.request("POST", f"/rest/api/3/issue/{issue_key}/comment", json_data=payload)
-        elif action == "create_issue":
-            project_key = params.get("project_key")
-            summary = params.get("summary")
-            if not project_key or not summary:
-                raise ValueError("project_key and summary are required for create_issue")
-            payload = {
-                "fields": {
-                    "project": {"key": project_key},
-                    "summary": summary,
-                    "issuetype": {"name": params.get("issue_type", "Task")},
+        elif action in ["add_comment", "create_issue"]:
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
+            if action == "add_comment":
+                issue_key = params.get("issue_key")
+                body = params.get("body")
+                if not issue_key or not body:
+                    raise ValueError("issue_key and body are required for add_comment")
+                # Minimal Jira v3 comment format
+                payload = {"body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"text": body, "type": "text"}]}]}}
+                result = await client.request(
+                    "POST", 
+                    f"/rest/api/3/issue/{issue_key}/comment", 
+                    json_data=payload,
+                    idempotency_key=idempotency_key
+                )
+            else: # create_issue
+                project_key = params.get("project_key")
+                summary = params.get("summary")
+                if not project_key or not summary:
+                    raise ValueError("project_key and summary are required for create_issue")
+                payload = {
+                    "fields": {
+                        "project": {"key": project_key},
+                        "summary": summary,
+                        "issuetype": {"name": params.get("issue_type", "Task")},
+                    }
                 }
-            }
-            if params.get("description"):
-                payload["fields"]["description"] = {
-                    "type": "doc",
-                    "version": 1,
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [{"text": params["description"], "type": "text"}],
-                        }
-                    ],
-                }
-            return await client.request("POST", "/rest/api/3/issue", json_data=payload)
+                if params.get("description"):
+                    payload["fields"]["description"] = {
+                        "type": "doc",
+                        "version": 1,
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [{"text": params["description"], "type": "text"}],
+                            }
+                        ],
+                    }
+                result = await client.request(
+                    "POST", 
+                    "/rest/api/3/issue", 
+                    json_data=payload,
+                    idempotency_key=idempotency_key
+                )
+
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         raise self._unsupported_action(
             action,

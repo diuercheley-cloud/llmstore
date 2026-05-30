@@ -270,6 +270,11 @@ agent-e2e-tests: ## Run lightweight agentic E2E contract tests
 	@echo "Running Agentic E2E tests..."
 	@PYTHONPATH=.:control_plane .venv/bin/pytest tests/e2e/test_multi_agent_research_code_review_deploy.py tests/e2e/test_agent_studio_dry_run.py tests/e2e/test_mcp_tool_integration.py -v
 
+agent-executor-e2e: ## Run Agent Executor real E2E flow test
+	@echo "Running Agent Executor real E2E flow test..."
+	@PYTHONPATH=.:control_plane .venv/bin/pytest tests/e2e/test_agent_executor_real_flow.py -v
+
+
 agent-platform-validation: ## Run the core agentic expansion validation pack
 	@echo "Running full Agentic Platform operational validation..."
 	@$(MAKE) agent-security-tests

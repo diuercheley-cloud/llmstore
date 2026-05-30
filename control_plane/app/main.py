@@ -169,6 +169,15 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(agent_tools_admin_router)
     app.include_router(platform_ga_admin_router)
 
+    from app.api.agent_a2a import router as agent_a2a_router
+    app.include_router(agent_a2a_router)
+
+    from app.api.agents_ws import router as agents_ws_router
+    app.include_router(agents_ws_router)
+
+    from app.api.billing_payments import router as billing_payments_router
+    app.include_router(billing_payments_router)
+
     if settings.agentic_router_v2_enabled:
         from app.api.agent_routing_admin import router as agent_routing_admin_router
         app.include_router(agent_routing_admin_router)
@@ -184,6 +193,14 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_runtime_admin_router)
         app.include_router(agent_registry_admin_router)
         app.include_router(tenant_agentic_readiness_admin_router)
+
+    if settings.agent_assistants_api_enabled:
+        from app.api.assistants_v1 import router as assistants_v1_router
+        app.include_router(assistants_v1_router)
+
+    if settings.agent_batch_api_enabled:
+        from app.api.batches_v1 import router as batches_v1_router
+        app.include_router(batches_v1_router)
 
     if settings.agent_worker_enabled:
         from app.api.agent_worker_admin import router as agent_worker_admin_router

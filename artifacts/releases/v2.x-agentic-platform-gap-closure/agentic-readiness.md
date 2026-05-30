@@ -1,6 +1,6 @@
 # Agentic Readiness
 
-**Generated at**: 2026-05-30T01:41:54Z
+**Generated at**: 2026-05-30T02:15:12Z
 **Status**: ready
 **Runtime enabled**: false
 **Worker enabled**: false
@@ -11,8 +11,8 @@ Running hermetic preflight check...
 ✅ Docker: Found (Docker version 29.4.3, build 055a478)
 ✅ Docker Compose: Found (Docker Compose version v5.1.3)
 ✅ Python: Found (Python 3.12.3)
-✅ Node: Found (v22.22.3)
-✅ NPM: Found (10.9.8)
+✅ Node: Found (v25.9.0)
+✅ NPM: Found (11.12.1)
 Disk Space Free: 865G
 ✅ Permissions: Writable
 ==========================================================
@@ -21,7 +21,7 @@ Disk Space Free: 865G
 ----------------------------------------------------------------
   AGENTIC RUNTIME READINESS CHECK (Mode: advisory)
 ----------------------------------------------------------------
-Timestamp: 2026-05-30T01:40:43.114863+00:00
+Timestamp: 2026-05-30T02:14:01.963398+00:00
 Status:    ready
 ----------------------------------------------------------------
 Detailed Checks:

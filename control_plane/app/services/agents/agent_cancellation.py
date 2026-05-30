@@ -23,11 +23,11 @@ class AgentCancellationService:
         if not job:
             return False
 
-        if job.status == "cancelled":
+        if job.queue_status == "cancelled":
             return True
 
         # Transition status
-        job.status = "cancelled"
+        job.queue_status = "cancelled"
         job.updated_at = utc_now()
 
         # Update the associated AgentRun status to "cancelled"

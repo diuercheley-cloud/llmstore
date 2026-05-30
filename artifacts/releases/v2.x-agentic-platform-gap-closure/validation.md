@@ -1,6 +1,6 @@
 # v2.x-agentic-platform-gap-closure Validation
 
-**Generated at**: 2026-05-30T01:41:54Z
+**Generated at**: 2026-05-30T02:15:12Z
 
 | Gate | Result |
 |------|--------|

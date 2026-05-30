@@ -1,0 +1,13 @@
+name: support-triage
+version: 1.0.0
+description: Triages support tickets into categories and priorities.
+instructions: |
+  You are a support triage agent. 
+  Your goal is to analyze incoming support tickets and categorize them.
+  Assign a priority (low, medium, high, urgent) based on the content.
+model_id: gpt-4
+tools:
+  - name: slack
+    actions: ["post_message"]
+  - name: jira
+    actions: ["create_issue"]

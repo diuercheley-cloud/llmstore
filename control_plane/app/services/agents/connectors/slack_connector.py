@@ -57,7 +57,7 @@ class SlackConnector(ConnectorAdapter):
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.MEDIUM
+        return RiskLevel.HIGH
 
     @property
     def side_effect_level(self) -> SideEffectLevel:
@@ -100,31 +100,33 @@ class SlackConnector(ConnectorAdapter):
         await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
 
         if self.mode == ConnectorMode.REAL:
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
         token = credentials.get("token") or credentials.get("api_key")
         client = ConnectorHTTPClient(
             base_url="https://slack.com/api",
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
             headers={"Authorization": f"Bearer {token}"}
         )
 
         if action == "list_channels":
             return await client.request("GET", "conversations.list")
-
-        elif action == "post_message":
-            channel = params.get("channel")
-            text = params.get("text")
-            if not channel or not text:
-                raise ValueError("channel and text are required for post_message")
-            return await client.request("POST", "chat.postMessage", json_data={"channel": channel, "text": text})
 
         elif action == "search_messages":
             query = params.get("query")
@@ -132,13 +134,39 @@ class SlackConnector(ConnectorAdapter):
                 raise ValueError("query is required for search_messages")
             return await client.request("GET", "search.messages", params={"query": query})
 
-        elif action == "create_thread_reply":
-            channel = params.get("channel")
-            thread_ts = params.get("thread_ts")
-            text = params.get("text")
-            if not channel or not thread_ts or not text:
-                raise ValueError("channel, thread_ts, and text are required for create_thread_reply")
-            return await client.request("POST", "chat.postMessage", json_data={"channel": channel, "thread_ts": thread_ts, "text": text})
+        elif action in ["post_message", "create_thread_reply"]:
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
+            if action == "post_message":
+                channel = params.get("channel")
+                text = params.get("text")
+                if not channel or not text:
+                    raise ValueError("channel and text are required for post_message")
+                result = await client.request(
+                    "POST", 
+                    "chat.postMessage", 
+                    json_data={"channel": channel, "text": text},
+                    idempotency_key=idempotency_key
+                )
+            else: # create_thread_reply
+                channel = params.get("channel")
+                thread_ts = params.get("thread_ts")
+                text = params.get("text")
+                if not channel or not thread_ts or not text:
+                    raise ValueError("channel, thread_ts, and text are required for create_thread_reply")
+                result = await client.request(
+                    "POST", 
+                    "chat.postMessage", 
+                    json_data={"channel": channel, "thread_ts": thread_ts, "text": text},
+                    idempotency_key=idempotency_key
+                )
+
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         raise self._unsupported_action(
             action,

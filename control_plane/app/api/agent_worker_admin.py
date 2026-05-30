@@ -48,9 +48,9 @@ async def retry_dlq_item(
     res_job = await db.execute(stmt_job)
     job = res_job.scalar_one_or_none()
     if job:
-        job.status = "queued"
-        job.attempts = 0
-        job.scheduled_at = utc_now()
+        job.queue_status = "queued"
+        job.attempt_count = 0
+        job.available_at = utc_now()
         job.updated_at = utc_now()
         
         # Also need to reset run status

@@ -173,6 +173,13 @@ class FakeRedis:
         self._record("zscore", key, member)
         return self._zsets[key].get(member)
 
+    async def zrem(self, key, member):
+        self._record("zrem", key, member)
+        if member in self._zsets[key]:
+            del self._zsets[key][member]
+            return 1
+        return 0
+
     async def zremrangebyscore(self, key, min_val, max_val):
         self._record("zremrangebyscore", key, min_val, max_val)
         return await self._do_zremrangebyscore(key, min_val, max_val)

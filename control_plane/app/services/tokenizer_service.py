@@ -66,6 +66,19 @@ class TokenizerService(TokenAccountingContract):
         return self._tiktoken_cache[model]
 
     async def count_text_tokens(self, text: str, model: str | None = None) -> TokenCountResult:
+        if self.settings.token_counting_real_enabled:
+            from app.services.token_counting.token_counter import TokenCounter
+            tc = TokenCounter()
+            res = tc.count_tokens(prompt=text, completion="", model=model or "gpt-3.5-turbo")
+            return TokenCountResult(
+                input_tokens=res.prompt_tokens,
+                output_tokens=res.completion_tokens,
+                total_tokens=res.total_tokens,
+                method=res.tokenizer_used,
+                model=model,
+                is_estimated=res.fallback_used
+            )
+
         if not text:
             return TokenCountResult(input_tokens=0, total_tokens=0, method="estimated", is_estimated=True)
 
@@ -117,6 +130,19 @@ class TokenizerService(TokenAccountingContract):
         )
 
     async def count_chat_tokens(self, messages: list[dict], model: str | None = None) -> TokenCountResult:
+        if self.settings.token_counting_real_enabled:
+            from app.services.token_counting.token_counter import TokenCounter
+            tc = TokenCounter()
+            res = tc.count_tokens(prompt=messages, completion="", model=model or "gpt-3.5-turbo")
+            return TokenCountResult(
+                input_tokens=res.prompt_tokens,
+                output_tokens=res.completion_tokens,
+                total_tokens=res.total_tokens,
+                method=res.tokenizer_used,
+                model=model,
+                is_estimated=res.fallback_used
+            )
+
         if not messages:
             return TokenCountResult(input_tokens=0, total_tokens=0, method="estimated", is_estimated=True)
 
@@ -178,6 +204,29 @@ class TokenizerService(TokenAccountingContract):
         )
 
     async def count_embedding_tokens(self, input: Union[str, List[str]], model: str | None = None) -> TokenCountResult:
+        if self.settings.token_counting_real_enabled:
+            if isinstance(input, str):
+                texts = [input]
+            else:
+                texts = input
+            total_count = 0
+            method = "estimated"
+            is_estimated = True
+            from app.services.token_counting.token_counter import TokenCounter
+            tc = TokenCounter()
+            for text in texts:
+                res = tc.count_tokens(prompt=text, completion="", model=model or "text-embedding-3-small")
+                total_count += res.prompt_tokens
+                method = res.tokenizer_used
+                is_estimated = res.fallback_used
+            return TokenCountResult(
+                input_tokens=total_count,
+                total_tokens=total_count,
+                method=method,
+                model=model,
+                is_estimated=is_estimated
+            )
+
         if isinstance(input, str):
             texts = [input]
         else:
@@ -204,3 +253,4 @@ class TokenizerService(TokenAccountingContract):
 @functools.lru_cache()
 def get_tokenizer_service() -> TokenizerService:
     return TokenizerService()
+

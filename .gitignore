@@ -112,3 +112,4 @@ releases/**/raw-results*
 venv/
 __pycache__/
 *.pyc
+*.pem

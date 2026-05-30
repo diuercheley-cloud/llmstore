@@ -74,7 +74,7 @@ async def cancel_job(
 
     await AgentCancellationService.cancel_run(db, job.agent_run_id)
 
-    job.status = "cancelled"
+    job.queue_status = "cancelled"
     job.updated_at = utc_now()
     await db.commit()
 
@@ -99,8 +99,8 @@ async def retry_job(
     if job is None:
         raise HTTPException(status_code=404, detail="Execution job not found")
 
-    job.status = "queued"
-    job.scheduled_at = utc_now()
+    job.queue_status = "queued"
+    job.available_at = utc_now()
     job.updated_at = utc_now()
 
     run = await agent_state.get_agent_run(db, job.agent_run_id)

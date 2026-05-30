@@ -147,6 +147,37 @@ def apply_service(name: str, namespace: str, owner: Dict[str, Any], logger):
         logger.info(f"Patched Service {name}")
 
 
+@kopf.on.create("llm.stack.local", "v1", "llmworkers")
+@kopf.on.update("llm.stack.local", "v1", "llmworkers")
+def reconcile_worker(spec, name, namespace, body, logger, **kwargs):
+    logger.info(f"Reconciling LLMWorker {name} in mode={get_operator_mode()}")
+
+    try:
+        # Agent Worker specific environment
+        spec["env"] = spec.get("env", []) + [
+            {"name": "AGENT_WORKER_ENABLED", "value": "true"},
+            {"name": "AGENT_EXECUTION_PLANE_ENABLED", "value": "true"},
+        ]
+        
+        apply_deployment(name, namespace, spec, body, logger)
+        update_status(
+            name,
+            namespace,
+            "llmworkers",
+            [{"type": "Ready", "status": "True", "reason": "Success", "message": "Worker deployment reconciled"}],
+            logger,
+        )
+    except Exception as exc:
+        logger.error(f"Worker reconciliation failed: {exc}")
+        update_status(
+            name,
+            namespace,
+            "llmworkers",
+            [{"type": "Ready", "status": "False", "reason": "Error", "message": str(exc)}],
+            logger,
+        )
+
+
 @kopf.on.create("llm.stack.local", "v1", "llminferencestacks")
 @kopf.on.update("llm.stack.local", "v1", "llminferencestacks")
 def reconcile_inference_stack(spec, name, namespace, body, logger, **kwargs):

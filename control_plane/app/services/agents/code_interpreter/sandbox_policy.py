@@ -51,6 +51,14 @@ FORBIDDEN_CALLS = {
     "open",
     "breakpoint",
     "__import__",
+    "getattr",
+    "setattr",
+    "delattr",
+    "hasattr",
+    "input",
+    "help",
+    "quit",
+    "exit",
 }
 
 

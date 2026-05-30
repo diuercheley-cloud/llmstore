@@ -186,8 +186,8 @@ async def resume_run_internal(
         res = await db.execute(stmt)
         job = res.scalar_one_or_none()
         if job:
-            job.status = "queued"
-            job.scheduled_at = utc_now()
+            job.queue_status = "queued"
+            job.available_at = utc_now()
             job.updated_at = utc_now()
         else:
             from app.services.agents.agent_queue import AgentQueueManager

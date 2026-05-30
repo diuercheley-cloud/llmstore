@@ -89,6 +89,32 @@ async def record_embedding_usage(
         usage_record.tokens_estimated = tokens_estimated
 
 
+async def update_usage_with_real_tokens(
+    session: AsyncSession,
+    client_id,
+    estimated_prompt: int,
+    estimated_completion: int,
+    real_prompt: int,
+    real_completion: int,
+    token_count_method: str | None = None,
+) -> None:
+    prompt_diff = real_prompt - estimated_prompt
+    completion_diff = real_completion - estimated_completion
+    total_diff = prompt_diff + completion_diff
+
+    today = date.today()
+    for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
+        counter = await _get_or_create_counter(session, client_id, period_start, period_type)
+        counter.used_tokens += total_diff
+
+        usage_record = await _get_or_create_usage_record(session, client_id, period_start, period_type)
+        usage_record.prompt_tokens += prompt_diff
+        usage_record.completion_tokens += completion_diff
+        usage_record.token_count_method = token_count_method
+        usage_record.tokens_estimated = False
+
+
+
 async def _get_or_create_counter(session: AsyncSession, client_id, period_start: date, period_type: str) -> QuotaCounter:
     result = await session.execute(
         select(QuotaCounter).where(

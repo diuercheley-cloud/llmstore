@@ -416,6 +416,7 @@ from app.models.agents import (
     AgentRunCosts,
     AgentTraceSpan,
     AgentTimelineEvent,
+    AgentA2ARegistration,
 )
 from app.models.agent_workspace import (
     AgentWorkspace,
@@ -694,6 +695,7 @@ __all__ = [
     "AgentRunCosts",
     "AgentTraceSpan",
     "AgentTimelineEvent",
+    "AgentA2ARegistration",
     "AgentToolCredential",
     "AgentToolCredentialGrant",
     "AgentToolExecutionSandbox",
@@ -916,3 +918,4 @@ from app.models.agent_mcp_oauth import (
 
 from app.models.managed_control_plane import *
 from app.models.agent_catalog import *
+from app.models.payments import *

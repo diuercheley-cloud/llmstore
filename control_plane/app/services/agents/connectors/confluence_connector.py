@@ -56,7 +56,7 @@ class ConfluenceConnector(ConnectorAdapter):
 
     @property
     def risk_level(self) -> RiskLevel:
-        return RiskLevel.MEDIUM
+        return RiskLevel.HIGH
 
     @property
     def side_effect_level(self) -> SideEffectLevel:
@@ -98,13 +98,19 @@ class ConfluenceConnector(ConnectorAdapter):
         await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
 
         if self.mode == ConnectorMode.REAL:
+            real_kwargs = kwargs.copy()
+            real_kwargs.pop("action", None)
+            real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials),
+                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        tenant_id = kwargs.get("tenant_id")
+        invocation_id = kwargs.get("invocation_id", "manual")
+        
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -121,7 +127,13 @@ class ConfluenceConnector(ConnectorAdapter):
             encoded_auth = base64.b64encode(auth_str.encode()).decode()
             headers["Authorization"] = f"Basic {encoded_auth}"
 
-        client = ConnectorHTTPClient(base_url=base_url, headers=headers)
+        client = ConnectorHTTPClient(
+            base_url=base_url,
+            tenant_id=tenant_id,
+            connector_name=self.connector_name,
+            rate_limit_policy=self.rate_limit_policy,
+            headers=headers
+        )
 
         if action == "get_page":
             page_id = params.get("page_id")
@@ -134,6 +146,12 @@ class ConfluenceConnector(ConnectorAdapter):
                 raise ValueError("cql is required for search_pages")
             return await client.request("GET", "/wiki/rest/api/content/search", params={"cql": cql})
         elif action == "create_page":
+            # High-risk write path
+            approval_kwargs = kwargs.copy()
+            approval_kwargs.pop("tenant_id", None)
+            await self._ensure_approval(tenant_id, action, self.risk_level, **approval_kwargs)
+            idempotency_key = kwargs.get("idempotency_key") or invocation_id
+
             space_key = params.get("space_key")
             title = params.get("title")
             body = params.get("body")
@@ -152,7 +170,16 @@ class ConfluenceConnector(ConnectorAdapter):
             }
             if params.get("parent_id"):
                 payload["ancestors"] = [{"id": params["parent_id"]}]
-            return await client.request("POST", "/wiki/rest/api/content", json_data=payload)
+            
+            result = await client.request(
+                "POST", 
+                "/wiki/rest/api/content", 
+                json_data=payload,
+                idempotency_key=idempotency_key
+            )
+            
+            await self._register_receipt(tenant_id, result, invocation_id)
+            return result
 
         raise self._unsupported_action(
             action,

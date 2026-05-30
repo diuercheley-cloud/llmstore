@@ -1,0 +1,18 @@
+{
+  "id": "safe-tool",
+  "version": "1.0.0",
+  "name": "Safe Tool Plugin",
+  "description": "An example plugin with safe tools.",
+  "tools": [
+    {
+      "name": "calculate_hash",
+      "description": "Calculates SHA256 hash of a string.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" }
+        }
+      }
+    }
+  ]
+}
