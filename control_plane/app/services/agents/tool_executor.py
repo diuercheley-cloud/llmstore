@@ -94,8 +94,15 @@ async def execute_tool(
         db=db, tenant_id=effective_tenant, agent_tool_id=tool.id, agent_id=effective_agent_id
     )
     modified_parameters = dict(parameters)
+    modified_parameters["db"] = db
     if resolved_secret:
         modified_parameters["api_key"] = resolved_secret
+    if "tenant_id" not in modified_parameters and effective_tenant:
+        modified_parameters["tenant_id"] = effective_tenant
+    if "agent_id" not in modified_parameters and effective_agent_id:
+        modified_parameters["agent_id"] = effective_agent_id
+    if "run_id" not in modified_parameters and run_id:
+        modified_parameters["run_id"] = run_id
 
     await check_and_increment_quota(
         db=db,

@@ -98,6 +98,8 @@ from app.api.observability_admin import router as observability_admin_router
 from app.api.operations_ux_admin import router as operations_ux_admin_router
 from app.api.performance_admin import router as performance_admin_router
 from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
+from app.services.multimodal.multimodal_router import router as multimodal_router
+from app.api.web_search_admin import router as web_search_admin_router
 from app.api.admin_onboarding import router as admin_onboarding_router
 from app.api.admin_metrics import router as admin_metrics_router
 from app.api.multi_cluster_admin import router as multi_cluster_admin_router
@@ -106,7 +108,12 @@ from app.api.compliance_admin import router as compliance_admin_router
 from app.api.payments import router as payments_router
 from app.api.supported_surface_admin import router as supported_surface_admin_router
 from app.api.runtime_profiles_admin import router as runtime_profiles_admin_router
-from app.api.feature_flags_admin import router as feature_flags_admin_router
+from app.api.admin_vectorstores import router as admin_vectorstores_router
+from app.api.collab_chat import router as collab_chat_router
+from app.api.voice import router as voice_router
+from app.api.admin_model_experiments import router as admin_model_experiments_router
+from app.api.web_ide import router as web_ide_router
+from app.api.mobile_v1 import router as mobile_v1_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
@@ -519,6 +526,11 @@ app.include_router(client_router)
 app.include_router(rag_router)
 app.include_router(client_rag_router)
 app.include_router(rag_enterprise_router)
+app.include_router(collab_chat_router)
+app.include_router(voice_router)
+app.include_router(admin_model_experiments_router)
+app.include_router(web_ide_router)
+app.include_router(mobile_v1_router)
 app.include_router(admin_rag_router)
 app.include_router(portal_router, prefix="/portal")
 app.include_router(account_router, prefix="/v1") # Alias for /account
@@ -597,7 +609,10 @@ app.include_router(chaos_admin_router)
 app.include_router(compliance_admin_router)
 app.include_router(payments_router)
 app.include_router(pocket_tts_router)
+app.include_router(admin_vectorstores_router)
 app.include_router(pki_attestation_admin_router)
+app.include_router(multimodal_router)
+app.include_router(web_search_admin_router)
 
 include_optional_routers(app, settings)
 

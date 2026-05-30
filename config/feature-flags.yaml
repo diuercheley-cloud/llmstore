@@ -997,7 +997,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: Simulation is disabled by default so production-like posture cannot silently downgrade to a mock sandbox.
+  safe_default_reason: Simulation is disabled by default so production-like posture
+    cannot silently downgrade to a mock sandbox.
 - name: AGENT_SANDBOX_PRODUCTION_REQUIRES_ATTESTATION
   default: false
   owner: agent-platform
@@ -1008,7 +1009,8 @@
   dependencies:
   - AGENT_CODE_INTERPRETER_ENABLED
   conflicts: []
-  safe_default_reason: Attestation enforcement stays opt-in until operators provision and validate the target sandbox provider.
+  safe_default_reason: Attestation enforcement stays opt-in until operators provision
+    and validate the target sandbox provider.
 - name: AGENT_CONNECTOR_CATALOG_ENABLED
   default: false
   owner: agent-platform
@@ -1019,7 +1021,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Catalog workflows remain opt-in until operators define approval and credential governance.
+  safe_default_reason: Catalog workflows remain opt-in until operators define approval
+    and credential governance.
 - name: AGENT_PLUGIN_SUPPLY_CHAIN_ENABLED
   default: false
   owner: agent-platform
@@ -1030,7 +1033,8 @@
   dependencies:
   - AGENT_CONNECTOR_CATALOG_ENABLED
   conflicts: []
-  safe_default_reason: Plugin provenance enforcement stays disabled until operators provision signing and verification policy.
+  safe_default_reason: Plugin provenance enforcement stays disabled until operators
+    provision signing and verification policy.
 - name: AGENT_DISTRIBUTED_RUNTIME_ENABLED
   default: false
   owner: agent-platform
@@ -1041,7 +1045,8 @@
   dependencies:
   - DISTRIBUTED_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Distributed agent execution stays disabled until operators validate the enterprise topology and routing posture.
+  safe_default_reason: Distributed agent execution stays disabled until operators
+    validate the enterprise topology and routing posture.
 - name: AGENT_CLUSTER_FEDERATION_ENABLED
   default: false
   owner: agent-platform
@@ -1052,7 +1057,8 @@
   dependencies:
   - MULTI_CLUSTER_ENABLED
   conflicts: []
-  safe_default_reason: Cross-cluster coordination stays off until metadata boundaries and operational ownership are explicitly defined.
+  safe_default_reason: Cross-cluster coordination stays off until metadata boundaries
+    and operational ownership are explicitly defined.
 - name: AGENT_EXECUTION_PLANE_ENABLED
   default: false
   owner: agent-platform
@@ -2876,7 +2882,8 @@
   dependencies:
   - DISTRIBUTED_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Multi-cluster coordination stays disabled until operators intentionally provision and validate enterprise distributed topology.
+  safe_default_reason: Multi-cluster coordination stays disabled until operators intentionally
+    provision and validate enterprise distributed topology.
 - name: PLATFORM_PROFILE
   default: appliance
   owner: platform-ops
@@ -2886,7 +2893,8 @@
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Appliance remains the safest default profile and keeps the local/offline posture intact.
+  safe_default_reason: Appliance remains the safest default profile and keeps the
+    local/offline posture intact.
 - name: PLUGIN_RUNTIME_ENABLED
   default: false
   owner: platform-ops
@@ -2897,7 +2905,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Plugin execution stays disabled until operators explicitly enable the runtime and its sandbox policy.
+  safe_default_reason: Plugin execution stays disabled until operators explicitly
+    enable the runtime and its sandbox policy.
 - name: OBSERVABILITY_ENABLED
   default: false
   owner: platform-ops
@@ -3900,7 +3909,8 @@
   - AGENT_MCP_ENABLED
   - AGENT_CONNECTOR_CATALOG_ENABLED
   conflicts: []
-  safe_default_reason: MCP catalog governance stays disabled until operators explicitly enable governed registration and review.
+  safe_default_reason: MCP catalog governance stays disabled until operators explicitly
+    enable governed registration and review.
 - name: AGENT_MCP_REAL_DISCOVERY_ENABLED
   default: false
   owner: agent-platform
@@ -4006,8 +4016,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Cognitive loopback remains opt-in so the platform does not learn
-    from executions by default.
+  safe_default_reason: Cognitive loopback remains opt-in so the platform does not
+    learn from executions by default.
 - name: AGENT_FEWSHOT_AUTO_CURATOR_ENABLED
   default: false
   owner: agent-platform
@@ -4209,8 +4219,8 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Canary routing is off by default so new agents receive no
-    production traffic automatically.
+  safe_default_reason: Canary routing is off by default so new agents receive no production
+    traffic automatically.
 - name: AGENT_CANARY_AUTO_PROMOTE
   default: false
   owner: agent-platform
@@ -4324,8 +4334,8 @@
   dependencies:
   - AGENT_SAB_ENABLED
   conflicts: []
-  safe_default_reason: SAB import stays disabled until operators accept external
-    definition ingestion.
+  safe_default_reason: SAB import stays disabled until operators accept external definition
+    ingestion.
 - name: AGENT_SAB_EXPORT_ENABLED
   default: false
   owner: agent-platform
@@ -5205,7 +5215,8 @@
   status: active
   introduced_in: v2.2.0
   risk_level: low
-  dependencies: [CRYPTO_RECEIPTS_ENABLED]
+  dependencies:
+  - CRYPTO_RECEIPTS_ENABLED
   conflicts: []
   safe_default_reason: Signature requirement is optional by default.
 - name: CRYPTO_RECEIPTS_EXTERNAL_TIMESTAMP_ENABLED
@@ -5215,6 +5226,337 @@
   status: active
   introduced_in: v2.2.0
   risk_level: low
-  dependencies: [CRYPTO_RECEIPTS_ENABLED]
+  dependencies:
+  - CRYPTO_RECEIPTS_ENABLED
   conflicts: []
   safe_default_reason: External timestamp is disabled by default to avoid online dependencies.
+- name: MULTIMODAL_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: VISION_INPUT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MULTIMODAL_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: IMAGE_GENERATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MULTIMODAL_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: SPEECH_TO_TEXT_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MULTIMODAL_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: REALTIME_AUDIO_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MULTIMODAL_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: AGENT_WEB_SEARCH_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: AGENT_WEB_SEARCH_EXTERNAL_NETWORK_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - AGENT_WEB_SEARCH_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default for security.
+- name: AGENT_WEB_SEARCH_ALLOWLIST_ENABLED
+  default: true
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - AGENT_WEB_SEARCH_ENABLED
+  conflicts: []
+  safe_default_reason: Enabled by default to restrict domains.
+- name: MLOPS_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: FINE_TUNING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MLOPS_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: EXPERIMENT_TRACKING_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - MLOPS_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until opt-in.
+- name: MLFLOW_INTEGRATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - EXPERIMENT_TRACKING_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until configured.
+- name: WANDB_INTEGRATION_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: active
+  introduced_in: v2.0.2
+  risk_level: low
+  dependencies:
+  - EXPERIMENT_TRACKING_ENABLED
+  conflicts: []
+  safe_default_reason: Disabled by default until configured.
+- name: CARD_PAYMENT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: COLLAB_CHAT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: COLLAB_CHAT_WEBSOCKET_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: MILVUS_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: MOBILE_FOUNDATION_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: MODEL_AB_TESTING_ENABLED
+  default: none
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: MODEL_CANARY_ENABLED
+  default: none
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: MODEL_EXPERIMENTS_ENABLED
+  default: none
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: PIX_PAYMENT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: PUSH_NOTIFICATIONS_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: QDRANT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: REALTIME_VOICE_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: VECTOR_DB_PROVIDER
+  default: none
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: VLLM_BACKEND_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: VLLM_DEFAULT_MODEL
+  default: none
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: VLLM_OPENAI_COMPAT_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: WEAVIATE_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: WEBRTC_AUDIO_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.
+- name: WEB_IDE_ENABLED
+  default: false
+  owner: platform
+  area: core
+  status: beta
+  introduced_in: v2.0.2-agentic-platform-expansion
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Opt-in by default to ensure safety.

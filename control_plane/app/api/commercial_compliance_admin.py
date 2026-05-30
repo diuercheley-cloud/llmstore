@@ -438,9 +438,30 @@ async def get_operational_effectiveness(db: AsyncSession = Depends(get_db_sessio
     return items
 
 
-@router.post("/operational-controls/exception-links", status_code=201)
-async def post_operational_exception_link(payload: OperationalExceptionLinkPayload, db: AsyncSession = Depends(get_db_session)):
-    item = await link_exception(db, **payload.model_dump())
-    await db.commit()
-    await db.refresh(item)
-    return item
+from app.services.compliance.audit_pack import AuditPackService
+
+@router.post("/audit-pack/generate")
+async def post_generate_audit_pack(
+    standard: str = Query(default="soc2", pattern="^(soc2|iso27001)$"),
+    db: AsyncSession = Depends(get_db_session),
+):
+    svc = AuditPackService(db)
+    return await svc.generate_pack(standard)
+
+
+@router.get("/audit-pack/{id}")
+async def get_audit_pack(
+    id: uuid.UUID,
+    standard: str = Query(default="soc2", pattern="^(soc2|iso27001)$"),
+):
+    base_path = Path("compliance/audit-packs") / standard / str(id)
+    if not base_path.exists():
+        raise HTTPException(status_code=404, detail="Audit pack not found")
+        
+    # Return manifest and list of evidence files
+    manifest_path = base_path / "manifest.json"
+    with open(manifest_path, "r") as f:
+        manifest = json.load(f)
+        
+    files = [f.name for f in base_path.iterdir() if f.is_file()]
+    return {"manifest": manifest, "files": files}

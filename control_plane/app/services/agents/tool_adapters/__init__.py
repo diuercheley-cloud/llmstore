@@ -7,6 +7,7 @@ from app.services.agents.tool_adapters.support_bundle_tool import SupportBundleT
 from app.services.agents.tool_adapters.compliance_evidence_tool import ComplianceEvidenceToolAdapter
 from app.services.agents.tool_adapters.database_read_tool import DatabaseReadToolAdapter
 from app.services.agents.tool_adapters.shell_command_tool import ShellCommandToolAdapter
+from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 
 
 def register_all_adapters():
@@ -19,3 +20,4 @@ def register_all_adapters():
     adapter_registry.register(ComplianceEvidenceToolAdapter())
     adapter_registry.register(DatabaseReadToolAdapter())
     adapter_registry.register(ShellCommandToolAdapter())
+    adapter_registry.register(WebSearchToolAdapter())

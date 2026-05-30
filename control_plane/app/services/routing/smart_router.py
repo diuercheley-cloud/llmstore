@@ -33,7 +33,7 @@ def _load_policy() -> dict[str, Any]:
         "premium_provider_preference": "openai",
         "max_provider_cost_per_request_brl": 0.50,
         "tenant_policy_overrides": {},
-        "fallback_order": ["local", "lmstudio", "mock"],
+        "fallback_order": ["local", "vllm", "lmstudio", "mock"],
     }
     if policy_path.exists():
         try:
@@ -45,13 +45,13 @@ def _load_policy() -> dict[str, Any]:
     return defaults
 
 
-FALLBACK_ORDER: list[str] = ["local", "lmstudio", "mock"]
+FALLBACK_ORDER: list[str] = ["local", "vllm", "lmstudio", "mock"]
 CLOUD_PROVIDERS = set(CLOUD_PROVIDER_IDS)
 LOCAL_PROVIDERS = set(LOCAL_PROVIDER_IDS)
 EMBEDDINGS_PROVIDERS = {"local", "openai"}
 RAG_CAPABLE_PROVIDERS = {"local", "openai", "anthropic"}
-LOW_COST_ORDER = ["deepseek", "local", "lmstudio", "openai", "anthropic", "mock"]
-PREMIUM_ORDER = ["openai", "anthropic", "local", "lmstudio", "mock"]
+LOW_COST_ORDER = ["deepseek", "local", "vllm", "lmstudio", "openai", "anthropic", "mock"]
+PREMIUM_ORDER = ["openai", "anthropic", "local", "vllm", "lmstudio", "mock"]
 CODING_PROVIDER_PREFERENCE = "anthropic"
 LOW_BUDGET_PROVIDER_PREFERENCE = "deepseek"
 PREMIUM_PROVIDER_PREFERENCE = "openai"
@@ -71,6 +71,10 @@ def _get_provider_config(provider_id: str) -> dict[str, Any]:
     settings = get_settings()
     config_map = {
         "local": {"enabled": True, "configured": True},
+        "vllm": {
+            "enabled": settings.vllm_backend_enabled,
+            "configured": bool(settings.vllm_base_url),
+        },
         "lmstudio": {
             "enabled": settings.lmstudio_enabled,
             "configured": bool(settings.lmstudio_base_url),
@@ -114,6 +118,7 @@ def _get_cloud_providers_enabled() -> bool:
 def _estimate_cost(provider_id: str, prompt_tokens: int, max_output_tokens: int) -> float:
     rates: dict[str, dict[str, float]] = {
         "local": {"prompt": 0.0, "completion": 0.0},
+        "vllm": {"prompt": 0.0, "completion": 0.0},
         "lmstudio": {"prompt": 0.0, "completion": 0.0},
         "mock": {"prompt": 0.0, "completion": 0.0},
         "openai": {"prompt": 0.0000025, "completion": 0.00001},
@@ -147,7 +152,7 @@ def _provider_health(provider_id: str) -> str:
         return "error"
 
 
-from app.contracts.routing import RoutingContract, RoutingInput, RoutingDecision, RoutingCapabilities
+from app.contracts.routing import RoutingContract, RoutingInput, RoutingDecision as ContractRoutingDecision, RoutingCapabilities
 
 class SmartRouter(RoutingContract):
     def __init__(self) -> None:
@@ -194,7 +199,7 @@ class SmartRouter(RoutingContract):
             else str(inp.strategy) if inp.strategy else "local_first"
         )
 
-        for pid in ["local", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
+        for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
             provider_states[pid] = _provider_health(pid)
 
         result = self._apply_strategy(inp, strategy, cloud_allowed, cloud_enabled, provider_states, warnings, dynamic_configs=dynamic_configs)
@@ -416,7 +421,7 @@ class SmartRouter(RoutingContract):
         from app.schemas.routing import TaskType
         
         candidates = []
-        for pid in ["local", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
+        for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
              candidates.append({"provider": pid})
              
         ranked, rejected, guardrail_decisions = rank_commercial_routes(
@@ -468,7 +473,7 @@ class SmartRouter(RoutingContract):
         warnings: list[str],
     ) -> dict[str, Any]:
         fallback_chain: list[str] = []
-        for pid in ["local", "openai", "lmstudio", "mock"]:
+        for pid in ["local", "vllm", "openai", "lmstudio", "mock"]:
             if not cloud_allowed and pid in CLOUD_PROVIDERS:
                 continue
             if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(pid):
@@ -499,7 +504,7 @@ class SmartRouter(RoutingContract):
         warnings: list[str],
     ) -> dict[str, Any]:
         fallback_chain: list[str] = []
-        for pid in ["local", "openai", "anthropic", "lmstudio", "mock"]:
+        for pid in ["local", "vllm", "openai", "anthropic", "lmstudio", "mock"]:
             if not cloud_allowed and pid in CLOUD_PROVIDERS:
                 continue
             if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(pid):
@@ -608,7 +613,7 @@ class SmartRouter(RoutingContract):
         primary_strategy = inp.strategy if isinstance(inp.strategy, RoutingStrategy) else RoutingStrategy.local_first
         primary_decision = next((d for s, d in all_results if s == primary_strategy.value), all_results[0][1])
         strategies_considered = [s for s, _ in all_results]
-        provider_states = {pid: _provider_health(pid) for pid in ["local", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]}
+        provider_states = {pid: _provider_health(pid) for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]}
 
         return primary_decision, strategies_considered, provider_states, config_snapshot
 

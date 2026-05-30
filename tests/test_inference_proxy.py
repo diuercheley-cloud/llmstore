@@ -94,10 +94,11 @@ def test_normalize_openrouter_endpoint_handles_root_and_api_v1_base_urls():
     assert proxy._normalize_openrouter_endpoint("https://openrouter.ai/api", "/v1/chat/completions") == "/v1/chat/completions"
 
 
-def test_prepare_chat_payload_uses_qwen_template_and_disables_reasoning():
+@pytest.mark.asyncio
+async def test_prepare_chat_payload_uses_qwen_template_and_disables_reasoning():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
 
-    prepared = proxy._prepare_chat_payload(
+    prepared = await proxy._prepare_chat_payload(
         {"model": "gemma", "messages": [{"role": "user", "content": "oi"}]},
         include_reasoning=False,
         backend="llama.cpp",
@@ -110,10 +111,11 @@ def test_prepare_chat_payload_uses_qwen_template_and_disables_reasoning():
     assert prepared["chat_template_kwargs"]["enable_thinking"] is False
 
 
-def test_prepare_chat_payload_uses_gemma_template_and_disables_reasoning():
+@pytest.mark.asyncio
+async def test_prepare_chat_payload_uses_gemma_template_and_disables_reasoning():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
 
-    prepared = proxy._prepare_chat_payload(
+    prepared = await proxy._prepare_chat_payload(
         {"model": "gemma", "messages": [{"role": "user", "content": "oi"}]},
         include_reasoning=False,
         backend="llama.cpp",
@@ -125,36 +127,44 @@ def test_prepare_chat_payload_uses_gemma_template_and_disables_reasoning():
     assert prepared["chat_template_kwargs"]["enable_thinking"] is False
 
 
-def test_prepare_chat_payload_trims_openai_compatible_context():
+@pytest.mark.asyncio
+async def test_prepare_chat_payload_trims_openai_compatible_context():
+    import app.services.context_manager
+    old_val = app.services.context_manager.settings.inference_max_context_tokens
+    app.services.context_manager.settings.inference_max_context_tokens = 2048
+    try:
+        proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
+        payload = {
+            "model": "nvidia/nemotron-3-nano-4b",
+            "messages": [
+                {"role": "system", "content": "system " + ("instructions " * 400)},
+                {"role": "user", "content": "turn 1 " + ("context " * 400)},
+                {"role": "assistant", "content": "turn 2 " + ("context " * 400)},
+                {"role": "user", "content": "turn 3 " + ("context " * 400)},
+                {"role": "assistant", "content": "turn 4 " + ("context " * 400)},
+                {"role": "user", "content": "final question"},
+            ],
+            "max_tokens": 512,
+        }
+
+        prepared = await proxy._prepare_chat_payload(
+            payload,
+            include_reasoning=False,
+            backend="openai_compatible",
+            prompt_template=None,
+        )
+
+        assert len(prepared["messages"]) < len(payload["messages"])
+        assert estimate_prompt_tokens(messages=prepared["messages"]) <= 2048
+    finally:
+        app.services.context_manager.settings.inference_max_context_tokens = old_val
+
+
+@pytest.mark.asyncio
+async def test_prepare_chat_payload_disables_openrouter_reasoning_by_default():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
-    payload = {
-        "model": "nvidia/nemotron-3-nano-4b",
-        "messages": [
-            {"role": "system", "content": "system " + ("instructions " * 400)},
-            {"role": "user", "content": "turn 1 " + ("context " * 400)},
-            {"role": "assistant", "content": "turn 2 " + ("context " * 400)},
-            {"role": "user", "content": "turn 3 " + ("context " * 400)},
-            {"role": "assistant", "content": "turn 4 " + ("context " * 400)},
-            {"role": "user", "content": "final question"},
-        ],
-        "max_tokens": 512,
-    }
 
-    prepared = proxy._prepare_chat_payload(
-        payload,
-        include_reasoning=False,
-        backend="openai_compatible",
-        prompt_template=None,
-    )
-
-    assert len(prepared["messages"]) < len(payload["messages"])
-    assert estimate_prompt_tokens(messages=prepared["messages"]) <= 2048
-
-
-def test_prepare_chat_payload_disables_openrouter_reasoning_by_default():
-    proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
-
-    prepared = proxy._prepare_chat_payload(
+    prepared = await proxy._prepare_chat_payload(
         {"model": "openrouter-model", "messages": [{"role": "user", "content": "oi"}]},
         include_reasoning=False,
         backend="openrouter",

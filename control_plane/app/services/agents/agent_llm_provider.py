@@ -306,8 +306,14 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
             messages.append({"role": h["role"], "content": h["content"]})
 
         effective_input = input_override if input_override is not None else run.input_text
+        multimodal_asset_id = getattr(run, "multimodal_asset_id", None)
         if effective_input and (not history or history[-1].get("content") != effective_input):
-            messages.append({"role": "user", "content": effective_input})
+            content = effective_input
+            if multimodal_asset_id:
+                content = f"{content}\n[Asset Reference: {multimodal_asset_id}]"
+            messages.append({"role": "user", "content": content})
+        elif multimodal_asset_id:
+            messages.append({"role": "user", "content": f"[Asset Reference: {multimodal_asset_id}]"})
 
         payload = {
             "model": selected_model.model_id,

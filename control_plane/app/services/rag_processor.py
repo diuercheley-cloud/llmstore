@@ -105,11 +105,34 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         embeddings = await embedding_service.embed_batch(texts)
 
         # 4. Save chunks
+        from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+        store = VectorStoreFactory.get_instance(session=session)
+        
         # Delete existing chunks if reprocessing
-        await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document_id))
+        existing_chunk_ids = (await session.execute(
+            select(RAGDocumentChunk.id).where(RAGDocumentChunk.document_id == document_id)
+        )).scalars().all()
+        if existing_chunk_ids:
+            await store.delete(collection_name="rag_chunks", ids=[str(cid) for cid in existing_chunk_ids])
+            await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document_id))
         
         for i, (chunk_data, embedding) in enumerate(zip(chunks_to_process, embeddings)):
+            chunk_id = uuid.uuid4()
+            # Store in Vector DB
+            await store.upsert(
+                collection_name="rag_chunks",
+                id=str(chunk_id),
+                vector=embedding,
+                metadata={
+                    "client_id": str(doc.client_id),
+                    "document_id": str(doc.id),
+                    "content": chunk_data["content"]
+                }
+            )
+            
+            # Keep in DB for metadata/fallback
             chunk = RAGDocumentChunk(
+                id=chunk_id,
                 document_id=doc.id,
                 client_id=doc.client_id,
                 chunk_index=i,
@@ -137,7 +160,18 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         await session.commit()
 
 async def delete_rag_document(session: AsyncSession, document: RAGDocument):
-    # Delete chunks
+    # Delete chunks from Vector Store
+    from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+    store = VectorStoreFactory.get_instance(session=session)
+    
+    chunk_ids = (await session.execute(
+        select(RAGDocumentChunk.id).where(RAGDocumentChunk.document_id == document.id)
+    )).scalars().all()
+    
+    if chunk_ids:
+        await store.delete(collection_name="rag_chunks", ids=[str(cid) for cid in chunk_ids])
+        
+    # Delete chunks from DB
     await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id))
     # Delete file
     if os.path.exists(document.storage_path):

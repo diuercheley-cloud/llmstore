@@ -188,6 +188,22 @@ class Settings(BaseSettings):
 
 
     agent_memory_enabled: bool = Field(default=False, alias="AGENT_MEMORY_ENABLED")
+
+    multimodal_enabled: bool = Field(default=False, alias="MULTIMODAL_ENABLED")
+    vision_input_enabled: bool = Field(default=False, alias="VISION_INPUT_ENABLED")
+    image_generation_enabled: bool = Field(default=False, alias="IMAGE_GENERATION_ENABLED")
+    speech_to_text_enabled: bool = Field(default=False, alias="SPEECH_TO_TEXT_ENABLED")
+    realtime_audio_enabled: bool = Field(default=False, alias="REALTIME_AUDIO_ENABLED")
+
+    agent_web_search_enabled: bool = Field(default=False, alias="AGENT_WEB_SEARCH_ENABLED")
+    agent_web_search_external_network_enabled: bool = Field(default=False, alias="AGENT_WEB_SEARCH_EXTERNAL_NETWORK_ENABLED")
+    agent_web_search_allowlist_enabled: bool = Field(default=True, alias="AGENT_WEB_SEARCH_ALLOWLIST_ENABLED")
+
+    mlops_enabled: bool = Field(default=False, alias="MLOPS_ENABLED")
+    fine_tuning_enabled: bool = Field(default=False, alias="FINE_TUNING_ENABLED")
+    experiment_tracking_enabled: bool = Field(default=False, alias="EXPERIMENT_TRACKING_ENABLED")
+    mlflow_integration_enabled: bool = Field(default=False, alias="MLFLOW_INTEGRATION_ENABLED")
+    wandb_integration_enabled: bool = Field(default=False, alias="WANDB_INTEGRATION_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_cognitive_memory_enabled: bool = Field(default=False, alias="AGENT_COGNITIVE_MEMORY_ENABLED")
@@ -649,6 +665,13 @@ class Settings(BaseSettings):
     lmstudio_base_url: str = Field(default="http://192.168.101.1:1234/v1", alias="LMSTUDIO_BASE_URL")
     lmstudio_api_key: str = Field(default="", alias="LMSTUDIO_API_KEY")
     lmstudio_default_model: str = Field(default="nvidia/nemotron-3-nano-4b", alias="LMSTUDIO_DEFAULT_MODEL")
+    vllm_backend_enabled: bool = Field(default=False, alias="VLLM_BACKEND_ENABLED")
+    vllm_openai_compat_enabled: bool = Field(default=False, alias="VLLM_OPENAI_COMPAT_ENABLED")
+    vllm_base_url: str = Field(default="http://localhost:8000/v1", alias="VLLM_BASE_URL")
+    vllm_api_key: str = Field(default="", alias="VLLM_API_KEY")
+    vllm_default_model: str = Field(default="facebook/opt-125m", alias="VLLM_DEFAULT_MODEL")
+    vllm_timeout_seconds: int = Field(default=120, alias="VLLM_TIMEOUT_SECONDS")
+    vllm_max_concurrent_requests: int = Field(default=16, alias="VLLM_MAX_CONCURRENT_REQUESTS")
     data_plane_timeout_seconds: int = Field(default=120, alias="DATA_PLANE_TIMEOUT_SECONDS")
     request_timeout_seconds: int = Field(default=120, alias="REQUEST_TIMEOUT_SECONDS")
     queue_timeout_seconds: int = Field(default=30, alias="QUEUE_TIMEOUT_SECONDS")
@@ -1212,11 +1235,50 @@ class Settings(BaseSettings):
 
     # RAG Settings
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
+    vector_db_provider: str = Field(default="pgvector", alias="VECTOR_DB_PROVIDER")
+    qdrant_enabled: bool = Field(default=False, alias="QDRANT_ENABLED")
+    milvus_enabled: bool = Field(default=False, alias="MILVUS_ENABLED")
+    weaviate_enabled: bool = Field(default=False, alias="WEAVIATE_ENABLED")
+    
+    qdrant_url: str = Field(default="http://localhost:6333", alias="QDRANT_URL")
+    qdrant_api_key: str | None = Field(default=None, alias="QDRANT_API_KEY")
+    milvus_url: str = Field(default="http://localhost:19530", alias="MILVUS_URL")
+    milvus_token: str | None = Field(default=None, alias="MILVUS_TOKEN")
+    weaviate_url: str = Field(default="http://localhost:8080", alias="WEAVIATE_URL")
+    weaviate_api_key: str | None = Field(default=None, alias="WEAVIATE_API_KEY")
+
     rag_storage_dir: str = Field(default="./data/rag_uploads", alias="RAG_STORAGE_DIR")
     rag_max_file_mb: int = Field(default=25, alias="RAG_MAX_FILE_MB")
     rag_chunk_size: int = Field(default=1000, alias="RAG_CHUNK_SIZE")
     rag_chunk_overlap: int = Field(default=150, alias="RAG_CHUNK_OVERLAP")
     rag_top_k_default: int = Field(default=5, alias="RAG_TOP_K_DEFAULT")
+
+    collab_chat_enabled: bool = Field(default=False, alias="COLLAB_CHAT_ENABLED")
+    collab_chat_websocket_enabled: bool = Field(default=False, alias="COLLAB_CHAT_WEBSOCKET_ENABLED")
+
+    realtime_voice_enabled: bool = Field(default=False, alias="REALTIME_VOICE_ENABLED")
+    webrtc_audio_enabled: bool = Field(default=False, alias="WEBRTC_AUDIO_ENABLED")
+
+    model_experiments_enabled: bool = Field(default=False, alias="MODEL_EXPERIMENTS_ENABLED")
+    model_canary_enabled: bool = Field(default=False, alias="MODEL_CANARY_ENABLED")
+    model_ab_testing_enabled: bool = Field(default=False, alias="MODEL_AB_TESTING_ENABLED")
+
+    web_ide_enabled: bool = Field(default=False, alias="WEB_IDE_ENABLED")
+    web_ide_workspaces_dir: str = Field(default="./data/ide_workspaces", alias="WEB_IDE_WORKSPACES_DIR")
+
+    mobile_foundation_enabled: bool = Field(default=False, alias="MOBILE_FOUNDATION_ENABLED")
+    push_notifications_enabled: bool = Field(default=False, alias="PUSH_NOTIFICATIONS_ENABLED")
+
+    payment_processing_enabled: bool = Field(default=False, alias="PAYMENT_PROCESSING_ENABLED")
+    payment_provider: str = Field(default="mock", alias="PAYMENT_PROVIDER")
+    pix_payment_enabled: bool = Field(default=False, alias="PIX_PAYMENT_ENABLED")
+    card_payment_enabled: bool = Field(default=False, alias="CARD_PAYMENT_ENABLED")
+
+    stripe_api_key: str = Field(default="", alias="STRIPE_API_KEY")
+    stripe_webhook_secret: str = Field(default="", alias="STRIPE_WEBHOOK_SECRET")
+    mercadopago_access_token: str = Field(default="", alias="MERCADOPAGO_ACCESS_TOKEN")
+    asaas_api_key: str = Field(default="", alias="ASAAS_API_KEY")
+
     rag_embedding_provider: str = Field(default="local", alias="RAG_EMBEDDING_PROVIDER")
     rag_embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL")
     commercial_rag_vault_enabled: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_ENABLED")

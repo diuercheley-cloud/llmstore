@@ -30,7 +30,7 @@ VALID_CATEGORIES = {
 }
 
 VALID_RISK_LEVELS = {"low", "medium", "high", "critical"}
-VALID_SIDE_EFFECTS = {"none", "read", "write", "destructive", "external"}
+VALID_SIDE_EFFECTS = {"none", "read", "write", "destructive", "external", "external_read"}
 
 
 def bump_patch_version(version_str: str) -> str:
@@ -116,8 +116,8 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
     if side_effect_level not in VALID_SIDE_EFFECTS:
         raise ValueError(f"Invalid side_effect_level '{side_effect_level}'. Must be one of {VALID_SIDE_EFFECTS}")
 
-    # 3. Tool external_api or side_effect external must declare data_boundary
-    if category == "external_api" or side_effect_level == "external":
+    # 3. Tool external_api or side_effect external/external_read must declare data_boundary
+    if category == "external_api" or side_effect_level in ("external", "external_read"):
         data_boundary = data.get("data_boundary")
         if not data_boundary or not str(data_boundary).strip():
             raise ValueError("External tools must declare a non-empty 'data_boundary'.")

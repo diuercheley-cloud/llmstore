@@ -92,6 +92,7 @@ async def resolve_requested_model(
     *,
     client: Client,
     requested_model: str,
+    user_id: str | None = None,
 ) -> tuple[ModelRegistry, str]:
     active_models = await list_active_registry_models(session)
     if not active_models:
@@ -109,6 +110,29 @@ async def resolve_requested_model(
         selected = next((item for item in active_models if item.is_default), None) or active_models[0]
     if selected is None:
         raise HTTPException(status_code=404, detail="requested model not found")
+
+    # Model Experiments Phase
+    settings = get_settings()
+    if settings.model_experiments_enabled:
+        from app.services.model_experiments.traffic_splitter import TrafficSplitter
+        from app.services.model_experiments.context import set_experiment_context
+        splitter = TrafficSplitter(session)
+        variant = await splitter.get_assigned_variant(
+            tenant_id=client.id,
+            user_id=user_id
+        )
+        if variant:
+            set_experiment_context({
+                "experiment_id": str(variant.experiment_id),
+                "variant_id": str(variant.id),
+                "variant_name": variant.name,
+            })
+            # If variant overrides model, resolve the new model
+            if variant.model_id and variant.model_id != selected.model_id:
+                new_selected = next((m for m in active_models if m.model_id == variant.model_id), None)
+                if new_selected:
+                    selected = new_selected
+
     await enforce_model_trust_or_warn(
         session,
         model_name=selected.model_alias or selected.model_id,

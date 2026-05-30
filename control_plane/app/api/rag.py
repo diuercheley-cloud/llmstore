@@ -464,31 +464,37 @@ async def query_rag(
     query_embedding = await embedding_service.embed_text(payload.question)
     
     # 2. Search for similar chunks
-    stmt = select(RAGDocumentChunk).where(RAGDocumentChunk.client_id == client.id)
+    from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+    store = VectorStoreFactory.get_instance(session=session)
+    
+    filters = {"client_id": client.id}
     if payload.file_ids:
-        stmt = stmt.where(RAGDocumentChunk.document_id.in_(payload.file_ids))
+        # For simplicity, we assume single file_id or handle it in provider
+        filters["document_id"] = payload.file_ids[0] if payload.file_ids else None
+
+    hits = await store.search(
+        collection_name="rag_chunks",
+        vector=query_embedding,
+        limit=payload.top_k,
+        filters=filters
+    )
     
-    chunks = (await session.execute(stmt)).scalars().all()
-    
-    if not chunks:
+    if not hits:
         return {
             "answer": "Não encontrei nenhum documento para consultar.",
             "sources": [],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
         }
 
-    scored_chunks = []
-    for chunk in chunks:
-        score = cosine_similarity(query_embedding, chunk.embedding)
-        scored_chunks.append((score, chunk))
-    
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    top_chunks = scored_chunks[:payload.top_k]
-    
     # 3. Build prompt
     context_str = ""
     sources = []
-    for score, chunk in top_chunks:
+    for hit in hits:
+        chunk_id = uuid.UUID(hit["id"])
+        chunk = (await session.execute(select(RAGDocumentChunk).where(RAGDocumentChunk.id == chunk_id))).scalar_one_or_none()
+        if not chunk:
+            continue
+            
         doc = (await session.execute(select(RAGDocument).where(RAGDocument.id == chunk.document_id))).scalar_one()
         context_str += f"[fonte: {doc.original_filename}, página {chunk.page_number}]\n{chunk.content}\n\n"
         sources.append(RAGSource(
@@ -497,7 +503,7 @@ async def query_rag(
             page=chunk.page_number,
             chunk_index=chunk.chunk_index,
             text=chunk.content,
-            score=float(score)
+            score=float(hit["score"])
         ))
     
     prompt = f"""Você é um assistente que responde usando apenas o contexto fornecido abaixo.

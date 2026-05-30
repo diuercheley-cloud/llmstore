@@ -54,6 +54,8 @@ APP_ROOT = ROOT / "app"
 if APP_ROOT.exists() and str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import app.models
+
 
 class FakeRedis:
     def __init__(self) -> None:

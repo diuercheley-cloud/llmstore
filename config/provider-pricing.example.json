@@ -18,6 +18,13 @@
       "cost_usd_per_1k_embedding": 0.0,
       "pricing_configured": true
     },
+    "vllm": {
+      "label": "vLLM",
+      "cost_usd_per_1k_prompt": 0.0,
+      "cost_usd_per_1k_completion": 0.0,
+      "cost_usd_per_1k_embedding": 0.0,
+      "pricing_configured": true
+    },
     "mock": {
       "label": "Mock Backend",
       "cost_usd_per_1k_prompt": 0.0,

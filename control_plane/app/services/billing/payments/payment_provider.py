@@ -37,17 +37,35 @@ class PaymentProvider(ABC):
         pass
 
     @abstractmethod
-    async def retrieve_payment_intent(
+    async def create_pix_payment(
         self,
-        provider_intent_id: str
+        client_id: uuid.UUID,
+        amount_cents: int,
+        currency: str,
+        idempotency_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Retrieves a payment intent from the provider.
-        Expected return dict:
-        {
-            "id": "provider_intent_id",
-            "amount_cents": int,
-            "status": "requires_payment_method|succeeded|processing etc"
-        }
+        Creates a PIX payment and returns payment details including QR code.
+        """
+        pass
+
+    @abstractmethod
+    async def create_card_payment(
+        self,
+        client_id: uuid.UUID,
+        amount_cents: int,
+        currency: str,
+        payment_method_id: str,
+        idempotency_key: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Creates a card payment using a tokenized payment method.
+        """
+        pass
+
+    @abstractmethod
+    async def validate_webhook(self, payload: bytes, signature: str) -> bool:
+        """
+        Validates the webhook signature from the provider.
         """
         pass

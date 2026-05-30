@@ -49,6 +49,17 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "metadata_json": json.dumps({"service_name": "data-plane-lmstudio", "api_key": settings.lmstudio_api_key}),
         },
         {
+            "name": "vllm-local",
+            "provider": "vllm",
+            "backend_url": settings.vllm_base_url,
+            "healthcheck_path": "/health",
+            "is_active": settings.vllm_backend_enabled,
+            "is_default": False,
+            "status": "configured" if settings.vllm_backend_enabled else "optional-disabled",
+            "max_parallel_requests": settings.vllm_max_concurrent_requests,
+            "metadata_json": json.dumps({"service_name": "data-plane-vllm", "api_key": settings.vllm_api_key}),
+        },
+        {
             "name": "fallback-local",
             "provider": "llama.cpp",
             "backend_url": "http://data-plane-mock:8081",

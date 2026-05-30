@@ -919,3 +919,27 @@ from app.models.agent_mcp_oauth import (
 from app.models.managed_control_plane import *
 from app.models.agent_catalog import *
 from app.models.payments import *
+
+from app.models.multimodal import (
+    MultimodalAsset,
+    MultimodalRequest,
+    MultimodalUsageEvent,
+    MultimodalPolicyEvent,
+)
+
+from app.models.web_search import (
+    AgentWebSearchQuery,
+    AgentWebSearchResult,
+    AgentWebSearchCache,
+    AgentWebSearchPolicyEvent,
+)
+
+from app.models.mlops import (
+    MLDataset,
+    MLDatasetVersion,
+    MLTrainingJob,
+    MLExperiment,
+    MLExperimentRun,
+    MLModelLineage,
+    MLEvalArtifact,
+)

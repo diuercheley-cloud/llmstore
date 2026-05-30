@@ -56,6 +56,27 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
             ),
         )
         gemma_model.is_default = False
+
+    if settings.vllm_backend_enabled and "vllm-local" in backends:
+        logger.info(f"Seeding vLLM model: {settings.vllm_default_model}")
+        vllm_model = await _ensure_model_entry(
+            session,
+            model_id=settings.vllm_default_model,
+            model_alias="vllm-default",
+            model_file="",
+            backend=backends["vllm-local"],
+            is_default=True,
+            is_active=True,
+            provider="vllm",
+            metadata=json.dumps({
+                "recommended_quantization": "",
+                "gpu_profile": "",
+                "backend": "vllm",
+                "backend_name": "vllm-local",
+                "architecture": "opt",
+            }),
+        )
+        gemma_model.is_default = False
     existing_defaults = (
         await session.execute(select(ModelRegistry).where(ModelRegistry.id != gemma_model.id, ModelRegistry.is_default.is_(True)))
     ).scalars().all()

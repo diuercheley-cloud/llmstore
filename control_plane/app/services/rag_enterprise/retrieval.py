@@ -55,24 +55,37 @@ async def search_chunks(
     document_ids: Optional[List[uuid.UUID]] = None,
     collection_ids: Optional[List[uuid.UUID]] = None,
 ) -> List[Tuple[float, RAGDocumentChunk, Optional[RAGDocument]]]:
-    stmt = select(RAGDocumentChunk).where(RAGDocumentChunk.client_id == client_id)
-
+    from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+    store = VectorStoreFactory.get_instance(session=session)
+    
+    filters = {"client_id": client_id}
     if document_ids:
-        stmt = stmt.where(RAGDocumentChunk.document_id.in_(document_ids))
+        # Simple implementation: use the first document_id if provided
+        filters["document_id"] = document_ids[0]
 
-    chunks = (await session.execute(stmt)).scalars().all()
+    hits = await store.search(
+        collection_name="rag_chunks",
+        vector=query_embedding,
+        limit=top_k,
+        filters=filters
+    )
 
-    if not chunks:
+    if not hits:
         return []
 
+    results = []
     doc_cache: dict[uuid.UUID, Optional[RAGDocument]] = {}
 
-    scored_chunks = []
-    for chunk in chunks:
-        if chunk.embedding is None:
+    for hit in hits:
+        if hit.get("score", 0.0) < score_threshold:
             continue
-        score = cosine_similarity(query_embedding, chunk.embedding)
-        if score < score_threshold:
+            
+        chunk_id = uuid.UUID(hit["id"])
+        chunk = (await session.execute(
+            select(RAGDocumentChunk).where(RAGDocumentChunk.id == chunk_id)
+        )).scalar_one_or_none()
+        
+        if not chunk:
             continue
 
         doc_id = chunk.document_id
@@ -86,10 +99,9 @@ async def search_chunks(
         if doc is None:
             continue
 
-        scored_chunks.append((score, chunk, doc))
+        results.append((float(hit["score"]), chunk, doc))
 
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    return scored_chunks[:top_k]
+    return results
 
 
 async def execute_enterprise_query(

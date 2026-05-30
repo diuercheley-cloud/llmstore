@@ -38,3 +38,34 @@ class MockPaymentProvider(PaymentProvider):
             "amount_cents": 1000,
             "status": "succeeded"
         }
+
+    async def create_pix_payment(
+        self,
+        client_id: uuid.UUID,
+        amount_cents: int,
+        currency: str,
+        idempotency_key: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return {
+            "id": f"pix_mock_{uuid.uuid4().hex[:16]}",
+            "qr_code": "00020126360014br.gov.bcb.pix0114+5511999999999520400005303986540510.005802BR5908LLM STACK6009SAO PAULO62070503***6304ABCD",
+            "qr_code_url": "https://example.com/pix/mock",
+            "status": "pending"
+        }
+
+    async def create_card_payment(
+        self,
+        client_id: uuid.UUID,
+        amount_cents: int,
+        currency: str,
+        payment_method_id: str,
+        idempotency_key: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return {
+            "id": f"pay_mock_{uuid.uuid4().hex[:16]}",
+            "status": "succeeded",
+            "last4": "4242"
+        }
+
+    async def validate_webhook(self, payload: bytes, signature: str) -> bool:
+        return signature == "mock_valid_signature"

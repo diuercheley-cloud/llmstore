@@ -12,6 +12,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.agents import AgentMemoryIndex, AgentMemorySearchEvent, AgentMemoryItem
 from app.core.config import get_settings
+from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
 
 logger = logging.getLogger(__name__)
 
@@ -73,15 +74,37 @@ class MemoryIndexingService:
     async def index_item(self, tenant_id: str, agent_id: uuid.UUID, item: AgentMemoryItem):
         content = item.raw_content or ""
         embedding = await self._compute_embedding(content)
-        index = AgentMemoryIndex(
-            tenant_id=tenant_id,
-            agent_id=agent_id,
-            memory_item_id=item.id,
-            index_status="completed",
-            vector_id=f"vec_{item.id}",
-            embedding=json.dumps(embedding),
+        
+        # Store in Vector DB
+        store = VectorStoreFactory.get_instance(session=self.db)
+        await store.upsert(
+            collection_name="agent_memory",
+            id=str(item.id),
+            vector=embedding,
+            metadata={
+                "tenant_id": tenant_id,
+                "agent_id": str(agent_id),
+                "content": content
+            }
         )
-        self.db.add(index)
+
+        # Update status in local DB
+        stmt = select(AgentMemoryIndex).where(AgentMemoryIndex.memory_item_id == item.id)
+        res = await self.db.execute(stmt)
+        index = res.scalar_one_or_none()
+
+        if not index:
+            index = AgentMemoryIndex(
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                memory_item_id=item.id,
+                vector_id=f"vec_{item.id}",
+            )
+            self.db.add(index)
+        
+        index.index_status = "completed"
+        index.embedding = json.dumps(embedding)
+        await self.db.flush()
 
     async def search(
         self,
@@ -136,27 +159,27 @@ class MemoryIndexingService:
     ) -> List[AgentMemoryItem]:
         query_emb = await self._compute_embedding(query)
 
-        stmt = (
-            select(AgentMemoryIndex, AgentMemoryItem)
-            .join(AgentMemoryItem, AgentMemoryIndex.memory_item_id == AgentMemoryItem.id)
-            .where(
-                AgentMemoryIndex.tenant_id == tenant_id,
-                AgentMemoryIndex.agent_id == agent_id,
-                AgentMemoryIndex.embedding.isnot(None),
-                AgentMemoryIndex.index_status == "completed",
-            )
+        store = VectorStoreFactory.get_instance(session=self.db)
+        hits = await store.search(
+            collection_name="agent_memory",
+            vector=query_emb,
+            limit=limit,
+            filters={"tenant_id": tenant_id, "agent_id": str(agent_id)}
         )
-        res = await self.db.execute(stmt)
-        rows = list(res.all())
 
-        scored: List[Tuple[float, AgentMemoryItem]] = []
-        for idx, item in rows:
+        item_ids = []
+        for hit in hits:
             try:
-                emb = json.loads(idx.embedding)
-                score = cosine_similarity(query_emb, emb)
-                scored.append((score, item))
-            except (json.JSONDecodeError, TypeError):
+                item_ids.append(uuid.UUID(hit["id"]))
+            except (ValueError, KeyError, TypeError):
                 continue
+        
+        if not item_ids:
+            return []
 
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [item for _, item in scored[:limit]]
+        stmt = select(AgentMemoryItem).where(AgentMemoryItem.id.in_(item_ids))
+        res = await self.db.execute(stmt)
+        items_map = {it.id: it for it in res.scalars().all()}
+
+        # Return in the order of hits (similarity score order)
+        return [items_map[id] for id in item_ids if id in items_map]

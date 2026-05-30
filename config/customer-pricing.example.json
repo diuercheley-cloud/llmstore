@@ -55,7 +55,7 @@
     "default_max_cost_per_request_brl": 0.50,
     "suspended_plans_allow_local": true,
     "low_balance_threshold_brl": 5.0,
-    "profiling_providers_order": ["deepseek", "local", "lmstudio", "openai", "anthropic", "openrouter", "mock"]
+    "profiling_providers_order": ["deepseek", "local", "vllm", "lmstudio", "openai", "anthropic", "openrouter", "mock"]
   },
   "default_markup_percent": 50,
   "cache_discount_percent": 50

@@ -87,8 +87,8 @@ class InferenceProxy:
         
         # Auto-detect health path if default /health fails for openai_compatible
         ok = await self.health_url(backend.backend_url, health_path)
-        if not ok and backend.provider == "openai_compatible" and health_path == "/health":
-            # Try /v1/models as a fallback health check for OpenAI-compatible backends
+        if not ok and backend.provider in ("openai_compatible", "vllm") and health_path == "/health":
+            # Try /v1/models as a fallback health check for OpenAI-compatible/vLLM backends
             ok = await self.health_url(backend.backend_url, "/v1/models")
             if ok:
                 health_path = "/v1/models"

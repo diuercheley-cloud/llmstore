@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
 from app.api.deps import require_admin
+from app.services.auth import require_client
 from app.core.config import get_settings
 from app.services.billing.payments.invoice_payment import PaymentService
 from app.services.billing.payments.payment_webhooks import PaymentWebhookService
@@ -89,6 +90,47 @@ async def stripe_payment_webhook(
         payload_bytes=payload,
         signature_header=stripe_signature
     )
+
+class CreatePixPaymentRequest(BaseModel):
+    amount_cents: int
+    idempotency_key: Optional[str] = None
+
+class CreateCardPaymentRequest(BaseModel):
+    amount_cents: int
+    payment_method_id: str
+    idempotency_key: Optional[str] = None
+
+@router.post("/billing/payments/pix")
+async def create_pix_payment(
+    req: CreatePixPaymentRequest,
+    db: AsyncSession = Depends(get_db_session),
+    client: Any = Depends(require_client)
+):
+    from app.services.billing.payments.pix_service import PixService
+    return await PixService.create_payment(db, client.id, req.amount_cents, req.idempotency_key)
+
+@router.post("/billing/payments/card")
+async def create_card_payment(
+    req: CreateCardPaymentRequest,
+    db: AsyncSession = Depends(get_db_session),
+    client: Any = Depends(require_client)
+):
+    from app.services.billing.payments.card_service import CardService
+    return await CardService.create_payment(db, client.id, req.amount_cents, req.payment_method_id, req.idempotency_key)
+
+@router.post("/billing/webhooks/{provider}")
+async def payment_webhook(
+    provider: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+    x_signature: Optional[str] = Header(None, alias="X-Payment-Signature")
+):
+    from app.services.billing.payments.payment_reconciliation import PaymentReconciliationService
+    payload = await request.body()
+    success = await PaymentReconciliationService.process_webhook(db, provider, payload, x_signature or "")
+    if not success:
+        raise HTTPException(status_code=400, detail="Webhook validation failed")
+    return {"status": "ok"}
 
 @router.get("/admin/billing/payments/{id}", response_model=PaymentIntentResponse)
 async def get_payment_intent(

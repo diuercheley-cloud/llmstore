@@ -379,6 +379,16 @@ class AgentExecutor:
         await self.obs.record_tool_call_result(self.run_id, tool_name, "failed" if error else "completed", latency, error)
         i_hash, o_hash = agent_state.compute_sha256(tool_input), agent_state.compute_sha256(output)
         await self.receipts.create_receipt(self.run_id, step_number, "tool_execution", i_hash, o_hash, success=not error, failure_reason=error)
+        
+        step_meta = None
+        if tool_name == "web_search" and not error and isinstance(output, dict):
+            step_meta = {
+                "query_hash": output.get("query_hash"),
+                "result_ids": output.get("result_ids"),
+                "citation": output.get("citation"),
+                "audit_event_id": output.get("audit_event_id"),
+            }
+
         await agent_state.log_run_step(
             self.db,
             self.run_id,
@@ -388,6 +398,7 @@ class AgentExecutor:
             {"output_hash": o_hash, "result": output},
             "success" if not error else "failed",
             latency_ms=latency,
+            metadata=step_meta,
             error=error,
         )
         if error:

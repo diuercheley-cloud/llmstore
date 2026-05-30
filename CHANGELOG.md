@@ -751,3 +751,6 @@
 - Processo de DR e restore revalidado para ambiente local.
 - Scripts de validação agora suportam modo localhost como principal.
 - Reforço da segurança no manuseio de dados locais.
+
+## v2.0.2-agentic-platform-expansion
+- Release v2.0.2-agentic-platform-expansion

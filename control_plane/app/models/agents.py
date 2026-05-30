@@ -62,6 +62,7 @@ class AgentRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     correlation_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    multimodal_asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("multimodal_assets.id", ondelete="SET NULL"), nullable=True)
 
     agent = relationship("AgentDefinition", back_populates="runs")
     steps = relationship("AgentRunStep", back_populates="run", cascade="all, delete-orphan")
