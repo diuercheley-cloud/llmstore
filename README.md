@@ -203,7 +203,7 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 
 ### Release v2.x scope
 
-- **Cognitive loopback remains gated**: post-run feedback mining, learning candidates, and few-shot activation exist, but `AGENT_COGNITIVE_LOOPBACK_ENABLED=false` and `AGENT_AUTO_APPLY_LEARNINGS=false` preserve HITL-first learning.
+- **Cognitive loopback is now enabled by default**: post-run feedback mining, learning candidates, and few-shot activation exist, and `AGENT_COGNITIVE_LOOPBACK_ENABLED=true` and `AGENT_AUTO_APPLY_LEARNINGS=true` enable autonomous learning out of the box.
 - **Uncertainty and review are explicit**: uncertainty detection, optional auto-research, and meta-reviewer controls are available behind dedicated flags and remain advisory-first by default.
 - **Studio becomes governable GA surface**: visual flow authoring, validation, compilation, and dry-run flows are operator-gated, auditable, and disabled by default.
 - **Replay and rollout controls expand**: time-travel debugger, shadow mode, and canary promotion are available for agent debugging and promotion without changing the safe default posture.
@@ -464,7 +464,7 @@ make validate-real-provider-env
 - **Modos Operacionais Controlados.** A ativação de features é governada pela variável `DEPLOYMENT_MODE`. O modo padrão é `appliance` (totalmente local e com runtime desativado). Outros modos suportados são `pilot` (sandboxes de teste com escritas externas bloqueadas e orçamentos estritos), `production` (ambientes produtivos com eval gates e SLOs mandatórios) e `enterprise_managed` (multi-cluster federado com isolamento estrito de tenants).
 - **Modelos dependem do hardware local.** Desempenho varia conforme GPU, RAM e quantização. Consulte [docs/MODEL_BENCHMARK_LOCAL.md](docs/MODEL_BENCHMARK_LOCAL.md).
 - **Recursos opcionais dependem de configuração.** RAG, TTS, observabilidade, cache e providers cloud requerem ativação explícita em `.env.local`.
-- **RBAC administrativo permanece em legado por padrão.** `RBAC_ADMIN_ENABLED=false` mantém o fluxo atual baseado em `X-Admin-Token`.
+- **RBAC administrativo ativado por padrão.** `RBAC_ADMIN_ENABLED=true` garante autorização granular, substituindo o fluxo legado de token único.
 - **Troca de modelo GGUF é opt-in.** Com `MODEL_HOT_SWAP_ENABLED=false`, o comportamento continua sendo o fluxo antigo sem supervisor de runtimes.
 - **Marketplace permanece offline-first.** O fluxo de marketplace usa artefatos locais importados pelo operador; não depende de catálogo remoto para funcionar.
 - **Autoscaling de GPU é advisory por padrão.** Mesmo quando habilitado, a política inicial opera em `mode=recommendation` até que o operador promova para ação ativa.

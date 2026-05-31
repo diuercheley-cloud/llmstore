@@ -72,6 +72,8 @@ class ArbitrationEngine:
     def __init__(self, db=None):
         self.db = db
         self.settings = get_settings()
+        from app.services.agents.multi_agent.discovery.dynamic_swarm import DynamicSwarmDiscovery
+        self.discovery = DynamicSwarmDiscovery()
 
     def _real_arbitration_required(self) -> bool:
         return bool(

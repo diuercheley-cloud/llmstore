@@ -27,7 +27,7 @@ class TestAdapterRegistryModels:
             manifest_hash="hash123",
             registry_status="draft",
             registry_hash="reg_hash123",
-            signature_placeholder="sig_abc",
+            signature="sig_abc",
             immutable_hash="imm_hash123"
         )
         session.add(entry)

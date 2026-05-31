@@ -1,5 +1,6 @@
 import pytest
 from app.services.operations.correlation.receipts import (
+from app.utils.crypto_signer import sign_payload
     build_correlation_receipt,
     build_trust_link_receipt,
     build_graph_summary_receipt
@@ -18,7 +19,7 @@ def test_build_correlation_receipt():
     assert receipt["immutable_hash"] == "corr_hash_123"
     assert "payload_hash" in receipt
     assert receipt["advisory_only"] is True
-    assert receipt["signature_placeholder"].startswith("sig_placeholder_")
+    assert receipt["signature"].startswith("sig_placeholder_")
     assert "generated_at" in receipt
 
 def test_build_trust_link_receipt():

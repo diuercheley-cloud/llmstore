@@ -46,7 +46,7 @@ class RegistryEntryResponse(BaseModel):
     manifest_hash: str
     registry_status: str
     registry_hash: str
-    signature_placeholder: str
+    signature: str
     created_at: datetime
 
 class RegistryEntryRegisterRequest(BaseModel):

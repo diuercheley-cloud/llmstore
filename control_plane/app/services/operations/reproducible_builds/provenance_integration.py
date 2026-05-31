@@ -27,7 +27,7 @@ class ReproducibleBuildProvenanceIntegration:
         }
         return {
             "sbom_placeholder_hash": sha256_hex({"kind": "phase80_sbom_placeholder_alignment", **payload}),
-            "placeholder_only": True,
+            "signature_only": True,
             "real_signing": False,
             "external_dependency_resolver": False,
         }

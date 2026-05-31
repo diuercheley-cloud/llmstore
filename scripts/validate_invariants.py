@@ -68,7 +68,7 @@ FUNCTION_SPECS = (
     ),
     (
         "app.services.invariants.trust_invariants",
-        "validate_signed_artifact_has_signature_metadata_placeholder",
+        "validate_signed_artifact_has_signature_metadata",
         {"signed": True, "signature_metadata": {"placeholder": "pending"}},
     ),
     (

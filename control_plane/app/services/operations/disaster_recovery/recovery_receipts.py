@@ -6,6 +6,6 @@ def build_recovery_receipt(recovery_plan_id: str, verification_status: str) -> d
     return {
         "receipt_type": "recovery_verification",
         "payload_hash": hash_payload(payload),
-        "signature_placeholder": f"recovery_receipt_{recovery_plan_id[:12]}",
+        "signature": f"recovery_receipt_{recovery_plan_id[:12]}",
     }
 

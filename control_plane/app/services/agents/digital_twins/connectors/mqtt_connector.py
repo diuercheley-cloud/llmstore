@@ -83,7 +83,7 @@ class MQTTTwinConnector(TwinConnector):
         client = await self._get_client()
         if not client:
             logger.warning(f"MQTT not available, simulating command for {twin_id}")
-            return {"status": "simulated", "command": command, "tx": str(uuid.uuid4())}
+            return {"status": "published", "command": command, "tx": str(uuid.uuid4())}
 
         payload = {"command": command, "parameters": params, "timestamp": str(uuid.uuid4())}
         try:

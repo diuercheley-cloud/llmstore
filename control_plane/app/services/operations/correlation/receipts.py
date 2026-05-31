@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from app.core.time import utc_now
+from app.utils.crypto_signer import sign_payload
 
 def _canonical_json(payload: Any) -> str:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
@@ -15,9 +16,9 @@ def _build_receipt(receipt_type: str, immutable_hash: str, payload: Any, version
     payload_json = _canonical_json(payload)
     payload_hash = _sha256(payload_json)
     
-    # Simple placeholder for signature
+    # Signature
     receipt_hash = _sha256(f"{receipt_type}:{immutable_hash}:{payload_hash}:{version}")
-    signature_placeholder = f"sig_placeholder_{receipt_hash[:32]}"
+    signature = sign_payload(f"{receipt_hash[:32]}")
     
     return {
         "receipt_type": receipt_type,
@@ -25,7 +26,7 @@ def _build_receipt(receipt_type: str, immutable_hash: str, payload: Any, version
         "payload_hash": payload_hash,
         "deterministic_version": version,
         "advisory_only": True,
-        "signature_placeholder": signature_placeholder,
+        "signature": signature,
         "generated_at": utc_now().isoformat()
     }
 

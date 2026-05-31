@@ -10,7 +10,7 @@ from app.services.admin_model_management import project_root
 from app.services.providers.registry import reload_registry
 
 _ENV_LINE_RE = re.compile(r"^([A-Z0-9_]+)=(.*)$")
-_PLACEHOLDER_API_KEY_MARKERS = (
+_TEST_API_KEY_MARKERS = (
     "dummy-test-key-not-valid",
     "not-valid",
     "test_api_key",
@@ -63,7 +63,7 @@ def is_real_api_key_configured(value: str | None) -> bool:
     if not value or not value.strip():
         return False
     normalized = value.strip().lower()
-    return not any(marker in normalized for marker in _PLACEHOLDER_API_KEY_MARKERS)
+    return not any(marker in normalized for marker in _TEST_API_KEY_MARKERS)
 
 
 def masked_real_api_key(value: str | None) -> str | None:

@@ -565,7 +565,7 @@ async def generate_session_receipt(
         receipt_type=receipt_payload["receipt_type"],
         payload_hash=receipt_payload["payload_hash"],
         immutable_hash=receipt_payload["immutable_hash"],
-        signature_placeholder=receipt_payload["signature_placeholder"],
+        signature=receipt_payload["signature"],
     )
     db.add(receipt)
     await db.commit()

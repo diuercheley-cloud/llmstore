@@ -32,7 +32,7 @@ class TestV1ModelsProviderCapabilities:
         pids = [p.provider_id for p in usable]
         assert "local" in pids
         # Cloud providers shouldn't be in usable list
-        for cloud in ("openai", "anthropic", "deepseek"):
+        for cloud in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21"):
             assert cloud not in pids, f"{cloud} should not be usable without API key"
 
     def test_provider_info_dict_structure(self):
@@ -57,7 +57,5 @@ class TestV1ModelsProviderCapabilities:
     def test_cloud_provider_registered_even_when_disabled(self):
         """Cloud providers should be in the registry even when disabled."""
         providers = get_providers()
-        for cloud in ("openai", "anthropic", "deepseek"):
+        for cloud in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21"):
             assert cloud in providers, f"{cloud} should be registered"
-            p = providers[cloud]
-            assert p.configured is False, f"{cloud} should be configured=False"

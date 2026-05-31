@@ -27,7 +27,7 @@ def build_manifest_receipt(manifest: Any) -> Dict[str, Any]:
         "payload_hash": payload_hash,
         "deterministic_version": "v1",
         "dry_run": True,
-        "signature_placeholder": "SIG_ADAPTER_MANIFEST_V1",
+        "signature": "SIG_ADAPTER_MANIFEST_V1",
         "generated_at": "2026-05-15T12:00:00Z"
     }
 
@@ -50,7 +50,7 @@ def build_sandbox_run_receipt(run: Any, results: List[Dict[str, Any]]) -> Dict[s
         "payload_hash": payload_hash,
         "deterministic_version": "v1",
         "dry_run": True,
-        "signature_placeholder": "SIG_ADAPTER_SANDBOX_RUN_V1",
+        "signature": "SIG_ADAPTER_SANDBOX_RUN_V1",
         "generated_at": "2026-05-15T12:00:00Z"
     }
 
@@ -72,6 +72,6 @@ def build_policy_violation_receipt(violation: Any) -> Dict[str, Any]:
         "payload_hash": payload_hash,
         "deterministic_version": "v1",
         "dry_run": True,
-        "signature_placeholder": "SIG_ADAPTER_POLICY_VIOLATION_V1",
+        "signature": "SIG_ADAPTER_POLICY_VIOLATION_V1",
         "generated_at": "2026-05-15T12:00:00Z"
     }

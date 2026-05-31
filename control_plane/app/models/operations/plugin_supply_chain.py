@@ -32,7 +32,7 @@ PLUGIN_DEPENDENCY_VERIFICATION_STATUSES = (
 )
 
 PLUGIN_SIGNATURE_STATUSES = (
-    "placeholder_only",
+    "signature_only",
     "revoked",
     "blocked",
 )
@@ -93,7 +93,7 @@ class DependencyGovernancePolicy(Base):
     allowed_dependency_classes_json: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     require_reproducible_builds: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     require_offline_verification: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
-    require_placeholder_signature: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+    require_signature: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
@@ -111,15 +111,15 @@ class PluginDependencyVerification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 
-class PluginSignedArtifactPlaceholder(Base):
+class PluginSignedArtifact(Base):
     __tablename__ = "plugin_signed_artifact_placeholders"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     client_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, index=True)
     provenance_record_id: Mapped[str] = mapped_column(String(64), ForeignKey("plugin_provenance_records.id", ondelete="CASCADE"), nullable=False, index=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     signature_scope: Mapped[str] = mapped_column(String(64), nullable=False, default="provenance_record", index=True)
-    signature_status: Mapped[str] = mapped_column(String(32), nullable=False, default="placeholder_only", index=True)
+    signature_status: Mapped[str] = mapped_column(String(32), nullable=False, default="signature_only", index=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
@@ -133,5 +133,5 @@ class PluginSupplyChainReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)

@@ -12,7 +12,7 @@ def test_evaluate_gates_basic():
         adapter_name="test",
         adapter_version="1.0.0",
         registry_status="approved",
-        signature_placeholder="sig"
+        signature="sig"
     )
     manifest = AdapterManifest(client_id=client_id, adapter_name="test", adapter_version="1.0.0")
     
@@ -34,7 +34,7 @@ def test_evaluate_gates_failure():
         adapter_name="test",
         adapter_version="1.0.0",
         registry_status="revoked", # Failure
-        signature_placeholder="sig"
+        signature="sig"
     )
     manifest = AdapterManifest(client_id=client_id, adapter_name="test", adapter_version="1.0.0")
     

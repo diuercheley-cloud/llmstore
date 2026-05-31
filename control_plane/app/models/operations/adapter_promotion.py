@@ -63,7 +63,7 @@ class AdapterPromotionReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(100), nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 class AdapterPromotionRollback(Base):

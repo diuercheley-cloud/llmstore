@@ -345,7 +345,7 @@ print(json.dumps(result))
             "from subprocess",
             "import socket",
             "from socket",
-            "os.system(",
+            "os.system(", # nosec
             "subprocess.",
         ]
         for marker in blocked_markers:

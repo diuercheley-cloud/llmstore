@@ -18,14 +18,14 @@ const steps: Array<{ key: Step; label: string; icon: React.ReactNode; cli: strin
 interface Manifest {
   name: string
   version: string
-  description?: string
-  author?: string
-  category?: string
-  min_platform_version?: string
-  agent_definition?: Record<string, unknown>
-  tool_requirements?: Array<{ name: string; version: string }>
-  eval_suite?: Record<string, unknown>
-  checksums?: Record<string, string>
+  description: string
+  author: string
+  category: string
+  min_platform_version: string
+  agent_definition: Record<string, unknown>
+  tool_requirements: Array<{ name: string; version: string }>
+  eval_suite: Record<string, unknown>
+  checksums: Record<string, string>
   signature?: Record<string, string>
   [key: string]: unknown
 }
@@ -39,7 +39,19 @@ export default function Bundles() {
   const stepIndex = steps.findIndex(s => s.key === currentStep)
 
   const handleBundleLoaded = (data: Record<string, unknown>) => {
-    setManifest(data as Manifest)
+    setManifest({
+      name: String(data.name || ''),
+      version: String(data.version || ''),
+      description: data.description ? String(data.description) : '',
+      author: data.author ? String(data.author) : '',
+      category: data.category ? String(data.category) : '',
+      min_platform_version: data.min_platform_version ? String(data.min_platform_version) : '',
+      agent_definition: (data.agent_definition as Record<string, unknown>) || {},
+      tool_requirements: Array.isArray(data.tool_requirements) ? (data.tool_requirements as Array<{ name: string; version: string }>) : [],
+      eval_suite: (data.eval_suite as Record<string, unknown>) || {},
+      checksums: (data.checksums as Record<string, string>) || {},
+      signature: data.signature as Record<string, string> | undefined,
+    })
     setSignatureValid(data.signature ? true : null)
     setCurrentStep('validate')
   }

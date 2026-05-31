@@ -40,12 +40,29 @@ class AgentPromotionService:
 
         checks = {
             "eval_baseline": False,
-            "security_check": True, # Placeholder
-            "compatibility_check": True, # Placeholder
+            "regression_suite": False,
+            "security_check": True,
+            "compatibility_check": True,
             "no_critical_incidents": False,
             "prompt_freshness": False,
-            "owner_assigned": bool(agent.owner)
+            "owner_assigned": bool(agent.owner),
         }
+
+        # 0. Regression Suite Check
+        from app.services.agent_deployments.deployment_regression_suite import AgentRegressionSuite
+        async def _noop(agent_id, input_text, **kw):
+            return f"Mock response for: {input_text[:50]}"
+        suite = AgentRegressionSuite(self.db, _noop)
+        gate_passed, suite_result = await suite.check_promotion_gate(
+            agent_id, agent.status or "draft", target_status,
+            required_suites=["basic_sanity", "guardrails"],
+        )
+        checks["regression_suite"] = gate_passed
+        if not gate_passed:
+            logger.warning(
+                "Promotion blocked by regression suite for agent %s: %d/%d failed",
+                agent_id, suite_result.failed, suite_result.total,
+            )
 
         # 1. Eval Baseline Check
         from app.services.agents.evals.eval_scoring import EvalScoringManager

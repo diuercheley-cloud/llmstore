@@ -147,7 +147,7 @@ class TestRemediationPlanningModels:
             receipt_type="proposal",
             payload_hash="pay_h",
             immutable_hash="rec_h",
-            signature_placeholder="sig_h"
+            signature="sig_h"
         )
         session.add(receipt)
         await session.commit()
@@ -157,4 +157,4 @@ class TestRemediationPlanningModels:
         )
         saved = result.scalars().one()
         assert saved.receipt_type == "proposal"
-        assert saved.signature_placeholder == "sig_h"
+        assert saved.signature == "sig_h"

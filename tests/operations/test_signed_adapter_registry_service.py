@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.operations.adapter_sandbox import AdapterManifest
 from app.services.operations.adapter_registry.registry_service import SignedAdapterRegistryService
+from app.utils.crypto_signer import sign_payload
 
 @pytest.mark.asyncio
 class TestSignedAdapterRegistryService:
@@ -26,7 +27,7 @@ class TestSignedAdapterRegistryService:
         
         assert entry.adapter_name == "test_adapter"
         assert entry.registry_status == "draft"
-        assert entry.signature_placeholder.startswith("sig_placeholder_")
+        assert entry.signature.startswith("sig_placeholder_")
 
     async def test_lifecycle_transitions(self, session: AsyncSession):
         client_id = uuid.uuid4()

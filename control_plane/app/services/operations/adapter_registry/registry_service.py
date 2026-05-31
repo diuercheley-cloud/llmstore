@@ -12,6 +12,7 @@ from app.models.operations.adapter_registry import (
 from app.models.operations.adapter_sandbox import AdapterManifest
 from app.services.operations.adapter_registry.hash_utils import compute_registry_hash, sha256_hex
 from app.core.time import utc_now
+from app.utils.crypto_signer import sign_payload
 
 class SignedAdapterRegistryService:
     def __init__(self, session: AsyncSession):
@@ -31,8 +32,8 @@ class SignedAdapterRegistryService:
         }
         registry_hash = compute_registry_hash(payload)
         
-        # Placeholder signature
-        signature_placeholder = f"sig_placeholder_{sha256_hex(registry_hash)[:16]}"
+        # Signature
+        signature = sign_payload(f"{sha256_hex(registry_hash)[:16]}")
         
         # Deterministic immutable_hash
         immutable_hash = sha256_hex(f"entry_{manifest.client_id}_{manifest.adapter_name}_{manifest.adapter_version}_{manifest.manifest_hash}")
@@ -46,7 +47,7 @@ class SignedAdapterRegistryService:
             manifest_hash=manifest.manifest_hash,
             registry_status=status,
             registry_hash=registry_hash,
-            signature_placeholder=signature_placeholder,
+            signature=signature,
             approval_required=manifest.approval_required,
             immutable_hash=immutable_hash,
         )

@@ -1,0 +1,50 @@
+{{- if .Values.observability.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-grafana
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "llm-inference-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        {{- include "llm-inference-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: {{ .Values.observability.grafana.image }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "llm-inference-stack.fullname" . }}
+                  key: grafana-admin-password
+          volumeMounts:
+            - name: dashboards
+              mountPath: /etc/grafana/dashboards
+              readOnly: true
+            - name: provisioning
+              mountPath: /etc/grafana/provisioning/dashboards
+              readOnly: true
+      volumes:
+        - name: dashboards
+          configMap:
+            name: {{ include "llm-inference-stack.fullname" . }}-grafana-dashboards
+        - name: provisioning
+          configMap:
+            name: {{ include "llm-inference-stack.fullname" . }}-grafana-provisioning
+{{- end }}

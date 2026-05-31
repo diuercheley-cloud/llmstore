@@ -5,6 +5,7 @@ from app.api.dependencies import get_current_admin, get_db
 from app.main import app
 from app.models.client import Client
 from app.models.operations.plugin_runtime import PluginABIContract
+from app.utils.crypto_signer import sign_payload
 
 
 async def _override_admin():
@@ -77,7 +78,7 @@ async def test_plugin_supply_chain_api_flow(session):
             },
         )
         assert sbom.status_code == 200
-        assert sbom.json()["validation"]["placeholder_only"] is True
+        assert sbom.json()["validation"]["signature_only"] is True
 
         verification = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/dependency-verify",
@@ -108,7 +109,7 @@ async def test_plugin_supply_chain_api_flow(session):
             json={"client_id": str(client.id)},
         )
         assert signature.status_code == 200
-        assert signature.json()["signature"]["signature_placeholder"].startswith("placeholder-signature:")
+        assert signature.json()["signature"]["signature"].startswith("placeholder-signature:")
 
         receipt = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/receipt",

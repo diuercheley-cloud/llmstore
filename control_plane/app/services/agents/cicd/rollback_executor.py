@@ -4,7 +4,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models.agent_cicd import AgentRollback, AgentDeployment
+from app.models.agent_cicd import AgentRollback, AgentDeployment, AgentDeploymentEvent
 from app.models.agents import AgentRegistryEntry
 
 logger = logging.getLogger(__name__)
@@ -28,11 +28,25 @@ class RollbackExecutor:
 
         logger.warning(f"Executing rollback for deployment {deployment_id}. Reason: {reason}")
 
+        previous_stable = await self._find_previous_stable_deployment(deployment)
+        if not previous_stable:
+            logger.error("Rollback failed: no previous stable deployment found")
+            rollback = AgentRollback(
+                deployment_id=deployment_id,
+                from_version=deployment.version_tag,
+                to_version="unknown",
+                reason=reason,
+                status="failed"
+            )
+            self.db.add(rollback)
+            await self.db.flush()
+            return False
+
         # 1. Create Rollback Record
         rollback = AgentRollback(
             deployment_id=deployment_id,
             from_version=deployment.version_tag,
-            to_version="previous_stable", # Simplified: would lookup real previous version
+            to_version=previous_stable.version_tag,
             reason=reason,
             status="in_progress"
         )
@@ -46,13 +60,23 @@ class RollbackExecutor:
             registry = res_reg.scalar_one_or_none()
             
             if registry:
-                # In a real system, we'd lookup the previous definition_id from history
-                # and restore it here.
-                registry.status = "stable"
-                logger.info(f"Registry for agent {deployment.agent_id} reverted to stable")
+                registry.status = "active"
+                logger.info(f"Registry for agent {deployment.agent_id} reverted to active stable version")
 
             # 3. Mark Deployment as Rolled Back
             deployment.status = "rolled_back"
+            previous_stable.status = "completed"
+            self.db.add(
+                AgentDeploymentEvent(
+                    deployment_id=deployment.id,
+                    event_type="rollback_completed",
+                    details={
+                        "reason": reason,
+                        "restored_version_tag": previous_stable.version_tag,
+                        "environment": deployment.environment,
+                    },
+                )
+            )
             rollback.status = "completed"
             
             await self.db.flush()
@@ -63,3 +87,15 @@ class RollbackExecutor:
             rollback.status = "failed"
             await self.db.flush()
             return False
+
+    async def _find_previous_stable_deployment(self, deployment: AgentDeployment) -> AgentDeployment | None:
+        stmt = (
+            select(AgentDeployment)
+            .where(AgentDeployment.agent_id == deployment.agent_id)
+            .where(AgentDeployment.environment == deployment.environment)
+            .where(AgentDeployment.status == "completed")
+            .where(AgentDeployment.id != deployment.id)
+            .order_by(AgentDeployment.created_at.desc())
+        )
+        res = await self.db.execute(stmt)
+        return res.scalars().first()

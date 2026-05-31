@@ -101,12 +101,12 @@ class AdapterPromotionGateService:
             "blocking": target_stage == "production_eligible"
         })
 
-        # 10. signature_placeholder_present
-        has_sig = bool(registry_entry.signature_placeholder)
+        # 10. signature_present
+        has_sig = bool(registry_entry.signature)
         results.append({
-            "gate_name": "signature_placeholder_present",
+            "gate_name": "signature_present",
             "gate_status": "passed" if has_sig else "failed",
-            "reason": "Signature placeholder present" if has_sig else "Signature placeholder missing",
+            "reason": "Signature present" if has_sig else "Signature missing",
             "required": True,
             "blocking": True
         })

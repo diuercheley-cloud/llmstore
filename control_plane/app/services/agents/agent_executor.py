@@ -102,11 +102,28 @@ class AgentExecutor:
         return False, sanitized
 
     async def execute_step(self) -> bool:
+        # PII Protection and OTel Tracing Integration
+        from app.services.security.pii_gateway import pii_gateway
+        from app.services.agents.telemetry.native_otel import agent_tracer
+        
         run = await agent_state.get_agent_run(self.db, self.run_id)
         if not run or run.status in ("completed", "failed", "cancelled", "paused", "waiting_approval"):
             return False
 
-        # --- Debugger Integration ---
+        # Sanitize input text if present
+        if run.input_text:
+            run.input_text = pii_gateway.redact_text(run.input_text)
+
+        agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
+        if not agent_def:
+            await self._fail_run("Agent definition not found")
+            await self.db.commit()
+            return False
+
+        with agent_tracer.start_agent_span(agent_def.name, str(run.id)) as span:
+            logger.info(f"Executing step for agent {agent_def.name} under PII Gateway protection")
+            
+            # --- Debugger Integration ---
         if self.settings.agent_debugger_enabled:
             from app.services.agents.debugger.live_stepper import LiveStepper
             from app.services.agents.debugger.debug_sessions import DebugSessionManager

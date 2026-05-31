@@ -30,7 +30,7 @@ def build_registry_entry_receipt(entry: SignedAdapterRegistryEntry) -> AdapterRe
         receipt_type="adapter_registry_entry",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"receipt_sig_{payload_hash[:16]}",
+        signature=f"receipt_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )
 
@@ -51,7 +51,7 @@ def build_registry_decision_receipt(decision: AdapterRegistryDecision) -> Adapte
         receipt_type="adapter_registry_decision",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"receipt_sig_{payload_hash[:16]}",
+        signature=f"receipt_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )
 
@@ -65,7 +65,7 @@ def build_policy_receipt(policy: AdapterRegistryPolicy) -> dict:
         "client_id": str(policy.client_id),
         "subject_id": str(policy.id),
         "payload_hash": policy.immutable_hash,
-        "signature_placeholder": f"policy_sig_{policy.immutable_hash[:16]}",
+        "signature": f"policy_sig_{policy.immutable_hash[:16]}",
         "generated_at": utc_now().isoformat()
     }
 
@@ -75,7 +75,7 @@ def build_allowlist_receipt(item: AdapterRegistryAllowlistEntry) -> dict:
         "client_id": str(item.client_id),
         "subject_id": str(item.id),
         "payload_hash": item.immutable_hash,
-        "signature_placeholder": f"allow_sig_{item.immutable_hash[:16]}",
+        "signature": f"allow_sig_{item.immutable_hash[:16]}",
         "generated_at": utc_now().isoformat()
     }
 
@@ -85,6 +85,6 @@ def build_blocklist_receipt(item: AdapterRegistryBlocklistEntry) -> dict:
         "client_id": str(item.client_id),
         "subject_id": str(item.id),
         "payload_hash": item.immutable_hash,
-        "signature_placeholder": f"block_sig_{item.immutable_hash[:16]}",
+        "signature": f"block_sig_{item.immutable_hash[:16]}",
         "generated_at": utc_now().isoformat()
     }

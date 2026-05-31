@@ -27,7 +27,7 @@ def test_build_receipts():
     )
     r1 = build_promotion_workflow_receipt(workflow)
     assert r1.receipt_type == "adapter_promotion_workflow"
-    assert r1.signature_placeholder.startswith("promotion_sig_")
+    assert r1.signature.startswith("promotion_sig_")
 
     gate = AdapterPromotionGateResult(
         id=uuid.uuid4(),

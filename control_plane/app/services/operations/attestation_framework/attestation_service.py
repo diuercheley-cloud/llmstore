@@ -5,6 +5,7 @@ from app.models.operations.attestation_framework import (
     AttestationVerificationResult,
     SovereignExecutionAttestation,
 )
+from app.utils.crypto_signer import sign_payload
 from app.services.operations.attestation_framework.hash_utils import (
     compute_attestation_hash,
     compute_chain_link_hash,
@@ -32,9 +33,9 @@ class SovereignExecutionAttestationService:
     deterministic_version = "v1"
 
     def issue_attestation(self, subject: dict[str, Any], attestation_type: str) -> SovereignExecutionAttestation:
-        signature_placeholder = subject.get("signature_placeholder") or f"placeholder-signature:{attestation_type}"
-        if not signature_placeholder:
-            raise ValueError("signature_placeholder is required")
+        signature = subject.get("signature") or sign_payload(f"{attestation_type}")
+        if not signature:
+            raise ValueError("signature is required")
         if not subject.get("replay_verifiable", True):
             raise ValueError("replay_verifiable is required")
         if not subject.get("offline_verifiable", True):
@@ -61,7 +62,7 @@ class SovereignExecutionAttestationService:
                 "attestation_scope": sanitized.get("attestation_scope", sanitized["subject_type"]),
                 "payload_hash": payload_hash,
                 "previous_attestation_hash": previous_hash,
-                "signature_placeholder": signature_placeholder,
+                "signature": signature,
                 "attestation_chain_position": chain_position,
                 "replay_verifiable": True,
                 "offline_verifiable": True,
@@ -87,7 +88,7 @@ class SovereignExecutionAttestationService:
             payload_hash=payload_hash,
             attestation_hash=attestation_hash,
             previous_attestation_hash=previous_hash,
-            signature_placeholder=signature_placeholder,
+            signature=signature,
             attestation_chain_position=chain_position,
             replay_verifiable=True,
             offline_verifiable=True,
@@ -104,7 +105,7 @@ class SovereignExecutionAttestationService:
                 "attestation_scope": attestation.attestation_scope,
                 "payload_hash": attestation.payload_hash,
                 "previous_attestation_hash": attestation.previous_attestation_hash,
-                "signature_placeholder": attestation.signature_placeholder,
+                "signature": attestation.signature,
                 "attestation_chain_position": attestation.attestation_chain_position,
                 "replay_verifiable": attestation.replay_verifiable,
                 "offline_verifiable": attestation.offline_verifiable,
@@ -112,7 +113,7 @@ class SovereignExecutionAttestationService:
             }
         )
         replay_verified = expected_hash == attestation.attestation_hash
-        offline_verified = bool(attestation.offline_verifiable and attestation.signature_placeholder)
+        offline_verified = bool(attestation.offline_verifiable and attestation.signature)
         chain_verified = bool(attestation.attestation_chain_position)
         passed = replay_verified and offline_verified and chain_verified
         status = "passed" if passed else "failed"

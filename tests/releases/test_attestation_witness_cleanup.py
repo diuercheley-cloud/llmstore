@@ -14,6 +14,7 @@ from app.models.commercial_witness import CommercialWitness, CommercialWitnessSi
 from app.models.commercial_merkle_timelines import CommercialMerkleTimeline
 from app.models.operations.plugin_supply_chain import PluginSBOMPlaceholder
 from app.services.inference import confidential_runtime
+from app.utils.crypto_signer import sign_payload
 from app.models.commercial_confidential_runtime import (
     CommercialConfidentialInferenceSession,
     CommercialConfidentialRuntimeProfile,
@@ -94,7 +95,7 @@ async def test_attestation_requires_signature_in_production():
         }
         assert AttestationService.verify_attestation(att) is False
         
-        # Placeholder signature
+        # Signature
         att["signature"] = "placeholder-signature-fallback"
         assert AttestationService.verify_attestation(att) is False
         

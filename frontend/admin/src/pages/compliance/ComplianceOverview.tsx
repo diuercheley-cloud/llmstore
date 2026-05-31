@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
-import { ShieldCheck, FileCheck, AlertCircle, BarChart3, BookOpen, Clock, ChevronRight, Download, RefreshCw } from 'lucide-react'
+import { ShieldCheck, FileCheck, AlertCircle, BarChart3, BookOpen, Clock, ChevronRight, Download, RefreshCw, Activity } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function ComplianceOverview() {

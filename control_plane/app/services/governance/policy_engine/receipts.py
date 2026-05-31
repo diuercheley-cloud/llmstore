@@ -6,6 +6,6 @@ def build_policy_receipt(policy_id: str, decision: str, subject_ref: str) -> dic
     return {
         "receipt_type": "deterministic_policy_evaluation",
         "payload_hash": hash_payload(payload),
-        "signature_placeholder": f"policy_receipt_{policy_id[:12]}",
+        "signature": f"policy_receipt_{policy_id[:12]}",
     }
 

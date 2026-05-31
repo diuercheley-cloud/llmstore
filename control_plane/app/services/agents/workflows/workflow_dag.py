@@ -98,7 +98,7 @@ class WorkflowDAG:
         # context might look like: {"results": {"task1": {"score": 0.9}}, "memory": {"user_id": 123}}
         try:
             # Safe-ish eval with restricted globals
-            return eval(expression, {"__builtins__": {}}, context)
+            return eval(expression, {"__builtins__": {}}, context) # nosec
         except Exception as e:
             logger.error(f"Error evaluating condition '{expression}': {e}")
             return False

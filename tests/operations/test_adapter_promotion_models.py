@@ -61,7 +61,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         receipt_type="test_receipt",
         payload_hash="phash",
         immutable_hash="rec_imm_hash",
-        signature_placeholder="sig"
+        signature="sig"
     )
     session.add(receipt)
     await session.flush()

@@ -4,6 +4,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import get_current_admin, get_db
 from app.main import app
 from app.models.client import Client
+from app.utils.crypto_signer import sign_payload
 
 
 async def _override_admin():
@@ -124,7 +125,7 @@ async def test_compatibility_api_flow(session):
             json={"client_id": str(client.id), "receipt_type": "verification_receipt"},
         )
         assert receipt.status_code == 200
-        assert receipt.json()["receipt"]["signature_placeholder"].startswith("placeholder-signature:")
+        assert receipt.json()["receipt"]["signature"].startswith("placeholder-signature:")
 
         cross_tenant = await ac.post(
             f"/admin/operations/compatibility/contracts/{contract_id}/verify",

@@ -36,7 +36,7 @@ class FederationTrustNegotiationService:
             "valid": accepted and negotiation.offline_verification_required and negotiation.replay_verification_required,
             "accepted": accepted,
             "placeholder_trust_only": True,
-            "signature_placeholder_is_real_trust": False,
+            "signature_is_real_trust": False,
         }
 
     def evaluate_trust_requirements(self, source: Any, target: Any) -> dict[str, Any]:
@@ -69,6 +69,6 @@ class FederationTrustNegotiationService:
                 "isolated cannot synchronize automatically",
                 "restricted requires manual review for conflicts",
                 "verified requires replay-verifiable bundles",
-                "signature_placeholder does not count as real trust",
+                "signature does not count as real trust",
             ],
         }

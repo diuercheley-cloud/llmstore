@@ -7,7 +7,7 @@ def validate_dependency_graph():
     
     # Rules: (Source Folder, Forbidden Patterns)
     rules = [
-        ("app/services", [r"from app\.api", r"import app\.api"]),
+        ("app/services", [r"from app\.api(?!\.deps)", r"import app\.api(?!\.deps)"]),
         ("app/models", [r"from app\.services", r"import app\.services", r"from app\.api", r"import app\.api"]),
         ("app/db", [r"from app\.services", r"import app\.services", r"from app\.api", r"import app\.api", r"from app\.models", r"import app\.models"])
     ]

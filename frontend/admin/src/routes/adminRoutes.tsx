@@ -28,79 +28,80 @@ import {
   GitBranch,
   Rocket,
   Inbox,
+  ShieldAlert,
 } from 'lucide-react'
 
 // Lazy loaded page components
-const Hub = lazy(() => import('./pages/Hub'))
-const Clients = lazy(() => import('./pages/Clients'))
-const Models = lazy(() => import('./pages/Models'))
-const Backends = lazy(() => import('./pages/Backends'))
-const Plugins = lazy(() => import('./pages/Plugins'))
-const ManagedControlPlane = lazy(() => import('./pages/ManagedControlPlane'))
+const Hub = lazy(() => import('../pages/Hub'))
+const Clients = lazy(() => import('../pages/Clients'))
+const Models = lazy(() => import('../pages/Models'))
+const Backends = lazy(() => import('../pages/Backends'))
+const Plugins = lazy(() => import('../pages/Plugins'))
+const ManagedControlPlane = lazy(() => import('../pages/ManagedControlPlane'))
 
 // Operations
-const OperationsOverview = lazy(() => import('./pages/operations/OperationsOverview'))
-const RuntimeNodes = lazy(() => import('./pages/operations/RuntimeNodes'))
-const ModelRuntime = lazy(() => import('./pages/operations/ModelRuntime'))
-const QueueQoS = lazy(() => import('./pages/operations/QueueQoS'))
-const Readiness = lazy(() => import('./pages/operations/Readiness'))
-const SecurityPosture = lazy(() => import('./pages/operations/SecurityPosture'))
-const ReleaseStatus = lazy(() => import('./pages/operations/ReleaseStatus'))
-const IncidentTimeline = lazy(() => import('./pages/operations/IncidentTimeline'))
+const OperationsOverview = lazy(() => import('../pages/operations/OperationsOverview'))
+const RuntimeNodes = lazy(() => import('../pages/operations/RuntimeNodes'))
+const ModelRuntime = lazy(() => import('../pages/operations/ModelRuntime'))
+const QueueQoS = lazy(() => import('../pages/operations/QueueQoS'))
+const Readiness = lazy(() => import('../pages/operations/Readiness'))
+const SecurityPosture = lazy(() => import('../pages/operations/SecurityPosture'))
+const ReleaseStatus = lazy(() => import('../pages/operations/ReleaseStatus'))
+const IncidentTimeline = lazy(() => import('../pages/operations/IncidentTimeline'))
 
 // Performance
-const PerformanceDashboard = lazy(() => import('./pages/performance/PerformanceDashboard'))
-const BenchmarkHistory = lazy(() => import('./pages/performance/BenchmarkHistory'))
-const TuningProfiles = lazy(() => import('./pages/performance/TuningProfiles'))
+const PerformanceDashboard = lazy(() => import('../pages/performance/PerformanceDashboard'))
+const BenchmarkHistory = lazy(() => import('../pages/performance/BenchmarkHistory'))
+const TuningProfiles = lazy(() => import('../pages/performance/TuningProfiles'))
 
 // Enterprise
-const EnterpriseOnboardingDashboard = lazy(() => import('./pages/enterprise/EnterpriseOnboardingDashboard'))
-const OnboardingChecklist = lazy(() => import('./pages/enterprise/OnboardingChecklist'))
+const EnterpriseOnboardingDashboard = lazy(() => import('../pages/enterprise/EnterpriseOnboardingDashboard'))
+const OnboardingChecklist = lazy(() => import('../pages/enterprise/OnboardingChecklist'))
 
 // Observability
-const ObservabilityDashboard = lazy(() => import('./pages/observability/ObservabilityDashboard'))
-const RealtimeDashboard = lazy(() => import('./pages/observability/RealtimeDashboard'))
-const AgentObservability = lazy(() => import('./pages/observability/AgentObservability'))
+const ObservabilityDashboard = lazy(() => import('../pages/observability/ObservabilityDashboard'))
+const RealtimeDashboard = lazy(() => import('../pages/observability/RealtimeDashboard'))
+const AgentObservability = lazy(() => import('../pages/observability/AgentObservability'))
 
 // Multi-cluster / Chaos / Compliance
-const MultiClusterOverview = lazy(() => import('./pages/multicluster/MultiClusterOverview'))
-const ChaosDashboard = lazy(() => import('./pages/chaos/ChaosDashboard'))
-const ComplianceOverview = lazy(() => import('./pages/compliance/ComplianceOverview'))
-const ControlMap = lazy(() => import('./pages/compliance/ControlMap'))
-const EvidenceCenter = lazy(() => import('./pages/compliance/EvidenceCenter'))
-const RiskRegister = lazy(() => import('./pages/compliance/RiskRegister'))
-const PolicyCenter = lazy(() => import('./pages/compliance/PolicyCenter'))
+const MultiClusterOverview = lazy(() => import('../pages/multicluster/MultiClusterOverview'))
+const ChaosDashboard = lazy(() => import('../pages/chaos/ChaosDashboard'))
+const ComplianceOverview = lazy(() => import('../pages/compliance/ComplianceOverview'))
+const ControlMap = lazy(() => import('../pages/compliance/ControlMap'))
+const EvidenceCenter = lazy(() => import('../pages/compliance/EvidenceCenter'))
+const RiskRegister = lazy(() => import('../pages/compliance/RiskRegister'))
+const PolicyCenter = lazy(() => import('../pages/compliance/PolicyCenter'))
 
 // Agent Control Plane
-const AgentsOverview = lazy(() => import('./pages/agents/AgentsOverview'))
-const AgentRegistry = lazy(() => import('./pages/agents/AgentRegistry'))
-const AgentRuns = lazy(() => import('./pages/agents/AgentRuns'))
-const AgentRunTimeline = lazy(() => import('./pages/agents/AgentRunTimeline'))
-const AgentTools = lazy(() => import('./pages/agents/AgentTools'))
-const AgentMemory = lazy(() => import('./pages/agents/AgentMemory'))
-const AgentApprovals = lazy(() => import('./pages/agents/AgentApprovals'))
-const AgentEvals = lazy(() => import('./pages/agents/AgentEvals'))
-const AgentPolicies = lazy(() => import('./pages/agents/AgentPolicies'))
-const AgentMarketplace = lazy(() => import('./pages/agents/AgentMarketplace'))
-const AgentWorkspaces = lazy(() => import('./pages/agents/AgentWorkspaces'))
-const AgentArtifactBrowser = lazy(() => import('./pages/agents/AgentArtifactBrowser'))
-const AgentArtifactDetail = lazy(() => import('./pages/agents/AgentArtifactDetail'))
+const AgentsOverview = lazy(() => import('../pages/agents/AgentsOverview'))
+const AgentRegistry = lazy(() => import('../pages/agents/AgentRegistry'))
+const AgentRuns = lazy(() => import('../pages/agents/AgentRuns'))
+const AgentRunTimeline = lazy(() => import('../pages/agents/AgentRunTimeline'))
+const AgentTools = lazy(() => import('../pages/agents/AgentTools'))
+const AgentMemory = lazy(() => import('../pages/agents/AgentMemory'))
+const AgentApprovals = lazy(() => import('../pages/agents/AgentApprovals'))
+const AgentEvals = lazy(() => import('../pages/agents/AgentEvals'))
+const AgentPolicies = lazy(() => import('../pages/agents/AgentPolicies'))
+const AgentMarketplace = lazy(() => import('../pages/agents/AgentMarketplace'))
+const AgentWorkspaces = lazy(() => import('../pages/agents/AgentWorkspaces'))
+const AgentArtifactBrowser = lazy(() => import('../pages/agents/AgentArtifactBrowser'))
+const AgentArtifactDetail = lazy(() => import('../pages/agents/AgentArtifactDetail'))
 
 // Agent Platform (orphan pages, now connected)
-const AgentStudio = lazy(() => import('./pages/agents/studio/AgentStudio'))
-const AgentAnalyticsDashboard = lazy(() => import('./pages/agents/analytics/AgentAnalyticsDashboard'))
-const ApprovalPortal = lazy(() => import('./pages/agents/approvals/ApprovalPortal'))
-const AgentPromotion = lazy(() => import('./pages/agents/AgentPromotion'))
-const AgentLineage = lazy(() => import('./pages/agents/AgentLineage'))
+const AgentStudio = lazy(() => import('../pages/agents/studio/AgentStudio'))
+const AgentAnalyticsDashboard = lazy(() => import('../pages/agents/analytics/AgentAnalyticsDashboard'))
+const ApprovalPortal = lazy(() => import('../pages/agents/approvals/ApprovalPortal'))
+const AgentPromotion = lazy(() => import('../pages/agents/AgentPromotion'))
+const AgentLineage = lazy(() => import('../pages/agents/AgentLineage'))
 
 // Collaboration / Dev tools
-const CollaborativeChat = lazy(() => import('./pages/chat/CollaborativeChat'))
-const WebIDE = lazy(() => import('./pages/ide/WebIDE'))
-const DeveloperPortal = lazy(() => import('./pages/developers/DeveloperPortal'))
+const CollaborativeChat = lazy(() => import('../pages/chat/CollaborativeChat'))
+const WebIDE = lazy(() => import('../pages/ide/WebIDE'))
+const DeveloperPortal = lazy(() => import('../pages/developers/DeveloperPortal'))
 
 export interface RouteConfig {
   path: string
-  component: React.LazyExoticComponent<React.FC<Record<string, unknown>>>
+  component: React.LazyExoticComponent<React.ComponentType<any>>
   label: string
   icon: LucideIcon
   group: string

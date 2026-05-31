@@ -16,5 +16,5 @@ def test_phase80_provenance_integration():
     )
     integration = ReproducibleBuildProvenanceIntegration()
     assert integration.integrate_with_phase80_provenance(manifest)["phase"] == "phase80"
-    assert integration.integrate_with_sbom_placeholder(manifest)["placeholder_only"] is True
+    assert integration.integrate_with_sbom_placeholder(manifest)["signature_only"] is True
     assert integration.validate_supply_chain_alignment(manifest)["aligned"] is True

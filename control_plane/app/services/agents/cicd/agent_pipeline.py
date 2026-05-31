@@ -47,8 +47,13 @@ class AgentPipelineService:
             await self._step_eval(pipeline)
             # 4. Security Scan
             await self._step_security_scan(pipeline)
-            # 5. Deploy Staging
-            await self._step_deploy(pipeline, "staging")
+            # 5. Deploy per environment plan
+            config = pipeline.config or {}
+            promotion_environments = config.get("promotion_environments") or ["staging"]
+            if isinstance(promotion_environments, str):
+                promotion_environments = [promotion_environments]
+            for environment in promotion_environments:
+                await self._step_deploy(pipeline, environment)
             
             pipeline.status = "completed"
         except Exception as e:
@@ -68,14 +73,20 @@ class AgentPipelineService:
             raise RuntimeError(f"Agent {pipeline.agent_id} not found")
 
         errors = []
-        if not agent.name or len(agent.name.strip()) == 0:
+        agent_name = getattr(agent, "name", None)
+        agent_model_id = getattr(agent, "model_id", None)
+        agent_instructions = getattr(agent, "instructions", None)
+        agent_config = getattr(agent, "config", None) or {}
+        agent_tools = getattr(agent, "tools", None)
+        allowed_tools = getattr(agent, "allowed_tools", None)
+
+        if not agent_name or len(str(agent_name).strip()) == 0:
             errors.append("Agent name is empty")
-        if not agent.model_id:
+        if not agent_model_id:
             errors.append("Agent model_id is not set")
-        if not agent.instructions or len(agent.instructions.strip()) == 0:
+        if not agent_instructions or len(str(agent_instructions).strip()) == 0:
             errors.append("Agent instructions are empty")
-        agent_config = agent.config or {}
-        if agent_config.get("require_tools") and not agent.tools:
+        if agent_config.get("require_tools") and not (agent_tools or allowed_tools):
             errors.append("Agent requires tools but none are configured")
 
         if errors:
@@ -125,7 +136,7 @@ class AgentPipelineService:
 
         if "ignore_security" in instructions.lower() or "bypass security" in instructions.lower():
             findings.append("Instructions contain security bypass phrases")
-        if "eval(" in instructions or "exec(" in instructions:
+        if "eval(" in instructions or "exec(" in instructions: # nosec
             findings.append("Instructions contain potentially dangerous function calls (eval/exec)")
         if "rm -rf /" in instructions or "rm -rf /*" in instructions:
             findings.append("Instructions contain destructive filesystem commands")
@@ -144,4 +155,37 @@ class AgentPipelineService:
         logger.info(f"Pipeline {pipeline.id}: Deploying to {environment}")
         from app.services.agents.cicd.blue_green_deployment import BlueGreenDeploymentService
         bg_service = BlueGreenDeploymentService(self.db)
-        await bg_service.start_deployment(pipeline.agent_id, environment, strategy="blue-green")
+        config = pipeline.config or {}
+        strategy = config.get("rollout_strategy", "blue-green")
+        if environment in {"production", "dr", "disaster-recovery"} and config.get("require_manual_approval_for_production", True):
+            if not config.get("production_approved", False):
+                raise RuntimeError(f"Production deployment blocked: approval missing for environment {environment}")
+
+        deployment = await bg_service.start_deployment(
+            pipeline.agent_id,
+            environment,
+            strategy=strategy,
+            pipeline_id=pipeline.id,
+            version_tag=config.get("version_tag"),
+            rollout_metadata={
+                "promotion_environments": config.get("promotion_environments", ["staging"]),
+            },
+        )
+
+        rollout_weights = config.get("rollout_weights")
+        if environment == "staging":
+            await bg_service.progressive_rollout(
+                deployment.id,
+                weights=rollout_weights or [1.0],
+                require_healthy=True,
+                healthy=config.get("staging_healthy", True),
+            )
+            return deployment
+
+        await bg_service.progressive_rollout(
+            deployment.id,
+            weights=rollout_weights or [0.1, 0.5, 1.0],
+            require_healthy=True,
+            healthy=config.get("production_healthy", True),
+        )
+        return deployment

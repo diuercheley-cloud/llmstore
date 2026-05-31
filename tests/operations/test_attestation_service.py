@@ -3,6 +3,7 @@ import uuid
 import pytest
 
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
+from app.utils.crypto_signer import sign_payload
 
 
 def test_issue_verify_revoke_and_chain():
@@ -15,7 +16,7 @@ def test_issue_verify_revoke_and_chain():
             "subject_ref": "wf-1",
             "attestation_scope": "operations",
             "payload": {"step": "prepare", "secret_token": "hidden"},
-            "signature_placeholder": "placeholder-signature:workflow",
+            "signature": sign_payload("workflow"),
         },
         "workflow",
     )
@@ -26,7 +27,7 @@ def test_issue_verify_revoke_and_chain():
             "subject_ref": "wf-1",
             "attestation_scope": "operations",
             "payload": {"step": "execute"},
-            "signature_placeholder": "placeholder-signature:workflow",
+            "signature": sign_payload("workflow"),
             "previous_attestation_hash": first.attestation_hash,
             "attestation_chain_position": "2",
         },
@@ -52,7 +53,7 @@ def test_revoke_requires_reason():
             "subject_ref": "exec-1",
             "attestation_scope": "operations",
             "payload": {"x": 1},
-            "signature_placeholder": "placeholder-signature:execution",
+            "signature": sign_payload("execution"),
         },
         "execution",
     )

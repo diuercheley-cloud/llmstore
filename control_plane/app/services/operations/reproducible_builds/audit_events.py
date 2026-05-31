@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.services.operations.reproducible_builds.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 
 REPRODUCIBLE_BUILD_AUDIT_EVENTS = {
@@ -35,5 +36,5 @@ def build_reproducible_build_audit_event(event_type: str, client_id: str, payloa
         "payload": sanitized,
         "payload_hash": sha256_hex({"event_type": event_type, "payload": sanitized}),
         "offline_compatible": True,
-        "signature_placeholder": f"placeholder-signature:audit:{event_type}",
+        "signature": sign_payload(f"audit:{event_type}"),
     }

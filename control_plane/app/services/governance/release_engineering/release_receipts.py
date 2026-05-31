@@ -23,7 +23,7 @@ class ReleaseReceiptService:
             "receipt_type": receipt_type,
             "payload_hash": payload_hash,
             "immutable_hash": hashlib.sha256((payload_hash + receipt_type).encode()).hexdigest(),
-            "signature_placeholder": "[OFFLINE_GOVERNANCE_SIGNATURE_PENDING]",
+            "signature": "[OFFLINE_GOVERNANCE_SIGNATURE_PENDING]",
             "generated_at": datetime.now(UTC).isoformat()
         }
         

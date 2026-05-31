@@ -28,6 +28,7 @@ from app.services.operations.attestation_framework.receipts import (
 from app.services.operations.attestation_framework.replay_verifier import AttestationReplayVerifier
 from app.services.operations.attestation_framework.trust_policy_engine import AttestationTrustPolicyEngine
 from app.services.operations.attestation_framework.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 router = APIRouter()
 
@@ -44,7 +45,7 @@ class AttestationCreateRequest(BaseModel):
     subject_ref: str
     attestation_scope: str = "operations"
     payload: dict[str, Any] = Field(default_factory=dict)
-    signature_placeholder: str = "placeholder-signature:attestation"
+    signature: str = sign_payload("attestation")
 
 
 class AttestationActionRequest(BaseModel):
@@ -83,7 +84,7 @@ class AttestationResponse(BaseModel):
     payload_hash: str
     attestation_hash: str
     previous_attestation_hash: Optional[str]
-    signature_placeholder: str
+    signature: str
     attestation_chain_position: str
     replay_verifiable: bool
     offline_verifiable: bool
@@ -118,7 +119,7 @@ def _serialize_attestation(attestation: SovereignExecutionAttestation) -> dict[s
         "payload_hash": attestation.payload_hash,
         "attestation_hash": attestation.attestation_hash,
         "previous_attestation_hash": attestation.previous_attestation_hash,
-        "signature_placeholder": attestation.signature_placeholder,
+        "signature": attestation.signature,
         "attestation_chain_position": attestation.attestation_chain_position,
         "replay_verifiable": attestation.replay_verifiable,
         "offline_verifiable": attestation.offline_verifiable,
@@ -201,7 +202,7 @@ async def create_attestation(
             "subject_ref": request.subject_ref,
             "attestation_scope": request.attestation_scope,
             "payload": request.payload,
-            "signature_placeholder": request.signature_placeholder,
+            "signature": request.signature,
             "previous_attestation_hash": previous.attestation_hash if previous else None,
             "attestation_chain_position": str((int(previous.attestation_chain_position) + 1) if previous else 1),
             "replay_verifiable": True,
@@ -218,7 +219,7 @@ async def create_attestation(
         receipt_type=receipt_payload["receipt_type"],
         payload_hash=receipt_payload["payload_hash"],
         immutable_hash=receipt_payload["immutable_hash"],
-        signature_placeholder=receipt_payload["signature_placeholder"],
+        signature=receipt_payload["signature"],
     )
     db.add(receipt)
     await db.commit()
@@ -487,7 +488,7 @@ async def create_attestation_receipt(
         receipt_type=receipt_payload["receipt_type"],
         payload_hash=receipt_payload["payload_hash"],
         immutable_hash=receipt_payload["immutable_hash"],
-        signature_placeholder=receipt_payload["signature_placeholder"],
+        signature=receipt_payload["signature"],
     )
     db.add(receipt)
     await db.commit()

@@ -35,5 +35,5 @@ class ReleaseReceipt(Base):
     receipt_type = Column(String(50), nullable=False) # internal | audit | compliance
     payload_hash = Column(String(64), nullable=False)
     immutable_hash = Column(String(64), nullable=False)
-    signature_placeholder = Column(Text, nullable=True)
+    signature = Column(Text, nullable=True)
     generated_at = Column(DateTime, default=datetime.utcnow)

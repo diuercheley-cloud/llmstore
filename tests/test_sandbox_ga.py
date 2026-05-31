@@ -4,6 +4,7 @@ from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEng
 from app.services.agents.code_interpreter.sandbox_attestation import AttestationService
 from app.services.agents.code_interpreter.providers.gvisor_sandbox import GVisorSandboxProvider
 from app.services.agents.code_interpreter.providers.firecracker_sandbox import FirecrackerSandboxProvider
+from app.utils.crypto_signer import sign_payload
 
 @pytest.mark.asyncio
 async def test_gvisor_indisponivel_nao_retorna_sucesso_simulado():

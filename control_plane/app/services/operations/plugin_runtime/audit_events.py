@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.services.operations.plugin_runtime.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 PLUGIN_RUNTIME_AUDIT_EVENTS = {
     "plugin_abi_contract_created",
@@ -37,5 +38,5 @@ def build_plugin_runtime_audit_event(event_type: str, client_id: str, payload: d
         "payload": sanitized,
         "payload_hash": sha256_hex(sanitized),
         "offline_compatible": True,
-        "signature_placeholder": f"placeholder-signature:audit:{event_type}",
+        "signature": sign_payload(f"audit:{event_type}"),
     }

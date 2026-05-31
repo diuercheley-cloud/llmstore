@@ -41,6 +41,7 @@ import time
 from typing import Any
 
 from app.core.config import get_settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .mcp_audit import MCPAuditLog
 from .mcp_prompt_adapter import MCPPromptAdapter
@@ -75,7 +76,8 @@ _MOCK_PROMPTS: list[dict[str, Any]] = [
 
 
 class MCPClient:
-    def __init__(self):
+    def __init__(self, db: AsyncSession | None = None):
+        self.db = db
         self.registry = MCPRegistry()
         self.security = MCPSecurity()
         self.tool_adapter = MCPToolAdapter()
@@ -100,11 +102,11 @@ class MCPClient:
         the exception propagates so callers know why.
         """
         self.security.require_client_enabled()
-        server = self._get_server(server_id, tenant_id)
+        server = await self._get_server(server_id, tenant_id)
 
         # ---- Mock mode (test/staging only) ----
         if self.security.is_mock_mode():
-            return self._mock_discover(server)
+            return await self._mock_discover(server)
 
         # ---- Real discovery ----
         self.security.require_real_discovery()
@@ -178,10 +180,20 @@ class MCPClient:
         resources = [self.resource_adapter.adapt(r) for r in raw_resources]
         prompts = [self.prompt_adapter.adapt(p) for p in raw_prompts]
 
-        server.discovered_tools = tools
-        server.discovered_resources = resources
-        server.discovered_prompts = prompts
-        server.server_info = server_info
+        if self.db is not None:
+            server = await self.registry.update_discovery_persistent(
+                self.db,
+                server.id,
+                discovered_tools=tools,
+                discovered_resources=resources,
+                discovered_prompts=prompts,
+                server_info=server_info,
+            )
+        else:
+            server.discovered_tools = tools
+            server.discovered_resources = resources
+            server.discovered_prompts = prompts
+            server.server_info = server_info
 
         elapsed_ms = (time.monotonic() - started) * 1000
         MCPAuditLog.record(
@@ -199,15 +211,25 @@ class MCPClient:
         )
         return {"tools": tools, "resources": resources, "prompts": prompts}
 
-    def _mock_discover(self, server: MCPServerRecord) -> dict[str, Any]:
+    async def _mock_discover(self, server: MCPServerRecord) -> dict[str, Any]:
         """Return static mock catalogue. AGENT_MCP_MOCK_MODE=true required."""
         tools = [self.tool_adapter.adapt(t) for t in _MOCK_TOOLS]
         resources = [self.resource_adapter.adapt(r) for r in _MOCK_RESOURCES]
         prompts = [self.prompt_adapter.adapt(p) for p in _MOCK_PROMPTS]
 
-        server.discovered_tools = tools
-        server.discovered_resources = resources
-        server.discovered_prompts = prompts
+        if self.db is not None:
+            await self.registry.update_discovery_persistent(
+                self.db,
+                server.id,
+                discovered_tools=tools,
+                discovered_resources=resources,
+                discovered_prompts=prompts,
+                server_info={"mode": "mock"},
+            )
+        else:
+            server.discovered_tools = tools
+            server.discovered_resources = resources
+            server.discovered_prompts = prompts
 
         MCPAuditLog.record(
             "mcp_discover",
@@ -225,12 +247,33 @@ class MCPClient:
     # Tool approval
     # ------------------------------------------------------------------
 
-    def approve_tool(self, server_id: str, tool_name: str, tenant_id: str | None = None) -> dict[str, Any]:
+    def approve_tool(self, server_id: str, tool_name: str, tenant_id: str | None = None):
+        if self.db is None:
+            safe_name = self.security.sanitize_tool({"name": tool_name, "description": ""})["name"]
+            server = self.registry.get(server_id)
+            if not server:
+                raise KeyError(f"MCP server '{server_id}' not found")
+            if tenant_id and server.tenant_id != tenant_id:
+                raise PermissionError(f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'")
+            server.approved_tools.add(safe_name)
+            MCPAuditLog.record(
+                "mcp_approve_tool",
+                {"tool_name": safe_name},
+                tenant_id=server.tenant_id,
+                server_id=server_id,
+            )
+            return {"server_id": server_id, "tool_name": safe_name, "approved": True}
+        return self._approve_tool_async(server_id, tool_name, tenant_id)
+
+    async def _approve_tool_async(self, server_id: str, tool_name: str, tenant_id: str | None = None) -> dict[str, Any]:
         """Add tool_name to the server's approved set."""
-        server = self._get_server(server_id, tenant_id)
+        server = await self._get_server(server_id, tenant_id)
         # Sanitize before adding to approved list
         safe_name = self.security.sanitize_tool({"name": tool_name, "description": ""})["name"]
-        server.approved_tools.add(safe_name)
+        if self.db is not None:
+            server = await self.registry.approve_tool_persistent(self.db, server_id, safe_name)
+        else:
+            server.approved_tools.add(safe_name)
         MCPAuditLog.record(
             "mcp_approve_tool",
             {"tool_name": safe_name},
@@ -265,7 +308,7 @@ class MCPClient:
           - mcp_call_error    (on failure, exception re-raised)
         """
         self.security.require_client_enabled()
-        server = self._get_server(server_id, tenant_id)
+        server = await self._get_server(server_id, tenant_id)
         self.security.require_tool_approved(tool_name, server.approved_tools)
 
         MCPAuditLog.record(
@@ -327,8 +370,11 @@ class MCPClient:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get_server(self, server_id: str, tenant_id: str | None = None) -> MCPServerRecord:
-        server = self.registry.get(server_id)
+    async def _get_server(self, server_id: str, tenant_id: str | None = None) -> MCPServerRecord:
+        if self.db is not None:
+            server = await self.registry.get_persistent(self.db, server_id, tenant_id=tenant_id)
+        else:
+            server = self.registry.get(server_id)
         if not server:
             raise KeyError(f"MCP server '{server_id}' not found")
         if tenant_id and server.tenant_id != tenant_id:

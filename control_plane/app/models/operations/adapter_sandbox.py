@@ -94,5 +94,5 @@ class AdapterSandboxReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(100), nullable=False) # manifest_registration, sandbox_run, policy_violation
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=True)
+    signature: Mapped[str] = mapped_column(String(255), nullable=True)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)

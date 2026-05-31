@@ -17,7 +17,7 @@ async def test_workflow_service_lifecycle(session: AsyncSession):
         manifest_hash="mhash",
         registry_status="approved",
         registry_hash="rhash",
-        signature_placeholder="sig",
+        signature="sig",
         immutable_hash="entry_imm"
     )
     session.add(entry)

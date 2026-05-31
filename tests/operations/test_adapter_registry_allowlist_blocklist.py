@@ -14,7 +14,7 @@ class TestAdapterRegistryAllowlistBlocklist:
             adapter_version="1.0.0",
             manifest_hash="hash_abc",
             registry_hash="rhash",
-            signature_placeholder="sig",
+            signature="sig",
             immutable_hash="imm_h"
         )
         

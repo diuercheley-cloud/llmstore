@@ -51,6 +51,12 @@ class AgentUsageMeter:
         tier_name: str = "free",
         invocation_mode: str = "async",
     ) -> AgentServiceUsage:
+        existing_stmt = select(AgentServiceUsage).where(AgentServiceUsage.run_id == run_id)
+        existing_res = await self.db.execute(existing_stmt)
+        existing = existing_res.scalar_one_or_none()
+        if existing is not None:
+            return existing
+
         tier = await self.get_or_create_tier(tier_name)
 
         usage = AgentServiceUsage(

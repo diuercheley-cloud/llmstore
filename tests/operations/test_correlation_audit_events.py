@@ -26,7 +26,7 @@ class TestCorrelationAuditEvents:
         assert entry.payload_json["correlation_id"] == str(correlation_id)
         assert entry.payload_json["client_id"] == str(client_id)
         assert entry.payload_json["advisory_only"] is True
-        assert "signature_placeholder" in entry.payload_json
+        assert "signature" in entry.payload_json
 
     async def test_log_trust_link_created(self, session: AsyncSession):
         client_id = uuid.uuid4()

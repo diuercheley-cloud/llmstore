@@ -58,17 +58,16 @@ class SpeechToTextService:
         if not audio_bytes:
             raise HTTPException(status_code=400, detail="Empty audio bytes provided.")
 
-        # 3. Process transcription & calculate mock parameters
+        # 3. Process transcription using real provider
+        from app.services.multimodal.providers.local_whisper import LocalWhisperProvider
+        provider = LocalWhisperProvider()
+        result = provider.transcribe(audio_bytes)
+        
         # Real duration calculation would check audio headers. Here we estimate 1 second per 16KB of audio
         duration_seconds = max(1, int(len(audio_bytes) / 16000))
-        detected_language = "pt-BR"
-        confidence = 0.98
-
-        # Mock transcription text
-        transcription_text = (
-            "Transcrição mock: Este é um exemplo de áudio processado com "
-            "sucesso pelo llm-inference-stack."
-        )
+        detected_language = result.get("language", "en")
+        confidence = result.get("confidence", 0.95)
+        transcription_text = result.get("text", "")
 
         # 4. Save raw audio only if save_audio_by_policy is explicitly enabled
         asset_id = None

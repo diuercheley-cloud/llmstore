@@ -213,7 +213,7 @@ class PluginRuntimeReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 

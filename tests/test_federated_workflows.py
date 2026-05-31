@@ -70,7 +70,7 @@ async def test_federated_execution_registers_partition_and_forwarding(session):
     assert row.stage_ownership_json
     assert set(row.stage_ownership_json) == {"ingest", "score"}
     assert forwarded["target_cluster_id"] == "cluster-1"
-    assert forwarded["bundle_signature"].startswith("ed25519_placeholder:")
+    assert forwarded["bundle_signature"].startswith("ed25519:")
 
 
 @pytest.mark.asyncio

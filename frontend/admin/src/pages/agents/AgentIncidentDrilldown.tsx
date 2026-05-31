@@ -17,9 +17,9 @@ export const AgentIncidentDrilldown: React.FC = () => {
             </Paper>
             <Paper sx={{ p: 2 }}>
                 <Typography variant="h6">Related Traces</Typography>
-                <Typography variant="body2">Trace 1: handoff.started -> BillingAgent</Typography>
-                <Typography variant="body2">Trace 2: handoff.started -> SupportAgent</Typography>
-                <Typography variant="body2">Trace 3: handoff.started -> BillingAgent</Typography>
+                <Typography variant="body2">Trace 1: handoff.started -&gt; BillingAgent</Typography>
+                <Typography variant="body2">Trace 2: handoff.started -&gt; SupportAgent</Typography>
+                <Typography variant="body2">Trace 3: handoff.started -&gt; BillingAgent</Typography>
             </Paper>
         </Box>
     );

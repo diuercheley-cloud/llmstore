@@ -1,0 +1,20 @@
+{{- if .Values.observability.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-grafana-provisioning
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+data:
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: "agent-dashboards"
+        orgId: 1
+        folder: "Agents"
+        type: file
+        disableDeletion: true
+        editable: true
+        options:
+          path: /etc/grafana/dashboards
+{{- end }}

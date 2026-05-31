@@ -11,7 +11,7 @@ class TestRemediationReceipts:
         receipt = build_remediation_plan_receipt(plan, steps)
         assert receipt["receipt_type"] == "remediation_plan_proposal"
         assert "immutable_hash" in receipt
-        assert receipt["signature_placeholder"] == "SIG_REMEDIATION_PLAN_PROPOSAL_V1"
+        assert receipt["signature"] == "SIG_REMEDIATION_PLAN_PROPOSAL_V1"
 
     def test_build_step_receipt(self):
         step = {"id": "s1", "client_id": "c1", "action_type": "test", "dry_run": True}

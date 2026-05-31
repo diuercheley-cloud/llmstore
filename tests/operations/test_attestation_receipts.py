@@ -3,6 +3,7 @@ import uuid
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
 from app.services.operations.attestation_framework.federation_bundle import AttestationFederationBundleService
 from app.services.operations.attestation_framework.receipts import (
+from app.utils.crypto_signer import sign_payload
     build_attestation_receipt,
     build_bundle_receipt,
     build_chain_receipt,
@@ -20,7 +21,7 @@ def test_receipts_include_required_fields():
             "subject_ref": "wf-1",
             "attestation_scope": "operations",
             "payload": {"x": 1},
-            "signature_placeholder": "placeholder-signature:workflow",
+            "signature": sign_payload("workflow"),
         },
         "workflow",
     )
@@ -40,4 +41,4 @@ def test_receipts_include_required_fields():
         assert receipt["immutable_hash"]
         assert receipt["payload_hash"]
         assert receipt["deterministic_version"] == "v1"
-        assert receipt["signature_placeholder"].startswith("placeholder-signature:")
+        assert receipt["signature"].startswith("placeholder-signature:")

@@ -30,7 +30,7 @@ class AttestationFederationBundleService:
                     "attestation_hash": item.attestation_hash,
                     "attestation_type": item.attestation_type,
                     "subject_ref": item.subject_ref,
-                    "signature_placeholder": item.signature_placeholder,
+                    "signature": item.signature,
                     "replay_verifiable": item.replay_verifiable,
                     "offline_verifiable": item.offline_verifiable,
                 }

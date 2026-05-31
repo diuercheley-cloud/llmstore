@@ -15,7 +15,7 @@ router = APIRouter(tags=["web-search-admin"])
 class WebSearchTestRequest(BaseModel):
     query: str
     limit: Optional[int] = 5
-    provider: Optional[str] = "mock"
+    provider: Optional[str] = "local_tavily_real"
 
 
 @router.post("/admin/agents/tools/web-search/test")

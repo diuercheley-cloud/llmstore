@@ -3,6 +3,7 @@ import uuid
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
 from app.services.operations.attestation_framework.federation_bundle import AttestationFederationBundleService
 from app.services.operations.attestation_framework.replay_verifier import AttestationReplayVerifier
+from app.utils.crypto_signer import sign_payload
 
 
 def test_federation_bundle_create_export_import_verify():
@@ -17,7 +18,7 @@ def test_federation_bundle_create_export_import_verify():
             "subject_ref": "registry-entry-1",
             "attestation_scope": "operations",
             "payload": {"registry_hash": "abc"},
-            "signature_placeholder": "placeholder-signature:registry",
+            "signature": sign_payload("registry"),
         },
         "adapter_registry",
     )

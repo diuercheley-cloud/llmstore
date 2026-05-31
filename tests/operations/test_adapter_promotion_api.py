@@ -34,7 +34,7 @@ class TestAdapterPromotionAPI:
             manifest_hash="phash",
             registry_status="approved",
             registry_hash="rhash",
-            signature_placeholder="sig",
+            signature="sig",
             immutable_hash="e_imm"
         )
         session.add(entry)

@@ -50,7 +50,6 @@ export function TablePagination<TData>({
         </div>
         <div className="flex items-center space-x-2">
           <button
-            variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex items-center justify-center border border-border rounded-lg hover:bg-secondary disabled:opacity-50 transition-all"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}

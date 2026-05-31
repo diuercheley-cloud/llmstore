@@ -28,7 +28,7 @@ def validate_confidential_mode_no_plaintext(payload: dict[str, Any] | None) -> I
     )
 
 
-def validate_signed_artifact_has_signature_metadata_placeholder(artifact: dict[str, Any] | None) -> InvariantResult:
+def validate_signed_artifact_has_signature_metadata(artifact: dict[str, Any] | None) -> InvariantResult:
     """Signed artifacts must carry metadata placeholder even before hard enforcement."""
 
     payload = _as_mapping(artifact)
@@ -37,9 +37,9 @@ def validate_signed_artifact_has_signature_metadata_placeholder(artifact: dict[s
     has_placeholder = bool(metadata.get("placeholder")) or bool(metadata.get("algorithm"))
     passed = (not signed) or has_placeholder
     return advisory_result(
-        name="signed_artifact_has_signature_metadata_placeholder",
+        name="signed_artifact_has_signature_metadata",
         passed=passed,
-        message="signed artifact must include signature metadata placeholder",
+        message="signed artifact must include signature metadata",
         details={
             "signed": signed,
             "signature_metadata_present": bool(metadata),

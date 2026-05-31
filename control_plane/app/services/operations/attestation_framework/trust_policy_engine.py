@@ -13,8 +13,8 @@ class AttestationTrustPolicyEngine:
         reasons: list[str] = []
         if attestation.attestation_type not in allowed_types:
             reasons.append("attestation_type_not_allowed")
-        if policy.require_signature_placeholder and not attestation.signature_placeholder:
-            reasons.append("signature_placeholder_missing")
+        if policy.require_signature and not attestation.signature:
+            reasons.append("signature_missing")
         if policy.require_replay_verification and not attestation.replay_verifiable:
             reasons.append("replay_verification_missing")
         if policy.require_offline_verification and not attestation.offline_verifiable:

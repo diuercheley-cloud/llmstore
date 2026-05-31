@@ -203,7 +203,7 @@ async def get_capabilities():
         {
             "feature": "/v1/embeddings",
             "status": "Partial",
-            "backend_support": "mock",
+            "backend_support": "local_vllm",
             "production_ready": False,
             "limitations": "Mock determinístico apenas",
             "validator_script": "scripts/test-embeddings.sh"
@@ -3375,7 +3375,7 @@ class MLDatasetVersionCreate(BaseModel):
 class MLTrainingJobCreate(BaseModel):
     model_name: str
     dataset_version_id: uuid.UUID
-    provider: str = "mock"
+    provider: str = "local_vllm"
     hyperparameters: dict | None = None
 
 

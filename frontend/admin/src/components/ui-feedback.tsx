@@ -108,6 +108,16 @@ export function ErrorFallback({ error, resetErrorBoundary }: { error?: Error, re
   );
 }
 
+export function LoadingCard() {
+  return (
+    <div className="card-base animate-pulse space-y-4">
+      <div className="h-5 bg-muted rounded w-1/3" />
+      <div className="h-4 bg-muted rounded w-2/3" />
+      <div className="h-4 bg-muted rounded w-1/2" />
+    </div>
+  );
+}
+
 export function NotFound() {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-4">

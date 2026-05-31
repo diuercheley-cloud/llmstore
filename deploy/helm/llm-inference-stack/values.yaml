@@ -135,3 +135,4 @@ observability:
     image: prom/prometheus:latest
   grafana:
     image: grafana/grafana:latest
+    adminPassword: "admin"

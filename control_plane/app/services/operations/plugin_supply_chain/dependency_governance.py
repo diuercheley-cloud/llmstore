@@ -32,7 +32,7 @@ class DependencyGovernanceService:
         allowed_dependency_classes_json: list[str] | None = None,
         require_reproducible_builds: bool = True,
         require_offline_verification: bool = True,
-        require_placeholder_signature: bool = True,
+        require_signature: bool = True,
     ) -> DependencyGovernancePolicy:
         denied = sorted(set(denied_dependency_classes_json or DENIED_DEPENDENCY_CLASSES))
         allowed = sorted(set(allowed_dependency_classes_json or DEFAULT_ALLOWED_DEPENDENCY_CLASSES))
@@ -43,7 +43,7 @@ class DependencyGovernanceService:
             "allowed_dependency_classes_json": allowed,
             "require_reproducible_builds": require_reproducible_builds,
             "require_offline_verification": require_offline_verification,
-            "require_placeholder_signature": require_placeholder_signature,
+            "require_signature": require_signature,
         }
         immutable_hash = sha256_hex({"kind": "plugin_dependency_governance_policy", **logical_payload})
         policy = DependencyGovernancePolicy(
@@ -54,7 +54,7 @@ class DependencyGovernanceService:
             allowed_dependency_classes_json=allowed,
             require_reproducible_builds=require_reproducible_builds,
             require_offline_verification=require_offline_verification,
-            require_placeholder_signature=require_placeholder_signature,
+            require_signature=require_signature,
             immutable_hash=immutable_hash,
         )
         policy._logical_payload = logical_payload
@@ -65,7 +65,7 @@ class DependencyGovernanceService:
         provenance_record: Any,
         dependency_summary_json: dict[str, Any],
         policy: DependencyGovernancePolicy,
-        signature_placeholder: str | None = None,
+        signature: str | None = None,
         reproducible_build: bool = True,
         offline_verifiable: bool = True,
     ) -> PluginDependencyVerification:
@@ -82,16 +82,16 @@ class DependencyGovernanceService:
         if policy.require_offline_verification and not offline_verifiable:
             status = "failed"
             notes.append("offline verification marker missing")
-        if policy.require_placeholder_signature and not signature_placeholder:
+        if policy.require_signature and not signature:
             status = "warning" if status == "passed" else status
-            notes.append("placeholder signature missing")
+            notes.append("signature missing")
         if status not in PLUGIN_DEPENDENCY_VERIFICATION_STATUSES:
             raise ValueError("unsupported verification status")
         summary = {
             "dependency_classes": classes,
             "denied_hits": denied_hits,
             "allowed_dependency_classes": policy.allowed_dependency_classes_json,
-            "placeholder_signature_present": bool(signature_placeholder),
+            "signature_present": bool(signature),
             "reproducible_build": reproducible_build,
             "offline_verifiable": offline_verifiable,
             "notes": notes,

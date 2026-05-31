@@ -21,7 +21,7 @@ def build_pre_execution_receipt(execution: Dict[str, Any]) -> Dict[str, Any]:
         "payload_hash": payload_hash,
         "deterministic_version": execution.get("deterministic_version", "v1"),
         "dry_run": execution.get("dry_run", True),
-        "signature_placeholder": "SIG_REMEDIATION_PRE_EXEC_V1",
+        "signature": "SIG_REMEDIATION_PRE_EXEC_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -42,7 +42,7 @@ def build_post_execution_receipt(execution: Dict[str, Any], results: List[Dict[s
         "payload_hash": payload_hash,
         "deterministic_version": execution.get("deterministic_version", "v1"),
         "dry_run": execution.get("dry_run", True),
-        "signature_placeholder": "SIG_REMEDIATION_POST_EXEC_V1",
+        "signature": "SIG_REMEDIATION_POST_EXEC_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -59,7 +59,7 @@ def build_kill_switch_receipt(state: Dict[str, Any]) -> Dict[str, Any]:
         "payload_hash": payload_hash,
         "deterministic_version": "v1",
         "dry_run": False,
-        "signature_placeholder": "SIG_REMEDIATION_KS_UPDATE_V1",
+        "signature": "SIG_REMEDIATION_KS_UPDATE_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -76,6 +76,6 @@ def build_rollback_plan_receipt(rollback_plan: Dict[str, Any]) -> Dict[str, Any]
         "payload_hash": payload_hash,
         "deterministic_version": "v1",
         "dry_run": True,
-        "signature_placeholder": "SIG_REMEDIATION_ROLLBACK_PLAN_V1",
+        "signature": "SIG_REMEDIATION_ROLLBACK_PLAN_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }

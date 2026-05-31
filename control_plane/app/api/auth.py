@@ -200,7 +200,7 @@ async def callback_oauth(
     session.add(user_session)
     await session.commit()
 
-    frontend_url = str(request.base_url).rstrip("/") + "/static/admin-v2/#/login"
+    frontend_url = str(request.base_url).rstrip("/") + "/admin-v2/login"
     return RedirectResponse(
         url=f"{frontend_url}?sso_token={session_token}&email={email}",
         status_code=302,

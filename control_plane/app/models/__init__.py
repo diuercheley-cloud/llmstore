@@ -105,7 +105,7 @@ from app.models.operations.plugin_supply_chain import (
     PluginDependencyVerification,
     PluginProvenanceRecord,
     PluginSBOMPlaceholder,
-    PluginSignedArtifactPlaceholder,
+    PluginSignedArtifact,
     PluginSupplyChainReceipt,
 )
 from app.models.operations.reproducible_builds import (
@@ -939,6 +939,7 @@ from app.models.agent_mcp_oauth import (
     AgentMCPTokenExchange,
     AgentMCPScopePolicy,
 )
+from app.models.agent_mcp_registry import AgentMCPServer
 
 
 
@@ -1000,4 +1001,3 @@ from app.models.prompts import (
     PromptPlaygroundRun,
 )
 from app.models.auth import OAuthState, UserSession
-

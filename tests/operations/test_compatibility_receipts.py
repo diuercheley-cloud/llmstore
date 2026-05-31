@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 from app.services.operations.compatibility_contracts.receipts import (
+from app.utils.crypto_signer import sign_payload
     build_contract_receipt,
     build_deprecation_receipt,
     build_negotiation_receipt,
@@ -19,5 +20,5 @@ def test_receipts_include_required_fields():
         build_verification_receipt(verification),
         build_deprecation_receipt(deprecation),
     ):
-        assert receipt["signature_placeholder"].startswith("placeholder-signature:")
+        assert receipt["signature"].startswith("placeholder-signature:")
         assert receipt["deterministic_version"] == "v1"

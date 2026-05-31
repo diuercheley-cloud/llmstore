@@ -192,7 +192,7 @@ def _serialize_receipt(item: ReproducibleBuildReceipt) -> dict[str, Any]:
         "receipt_type": item.receipt_type,
         "payload_hash": item.payload_hash,
         "immutable_hash": item.immutable_hash,
-        "signature_placeholder": item.signature_placeholder,
+        "signature": item.signature,
     }
 
 

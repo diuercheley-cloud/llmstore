@@ -29,7 +29,7 @@ async def test_verify_signature_valid(session, settings):
         response_hash=hashlib.sha256(b"sig-response").hexdigest(),
     )
     assert verify_receipt_signature(receipt) is True
-    assert receipt.signature_algorithm == "ed25519_placeholder"
+    assert receipt.signature_algorithm == "ed25519"
     assert receipt.detached_signature is not None
 
 

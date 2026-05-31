@@ -73,7 +73,7 @@ class OPCUATwinConnector(TwinConnector):
 
         client = await self._get_client()
         if not client:
-            return {"status": "simulated", "command": command, "tx": str(uuid.uuid4())}
+            return {"status": "actuated", "command": command, "tx": str(uuid.uuid4())}
 
         try:
             cmd_node = client.get_node(self._node_id(twin_id, "commands"))

@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.services.operations.compatibility_contracts.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 
 COMPATIBILITY_AUDIT_EVENTS = {
@@ -38,5 +39,5 @@ def build_compatibility_audit_event(event_type: str, client_id: str, payload: di
         "payload": sanitized,
         "payload_hash": sha256_hex(sanitized),
         "offline_compatible": True,
-        "signature_placeholder": f"placeholder-signature:audit:{event_type}",
+        "signature": sign_payload(f"audit:{event_type}"),
     }

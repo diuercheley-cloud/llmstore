@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui-card'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/card'
 import api from '../../lib/api'
 import { TrendingUp, Server, Database, Activity } from 'lucide-react'
 

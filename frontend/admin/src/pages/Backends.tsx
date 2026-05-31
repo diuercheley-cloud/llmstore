@@ -173,7 +173,7 @@ export default function Backends() {
           <div className="p-3 bg-primary/10 text-primary rounded-xl"><Server className="w-6 h-6" /></div>
           <div>
             <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Backends Ativos</div>
-            <div className="text-2xl font-black text-foreground">{data?.items?.filter(b => b.is_enabled).length || 0} / {data?.total || 0}</div>
+            <div className="text-2xl font-black text-foreground">{data?.items?.filter((b: Backend) => b.is_enabled).length || 0} / {data?.total || 0}</div>
           </div>
         </div>
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center gap-4">

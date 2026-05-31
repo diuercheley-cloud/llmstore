@@ -15,7 +15,7 @@ class AttestationReplayVerifier:
                 "attestation_scope": attestation.attestation_scope,
                 "payload_hash": attestation.payload_hash,
                 "previous_attestation_hash": attestation.previous_attestation_hash,
-                "signature_placeholder": attestation.signature_placeholder,
+                "signature": attestation.signature,
                 "attestation_chain_position": attestation.attestation_chain_position,
                 "replay_verifiable": attestation.replay_verifiable,
                 "offline_verifiable": attestation.offline_verifiable,

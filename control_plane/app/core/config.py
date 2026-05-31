@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     commercial_witness_mode: str = "dry_run"
     commercial_witness_min_signatures: int = 1
     commercial_witness_require_external: bool = False
-    commercial_witness_signature_algorithm: str = "ed25519_placeholder"
+    commercial_witness_signature_algorithm: str = "ed25519"
     commercial_witness_request_timeout_seconds: int = 10
     commercial_transparency_gossip_enabled: bool = False
     commercial_transparency_gossip_mode: str = "dry_run"
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     agent_feedback_learning_enabled: bool = Field(default=False, alias="AGENT_FEEDBACK_LEARNING_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_auto_apply_learnings: bool = Field(default=False, alias="AGENT_AUTO_APPLY_LEARNINGS")
+    agent_auto_apply_learnings: bool = Field(default=True, alias="AGENT_AUTO_APPLY_LEARNINGS")
     # Owner: agent-platform
     # Status: beta
     agent_uncertainty_detection_enabled: bool = Field(default=True, alias="AGENT_UNCERTAINTY_DETECTION_ENABLED")
@@ -476,7 +476,7 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: production
     agent_observability_enabled: bool = Field(default=True, alias="AGENT_OBSERVABILITY_ENABLED")
-    agent_otel_tracing_enabled: bool = Field(default=False, alias="AGENT_OTEL_TRACING_ENABLED")
+    agent_otel_tracing_enabled: bool = Field(default=True, alias="AGENT_OTEL_TRACING_ENABLED")
     otlp_export_enabled: bool = Field(default=False, alias="OTLP_EXPORT_ENABLED")
     jaeger_export_enabled: bool = Field(default=False, alias="JAEGER_EXPORT_ENABLED")
     zipkin_export_enabled: bool = Field(default=False, alias="ZIPKIN_EXPORT_ENABLED")
@@ -547,7 +547,7 @@ class Settings(BaseSettings):
     agent_code_interpreter_enabled: bool = Field(default=False, alias="AGENT_CODE_INTERPRETER_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_code_sandbox_provider: str = Field(default="mock", alias="AGENT_CODE_SANDBOX_PROVIDER")
+    agent_code_sandbox_provider: str = Field(default="gvisor", alias="AGENT_CODE_SANDBOX_PROVIDER")
     # Owner: agent-platform
     # Status: production-ready
     # Set to False to block any mock/simulated sandbox path in production.
@@ -667,7 +667,7 @@ class Settings(BaseSettings):
     agent_kg_adjacency_cache_enabled: bool = Field(default=False, alias="AGENT_KG_ADJACENCY_CACHE_ENABLED")
     # Owner: agent-platform
     # Status: experimental
-    agent_kg_postgres_graph_enabled: bool = Field(default=False, alias="AGENT_KG_POSTGRES_GRAPH_ENABLED")
+    agent_kg_postgres_graph_enabled: bool = Field(default=True, alias="AGENT_KG_POSTGRES_GRAPH_ENABLED")
     # Owner: agent-platform
     # Status: experimental
     agent_kg_pgvector_enabled: bool = Field(default=False, alias="AGENT_KG_PGVECTOR_ENABLED")
@@ -714,7 +714,7 @@ class Settings(BaseSettings):
     admin_read_token: str | None = Field(default=None, alias="ADMIN_READ_TOKEN")
     admin_write_token: str | None = Field(default=None, alias="ADMIN_WRITE_TOKEN")
     admin_super_token: str | None = Field(default=None, alias="ADMIN_SUPER_TOKEN")
-    rbac_admin_enabled: bool = Field(default=False, alias="RBAC_ADMIN_ENABLED")
+    rbac_admin_enabled: bool = Field(default=True, alias="RBAC_ADMIN_ENABLED")
     admin_tests_rate_limit_enabled: bool = Field(default=True, alias="ADMIN_TESTS_RATE_LIMIT_ENABLED")
     cors_allow_origins: str = Field(default="", alias="CORS_ALLOW_ORIGINS")
     public_exposure: bool = Field(default=False, alias="PUBLIC_EXPOSURE")
@@ -877,7 +877,7 @@ class Settings(BaseSettings):
     stripe_payment_enabled: bool = Field(default=False, alias="STRIPE_PAYMENT_ENABLED")
     stripe_secret_key: str = Field(default="", alias="STRIPE_SECRET_KEY")
     stripe_webhook_secret: str = Field(default="", alias="STRIPE_WEBHOOK_SECRET")
-    token_counting_real_enabled: bool = Field(default=False, alias="TOKEN_COUNTING_REAL_ENABLED")
+    token_counting_real_enabled: bool = Field(default=True, alias="TOKEN_COUNTING_REAL_ENABLED")
     token_counting_fallback_allowed: bool = Field(default=True, alias="TOKEN_COUNTING_FALLBACK_ALLOWED")
     demo_client_name: str = Field(default="demo-client", alias="DEMO_CLIENT_NAME")
     demo_rate_limit_per_minute: int = Field(default=5, alias="DEMO_RATE_LIMIT_PER_MINUTE")
@@ -946,7 +946,7 @@ class Settings(BaseSettings):
     
     # Embeddings Settings
     embeddings_enabled: bool = Field(default=True, alias="EMBEDDINGS_ENABLED")
-    embeddings_backend: str = Field(default="mock", alias="EMBEDDINGS_BACKEND")
+    embeddings_backend: str = Field(default="local", alias="EMBEDDINGS_BACKEND")
     default_embedding_model: str = Field(default="text-embedding-3-small", alias="DEFAULT_EMBEDDING_MODEL")
     embedding_dimensions: int = Field(default=384, alias="EMBEDDING_DIMENSIONS")
 
@@ -1244,7 +1244,7 @@ class Settings(BaseSettings):
     commercial_receipts_timestamp_mode: str = Field(default="local", alias="COMMERCIAL_RECEIPTS_TIMESTAMP_MODE")
     commercial_receipts_export_enabled: bool = Field(default=True, alias="COMMERCIAL_RECEIPTS_EXPORT_ENABLED")
     commercial_receipts_signature_required: bool = Field(default=False, alias="COMMERCIAL_RECEIPTS_SIGNATURE_REQUIRED")
-    commercial_receipt_signature_algorithm: str = Field(default="ed25519_placeholder", alias="COMMERCIAL_RECEIPT_SIGNATURE_ALGORITHM")
+    commercial_receipt_signature_algorithm: str = Field(default="ed25519", alias="COMMERCIAL_RECEIPT_SIGNATURE_ALGORITHM")
     commercial_model_integrity_auto_quarantine: bool = Field(default=False, alias="COMMERCIAL_MODEL_INTEGRITY_AUTO_QUARANTINE")
     commercial_model_integrity_boot_scan_enabled: bool = Field(default=True, alias="COMMERCIAL_MODEL_INTEGRITY_BOOT_SCAN_ENABLED")
 
@@ -1325,6 +1325,20 @@ class Settings(BaseSettings):
     oauth_github_client_id: str = Field(default="", alias="OAUTH_GITHUB_CLIENT_ID")
     oauth_github_client_secret: str = Field(default="", alias="OAUTH_GITHUB_CLIENT_SECRET")
     oauth_enabled: bool = Field(default=False, alias="OAUTH_ENABLED")
+
+    # Enterprise SSO
+    enterprise_sso_enabled: bool = Field(default=False, alias="ENTERPRISE_SSO_ENABLED")
+    enterprise_sso_tenant_id: str = Field(default="", alias="ENTERPRISE_SSO_TENANT_ID")
+    enterprise_sso_azure_client_id: str = Field(default="", alias="ENTERPRISE_SSO_AZURE_CLIENT_ID")
+    enterprise_sso_azure_client_secret: str = Field(default="", alias="ENTERPRISE_SSO_AZURE_CLIENT_SECRET")
+    enterprise_sso_okta_client_id: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_CLIENT_ID")
+    enterprise_sso_okta_client_secret: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_CLIENT_SECRET")
+    enterprise_sso_okta_domain: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_DOMAIN")
+    enterprise_sso_saml_sso_url: str = Field(default="", alias="ENTERPRISE_SSO_SAML_SSO_URL")
+    enterprise_sso_saml_entity_id: str = Field(default="", alias="ENTERPRISE_SSO_SAML_ENTITY_ID")
+    enterprise_sso_saml_certificate: str = Field(default="", alias="ENTERPRISE_SSO_SAML_CERTIFICATE")
+    frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
+
     provider_timeout_seconds: int = Field(
         default=30,
         validation_alias=AliasChoices("PROVIDER_TIMEOUT_SECONDS", "REAL_PROVIDER_TIMEOUT_SECONDS"),
@@ -1405,6 +1419,50 @@ class Settings(BaseSettings):
     commercial_rag_max_context_chunks: int = Field(default=20, alias="COMMERCIAL_RAG_MAX_CONTEXT_CHUNKS")
     commercial_rag_enable_poison_detection: bool = Field(default=True, alias="COMMERCIAL_RAG_ENABLE_POISON_DETECTION")
     commercial_rag_enable_immutable_audit: bool = Field(default=True, alias="COMMERCIAL_RAG_ENABLE_IMMUTABLE_AUDIT")
+
+    # Fine-tuning
+    mlops_dataset_storage_path: str = Field(default="", alias="MLOPS_DATASET_STORAGE_PATH")
+    fine_tuning_enabled: bool = Field(default=False, alias="FINE_TUNING_ENABLED")
+    fine_tuning_gpu_provider: bool = Field(default=False, alias="FINE_TUNING_GPU_PROVIDER_ENABLED")
+
+    # Deployment auto-scaling
+    deployment_autoscale_enabled: bool = Field(default=True, alias="DEPLOYMENT_AUTOSCALE_ENABLED")
+    deployment_autoscale_window_sec: int = Field(default=60, alias="DEPLOYMENT_AUTOSCALE_WINDOW_SEC")
+
+    # PagerDuty / OpsGenie
+    pagerduty_routing_key: str = Field(default="", alias="PAGERDUTY_ROUTING_KEY")
+    opsgenie_api_key: str = Field(default="", alias="OPSGENIE_API_KEY")
+    opsgenie_api_url: str = Field(default="https://api.opsgenie.com/v2/alerts", alias="OPSGENIE_API_URL")
+
+    # Content moderation
+    content_moderation_enabled: bool = Field(default=True, alias="CONTENT_MODERATION_ENABLED")
+    content_moderation_toxicity_threshold: float = Field(default=0.7, alias="CONTENT_MODERATION_TOXICITY_THRESHOLD")
+
+    # A2A Protocol
+    a2a_enabled: bool = Field(default=False, alias="A2A_ENABLED")
+    a2a_base_url: str = Field(default="", alias="A2A_BASE_URL")
+    a2a_api_key: str = Field(default="", alias="A2A_API_KEY")
+
+    # Secrets Manager
+    secrets_manager_provider: str = Field(default="vault", alias="SECRETS_MANAGER_PROVIDER")
+    vault_addr: str = Field(default="http://localhost:8200", alias="VAULT_ADDR")
+    vault_token: str = Field(default="", alias="VAULT_TOKEN")
+    vault_kv_mount: str = Field(default="secret", alias="VAULT_KV_MOUNT")
+    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
+
+    # Data Residency
+    cluster_region: str = Field(default="default", alias="CLUSTER_REGION")
+    data_residency_enabled: bool = Field(default=False, alias="DATA_RESIDENCY_ENABLED")
+
+    # Disaster Recovery
+    disaster_recovery_enabled: bool = Field(default=False, alias="DISASTER_RECOVERY_ENABLED")
+    disaster_recovery_backup_dir: str = Field(default="/tmp/agent-backups", alias="DISASTER_RECOVERY_BACKUP_DIR")
+    disaster_recovery_schedule_hours: int = Field(default=24, alias="DISASTER_RECOVERY_SCHEDULE_HOURS")
+
+    # Marketplace Governance
+    marketplace_governance_enabled: bool = Field(default=True, alias="MARKETPLACE_GOVERNANCE_ENABLED")
+    marketplace_require_security_scan: bool = Field(default=True, alias="MARKETPLACE_REQUIRE_SECURITY_SCAN")
+    marketplace_require_approval: bool = Field(default=True, alias="MARKETPLACE_REQUIRE_APPROVAL")
 
     @model_validator(mode="after")
     def validate_appliance_mode(self) -> "Settings":

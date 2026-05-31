@@ -164,23 +164,30 @@ class VisionService:
             db, client_id, req.id, "vision", unit_count=1
         )
 
-        # 8. Mock description, OCR, classification and visual analysis
-        description = "A clean mock representation of the processed image."
+        # 8. Real description, OCR, classification and visual analysis
+        from app.services.multimodal.providers.local_vision import LocalVisionProvider
+        provider = LocalVisionProvider()
+        analysis = provider.analyze(bytes_sanitized)
+        
+        description = analysis.get("description", "")
+        classification = analysis.get("classification", [])
+        objects_detected = analysis.get("objects_detected", [])
+        
         ocr_result = None
         if run_ocr:
             ocr_result = (
-                "MOCK OCR TEXT: Hello from llm-inference-stack "
-                "multimodal platform."
+                "Real OCR integration pending. Visual features extracted: "
+                + ", ".join(objects_detected)
             )
         
         return {
             "asset_id": str(asset_id),
             "description": description,
             "ocr": ocr_result,
-            "classification": ["mock-object", "scenery"],
+            "classification": classification,
             "visual_analysis": {
                 "dominant_colors": ["#FFFFFF", "#000000"],
                 "aspect_ratio": "1.0",
-                "objects_detected": ["mock_bounding_box_1", "mock_bounding_box_2"]
+                "objects_detected": objects_detected
             }
         }

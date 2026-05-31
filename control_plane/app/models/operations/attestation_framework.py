@@ -56,7 +56,7 @@ class SovereignExecutionAttestation(Base):
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     attestation_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     previous_attestation_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     attestation_chain_position: Mapped[str] = mapped_column(String(32), nullable=False, default="1")
     replay_verifiable: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     offline_verifiable: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
@@ -74,7 +74,7 @@ class AttestationTrustPolicy(Base):
     require_chain_integrity: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     require_replay_verification: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     require_offline_verification: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
-    require_signature_placeholder: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+    require_signature: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     federation_allowed: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
@@ -122,7 +122,7 @@ class AttestationReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
 

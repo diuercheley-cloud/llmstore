@@ -252,7 +252,7 @@ async def generate_remediation_receipt(
         receipt_type=receipt_data["receipt_type"],
         payload_hash=receipt_data["payload_hash"],
         immutable_hash=receipt_data["immutable_hash"],
-        signature_placeholder=receipt_data["signature_placeholder"]
+        signature=receipt_data["signature"]
     )
     db.add(receipt)
     await db.commit()

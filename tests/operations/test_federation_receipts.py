@@ -10,6 +10,7 @@ from app.services.operations.federation_sync.receipts import (
 from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
 from app.services.operations.federation_sync.trust_negotiation import FederationTrustNegotiationService
 from app.services.operations.federation_sync.conflict_resolution import FederationConflictResolutionService
+from app.utils.crypto_signer import sign_payload
 
 
 def test_federation_receipts_shape():
@@ -30,5 +31,5 @@ def test_federation_receipts_shape():
         build_trust_negotiation_receipt(negotiation),
         build_conflict_resolution_receipt(conflict),
     ):
-        assert receipt["signature_placeholder"].startswith("placeholder-signature:")
+        assert receipt["signature"].startswith("placeholder-signature:")
         assert "generated_at" in receipt

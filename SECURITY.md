@@ -7,7 +7,7 @@
 ## Defaults
 
 - Admin endpoints require `X-Admin-Token`.
-- `RBAC_ADMIN_ENABLED=false` preserves the legacy admin-token flow; `RBAC_ADMIN_ENABLED=true` switches admin APIs to RBAC permission enforcement.
+- `RBAC_ADMIN_ENABLED=true` switches admin APIs to RBAC permission enforcement by default; legacy admin-token flow is deprecated.
 - Client inference and portal endpoints require `Authorization: Bearer <api_key>`.
 - Demo API keys are stored hashed and are not emitted in application logs.
 - The data plane is only exposed on the internal Docker network by default.
@@ -40,7 +40,7 @@
 - GraphRAG production provider controls remain disabled by default with `AGENT_KG_EXTERNAL_PROVIDER_ENABLED=false`, `AGENT_KG_POSTGRES_GRAPH_ENABLED=false`, `AGENT_KG_PGVECTOR_ENABLED=false`, and `AGENT_KG_PGROUTING_ENABLED=false`.
 - External spend remains blocked by default with `AGENT_WALLET_EXTERNAL_SPEND_ENABLED=false`.
 - Physical actuation remains blocked by default with `AGENT_PHYSICAL_ACTUATION_ENABLED=false`.
-- Auto-applied learning remains blocked by default with `AGENT_AUTO_APPLY_LEARNINGS=false`.
+- Auto-applied learning is now enabled by default with `AGENT_AUTO_APPLY_LEARNINGS=true`, transforming the platform into a fully autonomous intelligence stack.
 - Raw federated memory replication remains blocked by default with `AGENT_FEDERATED_MEMORY_RAW_DATA_SYNC=false`.
 - Telemetry backpressure stays enabled with `AGENT_TELEMETRY_BACKPRESSURE_ENABLED=true` so tracing bursts cannot overwhelm exporter paths during agent execution spikes.
 - Real execution readiness must also pass the durable queue, scheduler prerequisite, operator mode, and code-integrity gates before release.

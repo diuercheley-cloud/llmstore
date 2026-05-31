@@ -88,8 +88,8 @@ async def compile_flow_version(
     compiler = FlowCompiler()
     return compiler.compile(version)
 
-@router.post("/versions/{version_id}/dry-run")
-async def dry_run_flow_version(
+@router.post("/versions/{version_id}/deploy-real")
+async def deploy_real_flow_version(
     version_id: uuid.UUID,
     input_data: Dict[str, Any],
     db: AsyncSession = Depends(get_db),
@@ -103,7 +103,7 @@ async def dry_run_flow_version(
     if not flow or flow.tenant_id != tenant_id:
         raise HTTPException(status_code=404, detail="Version not found")
     adapter = FlowRuntimeAdapter(db)
-    return await adapter.dry_run(version_id, input_data)
+    return await adapter.deploy_real(version_id, input_data)
 
 @router.get("/templates")
 async def list_templates():

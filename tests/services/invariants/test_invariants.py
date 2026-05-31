@@ -11,7 +11,7 @@ from app.services.invariants.runtime_invariants import (
 from app.services.invariants.sovereign_invariants import validate_exported_sovereign_bundle_sanitized
 from app.services.invariants.trust_invariants import (
     validate_confidential_mode_no_plaintext,
-    validate_signed_artifact_has_signature_metadata_placeholder,
+    validate_signed_artifact_has_signature_metadata,
 )
 
 
@@ -77,8 +77,8 @@ def test_exported_sovereign_bundle_must_be_sanitized():
 
 
 def test_signed_artifact_must_include_signature_metadata_placeholder():
-    failing = validate_signed_artifact_has_signature_metadata_placeholder({"signed": True, "signature_metadata": {}})
-    passing = validate_signed_artifact_has_signature_metadata_placeholder(
+    failing = validate_signed_artifact_has_signature_metadata({"signed": True, "signature_metadata": {}})
+    passing = validate_signed_artifact_has_signature_metadata(
         {"signed": True, "signature_metadata": {"placeholder": "pending"}}
     )
     assert failing.passed is False

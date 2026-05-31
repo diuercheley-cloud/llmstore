@@ -136,7 +136,7 @@ export const navRoutes: NavRoute[] = [
   { path: '/developers/bundles', label: 'Agent Bundles', icon: Package, section: 'developers', featureFlag: 'developers', status: 'active' },
   { path: '/prompts', label: 'Prompts', icon: FileText, section: 'developers', featureFlag: 'developers', status: 'active' },
 
-  // ── Placeholder routes (coming soon) ──────────────────
+  // ── Business and governance surfaces ──────────────────
   { path: '/api-keys', label: 'API Keys', icon: Key, section: 'core', featureFlag: 'agents', status: 'active' },
   { path: '/billing', label: 'Billing', icon: Wallet, section: 'core', featureFlag: 'agents', status: 'active' },
   { path: '/usage', label: 'Uso', icon: TrendingUp, section: 'core', featureFlag: 'agents', status: 'active' },

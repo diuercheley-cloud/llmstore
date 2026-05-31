@@ -8,6 +8,7 @@ from app.services.operations.plugin_supply_chain.provenance_service import Plugi
 from app.services.operations.plugin_supply_chain.receipts import build_supply_chain_receipt
 from app.services.operations.plugin_supply_chain.replay_verifier import PluginSupplyChainReplayVerifier
 from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
+from app.utils.crypto_signer import sign_payload
 
 
 def _provenance_record():
@@ -48,7 +49,7 @@ def test_sbom_placeholder_and_lineage_verification():
     assert lineage_service.verify_lineage(lineage, record)["verified"] is True
 
 
-def test_dependency_governance_blocks_denied_classes_and_requires_placeholder_signature():
+def test_dependency_governance_blocks_denied_classes_and_requires_signature():
     record = _provenance_record()
     governance = DependencyGovernanceService()
     policy = governance.create_policy(record.client_id)
@@ -56,7 +57,7 @@ def test_dependency_governance_blocks_denied_classes_and_requires_placeholder_si
         record,
         {"dependency_classes": ["network_loaders", "local_static_module"]},
         policy,
-        signature_placeholder=None,
+        signature=None,
     )
     summary = json.loads(blocked.dependency_summary)
     assert blocked.verification_status == "blocked"
@@ -65,9 +66,9 @@ def test_dependency_governance_blocks_denied_classes_and_requires_placeholder_si
     assert summary["no_external_dependency_resolution"] is True
 
 
-def test_receipts_and_audit_events_are_placeholder_only():
+def test_receipts_and_audit_events_are_signature_only():
     record = _provenance_record()
     receipt = build_supply_chain_receipt("provenance_receipt", record, record.provenance_hash)
     audit = build_plugin_supply_chain_audit_event("provenance_created", str(record.client_id), {"token": "secret", "artifact_name": "bundle"})
-    assert receipt.signature_placeholder.startswith("placeholder-signature:")
+    assert receipt.signature.startswith("placeholder-signature:")
     assert audit["payload"]["token"] == "redacted"

@@ -4,6 +4,7 @@ from typing import Any
 from app.core.time import utc_now
 from app.models.operations.plugin_supply_chain import PluginSupplyChainReceipt
 from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 
 def build_supply_chain_receipt(
@@ -24,9 +25,9 @@ def build_supply_chain_receipt(
     is_prod = get_settings().app_env == "production"
     if is_prod:
         from app.services.inference.cryptographic_receipts import sign_payload
-        signature_placeholder = sign_payload(payload_hash)
+        signature = sign_payload(payload_hash)
     else:
-        signature_placeholder = f"placeholder-signature:{receipt_type}:{payload_hash[:16]}"
+        signature = sign_payload(f"{receipt_type}:{payload_hash[:16]}")
         
     receipt = PluginSupplyChainReceipt(
         id=sha256_hex({"kind": "plugin_supply_chain_receipt_id", **logical_payload}),
@@ -35,7 +36,7 @@ def build_supply_chain_receipt(
         receipt_type=receipt_type,
         payload_hash=payload_hash,
         immutable_hash=sha256_hex({"kind": "plugin_supply_chain_receipt_immutable", **logical_payload}),
-        signature_placeholder=signature_placeholder,
+        signature=signature,
         generated_at=generated_at if isinstance(generated_at, datetime) else utc_now(),
     )
     receipt._logical_payload = logical_payload

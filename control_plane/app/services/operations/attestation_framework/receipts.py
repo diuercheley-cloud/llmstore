@@ -3,6 +3,7 @@ from typing import Any
 
 from app.core.time import utc_now
 from app.services.operations.attestation_framework.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 
 def _receipt_payload(receipt_type: str, client_id: str, subject_id: str, payload_hash: str, deterministic_version: str) -> dict[str, Any]:
@@ -23,7 +24,7 @@ def _receipt_payload(receipt_type: str, client_id: str, subject_id: str, payload
         "immutable_hash": immutable_hash,
         "payload_hash": payload_hash,
         "deterministic_version": deterministic_version,
-        "signature_placeholder": f"placeholder-signature:{receipt_type}:{payload_hash[:16]}",
+        "signature": sign_payload(f"{receipt_type}:{payload_hash[:16]}"),
         "generated_at": generated_at if isinstance(generated_at, datetime) else utc_now(),
     }
 

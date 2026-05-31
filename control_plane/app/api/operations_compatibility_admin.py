@@ -618,7 +618,7 @@ async def create_receipt(
         receipt_type=receipt_payload["receipt_type"],
         payload_hash=receipt_payload["payload_hash"],
         immutable_hash=receipt_payload["immutable_hash"],
-        signature_placeholder=receipt_payload["signature_placeholder"],
+        signature=receipt_payload["signature"],
         generated_at=receipt_payload["generated_at"],
     )
     db.add(receipt)

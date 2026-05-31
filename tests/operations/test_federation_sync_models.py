@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 from app.models.client import Client
 from app.models.operations.federation_sync import (
+from app.utils.crypto_signer import sign_payload
     FederationConflictResolution,
     FederationLineageLink,
     FederationSynchronizationBundle,
@@ -87,7 +88,7 @@ async def test_federation_sync_models_persist(session):
         receipt_type="sync_session_receipt",
         payload_hash="6" * 64,
         immutable_hash="7" * 64,
-        signature_placeholder="placeholder-signature:sync",
+        signature=sign_payload("sync"),
     )
     lineage = FederationLineageLink(
         id="link-1",

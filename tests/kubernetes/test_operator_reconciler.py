@@ -29,12 +29,23 @@ def k8s_core_v1():
         yield m.return_value
 
 @pytest.fixture
+def k8s_autoscaling_v2():
+    with mock.patch('kubernetes.client.AutoscalingV2Api') as m:
+        yield m.return_value
+
+@pytest.fixture
 def k8s_custom_objects():
     with mock.patch('kubernetes.client.CustomObjectsApi') as m:
         yield m.return_value
 
-def test_reconcile_inference_stack_creates_resources(k8s_apps_v1, k8s_core_v1, k8s_custom_objects, logger):
-    spec = {'image': 'control-plane:v1', 'replicas': 3}
+def test_reconcile_inference_stack_creates_resources(k8s_apps_v1, k8s_core_v1, k8s_autoscaling_v2, k8s_custom_objects, logger):
+    spec = {
+        'image': 'control-plane:v1',
+        'replicas': 3,
+        'service': {'enabled': True, 'type': 'ClusterIP', 'port': 8080},
+        'autoscaling': {'enabled': True, 'minReplicas': 2, 'maxReplicas': 5, 'targetCPUUtilizationPercentage': 75},
+        'persistentVolumeClaim': {'name': 'cp-data', 'size': '50Gi', 'mountPath': '/var/lib/stack'},
+    }
     body = {'metadata': {'name': 'test-stack', 'namespace': 'default'}}
     
     reconcile_inference_stack(spec, 'test-stack', 'default', body, logger)
@@ -44,9 +55,13 @@ def test_reconcile_inference_stack_creates_resources(k8s_apps_v1, k8s_core_v1, k
     args, kwargs = k8s_apps_v1.create_namespaced_deployment.call_args
     assert kwargs['body']['spec']['replicas'] == 3
     assert kwargs['body']['spec']['template']['spec']['containers'][0]['image'] == 'control-plane:v1'
+    assert kwargs['body']['spec']['template']['spec']['containers'][0]['readinessProbe']['httpGet']['path'] == '/healthz'
+    assert kwargs['body']['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName'] == 'cp-data'
     
     # Check Service creation
     k8s_core_v1.create_namespaced_service.assert_called_once()
+    k8s_core_v1.create_namespaced_persistent_volume_claim.assert_called_once()
+    k8s_autoscaling_v2.create_namespaced_horizontal_pod_autoscaler.assert_called_once()
     
     # Check status update
     k8s_custom_objects.patch_namespaced_custom_object_status.assert_called_once()

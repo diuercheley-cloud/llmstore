@@ -28,7 +28,7 @@ def build_promotion_workflow_receipt(workflow: AdapterPromotionWorkflow) -> Adap
         receipt_type="adapter_promotion_workflow",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"promotion_sig_{payload_hash[:16]}",
+        signature=f"promotion_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )
 
@@ -47,7 +47,7 @@ def build_gate_result_receipt(gate_result: AdapterPromotionGateResult) -> Adapte
         receipt_type="adapter_promotion_gate",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"gate_sig_{payload_hash[:16]}",
+        signature=f"gate_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )
 
@@ -67,7 +67,7 @@ def build_transition_receipt(transition: AdapterPromotionStageTransition) -> Ada
         receipt_type="adapter_promotion_transition",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"transition_sig_{payload_hash[:16]}",
+        signature=f"transition_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )
 
@@ -87,6 +87,6 @@ def build_rollback_receipt(rollback: AdapterPromotionRollback) -> AdapterPromoti
         receipt_type="adapter_promotion_rollback",
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
-        signature_placeholder=f"rollback_sig_{payload_hash[:16]}",
+        signature=f"rollback_sig_{payload_hash[:16]}",
         generated_at=utc_now()
     )

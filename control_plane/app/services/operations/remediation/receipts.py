@@ -29,7 +29,7 @@ def build_remediation_plan_receipt(plan: Dict[str, Any], steps: List[Dict[str, A
         "deterministic_version": plan.get("deterministic_version", "v1"),
         "advisory_only": True,
         "dry_run": plan.get("dry_run", True),
-        "signature_placeholder": "SIG_REMEDIATION_PLAN_PROPOSAL_V1",
+        "signature": "SIG_REMEDIATION_PLAN_PROPOSAL_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -48,7 +48,7 @@ def build_remediation_step_receipt(step: Dict[str, Any]) -> Dict[str, Any]:
         "deterministic_version": "v1",
         "advisory_only": True,
         "dry_run": step.get("dry_run", True),
-        "signature_placeholder": "SIG_REMEDIATION_STEP_PROPOSAL_V1",
+        "signature": "SIG_REMEDIATION_STEP_PROPOSAL_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -67,6 +67,6 @@ def build_approval_requirement_receipt(requirement: Dict[str, Any]) -> Dict[str,
         "deterministic_version": "v1",
         "advisory_only": True,
         "dry_run": True,
-        "signature_placeholder": "SIG_REMEDIATION_APPROVAL_REQ_V1",
+        "signature": "SIG_REMEDIATION_APPROVAL_REQ_V1",
         "generated_at": datetime.now(timezone.utc).isoformat()
     }

@@ -1,0 +1,35 @@
+{
+  "title": "Agent Step Latency",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Step Latency p50/p95/p99 (last 1h)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(LLM_AGENT_STEP_DURATION_SECONDS_bucket[5m])) by (le, step_type))", "legendFormat": "p50 {{step_type}}"},
+        {"expr": "histogram_quantile(0.95, sum(rate(LLM_AGENT_STEP_DURATION_SECONDS_bucket[5m])) by (le, step_type))", "legendFormat": "p95 {{step_type}}"},
+        {"expr": "histogram_quantile(0.99, sum(rate(LLM_AGENT_STEP_DURATION_SECONDS_bucket[5m])) by (le, step_type))", "legendFormat": "p99 {{step_type}}"}
+      ],
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "title": "Step Count by Type (last 1h)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum by(step_type) (rate(LLM_AGENT_STEP_COUNT_TOTAL[5m]))", "legendFormat": "{{step_type}}"}
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 10}
+    },
+    {
+      "title": "Slowest Agents (p99 latency)",
+      "type": "table",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "topk(10, histogram_quantile(0.99, sum(rate(LLM_AGENT_STEP_DURATION_SECONDS_bucket[5m])) by (le, agent_id)))", "legendFormat": "{{agent_id}}"}
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 10}
+    }
+  ]
+}

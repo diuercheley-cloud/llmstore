@@ -10,7 +10,7 @@ from app.services.invariants.runtime_invariants import (
 from app.services.invariants.sovereign_invariants import validate_exported_sovereign_bundle_sanitized
 from app.services.invariants.trust_invariants import (
     validate_confidential_mode_no_plaintext,
-    validate_signed_artifact_has_signature_metadata_placeholder,
+    validate_signed_artifact_has_signature_metadata,
 )
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
     "validate_repair_operation_emits_healing_receipt",
     "validate_dry_run_does_not_mutate_persistent_state",
     "validate_confidential_mode_no_plaintext",
-    "validate_signed_artifact_has_signature_metadata_placeholder",
+    "validate_signed_artifact_has_signature_metadata",
     "validate_tenant_scoped_record_has_client_id",
     "validate_exported_sovereign_bundle_sanitized",
 ]

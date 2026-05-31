@@ -41,6 +41,8 @@ logger = logging.getLogger(__name__)
 
 import signal
 
+SessionLocal = session.SessionLocal
+
 class AgentWorkerService:
     def __init__(self, worker_id: str | None = None):
         self.settings = get_settings()
@@ -48,7 +50,7 @@ class AgentWorkerService:
         self.is_running = False
         self.is_draining = False
         self._heartbeat_task = None
-        logger.info(f"AgentWorkerService initialized with SessionLocal: {session.SessionLocal}")
+        logger.info(f"AgentWorkerService initialized with SessionLocal: {SessionLocal}")
         self._recovery_task = None
         self._setup_signal_handlers()
 
@@ -108,7 +110,7 @@ class AgentWorkerService:
         self.is_running = True
         logger.info(f"Starting Agent Worker: {self.worker_id}")
 
-        async with session.SessionLocal() as db:
+        async with SessionLocal() as db:
             await self.register_heartbeat(db)
 
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
@@ -132,7 +134,7 @@ class AgentWorkerService:
         
         # Mark worker as inactive
         try:
-            async with session.SessionLocal() as db:
+            async with SessionLocal() as db:
                 stmt = select(AgentWorkerHeartbeat).where(AgentWorkerHeartbeat.worker_id == self.worker_id)
                 res = await db.execute(stmt)
                 hb = res.scalar_one_or_none()
@@ -154,7 +156,7 @@ class AgentWorkerService:
         while self.is_running:
             try:
                 await asyncio.sleep(10)
-                async with session.SessionLocal() as db:
+                async with SessionLocal() as db:
                     await self.register_heartbeat(db)
             except asyncio.CancelledError:
                 break
@@ -166,7 +168,7 @@ class AgentWorkerService:
         while self.is_running:
             try:
                 await asyncio.sleep(60) # Run every minute
-                async with session.SessionLocal() as db:
+                async with SessionLocal() as db:
                     await self.recover_orphans(db)
             except asyncio.CancelledError:
                 break
@@ -240,7 +242,7 @@ class AgentWorkerService:
             logger.info(f"Worker {self.worker_id} is draining. Skipping pickup.")
             return False
 
-        async with session.SessionLocal() as db:
+        async with SessionLocal() as db:
             queue_mgr = AgentQueueManager(db)
             job = await queue_mgr.dequeue_job(self.worker_id, lease_timeout_seconds=60)
             if not job:
@@ -259,7 +261,7 @@ class AgentWorkerService:
 
         try:
             # ... (rest of implementation remains similar)
-            async with session.SessionLocal() as db:
+            async with SessionLocal() as db:
                 # Transition job status to running
                 stmt = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
                 res = await db.execute(stmt)
@@ -280,11 +282,11 @@ class AgentWorkerService:
             
             while True:
                 # Check cancellation first
-                async with session.SessionLocal() as db:
+                async with SessionLocal() as db:
                     cancelled = await AgentCancellationService.is_cancelled(db, run_id)
                     if cancelled:
                         logger.info(f"Run {run_id} has been cancelled. Stopping execution.")
-                        async with session.SessionLocal() as db_cancel:
+                        async with SessionLocal() as db_cancel:
                             stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
                             res_job = await db_cancel.execute(stmt_job)
                             j = res_job.scalar_one()
@@ -298,7 +300,7 @@ class AgentWorkerService:
 
                 # Execute step
                 try:
-                    async with session.SessionLocal() as db_step:
+                    async with SessionLocal() as db_step:
                         executor = AgentExecutor(db_step, run_id)
                         should_continue = await executor.execute_step()
                         
@@ -317,7 +319,7 @@ class AgentWorkerService:
             lease_renewer.cancel()
             
             if not execution_failed:
-                async with session.SessionLocal() as db:
+                async with SessionLocal() as db:
                     # Check run's final status
                     run = await agent_state.get_agent_run(db, run_id)
                     stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
@@ -367,7 +369,7 @@ class AgentWorkerService:
         while self.is_running:
             try:
                 await asyncio.sleep(15)
-                async with session.SessionLocal() as db:
+                async with SessionLocal() as db:
                     # Update both AgentExecutionJob and AgentExecutionLease
                     stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
                     res_job = await db.execute(stmt_job)
@@ -394,7 +396,7 @@ class AgentWorkerService:
 
     async def _handle_job_failure(self, job_id: uuid.UUID, error_message: str) -> None:
         now = utc_now()
-        async with session.SessionLocal() as db:
+        async with SessionLocal() as db:
             stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id).with_for_update()
             res_job = await db.execute(stmt_job)
             job = res_job.scalar_one_or_none()

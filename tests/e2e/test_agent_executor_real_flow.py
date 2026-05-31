@@ -315,7 +315,8 @@ async def test_agent_executor_real_flow(e2e_client, monkeypatch):
     async with SessionLocal() as db:
         run = await db.get(AgentRun, run_id)
         assert run.status == "completed", f"Expected completed status, got {run.status}"
-        assert run.total_steps == 3, f"Expected 3 total steps, got {run.total_steps}"
+        # The hardened runtime records granular orchestration/model/tool/memory phases.
+        assert run.total_steps >= 5, f"Expected granular step timeline, got {run.total_steps}"
 
 
         # 17. Check Receipts are generated

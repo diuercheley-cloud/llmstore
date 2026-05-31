@@ -133,7 +133,7 @@ export default function ApprovalPortal() {
       </div>
       <div style={{ width: '450px', background: 'rgba(10, 17, 32, 0.95)', display: 'flex', flexDirection: 'column' }}>
         {selectedRequest ? (
-          <ApprovalDetail request={selectedRequest} onDecision={handleDecision} />
+          <ApprovalDetail approval={selectedRequest} />
         ) : (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
             Select a request to review details

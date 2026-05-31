@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from typing import Any
+from app.utils.crypto_signer import sign_payload
 
 
 def canonical_json(payload: Any) -> str:
@@ -67,8 +68,8 @@ def build_action_receipt(
         "sandbox_context": sandbox_context or {},
     }
     receipt_hash = sha256_hex(canonical_json(body))
-    signature_algorithm = "ed25519_placeholder"
-    detached_signature = f"placeholder_ed25519_{sha256_hex(receipt_hash + ':trusted-agent')[:48]}"
+    signature_algorithm = "ed25519"
+    detached_signature = sign_payload(f"{sha256_hex(receipt_hash + ':trusted-agent')[:48]}")
     immutable_hash = sha256_hex(
         canonical_json(
             {

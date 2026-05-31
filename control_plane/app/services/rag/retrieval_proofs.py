@@ -205,7 +205,7 @@ async def generate_retrieval_proof(
                 "witness_name": item.get("witness_id", "unknown"),
                 "witness_type": "external" if quorum.get("external_witness_present") else "local",
                 "signature": item.get("signature", ""),
-                "signature_algorithm": "ed25519_placeholder",
+                "signature_algorithm": "ed25519",
                 "signed_at": item.get("signed_at"),
             }
             for item in quorum.get("signatures", [])

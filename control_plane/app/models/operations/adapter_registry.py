@@ -21,7 +21,7 @@ class SignedAdapterRegistryEntry(Base):
     manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     registry_status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False, index=True)
     registry_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     signer_ref: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     approval_required: Mapped[bool] = mapped_column(Boolean(), default=True, nullable=False)
     approved_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
@@ -72,7 +72,7 @@ class AdapterRegistryReceipt(Base):
     receipt_type: Mapped[str] = mapped_column(String(100), nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
-    signature_placeholder: Mapped[str] = mapped_column(String(255), nullable=False)
+    signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 class AdapterRegistryBlocklistEntry(Base):

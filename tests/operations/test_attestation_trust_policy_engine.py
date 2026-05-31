@@ -3,6 +3,7 @@ import uuid
 from app.models.operations.attestation_framework import AttestationTrustPolicy
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
 from app.services.operations.attestation_framework.trust_policy_engine import AttestationTrustPolicyEngine
+from app.utils.crypto_signer import sign_payload
 
 
 def test_trust_policy_engine_blocks_invalid_attestation_type():
@@ -15,7 +16,7 @@ def test_trust_policy_engine_blocks_invalid_attestation_type():
             "subject_ref": "wf-1",
             "attestation_scope": "operations",
             "payload": {"x": 1},
-            "signature_placeholder": "placeholder-signature:workflow",
+            "signature": sign_payload("workflow"),
         },
         "workflow",
     )

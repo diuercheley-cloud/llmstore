@@ -173,6 +173,13 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.gpu_autoscaling_enabled:
         from app.api.gpu_autoscaling_admin import router as gpu_autoscaling_admin_router
         app.include_router(gpu_autoscaling_admin_router)
+
+    from app.api.alert_webhooks import router as alert_webhooks_router
+    app.include_router(alert_webhooks_router, prefix="/api/v1", tags=["alerting"])
+
+    if settings.a2a_enabled:
+        from app.api.a2a_router import router as a2a_router
+        app.include_router(a2a_router, prefix="/api/v1", tags=["a2a-protocol"])
     
     if settings.plugin_marketplace_enabled:
         from app.api.plugin_marketplace_admin import router as plugin_marketplace_admin_router
@@ -220,12 +227,14 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_runtime_enabled or settings.agent_execution_enabled:
         from app.api.agents import router as agents_router
         from app.api.agents_v1 import router as agents_v1_router
+        from app.api.agent_cicd_admin import router as agent_cicd_admin_router
         from app.api.agent_runtime_admin import router as agent_runtime_admin_router
         from app.api.agent_registry_admin import router as agent_registry_admin_router
         from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
         from app.api.agent_environments_admin import router as agent_environments_admin_router
         app.include_router(agents_router)
         app.include_router(agents_v1_router)
+        app.include_router(agent_cicd_admin_router)
         app.include_router(agent_runtime_admin_router)
         app.include_router(agent_registry_admin_router)
         app.include_router(tenant_agentic_readiness_admin_router)

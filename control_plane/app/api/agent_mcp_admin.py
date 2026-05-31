@@ -47,32 +47,59 @@ server_router = APIRouter(prefix="/mcp", tags=["mcp-server"])
 
 
 @admin_router.get("/servers")
-def list_servers(settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def list_servers(
+    settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
+    _: dict = Depends(require_admin),
+):
     if not settings.agent_mcp_enabled:
         raise HTTPException(status_code=400, detail="MCP is not enabled")
-    return [server.__dict__ for server in MCPRegistry().list()]
+    return [server.__dict__ for server in await MCPRegistry().list_persistent(db)]
 
 
 @admin_router.post("/servers")
-def register_server(req: RegisterMCPServerRequest, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def register_server(
+    req: RegisterMCPServerRequest,
+    settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
+    _: dict = Depends(require_admin),
+):
     if not settings.agent_mcp_enabled:
         raise HTTPException(status_code=400, detail="MCP is not enabled")
-    server = MCPRegistry().register(req.tenant_id, req.name, req.transport, req.endpoint, req.trust_level)
+    server = await MCPRegistry().register_persistent(
+        db,
+        req.tenant_id,
+        req.name,
+        req.transport,
+        req.endpoint,
+        req.trust_level,
+    )
     return server.__dict__
 
 
 @admin_router.post("/servers/{server_id}/discover")
-async def discover_server(server_id: str, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def discover_server(
+    server_id: str,
+    settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
+    _: dict = Depends(require_admin),
+):
     try:
-        return await MCPClient().discover(server_id)
+        return await MCPClient(db).discover(server_id)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @admin_router.post("/servers/{server_id}/approve-tool")
-def approve_tool(server_id: str, req: ApproveMCPToolRequest, settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def approve_tool(
+    server_id: str,
+    req: ApproveMCPToolRequest,
+    settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
+    _: dict = Depends(require_admin),
+):
     try:
-        return MCPClient().approve_tool(server_id, req.tool_name)
+        return await MCPClient(db).approve_tool(server_id, req.tool_name)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -82,6 +109,7 @@ async def call_tool(
     tool_name: str,
     req: MCPCallRequest,
     settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
     _: dict = Depends(require_admin),
 ):
     if not settings.agent_mcp_enabled:
@@ -91,7 +119,7 @@ async def call_tool(
     if not server_id:
         raise HTTPException(status_code=422, detail="__server_id must be provided in arguments")
     try:
-        return await MCPClient().call_tool(server_id, tool_name, req.arguments)
+        return await MCPClient(db).call_tool(server_id, tool_name, req.arguments)
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except KeyError as exc:
@@ -101,11 +129,15 @@ async def call_tool(
 
 
 @admin_router.get("/tools")
-def list_tools(settings: Settings = Depends(get_settings), _: dict = Depends(require_admin)):
+async def list_tools(
+    settings: Settings = Depends(get_settings),
+    db: AsyncSession = Depends(get_db_session),
+    _: dict = Depends(require_admin),
+):
     if not settings.agent_mcp_enabled:
         raise HTTPException(status_code=400, detail="MCP is not enabled")
     tools = []
-    for server in MCPRegistry().list():
+    for server in await MCPRegistry().list_persistent(db):
         for tool in server.discovered_tools:
             tool_payload = dict(tool)
             tool_payload["server_id"] = server.id
@@ -306,4 +338,3 @@ def list_oauth_audit(
     if not settings.agent_mcp_enabled:
         raise HTTPException(status_code=400, detail="MCP is not enabled")
     return MCPOAuthAuditLog.events
-

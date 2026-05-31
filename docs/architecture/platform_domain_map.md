@@ -98,7 +98,7 @@ graph TB
 - Trust boundaries (advisory)
 - Crypto readiness planning
 - Tenant isolation rules
-- No real PKI or hardware trust
+- No real hardware trust
 
 ### Financial
 - Billing governance contracts

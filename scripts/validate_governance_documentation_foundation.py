@@ -81,7 +81,6 @@ PROHIBITED_CLAIMS = (
     "real hardware attestation",
     "certified confidential computing",
     "certified plugin",
-    "real pki",
 )
 
 

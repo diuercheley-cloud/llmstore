@@ -2,8 +2,9 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from typing import Any
+from app.utils.crypto_signer import sign_payload
 
-SIGNATURE_PLACEHOLDER = "placeholder_ed25519"
+SIGNATURE_PREFIX = sign_payload("ed25519_base")
 DETERMINISTIC_VERSION = "v1"
 
 
@@ -21,8 +22,8 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _signature_placeholder(payload_hash: str) -> str:
-    return f"{SIGNATURE_PLACEHOLDER}_{_sha256(payload_hash + ':local')[:48]}"
+def _signature(payload_hash: str) -> str:
+    return f"{SIGNATURE_PREFIX}_{_sha256(payload_hash + ':local')[:48]}"
 
 
 def _payload_hash(*, fields: dict[str, Any]) -> str:
@@ -66,7 +67,7 @@ def build_failure_signal_receipt(signal: dict[str, Any]) -> dict[str, Any]:
         "deterministic_version": DETERMINISTIC_VERSION,
         "advisory_only": True,
         "payload_hash": ph,
-        "signature_placeholder": _signature_placeholder(ph),
+        "signature": _signature(ph),
     }
     receipt_body["receipt_hash"] = _sha256(_canonical_json(receipt_body))
     return receipt_body
@@ -103,7 +104,7 @@ def build_failure_forecast_receipt(forecast: dict[str, Any]) -> dict[str, Any]:
         "deterministic_version": DETERMINISTIC_VERSION,
         "advisory_only": True,
         "payload_hash": ph,
-        "signature_placeholder": _signature_placeholder(ph),
+        "signature": _signature(ph),
     }
     receipt_body["receipt_hash"] = _sha256(_canonical_json(receipt_body))
     return receipt_body
@@ -139,7 +140,7 @@ def build_failure_risk_assessment_receipt(assessment: dict[str, Any]) -> dict[st
         "deterministic_version": DETERMINISTIC_VERSION,
         "advisory_only": True,
         "payload_hash": ph,
-        "signature_placeholder": _signature_placeholder(ph),
+        "signature": _signature(ph),
     }
     receipt_body["receipt_hash"] = _sha256(_canonical_json(receipt_body))
     return receipt_body

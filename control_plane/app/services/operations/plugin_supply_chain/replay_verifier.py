@@ -24,7 +24,7 @@ class PluginSupplyChainReplayVerifier:
             "denied_dependencies_json": sorted(placeholder.denied_dependencies_json),
             "reproducible_build": placeholder.reproducible_build,
             "offline_verifiable": placeholder.offline_verifiable,
-            "placeholder_only": True,
+            "signature_only": True,
         }
         return self.compare_hashes(placeholder.sbom_hash, compute_sbom_hash(logical_payload))
 

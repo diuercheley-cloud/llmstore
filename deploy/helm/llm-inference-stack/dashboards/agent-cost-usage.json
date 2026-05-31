@@ -1,0 +1,51 @@
+{
+  "title": "Agent Cost & Usage",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Total Provider Cost (last 24h)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(LLM_PROVIDER_COST_TOTAL)", "legendFormat": "Total Cost"}
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 0, "y": 0}
+    },
+    {
+      "title": "Total Tokens (last 24h)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(LLM_TOKEN_USAGE_TOTAL)", "legendFormat": "Total Tokens"}
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 4, "y": 0}
+    },
+    {
+      "title": "Cost per Agent (last 24h)",
+      "type": "table",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "topk(10, sum by(agent_id) (LLM_PROVIDER_COST_TOTAL))", "legendFormat": "{{agent_id}}"}
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "title": "Token Usage by Provider (last 24h)",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum by(provider) (LLM_TOKEN_USAGE_TOTAL)", "legendFormat": "{{provider}}"}
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "title": "Daily Cost Trend (last 7d)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(increase(LLM_PROVIDER_COST_TOTAL[24h]))", "legendFormat": "Cost/day"}
+      ],
+      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 18}
+    }
+  ]
+}

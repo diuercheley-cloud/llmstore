@@ -26,6 +26,19 @@ class TestProviderRegistry:
         assert "openai" in ids
         assert "anthropic" in ids
         assert "deepseek" in ids
+        assert "openrouter" in ids
+        assert "gemini" in ids
+        assert "bedrock" in ids
+        assert "azure_openai" in ids
+        assert "mistral" in ids
+        assert "cohere" in ids
+        assert "groq" in ids
+        assert "together" in ids
+        assert "perplexity" in ids
+        assert "replicate" in ids
+        assert "xai" in ids
+        assert "fireworks" in ids
+        assert "ai21" in ids
 
     def test_local_provider_enabled_and_configured(self):
         local = get_provider("local")
@@ -35,7 +48,7 @@ class TestProviderRegistry:
         assert local.provider_id == "local"
 
     def test_cloud_providers_disabled_by_default(self):
-        for pid in ("openai", "anthropic", "deepseek", "openrouter"):
+        for pid in ("openai", "anthropic", "deepseek", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21"):
             p = get_provider(pid)
             assert p is not None
             assert p.configured is False, f"{pid} should be configured=false by default"
@@ -81,7 +94,7 @@ class TestProviderRegistry:
         deepseek = get_provider("deepseek")
         caps = deepseek.capabilities()
         assert caps.chat is True
-        assert caps.embeddings is True
+        assert caps.embeddings is False
         assert caps.vision is False
 
     def test_local_estimate_cost_zero(self):

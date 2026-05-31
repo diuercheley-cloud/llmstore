@@ -19,5 +19,5 @@ The subsystem is composed of several specialized services:
 
 ## Governance
 Learning is never automatically applied to production by default. 
-- `AGENT_AUTO_APPLY_LEARNINGS=false` ensures a human-in-the-loop review.
+- `AGENT_AUTO_APPLY_LEARNINGS=true` enables autonomous learning, bypassing human-in-the-loop review.
 - Tenant isolation is strictly enforced; learnings from Tenant A never leak to Tenant B.

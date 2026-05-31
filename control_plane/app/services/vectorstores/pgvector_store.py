@@ -4,7 +4,11 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.agents import AgentMemoryIndex
+from app.models.rag_document_chunk import RAGDocumentChunk
 
 from .base import VectorStoreBase
 
@@ -17,6 +21,44 @@ class PGVectorStore(VectorStoreBase):
 
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    def _supports_pgvector(self) -> bool:
+        bind = self.session.bind
+        if bind is None:
+            return False
+        return bind.dialect.name == "postgresql"
+
+    @staticmethod
+    def _cosine_similarity(a: List[float], b: List[float]) -> float:
+        if not a or not b or len(a) != len(b):
+            return 0.0
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = sum(x * x for x in a) ** 0.5
+        norm_b = sum(y * y for y in b) ** 0.5
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)
+
+    @staticmethod
+    def _decode_embedding(raw: Any) -> List[float]:
+        if raw is None:
+            return []
+        if isinstance(raw, list):
+            return [float(v) for v in raw]
+        if isinstance(raw, str):
+            try:
+                decoded = json.loads(raw)
+                if isinstance(decoded, list):
+                    return [float(v) for v in decoded]
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    @staticmethod
+    def _as_uuid(value: Any) -> uuid.UUID:
+        if isinstance(value, uuid.UUID):
+            return value
+        return uuid.UUID(str(value))
 
     async def upsert(
         self,
@@ -36,8 +78,52 @@ class PGVectorStore(VectorStoreBase):
             id_col = "id"
             vector_col = "embedding"
         
+        metadata = metadata or {}
         vector_str = json.dumps(vector)
-        meta_str = json.dumps(metadata or {})
+        meta_str = json.dumps(metadata)
+        client_id = metadata.get("client_id") or metadata.get("tenant_id")
+        doc_id = metadata.get("document_id") or uuid.uuid4()
+        agent_id = metadata.get("agent_id") or uuid.uuid4()
+        content = metadata.get("content", "")
+
+        if not self._supports_pgvector():
+            if table_name == "agent_memory_indexes":
+                stmt = select(AgentMemoryIndex).where(AgentMemoryIndex.memory_item_id == uuid.UUID(id))
+                result = await self.session.execute(stmt)
+                row = result.scalar_one_or_none()
+                if row is None:
+                    row = AgentMemoryIndex(
+                        tenant_id=str(client_id),
+                        agent_id=self._as_uuid(agent_id),
+                        memory_item_id=uuid.UUID(id),
+                        vector_id=f"vec_{id}",
+                    )
+                    self.session.add(row)
+                row.embedding = vector_str
+                row.index_status = "completed"
+                await self.session.flush()
+                return
+
+            chunk = await self.session.get(RAGDocumentChunk, uuid.UUID(id))
+            if chunk is None:
+                chunk = RAGDocumentChunk(
+                    id=uuid.UUID(id),
+                    document_id=self._as_uuid(doc_id),
+                    client_id=self._as_uuid(client_id),
+                    chunk_index=0,
+                    page_number=0,
+                    content=content,
+                    token_count=0,
+                    embedding=vector,
+                    metadata_json=metadata or {},
+                )
+                self.session.add(chunk)
+            else:
+                chunk.embedding = vector
+                chunk.metadata_json = metadata or {}
+                chunk.content = content
+            await self.session.flush()
+            return
         
         # We handle both cases with a single logic if possible
         if table_name == "agent_memory_indexes":
@@ -59,11 +145,6 @@ class PGVectorStore(VectorStoreBase):
                     content = :content
             """)
         
-        client_id = metadata.get("client_id") or metadata.get("tenant_id")
-        doc_id = metadata.get("document_id") or uuid.uuid4()
-        agent_id = metadata.get("agent_id") or uuid.uuid4()
-        content = metadata.get("content", "")
-
         try:
             await self.session.execute(sql, {
                 "id": id,
@@ -116,6 +197,40 @@ class PGVectorStore(VectorStoreBase):
                 filter_sql += " AND agent_id = :agent_id"
                 params["agent_id"] = filters["agent_id"]
 
+        if not self._supports_pgvector():
+            try:
+                if table_name == "agent_memory_indexes":
+                    stmt = select(AgentMemoryIndex)
+                    result = await self.session.execute(stmt)
+                    rows = result.scalars().all()
+                    hits = []
+                    for row in rows:
+                        if "tenant_id" in params and row.tenant_id != str(params["tenant_id"]):
+                            continue
+                        if "agent_id" in params and str(row.agent_id) != str(params["agent_id"]):
+                            continue
+                        embedding = self._decode_embedding(row.embedding)
+                        score = self._cosine_similarity(vector, embedding)
+                        hits.append({"id": str(row.memory_item_id), "score": score})
+                else:
+                    stmt = select(RAGDocumentChunk)
+                    result = await self.session.execute(stmt)
+                    rows = result.scalars().all()
+                    hits = []
+                    for row in rows:
+                        if "tenant_id" in params and str(row.client_id) != str(params["tenant_id"]):
+                            continue
+                        if "doc_id" in params and str(row.document_id) != str(params["doc_id"]):
+                            continue
+                        embedding = self._decode_embedding(row.embedding)
+                        score = self._cosine_similarity(vector, embedding)
+                        hits.append({"id": str(row.id), "score": score})
+                hits.sort(key=lambda item: item["score"], reverse=True)
+                return hits[:limit]
+            except Exception as e:
+                logger.error(f"Portable vector search failed on table {table_name}: {e}")
+                return []
+
         sql = text(f"""
             SELECT {id_col}, 
                    (1 - ({vector_col} <=> CAST(:embedding AS vector))) as score
@@ -124,7 +239,7 @@ class PGVectorStore(VectorStoreBase):
             ORDER BY score DESC
             LIMIT :limit
         """)
-        
+
         try:
             result = await self.session.execute(sql, params)
             hits = []
@@ -161,6 +276,13 @@ class PGVectorStore(VectorStoreBase):
         dimension: int,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
+        if not self._supports_pgvector():
+            logger.info(
+                "Skipping pgvector collection_create for '%s' because the active dialect is %s",
+                collection_name,
+                self.session.bind.dialect.name if self.session.bind is not None else "unknown",
+            )
+            return
         safe_name = collection_name.replace(" ", "_").replace("-", "_").lower()
         table_name = f"vec_{safe_name}"
 
@@ -196,6 +318,9 @@ class PGVectorStore(VectorStoreBase):
         self,
         collection_name: str,
     ) -> None:
+        if not self._supports_pgvector():
+            logger.info("Skipping pgvector collection_delete for '%s' on non-PostgreSQL backend", collection_name)
+            return
         safe_name = collection_name.replace(" ", "_").replace("-", "_").lower()
         table_name = f"vec_{safe_name}"
 
@@ -208,6 +333,13 @@ class PGVectorStore(VectorStoreBase):
         logger.info(f"Deleted collection '{collection_name}'")
 
     async def healthcheck(self) -> Dict[str, Any]:
+        if not self._supports_pgvector():
+            return {
+                "status": "degraded",
+                "provider": "pgvector",
+                "portable_fallback": True,
+                "reason": "non_postgresql_backend",
+            }
         try:
             res = await self.session.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
             has_extension = res.scalar() is not None

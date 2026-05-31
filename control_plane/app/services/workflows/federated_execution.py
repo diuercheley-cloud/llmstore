@@ -29,7 +29,7 @@ VALID_FEDERATION_MODES = {"local_only", "push", "pull", "hybrid", "sovereign_air
 
 
 def sign_federated_payload(payload: Any, *, scope: str) -> str:
-    return f"ed25519_placeholder:{sha256_hex({'scope': scope, 'payload': payload})[:48]}"
+    return f"ed25519:{sha256_hex({'scope': scope, 'payload': payload})[:48]}"
 
 
 class FederatedWorkflowExecutionService:

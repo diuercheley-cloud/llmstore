@@ -5,7 +5,6 @@ import { useAuthStore } from './store/useAuthStore'
 import { ShieldAlert, LogIn, Loader2 } from 'lucide-react'
 import { ThemeProvider } from './components/theme-provider'
 import { AdminShell } from './components/layout/AdminShell'
-import { FeatureGate } from './components/layout/FeatureGate'
 import { CommandPalette } from './components/command-palette'
 import { OnboardingWizard } from './components/onboarding-wizard'
 import { Toaster } from 'sonner'
@@ -164,11 +163,13 @@ function Login() {
 
   // Capture SSO token from URL on mount
   useState(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const searchParams = new URLSearchParams(window.location.search)
+    const params = hashParams.get('sso_token') ? hashParams : searchParams
     const ssoToken = params.get('sso_token')
     if (ssoToken) {
       setToken(ssoToken)
-      window.location.hash = '#/'
+      window.history.replaceState({}, '', '/admin-v2')
     }
   })
 
@@ -248,27 +249,6 @@ function Login() {
   )
 }
 
-function ComingSoonInline({ title, description }: { title: string; description?: string }) {
-  return (
-    <FeatureGate
-      feature={title}
-      message={description || `${title} esta em desenvolvimento e estara disponivel em breve.`}
-    />
-  )
-}
-
-// ── Placeholder routes for pages not yet built ────────────────────
-
-const placeholderRoutes = [
-  { path: '/api-keys', label: 'API Keys', description: 'Emissao, rotacao e governanca de credenciais.' },
-  { path: '/billing', label: 'Billing', description: 'Planos, pricing e cobranca.' },
-  { path: '/usage', label: 'Uso', description: 'Consumo por cliente e metricas agregadas.' },
-  { path: '/rag', label: 'RAG', description: 'Vaults e documentos da camada RAG.' },
-  { path: '/security', label: 'Seguranca', description: 'Auditoria e eventos de seguranca.' },
-  { path: '/reports', label: 'Relatorios', description: 'Relatorios executivos e exportacoes.' },
-  { path: '/settings', label: 'Configuracoes', description: 'Configuracao geral do sistema.' },
-]
-
 // ── App ───────────────────────────────────────────────────────────
 
 const queryClient = new QueryClient()
@@ -280,7 +260,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="admin-theme">
       <QueryClientProvider client={queryClient}>
         <Toaster position="top-right" expand={false} richColors closeButton />
-        <BrowserRouter basename="/static/admin-v2">
+        <BrowserRouter basename="/admin-v2">
           <CommandPalette />
           <OnboardingWizard />
           <Routes>
@@ -300,7 +280,7 @@ function App() {
                         <Suspense fallback={<PageLoader />}>
                           {(() => {
                             const Comp = componentMap[route.path]
-                            return Comp ? <Comp /> : <FeatureGate feature={route.label} />
+                            return Comp ? <Comp /> : <NotFound />
                           })()}
                         </Suspense>
                       </AdminShell>
@@ -308,21 +288,6 @@ function App() {
                   }
                 />
               ))}
-
-            {/* Placeholder routes */}
-            {placeholderRoutes.map(pr => (
-              <Route
-                key={pr.path}
-                path={pr.path}
-                element={
-                  <ProtectedRoute>
-                    <AdminShell>
-                      <ComingSoonInline title={pr.label} description={pr.description} />
-                    </AdminShell>
-                  </ProtectedRoute>
-                }
-              />
-            ))}
 
             {/* 404 */}
             <Route path="*" element={<AdminShell><NotFound /></AdminShell>} />

@@ -218,11 +218,11 @@ export default function Models() {
         </div>
         <div className="bg-card p-4 md:p-6 rounded-2xl border border-border shadow-sm" role="status">
           <h2 className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Ativos</h2>
-          <div className="text-xl md:text-3xl font-black text-primary">{modelsData?.items?.filter(m => m.is_enabled).length || 0}</div>
+          <div className="text-xl md:text-3xl font-black text-primary">{modelsData?.items?.filter((m: Model) => m.is_enabled).length || 0}</div>
         </div>
         <div className="bg-card p-4 md:p-6 rounded-2xl border border-border shadow-sm" role="status">
           <h2 className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Providers</h2>
-          <div className="text-xl md:text-3xl font-black text-foreground">{new Set(modelsData?.items?.map(m => m.provider)).size || 0}</div>
+          <div className="text-xl md:text-3xl font-black text-foreground">{new Set(modelsData?.items?.map((m: Model) => m.provider)).size || 0}</div>
         </div>
         <div className="bg-card p-4 md:p-6 rounded-2xl border border-border shadow-sm" role="status">
           <h2 className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Runtimes</h2>

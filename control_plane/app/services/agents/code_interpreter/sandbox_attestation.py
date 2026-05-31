@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 import uuid
 from app.core.time import utc_now
+from app.utils.crypto_signer import sign_payload
 
 class SandboxAttestation(BaseModel):
     provider: str

@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
 
+type Organization = {
+  id: string
+  name: string
+  slug: string
+  status: string
+}
+
+type Appliance = {
+  id: string
+  name: string
+  workspace_name: string
+  version: string
+  health_status: string
+  status: string
+  last_heartbeat_at: string
+}
+
 const ManagedControlPlane: React.FC = () => {
-  const [organizations, setOrganizations] = useState([]);
-  const [workspaces, setWorkspaces] = useState([]);
-  const [appliances, setAppliances] = useState([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [workspaces, setWorkspaces] = useState<Array<Record<string, unknown>>>([]);
+  const [appliances, setAppliances] = useState<Appliance[]>([]);
 
   // Mock fetching data for now
   useEffect(() => {
@@ -27,7 +44,7 @@ const ManagedControlPlane: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {organizations.map(org => (
+            {organizations.map((org) => (
               <tr key={org.id}>
                 <td>{org.name}</td>
                 <td>{org.slug}</td>
@@ -58,7 +75,7 @@ const ManagedControlPlane: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {appliances.map(app => (
+            {appliances.map((app) => (
               <tr key={app.id}>
                 <td>{app.name}</td>
                 <td>{app.workspace_name}</td>

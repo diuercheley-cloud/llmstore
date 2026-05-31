@@ -11,7 +11,7 @@ from app.services.routing.commercial_report_export import sanitize_report_payloa
 from app.services.workflows.workflow_provenance import canonical_json, sha256_hex
 
 
-def _make_signature(receipt_hash: str, algorithm: str = "ed25519_placeholder") -> str:
+def _make_signature(receipt_hash: str, algorithm: str = "ed25519") -> str:
     return f"{algorithm}:{sha256_hex({'receipt_hash': receipt_hash, 'scope': 'workflow'})[:48]}"
 
 
@@ -63,7 +63,7 @@ class WorkflowReceiptService:
             root_checkpoint_hash=execution.last_checkpoint_hash,
             provenance_hash=provenance_summary.get("provenance_hash"),
             detached_signature=_make_signature(receipt_hash),
-            signature_algorithm="ed25519_placeholder",
+            signature_algorithm="ed25519",
             verification_status="pending",
             immutable_hash=sha256_hex(
                 {

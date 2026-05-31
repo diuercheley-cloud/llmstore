@@ -28,7 +28,7 @@ async def log_remediation_execution_audit_event(
         ensure_ascii=True,
         default=str,
     )
-    sanitized_payload["signature_placeholder"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[:16]
+    sanitized_payload["signature"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[:16]
 
     audit_entry = AdminActionLog(
         action=f"ops_remediation_exec:{action}",

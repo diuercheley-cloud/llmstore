@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.client import Client
 from app.models.operations.attestation_framework import (
+from app.utils.crypto_signer import sign_payload
     AttestationChainLink,
     AttestationFederationBundle,
     AttestationReceipt,
@@ -33,7 +34,7 @@ async def test_attestation_framework_models_persist(session: AsyncSession):
         payload_hash="a" * 64,
         attestation_hash="b" * 64,
         previous_attestation_hash=None,
-        signature_placeholder="placeholder-signature:workflow",
+        signature=sign_payload("workflow"),
         attestation_chain_position="1",
         immutable_hash="c" * 64,
     )
@@ -73,7 +74,7 @@ async def test_attestation_framework_models_persist(session: AsyncSession):
         receipt_type="attestation_receipt",
         payload_hash="2" * 64,
         immutable_hash="3" * 64,
-        signature_placeholder="placeholder-signature:receipt",
+        signature=sign_payload("receipt"),
     )
     chain_link = AttestationChainLink(
         id="lnk-1",
@@ -91,7 +92,7 @@ async def test_attestation_framework_models_persist(session: AsyncSession):
     stored = (await session.execute(select(SovereignExecutionAttestation))).scalars().all()
     assert stored[0].replay_verifiable is True
     assert stored[0].offline_verifiable is True
-    assert stored[0].signature_placeholder.startswith("placeholder-signature:")
+    assert stored[0].signature.startswith("placeholder-signature:")
     assert bundle.bundle_status == "draft"
     assert policy.require_chain_integrity is True
 

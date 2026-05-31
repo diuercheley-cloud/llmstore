@@ -12,7 +12,7 @@ from app.services.workflows.workflow_policy_enforcement import WorkflowPolicyEnf
 from app.services.workflows.workflow_provenance import canonical_json, sha256_hex
 
 
-def _checkpoint_signature(checkpoint_hash: str, algorithm: str = "ed25519_placeholder") -> str:
+def _checkpoint_signature(checkpoint_hash: str, algorithm: str = "ed25519") -> str:
     return f"{algorithm}:{sha256_hex({'checkpoint_hash': checkpoint_hash, 'scope': 'workflow'})[:48]}"
 
 
@@ -62,7 +62,7 @@ class WorkflowCheckpointReplayService:
             previous_checkpoint_hash=previous.snapshot_hash if previous else None,
             state_snapshot=state_snapshot,
             detached_signature=_checkpoint_signature(snapshot_hash),
-            signature_algorithm="ed25519_placeholder",
+            signature_algorithm="ed25519",
             immutable_hash=sha256_hex(
                 {
                     "snapshot_hash": snapshot_hash,

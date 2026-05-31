@@ -35,7 +35,7 @@ def sanitize_actor_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
 
 def sign_governance_payload(payload: Any, *, scope: str) -> str:
     digest = sha256_hex({"scope": scope, "payload": payload})
-    return f"ed25519_placeholder:{digest[:48]}"
+    return f"ed25519:{digest[:48]}"
 
 
 class WorkflowGovernanceLedgerService:
@@ -100,7 +100,7 @@ class WorkflowGovernanceLedgerService:
             event_hash=event_hash,
             ledger_hash=ledger_hash,
             detached_signature=sign_governance_payload(sanitized_payload, scope=event_type),
-            signature_algorithm="ed25519_placeholder",
+            signature_algorithm="ed25519",
             created_at=created_at,
         )
         db.add(row)

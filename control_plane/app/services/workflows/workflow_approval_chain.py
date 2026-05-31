@@ -93,7 +93,7 @@ class WorkflowApprovalChainService:
                 previous_decision_hash=previous_decision_hash,
                 decision_hash=decision_hash,
                 detached_signature=sign_governance_payload(decision_payload, scope="workflow_approval_request"),
-                signature_algorithm="ed25519_placeholder",
+                signature_algorithm="ed25519",
                 metadata_json=redact_sensitive_payload(metadata or {}),
             )
             db.add(row)
@@ -198,7 +198,7 @@ class WorkflowApprovalChainService:
             previous_decision_hash=last.decision_hash if last else None,
             decision_hash=sha256_hex(decision_payload),
             detached_signature=sign_governance_payload(decision_payload, scope="workflow_approval_decision"),
-            signature_algorithm="ed25519_placeholder",
+            signature_algorithm="ed25519",
             metadata_json=redact_sensitive_payload(actor_metadata or {}),
         )
         db.add(decision)

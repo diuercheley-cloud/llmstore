@@ -72,7 +72,7 @@ The following claims must never appear in documentation:
 - `guaranteed secure` or absolute security guarantees
 - `certified` or `formally certified` without explicit evidence
 - `unbreakable` or `impenetrable`
-- Any suggestion of real PKI or hardware trust
+- Any suggestion of real hardware trust
 - Any suggestion of unrestricted or cluster-wide third-party plugin code execution
 - Any suggestion of mandatory cloud/SaaS
 

@@ -135,7 +135,7 @@ async def register_adapter_manifest(
         receipt_type="manifest_registration",
         payload_hash=receipt_data["payload_hash"],
         immutable_hash=receipt_data["immutable_hash"],
-        signature_placeholder=receipt_data["signature_placeholder"]
+        signature=receipt_data["signature"]
     )
     db.add(receipt)
     await db.commit()
@@ -254,7 +254,7 @@ async def simulate_sandbox_run(
         receipt_type="sandbox_run",
         payload_hash=receipt_data["payload_hash"],
         immutable_hash=receipt_data["immutable_hash"],
-        signature_placeholder=receipt_data["signature_placeholder"]
+        signature=receipt_data["signature"]
     )
     db.add(receipt)
     
@@ -323,7 +323,7 @@ async def generate_sandbox_run_receipt(
         receipt_type="sandbox_run",
         payload_hash=receipt_data["payload_hash"],
         immutable_hash=receipt_data["immutable_hash"],
-        signature_placeholder=receipt_data["signature_placeholder"]
+        signature=receipt_data["signature"]
     )
     db.add(receipt)
     await db.commit()

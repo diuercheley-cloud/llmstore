@@ -8,7 +8,7 @@ from app.models.operations.plugin_supply_chain import (
     PluginDependencyVerification,
     PluginProvenanceRecord,
     PluginSBOMPlaceholder,
-    PluginSignedArtifactPlaceholder,
+    PluginSignedArtifact,
     PluginSupplyChainReceipt,
 )
 from app.models.operations.plugin_runtime import PluginABIContract
@@ -20,7 +20,7 @@ def test_plugin_supply_chain_models_exposed():
     assert PluginArtifactLineage.__tablename__ == "plugin_artifact_lineage"
     assert DependencyGovernancePolicy.__tablename__ == "dependency_governance_policies"
     assert PluginDependencyVerification.__tablename__ == "plugin_dependency_verifications"
-    assert PluginSignedArtifactPlaceholder.__tablename__ == "plugin_signed_artifact_placeholders"
+    assert PluginSignedArtifact.__tablename__ == "plugin_signed_artifact_placeholders"
     assert PluginSupplyChainReceipt.__tablename__ == "plugin_supply_chain_receipts"
 
 

@@ -2,6 +2,7 @@ import uuid
 
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
 from app.services.operations.attestation_framework.replay_verifier import AttestationReplayVerifier
+from app.utils.crypto_signer import sign_payload
 
 
 def test_replay_verifier_attestation_and_chain():
@@ -14,7 +15,7 @@ def test_replay_verifier_attestation_and_chain():
             "subject_ref": "run-1",
             "attestation_scope": "sandbox",
             "payload": {"result": "ok"},
-            "signature_placeholder": "placeholder-signature:sandbox",
+            "signature": sign_payload("sandbox"),
         },
         "sandbox_run",
     )

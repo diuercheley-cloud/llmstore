@@ -230,7 +230,7 @@ def _serialize_receipt(item: PluginRuntimeReceipt) -> dict[str, Any]:
         "receipt_type": item.receipt_type,
         "payload_hash": item.payload_hash,
         "immutable_hash": item.immutable_hash,
-        "signature_placeholder": item.signature_placeholder,
+        "signature": item.signature,
     }
 
 
@@ -710,7 +710,7 @@ async def generate_receipt(
         receipt_type=receipt_payload["receipt_type"],
         payload_hash=receipt_payload["payload_hash"],
         immutable_hash=receipt_payload["immutable_hash"],
-        signature_placeholder=receipt_payload["signature_placeholder"],
+        signature=receipt_payload["signature"],
         generated_at=receipt_payload["generated_at"],
     )
     db.add(receipt)

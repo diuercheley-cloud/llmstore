@@ -1,6 +1,14 @@
 apiVersion: 1
 providers:
-  - name: Local LLM
+  - name: LLM Agent Dashboards
+    orgId: 1
+    folder: "LLM Inference Stack"
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards
+  - name: Legacy Path
     orgId: 1
     folder: ""
     type: file

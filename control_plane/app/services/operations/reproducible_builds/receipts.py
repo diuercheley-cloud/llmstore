@@ -4,6 +4,7 @@ from typing import Any
 from app.core.time import utc_now
 from app.models.operations.reproducible_builds import ReproducibleBuildReceipt
 from app.services.operations.reproducible_builds.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 
 def _build_receipt_payload(receipt_type: str, client_id: str, subject_id: str, immutable_hash: str, payload_hash: str, deterministic_version: str) -> dict[str, Any]:
@@ -15,7 +16,7 @@ def _build_receipt_payload(receipt_type: str, client_id: str, subject_id: str, i
         "immutable_hash": immutable_hash,
         "payload_hash": payload_hash,
         "deterministic_version": deterministic_version,
-        "signature_placeholder": f"placeholder-signature:{receipt_type}:{payload_hash[:16]}",
+        "signature": sign_payload(f"{receipt_type}:{payload_hash[:16]}"),
         "generated_at": generated_at if isinstance(generated_at, datetime) else utc_now(),
     }
 
@@ -36,7 +37,7 @@ def _build_model_receipt(receipt_type: str, manifest: Any, subject_id: str, payl
         receipt_type=payload["receipt_type"],
         payload_hash=payload["payload_hash"],
         immutable_hash=sha256_hex({"kind": "reproducible_build_receipt_immutable", "receipt_type": receipt_type, "subject_id": subject_id, "payload_hash": payload_hash}),
-        signature_placeholder=payload["signature_placeholder"],
+        signature=payload["signature"],
         generated_at=payload["generated_at"],
     )
     receipt._payload = payload

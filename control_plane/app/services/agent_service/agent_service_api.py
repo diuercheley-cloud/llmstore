@@ -49,6 +49,11 @@ class AgentServiceAPI:
             return {"run_id": str(run.id), "status": run.status}
 
     async def _record_usage(self, agent_id: uuid.UUID, tenant_id: str, run_id: uuid.UUID, tier_id: uuid.UUID, mode: str):
+        existing = await self.db.execute(
+            select(AgentServiceUsage).where(AgentServiceUsage.run_id == run_id)
+        )
+        if existing.scalar_one_or_none() is not None:
+            return
         usage = AgentServiceUsage(
             agent_id=agent_id,
             tenant_id=tenant_id,

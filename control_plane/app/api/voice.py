@@ -30,8 +30,8 @@ router = APIRouter(prefix="/v1/voice", tags=["voice-agent"])
 class VoiceSessionCreate(BaseModel):
     agent_id: uuid.UUID
     mode: str = "websocket"
-    stt_provider: str = "mock"
-    tts_provider: str = "mock"
+    stt_provider: str = "local_whisper_real"
+    tts_provider: str = "local_tts_real"
     language: str = "pt-BR"
 
 

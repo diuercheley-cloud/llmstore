@@ -8,6 +8,7 @@ from app.services.operations.reproducible_builds.receipts import (
     build_reproducibility_receipt,
 )
 from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
+from app.utils.crypto_signer import sign_payload
 
 
 def _manifest():
@@ -47,4 +48,4 @@ def test_receipts_contain_required_fields():
     for receipt in receipts:
         assert receipt.receipt_type
         assert receipt.payload_hash
-        assert receipt.signature_placeholder.startswith("placeholder-signature:")
+        assert receipt.signature.startswith("placeholder-signature:")

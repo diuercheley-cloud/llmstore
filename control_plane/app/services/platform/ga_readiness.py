@@ -65,6 +65,70 @@ class GAReadinessService:
         else:
             return loop.run_until_complete(coro)
 
+    def _production_surface_dependencies_ok(self, base_dir: Path) -> tuple[bool, str]:
+        supported_surface_yaml = base_dir / "config/supported-surface.yaml"
+        if not supported_surface_yaml.exists():
+            return False, "config/supported-surface.yaml is missing"
+
+        try:
+            data = yaml.safe_load(supported_surface_yaml.read_text(encoding="utf-8")) or {}
+        except Exception as exc:
+            return False, f"Failed to parse supported-surface.yaml: {exc}"
+
+        capabilities = data.get("capabilities", [])
+        production_core_ids = {
+            item.get("id")
+            for item in capabilities
+            if isinstance(item, dict) and item.get("status") == "production_core"
+        }
+        blockers = []
+
+        if "billing" in production_core_ids:
+            provider = str(getattr(self.settings, "payment_provider", "mock")).strip().lower()
+            if provider in {"mock", "disabled", ""}:
+                blockers.append(f"billing requires PAYMENT_PROVIDER real, found '{provider}'")
+
+        if "rag" in production_core_ids:
+            embeddings = str(getattr(self.settings, "embeddings_backend", "mock")).strip().lower()
+            if embeddings == "mock":
+                blockers.append("rag requires EMBEDDINGS_BACKEND real, found 'mock'")
+
+        if "multi-provider-routing" in production_core_ids:
+            if bool(getattr(self.settings, "mock_backend_enabled", False)):
+                blockers.append("multi-provider-routing requires MOCK_BACKEND_ENABLED=false")
+
+        if "agentic-runtime" in production_core_ids:
+            llm_provider = str(getattr(self.settings, "agent_llm_provider", "mock")).strip().lower()
+            if llm_provider == "mock":
+                blockers.append("agentic-runtime requires AGENT_LLM_PROVIDER not mock")
+            non_real_modes = [
+                mode
+                for mode, enabled in (
+                    ("mock", bool(getattr(self.settings, "agent_executor_mock_mode", False))),
+                    ("dry_run", bool(getattr(self.settings, "agent_executor_dry_run_mode", False))),
+                    ("simulation", bool(getattr(self.settings, "agent_executor_allow_simulation", False))),
+                )
+                if enabled
+            ]
+            if non_real_modes:
+                blockers.append(
+                    "agentic-runtime requires real executor modes only; found "
+                    + ", ".join(non_real_modes)
+                )
+
+        if "agent-worker-operations" in production_core_ids:
+            if not bool(getattr(self.settings, "agent_worker_enabled", False)):
+                blockers.append("agent-worker-operations requires AGENT_WORKER_ENABLED=true")
+
+        if "agent-readiness" in production_core_ids:
+            readiness_artifact = base_dir / "artifacts/runtime/real-execution-readiness.json"
+            if not readiness_artifact.exists():
+                blockers.append("agent-readiness requires artifacts/runtime/real-execution-readiness.json")
+
+        if blockers:
+            return False, "; ".join(blockers)
+        return True, "Supported surface validated with production dependencies hardened"
+
     async def _check_active_workers_db(self) -> bool:
         try:
             from app.db.session import SessionLocal
@@ -205,28 +269,8 @@ class GAReadinessService:
             reasons["clean_working_tree"] = f"working-tree-certification.md artifact is missing for tag {tag}"
 
         # 11. supported_surface_no_production_beta_stub
-        # We check if supported-surface configuration exists and contains no production beta/stub
-        supported_surface_yaml = base_dir / "config/supported-surface.yaml"
-        surface_ok = False
-        if supported_surface_yaml.exists():
-            try:
-                data = yaml.safe_load(supported_surface_yaml.read_text(encoding="utf-8")) or {}
-                # Check for beta/stub features in production
-                production_features = data.get("production", [])
-                has_beta_stub = False
-                for feat in production_features:
-                    if isinstance(feat, dict) and (feat.get("status") in ("beta", "experimental") or feat.get("stub", False)):
-                        has_beta_stub = True
-                        break
-                if not has_beta_stub:
-                    surface_ok = True
-                    reasons["supported_surface_no_production_beta_stub"] = "Supported surface validated with no production beta/stub dependencies"
-                else:
-                    reasons["supported_surface_no_production_beta_stub"] = "Found production features flagged as beta/stub in supported-surface.yaml"
-            except Exception as e:
-                reasons["supported_surface_no_production_beta_stub"] = f"Failed to parse supported-surface.yaml: {e}"
-        else:
-            reasons["supported_surface_no_production_beta_stub"] = "config/supported-surface.yaml is missing"
+        surface_ok, surface_reason = self._production_surface_dependencies_ok(base_dir)
+        reasons["supported_surface_no_production_beta_stub"] = surface_reason
 
         # 12. release_gate_passed
         release_gate_artifact = resolver.get_production_gate_path(tag)

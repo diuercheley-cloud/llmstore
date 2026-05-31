@@ -4,6 +4,7 @@ Status: implementation
 """
 import datetime
 import os
+from copy import deepcopy
 from typing import Any, Dict, List
 
 import kopf
@@ -57,56 +58,235 @@ def update_status(name: str, namespace: str, plural: str, conditions: List[Dict[
     api.patch_namespaced_custom_object_status(group, version, namespace, plural, name, {"status": status})
 
 
+def _ensure_list(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def _merge_env(env: List[Dict[str, Any]], extra_env: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    merged: Dict[str, Dict[str, Any]] = {}
+    for item in env + extra_env:
+        name = item.get("name")
+        if name:
+            merged[name] = item
+    return list(merged.values())
+
+
+def _build_probe(probe: Dict[str, Any] | None, default_port: int) -> Dict[str, Any] | None:
+    if not probe:
+        return None
+    probe = deepcopy(probe)
+    if "httpGet" not in probe and probe.get("path"):
+        probe["httpGet"] = {
+            "path": probe.pop("path"),
+            "port": probe.pop("port", default_port),
+        }
+    return probe
+
+
+def _default_probes(container_port: int) -> Dict[str, Dict[str, Any]]:
+    return {
+        "readinessProbe": {
+            "httpGet": {"path": "/healthz", "port": container_port},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+            "timeoutSeconds": 3,
+            "failureThreshold": 6,
+        },
+        "livenessProbe": {
+            "httpGet": {"path": "/healthz", "port": container_port},
+            "initialDelaySeconds": 15,
+            "periodSeconds": 20,
+            "timeoutSeconds": 3,
+            "failureThreshold": 3,
+        },
+    }
+
+
+def _build_persistent_volume_claim(name: str, namespace: str, claim: Dict[str, Any]) -> Dict[str, Any]:
+    access_modes = claim.get("accessModes") or ["ReadWriteOnce"]
+    storage_class_name = claim.get("storageClassName")
+    pvc = {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+            "name": claim.get("name", f"{name}-data"),
+            "namespace": namespace,
+            "labels": {"app": name},
+        },
+        "spec": {
+            "accessModes": access_modes,
+            "resources": {"requests": {"storage": claim.get("size", "20Gi")}},
+        },
+    }
+    if storage_class_name:
+        pvc["spec"]["storageClassName"] = storage_class_name
+    return pvc
+
+
+def _build_hpa_body(name: str, namespace: str, autoscaling: Dict[str, Any]) -> Dict[str, Any]:
+    metrics: List[Dict[str, Any]] = []
+    cpu = autoscaling.get("targetCPUUtilizationPercentage")
+    memory = autoscaling.get("targetMemoryUtilizationPercentage")
+    if cpu:
+        metrics.append(
+            {
+                "type": "Resource",
+                "resource": {
+                    "name": "cpu",
+                    "target": {"type": "Utilization", "averageUtilization": cpu},
+                },
+            }
+        )
+    if memory:
+        metrics.append(
+            {
+                "type": "Resource",
+                "resource": {
+                    "name": "memory",
+                    "target": {"type": "Utilization", "averageUtilization": memory},
+                },
+            }
+        )
+    return {
+        "apiVersion": "autoscaling/v2",
+        "kind": "HorizontalPodAutoscaler",
+        "metadata": {
+            "name": name,
+            "namespace": namespace,
+            "labels": {"app": name},
+        },
+        "spec": {
+            "scaleTargetRef": {"apiVersion": "apps/v1", "kind": "Deployment", "name": name},
+            "minReplicas": autoscaling.get("minReplicas", 1),
+            "maxReplicas": autoscaling.get("maxReplicas", 3),
+            "metrics": metrics,
+        },
+    }
+
+
 def _build_deployment_body(name: str, namespace: str, spec: Dict[str, Any]) -> Dict[str, Any]:
+    metadata = spec.get("metadata", {})
+    pod_metadata = spec.get("podMetadata", {})
+    labels = {"app": name, **metadata.get("labels", {})}
+    pod_labels = {"app": name, **pod_metadata.get("labels", {})}
+    annotations = metadata.get("annotations", {})
+    pod_annotations = pod_metadata.get("annotations", {})
+    container_port = int(spec.get("containerPort", 8080))
+    container_ports = spec.get("ports") or [{"containerPort": container_port}]
+    env = _ensure_list(spec.get("env"))
+    env_from = _ensure_list(spec.get("envFrom"))
+    resources = deepcopy(spec.get("resources", {}))
+    security_context = deepcopy(spec.get("securityContext", {}))
+    pod_security_context = deepcopy(spec.get("podSecurityContext", {}))
+    volumes = _ensure_list(spec.get("volumes"))
+    volume_mounts = _ensure_list(spec.get("volumeMounts"))
+    persistent_volume_claim = spec.get("persistentVolumeClaim")
+    service_account_name = spec.get("serviceAccountName")
+
     deployment = {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
         "metadata": {
             "name": name,
             "namespace": namespace,
-            "labels": {"app": name},
+            "labels": labels,
         },
         "spec": {
             "replicas": spec.get("replicas", 1),
             "selector": {"matchLabels": {"app": name}},
             "template": {
-                "metadata": {"labels": {"app": name}},
+                "metadata": {"labels": pod_labels},
                 "spec": {
                     "containers": [
                         {
                             "name": "main",
                             "image": spec.get("image", "busybox"),
-                            "ports": [{"containerPort": 8080}],
+                            "ports": container_ports,
+                            "env": env,
+                            "envFrom": env_from,
+                            "resources": resources,
+                            "securityContext": security_context,
+                            "volumeMounts": volume_mounts,
                         }
-                    ]
+                    ],
+                    "volumes": volumes,
                 },
             },
         },
     }
 
+    if annotations:
+        deployment["metadata"]["annotations"] = annotations
+    if pod_annotations:
+        deployment["spec"]["template"]["metadata"]["annotations"] = pod_annotations
+    if service_account_name:
+        deployment["spec"]["template"]["spec"]["serviceAccountName"] = service_account_name
+    if pod_security_context:
+        deployment["spec"]["template"]["spec"]["securityContext"] = pod_security_context
+    if spec.get("nodeSelector"):
+        deployment["spec"]["template"]["spec"]["nodeSelector"] = spec["nodeSelector"]
+    if spec.get("tolerations"):
+        deployment["spec"]["template"]["spec"]["tolerations"] = spec["tolerations"]
+    if spec.get("affinity"):
+        deployment["spec"]["template"]["spec"]["affinity"] = spec["affinity"]
+
+    if persistent_volume_claim:
+        claim_name = persistent_volume_claim.get("name", f"{name}-data")
+        deployment["spec"]["template"]["spec"].setdefault("volumes", []).append(
+            {
+                "name": persistent_volume_claim.get("volumeName", "data"),
+                "persistentVolumeClaim": {"claimName": claim_name},
+            }
+        )
+        mount_path = persistent_volume_claim.get("mountPath", "/data")
+        deployment["spec"]["template"]["spec"]["containers"][0].setdefault("volumeMounts", []).append(
+            {"name": persistent_volume_claim.get("volumeName", "data"), "mountPath": mount_path}
+        )
+
+    probes = _default_probes(container_port)
+    readiness_probe = _build_probe(spec.get("readinessProbe"), container_port) or probes["readinessProbe"]
+    liveness_probe = _build_probe(spec.get("livenessProbe"), container_port) or probes["livenessProbe"]
+    startup_probe = _build_probe(spec.get("startupProbe"), container_port)
+    deployment["spec"]["template"]["spec"]["containers"][0]["readinessProbe"] = readiness_probe
+    deployment["spec"]["template"]["spec"]["containers"][0]["livenessProbe"] = liveness_probe
+    if startup_probe:
+        deployment["spec"]["template"]["spec"]["containers"][0]["startupProbe"] = startup_probe
+
     if spec.get("gpu", {}).get("enabled"):
         gpu_count = spec["gpu"].get("count", 1)
-        deployment["spec"]["template"]["spec"]["containers"][0]["resources"] = {
-            "limits": {"nvidia.com/gpu": gpu_count}
-        }
+        container_resources = deployment["spec"]["template"]["spec"]["containers"][0].setdefault("resources", {})
+        container_resources.setdefault("limits", {})
+        container_resources["limits"]["nvidia.com/gpu"] = gpu_count
 
     return deployment
 
 
-def _build_service_body(name: str, namespace: str) -> Dict[str, Any]:
-    return {
+def _build_service_body(name: str, namespace: str, spec: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    spec = spec or {}
+    service_spec = spec.get("service", {})
+    port = int(service_spec.get("port", 80))
+    target_port = int(service_spec.get("targetPort", spec.get("containerPort", 8080)))
+    body = {
         "apiVersion": "v1",
         "kind": "Service",
         "metadata": {
             "name": name,
             "namespace": namespace,
-            "labels": {"app": name},
+            "labels": {"app": name, **service_spec.get("labels", {})},
         },
         "spec": {
             "selector": {"app": name},
-            "ports": [{"port": 80, "targetPort": 8080}],
+            "type": service_spec.get("type", "ClusterIP"),
+            "ports": service_spec.get("ports") or [{"port": port, "targetPort": target_port}],
         },
     }
+    if service_spec.get("annotations"):
+        body["metadata"]["annotations"] = service_spec["annotations"]
+    return body
 
 
 def apply_deployment(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
@@ -128,9 +308,9 @@ def apply_deployment(name: str, namespace: str, spec: Dict[str, Any], owner: Dic
         logger.info(f"Updated Deployment {name}")
 
 
-def apply_service(name: str, namespace: str, owner: Dict[str, Any], logger):
+def apply_service(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
     core_v1 = kubernetes.client.CoreV1Api()
-    service = _build_service_body(name, namespace)
+    service = _build_service_body(name, namespace, spec)
     kopf.adopt(service, owner)
 
     if not _apply_enabled():
@@ -147,24 +327,90 @@ def apply_service(name: str, namespace: str, owner: Dict[str, Any], logger):
         logger.info(f"Patched Service {name}")
 
 
+def apply_persistent_volume_claim(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+    claim = spec.get("persistentVolumeClaim")
+    if not claim:
+        return
+    core_v1 = kubernetes.client.CoreV1Api()
+    pvc = _build_persistent_volume_claim(name, namespace, claim)
+    kopf.adopt(pvc, owner)
+
+    if not _apply_enabled():
+        logger.info(f"[{_mode_log_prefix()}] Would apply PersistentVolumeClaim {pvc['metadata']['name']}")
+        return
+
+    try:
+        core_v1.create_namespaced_persistent_volume_claim(namespace=namespace, body=pvc)
+        logger.info(f"Created PersistentVolumeClaim {pvc['metadata']['name']}")
+    except kubernetes.client.exceptions.ApiException as exc:
+        if exc.status != 409:
+            raise
+        core_v1.patch_namespaced_persistent_volume_claim(
+            name=pvc["metadata"]["name"],
+            namespace=namespace,
+            body=pvc,
+        )
+        logger.info(f"Patched PersistentVolumeClaim {pvc['metadata']['name']}")
+
+
+def apply_horizontal_pod_autoscaler(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+    autoscaling = spec.get("autoscaling", {})
+    if not autoscaling.get("enabled"):
+        return
+    autoscaling_v2 = kubernetes.client.AutoscalingV2Api()
+    hpa = _build_hpa_body(name, namespace, autoscaling)
+    kopf.adopt(hpa, owner)
+
+    if not _apply_enabled():
+        logger.info(f"[{_mode_log_prefix()}] Would apply HorizontalPodAutoscaler {name}")
+        return
+
+    try:
+        autoscaling_v2.create_namespaced_horizontal_pod_autoscaler(namespace=namespace, body=hpa)
+        logger.info(f"Created HorizontalPodAutoscaler {name}")
+    except kubernetes.client.exceptions.ApiException as exc:
+        if exc.status != 409:
+            raise
+        autoscaling_v2.patch_namespaced_horizontal_pod_autoscaler(name=name, namespace=namespace, body=hpa)
+        logger.info(f"Patched HorizontalPodAutoscaler {name}")
+
+
+def _resource_status_message(base: str, spec: Dict[str, Any]) -> str:
+    resources = ["deployment"]
+    if spec.get("service", {}).get("enabled", True):
+        resources.append("service")
+    if spec.get("persistentVolumeClaim"):
+        resources.append("persistent_volume_claim")
+    if spec.get("autoscaling", {}).get("enabled"):
+        resources.append("horizontal_pod_autoscaler")
+    return f"{base}: {', '.join(resources)}"
+
+
 @kopf.on.create("llm.stack.local", "v1", "llmworkers")
 @kopf.on.update("llm.stack.local", "v1", "llmworkers")
 def reconcile_worker(spec, name, namespace, body, logger, **kwargs):
-    logger.info(f"Reconciling LLMWorker {name} in mode={get_operator_mode()}")
+    logger.info(f"Reconciling LLMWorker {name} with Agentic Self-Healing")
 
+    # Agentic Health Check (Semantic sanity)
+    # In a real scenario, this would query Prometheus/Metrics for agent error rates
+    semantic_health = spec.get("healthThreshold", 0.95)
+    
     try:
-        # Agent Worker specific environment
-        spec["env"] = spec.get("env", []) + [
-            {"name": "AGENT_WORKER_ENABLED", "value": "true"},
-            {"name": "AGENT_EXECUTION_PLANE_ENABLED", "value": "true"},
-        ]
-        
-        apply_deployment(name, namespace, spec, body, logger)
+        worker_spec = deepcopy(spec)
+        # Injection of self-healing environment variables
+        worker_spec["env"] = _merge_env(_ensure_list(worker_spec.get("env")), [
+            {"name": "AGENT_SELF_HEALING_ENABLED", "value": "true"},
+            {"name": "AGENT_HEALTH_THRESHOLD", "value": str(semantic_health)},
+        ])
+
+        apply_persistent_volume_claim(name, namespace, worker_spec, body, logger)
+        apply_deployment(name, namespace, worker_spec, body, logger)
+        apply_horizontal_pod_autoscaler(name, namespace, worker_spec, body, logger)
         update_status(
             name,
             namespace,
             "llmworkers",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": "Worker deployment reconciled"}],
+            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("Worker deployment reconciled", worker_spec)}],
             logger,
         )
     except Exception as exc:
@@ -184,13 +430,17 @@ def reconcile_inference_stack(spec, name, namespace, body, logger, **kwargs):
     logger.info(f"Reconciling LLMInferenceStack {name} in mode={get_operator_mode()}")
 
     try:
-        apply_deployment(f"{name}-cp", namespace, spec, body, logger)
-        apply_service(f"{name}-cp", namespace, body, logger)
+        control_plane_spec = deepcopy(spec)
+        apply_persistent_volume_claim(f"{name}-cp", namespace, control_plane_spec, body, logger)
+        apply_deployment(f"{name}-cp", namespace, control_plane_spec, body, logger)
+        if control_plane_spec.get("service", {}).get("enabled", True):
+            apply_service(f"{name}-cp", namespace, control_plane_spec, body, logger)
+        apply_horizontal_pod_autoscaler(f"{name}-cp", namespace, control_plane_spec, body, logger)
         update_status(
             name,
             namespace,
             "llminferencestacks",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": "All resources reconciled"}],
+            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("All resources reconciled", control_plane_spec)}],
             logger,
         )
     except Exception as exc:
@@ -210,12 +460,17 @@ def reconcile_model_runtime(spec, name, namespace, body, logger, **kwargs):
     logger.info(f"Reconciling LLMModelRuntime {name} in mode={get_operator_mode()}")
 
     try:
-        apply_deployment(name, namespace, spec, body, logger)
+        runtime_spec = deepcopy(spec)
+        apply_persistent_volume_claim(name, namespace, runtime_spec, body, logger)
+        apply_deployment(name, namespace, runtime_spec, body, logger)
+        if runtime_spec.get("service", {}).get("enabled", False):
+            apply_service(name, namespace, runtime_spec, body, logger)
+        apply_horizontal_pod_autoscaler(name, namespace, runtime_spec, body, logger)
         update_status(
             name,
             namespace,
             "llmmodelruntimes",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": "Runtime deployment reconciled"}],
+            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("Runtime deployment reconciled", runtime_spec)}],
             logger,
         )
     except Exception as exc:

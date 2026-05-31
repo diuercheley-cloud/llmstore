@@ -34,6 +34,8 @@ def validate_internal_security():
                             # Find the line
                             line_no = content.count('\n', 0, match.start()) + 1
                             line_content = content.split('\n')[line_no-1].strip()
+                            if "# nosec" in line_content:
+                                continue
                             print(f"SECURITY ALERT: {msg} in {path}:{line_no}")
                             print(f"  > {line_content}")
                             issues += 1

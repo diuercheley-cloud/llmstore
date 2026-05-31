@@ -1,85 +1,176 @@
-# Owner: agent-platform
-import uuid
+import asyncio
 import logging
-from typing import List, Dict, Any, Optional
+import uuid
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.multi_agent import AgentTeam, AgentTeamMember
 from app.services.agents.multi_agent.team_runtime import TeamRuntime
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
+from app.services.agents.multi_agent.delegation_policy import DelegationPolicy
 
 logger = logging.getLogger(__name__)
 
+
 class SpecialistRoutingRuntime(TeamRuntime):
     """
-    Implements Specialist Routing: Dispatcher -> Multiple Independent Specialists.
+    Implements the dispatcher-specialist pattern:
+      Dispatcher agent routes incoming tasks to the right specialist agents.
+      Specialists process in parallel; results are synthesized by an arbitrator.
     """
-    def __init__(self, db):
+
+    def __init__(self, db: AsyncSession):
         super().__init__(db)
+        self.db = db
         self.arbitrator = ArbitrationEngine()
         self.policy = MultiAgentPolicyService(db)
+        self.delegation = DelegationPolicy(db)
+        self._agent_runtime = None
 
-    async def execute(self, team_id: uuid.UUID, goal: str):
-        team = await self.get_team(team_id)
-        members = await self.get_members(team_id)
-        
+    @property
+    def agent_runtime(self):
+        if self._agent_runtime is None:
+            from app.services.agents import agent_runtime as ar
+            self._agent_runtime = ar
+        return self._agent_runtime
+
+    async def execute(self, team_id: uuid.UUID, goal: str) -> str:
+        team = await self._get_team(team_id)
+        members = await self._get_members(team_id)
+
         dispatcher = next((m for m in members if m.role == "dispatcher"), None)
         if not dispatcher:
             raise ValueError("Team must have a dispatcher for specialist routing")
-            
-        run = await self.start_run(team_id, team.tenant_id, goal)
-        workspace = self.get_workspace(team.tenant_id)
-        
-        try:
-            specialists = [m for m in members if m.role == "specialist"]
-            
-            await self.obs.record_trace(run.id, "routing_started", {"goal": goal})
-            
-            # 1. Routing phase (mocking dispatcher logic)
-            # Dispatcher decides which specialists are needed based on the goal
-            selected_specialists = specialists[:2] # Mocking selection
-            
-            outputs = []
-            from app.services.agents import agent_runtime
-            for spec in selected_specialists:
-                # Policy check
-                allowed, reason = await self.policy.validate_delegation(run.id, dispatcher.agent_id, spec.agent_id)
-                if not allowed:
-                    continue # Skip blocked specialists
-                
-                await self.obs.record_trace(run.id, "specialist_routed", {"agent_id": str(spec.agent_id)})
-                
-                # REAL DELEGATION
-                sub_run = await agent_runtime.start_run(
-                    db=self.db,
-                    agent_id=spec.agent_id,
-                    tenant_id=team.tenant_id,
-                    input_text=f"Routing task for goal: {goal}.",
-                    parent_run_id=run.id,
-                    correlation_id=run.correlation_id
-                )
-                while sub_run.status not in ("completed", "failed", "cancelled"):
-                    await asyncio.sleep(1)
-                    await self.db.refresh(sub_run)
 
-                spec_result = f"Result from {spec.agent_id} (run {sub_run.id}): Analysis completed."
-                output = {
-                    "agent_id": str(spec.agent_id),
-                    "run_id": str(sub_run.id),
-                    "result": spec_result,
-                    "confidence": 0.9,
-                    "cost_brl": sub_run.estimated_cost_brl
-                }
-                outputs.append(output)
-                await self.obs.record_message(run.id, spec.agent_id, dispatcher.agent_id, spec_result, "result")
-            
-            # 2. Synthesis phase
-            arbitration = await self.arbitrator.arbitrate(outputs, {"goal": goal})
-            final_result = arbitration["final_synthesis"]
-            
-            await self.obs.record_message(run.id, dispatcher.agent_id, None, final_result, "result")
+        specialists = [m for m in members if m.role == "specialist"]
+        if not specialists:
+            raise ValueError("Team must have at least one specialist")
+
+        run = await self.start_run(team_id, team.tenant_id, goal)
+
+        try:
+            logger.info(
+                "SpecialistRouting: team=%s goal=%s dispatcher=%s specialists=%d",
+                team_id, goal[:80], dispatcher.agent_id, len(specialists),
+            )
+
+            selected = await self._select_specialists(dispatcher, specialists, goal)
+            if not selected:
+                return await self._fallback(dispatcher, goal, run.id)
+
+            outputs = await self._delegate_to_specialists(
+                selected, goal, team.tenant_id, run.id,
+            )
+
+            synthesis = await self.arbitrator.arbitrate(
+                outputs, {"goal": goal, "team_id": str(team_id)}
+            )
+            final_result = synthesis.get("final_synthesis", str(outputs))
+
             await self.complete_run(run.id, final_result)
             return final_result
-            
+
         except Exception as e:
-            logger.exception("Error in specialist routing")
+            logger.exception("SpecialistRouting failed")
             await self.fail_run(run.id, str(e))
             raise
+
+    async def _select_specialists(
+        self,
+        dispatcher: AgentTeamMember,
+        specialists: List[AgentTeamMember],
+        goal: str,
+    ) -> List[AgentTeamMember]:
+        selected = []
+        for spec in specialists:
+            allowed = await self.delegation.can_delegate(
+                dispatcher.agent_id, spec.agent_id, "specialist_task"
+            )
+            if allowed:
+                selected.append(spec)
+        return selected or specialists[:2]
+
+    async def _delegate_to_specialists(
+        self,
+        specialists: List[AgentTeamMember],
+        goal: str,
+        tenant_id: str,
+        parent_run_id: uuid.UUID,
+    ) -> List[Dict]:
+        async def _run_specialist(spec: AgentTeamMember) -> Dict:
+            try:
+                allowed, reason = await self.policy.validate_delegation(
+                    parent_run_id, specialists[0].agent_id, spec.agent_id
+                )
+                if not allowed:
+                    return {
+                        "agent_id": str(spec.agent_id),
+                        "result": f"Blocked by policy: {reason}",
+                        "confidence": 0.0,
+                        "error": reason,
+                    }
+
+                sub_run = await self.agent_runtime.start_run(
+                    db=self.db,
+                    agent_id=spec.agent_id,
+                    tenant_id=tenant_id,
+                    input_text=f"Specialist task for goal: {goal}",
+                    parent_run_id=parent_run_id,
+                )
+
+                while sub_run.status not in ("completed", "failed", "cancelled"):
+                    await asyncio.sleep(0.5)
+                    await self.db.refresh(sub_run)
+
+                return {
+                    "agent_id": str(spec.agent_id),
+                    "run_id": str(sub_run.id),
+                    "result": sub_run.result or f"Analysis from {spec.agent_id}",
+                    "confidence": 0.85,
+                    "cost_brl": getattr(sub_run, "estimated_cost_brl", 0.0),
+                    "status": sub_run.status,
+                }
+            except Exception as e:
+                logger.error("Specialist %s failed: %s", spec.agent_id, e)
+                return {
+                    "agent_id": str(spec.agent_id),
+                    "result": str(e),
+                    "confidence": 0.0,
+                    "error": str(e),
+                }
+
+        tasks = [_run_specialist(spec) for spec in specialists]
+        return await asyncio.gather(*tasks)
+
+    async def _fallback(
+        self, dispatcher: AgentTeamMember, goal: str, run_id: uuid.UUID
+    ) -> str:
+        fallback = await self.agent_runtime.start_run(
+            db=self.db,
+            agent_id=dispatcher.agent_id,
+            tenant_id="system",
+            input_text=f"Direct dispatch for: {goal}",
+            parent_run_id=run_id,
+        )
+        while fallback.status not in ("completed", "failed", "cancelled"):
+            await asyncio.sleep(0.5)
+            await self.db.refresh(fallback)
+        return fallback.result or "Fallback completed"
+
+    async def _get_team(self, team_id: uuid.UUID) -> AgentTeam:
+        result = await self.db.execute(
+            select(AgentTeam).where(AgentTeam.id == team_id)
+        )
+        team = result.scalar_one_or_none()
+        if not team:
+            raise ValueError(f"Team {team_id} not found")
+        return team
+
+    async def _get_members(self, team_id: uuid.UUID) -> List[AgentTeamMember]:
+        result = await self.db.execute(
+            select(AgentTeamMember).where(AgentTeamMember.team_id == team_id)
+        )
+        return list(result.scalars().all())

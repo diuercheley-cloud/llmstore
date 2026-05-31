@@ -26,7 +26,7 @@ class PluginSBOMPlaceholderService:
             "denied_dependencies_json": sorted(denied_dependencies_json),
             "reproducible_build": reproducible_build,
             "offline_verifiable": offline_verifiable,
-            "placeholder_only": True,
+            "signature_only": True,
         }
         sbom_hash = compute_sbom_hash(logical_payload)
         immutable_hash = sha256_hex({"kind": "plugin_supply_chain_sbom_immutable", "sbom_hash": sbom_hash})
@@ -58,13 +58,13 @@ class PluginSBOMPlaceholderService:
             "denied_dependencies_json": sorted(placeholder.denied_dependencies_json),
             "reproducible_build": placeholder.reproducible_build,
             "offline_verifiable": placeholder.offline_verifiable,
-            "placeholder_only": True,
+            "signature_only": True,
         }
         replay_hash = compute_sbom_hash(logical_payload)
         valid = replay_hash == placeholder.sbom_hash
         return {
             "valid": valid,
-            "placeholder_only": True,
+            "signature_only": True,
             "offline_verifiable": placeholder.offline_verifiable,
             "reproducible_build": placeholder.reproducible_build,
             "original_hash": placeholder.sbom_hash,
@@ -74,7 +74,7 @@ class PluginSBOMPlaceholderService:
     def explain_sbom(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
         return {
             "sbom_format": placeholder.sbom_format,
-            "placeholder_only": True,
+            "signature_only": True,
             "formal_sbom": False,
             "offline_verifiable": placeholder.offline_verifiable,
             "reproducible_build": placeholder.reproducible_build,

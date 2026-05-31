@@ -12,6 +12,7 @@ from app.models.commercial_cryptographic_receipts import (
     CommercialInferenceReceiptVerificationReport,
 )
 from app.services.inference.cryptographic_receipts import (
+from app.utils.crypto_signer import sign_payload
     build_receipt_hash,
     export_receipt,
     generate_inference_receipt,
@@ -43,7 +44,7 @@ async def test_generate_inference_receipt(session, settings):
     assert receipt.receipt_hash is not None
     assert receipt.verification_status == "pending"
     assert receipt.detached_signature is not None
-    assert receipt.signature_algorithm == "ed25519_placeholder"
+    assert receipt.signature_algorithm == "ed25519"
     assert receipt.timestamp_mode == "local"
     assert receipt.previous_receipt_hash is None
     assert receipt.immutable_hash is not None
@@ -114,7 +115,7 @@ async def test_detached_signature(session, settings):
     await sign_receipt(session, receipt)
     assert receipt.detached_signature is not None
     assert receipt.detached_signature.startswith("placeholder_ed25519_")
-    assert receipt.signature_algorithm == "ed25519_placeholder"
+    assert receipt.signature_algorithm == "ed25519"
 
 
 @pytest.mark.asyncio

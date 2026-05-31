@@ -88,19 +88,27 @@
 
 /* ── Shared design tokens ─────────────────────────────────── */
 
-@layer utilities {
-  .card-base {
-    @apply bg-card border border-border rounded-xl p-6;
-    box-shadow: var(--shadow-card);
-  }
-  .card-interactive {
-    @apply card-base transition-all duration-200;
-  }
-  .card-interactive:hover {
-    box-shadow: var(--shadow-card-hover);
-    @apply border-primary/30;
-  }
-  .page-container {
-    @apply max-w-7xl mx-auto;
-  }
+@utility card-base {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+}
+@utility card-interactive {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s;
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+@utility page-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
 }

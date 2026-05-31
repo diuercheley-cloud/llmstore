@@ -20,7 +20,7 @@ class TestAdapterRegistryReceipts:
         receipt = build_registry_entry_receipt(entry)
         assert receipt.receipt_type == "adapter_registry_entry"
         assert receipt.client_id == client_id
-        assert receipt.signature_placeholder.startswith("receipt_sig_")
+        assert receipt.signature.startswith("receipt_sig_")
 
     def test_build_decision_receipt(self):
         client_id = uuid.uuid4()
@@ -34,4 +34,4 @@ class TestAdapterRegistryReceipts:
         receipt = build_registry_decision_receipt(decision)
         assert receipt.receipt_type == "adapter_registry_decision"
         assert receipt.client_id == client_id
-        assert receipt.signature_placeholder.startswith("receipt_sig_")
+        assert receipt.signature.startswith("receipt_sig_")

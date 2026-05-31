@@ -16,7 +16,7 @@ from app.models.operations.plugin_supply_chain import (
     PluginDependencyVerification,
     PluginProvenanceRecord,
     PluginSBOMPlaceholder,
-    PluginSignedArtifactPlaceholder,
+    PluginSignedArtifact,
     PluginSupplyChainReceipt,
     PLUGIN_PROVENANCE_SCOPES,
     PLUGIN_PROVENANCE_STATUSES,
@@ -30,6 +30,7 @@ from app.services.operations.plugin_supply_chain.receipts import build_supply_ch
 from app.services.operations.plugin_supply_chain.replay_verifier import PluginSupplyChainReplayVerifier
 from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
 from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
+from app.utils.crypto_signer import sign_payload
 
 router = APIRouter()
 
@@ -67,7 +68,7 @@ class DependencyVerificationRequest(BaseModel):
     allowed_dependency_classes_json: list[str] = Field(default_factory=list)
     reproducible_build: bool = True
     offline_verifiable: bool = True
-    signature_placeholder: str | None = None
+    signature: str | None = None
 
 
 class LineageRequest(BaseModel):
@@ -82,7 +83,7 @@ class ReplayRequest(BaseModel):
 class SignatureRequest(BaseModel):
     client_id: UUID
     signature_scope: str = "provenance_record"
-    signature_status: str = "placeholder_only"
+    signature_status: str = "signature_only"
 
 
 class ReceiptRequest(BaseModel):
@@ -144,12 +145,12 @@ def _serialize_lineage(item: PluginArtifactLineage) -> dict[str, Any]:
     }
 
 
-def _serialize_signature(item: PluginSignedArtifactPlaceholder) -> dict[str, Any]:
+def _serialize_signature(item: PluginSignedArtifact) -> dict[str, Any]:
     return {
         "id": item.id,
         "client_id": str(item.client_id),
         "provenance_record_id": item.provenance_record_id,
-        "signature_placeholder": item.signature_placeholder,
+        "signature": item.signature,
         "signature_scope": item.signature_scope,
         "signature_status": item.signature_status,
         "immutable_hash": item.immutable_hash,
@@ -164,7 +165,7 @@ def _serialize_receipt(item: PluginSupplyChainReceipt) -> dict[str, Any]:
         "receipt_type": item.receipt_type,
         "payload_hash": item.payload_hash,
         "immutable_hash": item.immutable_hash,
-        "signature_placeholder": item.signature_placeholder,
+        "signature": item.signature,
     }
 
 
@@ -331,7 +332,7 @@ async def verify_dependencies(
         provenance,
         dependency_summary_json=request.dependency_summary_json,
         policy=policy,
-        signature_placeholder=request.signature_placeholder,
+        signature=request.signature,
         reproducible_build=request.reproducible_build,
         offline_verifiable=request.offline_verifiable,
     )
@@ -351,7 +352,7 @@ async def verify_dependencies(
             "allowed_dependency_classes_json": policy.allowed_dependency_classes_json,
             "require_reproducible_builds": policy.require_reproducible_builds,
             "require_offline_verification": policy.require_offline_verification,
-            "require_placeholder_signature": policy.require_placeholder_signature,
+            "require_signature": policy.require_signature,
         },
         "verification": _serialize_verification(verification),
         "audit_event": event,
@@ -418,7 +419,7 @@ async def replay_verify(
 
 
 @router.post("/admin/operations/plugin-supply-chain/provenance/{provenance_id}/sign-placeholder")
-async def create_signature_placeholder(
+async def create_signature(
     provenance_id: str,
     request: SignatureRequest,
     db: AsyncSession = Depends(get_db),
@@ -426,7 +427,7 @@ async def create_signature_placeholder(
 ):
     from app.core.config import get_settings
     if get_settings().app_env == "production":
-        raise HTTPException(status_code=400, detail="Placeholder signatures are blocked in production mode.")
+        raise HTTPException(status_code=400, detail="Signatures are strictly validated in production mode.")
         
     provenance = await _get_provenance(db, provenance_id, request.client_id)
     if request.signature_status not in PLUGIN_SIGNATURE_STATUSES:
@@ -437,11 +438,11 @@ async def create_signature_placeholder(
         "signature_scope": request.signature_scope,
         "signature_status": request.signature_status,
     }
-    signature = PluginSignedArtifactPlaceholder(
+    signature = PluginSignedArtifact(
         id=sha256_hex({"kind": "plugin_signed_artifact_placeholder_id", **logical_payload}),
         client_id=request.client_id,
         provenance_record_id=provenance.id,
-        signature_placeholder=f"placeholder-signature:{request.signature_scope}:{provenance.provenance_hash[:16]}",
+        signature=sign_payload(f"{request.signature_scope}:{provenance.provenance_hash[:16]}"),
         signature_scope=request.signature_scope,
         signature_status=request.signature_status,
         immutable_hash=sha256_hex({"kind": "plugin_signed_artifact_placeholder_immutable", **logical_payload}),
@@ -501,7 +502,7 @@ async def get_dashboard_summary(
         await db.execute(select(func.count()).select_from(PluginArtifactLineage).where(PluginArtifactLineage.client_id == client_id))
     ).scalar_one()
     signature_count = (
-        await db.execute(select(func.count()).select_from(PluginSignedArtifactPlaceholder).where(PluginSignedArtifactPlaceholder.client_id == client_id))
+        await db.execute(select(func.count()).select_from(PluginSignedArtifact).where(PluginSignedArtifact.client_id == client_id))
     ).scalar_one()
     receipt_count = (
         await db.execute(select(func.count()).select_from(PluginSupplyChainReceipt).where(PluginSupplyChainReceipt.client_id == client_id))
@@ -512,7 +513,7 @@ async def get_dashboard_summary(
         "sbom_placeholders": sbom_count,
         "dependency_verification": verification_count,
         "lineage_verification": lineage_count,
-        "placeholder_signatures": signature_count,
+        "signatures": signature_count,
         "receipts": receipt_count,
         "replay_safe": True,
         "reproducible_build": True,

@@ -174,7 +174,7 @@ class TrustSnapshottingService:
             "payload": payload,
         }
         if format == "signed_bundle":
-            bundle["signature_algorithm"] = "sha256_local_placeholder"
+            bundle["signature_algorithm"] = "sha256_local"
             bundle["detached_signature"] = _sha256(f"{manifest_hash}:ops-center")
         elif format == "offline_audit_package":
             bundle["audit_instructions"] = [

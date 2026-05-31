@@ -663,7 +663,7 @@ async def embeddings(
         raise HTTPException(status_code=429, detail=str(exc)) from exc
 
     started = perf_counter()
-    backend_name = "mock"
+    backend_name = "local"
     
     if settings.embeddings_backend == "mock":
         response_data = process_mock_embeddings(

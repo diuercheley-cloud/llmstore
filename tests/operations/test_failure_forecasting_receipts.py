@@ -151,29 +151,29 @@ class TestPayloadHash:
         assert r1["payload_hash"] != r2["payload_hash"]
 
 
-# ── signature_placeholder ─────────────────────────────────────────────────────
+# ── signature ─────────────────────────────────────────────────────
 
 
 class TestSignaturePlaceholder:
 
-    def test_signature_placeholder_present(self):
+    def test_signature_present(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
-        assert "signature_placeholder" in r
+        assert "signature" in r
 
-    def test_signature_placeholder_starts_with_placeholder(self):
+    def test_signature_starts_with_placeholder(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
-        assert r["signature_placeholder"].startswith(SIGNATURE_PLACEHOLDER)
+        assert r["signature"].startswith(SIGNATURE_PLACEHOLDER)
 
-    def test_signature_placeholder_deterministic_for_same_input(self):
+    def test_signature_deterministic_for_same_input(self):
         r1 = build_failure_signal_receipt(SIGNAL_DICT)
         r2 = build_failure_signal_receipt(SIGNAL_DICT)
-        assert r1["signature_placeholder"] == r2["signature_placeholder"]
+        assert r1["signature"] == r2["signature"]
 
-    def test_signature_placeholder_changes_with_payload(self):
+    def test_signature_changes_with_payload(self):
         r1 = build_failure_signal_receipt(SIGNAL_DICT)
         other = dict(SIGNAL_DICT, severity="info")
         r2 = build_failure_signal_receipt(other)
-        assert r1["signature_placeholder"] != r2["signature_placeholder"]
+        assert r1["signature"] != r2["signature"]
 
 
 # ── advisory_only ────────────────────────────────────────────────────────────
@@ -285,5 +285,5 @@ def _assert_receipt_fields(receipt: dict, expected_type: str) -> None:
     assert "deterministic_version" in receipt
     assert "advisory_only" in receipt
     assert "payload_hash" in receipt
-    assert "signature_placeholder" in receipt
+    assert "signature" in receipt
     assert "receipt_hash" in receipt

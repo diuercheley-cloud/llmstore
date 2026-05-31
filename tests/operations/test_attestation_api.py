@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_admin, get_db
 from app.main import app
 from app.models.client import Client
+from app.utils.crypto_signer import sign_payload
 
 
 async def _override_admin():
@@ -36,7 +37,7 @@ async def test_attestation_api_flow(session: AsyncSession):
                 "subject_ref": "wf-1",
                 "attestation_scope": "operations",
                 "payload": {"step": "execute", "secret_token": "hidden"},
-                "signature_placeholder": "placeholder-signature:workflow",
+                "signature": sign_payload("workflow"),
             },
         )
         assert create.status_code == 200

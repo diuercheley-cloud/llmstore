@@ -1,14 +1,16 @@
-import axios, { AxiosError, AxiosInstance } from 'axios'
+import axios, { AxiosError } from 'axios'
+import type { AxiosInstance } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 
 export class APIError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public data?: unknown,
-  ) {
+  status?: number
+  data?: unknown
+
+  constructor(message: string, status?: number, data?: unknown) {
     super(message)
     this.name = 'APIError'
+    this.status = status
+    this.data = data
   }
 }
 
@@ -36,9 +38,29 @@ class APIClient {
     )
   }
 
-  private async request<T>(method: string, path: string, data?: unknown): Promise<T> {
+  private async request<T = any>(method: string, path: string, data?: unknown): Promise<T> {
     const res = await this.client.request<T>({ method, url: path, data })
     return res.data
+  }
+
+  get<T = any>(path: string, config?: Record<string, unknown>) {
+    return this.client.get<T>(path, config)
+  }
+
+  post<T = any>(path: string, data?: unknown, config?: Record<string, unknown>) {
+    return this.client.post<T>(path, data, config)
+  }
+
+  put<T = any>(path: string, data?: unknown, config?: Record<string, unknown>) {
+    return this.client.put<T>(path, data, config)
+  }
+
+  patch<T = any>(path: string, data?: unknown, config?: Record<string, unknown>) {
+    return this.client.patch<T>(path, data, config)
+  }
+
+  delete<T = any>(path: string, config?: Record<string, unknown>) {
+    return this.client.delete<T>(path, config)
   }
 
   // System

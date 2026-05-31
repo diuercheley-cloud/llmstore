@@ -23,6 +23,7 @@ from app.services.agents.execution_receipts import canonical_json, sha256_hex
 from app.services.agents.tool_policy_engine import ToolPolicyEngine
 from app.services.agents.trusted_agent_runtime import trusted_agent_runtime
 from app.services.auth import require_admin
+from app.utils.crypto_signer import sign_payload
 
 router = APIRouter(
     tags=["admin", "trusted-agent-runtime"],
@@ -165,7 +166,7 @@ async def register_trusted_tool(payload: ToolRegistryPayload, db: AsyncSession =
     row = CommercialToolRegistry(
         **payload_data,
         provenance_hash=sha256_hex(canonical_json(payload_data)),
-        provenance_signature=f"placeholder_sig_{sha256_hex(payload.tool_name)[:24]}",
+        provenance_signature=sign_payload(f"{sha256_hex(payload.tool_name)[:24]}"),
     )
     db.add(row)
     await db.commit()

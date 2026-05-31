@@ -28,8 +28,18 @@ export const badgeVariants = cva(
 
 export interface BadgeProps
   extends HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline'
+}
 
-export function Badge({ className, tone, size, ...props }: BadgeProps) {
-  return <span className={cn(badgeVariants({ tone, size, className }))} {...props} />;
+function mapVariantToTone(variant?: BadgeProps['variant']): BadgeProps['tone'] {
+  if (variant === 'default') return 'success'
+  if (variant === 'secondary') return 'neutral'
+  if (variant === 'destructive') return 'danger'
+  if (variant === 'outline') return 'info'
+  return undefined
+}
+
+export function Badge({ className, tone, size, variant, ...props }: BadgeProps) {
+  return <span className={cn(badgeVariants({ tone: tone ?? mapVariantToTone(variant), size, className }))} {...props} />;
 }

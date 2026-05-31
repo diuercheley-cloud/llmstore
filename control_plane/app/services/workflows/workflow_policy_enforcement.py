@@ -123,7 +123,7 @@ class WorkflowPolicyEnforcementService:
                 runtime_context_hash=sha256_hex(runtime_context),
                 snapshot_hash=snapshot_hash,
                 detached_signature=sign_governance_payload({"snapshot_hash": snapshot_hash}, scope="workflow_policy_snapshot"),
-                signature_algorithm="ed25519_placeholder",
+                signature_algorithm="ed25519",
                 immutable_hash=sha256_hex({"snapshot_hash": snapshot_hash, "policy_hash": sha256_hex(policy_json)}),
                 policy_json=policy_json,
                 runtime_context_json=runtime_context,

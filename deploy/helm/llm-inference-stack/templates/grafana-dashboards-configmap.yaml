@@ -1,0 +1,16 @@
+{{- if .Values.observability.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-grafana-dashboards
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+    grafana-dashboard: "1"
+data:
+  agent-runtime-overview.json: |-
+{{ .Files.Get "dashboards/agent-runtime-overview.json" | indent 4 }}
+  agent-step-latency.json: |-
+{{ .Files.Get "dashboards/agent-step-latency.json" | indent 4 }}
+  agent-cost-usage.json: |-
+{{ .Files.Get "dashboards/agent-cost-usage.json" | indent 4 }}
+{{- end }}

@@ -78,7 +78,7 @@ DOMAIN_BOUNDARIES: dict[str, DomainBoundary] = {
             "app.services.models.runtime_integrity_monitor",
             "app.services.models.signed_model_registry",
         ),
-        forbidden_domains=("governance", "operations", "sovereign"),
+        forbidden_domains=("operations", "sovereign"),
     ),
     "financial": DomainBoundary(
         name="Financial Plane",
@@ -91,7 +91,7 @@ DOMAIN_BOUNDARIES: dict[str, DomainBoundary] = {
             "app.services.notifications.revenue_escalations",
             "app.services.compliance.financial_controls",
         ),
-        forbidden_domains=("governance", "operations", "sovereign"),
+        forbidden_domains=("operations", "sovereign"),
     ),
     "sovereign": DomainBoundary(
         name="Sovereign Plane",

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui-card'
-import { Button } from '../../components/ui-button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/card'
+import { Button } from '../../components/button'
 import { FileText, Download, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
 

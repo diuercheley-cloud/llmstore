@@ -24,7 +24,7 @@ O comportamento da contagem de tokens é controlado por duas variáveis de ambie
 
 | Variável | Valor Padrão | Descrição |
 | :--- | :--- | :--- |
-| `TOKEN_COUNTING_REAL_ENABLED` | `false` | Se `true`, ativa a contagem real por tokenizer. Se `false`, o sistema usa apenas a estimativa/fallback heurístico. |
+| `TOKEN_COUNTING_REAL_ENABLED` | `true` | Se `true`, ativa a contagem real por tokenizer. Se `false`, o sistema usa apenas a estimativa/fallback heurístico. |
 | `TOKEN_COUNTING_FALLBACK_ALLOWED` | `true` | Se `true`, permite o uso do contador de fallback caso ocorram erros ou ausência de dependências (como `tiktoken` não instalado). Se `false`, falha com erro na indisponibilidade do tokenizer real. |
 
 ## Integração do Sistema

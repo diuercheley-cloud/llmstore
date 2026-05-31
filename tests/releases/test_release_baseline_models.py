@@ -28,7 +28,7 @@ def test_release_receipt_structure():
         receipt_type="audit",
         payload_hash="pay_hash",
         immutable_hash="imm_hash",
-        signature_placeholder="[SIGNED]"
+        signature="[SIGNED]"
     )
     assert receipt.receipt_type == "audit"
-    assert receipt.signature_placeholder == "[SIGNED]"
+    assert receipt.signature == "[SIGNED]"
