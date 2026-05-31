@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DeveloperPortal: React.FC = () => {
+    const navigate = useNavigate();
     const [apiKey, setApiKey] = useState('sk-proj-********************');
 
     const generateKey = () => {
@@ -35,9 +37,9 @@ const DeveloperPortal: React.FC = () => {
                     </h2>
                     <code className="bg-black text-white p-3 rounded block text-[10px] font-mono">
                         $ pip install agentctl<br/>
-                        $ agentctl init my-agent<br/>
-                        $ agentctl validate .<br/>
-                        $ agentctl bundle .
+                        $ agentctl bundle init my-agent<br/>
+                        $ agentctl bundle test .<br/>
+                        $ agentctl bundle publish .
                     </code>
                 </div>
             </section>
@@ -56,12 +58,17 @@ const DeveloperPortal: React.FC = () => {
             </section>
 
             <section className="bg-card p-6 rounded-xl border border-border space-y-4">
-                <h2 className="text-xl font-bold">PLUGIN UPLOADS</h2>
+                <h2 className="text-xl font-bold uppercase">Bundle Uploads</h2>
                 <div className="border-2 border-dashed border-border rounded-lg p-12 text-center space-y-2">
-                    <div className="text-4xl">📤</div>
-                    <div className="text-sm font-bold">Drag and drop your .zip plugin bundle</div>
-                    <div className="text-xs text-muted-foreground">Manifest must be signed with your developer key.</div>
-                    <button className="mt-4 px-6 py-2 bg-secondary text-foreground font-black text-xs rounded-md">CHOOSE FILE</button>
+                    <div className="text-4xl">📦</div>
+                    <div className="text-sm font-bold">Drag and drop your agent bundle (.zip or manifest.json)</div>
+                    <div className="text-xs text-muted-foreground">Manifest must be signed with your developer key for marketplace publication.</div>
+                    <button 
+                        onClick={() => navigate('/developers/bundles')}
+                        className="mt-4 px-6 py-2 bg-primary text-primary-foreground font-black text-xs rounded-md"
+                    >
+                        GO TO BUNDLES PAGE
+                    </button>
                 </div>
             </section>
         </div>

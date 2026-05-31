@@ -74,7 +74,7 @@ fi
 
 # 3. Sandbox dry-run (mock)
 info "Running sandbox dry-run..."
-DRY_RUN_RESULT=$(python3 -c "
+python3 -c "
 import json
 result = {
     'status': 'success',
@@ -85,13 +85,7 @@ result = {
         {'name': 'memory_policy_valid', 'status': 'pass'},
     ]
 }
-json.dump(result, indent=2)
-" 2>&1)
-
-echo "$DRY_RUN_RESULT" | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for check in data.get('checks', []):
+for check in result['checks']:
     status = check['status']
     color = '\033[0;32m' if status == 'pass' else '\033[0;31m'
     print(f'  {color}{check[\"name\"]}: {status.upper()}\033[0m')
@@ -102,7 +96,7 @@ green "Sandbox dry-run: PASSED"
 info "Checking dependencies..."
 if [ -f "$BUNDLE_DIR/manifest.json" ]; then
   python3 -c "
-import json
+import json, os
 with open('$BUNDLE_DIR/manifest.json') as f:
     data = json.load(f)
 
@@ -115,7 +109,7 @@ if tools:
 else:
     print('  No external tool dependencies')
 print('  Platform version: ' + data.get('min_platform_version', 'not specified'))
-" 2>&1
+"
 fi
 green "Dependency check: PASSED"
 

@@ -126,12 +126,25 @@ async def run_execution_loop(
             # Yield control briefly
             await asyncio.sleep(0.01)
             
+        # Trigger deployment callback if applicable
+        from app.services.agent_deployments.deployment_callback import DeploymentCallbackService
+        callback_svc = DeploymentCallbackService(db)
+        await callback_svc.trigger_callback(run_id)
+            
     except Exception as e:
         logger.exception(f"Execution loop failed for run {run_id}")
         await agent_state.update_run(
             db, run_id, status="failed", failure_reason=str(e), completed_at=utc_now()
         )
         await agent_state.log_run_event(db, run_id, "run_failed", {"error": str(e)})
+        
+        # Trigger deployment callback even on failure
+        try:
+            from app.services.agent_deployments.deployment_callback import DeploymentCallbackService
+            callback_svc = DeploymentCallbackService(db)
+            await callback_svc.trigger_callback(run_id)
+        except Exception:
+            pass
 
 async def pause_run(db: AsyncSession, run_id: uuid.UUID) -> Optional[Any]:
     _verify_runtime_enabled()

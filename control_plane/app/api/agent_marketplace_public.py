@@ -105,7 +105,7 @@ async def list_items(
     risk_level: Optional[str] = Query(None),
     min_rating: float = Query(0.0, ge=0.0, le=5.0),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),

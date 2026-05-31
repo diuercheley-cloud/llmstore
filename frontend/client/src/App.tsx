@@ -21,9 +21,15 @@ import { BrandingSettings } from './components/BrandingSettings';
 import { MobileShell } from './mobile/MobileShell';
 import { PushSettings } from './mobile/PushSettings';
 import { Toaster } from 'sonner';
+import { registerServiceWorker } from './lib/pwa';
+import { useEffect } from 'react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },

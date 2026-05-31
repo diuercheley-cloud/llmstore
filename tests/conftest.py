@@ -361,6 +361,7 @@ def models_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
+    from app.services.admin_rbac import ensure_admin_rbac_seed
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -369,6 +370,8 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
         await conn.run_sync(Base.metadata.create_all)
 
     async with testing_session_local() as session:
+        await ensure_admin_rbac_seed(session)
+        await session.commit()
         yield session
 
     await engine.dispose()
@@ -380,12 +383,17 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
     from app.db.session import get_db_session, get_redis
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
+    from app.services.admin_rbac import ensure_admin_rbac_seed
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    async with testing_session_local() as session:
+        await ensure_admin_rbac_seed(session)
+        await session.commit()
 
     async def override_get_db_session():
         async with testing_session_local() as session:

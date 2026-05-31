@@ -66,6 +66,7 @@ All tables include standard `id` (UUID PK), `created_at`, and `updated_at` field
 - `agent_id` — FK to agent_definitions
 - `user_id` — optional end-user identifier
 - `status` — `active` | `archived` | `deleted`
+- `summary` — cached text of the latest conversation summary
 - `retention_policy` — JSON with `retention_days`, `keep_summaries`, etc.
 - `last_message_at` — indexed timestamp for ordering
 
@@ -84,7 +85,7 @@ All endpoints require client authentication via API key.
 ### Create Session
 
 ```
-POST /v1/agents/sessions/{agent_id}
+POST /v1/agents/{agent_id}/sessions
 ```
 
 Creates a new session for the given agent. Automatically creates the default thread.

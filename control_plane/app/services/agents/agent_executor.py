@@ -311,6 +311,24 @@ class AgentExecutor:
                 agent_def.instructions += f"\n\n{mem['context_block']}"
                 await self.obs.record_memory_op_detailed(self.run_id, "read", "short_term", True)
 
+        # Session Context Integration
+        if run.session_id:
+            from app.services.agents.sessions.session_context_builder import SessionContextBuilder
+            context_builder = SessionContextBuilder(self.db)
+            session_context = await context_builder.build_context_for_llm(
+                session_id=run.session_id,
+                max_messages=50,
+                include_summary=True
+            )
+            if session_context:
+                # We inject the session history into the reasoning loop's input
+                # The ReasoningLoop service usually takes the run and agent_def
+                # We might need to pass the history explicitly if it's not already handled
+                # For now, we'll append it to the instructions or handle it in reasoning_loop
+                history_str = "\n".join([f"{m['role']}: {m['content']}" for m in session_context])
+                agent_def.instructions += f"\n\nConversation History:\n{history_str}"
+                logger.info(f"Injected {len(session_context)} messages from session {run.session_id} into context")
+
         # Check Cache
         cached_decision = await self.step_cache.get_cached_step(
             agent_id=run.agent_id,

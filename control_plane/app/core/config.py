@@ -160,7 +160,7 @@ class Settings(BaseSettings):
     agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
     # Owner: agent-platform
     # Status: beta
-    agent_federated_memory_enabled: bool = Field(default=True, alias="AGENT_FEDERATED_MEMORY_ENABLED")
+    agent_federated_memory_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_federated_memory_sync_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_SYNC_ENABLED")

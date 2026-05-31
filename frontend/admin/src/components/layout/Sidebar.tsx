@@ -1,20 +1,9 @@
-import { useTheme } from '../../components/theme-provider'
 import { useLocation, Link } from 'react-router-dom'
 import {
   ChevronRight,
-  LayoutDashboard,
-  Bot,
-  Activity,
-  TrendingUp,
-  Briefcase,
-  Monitor,
-  Gavel,
-  Network,
-  Code2,
   ChevronDown,
 } from 'lucide-react'
-import { navSections, getSectionRoutes, type NavSection, type NavRoute } from '../../navigation/navConfig'
-import { isRouteDisabled } from '../../navigation/navConfig'
+import { buildSidebarGroups, type RouteConfig, type SidebarGroup, RouteStatus } from '../../routes/adminRoutes'
 import type { ReactNode } from 'react'
 
 interface SidebarProps {
@@ -22,21 +11,13 @@ interface SidebarProps {
   onNavigate?: () => void
 }
 
-const sectionIconMap: Record<string, ReactNode> = {
-  core: <LayoutDashboard size={16} />,
-  agents: <Bot size={16} />,
-  operations: <Activity size={16} />,
-  performance: <TrendingUp size={16} />,
-  enterprise: <Briefcase size={16} />,
-  observability: <Monitor size={16} />,
-  compliance: <Gavel size={16} />,
-  advanced: <Network size={16} />,
-  developers: <Code2 size={16} />,
+function isRouteDisabled(status: RouteStatus): boolean {
+  return status === 'coming_soon' || status === 'disabled'
 }
 
-function SidebarSection({ section, onNavigate }: { section: NavSection; onNavigate?: () => void }) {
+function SidebarSection({ group, onNavigate }: { group: SidebarGroup; onNavigate?: () => void }) {
   const location = useLocation()
-  const routes = getSectionRoutes(section.key)
+  const routes = group.items
 
   if (routes.length === 0) return null
 
@@ -75,8 +56,8 @@ function SidebarSection({ section, onNavigate }: { section: NavSection; onNaviga
         flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all list-none
         ${isActive ? 'text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}
       `}>
-        {sectionIconMap[section.key]}
-        <span className="flex-1">{section.label}</span>
+        <group.icon size={16} />
+        <span className="flex-1">{group.label}</span>
         <ChevronDown size={14} className="opacity-50 group-open:rotate-180 transition-transform" />
       </summary>
       <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
@@ -111,10 +92,11 @@ function SidebarSection({ section, onNavigate }: { section: NavSection; onNaviga
 }
 
 export function Sidebar({ onNavigate }: SidebarProps) {
+  const groups = buildSidebarGroups()
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
-      {navSections.map(section => (
-        <SidebarSection key={section.key} section={section} onNavigate={onNavigate} />
+      {groups.map(group => (
+        <SidebarSection key={group.key} group={group} onNavigate={onNavigate} />
       ))}
     </nav>
   )

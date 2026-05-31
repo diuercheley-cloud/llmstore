@@ -148,7 +148,7 @@ class AgentApiDeploymentService:
     async def rollback_deployment(
         self, deployment_id: uuid.UUID, tenant_id: str, target_version_slug: str
     ) -> AgentApiDeployment:
-        """Rollback to a previous deployment version."""
+        """Rollback to a previous deployment version's configuration."""
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Deployment not found")
@@ -157,15 +157,16 @@ class AgentApiDeploymentService:
         if not target or target.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Target version not found")
 
-        # Store current slug as previous
-        deployment.previous_version_slug = deployment.slug
-        deployment.slug = target.slug
-        deployment.version = target.version
+        # Update current deployment with target's configuration
+        # We keep our OWN slug but point to the target's agent and SLA
+        deployment.previous_version_slug = deployment.slug # Not very useful if we don't change slug, but keeping for audit
         deployment.agent_id = target.agent_id
+        deployment.version = target.version
         deployment.timeout_seconds = target.timeout_seconds
         deployment.max_concurrency = target.max_concurrency
         deployment.rate_limit_per_minute = target.rate_limit_per_minute
         deployment.rate_limit_per_day = target.rate_limit_per_day
+        
         await self.db.flush()
         return deployment
 

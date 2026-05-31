@@ -23,7 +23,7 @@ from app.services.agents.sessions.session_history_policy import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/v1/agents/sessions", tags=["client", "agents-sessions"])
+router = APIRouter(tags=["client", "agents-sessions"])
 
 
 def _serialize_session(session) -> Dict[str, Any]:
@@ -34,6 +34,7 @@ def _serialize_session(session) -> Dict[str, Any]:
         "agent_id": str(session.agent_id),
         "title": session.title,
         "status": session.status,
+        "summary": session.summary,
         "retention_policy": session.retention_policy,
         "metadata": session.session_metadata,
         "last_message_at": session.last_message_at.isoformat() if session.last_message_at else None,
@@ -56,7 +57,7 @@ def _serialize_message(msg) -> Dict[str, Any]:
     }
 
 
-@router.post("/{agent_id}")
+@router.post("/v1/agents/{agent_id}/sessions")
 async def create_session(
     agent_id: uuid.UUID,
     title: Optional[str] = Body(None),
@@ -77,7 +78,7 @@ async def create_session(
     return _serialize_session(session)
 
 
-@router.get("")
+@router.get("/v1/agents/sessions")
 async def list_sessions(
     agent_id: Optional[uuid.UUID] = Query(None),
     user_id: Optional[str] = Query(None),
@@ -99,7 +100,7 @@ async def list_sessions(
     return [_serialize_session(s) for s in sessions]
 
 
-@router.get("/{session_id}")
+@router.get("/v1/agents/sessions/{session_id}")
 async def get_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -112,7 +113,7 @@ async def get_session(
     return _serialize_session(session)
 
 
-@router.post("/{session_id}/messages")
+@router.post("/v1/agents/sessions/{session_id}/messages")
 async def add_message(
     session_id: uuid.UUID,
     role: str = Body(...),
@@ -138,11 +139,18 @@ async def add_message(
         metadata=metadata,
     )
     await svc.touch_session(session_id)
+    
+    # Check for automatic summarization
+    try:
+        await svc.check_and_trigger_summarization(session_id)
+    except Exception as e:
+        logger.warning(f"Failed to trigger auto-summarization for session {session_id}: {e}")
+
     await db.commit()
     return _serialize_message(message)
 
 
-@router.get("/{session_id}/messages")
+@router.get("/v1/agents/sessions/{session_id}/messages")
 async def get_messages(
     session_id: uuid.UUID,
     limit: int = Query(100, ge=1, le=500),
@@ -162,7 +170,7 @@ async def get_messages(
     return [_serialize_message(m) for m in messages]
 
 
-@router.post("/{session_id}/runs")
+@router.post("/v1/agents/sessions/{session_id}/runs")
 async def start_session_run(
     session_id: uuid.UUID,
     input_text: str = Body(...),
@@ -206,7 +214,7 @@ async def start_session_run(
     }
 
 
-@router.delete("/{session_id}")
+@router.delete("/v1/agents/sessions/{session_id}")
 async def delete_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -219,7 +227,7 @@ async def delete_session(
     return {"status": "deleted", "session_id": str(session_id)}
 
 
-@router.patch("/{session_id}")
+@router.patch("/v1/agents/sessions/{session_id}")
 async def update_session(
     session_id: uuid.UUID,
     title: Optional[str] = Body(None),

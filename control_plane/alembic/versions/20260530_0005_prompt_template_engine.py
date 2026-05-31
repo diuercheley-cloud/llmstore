@@ -18,6 +18,73 @@ depends_on: Optional[Sequence[str]] = None
 
 
 def upgrade() -> None:
+    # 0. Create prompt_templates
+    op.create_table(
+        'prompt_templates',
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('tenant_id', sa.String(length=128), nullable=False),
+        sa.Column('name', sa.String(length=128), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('tags', sa.JSON(), nullable=False, server_default='{}'),
+        sa.Column('variable_schema', sa.JSON(), nullable=False, server_default='{}'),
+        sa.Column('active_version_id', postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    )
+    op.create_index('ix_prompt_templates_tenant_id', 'prompt_templates', ['tenant_id'])
+    op.create_index('ix_prompt_templates_name', 'prompt_templates', ['name'])
+
+    # 0.1 Create prompt_template_versions
+    op.create_table(
+        'prompt_template_versions',
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('template_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_templates.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('version_tag', sa.String(length=64), nullable=False),
+        sa.Column('content', sa.Text(), nullable=False),
+        sa.Column('provider_settings', sa.JSON(), nullable=False, server_default='{}'),
+        sa.Column('status', sa.String(length=32), nullable=False, server_default='draft'),
+        sa.Column('created_by', sa.String(length=128), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    )
+    op.create_index('ix_prompt_template_versions_template_id', 'prompt_template_versions', ['template_id'])
+
+    # 0.2 Add ForeignKey with use_alter for active_version_id
+    op.create_foreign_key(
+        'fk_prompt_templates_active_version',
+        'prompt_templates', 'prompt_template_versions',
+        ['active_version_id'], ['id'],
+        use_alter=True
+    )
+
+    # 0.3 Create prompt_experiments
+    op.create_table(
+        'prompt_experiments',
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('tenant_id', sa.String(length=128), nullable=False),
+        sa.Column('name', sa.String(length=128), nullable=False),
+        sa.Column('template_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_templates.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('version_a_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_template_versions.id'), nullable=False),
+        sa.Column('version_b_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_template_versions.id'), nullable=False),
+        sa.Column('status', sa.String(length=32), nullable=False, server_default='running'),
+        sa.Column('traffic_split', sa.Float(), nullable=False, server_default='0.5'),
+        sa.Column('winner_version_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_template_versions.id'), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    )
+    op.create_index('ix_prompt_experiments_tenant_id', 'prompt_experiments', ['tenant_id'])
+
+    # 0.4 Create prompt_playground_runs
+    op.create_table(
+        'prompt_playground_runs',
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column('version_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_template_versions.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('variables', sa.JSON(), nullable=False, server_default='{}'),
+        sa.Column('output', sa.Text(), nullable=False),
+        sa.Column('latency_ms', sa.Integer(), nullable=False),
+        sa.Column('token_usage', sa.JSON(), nullable=False, server_default='{}'),
+        sa.Column('created_by', sa.String(length=128), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    )
+
     # 1. Create prompt_template_variables
     op.create_table(
         'prompt_template_variables',
@@ -53,6 +120,7 @@ def upgrade() -> None:
     op.create_index('ix_prompt_template_render_events_agent_id', 'prompt_template_render_events', ['agent_id'])
 
     # 3. Add prompt_template columns to agent_definitions
+    # Use batch_alter_table for sqlite compatibility if needed, but this script seems aimed at postgres
     op.add_column(
         'agent_definitions',
         sa.Column('prompt_template_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('prompt_templates.id', ondelete='SET NULL'), nullable=True),
@@ -72,3 +140,7 @@ def downgrade() -> None:
     op.drop_column('agent_definitions', 'prompt_template_id')
     op.drop_table('prompt_template_render_events')
     op.drop_table('prompt_template_variables')
+    op.drop_table('prompt_playground_runs')
+    op.drop_table('prompt_experiments')
+    op.drop_table('prompt_template_versions')
+    op.drop_table('prompt_templates')

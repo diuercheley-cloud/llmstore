@@ -109,10 +109,10 @@ Agent bundle created with \`agentctl bundle init\`.
 ## Next Steps
 1. Edit \`manifest.json\` with your agent configuration
 2. Write instructions in \`src/instructions.md\`
-3. Run \`./agent-bundle-validate.sh\` to validate
-4. Run \`./agent-bundle-test.sh\` to test
-5. Run \`./agent-bundle-sign.sh\` to sign
-6. Run \`./agent-bundle-publish.sh\` to publish
+3. Run \`agentctl bundle validate\` to validate
+4. Run \`agentctl bundle test\` to test
+5. Run \`agentctl bundle sign\` to sign
+6. Run \`agentctl bundle publish\` to publish
 EOF
 
 echo ""

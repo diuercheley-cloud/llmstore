@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.client import Client
 from app.models.operations.attestation_framework import (
-from app.utils.crypto_signer import sign_payload
     AttestationChainLink,
     AttestationFederationBundle,
     AttestationReceipt,
@@ -14,6 +13,7 @@ from app.utils.crypto_signer import sign_payload
     AttestationVerificationResult,
     SovereignExecutionAttestation,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 @pytest.mark.asyncio

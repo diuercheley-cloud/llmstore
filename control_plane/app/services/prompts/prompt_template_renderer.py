@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Any, Dict, Optional, Set, Tuple
 
-from jinja2 import Environment, Template, meta, TemplateError, UndefinedError
+from jinja2 import Environment, Template, meta, TemplateError, UndefinedError, StrictUndefined
 from jinja2.sandbox import SandboxedEnvironment
 
 logger = logging.getLogger(__name__)
@@ -37,12 +37,8 @@ class PromptTemplateRenderer:
     def __init__(self):
         self.env = SandboxedEnvironment(
             autoescape=False,
-            undefined=self._strict_undefined,
+            undefined=StrictUndefined,
         )
-
-    @staticmethod
-    def _strict_undefined():
-        raise UndefinedError("Undefined variable")
 
     def _check_variable_name_is_safe(self, name: str) -> None:
         if name in BLOCKED_VARIABLE_NAMES:

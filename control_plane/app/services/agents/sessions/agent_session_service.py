@@ -214,3 +214,30 @@ class AgentSessionService:
         self, dry_run: bool = False
     ) -> Dict[str, int]:
         return await self.policy_service.apply_retention_policies(self.db, dry_run)
+
+    async def check_and_trigger_summarization(
+        self, session_id: uuid.UUID
+    ) -> Optional[AgentSessionSummary]:
+        if await self.policy_service.should_summarize(session_id):
+            logger.info(f"Triggering automatic summarization for session {session_id}")
+            context = await self.policy_service.build_summary_context(session_id)
+            
+            # Here we would normally call an LLM to summarize
+            # For now, we'll create a placeholder summary or use a mock logic
+            summary_text = f"Automatic summary of the conversation as of {utc_now().isoformat()}"
+            
+            summary = await self.policy_service.create_summary(
+                session_id=session_id,
+                summary_text=summary_text,
+            )
+            
+            # Update session cache
+            stmt = select(AgentSession).where(AgentSession.id == session_id)
+            res = await self.db.execute(stmt)
+            session = res.scalar_one_or_none()
+            if session:
+                session.summary = summary_text
+                await self.db.commit()
+            
+            return summary
+        return None

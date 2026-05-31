@@ -1,140 +1,54 @@
-# Admin Navigation - Route & Hub Integration
+# Admin Navigation System
 
-## Architecture Changes
+## Overview
 
-### Centralized Route Registry
+The Admin Navigation System provides a centralized way to manage routes, sidebar grouping, and breadcrumbs in the Admin Panel. It uses a "Route-First" approach where all metadata is defined in a single configuration file.
 
-**File:** `frontend/admin/src/routes/adminRoutes.tsx`
+## Central Route Map (`adminRoutes.tsx`)
 
-All routes are now defined in a single source of truth. Each route entry contains:
-- `path` - URL path
-- `component` - Lazy-loaded React component
-- `label` - Display name
-- `icon` - Lucide icon
-- `group` - Sidebar group key
-- `disabled` - Shows "Coming Soon" badge
-- `hidden` - Hidden from sidebar but still routable
+The single source of truth for all admin routes is located at `frontend/admin/src/routes/adminRoutes.tsx`.
 
-### Route Groups
+Each route entry contains:
+- `path`: The URL path.
+- `component`: The lazy-loaded page component.
+- `label`: Display name used in sidebar and breadcrumbs.
+- `icon`: Lucide icon component.
+- `group`: Sidebar section key (e.g., `core`, `agents`, `operations`).
+- `status`: `active`, `beta`, `coming_soon`, or `disabled`.
+- `hidden`: If `true`, the route is accessible but not visible in the sidebar.
+- `description`: Text shown on the Hub cards.
 
-| Group | Label | Routes |
-|-------|-------|--------|
-| `core` | Core | Hub, Clients, Models, Backends, Plugins, SaaS |
-| `agents` | Agentic Platform | Overview, Registry, Runs, Tools, Memory, Approvals, Evals, Policies, Marketplace, Workspaces, **Studio**, **Analytics**, **Approval Portal**, **Promotion**, **Lineage**, **Chat** |
-| `operations` | Operations | Overview, Nodes, Runtime, QoS, Readiness, Security, Release, Incidents |
-| `performance` | Performance | Dashboard, History, Profiles |
-| `enterprise` | Enterprise | Onboarding, Checklist |
-| `observability` | Observability | Dashboard, Realtime, Agent Observability |
-| `compliance` | Compliance | Overview, Controls, Evidence, Risks, Policies |
-| `advanced` | Advanced | Multi-Cluster (disabled), Chaos (disabled) |
-| `developers` | Developers | **Web IDE**, **Developer Portal** |
+## Sidebar Organization
 
-### Previously Orphan Pages (Now Connected)
+The sidebar is built automatically using the `buildSidebarGroups` helper. Groups are ordered as follows:
+1. Core
+2. Agentic Platform
+3. Operations
+4. Performance
+5. Enterprise
+6. Observability
+7. Compliance
+8. Advanced
+9. Developers
 
-| Page | Route | Status |
-|------|-------|--------|
-| Agent Studio | `/agents/studio` | Connected |
-| Agent Analytics | `/agents/analytics` | Connected |
-| Approval Portal | `/agents/approvals-portal` | Connected |
-| Collaborative Chat | `/agents/chat` | Connected |
-| Web IDE | `/ide` | Connected |
-| Developer Portal | `/developers` | Connected |
-| Agent Promotion | `/agents/promotion` | Connected (rewritten to Tailwind) |
-| Agent Lineage | `/agents/lineage` | Connected (rewritten to Tailwind) |
+Sections with multiple routes become collapsible groups, while single-route sections appear as flat links.
 
-### Placeholder Routes (Coming Soon)
+## Hub Page
 
-| Route | Page |
-|-------|------|
-| `/api-keys` | Coming Soon |
-| `/billing` | Coming Soon |
-| `/usage` | Coming Soon |
-| `/rag` | Coming Soon |
-| `/security` | Coming Soon |
-| `/reports` | Coming Soon |
-| `/settings` | Coming Soon |
+The Admin Hub (`/`) dynamically renders cards for all visible routes. It uses the `status` field to:
+- Show a "Soon" badge for `coming_soon` routes.
+- Apply a "Beta" look for `beta` routes.
+- Disable interactions for `disabled` or `coming_soon` status.
 
-These show a "Coming Soon" stub with a construction icon and badge.
+## Adding a New Page
 
-## Component Changes
-
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `src/routes/adminRoutes.tsx` | Centralized route registry, sidebar group builder |
-| `src/components/Layout.tsx` | Extracted Layout with sidebar, header, breadcrumbs |
-| `src/components/ComingSoon.tsx` | Placeholder component for unbuilt pages |
-
-### Modified Files
-
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Rewritten to use `adminRoutes` + `Layout`, generates routes dynamically |
-| `src/pages/Hub.tsx` | Rewritten: dead links fixed, cards built from route registry, "Soon" badges |
-| `src/components/command-palette.tsx` | Added 7 new shortcuts (Studio, Analytics, Approvals, Chat, IDE, Developers, Agents) |
-| `src/pages/agents/AgentPromotion.tsx` | Rewritten from MUI to Tailwind (MUI not in deps) |
-| `src/pages/agents/AgentLineage.tsx` | Rewritten from MUI to Tailwind (MUI not in deps) |
-
-### Sidebar Structure
-
-The sidebar now uses collapsible groups:
-
-```
-Hub
-─── Agentic Platform (expanded by default)
-    ├── Agentes
-    ├── Agent Studio
-    ├── Analytics
-    ├── Approval Portal
-    ├── Promotion
-    ├── Lineage
-    └── Chat Colaborativo
-─── Operations
-    └── Operacoes
-─── Performance
-    └── Performance
-─── Enterprise
-    └── Enterprise Onboarding
-─── Observability
-    └── Observabilidade
-─── Compliance
-    └── Compliance
-─── Advanced
-    ├── Multi-Cluster (Soon)
-    └── Chaos Engineering (Soon)
-─── Developers
-    ├── Web IDE
-    └── Developer Portal
-Sair
-```
-
-### Breadcrumbs
-
-Breadcrumb navigation is automatically generated from the URL path:
-- `/agents/studio` -> Hub > Agents > Studio
-- `/compliance/controls` -> Hub > Compliance > Controls
-
-### Hub Cards
-
-Hub cards are now built from the route registry. Every card links to a real route.
-- Active routes show "Ver Mais" with arrow
-- Disabled/placeholder routes show "Em Breve" with construction icon and "Soon" badge
-
-## Adding a New Route
-
-1. Add the route entry to `src/routes/adminRoutes.tsx` in the `routes` array
-2. Create the page component in `src/pages/`
-3. It will automatically appear in:
-   - The sidebar (if not `hidden`)
-   - The Hub cards
-   - The command palette (add shortcut manually)
-
-## Testing
-
-- All routes render without errors
-- Hub has no dead links
-- Disabled features show "Coming Soon" badge
-- Sidebar navigates correctly with group expand/collapse
-- Breadcrumbs update on navigation
-- Command palette includes all new pages
+1. Create your component in `frontend/admin/src/pages/`.
+2. Open `frontend/admin/src/routes/adminRoutes.tsx`.
+3. Add a lazy import for your component.
+4. Add a new entry to the `routes` array.
+5. The page will automatically appear in:
+   - The React Router switch in `App.tsx`.
+   - The Sidebar (unless `hidden` is true).
+   - The Admin Hub.
+   - The Breadcrumbs trail.
+   - The Command Palette (Ctrl+K).

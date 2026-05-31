@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { Send, Paperclip, X, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Send, Square, Paperclip, Mic, Image as ImageIcon } from 'lucide-react';
 import type { ChatAttachment } from '../../lib/types';
 
 interface ComposerProps {
-  onSend: (text: string, attachments?: ChatAttachment[]) => void;
-  disabled: boolean;
+  onSend: (text: string, attachments: ChatAttachment[]) => void;
+  disabled?: boolean;
   onCancel?: () => void;
   placeholder?: string;
 }
@@ -12,20 +12,13 @@ interface ComposerProps {
 export function Composer({ onSend, disabled, onCancel, placeholder }: ComposerProps) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const MAX_FILES = 5;
-
   const handleSend = () => {
-    const trimmed = text.trim();
-    if (!trimmed && attachments.length === 0) return;
-    onSend(trimmed, attachments.length > 0 ? attachments : undefined);
+    if (!text.trim() && attachments.length === 0) return;
+    onSend(text, attachments);
     setText('');
     setAttachments([]);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -35,93 +28,104 @@ export function Composer({ onSend, disabled, onCancel, placeholder }: ComposerPr
     }
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value);
-    const el = e.target;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const remaining = MAX_FILES - attachments.length;
-    const newAttachments = files.slice(0, remaining).map(file => ({
-      file,
-      mimeType: file.type,
-    }));
-    setAttachments(prev => [...prev, ...newAttachments]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  }, [text]);
 
   return (
-    <div className="p-4 border-t border-border-base bg-white">
-      {attachments.length > 0 && (
-        <div className="flex gap-2 flex-wrap mb-3 max-w-4xl mx-auto">
-          {attachments.map((att, i) => (
-            <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-lg text-xs text-slate-600">
-              <span className="truncate max-w-[120px]">{att.file.name}</span>
-              <button
-                onClick={() => removeAttachment(i)}
-                className="p-0.5 hover:bg-slate-200 rounded"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="flex gap-2 max-w-4xl mx-auto items-end">
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={handleFileSelect}
-          accept="image/*,.pdf,.txt,.csv,.json,.md"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || attachments.length >= MAX_FILES}
-          className="p-3 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 shrink-0"
-          title="Attach file"
-        >
-          <Paperclip size={20} />
-        </button>
-        <textarea
-          ref={textareaRef}
-          className="flex-1 resize-none px-4 py-3 bg-white border border-border-base rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm md:text-base min-h-[44px] max-h-[160px]"
-          placeholder={placeholder || 'Type your message... (Shift+Enter for newline)'}
-          value={text}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          rows={1}
-        />
-        {disabled && onCancel ? (
-          <button
-            onClick={onCancel}
-            className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shrink-0"
-            title="Cancel"
-          >
-            <X size={20} />
-          </button>
-        ) : (
-          <button
-            onClick={handleSend}
-            disabled={disabled || (!text.trim() && attachments.length === 0)}
-            className={`p-3 rounded-full transition-colors shrink-0 shadow-lg shadow-primary/20 ${
-              disabled || (!text.trim() && attachments.length === 0)
-                ? 'bg-slate-300 cursor-not-allowed shadow-none'
-                : 'bg-primary text-white hover:bg-primary/90'
-            }`}
-          >
-            {disabled ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-          </button>
+    <div className="p-4 bg-white border-t border-border-base shrink-0">
+      <div className="max-w-4xl mx-auto relative flex flex-col gap-2">
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {attachments.map((at, i) => (
+              <div key={i} className="relative w-16 h-16 rounded-lg border border-border-base overflow-hidden bg-slate-50 group">
+                {at.preview ? (
+                  <img src={at.preview} alt="upload preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <Paperclip size={20} />
+                  </div>
+                )}
+                <button
+                  onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                  className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Square size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
+
+        <div className="relative group transition-all duration-200">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            placeholder={placeholder || "Type a message..."}
+            className={`
+              w-full bg-slate-50/50 border border-border-base rounded-2xl py-3 pl-4 pr-24 
+              focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white
+              transition-all resize-none text-sm leading-relaxed
+              ${disabled ? 'opacity-50' : ''}
+            `}
+          />
+
+          <div className="absolute right-2 bottom-2 flex items-center gap-1">
+            <button
+              className="p-2 text-slate-400 hover:text-slate-600 rounded-xl transition-colors"
+              title="Attach files (Optional)"
+              disabled={disabled}
+            >
+              <Paperclip size={18} />
+            </button>
+            
+            {disabled && onCancel ? (
+              <button
+                onClick={onCancel}
+                className="p-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-xl transition-all shadow-sm"
+                title="Cancel run"
+              >
+                <Square size={18} fill="currentColor" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={disabled || (!text.trim() && attachments.length === 0)}
+                className={`
+                  p-2 rounded-xl transition-all shadow-sm
+                  ${text.trim() || attachments.length > 0 
+                    ? 'bg-primary text-white hover:bg-primary-dark shadow-primary/20' 
+                    : 'bg-slate-100 text-slate-400'}
+                `}
+              >
+                <Send size={18} fill={text.trim() ? "currentColor" : "none"} />
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between px-2">
+          <div className="flex gap-4">
+            <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-tight">
+              <Mic size={12} />
+              Voice
+            </button>
+            <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-tight">
+              <ImageIcon size={12} />
+              Vision
+            </button>
+          </div>
+          <div className="text-[10px] text-slate-400 font-medium">
+            Shift + Enter for new line
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -37,24 +37,26 @@ class DeploymentRouter:
 
         # Per-minute check
         minute_key = self._rate_key(str(deployment.id), "minute")
+        minute_limit = deployment.rate_limit_per_minute or 60
         minute_ago = now - 60
         if minute_key not in self._rate_counters:
             self._rate_counters[minute_key] = []
         self._rate_counters[minute_key] = [
             t for t in self._rate_counters[minute_key] if t > minute_ago
         ]
-        if len(self._rate_counters[minute_key]) >= deployment.rate_limit_per_minute:
+        if len(self._rate_counters[minute_key]) >= minute_limit:
             return False
 
         # Per-day check
         day_key = self._rate_key(str(deployment.id), "day")
+        day_limit = deployment.rate_limit_per_day or 10000
         day_ago = now - 86400
         if day_key not in self._rate_counters:
             self._rate_counters[day_key] = []
         self._rate_counters[day_key] = [
             t for t in self._rate_counters[day_key] if t > day_ago
         ]
-        if len(self._rate_counters[day_key]) >= deployment.rate_limit_per_day:
+        if len(self._rate_counters[day_key]) >= day_limit:
             return False
 
         # Record this request

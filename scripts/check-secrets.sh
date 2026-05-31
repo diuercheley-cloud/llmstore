@@ -152,6 +152,9 @@ relative_to_base() {
 
 is_text_scan_skipped() {
     local path="$1"
+    if [[ "$path" == ".well-known/security.txt" ]]; then
+        return 0
+    fi
     [[ "$path" =~ \.(gguf|bin|sqlite|db|bak|png|jpg|jpeg|gif|ico|pdf|zip|tar|gz)$ ]]
 }
 

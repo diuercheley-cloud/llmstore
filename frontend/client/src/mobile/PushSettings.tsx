@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, BellOff, Smartphone, Loader2, Wifi, WifiOff } from 'lucide-react';
+import { api } from '../lib/api';
+import { toast } from 'sonner';
 import {
   registerServiceWorker,
   subscribePushNotifications,
@@ -49,10 +51,16 @@ export function PushSettings() {
   const handleEnable = async () => {
     if (!swReg) return;
     setActionLoading(true);
-    const sub = await subscribePushNotifications(swReg);
-    if (sub) {
-      setIsSubscribed(true);
-      setPermission('granted');
+    try {
+      const sub = await subscribePushNotifications(swReg);
+      if (sub) {
+        await api.subscribePush(sub);
+        setIsSubscribed(true);
+        setPermission('granted');
+        toast.success('Push notifications enabled');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to enable push');
     }
     setActionLoading(false);
   };
@@ -60,9 +68,18 @@ export function PushSettings() {
   const handleDisable = async () => {
     if (!swReg) return;
     setActionLoading(true);
-    const ok = await unsubscribePushNotifications(swReg);
-    if (ok) {
-      setIsSubscribed(false);
+    try {
+      const sub = await getPushSubscription(swReg);
+      if (sub) {
+        await api.unsubscribePush(sub.endpoint);
+      }
+      const ok = await unsubscribePushNotifications(swReg);
+      if (ok) {
+        setIsSubscribed(false);
+        toast.success('Push notifications disabled');
+      }
+    } catch (err: any) {
+      toast.error('Failed to disable push');
     }
     setActionLoading(false);
   };

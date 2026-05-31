@@ -1,105 +1,57 @@
-# Agent Chat - User-Facing Chat UI
+# User Agent Chat UI
 
-User-facing AI assistant interface for chatting with configured agents.
+## Overview
 
-## Architecture
+The User Agent Chat UI provides a high-fidelity, real-time interface for end-users to interact with agents. It replaces basic playgrounds with a production-ready experience featuring persistent sessions, streaming responses, and detailed activity tracking.
 
-```
-frontend/client/src/
-  lib/
-    types.ts                    # TypeScript types for agents, sessions, messages
-    api.ts                      # API client with Bearer token auth
-  pages/
-    AgentChat.tsx               # Main chat page (orchestrator)
-  components/chat/
-    AgentSelector.tsx           # Agent dropdown picker
-    SessionList.tsx             # Conversation sidebar
-    MessageList.tsx             # Message rendering with streaming
-    Composer.tsx                # Input with file upload support
-    StreamingMessage.tsx        # Real-time streaming display
-    ToolActivityTimeline.tsx    # Tool calls, memory reads, approvals
-```
+## Components
+
+### Agent Chat Page (`AgentChat.tsx`)
+The main orchestrator that manages:
+- Authentication state (Client API Token).
+- Agent selection.
+- Session switching.
+- WebSocket lifecycle for real-time updates.
+
+### Session List (`SessionList.tsx`)
+Allows users to browse their previous conversations with a specific agent, delete old sessions, or start a new "New Thread".
+
+### Message List (`MessageList.tsx`)
+Renders the conversation history. It handles:
+- User messages.
+- Agent responses (including Markdown and code blocks).
+- Streaming deltas for low-latency feedback.
+- Tool activity indicators.
+
+### Composer (`Composer.tsx`)
+The rich input area. Features:
+- Multi-line auto-expanding textarea.
+- Shift+Enter for new lines, Enter to send.
+- Support for file/image attachments (Multimodal-ready).
+- Run cancellation during active streaming.
+
+### Tool Activity Timeline (`ToolActivityTimeline.tsx`)
+A visual timeline of what the agent is doing "under the hood" during a run:
+- **Tool Calls**: Shows which tools are being invoked and their status.
+- **Memory Access**: Indicates when the agent reads from short-term or long-term memory.
+- **Approvals**: Highlights when a human-in-the-loop (HITL) intervention is required.
 
 ## Features
 
-- **Agent selection** - Pick from available agents (filtered to active only)
-- **Session management** - Create/resume/delete conversations
-- **Persistent history** - Messages loaded from backend on session select
-- **WebSocket streaming** - Real-time token-by-token agent responses
-- **Tool activity** - Visual timeline of tool calls, memory reads, approvals
-- **Cancel runs** - Stop agent execution mid-stream
-- **File upload** - Attach up to 5 files (images, PDFs, text)
-- **Auth token** - Enter API key via UI, stored in localStorage
-- **Responsive** - Mobile sidebar with backdrop overlay
-- **Error handling** - Auth prompts, error banners, empty states
-- **WebSocket reconnect** - Auto-retry up to 3 times on disconnect
-- **Tenant isolation** - Backend validates tenant on all requests
+- **Real-time Streaming**: Uses WebSockets to stream deltas directly to the UI, providing immediate feedback as the agent thinks.
+- **Persistent State**: Conversations are stored on the server via the Session API. Users can close the app and resume later.
+- **Tenant Isolation**: The UI respects the API token's tenant scope. Users only see agents and sessions authorized for their client key.
+- **Responsive Design**: Mobile-friendly sidebar and layout, ready for PWA wrapping.
 
-## Authentication
+## WebSocket Protocol
 
-Client API token (Bearer token) is required. Set via:
+The UI listens for the following events on `ws://.../v1/agents/runs/{run_id}/stream`:
 
-1. **UI input** - First visit shows a token input prompt
-2. **Environment** - Set `VITE_API_TOKEN` in `.env`
-3. **localStorage** - Token persisted after first entry
-
-For WebSocket, the token is passed as `?token=` query parameter.
-
-## API Endpoints Used
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/v1/agents` | List available agents |
-| GET | `/v1/agents/{id}` | Get agent details |
-| POST | `/v1/agents/sessions/{agent_id}` | Create new session |
-| GET | `/v1/agents/sessions?agent_id=...` | List sessions |
-| GET | `/v1/agents/sessions/{id}` | Get session |
-| GET | `/v1/agents/sessions/{id}/messages` | Get message history |
-| POST | `/v1/agents/sessions/{id}/runs` | Start a run in session |
-| DELETE | `/v1/agents/sessions/{id}` | Delete session |
-| WS | `/v1/agents/runs/{run_id}/stream` | WebSocket streaming |
-
-## WebSocket Event Types
-
-| Event | Description |
-|-------|-------------|
-| `text_delta` / `content_delta` | Streaming text chunk |
-| `step_completed` / `agent_step` | Agent step finished |
-| `tool_call` / `tool_invocation` | Tool invocation |
-| `memory_read` / `memory_access` | Memory access |
-| `approval_required` / `waiting_approval` | Human approval needed |
-| `run_completed` / `completed` | Run finished successfully |
-| `run_failed` / `failed` | Run failed |
-| `run_cancelled` | Run was cancelled |
-
-## Development
-
-```bash
-cd frontend/client
-npm run dev
-```
-
-Set the API target if backend is on a different port:
-
-```bash
-VITE_API_TARGET=http://localhost:8080 npm run dev
-```
-
-The Vite dev server proxies `/v1/agents` to the control plane.
-
-## Configuration
-
-Environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_TOKEN` | (none) | Pre-configured API token |
-| `VITE_API_BASE_URL` | (empty) | API base URL (for production) |
-| `VITE_API_TARGET` | `http://localhost:8080` | Proxy target in dev |
-
-## PWA Considerations
-
-The UI is responsive and works well in mobile browsers. For full PWA support:
-- Add a `manifest.json` with app icons
-- Register a service worker for offline caching
-- Add install prompt handling
+| Event | Action |
+|-------|--------|
+| `text_delta` | Appends text to the current response buffer. |
+| `tool_call` | Adds a tool activity item to the timeline. |
+| `memory_read`| Shows a memory access event. |
+| `step_completed` | Updates activity status and optionally provides output. |
+| `run_completed` | Triggers a final message history reload and stops streaming mode. |
+| `run_failed` | Displays an error banner with the failure reason. |

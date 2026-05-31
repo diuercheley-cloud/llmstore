@@ -1,13 +1,13 @@
 from types import SimpleNamespace
 
 from app.services.operations.plugin_runtime.receipts import (
-from app.utils.crypto_signer import sign_payload
     build_abi_contract_receipt,
     build_compatibility_receipt,
     build_federation_compatibility_receipt,
     build_load_plan_receipt,
     build_replay_verification_receipt,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 def test_plugin_runtime_receipts_have_placeholders():

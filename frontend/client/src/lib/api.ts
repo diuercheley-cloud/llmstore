@@ -48,10 +48,37 @@ export const api = {
   getAgent: (agentId: string) => request<AgentDetail>(`/v1/agents/${agentId}`),
 
   createSession: (agentId: string, title?: string) =>
-    request<Session>('/v1/agents/sessions/' + agentId, {
+    request<Session>(`/v1/agents/${agentId}/sessions`, {
       method: 'POST',
       body: JSON.stringify({ title: title || null }),
     }),
+
+  // Mobile & PWA
+  registerDevice: (token: string, platform: string, model?: string, version?: string) =>
+    request<{ id: string }>(`/v1/mobile/devices/register`, {
+      method: 'POST',
+      body: JSON.stringify({ device_token: token, platform, model, app_version: version }),
+    }),
+
+  subscribePush: (subscription: PushSubscription) => {
+    const p = subscription.toJSON();
+    return request<{ status: string }>(`/v1/mobile/push/subscribe`, {
+      method: 'POST',
+      body: JSON.stringify({
+        endpoint: p.endpoint,
+        p256dh: p.keys?.p256dh,
+        auth: p.keys?.auth,
+      }),
+    });
+  },
+
+  unsubscribePush: (endpoint: string) =>
+    request<{ status: string }>(`/v1/mobile/push/unsubscribe`, {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    }),
+
+  getMobileConfig: () => request<any>(`/v1/mobile/config`),
 
   listSessions: (agentId?: string, limit = 50) => {
     const params = new URLSearchParams({ limit: String(limit) });
@@ -59,8 +86,8 @@ export const api = {
     return request<Session[]>(`/v1/agents/sessions?${params}`);
   },
 
-  getSession: (sessionId: string) =>
-    request<Session>(`/v1/agents/sessions/${sessionId}`),
+  getSession: (sessionId: string) => request<Session>(`/v1/agents/sessions/${sessionId}`),
+
 
   getMessages: (sessionId: string, limit = 200) =>
     request<SessionMessage[]>(`/v1/agents/sessions/${sessionId}/messages?limit=${limit}`),

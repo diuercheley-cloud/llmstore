@@ -38,13 +38,16 @@ def sanitize_payload(payload: Any) -> Any:
 
 class RunEventStreamService:
     @staticmethod
-    async def publish_run_event(run_id: str, event_type: str, data: Dict[str, Any]):
+    async def publish_run_event(run_id: str, event_type: str, data: Dict[str, Any], session_id: Optional[str] = None):
         sanitized_data = sanitize_payload(data)
         event = {
             "event": event_type,
             "run_id": run_id,
+            "session_id": session_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data": sanitized_data
         }
-        logger.debug(f"Streaming event {event_type} for run {run_id}")
+        logger.debug(f"Streaming event {event_type} for run {run_id} (session_id: {session_id})")
         await ws_manager.broadcast(run_id, event)
+        if session_id:
+            await ws_manager.broadcast(f"session:{session_id}", event)

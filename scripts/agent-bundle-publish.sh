@@ -33,7 +33,8 @@ fi
 # 3. Create publish payload
 info "Creating publish payload..."
 
-PUBLISH_PAYLOAD=$(python3 -c "
+PAYLOAD_FILE=$(mktemp)
+python3 -c "
 import json, os, hashlib
 
 bundle_dir = '$BUNDLE_DIR'
@@ -62,19 +63,20 @@ payload = {
     'status': 'draft'
 }
 
-print(json.dumps(payload, indent=2))
-" 2>&1)
+with open('$PAYLOAD_FILE', 'w') as f:
+    json.dump(payload, f, indent=2)
+"
 
-info "Payload created:"
-echo "$PUBLISH_PAYLOAD" | python3 -c "import json,sys; d=json.load(sys.stdin); [print(f'  {k}: {v}') for k,v in d.items() if k != 'manifest']"
+info "Payload created in $PAYLOAD_FILE"
 
 # 4. Publish via API (mock — would be a real POST in production)
 info "Publishing to marketplace..."
 
-RESULT=$(python3 -c "
-import json, datetime
+python3 -c "
+import json, datetime, sys
 
-payload = json.loads('''$PUBLISH_PAYLOAD''')
+with open('$PAYLOAD_FILE') as f:
+    payload = json.load(f)
 
 # Simulate API response
 result = {
@@ -82,28 +84,26 @@ result = {
     'bundle_id': 'bundle-' + payload['name'] + '-' + payload['version'],
     'marketplace_status': 'draft',
     'message': 'Bundle submitted as draft. Pending review.',
-    'published_at': datetime.datetime.utcnow().isoformat() + 'Z',
+    'published_at': datetime.datetime.now(datetime.UTC).isoformat() + 'Z',
     'next_steps': [
         'Bundle is now in draft status',
         'Review will be triggered automatically',
         'Once approved, it will appear in the marketplace'
     ]
 }
-print(json.dumps(result, indent=2))
-" 2>&1)
 
-echo ""
-echo "==============================="
-echo "$RESULT" | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-print(f'  Status: \033[0;32m{data[\"status\"].upper()}\033[0m')
-print(f'  Bundle ID: {data[\"bundle_id\"]}')
-print(f'  Marketplace: {data[\"marketplace_status\"]}')
-print()
-for step in data.get('next_steps', []):
+print('')
+print('===============================')
+print(f'  Status: \033[0;32m{result[\"status\"].upper()}\033[0m')
+print(f'  Bundle ID: {result[\"bundle_id\"]}')
+print(f'  Marketplace: {result[\"marketplace_status\"]}')
+print('')
+for step in result.get('next_steps', []):
     print(f'  -> {step}')
 "
+
+rm "$PAYLOAD_FILE"
+
 echo ""
 green "BUNDLE PUBLISHED AS DRAFT"
 echo ""

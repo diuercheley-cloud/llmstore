@@ -9,133 +9,8 @@ import { CommandPalette } from './components/command-palette'
 import { OnboardingWizard } from './components/onboarding-wizard'
 import { Toaster } from 'sonner'
 import { NotFound } from './components/ui-feedback'
-import { navRoutes, type NavRoute } from './navigation/navConfig'
-
-// ── Lazy page imports (generated from navRoutes) ──────────────────
-
-const Hub = lazy(() => import('./pages/Hub'))
-const Clients = lazy(() => import('./pages/Clients'))
-const Models = lazy(() => import('./pages/Models'))
-const Backends = lazy(() => import('./pages/Backends'))
-const Plugins = lazy(() => import('./pages/Plugins'))
-const ManagedControlPlane = lazy(() => import('./pages/ManagedControlPlane'))
-const OperationsOverview = lazy(() => import('./pages/operations/OperationsOverview'))
-const RuntimeNodes = lazy(() => import('./pages/operations/RuntimeNodes'))
-const ModelRuntime = lazy(() => import('./pages/operations/ModelRuntime'))
-const QueueQoS = lazy(() => import('./pages/operations/QueueQoS'))
-const Readiness = lazy(() => import('./pages/operations/Readiness'))
-const SecurityPosture = lazy(() => import('./pages/operations/SecurityPosture'))
-const ReleaseStatus = lazy(() => import('./pages/operations/ReleaseStatus'))
-const IncidentTimeline = lazy(() => import('./pages/operations/IncidentTimeline'))
-const PerformanceDashboard = lazy(() => import('./pages/performance/PerformanceDashboard'))
-const BenchmarkHistory = lazy(() => import('./pages/performance/BenchmarkHistory'))
-const TuningProfiles = lazy(() => import('./pages/performance/TuningProfiles'))
-const EnterpriseOnboardingDashboard = lazy(() => import('./pages/enterprise/EnterpriseOnboardingDashboard'))
-const OnboardingChecklist = lazy(() => import('./pages/enterprise/OnboardingChecklist'))
-const ObservabilityDashboard = lazy(() => import('./pages/observability/ObservabilityDashboard'))
-const RealtimeDashboard = lazy(() => import('./pages/observability/RealtimeDashboard'))
-const AgentObservability = lazy(() => import('./pages/observability/AgentObservability'))
-const MultiClusterOverview = lazy(() => import('./pages/multicluster/MultiClusterOverview'))
-const ChaosDashboard = lazy(() => import('./pages/chaos/ChaosDashboard'))
-const ComplianceOverview = lazy(() => import('./pages/compliance/ComplianceOverview'))
-const ControlMap = lazy(() => import('./pages/compliance/ControlMap'))
-const EvidenceCenter = lazy(() => import('./pages/compliance/EvidenceCenter'))
-const RiskRegister = lazy(() => import('./pages/compliance/RiskRegister'))
-const PolicyCenter = lazy(() => import('./pages/compliance/PolicyCenter'))
-const AgentsOverview = lazy(() => import('./pages/agents/AgentsOverview'))
-const AgentRegistry = lazy(() => import('./pages/agents/AgentRegistry'))
-const AgentRuns = lazy(() => import('./pages/agents/AgentRuns'))
-const AgentRunTimeline = lazy(() => import('./pages/agents/AgentRunTimeline'))
-const AgentTools = lazy(() => import('./pages/agents/AgentTools'))
-const AgentMemory = lazy(() => import('./pages/agents/AgentMemory'))
-const AgentApprovals = lazy(() => import('./pages/agents/AgentApprovals'))
-const AgentEvals = lazy(() => import('./pages/agents/AgentEvals'))
-const AgentPolicies = lazy(() => import('./pages/agents/AgentPolicies'))
-const AgentMarketplace = lazy(() => import('./pages/agents/AgentMarketplace'))
-const AgentWorkspaces = lazy(() => import('./pages/agents/AgentWorkspaces'))
-const AgentArtifactBrowser = lazy(() => import('./pages/agents/AgentArtifactBrowser'))
-const AgentArtifactDetail = lazy(() => import('./pages/agents/AgentArtifactDetail'))
-const AgentStudio = lazy(() => import('./pages/agents/studio/AgentStudio'))
-const AgentAnalyticsDashboard = lazy(() => import('./pages/agents/analytics/AgentAnalyticsDashboard'))
-const ApprovalPortal = lazy(() => import('./pages/agents/approvals/ApprovalPortal'))
-const AgentPromotion = lazy(() => import('./pages/agents/AgentPromotion'))
-const AgentLineage = lazy(() => import('./pages/agents/AgentLineage'))
-const CollaborativeChat = lazy(() => import('./pages/chat/CollaborativeChat'))
-const WebIDE = lazy(() => import('./pages/ide/WebIDE'))
-const DeveloperPortal = lazy(() => import('./pages/developers/DeveloperPortal'))
-const Bundles = lazy(() => import('./pages/developers/Bundles'))
-const ApiKeys = lazy(() => import('./pages/api-keys/ApiKeys'))
-const Billing = lazy(() => import('./pages/billing/Billing'))
-const Usage = lazy(() => import('./pages/usage/Usage'))
-const Rag = lazy(() => import('./pages/rag/Rag'))
-const Security = lazy(() => import('./pages/security/Security'))
-const Reports = lazy(() => import('./pages/reports/Reports'))
-const Settings = lazy(() => import('./pages/settings/Settings'))
-const Prompts = lazy(() => import('./pages/prompts/Prompts'))
-
-// ── Component map (path -> lazy component) ────────────────────────
-
-const componentMap: Record<string, React.LazyExoticComponent<React.FC<Record<string, unknown>>>> = {
-  '/': Hub,
-  '/clients': Clients,
-  '/models': Models,
-  '/backends': Backends,
-  '/plugins': Plugins,
-  '/saas': ManagedControlPlane,
-  '/operations': OperationsOverview,
-  '/operations/nodes': RuntimeNodes,
-  '/operations/runtime': ModelRuntime,
-  '/operations/qos': QueueQoS,
-  '/operations/readiness': Readiness,
-  '/operations/security': SecurityPosture,
-  '/operations/release': ReleaseStatus,
-  '/operations/incidents': IncidentTimeline,
-  '/performance': PerformanceDashboard,
-  '/performance/history': BenchmarkHistory,
-  '/performance/profiles': TuningProfiles,
-  '/enterprise/onboarding': EnterpriseOnboardingDashboard,
-  '/enterprise/onboarding/:id': OnboardingChecklist,
-  '/observability': ObservabilityDashboard,
-  '/observability/realtime': RealtimeDashboard,
-  '/observability/agents': AgentObservability,
-  '/multicluster': MultiClusterOverview,
-  '/chaos': ChaosDashboard,
-  '/compliance': ComplianceOverview,
-  '/compliance/controls': ControlMap,
-  '/compliance/evidence': EvidenceCenter,
-  '/compliance/risks': RiskRegister,
-  '/compliance/policies': PolicyCenter,
-  '/agents': AgentsOverview,
-  '/agents/registry': AgentRegistry,
-  '/agents/runs': AgentRuns,
-  '/agents/runs/:id': AgentRunTimeline,
-  '/agents/tools': AgentTools,
-  '/agents/memory': AgentMemory,
-  '/agents/approvals': AgentApprovals,
-  '/agents/evals': AgentEvals,
-  '/agents/policies': AgentPolicies,
-  '/agents/marketplace': AgentMarketplace,
-  '/agents/workspaces': AgentWorkspaces,
-  '/agents/workspaces/:id': AgentArtifactBrowser,
-  '/agents/workspaces/:id/artifacts/:artifactId': AgentArtifactDetail,
-  '/agents/studio': AgentStudio,
-  '/agents/analytics': AgentAnalyticsDashboard,
-  '/agents/approvals-portal': ApprovalPortal,
-  '/agents/promotion': AgentPromotion,
-  '/agents/lineage': AgentLineage,
-  '/agents/chat': CollaborativeChat,
-  '/ide': WebIDE,
-  '/developers': DeveloperPortal,
-  '/developers/bundles': Bundles,
-  '/api-keys': ApiKeys,
-  '/billing': Billing,
-  '/usage': Usage,
-  '/rag': Rag,
-  '/security': Security,
-  '/reports': Reports,
-  '/settings': Settings,
-  '/prompts': Prompts,
-}
+import { routes, type RouteConfig } from './routes/adminRoutes'
+import { FeatureGate } from './components/layout/FeatureGate'
 
 // ── Shared components ─────────────────────────────────────────────
 
@@ -154,6 +29,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore(state => state.token)
   if (!token) return <Navigate to="/login" replace />
   return <>{children}</>
+}
+
+function RouteRenderer({ route }: { route: RouteConfig }) {
+  // Check if route is coming soon or disabled
+  if (route.status === 'coming_soon' || route.status === 'disabled') {
+     return <FeatureGate feature={route.label} />
+  }
+
+  return <route.component />
 }
 
 function Login() {
@@ -267,27 +151,22 @@ function App() {
             {/* Login */}
             <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
 
-            {/* Real routes from navRoutes */}
-            {navRoutes
-              .filter(r => componentMap[r.path])
-              .map(route => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <ProtectedRoute>
-                      <AdminShell>
-                        <Suspense fallback={<PageLoader />}>
-                          {(() => {
-                            const Comp = componentMap[route.path]
-                            return Comp ? <Comp /> : <NotFound />
-                          })()}
-                        </Suspense>
-                      </AdminShell>
-                    </ProtectedRoute>
-                  }
-                />
-              ))}
+            {/* Centralized routes from adminRoutes.tsx */}
+            {routes.map(route => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <ProtectedRoute>
+                    <AdminShell>
+                      <Suspense fallback={<PageLoader />}>
+                        <RouteRenderer route={route} />
+                      </Suspense>
+                    </AdminShell>
+                  </ProtectedRoute>
+                }
+              />
+            ))}
 
             {/* 404 */}
             <Route path="*" element={<AdminShell><NotFound /></AdminShell>} />

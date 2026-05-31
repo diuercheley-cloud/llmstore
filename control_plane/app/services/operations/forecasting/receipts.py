@@ -5,6 +5,7 @@ from typing import Any
 from app.utils.crypto_signer import sign_payload
 
 SIGNATURE_PREFIX = sign_payload("ed25519_base")
+SIGNATURE_PLACEHOLDER = SIGNATURE_PREFIX
 DETERMINISTIC_VERSION = "v1"
 
 

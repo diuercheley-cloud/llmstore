@@ -93,9 +93,9 @@ export function AgentChat() {
 
   const processStreamEvent = useCallback((event: MessageEvent) => {
     try {
-      const data = JSON.parse(event.data);
-      const et = data.event_type;
-      const p = data.payload || {};
+      const msg = JSON.parse(event.data);
+      const et = msg.event;
+      const p = msg.data || {};
 
       if (et === 'step_completed' || et === 'agent_step') {
         const name = p.tool_name || p.step_type || 'Step';

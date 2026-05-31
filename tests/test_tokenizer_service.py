@@ -21,17 +21,24 @@ import app.models.api_key
 import app.models.request_financial
 
 @pytest.fixture
-def settings():
+def settings(monkeypatch):
+    monkeypatch.setenv("TOKEN_COUNTING_REAL_ENABLED", "False")
     return Settings(
         tokenizer_mode="auto",
         tokenizer_strict=False,
         tokenizer_cache_enabled=True
     )
 
+@pytest.fixture(autouse=True)
+def mock_settings(settings):
+    with patch("app.services.tokenizer_service.get_settings", return_value=settings), \
+         patch("app.services.token_counting.token_counter.get_settings", return_value=settings), \
+         patch("app.core.config.get_settings", return_value=settings):
+        yield
+
 @pytest.fixture
 def tokenizer_service(settings):
-    with patch("app.services.tokenizer_service.get_settings", return_value=settings):
-        return TokenizerService()
+    return TokenizerService()
 
 @pytest.mark.asyncio
 async def test_count_text_tokens_tiktoken(tokenizer_service):

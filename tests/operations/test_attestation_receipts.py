@@ -3,12 +3,12 @@ import uuid
 from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
 from app.services.operations.attestation_framework.federation_bundle import AttestationFederationBundleService
 from app.services.operations.attestation_framework.receipts import (
-from app.utils.crypto_signer import sign_payload
     build_attestation_receipt,
     build_bundle_receipt,
     build_chain_receipt,
     build_verification_receipt,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 def test_receipts_include_required_fields():

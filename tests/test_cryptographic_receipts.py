@@ -12,7 +12,6 @@ from app.models.commercial_cryptographic_receipts import (
     CommercialInferenceReceiptVerificationReport,
 )
 from app.services.inference.cryptographic_receipts import (
-from app.utils.crypto_signer import sign_payload
     build_receipt_hash,
     export_receipt,
     generate_inference_receipt,
@@ -22,6 +21,7 @@ from app.utils.crypto_signer import sign_payload
     verify_receipt,
     summarize_receipt,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 @pytest.mark.asyncio

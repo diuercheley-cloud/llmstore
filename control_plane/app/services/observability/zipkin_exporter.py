@@ -1,7 +1,10 @@
 # Owner: agent-platform
 import os
 import logging
-from opentelemetry.exporter.zipkin.proto.http import ZipkinExporter
+try:
+    from opentelemetry.exporter.zipkin.proto.http import ZipkinExporter
+except ImportError:
+    ZipkinExporter = None
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from app.core.config import get_settings
 
@@ -11,6 +14,10 @@ class ZipkinExporterService:
     def setup(self, provider):
         settings = get_settings()
         if not settings.zipkin_export_enabled:
+            return
+
+        if not ZipkinExporter:
+            logger.warning("Zipkin exporter is enabled in settings but opentelemetry-exporter-zipkin package is not installed.")
             return
 
         endpoint = os.environ.get("ZIPKIN_ENDPOINT", "http://localhost:9411/api/v2/spans")

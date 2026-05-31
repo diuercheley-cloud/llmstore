@@ -1,12 +1,12 @@
 from types import SimpleNamespace
 
 from app.services.operations.compatibility_contracts.receipts import (
-from app.utils.crypto_signer import sign_payload
     build_contract_receipt,
     build_deprecation_receipt,
     build_negotiation_receipt,
     build_verification_receipt,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 def test_receipts_include_required_fields():

@@ -1,7 +1,10 @@
 # Owner: agent-platform
 import os
 import logging
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+try:
+    from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+except ImportError:
+    JaegerExporter = None
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from app.core.config import get_settings
 
@@ -11,6 +14,10 @@ class JaegerExporterService:
     def setup(self, provider):
         settings = get_settings()
         if not settings.jaeger_export_enabled:
+            return
+
+        if not JaegerExporter:
+            logger.warning("Jaeger exporter is enabled in settings but opentelemetry-exporter-jaeger package is not installed.")
             return
 
         agent_host = os.environ.get("JAEGER_AGENT_HOST", "localhost")

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { buildBreadcrumbs } from '../../navigation/navConfig'
+import { buildBreadcrumbs } from '../../routes/adminRoutes'
 
 export function Breadcrumbs() {
   const location = useLocation()

@@ -4154,7 +4154,8 @@
   dependencies:
   - AGENT_STUDIO_ENABLED
   conflicts: []
-  safe_default_reason: Studio GA controls enabled by default for the v2.x release train.
+  safe_default_reason: Studio GA controls enabled by default for the v2.x release
+    train.
 - name: AGENT_VISUAL_FLOW_EDITOR_ENABLED
   default: false
   owner: agent-platform
@@ -4364,7 +4365,7 @@
   conflicts: []
   safe_default_reason: SAB export stays disabled until portability is explicitly desired.
 - name: AGENT_FEDERATED_MEMORY_ENABLED
-  default: true
+  default: false
   owner: agent-platform
   area: Agentic AI Platform
   status: active
@@ -5655,7 +5656,8 @@
   status: beta
   introduced_in: v2.2.0
   risk_level: high
-  dependencies: [AGENT_BROWSER_TOOL_ENABLED]
+  dependencies:
+  - AGENT_BROWSER_TOOL_ENABLED
   conflicts: []
   safe_default_reason: Restricted to local/internal network by default.
 - name: AGENT_BROWSER_SCREENSHOT_ENABLED
@@ -5665,7 +5667,8 @@
   status: active
   introduced_in: v2.2.0
   risk_level: low
-  dependencies: [AGENT_BROWSER_TOOL_ENABLED]
+  dependencies:
+  - AGENT_BROWSER_TOOL_ENABLED
   conflicts: []
   safe_default_reason: Screenshots are safe for debugging.
 - name: AGENT_BROWSER_TOOL_ENABLED
@@ -5715,7 +5718,8 @@
   status: beta
   introduced_in: v2.2.0
   risk_level: high
-  dependencies: [AGENT_FILE_TOOLS_ENABLED]
+  dependencies:
+  - AGENT_FILE_TOOLS_ENABLED
   conflicts: []
   safe_default_reason: Deletion is a high-risk operation.
 - name: AGENT_FILE_TOOLS_ENABLED
@@ -5735,7 +5739,8 @@
   status: active
   introduced_in: v2.2.0
   risk_level: medium
-  dependencies: [AGENT_FILE_TOOLS_ENABLED]
+  dependencies:
+  - AGENT_FILE_TOOLS_ENABLED
   conflicts: []
   safe_default_reason: Write operations are disabled by default.
 - name: AGENT_HARD_COST_CAP_ENABLED
@@ -5775,7 +5780,8 @@
   status: active
   introduced_in: v2.2.0
   risk_level: low
-  dependencies: [MULTIMODAL_ENABLED]
+  dependencies:
+  - MULTIMODAL_ENABLED
   conflicts: []
   safe_default_reason: Advanced vision features are opt-in.
 - name: EMAIL_PROVIDER
@@ -5838,3 +5844,223 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Observability exports are opt-in.
+- name: A2A_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: AI21_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: AZURE_OPENAI_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: BEDROCK_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: COHERE_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: CONTENT_MODERATION_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: CONTENT_MODERATION_TOXICITY_THRESHOLD
+  default: 0.7
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: DATA_RESIDENCY_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: DEPLOYMENT_AUTOSCALE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: DISASTER_RECOVERY_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: ENTERPRISE_SSO_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: FIREWORKS_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: GEMINI_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: GROQ_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: MISTRAL_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: NATS_TRIGGER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: PERPLEXITY_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: PULSAR_TRIGGER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: REPLICATE_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: SECRETS_MANAGER_PROVIDER
+  default: vault
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: TOGETHER_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.
+- name: XAI_PROVIDER_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: active
+  introduced_in: v2.2.0
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Registered missing flag for governance compliance.

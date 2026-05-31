@@ -87,7 +87,7 @@ async def promote_agent(
 @router.post("/{agent_id}/rollback")
 async def rollback_agent(
     agent_id: str,
-    environment: str = Query(..., regex="^(dev|staging|production)$"),
+    environment: str = Query(..., pattern="^(dev|staging|production)$"),
     db: AsyncSession = Depends(deps.get_db),
     current_user = Depends(deps.get_current_admin_user)
 ):

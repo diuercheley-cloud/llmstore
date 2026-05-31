@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import yaml
 import argparse
@@ -11,19 +12,40 @@ class AgentCTL:
         self.parser = argparse.ArgumentParser(prog="agentctl")
         subparsers = self.parser.add_subparsers(dest="command")
 
-        # init
+        # init (legacy/top-level)
         init_parser = subparsers.add_parser("init")
         init_parser.add_argument("name")
         init_parser.add_argument("--template", default="support-triage")
 
-        # validate
+        # validate (legacy/top-level)
         validate_parser = subparsers.add_parser("validate")
         validate_parser.add_argument("path", nargs="?", default=".")
 
         # bundle
         bundle_parser = subparsers.add_parser("bundle")
-        bundle_parser.add_argument("path", nargs="?", default=".")
-        bundle_parser.add_argument("--output", "-o", default="agent-bundle.zip")
+        bundle_sub = bundle_parser.add_subparsers(dest="subcommand")
+
+        # bundle init
+        b_init = bundle_sub.add_parser("init")
+        b_init.add_argument("name")
+        b_init.add_argument("dir", nargs="?", default=None)
+
+        # bundle validate
+        b_val = bundle_sub.add_parser("validate")
+        b_val.add_argument("path", nargs="?", default=".")
+
+        # bundle test
+        b_test = bundle_sub.add_parser("test")
+        b_test.add_argument("path", nargs="?", default=".")
+
+        # bundle sign
+        b_sign = bundle_sub.add_parser("sign")
+        b_sign.add_argument("path", nargs="?", default=".")
+        b_sign.add_argument("--key", help="Path to ed25519 pem key")
+
+        # bundle publish
+        b_pub = bundle_sub.add_parser("publish")
+        b_pub.add_argument("path", nargs="?", default=".")
 
     def run(self):
         args = self.parser.parse_args()
@@ -36,49 +58,31 @@ class AgentCTL:
         elif args.command == "validate":
             self.validate(args.path)
         elif args.command == "bundle":
-            self.bundle(args.path, args.output)
+            self.handle_bundle(args)
 
-    def init(self, name, template):
-        print(f"Initializing agent '{name}' from template '{template}'...")
-        # Simulating template copy
-        os.makedirs(name, exist_ok=True)
-        with open(os.path.join(name, "agent.yaml"), "w") as f:
-            yaml.dump({
-                "name": name,
-                "version": "0.1.0",
-                "description": f"Agent {name} initialized from {template}",
-                "instructions": "You are a helpful agent.",
-                "model_id": "gpt-4"
-            }, f)
-        print(f"Agent {name} created successfully.")
-
-    def validate(self, path):
-        yaml_path = os.path.join(path, "agent.yaml")
-        if not os.path.exists(yaml_path):
-            print(f"Error: agent.yaml not found in {path}")
-            sys.exit(1)
+    def handle_bundle(self, args):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
         
-        try:
-            with open(yaml_path, "r") as f:
-                data = yaml.safe_load(f)
-            
-            required_fields = ["name", "version", "instructions", "model_id"]
-            for field in required_fields:
-                if field not in data:
-                    print(f"Validation Error: Missing required field '{field}'")
-                    sys.exit(1)
-            
-            print(f"Agent '{data['name']}' is valid.")
-        except Exception as e:
-            print(f"Validation Error: {e}")
+        if args.subcommand == "init":
+            cmd = [f"{script_dir}/agent-bundle-init.sh", args.name]
+            if args.dir: cmd.append(args.dir)
+            os.execv(cmd[0], cmd)
+        elif args.subcommand == "validate":
+            cmd = [f"{script_dir}/agent-bundle-validate.sh", args.path]
+            os.execv(cmd[0], cmd)
+        elif args.subcommand == "test":
+            cmd = [f"{script_dir}/agent-bundle-test.sh", args.path]
+            os.execv(cmd[0], cmd)
+        elif args.subcommand == "sign":
+            cmd = [f"{script_dir}/agent-bundle-sign.sh", args.path]
+            if args.key: cmd.append(args.key)
+            os.execv(cmd[0], cmd)
+        elif args.subcommand == "publish":
+            cmd = [f"{script_dir}/agent-bundle-publish.sh", args.path]
+            os.execv(cmd[0], cmd)
+        else:
+            print("Usage: agentctl bundle {init,validate,test,sign,publish}")
             sys.exit(1)
-
-    def bundle(self, path, output):
-        print(f"Bundling agent in {path} to {output}...")
-        # In a real tool, this would zip the directory
-        with open(output, "w") as f:
-            f.write("MOCK_BUNDLE_CONTENT")
-        print("Bundle created successfully.")
 
 if __name__ == "__main__":
     ctl = AgentCTL()

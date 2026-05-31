@@ -1,146 +1,45 @@
-# Navigation System - Admin Frontend
+# Admin Navigation System
 
-Standardized navigation, layout, and design system for the admin portal.
+## Overview
+
+The Admin Navigation System is a centralized, configuration-driven architecture for managing the layout, routing, and discovery of features in the Admin Panel. It ensures a consistent user experience (UX) and simplifies the process of adding or restricting access to pages.
 
 ## Architecture
 
-```
-frontend/admin/src/
-  navigation/
-    navConfig.ts              # Single source of truth for all routes + metadata
-  components/layout/
-    AdminShell.tsx            # Main layout (sidebar + header + content)
-    Sidebar.tsx               # Navigation sidebar with collapsible sections
-    Breadcrumbs.tsx           # Auto-generated breadcrumbs from URL
-    FeatureGate.tsx           # Feature disabled / coming soon page
-    PageHeader.tsx            # Standardized page header with title, badge, actions
-  index.css                   # Design tokens (light + dark mode)
-  App.tsx                     # Router using navConfig + AdminShell
-  pages/Hub.tsx               # Hub dashboard built from navConfig
-```
+- **`navConfig.ts`**: The single source of truth for all navigation metadata. Defines paths, labels, icons, sections, and feature flags.
+- **`adminRoutes.tsx`**: Maps the navigation configuration to React components and provides helpers for building sidebar groups and breadcrumbs.
+- **`AdminShell.tsx`**: The common layout wrapper that provides the Sidebar, Top Header, and content area.
+- **`App.tsx`**: Orchestrates the routing and applies security/feature gating globally.
 
-## navConfig.ts
+## Adding a New Page
 
-Single source of truth. Every route has:
+1.  **Create the Component**: Add your page component to `frontend/admin/src/pages/`.
+2.  **Update `navConfig.ts`**: Add a new entry to the `navConfig` array.
+    ```typescript
+    {
+      label: 'My New Page',
+      path: '/my-page',
+      icon: MyIcon,
+      section: 'agents',
+      status: 'active',
+      description: 'Optional description for the Hub card.',
+      featureFlag: 'MY_FEATURE_ENABLED' // Optional
+    }
+    ```
+3.  **Update `adminRoutes.tsx`**: Add a lazy-loaded entry to the `componentMap`.
+    ```typescript
+    '/my-page': lazy(() => import('../pages/MyPage')),
+    ```
 
-```typescript
-interface NavRoute {
-  path: string           // URL path
-  label: string          // Display name
-  icon: LucideIcon       // Icon component
-  section: string        // Sidebar group key
-  featureFlag: string    // Feature gate key
-  status: 'active' | 'beta' | 'coming_soon' | 'disabled'
-  hidden?: boolean       // Hidden from sidebar, still routable
-  parentPath?: string    // For breadcrumb nesting
-}
-```
+## Feature Gating
 
-### Sections
+The system supports granular feature control via the `status` and `featureFlag` fields in `navConfig`.
+- **`coming_soon` / `disabled`**: The route is still accessible but renders the `FeatureGate` component instead of the actual page.
+- **`featureFlag`**: If a flag is provided, the `RouteRenderer` in `App.tsx` checks the user settings before rendering.
 
-| Key | Label | Feature Flag |
-|-----|-------|-------------|
-| `core` | Core | agents |
-| `agents` | Agentic Platform | agents |
-| `operations` | Operations | operations |
-| `performance` | Performance | performance |
-| `enterprise` | Enterprise | enterprise |
-| `observability` | Observability | observability |
-| `compliance` | Compliance | compliance |
-| `advanced` | Advanced | advanced |
-| `developers` | Developers | developers |
+## Standard Layout Components
 
-### Route Status
-
-| Status | Behavior |
-|--------|----------|
-| `active` | Normal link |
-| `beta` | Shows "Beta" badge |
-| `coming_soon` | Shows "Soon" badge, link disabled |
-| `disabled` | Fully disabled |
-
-## Layout Components
-
-### AdminShell
-Main layout wrapper. All pages render inside it:
-```tsx
-<AdminShell>
-  <MyPage />
-</AdminShell>
-```
-
-### Sidebar
-- Collapsible sections (single item = flat link, multiple = accordion)
-- Active state highlighting
-- Status badges (Beta, Soon)
-- Mobile responsive with backdrop
-
-### Breadcrumbs
-- Auto-generated from URL path
-- Uses navConfig for label resolution
-- Clickable intermediate segments
-
-### FeatureGate
-Shown when a feature is disabled or coming soon:
-```tsx
-<FeatureGate feature="Chaos Engineering" />
-```
-
-### PageHeader
-Standardized page header:
-```tsx
-<PageHeader
-  title="Agentes"
-  subtitle="Gerencie seus agentes IA"
-  icon={<Bot />}
-  badge="Beta"
-  badgeVariant="beta"
-  actions={<Button>Novo</Button>}
-/>
-```
-
-## Design Tokens
-
-### Colors (Light/Dark)
-| Token | Light | Dark |
-|-------|-------|------|
-| `background` | slate-50 | slate-950 |
-| `foreground` | slate-900 | slate-50 |
-| `card` | white | slate-900 |
-| `primary` | teal-600 | teal-500 |
-| `secondary` | slate-100 | slate-800 |
-| `muted-foreground` | slate-500 | slate-400 |
-| `destructive` | red-600 | red-400 |
-| `border` | slate-200 | slate-800 |
-
-### Shadows
-```css
---shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04)
---shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08)
---shadow-dropdown: 0 10px 25px -5px rgb(0 0 0 / 0.1)
-```
-
-### Utility Classes
-- `.card-base` - Standard card with shadow
-- `.card-interactive` - Card with hover effect
-- `.page-container` - Max-width container
-
-## Hub
-
-Hub cards are built from `navRoutes` + `hubCardMeta`:
-- Every nav route with metadata becomes a Hub card
-- Status determines card appearance (disabled, badge)
-- No dead links - all hrefs come from navConfig
-
-## Adding a New Route
-
-1. Add entry to `navRoutes` in `navConfig.ts`
-2. Add lazy import and entry to `componentMap` in `App.tsx`
-3. Add metadata to `hubCardMeta` if it should appear on Hub
-4. Route appears in sidebar, breadcrumbs, and Hub automatically
-
-## Adding a New Section
-
-1. Add to `navSections` array in `navConfig.ts`
-2. Add section icon to `sectionIconMap` in `Sidebar.tsx`
-3. Routes with matching `section` key appear in the group
+- **`PageHeader`**: Standardizes titles, subtitles, and top-level actions.
+- **`Breadcrumbs`**: Automatically generated from the URL path.
+- **`Sidebar`**: Grouped and collapsible navigation.
+- **`Hub`**: A dashboard of all available modules as interactive cards.

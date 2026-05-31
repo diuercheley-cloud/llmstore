@@ -1,10 +1,10 @@
 import pytest
 from app.services.operations.correlation.receipts import (
-from app.utils.crypto_signer import sign_payload
     build_correlation_receipt,
     build_trust_link_receipt,
     build_graph_summary_receipt
 )
+from app.utils.crypto_signer import sign_payload
 
 def test_build_correlation_receipt():
     correlation = {

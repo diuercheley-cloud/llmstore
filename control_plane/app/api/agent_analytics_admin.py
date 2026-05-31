@@ -81,7 +81,7 @@ async def get_agent_metrics(
 @router.get("/{agent_id}/costs")
 async def get_agent_costs(
     agent_id: str,
-    granularity: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    granularity: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
     days: int = Query(7, ge=1, le=365),
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
@@ -106,7 +106,7 @@ async def get_agent_costs(
 @router.get("/{agent_id}/latency")
 async def get_agent_latency(
     agent_id: str,
-    granularity: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    granularity: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
     days: int = Query(7, ge=1, le=365),
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,

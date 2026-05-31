@@ -17,9 +17,36 @@ agentctl validate .
 ```
 
 ### `bundle`
-Packages the agent project into a distribution bundle.
+Manage agent bundles for marketplace publication.
+
+#### `bundle init`
+Creates a new bundle skeleton.
 ```bash
-agentctl bundle . -o my-agent.zip
+agentctl bundle init my-agent [directory]
+```
+
+#### `bundle validate`
+Performs integrity and schema checks on a bundle.
+```bash
+agentctl bundle validate [directory]
+```
+
+#### `bundle test`
+Runs eval suites and unit tests for the bundle.
+```bash
+agentctl bundle test [directory]
+```
+
+#### `bundle sign`
+Digitally signs the bundle with Ed25519.
+```bash
+agentctl bundle sign [directory] [--key path/to/key.pem]
+```
+
+#### `bundle publish`
+Publishes the bundle to the marketplace as a draft.
+```bash
+agentctl bundle publish [directory]
 ```
 
 ### `register`

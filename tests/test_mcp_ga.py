@@ -28,12 +28,13 @@ def test_sampling_bloqueado_por_padrao(mcp_client):
     with pytest.raises(PermissionError, match="MCP sampling is disabled by default"):
         mcp_client.security.validate_sampling(True)
 
-def test_tenant_a_nao_usa_mcp_server_do_tenant_b(mcp_client):
+@pytest.mark.asyncio
+async def test_tenant_a_nao_usa_mcp_server_do_tenant_b(mcp_client):
     registry = mcp_client.registry
     server = registry.register(tenant_id="tenant_a", name="test_server", transport="stdio", endpoint="test")
     
     with pytest.raises(PermissionError, match="Access denied to MCP server"):
-        mcp_client._get_server(server.id, tenant_id="tenant_b")
+        await mcp_client._get_server(server.id, tenant_id="tenant_b")
 
 def test_tool_nao_aprovada_bloqueia(mcp_client):
     registry = mcp_client.registry

@@ -1,96 +1,56 @@
-import { Wrench, Brain, ShieldCheck, Circle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Bot, User, Terminal, Database, ShieldAlert, Cpu } from 'lucide-react';
 import type { ToolActivityItem } from '../../lib/types';
 
 interface ToolActivityTimelineProps {
-  items: ToolActivityItem[];
-  compact?: boolean;
+  activities: ToolActivityItem[];
 }
 
-function statusIcon(status: string) {
-  switch (status) {
-    case 'completed':
-      return <CheckCircle2 size={14} className="text-green-500" />;
-    case 'failed':
-      return <XCircle size={14} className="text-red-500" />;
-    case 'running':
-    case 'in_progress':
-      return <Clock size={14} className="text-blue-500 animate-pulse" />;
-    case 'approval_required':
-      return <ShieldCheck size={14} className="text-amber-500" />;
-    default:
-      return <Circle size={14} className="text-slate-300" />;
-  }
-}
-
-function itemIcon(type: string) {
-  switch (type) {
-    case 'tool_call':
-      return <Wrench size={14} className="text-violet-500" />;
-    case 'memory_read':
-      return <Brain size={14} className="text-cyan-500" />;
-    case 'approval_required':
-      return <ShieldCheck size={14} className="text-amber-500" />;
-    case 'step':
-      return <Circle size={14} className="text-blue-400" />;
-    default:
-      return <Circle size={14} className="text-slate-400" />;
-  }
-}
-
-function typeLabel(type: string) {
-  switch (type) {
-    case 'tool_call': return 'Tool Call';
-    case 'memory_read': return 'Memory';
-    case 'approval_required': return 'Approval';
-    case 'step': return 'Step';
-    default: return 'Event';
-  }
-}
-
-export function ToolActivityTimeline({ items, compact = false }: ToolActivityTimelineProps) {
-  if (items.length === 0) return null;
-
-  if (compact) {
-    return (
-      <div className="flex flex-wrap gap-1.5 my-1">
-        {items.map(item => (
-          <span
-            key={item.id}
-            className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 border border-slate-100 rounded-full text-xs text-slate-500"
-          >
-            {itemIcon(item.type)}
-            {item.name || typeLabel(item.type)}
-          </span>
-        ))}
-      </div>
-    );
-  }
+export function ToolActivityTimeline({ activities }: ToolActivityTimelineProps) {
+  if (activities.length === 0) return null;
 
   return (
-    <div className="flex justify-start mb-3">
-      <div className="max-w-[85%] md:max-w-[70%] ml-10">
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
-          <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Activity</div>
-          {items.map(item => (
-            <div key={item.id} className="flex items-start gap-2 text-xs">
-              {itemIcon(item.type)}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-600">
-                    {item.name || typeLabel(item.type)}
-                  </span>
-                  {statusIcon(item.status)}
-                </div>
-                {item.detail && (
-                  <p className="text-slate-400 mt-0.5 truncate">{item.detail}</p>
-                )}
-              </div>
+    <div className="mt-3 space-y-2.5">
+      {activities.map((item) => (
+        <div key={item.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+          <div className="flex flex-col items-center shrink-0">
+            <div className={`
+              w-6 h-6 rounded-lg flex items-center justify-center border shadow-sm
+              ${item.type === 'tool_call' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 
+                item.type === 'memory_read' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                item.type === 'approval_required' ? 'bg-amber-50 border-amber-100 text-amber-600' :
+                'bg-slate-50 border-slate-200 text-slate-500'}
+            `}>
+              {item.type === 'tool_call' && <Terminal size={12} />}
+              {item.type === 'memory_read' && <Database size={12} />}
+              {item.type === 'approval_required' && <ShieldAlert size={12} />}
+              {item.type === 'step' && <Cpu size={12} />}
             </div>
-          ))}
+            <div className="w-0.5 flex-1 bg-slate-100 min-h-[4px] last:hidden mt-2" />
+          </div>
+
+          <div className="flex-1 min-w-0 py-0.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-text-base uppercase tracking-wider truncate">
+                {item.name}
+              </span>
+              <span className={`
+                text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full tracking-widest border
+                ${item.status === 'running' ? 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse' :
+                  item.status === 'completed' || item.status === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                  item.status === 'approval_required' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                  'bg-slate-100 text-slate-500 border-slate-200'}
+              `}>
+                {item.status}
+              </span>
+            </div>
+            {item.detail && (
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed font-mono truncate">
+                {item.detail}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
-
-export { statusIcon, itemIcon, typeLabel };

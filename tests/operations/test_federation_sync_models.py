@@ -3,7 +3,6 @@ from sqlalchemy import select
 
 from app.models.client import Client
 from app.models.operations.federation_sync import (
-from app.utils.crypto_signer import sign_payload
     FederationConflictResolution,
     FederationLineageLink,
     FederationSynchronizationBundle,
@@ -12,6 +11,7 @@ from app.utils.crypto_signer import sign_payload
     FederationTrustNegotiation,
     SovereignFederationEnvironment,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 @pytest.mark.asyncio
