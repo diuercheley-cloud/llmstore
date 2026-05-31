@@ -134,6 +134,7 @@ export const navRoutes: NavRoute[] = [
   { path: '/ide', label: 'Web IDE', icon: Code2, section: 'developers', featureFlag: 'ide', status: 'active' },
   { path: '/developers', label: 'Developer Portal', icon: Key, section: 'developers', featureFlag: 'developers', status: 'active' },
   { path: '/developers/bundles', label: 'Agent Bundles', icon: Package, section: 'developers', featureFlag: 'developers', status: 'active' },
+  { path: '/prompts', label: 'Prompts', icon: FileText, section: 'developers', featureFlag: 'developers', status: 'active' },
 
   // ── Placeholder routes (coming soon) ──────────────────
   { path: '/api-keys', label: 'API Keys', icon: Key, section: 'core', featureFlag: 'agents', status: 'active' },
@@ -194,6 +195,7 @@ export const hubCardMeta: Record<string, HubCardMeta> = {
   '/ide': { badge: 'Dev', description: 'IDE web para edicao de agentes, plugins e manifests.' },
   '/developers': { badge: 'Dev', description: 'Portal do desenvolvedor com API keys, CLI e templates.' },
   '/developers/bundles': { badge: 'Dev', description: 'Criar, validar, assinar e publicar bundles de agentes.' },
+  '/prompts': { badge: 'Dev', description: 'Criacao, versionamento e gestao de templates de prompts.' },
   '/api-keys': { badge: 'Core', description: 'Emissao, rotacao e governanca de credenciais.' },
   '/billing': { badge: 'Finance', description: 'Planos, pricing e cobranca.' },
   '/usage': { badge: 'Analytics', description: 'Consumo por cliente e metricas agregadas.' },

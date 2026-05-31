@@ -145,6 +145,21 @@ async def increment_run_metric(db: AsyncSession, run_id: uuid.UUID, metric: str,
         setattr(run, metric, current + value)
     await db.commit()
 
+import json as _json
+import sys as _sys
+
+
+def _emit_agent_log(run_id, event_type, data):
+    structured = {
+        "timestamp": utc_now().isoformat(),
+        "source": "agent-runtime",
+        "run_id": str(run_id),
+        "event_type": event_type,
+        **data,
+    }
+    print(_json.dumps(structured), file=_sys.stderr, flush=True)
+
+
 async def log_run_step(
     db: AsyncSession,
     run_id: uuid.UUID,
@@ -174,6 +189,16 @@ async def log_run_step(
         error=error,
         created_at=utc_now(),
     )
+    _emit_agent_log(run_id, "run_step", {
+        "step_number": step_number,
+        "step_type": step_type,
+        "status": status,
+        "latency_ms": latency_ms,
+        "input_hash": input_hash,
+        "output_hash": output_hash,
+        "error": error,
+    })
+
     db.add(step)
     
     # Update total steps on the run
@@ -192,6 +217,11 @@ async def log_run_event(
     event_type: str,
     payload: Optional[dict] = None,
 ) -> AgentRunEvent:
+    _emit_agent_log(run_id, "run_event", {
+        "event_type": event_type,
+        "payload": payload,
+    })
+
     event = AgentRunEvent(
         run_id=run_id,
         event_type=event_type,

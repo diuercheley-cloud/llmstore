@@ -72,6 +72,7 @@ const Rag = lazy(() => import('./pages/rag/Rag'))
 const Security = lazy(() => import('./pages/security/Security'))
 const Reports = lazy(() => import('./pages/reports/Reports'))
 const Settings = lazy(() => import('./pages/settings/Settings'))
+const Prompts = lazy(() => import('./pages/prompts/Prompts'))
 
 // ── Component map (path -> lazy component) ────────────────────────
 
@@ -134,6 +135,7 @@ const componentMap: Record<string, React.LazyExoticComponent<React.FC<Record<str
   '/security': Security,
   '/reports': Reports,
   '/settings': Settings,
+  '/prompts': Prompts,
 }
 
 // ── Shared components ─────────────────────────────────────────────

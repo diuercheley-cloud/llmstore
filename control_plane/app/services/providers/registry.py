@@ -57,6 +57,9 @@ def _init_registry() -> None:
     from app.services.providers.together_provider import TogetherProvider
     from app.services.providers.perplexity_provider import PerplexityProvider
     from app.services.providers.replicate_provider import ReplicateProvider
+    from app.services.providers.xai_provider import XAIProvider
+    from app.services.providers.fireworks_provider import FireworksProvider
+    from app.services.providers.ai21_provider import AI21Provider
 
     settings = get_settings()
     providers_enabled = [p.strip() for p in settings.providers_enabled.split(",") if p.strip()]
@@ -78,11 +81,14 @@ def _init_registry() -> None:
         TogetherProvider(),
         PerplexityProvider(),
         ReplicateProvider(),
+        XAIProvider(),
+        FireworksProvider(),
+        AI21Provider(),
     ]
 
     for p in all_providers:
         provider_id = p.provider_id
-        is_cloud = p.provider_type.value in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate")
+        is_cloud = p.provider_type.value in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21")
 
         # Always register all providers so admin can see them even when disabled
         if provider_id not in providers_enabled and not is_cloud:

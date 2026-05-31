@@ -103,6 +103,12 @@ class APIClient {
   listStudioFlows = () => this.request<any[]>('GET', '/admin/agents/studio/flows')
   createStudioFlow = (f: any) => this.request<any>('POST', '/admin/agents/studio/flows', f)
 
+  // Prompts
+  listPrompts = () => this.request<any[]>('GET', '/admin/prompts')
+  getPrompt = (id: string) => this.request<any>('GET', `/admin/prompts/${id}`)
+  createPrompt = (p: any) => this.request<any>('POST', '/admin/prompts', p)
+  updatePrompt = (id: string, p: any) => this.request<any>('PATCH', `/admin/prompts/${id}`, p)
+
   // Portal
   listPlans = () => this.request<any[]>('GET', '/portal/plans')
   getProfile = () => this.request<any>('GET', '/portal/me')
