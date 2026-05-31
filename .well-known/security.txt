@@ -1,0 +1,15 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Contact: mailto:security@kleber.ai
+Expires: 2027-05-30T00:00:00.000Z
+Encryption: https://kleber.ai/.well-known/pgp-key.txt
+Preferred-Languages: en, pt-BR
+Canonical: https://kleber.ai/.well-known/security.txt
+Policy: https://kleber.ai/security-policy
+Hiring: https://kleber.ai/careers
+Acknowledgments: https://kleber.ai/hall-of-fame
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEE...
+-----END PGP SIGNATURE-----
