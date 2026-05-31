@@ -11,6 +11,8 @@ from .vector_store import VectorStore
 from .mock_memory_store import MockMemoryStore
 from .pgvector_memory_store import PGVectorMemoryStore
 from .chroma_memory_store import ChromaMemoryStore
+from .redis_memory_store import RedisMemoryStore
+from .pinecone_memory_store import PineconeMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,15 @@ class SemanticMemoryRetriever:
             self._vector_store = PGVectorMemoryStore(self.db)
         elif provider == "chroma":
             self._vector_store = ChromaMemoryStore()
+        elif provider == "redis":
+            self._vector_store = RedisMemoryStore()
+        elif provider == "pinecone":
+            from app.core.config import get_settings
+            s = get_settings()
+            api_key = getattr(s, 'pinecone_api_key', '') or getattr(s, 'agent_pinecone_api_key', '')
+            env = getattr(s, 'pinecone_environment', 'us-east-1-aws')
+            index_name = getattr(s, 'pinecone_index_name', 'agent-memory')
+            self._vector_store = PineconeMemoryStore(api_key=api_key, environment=env, index_name=index_name)
         else:
             self._vector_store = _MOCK_STORE
         

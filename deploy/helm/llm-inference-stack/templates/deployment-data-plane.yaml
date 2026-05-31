@@ -1,0 +1,85 @@
+{{- if .Values.dataPlane.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-inference-stack.fullname" . }}-data-plane
+  labels:
+    {{- include "llm-inference-stack.labels" . | nindent 4 }}
+    app: data-plane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "llm-inference-stack.selectorLabels" . | nindent 6 }}
+      app: data-plane
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "llm-inference-stack.selectorLabels" . | nindent 8 }}
+        app: data-plane
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.dataPlane.gpu.enabled }}
+      {{- with .Values.dataPlane.gpu }}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      {{- end }}
+      {{- end }}
+      containers:
+        - name: data-plane
+          image: "{{ .Values.dataPlane.image.repository | default .Values.image.repository }}:{{ .Values.dataPlane.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: MODEL_FILE
+              value: {{ .Values.dataPlane.modelFile | quote }}
+            - name: CTX_SIZE
+              value: {{ .Values.dataPlane.ctxSize | default "4096" | quote }}
+            - name: GPU_LAYERS
+              value: {{ .Values.dataPlane.gpu.layers | default "0" | quote }}
+          {{- if and .Values.dataPlane.persistence.enabled }}
+          volumeMounts:
+            - name: models
+              mountPath: /models
+          {{- end }}
+          resources:
+            {{- toYaml .Values.dataPlane.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      {{- if and .Values.dataPlane.persistence.enabled }}
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: {{ include "llm-inference-stack.fullname" . }}-models
+      {{- end }}
+      {{- with .Values.dataPlane.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dataPlane.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

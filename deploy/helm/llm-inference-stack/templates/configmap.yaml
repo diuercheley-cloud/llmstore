@@ -8,3 +8,7 @@ data:
   POSTGRES_DB: "llmstack"
   POSTGRES_USER: "llmuser"
   DEMO_MODE: {{ .Values.config.demoMode | quote }}
+  REDIS_PORT: "6379"
+  DATA_PLANE_BASE_URL: {{ .Values.config.dataPlaneBaseUrl | default (printf "http://%s-data-plane:8081" (include "llm-inference-stack.fullname" .)) | quote }}
+  AGENT_RUNTIME_ENABLED: {{ .Values.agentWorker.runtimeEnabled | default "true" | quote }}
+  AGENT_WORKER_ENABLED: {{ .Values.agentWorker.enabled | quote }}

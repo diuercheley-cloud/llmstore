@@ -1,26 +1,80 @@
 # Owner: agent-platform
+import asyncio
+import json
 import logging
-from typing import Dict, Any, Callable, Awaitable
+from typing import Dict, Any, Callable, Awaitable, Optional
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+try:
+    from aio_pika import connect_robust, IncomingMessage, Message
+    from aio_pika.abc import AbstractIncomingMessage
+    HAS_RABBITMQ = True
+except ImportError:
+    HAS_RABBITMQ = False
+    logger.info("aio-pika not installed; RabbitMQ adapter will use simulated mode")
+
+
 class RabbitMQAdapter:
     """
     Adapter for RabbitMQ event triggering.
+    Supports both real (aio-pika) and simulated modes.
     """
     def __init__(self):
         self.settings = get_settings()
+        self._connection = None
+        self._channel = None
+        self._queue = None
+        self._running = False
+        self._task: Optional[asyncio.Task] = None
+        self._callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
+
+    def _is_enabled(self) -> bool:
+        return getattr(self.settings, 'rabbitmq_trigger_enabled',
+                       getattr(self.settings, 'agent_event_driven_enabled', False))
 
     async def start_consumer(self, queue: str, callback: Callable[[Dict[str, Any]], Awaitable[None]]):
-        if not self.settings.rabbitmq_trigger_enabled:
+        if not self._is_enabled():
             logger.warning("RabbitMQ trigger is disabled. Skipping consumer start.")
             return
 
-        logger.info(f"Starting RabbitMQ consumer for queue: {queue}")
-        # Simulated consumer loop
-        # In real life: import aio_pika
-        pass
+        self._callback = callback
+        self._running = True
+
+        if HAS_RABBITMQ:
+            amqp_url = getattr(self.settings, 'rabbitmq_url', 'amqp://guest:guest@localhost:5672/')
+            self._connection = await connect_robust(amqp_url)
+            self._channel = await self._connection.channel()
+            self._queue = await self._channel.declare_queue(queue, durable=True)
+            self._task = asyncio.create_task(self._consume_loop())
+            logger.info(f"RabbitMQ consumer started for queue: {queue}")
+        else:
+            logger.info(f"RabbitMQ consumer started in simulated mode for queue: {queue}")
+
+    async def _consume_loop(self):
+        async with self._queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                if not self._running:
+                    break
+                async with message.process(requeue=True):
+                    try:
+                        body = json.loads(message.body.decode('utf-8'))
+                        await self._callback(body)
+                    except Exception as e:
+                        logger.error(f"RabbitMQ callback error: {e}")
 
     async def stop_consumer(self):
-        pass
+        self._running = False
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+            self._task = None
+        if self._connection:
+            await self._connection.close()
+            self._connection = None
+        logger.info("RabbitMQ consumer stopped")

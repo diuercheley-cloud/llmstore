@@ -48,6 +48,15 @@ def _init_registry() -> None:
     from app.services.providers.anthropic_provider import AnthropicProvider
     from app.services.providers.deepseek_provider import DeepSeekProvider
     from app.services.providers.openrouter_provider import OpenRouterProvider
+    from app.services.providers.gemini_provider import GeminiProvider
+    from app.services.providers.bedrock_provider import BedrockProvider
+    from app.services.providers.azure_openai_provider import AzureOpenAIProvider
+    from app.services.providers.mistral_provider import MistralProvider
+    from app.services.providers.cohere_provider import CohereProvider
+    from app.services.providers.groq_provider import GroqProvider
+    from app.services.providers.together_provider import TogetherProvider
+    from app.services.providers.perplexity_provider import PerplexityProvider
+    from app.services.providers.replicate_provider import ReplicateProvider
 
     settings = get_settings()
     providers_enabled = [p.strip() for p in settings.providers_enabled.split(",") if p.strip()]
@@ -60,11 +69,20 @@ def _init_registry() -> None:
         AnthropicProvider(),
         DeepSeekProvider(),
         OpenRouterProvider(),
+        GeminiProvider(),
+        BedrockProvider(),
+        AzureOpenAIProvider(),
+        MistralProvider(),
+        CohereProvider(),
+        GroqProvider(),
+        TogetherProvider(),
+        PerplexityProvider(),
+        ReplicateProvider(),
     ]
 
     for p in all_providers:
         provider_id = p.provider_id
-        is_cloud = p.provider_type.value in ("openai", "anthropic", "deepseek", "openrouter")
+        is_cloud = p.provider_type.value in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate")
 
         # Always register all providers so admin can see them even when disabled
         if provider_id not in providers_enabled and not is_cloud:

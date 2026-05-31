@@ -60,22 +60,85 @@ class AgentPipelineService:
 
     async def _step_validate(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Validating agent definition")
-        # Actual validation logic here
-        pass
+        from app.models.agents import AgentDefinition
+        stmt = select(AgentDefinition).where(AgentDefinition.id == pipeline.agent_id)
+        res = await self.db.execute(stmt)
+        agent = res.scalar_one_or_none()
+        if not agent:
+            raise RuntimeError(f"Agent {pipeline.agent_id} not found")
+
+        errors = []
+        if not agent.name or len(agent.name.strip()) == 0:
+            errors.append("Agent name is empty")
+        if not agent.model_id:
+            errors.append("Agent model_id is not set")
+        if not agent.instructions or len(agent.instructions.strip()) == 0:
+            errors.append("Agent instructions are empty")
+        agent_config = agent.config or {}
+        if agent_config.get("require_tools") and not agent.tools:
+            errors.append("Agent requires tools but none are configured")
+
+        if errors:
+            raise RuntimeError(f"Agent validation failed: {'; '.join(errors)}")
+        logger.info(f"Pipeline {pipeline.id}: Validation passed")
 
     async def _step_test(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Running unit tests")
-        pass
+        config = pipeline.config or {}
+        test_suite_id = config.get("test_suite_id")
+        if test_suite_id:
+            from app.services.agents.cicd.agent_cicd_tests import AgentCICDTestService
+            test_service = AgentCICDTestService(self.db)
+            result = await test_service.run_suite(test_suite_id, pipeline.tenant_id)
+            if result.get("failed", 0) > 0:
+                raise RuntimeError(f"Unit tests failed: {result.get('failed')} failures")
+        else:
+            logger.info(f"Pipeline {pipeline.id}: No test suite configured, skipping")
 
     async def _step_eval(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Running agent evaluations")
-        # Call EvalSystem implemented earlier
-        pass
+        from app.services.agents.agent_evals import AgentEvalService
+        eval_service = AgentEvalService(self.db)
+        config = pipeline.config or {}
+        suite_ids = config.get("eval_suite_ids", config.get("suite_ids", []))
+        if suite_ids:
+            for sid in suite_ids:
+                eval_run = await eval_service.run_eval_suite(uuid.UUID(sid) if isinstance(sid, str) else sid)
+                if eval_run.failed_count > 0:
+                    logger.warning(f"Pipeline {pipeline.id}: Eval suite {sid} had {eval_run.failed_count} failures")
+                    if config.get("fail_on_eval_failure", True) and eval_run.failed_count > 0:
+                        raise RuntimeError(f"Eval suite {sid} failed: {eval_run.failed_count} failures")
+        else:
+            logger.info(f"Pipeline {pipeline.id}: No eval suites configured, skipping")
 
     async def _step_security_scan(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Running security scans")
-        # Call PromptSecurityScanner, etc.
-        pass
+        from app.models.agents import AgentDefinition
+        stmt = select(AgentDefinition).where(AgentDefinition.id == pipeline.agent_id)
+        res = await self.db.execute(stmt)
+        agent = res.scalar_one_or_none()
+        if not agent:
+            raise RuntimeError(f"Agent {pipeline.agent_id} not found")
+
+        instructions = agent.instructions or ""
+        findings = []
+
+        if "ignore_security" in instructions.lower() or "bypass security" in instructions.lower():
+            findings.append("Instructions contain security bypass phrases")
+        if "eval(" in instructions or "exec(" in instructions:
+            findings.append("Instructions contain potentially dangerous function calls (eval/exec)")
+        if "rm -rf /" in instructions or "rm -rf /*" in instructions:
+            findings.append("Instructions contain destructive filesystem commands")
+        if instructions.count("{") > 50 or instructions.count("}") > 50:
+            findings.append("Instructions have excessive template expressions (possible injection attempt)")
+
+        config = pipeline.config or {}
+        if config.get("fail_on_security_findings", True) and findings:
+            raise RuntimeError(f"Security scan failed: {'; '.join(findings)}")
+        if findings:
+            logger.warning(f"Pipeline {pipeline.id}: Security findings: {'; '.join(findings)}")
+        else:
+            logger.info(f"Pipeline {pipeline.id}: Security scan passed")
 
     async def _step_deploy(self, pipeline: AgentPipeline, environment: str):
         logger.info(f"Pipeline {pipeline.id}: Deploying to {environment}")

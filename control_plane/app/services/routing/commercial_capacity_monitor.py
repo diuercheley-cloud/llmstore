@@ -149,12 +149,69 @@ async def summarize_cluster_capacity(db: AsyncSession, cluster_id: str, window_m
     }
 
 async def summarize_provider_capacity(db: AsyncSession, cluster_id: str, provider: str) -> Dict[str, Any]:
-    # Similar to cluster but filtered by provider
-    pass
+    start_time = utc_now() - timedelta(minutes=60)
+    stmt = select(CommercialCapacitySnapshot).where(
+        and_(
+            CommercialCapacitySnapshot.cluster_id == cluster_id,
+            CommercialCapacitySnapshot.provider == provider,
+            CommercialCapacitySnapshot.timestamp >= start_time,
+        )
+    ).order_by(CommercialCapacitySnapshot.timestamp.desc())
+    result = await db.execute(stmt)
+    snapshots = result.scalars().all()
+
+    if not snapshots:
+        return {"cluster_id": cluster_id, "provider": provider, "status": "no_data"}
+
+    latest = snapshots[0]
+    avg_latency = sum(s.avg_latency_ms for s in snapshots if s.avg_latency_ms) / max(len(snapshots), 1)
+    avg_rpm = sum(s.requests_per_minute for s in snapshots) / len(snapshots)
+
+    return {
+        "cluster_id": cluster_id,
+        "provider": provider,
+        "timestamp": latest.timestamp,
+        "cpu": latest.cpu_utilization,
+        "memory": latest.memory_utilization,
+        "gpu": latest.gpu_utilization,
+        "avg_latency_ms": round(avg_latency, 1),
+        "avg_requests_per_minute": round(avg_rpm, 1),
+        "sla_violation_rate": latest.sla_violation_rate,
+        "snapshot_count": len(snapshots),
+    }
+
 
 async def summarize_qos_capacity(db: AsyncSession, cluster_id: str, qos_tier: str) -> Dict[str, Any]:
-    # Similar to cluster but filtered by qos_tier
-    pass
+    start_time = utc_now() - timedelta(minutes=60)
+    stmt = select(CommercialCapacitySnapshot).where(
+        and_(
+            CommercialCapacitySnapshot.cluster_id == cluster_id,
+            CommercialCapacitySnapshot.qos_tier == qos_tier,
+            CommercialCapacitySnapshot.timestamp >= start_time,
+        )
+    ).order_by(CommercialCapacitySnapshot.timestamp.desc())
+    result = await db.execute(stmt)
+    snapshots = result.scalars().all()
+
+    if not snapshots:
+        return {"cluster_id": cluster_id, "qos_tier": qos_tier, "status": "no_data"}
+
+    latest = snapshots[0]
+    p95_values = [s.p95_latency_ms for s in snapshots if s.p95_latency_ms]
+    avg_p95 = sum(p95_values) / len(p95_values) if p95_values else 0
+
+    return {
+        "cluster_id": cluster_id,
+        "qos_tier": qos_tier,
+        "timestamp": latest.timestamp,
+        "requests_per_minute": latest.requests_per_minute,
+        "concurrent_requests": latest.concurrent_requests,
+        "avg_latency_ms": latest.avg_latency_ms,
+        "p95_latency_ms": round(avg_p95, 1),
+        "queue_depth": latest.queue_depth,
+        "sla_violation_rate": latest.sla_violation_rate,
+        "snapshot_count": len(snapshots),
+    }
 
 async def cleanup_old_snapshots(db: AsyncSession) -> int:
     settings = get_settings()

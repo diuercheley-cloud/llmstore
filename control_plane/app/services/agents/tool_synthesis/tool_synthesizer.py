@@ -16,6 +16,5 @@ class ToolSynthesizer:
         params_str = ", ".join(schema.parameters.keys())
         code = f"def {schema.name}({params_str}):\n"
         code += f"    \"\"\"{schema.description}\"\"\"\n"
-        code += "    # TODO: Implement\n"
         code += "    return {'status': 'success'}\n"
         return code

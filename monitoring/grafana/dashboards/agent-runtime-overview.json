@@ -1,0 +1,90 @@
+{
+  "title": "Agent Runtime Overview",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Active Agents (last 1h)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(LLM_AGENT_RUNS_TOTAL{status=\"running\"})",
+          "legendFormat": "Active Runs"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 0, "y": 0}
+    },
+    {
+      "title": "Run Error Rate (5m)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(LLM_AGENT_RUNS_TOTAL{status=\"failed\"}[5m]) / rate(LLM_AGENT_RUNS_TOTAL[5m]) * 100",
+          "legendFormat": "Error %"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 4, "y": 0}
+    },
+    {
+      "title": "Avg Step Latency (p50)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(LLM_AGENT_STEP_LATENCY_SECONDS)",
+          "legendFormat": "Avg Latency"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 8, "y": 0}
+    },
+    {
+      "title": "Runs Over Time (last 1h)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(LLM_AGENT_RUNS_TOTAL[5m])",
+          "legendFormat": "Runs/s"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "title": "Tool Failure Rate (last 1h)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(LLM_AGENT_TOOL_FAILURE_RATE[5m]) * 100",
+          "legendFormat": "Tool Failure %"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "title": "Top Agents by Run Count",
+      "type": "table",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "topk(10, sum by(agent_id) (LLM_AGENT_RUNS_TOTAL))",
+          "legendFormat": "{{agent_id}}"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 18}
+    },
+    {
+      "title": "Provider Usage Distribution",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by(provider) (LLM_PROVIDER_COST_TOTAL)",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 18}
+    }
+  ]
+}

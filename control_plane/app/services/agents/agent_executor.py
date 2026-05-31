@@ -379,6 +379,19 @@ class AgentExecutor:
         run.total_tokens += (p_tok + c_tok)
         run.estimated_cost_brl += cost
         await self.obs.record_cost(run.agent_id, run.id, cost, p_tok, c_tok)
+        try:
+            from app.services.agents.agent_usage_meter import AgentUsageMeter
+            meter = AgentUsageMeter(self.db)
+            await meter.record_run_usage(
+                tenant_id=run.tenant_id,
+                agent_id=run.agent_id,
+                run_id=run.id,
+                tokens_consumed=p_tok + c_tok,
+                cost_estimated_brl=cost,
+                tier_name=getattr(run, "service_tier", "free"),
+            )
+        except Exception as exc:
+            logger.warning(f"Usage metering failed for run {run.id}: {exc}")
         await self.db.commit()
 
     async def _record_provider_metadata(self, run, decision: ProviderResponse):

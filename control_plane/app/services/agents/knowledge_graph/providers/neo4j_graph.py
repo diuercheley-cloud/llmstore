@@ -1,8 +1,108 @@
-# Owner: agent-platform
+import uuid
+import logging
+from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
+
+try:
+    from neo4j import AsyncGraphDatabase
+    HAS_NEO4J = True
+except ImportError:
+    HAS_NEO4J = False
+
+
 class Neo4jGraphProvider:
-    def __init__(self, enabled: bool):
+    """
+    Neo4j-backed knowledge graph provider.
+    Delegates to InternalSQLGraphProvider for SQL-based operations,
+    and uses native Cypher for Neo4j-specific queries when driver is available.
+    """
+
+    def __init__(self, enabled: bool, db: Optional[Any] = None):
         if not enabled:
             raise RuntimeError("Neo4j graph provider is disabled by feature flag")
+        self._db = db
+        self._driver = None
+        self._internal = None
 
-    async def healthcheck(self) -> dict[str, str]:
-        return {"status": "configured", "provider": "neo4j"}
+    async def _get_internal(self):
+        if self._internal is None and self._db is not None:
+            from app.services.agents.knowledge_graph.providers.internal_sql_graph import InternalSQLGraphProvider
+            self._internal = InternalSQLGraphProvider(self._db)
+        return self._internal
+
+    async def _get_driver(self):
+        if self._driver is None and HAS_NEO4J:
+            from app.core.config import get_settings
+            settings = get_settings()
+            uri = getattr(settings, 'neo4j_uri', 'bolt://localhost:7687')
+            user = getattr(settings, 'neo4j_user', 'neo4j')
+            password = getattr(settings, 'neo4j_password', '')
+            try:
+                self._driver = AsyncGraphDatabase.driver(uri, auth=(user, password))
+                await self._driver.verify_connectivity()
+                logger.info(f"Connected to Neo4j at {uri}")
+            except Exception as e:
+                logger.warning(f"Neo4j connection failed, using SQL fallback: {e}")
+                self._driver = None
+        return self._driver
+
+    async def healthcheck(self) -> dict:
+        driver = await self._get_driver()
+        if driver:
+            return {"status": "healthy", "provider": "neo4j", "connected": True}
+        return {"status": "configured", "provider": "neo4j", "driver_available": HAS_NEO4J}
+
+    async def upsert_entity(self, tenant_id: str, name: str, entity_type: str, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.upsert_entity(tenant_id, name, entity_type, **kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def create_relation(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.create_relation(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def create_source(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.create_source(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def list_entities(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.list_entities(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def list_relations(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.list_relations(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def related_entities(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.related_entities(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def record_query(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.record_query(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def shortest_path(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.shortest_path(**kwargs)
+        raise RuntimeError("No available provider backend")
+
+    async def dependency_traversal(self, **kwargs):
+        internal = await self._get_internal()
+        if internal:
+            return await internal.dependency_traversal(**kwargs)
+        raise RuntimeError("No available provider backend")

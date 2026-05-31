@@ -11,9 +11,9 @@ from fastapi.responses import JSONResponse
 from starlette.routing import Match
 
 from app.core.config import get_settings
-from app.core.request_context import clear_correlation_id, clear_source_ip, set_correlation_id, set_source_ip
+from app.core.request_context import clear_correlation_id, clear_source_ip, set_correlation_id, set_source_ip, set_tenant_id, clear_tenant_id
 from app.db.session import get_redis
-from app.services.rate_limit import enforce_global_rate_limit, RateLimitExceeded
+from app.services.rate_limit import enforce_global_rate_limit, enforce_tenant_rate_limit, RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,8 @@ async def request_context_middleware(request: Request, call_next):
     if content_length and int(content_length) > settings.max_request_body_size_bytes:
         return JSONResponse({"detail": "request body too large"}, status_code=413)
 
-    # SaaS Protection: Block dangerous endpoints and enforce global rate limit
+    # SaaS Protection: Block dangerous endpoints
     if settings.deployment_mode == "saas":
-        # Block debug/internal endpoints in SaaS
         blocked_paths = {
             "/admin-lab", 
             "/admin/tests", 
@@ -51,16 +50,6 @@ async def request_context_middleware(request: Request, call_next):
         path = request.url.path
         if any(path == p or path.startswith(f"{p}/") for p in blocked_paths):
             return JSONResponse({"detail": "endpoint disabled in SaaS mode"}, status_code=403)
-        
-        # Enforce Global Rate Limit
-        try:
-            redis = await get_redis()
-            await enforce_global_rate_limit(redis)
-        except RateLimitExceeded as exc:
-            return JSONResponse({"detail": str(exc)}, status_code=429)
-        except Exception as e:
-            # Don't fail the request if Redis is down for rate limiting, but log it
-            logger.error(f"Global rate limit check failed: {e}")
 
     elif settings.public_exposure and (
         request.url.path in {"/admin-dashboard", "/admin-lab", "/provider-settings"}
@@ -74,12 +63,38 @@ async def request_context_middleware(request: Request, call_next):
         elif "admin-dashboard" in request.url.path or request.url.path.startswith("/static/admin/"):
             detail = "admin dashboard disabled in public exposure mode"
         return JSONResponse({"detail": detail}, status_code=404)
+
+    # Extract tenant context (from header, auth will override later)
+    tenant_id = request.headers.get("x-tenant-id", "").strip() or "default"
+    request.state.tenant_id = tenant_id
+
+    # Enforce Global Rate Limit (all deployment modes)
+    try:
+        redis = await get_redis()
+        limit = settings.rate_limit_global_per_minute if hasattr(settings, 'rate_limit_global_per_minute') else 1000
+        await enforce_global_rate_limit(redis, limit_per_minute=limit)
+    except RateLimitExceeded as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=429)
+    except Exception as e:
+        logger.error(f"Global rate limit check failed (non-blocking): {e}")
+
+    # Enforce Per-Tenant Rate Limit
+    try:
+        redis = await get_redis()
+        tenant_rpm = getattr(settings, 'rate_limit_tenant_per_minute', 500)
+        await enforce_tenant_rate_limit(redis, tenant_id, limit_per_minute=tenant_rpm)
+    except RateLimitExceeded as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=429)
+    except Exception as e:
+        logger.error(f"Tenant rate limit check failed (non-blocking): {e}")
+
     correlation_id = request.headers.get("x-correlation-id", "").strip() or str(uuid.uuid4())
     source_ip = resolve_source_ip(request)
     request.state.correlation_id = correlation_id
     request.state.source_ip = source_ip
     set_correlation_id(correlation_id)
     set_source_ip(source_ip)
+    set_tenant_id(tenant_id)
     
     start_time = time.perf_counter()
     try:
@@ -96,11 +111,26 @@ async def request_context_middleware(request: Request, call_next):
         )
         clear_correlation_id()
         clear_source_ip()
+        clear_tenant_id()
     response.headers["X-Correlation-ID"] = correlation_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
-    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self' ws: wss:; "
+        "frame-ancestors 'none'; "
+        "form-action 'self'; "
+        "base-uri 'self'; "
+        "object-src 'none'"
+    )
     return response
 
 

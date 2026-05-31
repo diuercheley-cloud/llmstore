@@ -1,0 +1,7 @@
+name: hello-world
+description: A simple hello world agent
+version: 1.0.0
+model: default
+system_prompt: "You are a helpful assistant."
+tools: []
+memory: false

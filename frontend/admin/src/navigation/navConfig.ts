@@ -120,8 +120,8 @@ export const navRoutes: NavRoute[] = [
   { path: '/observability/agents', label: 'Agent Observability', icon: Bot, section: 'observability', featureFlag: 'observability', status: 'active', hidden: true, parentPath: '/observability' },
 
   // ── Advanced ──────────────────────────────────────────
-  { path: '/multicluster', label: 'Multi-Cluster', icon: Network, section: 'advanced', featureFlag: 'advanced', status: 'coming_soon' },
-  { path: '/chaos', label: 'Chaos Engineering', icon: FlaskConical, section: 'advanced', featureFlag: 'advanced', status: 'coming_soon' },
+  { path: '/multicluster', label: 'Multi-Cluster', icon: Network, section: 'advanced', featureFlag: 'advanced', status: 'active' },
+  { path: '/chaos', label: 'Chaos Engineering', icon: FlaskConical, section: 'advanced', featureFlag: 'advanced', status: 'active' },
 
   // ── Compliance ────────────────────────────────────────
   { path: '/compliance', label: 'Compliance', icon: Gavel, section: 'compliance', featureFlag: 'compliance', status: 'active' },
@@ -136,13 +136,13 @@ export const navRoutes: NavRoute[] = [
   { path: '/developers/bundles', label: 'Agent Bundles', icon: Package, section: 'developers', featureFlag: 'developers', status: 'active' },
 
   // ── Placeholder routes (coming soon) ──────────────────
-  { path: '/api-keys', label: 'API Keys', icon: Key, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/billing', label: 'Billing', icon: Wallet, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/usage', label: 'Uso', icon: TrendingUp, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/rag', label: 'RAG', icon: FileText, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/security', label: 'Seguranca', icon: Shield, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/reports', label: 'Relatorios', icon: FileText, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
-  { path: '/settings', label: 'Configuracoes', icon: Settings, section: 'core', featureFlag: 'agents', status: 'coming_soon' },
+  { path: '/api-keys', label: 'API Keys', icon: Key, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/billing', label: 'Billing', icon: Wallet, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/usage', label: 'Uso', icon: TrendingUp, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/rag', label: 'RAG', icon: FileText, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/security', label: 'Seguranca', icon: Shield, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/reports', label: 'Relatorios', icon: FileText, section: 'core', featureFlag: 'agents', status: 'active' },
+  { path: '/settings', label: 'Configuracoes', icon: Settings, section: 'core', featureFlag: 'agents', status: 'active' },
 ]
 
 // ── Section Metadata ─────────────────────────────────────────────

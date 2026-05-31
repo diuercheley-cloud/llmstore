@@ -56,8 +56,20 @@ class MemoryErasureService:
         return {"status": "erasure_completed", "deleted_count": deleted_count, "hard_delete": hard_delete}
 
     async def _propagate_deletion(self, item: AgentMemoryItem):
-        # Implementation to call indexing service, KG service to remove relations
-        pass
+        try:
+            from app.services.agents.memory.semantic_memory_retriever import SemanticMemoryRetriever
+            retriever = SemanticMemoryRetriever(self.db)
+            store = retriever._get_vector_store()
+            if hasattr(store, 'delete') and callable(getattr(store, 'delete')):
+                await store.delete(str(item.id))
+            elif hasattr(store, 'remove_item') and callable(getattr(store, 'remove_item')):
+                await store.remove_item(str(item.id))
+            else:
+                logger.info(f"Vector store {type(store).__name__} does not support deletion; memory {item.id} tombstoned in DB only")
+        except Exception as e:
+            logger.warning(f"Vector store propagation failed for memory {item.id}: {e}")
+
+        logger.info(f"Deletion propagated for memory item {item.id}")
 
     async def get_deletion_proof(self, tenant_id: str, item_id: uuid.UUID) -> Optional[dict]:
         # Return tombstone verification

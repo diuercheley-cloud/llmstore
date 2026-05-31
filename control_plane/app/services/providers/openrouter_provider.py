@@ -72,7 +72,10 @@ class OpenRouterProvider(ProviderAdapter):
             return resp.json()
 
     async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
-        raise NotImplementedError("OpenRouter does not support embeddings")
+        async with await self._client() as client:
+            resp = await client.post("/embeddings", json=payload)
+            resp.raise_for_status()
+            return resp.json()
 
     def estimate_cost(self, model: str, prompt_tokens: int, completion_tokens: int) -> float:
         return 0.0
@@ -81,8 +84,8 @@ class OpenRouterProvider(ProviderAdapter):
         return ProviderCapabilities(
             chat=True,
             streaming=True,
-            responses=False,
-            embeddings=False,
+            responses=True,
+            embeddings=True,
             tools=True,
             vision=True,
             json_mode=True,

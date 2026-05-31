@@ -14,6 +14,18 @@ class ProviderType(str, enum.Enum):
     ANTHROPIC = "anthropic"
     DEEPSEEK = "deepseek"
     OPENROUTER = "openrouter"
+    GEMINI = "gemini"
+    BEDROCK = "bedrock"
+    AZURE_OPENAI = "azure_openai"
+    MISTRAL = "mistral"
+    COHERE = "cohere"
+    GROQ = "groq"
+    TOGETHER = "together"
+    PERPLEXITY = "perplexity"
+    REPLICATE = "replicate"
+    XAI = "xai"
+    FIREWORKS = "fireworks"
+    AI21 = "ai21"
 
 
 class ProviderAdapter(ProviderContract, ABC):

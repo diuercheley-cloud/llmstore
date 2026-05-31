@@ -1,4 +1,16 @@
-import { AgentsAPI, AgentEvalsAPI } from './agents';
+import { AgentsAPI, AgentEvalsAPI, AdminAgentsAPI } from './agents.js';
+import { MemoryAPI } from './memory.js';
+import { ToolsAPI } from './tools.js';
+import { MarketplaceAPI } from './marketplace.js';
+import { StudioAPI } from './studio.js';
+import { WorkflowsAPI } from './workflows.js';
+import { KnowledgeGraphAPI } from './knowledge_graph.js';
+import { SessionsAPI } from './sessions.js';
+import { MCPAPI } from './mcp.js';
+import { DeploymentsAPI } from './deployments.js';
+import { RAGAPI } from './rag.js';
+import { AdminAPI } from './admin.js';
+import { SystemAPI } from './system.js';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -24,6 +36,19 @@ export class Client {
   private timeout: number;
   public agents: AgentsAPI;
   public agentEvals: AgentEvalsAPI;
+  public adminAgents: AdminAgentsAPI;
+  public memory: MemoryAPI;
+  public tools: ToolsAPI;
+  public marketplace: MarketplaceAPI;
+  public studio: StudioAPI;
+  public workflows: WorkflowsAPI;
+  public knowledgeGraph: KnowledgeGraphAPI;
+  public sessions: SessionsAPI;
+  public mcp: MCPAPI;
+  public deployments: DeploymentsAPI;
+  public rag: RAGAPI;
+  public admin: AdminAPI;
+  public system: SystemAPI;
 
   constructor(options: ClientOptions) {
     this.apiKey = options.apiKey;
@@ -31,6 +56,19 @@ export class Client {
     this.timeout = options.timeout || 60000;
     this.agents = new AgentsAPI(this);
     this.agentEvals = new AgentEvalsAPI(this);
+    this.adminAgents = new AdminAgentsAPI(this);
+    this.memory = new MemoryAPI(this);
+    this.tools = new ToolsAPI(this);
+    this.marketplace = new MarketplaceAPI(this);
+    this.studio = new StudioAPI(this);
+    this.workflows = new WorkflowsAPI(this);
+    this.knowledgeGraph = new KnowledgeGraphAPI(this);
+    this.sessions = new SessionsAPI(this);
+    this.mcp = new MCPAPI(this);
+    this.deployments = new DeploymentsAPI(this);
+    this.rag = new RAGAPI(this);
+    this.admin = new AdminAPI(this);
+    this.system = new SystemAPI(this);
   }
 
   private async request(method: string, path: string, body?: any): Promise<any> {
@@ -72,8 +110,8 @@ export class Client {
   }
 
   async chat(messages: string | ChatMessage[], options: { model?: string; [key: string]: any } = {}): Promise<any> {
-    const formattedMessages = typeof messages === 'string' 
-      ? [{ role: 'user', content: messages }] 
+    const formattedMessages = typeof messages === 'string'
+      ? [{ role: 'user' as const, content: messages }]
       : messages;
 
     return this.request('POST', '/v1/chat/completions', {
@@ -93,6 +131,17 @@ export class Client {
     return this.request('POST', '/v1/embeddings', {
       input: formattedInput,
       model,
+    });
+  }
+
+  async responses(input: string | ChatMessage[], options: { model?: string; [key: string]: any } = {}): Promise<any> {
+    const formattedInput = typeof input === 'string'
+      ? [{ role: 'user' as const, content: input }]
+      : input;
+    return this.request('POST', '/v1/responses', {
+      model: options.model || 'default',
+      input: formattedInput,
+      ...options,
     });
   }
 

@@ -42,9 +42,9 @@ class GraphStore:
     def _get_provider(self):
         provider_name = self.settings.agent_kg_provider
         if provider_name == "neo4j":
-            return Neo4jGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled)
+            return Neo4jGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled, db=self.db)
         if provider_name == "falkordb":
-            return FalkorDBGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled)
+            return FalkorDBGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled, db=self.db)
         if provider_name == "postgres" or self.settings.agent_kg_postgres_graph_enabled:
             try:
                 from .providers.postgres_graph import PostgresGraphProvider

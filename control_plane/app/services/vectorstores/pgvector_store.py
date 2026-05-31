@@ -161,16 +161,51 @@ class PGVectorStore(VectorStoreBase):
         dimension: int,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
-        # In Postgres, we could create a new table or just record the collection existence
-        # For this implementation, we assume the table is shared.
-        pass
+        safe_name = collection_name.replace(" ", "_").replace("-", "_").lower()
+        table_name = f"vec_{safe_name}"
+
+        sql = text(f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                embedding vector({dimension}),
+                content TEXT,
+                metadata JSONB DEFAULT '{{}}',
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        await self.session.execute(sql)
+
+        collection_sql = text("""
+            INSERT INTO rag_collections (name, table_name, dimension, metadata, created_at)
+            VALUES (:name, :table_name, :dimension, :metadata, NOW())
+            ON CONFLICT (name) DO UPDATE SET
+                table_name = EXCLUDED.table_name,
+                dimension = EXCLUDED.dimension,
+                metadata = EXCLUDED.metadata
+        """)
+        await self.session.execute(collection_sql, {
+            "name": collection_name,
+            "table_name": table_name,
+            "dimension": dimension,
+            "metadata": json.dumps(metadata or {}),
+        })
+        await self.session.flush()
+        logger.info(f"Created collection '{collection_name}' (table: {table_name}, dimension: {dimension})")
 
     async def collection_delete(
         self,
         collection_name: str,
     ) -> None:
-        # In a shared table approach, we would delete all rows for this collection
-        pass
+        safe_name = collection_name.replace(" ", "_").replace("-", "_").lower()
+        table_name = f"vec_{safe_name}"
+
+        sql = text(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+        await self.session.execute(sql)
+
+        collection_sql = text("DELETE FROM rag_collections WHERE name = :name")
+        await self.session.execute(collection_sql, {"name": collection_name})
+        await self.session.flush()
+        logger.info(f"Deleted collection '{collection_name}'")
 
     async def healthcheck(self) -> Dict[str, Any]:
         try:

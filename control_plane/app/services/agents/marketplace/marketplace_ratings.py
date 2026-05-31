@@ -52,13 +52,15 @@ class MarketplaceRatingService:
         ).where(MarketplaceRating.item_id == item_id)
         
         res = await self.db.execute(stmt)
-        stats = res.one()
-        
+        row = res.one()
+        avg_val = row[0] if hasattr(row, '__getitem__') else getattr(row, 'avg', None)
+        count_val = row[1] if hasattr(row, '__getitem__') else getattr(row, 'count', None)
+
         stmt_item = select(MarketplaceItem).where(MarketplaceItem.id == item_id)
         res_item = await self.db.execute(stmt_item)
         item = res_item.scalar_one_or_none()
-        
+
         if item:
-            item.avg_rating = float(stats.avg or 0.0)
-            item.total_ratings = int(stats.count or 0)
+            item.avg_rating = float(avg_val or 0.0)
+            item.total_ratings = int(count_val or 0)
             await self.db.flush()

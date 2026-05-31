@@ -266,6 +266,54 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./monitoring/otel/otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      - prometheus
+    networks:
+      - control_net
+
+  loki:
+    image: grafana/loki:3.4.2
+    profiles: ["observability"]
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "3100:3100"
+    networks:
+      - control_net
+
+  promtail:
+    image: grafana/promtail:3.4.2
+    profiles: ["observability"]
+    command: ["-config.file=/etc/promtail/config.yaml"]
+    volumes:
+      - /var/log:/var/log:ro
+      - ./monitoring/promtail:/etc/promtail:ro
+    depends_on:
+      - loki
+    networks:
+      - control_net
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    profiles: ["observability"]
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "3200:3200"   # Tempo UI
+      - "4317:4317"   # OTLP gRPC
+    volumes:
+      - ./monitoring/tempo/tempo.yaml:/etc/tempo.yaml:ro
+    networks:
+      - control_net
+
 volumes:
   postgres_data:
   ollama_data:

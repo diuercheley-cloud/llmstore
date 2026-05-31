@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     agent_optimizer_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_cognitive_loopback_enabled: bool = Field(default=False, alias="AGENT_COGNITIVE_LOOPBACK_ENABLED")
+    agent_cognitive_loopback_enabled: bool = Field(default=True, alias="AGENT_COGNITIVE_LOOPBACK_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_fewshot_auto_curator_enabled: bool = Field(default=False, alias="AGENT_FEWSHOT_AUTO_CURATOR_ENABLED")
@@ -73,7 +73,7 @@ class Settings(BaseSettings):
     agent_auto_apply_learnings: bool = Field(default=False, alias="AGENT_AUTO_APPLY_LEARNINGS")
     # Owner: agent-platform
     # Status: beta
-    agent_uncertainty_detection_enabled: bool = Field(default=False, alias="AGENT_UNCERTAINTY_DETECTION_ENABLED")
+    agent_uncertainty_detection_enabled: bool = Field(default=True, alias="AGENT_UNCERTAINTY_DETECTION_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_uncertainty_auto_research_enabled: bool = Field(default=False, alias="AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED")
@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     agent_meta_reviewer_parallel_enabled: bool = Field(default=False, alias="AGENT_META_REVIEWER_PARALLEL_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_studio_ga_enabled: bool = Field(default=False, alias="AGENT_STUDIO_GA_ENABLED")
+    agent_studio_ga_enabled: bool = Field(default=True, alias="AGENT_STUDIO_GA_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_visual_flow_editor_enabled: bool = Field(default=False, alias="AGENT_VISUAL_FLOW_EDITOR_ENABLED")
@@ -112,13 +112,13 @@ class Settings(BaseSettings):
     agent_shadow_mode_enabled: bool = Field(default=False, alias="AGENT_SHADOW_MODE_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_canary_agents_enabled: bool = Field(default=False, alias="AGENT_CANARY_AGENTS_ENABLED")
+    agent_canary_agents_enabled: bool = Field(default=True, alias="AGENT_CANARY_AGENTS_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_canary_auto_promote: bool = Field(default=False, alias="AGENT_CANARY_AUTO_PROMOTE")
     # Owner: agent-platform
     # Status: beta
-    agent_wallets_enabled: bool = Field(default=False, alias="AGENT_WALLETS_ENABLED")
+    agent_wallets_enabled: bool = Field(default=True, alias="AGENT_WALLETS_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_wallet_stripe_enabled: bool = Field(default=False, alias="AGENT_WALLET_STRIPE_ENABLED")
@@ -139,7 +139,7 @@ class Settings(BaseSettings):
     agent_physical_actuation_enabled: bool = Field(default=False, alias="AGENT_PHYSICAL_ACTUATION_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_sab_enabled: bool = Field(default=False, alias="AGENT_SAB_ENABLED")
+    agent_sab_enabled: bool = Field(default=True, alias="AGENT_SAB_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_sab_import_enabled: bool = Field(default=False, alias="AGENT_SAB_IMPORT_ENABLED")
@@ -160,7 +160,7 @@ class Settings(BaseSettings):
     agent_task_simulation_mode: bool = Field(default=False, alias="AGENT_TASK_SIMULATION_MODE")
     # Owner: agent-platform
     # Status: beta
-    agent_federated_memory_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_ENABLED")
+    agent_federated_memory_enabled: bool = Field(default=True, alias="AGENT_FEDERATED_MEMORY_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_federated_memory_sync_enabled: bool = Field(default=False, alias="AGENT_FEDERATED_MEMORY_SYNC_ENABLED")
@@ -247,6 +247,9 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_memory_vector_provider: str = Field(default="mock", alias="AGENT_MEMORY_VECTOR_PROVIDER")
+    pinecone_api_key: str = Field(default="", alias="PINECONE_API_KEY")
+    pinecone_environment: str = Field(default="us-east-1-aws", alias="PINECONE_ENVIRONMENT")
+    pinecone_index_name: str = Field(default="agent-memory", alias="PINECONE_INDEX_NAME")
     # Owner: agent-platform
     # Status: beta
     agent_memory_embeddings_provider: str = Field(default="mock", alias="AGENT_MEMORY_EMBEDDINGS_PROVIDER")
@@ -404,6 +407,10 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_event_driven_enabled: bool = Field(default=False, alias="AGENT_EVENT_DRIVEN_ENABLED")
+    nats_url: str = Field(default="nats://localhost:4222", alias="NATS_URL")
+    nats_trigger_enabled: bool = Field(default=False, alias="NATS_TRIGGER_ENABLED")
+    pulsar_url: str = Field(default="pulsar://localhost:6650", alias="PULSAR_URL")
+    pulsar_trigger_enabled: bool = Field(default=False, alias="PULSAR_TRIGGER_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_cron_triggers_enabled: bool = Field(default=False, alias="AGENT_CRON_TRIGGERS_ENABLED")
@@ -438,7 +445,7 @@ class Settings(BaseSettings):
 
     # Owner: agent-platform
     # Status: beta
-    agent_marketplace_enabled: bool = Field(default=False, alias="AGENT_MARKETPLACE_ENABLED")
+    agent_marketplace_enabled: bool = Field(default=True, alias="AGENT_MARKETPLACE_ENABLED")
     agent_distributed_runtime_enabled: bool = Field(default=False, alias="AGENT_DISTRIBUTED_RUNTIME_ENABLED")
     multi_cluster_enabled: bool = Field(default=False, alias="MULTI_CLUSTER_ENABLED")
     agent_cluster_federation_enabled: bool = Field(default=False, alias="AGENT_CLUSTER_FEDERATION_ENABLED")
@@ -448,7 +455,7 @@ class Settings(BaseSettings):
     agent_remote_marketplace_enabled: bool = Field(default=False, alias="AGENT_REMOTE_MARKETPLACE_ENABLED")
     # Owner: agent-platform
     # Status: beta
-    agent_bundle_install_enabled: bool = Field(default=False, alias="AGENT_BUNDLE_INSTALL_ENABLED")
+    agent_bundle_install_enabled: bool = Field(default=True, alias="AGENT_BUNDLE_INSTALL_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_bundle_signature_required: bool = Field(default=False, alias="AGENT_BUNDLE_SIGNATURE_REQUIRED")
@@ -494,7 +501,7 @@ class Settings(BaseSettings):
     # Owner: platform-ops
     # Owner: agent-platform
     # Status: beta
-    agent_studio_enabled: bool = Field(default=False, alias="AGENT_STUDIO_ENABLED")
+    agent_studio_enabled: bool = Field(default=True, alias="AGENT_STUDIO_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_debugger_enabled: bool = Field(default=False, alias="AGENT_DEBUGGER_ENABLED")
@@ -1281,6 +1288,37 @@ class Settings(BaseSettings):
     deepseek_base_url: str = Field(default="", alias="DEEPSEEK_BASE_URL")
     deepseek_chat_model: str = Field(default="", alias="DEEPSEEK_CHAT_MODEL")
     openrouter_base_url: str = Field(default="", alias="OPENROUTER_BASE_URL")
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_base_url: str = Field(default="", alias="GEMINI_BASE_URL")
+    gemini_provider_enabled: bool = Field(default=True, alias="GEMINI_PROVIDER_ENABLED")
+    aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
+    bedrock_provider_enabled: bool = Field(default=True, alias="BEDROCK_PROVIDER_ENABLED")
+    azure_openai_api_key: str = Field(default="", alias="AZURE_OPENAI_API_KEY")
+    azure_openai_endpoint: str = Field(default="", alias="AZURE_OPENAI_ENDPOINT")
+    azure_openai_api_version: str = Field(default="2024-10-21", alias="AZURE_OPENAI_API_VERSION")
+    azure_openai_deployment: str = Field(default="", alias="AZURE_OPENAI_DEPLOYMENT")
+    azure_openai_provider_enabled: bool = Field(default=True, alias="AZURE_OPENAI_PROVIDER_ENABLED")
+    mistral_api_key: str = Field(default="", alias="MISTRAL_API_KEY")
+    mistral_provider_enabled: bool = Field(default=True, alias="MISTRAL_PROVIDER_ENABLED")
+    cohere_api_key: str = Field(default="", alias="COHERE_API_KEY")
+    cohere_provider_enabled: bool = Field(default=True, alias="COHERE_PROVIDER_ENABLED")
+    groq_api_key: str = Field(default="", alias="GROQ_API_KEY")
+    groq_provider_enabled: bool = Field(default=True, alias="GROQ_PROVIDER_ENABLED")
+    together_api_key: str = Field(default="", alias="TOGETHER_API_KEY")
+    together_provider_enabled: bool = Field(default=True, alias="TOGETHER_PROVIDER_ENABLED")
+    perplexity_api_key: str = Field(default="", alias="PERPLEXITY_API_KEY")
+    perplexity_provider_enabled: bool = Field(default=True, alias="PERPLEXITY_PROVIDER_ENABLED")
+    replicate_api_key: str = Field(default="", alias="REPLICATE_API_KEY")
+    replicate_provider_enabled: bool = Field(default=True, alias="REPLICATE_PROVIDER_ENABLED")
+    rate_limit_global_per_minute: int = Field(default=1000, alias="RATE_LIMIT_GLOBAL_PER_MINUTE")
+    rate_limit_tenant_per_minute: int = Field(default=500, alias="RATE_LIMIT_TENANT_PER_MINUTE")
+    oauth_google_client_id: str = Field(default="", alias="OAUTH_GOOGLE_CLIENT_ID")
+    oauth_google_client_secret: str = Field(default="", alias="OAUTH_GOOGLE_CLIENT_SECRET")
+    oauth_github_client_id: str = Field(default="", alias="OAUTH_GITHUB_CLIENT_ID")
+    oauth_github_client_secret: str = Field(default="", alias="OAUTH_GITHUB_CLIENT_SECRET")
+    oauth_enabled: bool = Field(default=False, alias="OAUTH_ENABLED")
     provider_timeout_seconds: int = Field(
         default=30,
         validation_alias=AliasChoices("PROVIDER_TIMEOUT_SECONDS", "REAL_PROVIDER_TIMEOUT_SECONDS"),

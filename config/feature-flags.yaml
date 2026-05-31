@@ -86,17 +86,16 @@
   safe_default_reason: Retry metadata can be present safely even while planning execution
     remains disabled by default.
 - name: AGENT_BUNDLE_INSTALL_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: experimental
+  status: active
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies:
   - AGENT_MARKETPLACE_ENABLED
   conflicts: []
-  safe_default_reason: Bundle installation remains off until marketplace workflows
-    mature.
+  safe_default_reason: Bundle installation enabled alongside marketplace GA.
 - name: AGENT_BUNDLE_SIGNATURE_REQUIRED
   default: false
   owner: agent-platform
@@ -297,16 +296,15 @@
   safe_default_reason: Retrieved memory is not reinjected into prompts unless operators
     explicitly opt in.
 - name: AGENT_MARKETPLACE_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: experimental
+  status: active
   introduced_in: v1.10.0-agentic-runtime
   risk_level: medium
   dependencies: []
   conflicts: []
-  safe_default_reason: Marketplace functionality stays disabled until signed bundle
-    governance is validated.
+  safe_default_reason: Marketplace is enabled by default for the v2.x release train.
 - name: AGENT_REMOTE_MARKETPLACE_ENABLED
   default: false
   owner: agent-platform
@@ -593,7 +591,7 @@
   safe_default_reason: Mock arbitration is test-only and disabled by default so release
     posture cannot silently simulate consensus.
 - name: AGENT_STUDIO_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
   status: active
@@ -602,8 +600,7 @@
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Agent Studio remains off until operators intentionally expose
-    visual authoring surfaces.
+  safe_default_reason: Agent Studio is enabled by default for the v2.x release train.
 - name: AGENT_WORKFLOW_TIMERS_ENABLED
   default: false
   owner: agent-platform
@@ -4028,17 +4025,17 @@
   conflicts: []
   safe_default_reason: Prompt and selection tuning remains opt-in only.
 - name: AGENT_COGNITIVE_LOOPBACK_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Cognitive loopback remains opt-in so the platform does not
-    learn from executions by default.
+  safe_default_reason: Cognitive loopback is enabled by default for the v2.x release
+    train.
 - name: AGENT_FEWSHOT_AUTO_CURATOR_ENABLED
   default: false
   owner: agent-platform
@@ -4076,17 +4073,17 @@
   conflicts: []
   safe_default_reason: Learned changes are never auto-applied by default.
 - name: AGENT_UNCERTAINTY_DETECTION_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Uncertainty scoring remains opt-in until operators calibrate
-    thresholds and escalation paths.
+  safe_default_reason: Uncertainty detection enabled by default for the v2.x release
+    train.
 - name: AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED
   default: false
   owner: agent-platform
@@ -4148,16 +4145,16 @@
   safe_default_reason: Parallel reviewer execution remains opt-in until operators
     accept the added cost.
 - name: AGENT_STUDIO_GA_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_STUDIO_ENABLED
   conflicts: []
-  safe_default_reason: Studio GA controls remain operator-gated and disabled by default.
+  safe_default_reason: Studio GA controls enabled by default for the v2.x release train.
 - name: AGENT_VISUAL_FLOW_EDITOR_ENABLED
   default: false
   owner: agent-platform
@@ -4231,17 +4228,16 @@
   safe_default_reason: Shadow execution remains disabled until rollout governance
     is explicitly enabled.
 - name: AGENT_CANARY_AGENTS_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Canary routing is off by default so new agents receive no production
-    traffic automatically.
+  safe_default_reason: Canary routing enabled by default for the v2.x release train.
 - name: AGENT_CANARY_AUTO_PROMOTE
   default: false
   owner: agent-platform
@@ -4255,17 +4251,16 @@
   safe_default_reason: Auto-promotion is disabled by default to preserve manual promotion
     review.
 - name: AGENT_WALLETS_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_RUNTIME_ENABLED
   conflicts: []
-  safe_default_reason: Wallet capabilities remain disabled until operators provision
-    budgets and approval policies.
+  safe_default_reason: Wallets enabled by default for the v2.x release train.
 - name: AGENT_WALLET_STRIPE_ENABLED
   default: false
   owner: agent-platform
@@ -4335,16 +4330,16 @@
   conflicts: []
   safe_default_reason: Physical actuation is disabled by default.
 - name: AGENT_SAB_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: medium
   dependencies:
   - AGENT_BUNDLE_INSTALL_ENABLED
   conflicts: []
-  safe_default_reason: Standardized bundle portability remains opt-in.
+  safe_default_reason: SAB enabled by default for the v2.x release train.
 - name: AGENT_SAB_IMPORT_ENABLED
   default: false
   owner: agent-platform
@@ -4369,17 +4364,16 @@
   conflicts: []
   safe_default_reason: SAB export stays disabled until portability is explicitly desired.
 - name: AGENT_FEDERATED_MEMORY_ENABLED
-  default: false
+  default: true
   owner: agent-platform
   area: Agentic AI Platform
-  status: beta
+  status: active
   introduced_in: v2.x-agentic-evolutionary-intelligence
   risk_level: high
   dependencies:
   - AGENT_MEMORY_ENABLED
   conflicts: []
-  safe_default_reason: Federated memory remains disabled until sovereignty and retention
-    policies are configured.
+  safe_default_reason: Federated memory enabled by default for the v2.x release train.
 - name: AGENT_FEDERATED_MEMORY_SYNC_ENABLED
   default: false
   owner: agent-platform

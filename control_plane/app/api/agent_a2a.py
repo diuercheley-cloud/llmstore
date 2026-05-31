@@ -11,6 +11,7 @@ from app.api.deps import require_admin
 from app.services.agents.a2a.a2a_registry import A2ARegistryService
 from app.services.agents.a2a.a2a_security import A2ASecurityService
 from app.services.agents.a2a.a2a_server import A2AServerService
+from app.services.agents.a2a.a2a_discovery import A2ADiscoveryService
 
 router = APIRouter(tags=["agent-a2a"])
 
@@ -107,3 +108,65 @@ async def delegate_a2a_task(
             detail="Missing A2A authentication token."
         )
     return await A2AServerService.receive_delegation(db, body, x_agent_a2a_token)
+
+
+# A2A Discovery endpoints
+class DiscoverQueryParams(BaseModel):
+    tenant_id: str
+    capability: Optional[str] = None
+    tool_name: Optional[str] = None
+    name_query: Optional[str] = None
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+class AnnouncePresenceRequest(BaseModel):
+    tenant_id: str
+    agent_id: uuid.UUID
+    capabilities: Dict[str, Any]
+
+@router.get("/admin/agents/a2a/discover")
+async def discover_a2a_agents(
+    tenant_id: str,
+    capability: Optional[str] = None,
+    tool_name: Optional[str] = None,
+    name_query: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+):
+    discovery = A2ADiscoveryService(db)
+    return await discovery.discover_agents(
+        tenant_id=tenant_id,
+        capability=capability,
+        tool_name=tool_name,
+        name_query=name_query,
+        limit=limit,
+        offset=offset,
+    )
+
+@router.get("/admin/agents/a2a/profile/{agent_id}")
+async def get_a2a_agent_profile(
+    agent_id: uuid.UUID,
+    tenant_id: str,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+):
+    discovery = A2ADiscoveryService(db)
+    profile = await discovery.get_agent_profile(tenant_id, agent_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return profile
+
+@router.post("/admin/agents/a2a/announce")
+async def announce_a2a_presence(
+    req: AnnouncePresenceRequest,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+):
+    discovery = A2ADiscoveryService(db)
+    return await discovery.announce_presence(
+        tenant_id=req.tenant_id,
+        agent_id=req.agent_id,
+        capabilities=req.capabilities,
+    )

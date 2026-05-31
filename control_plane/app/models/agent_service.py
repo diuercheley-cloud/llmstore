@@ -15,7 +15,10 @@ class AgentServiceTier(Base):
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False) # free, pro, enterprise
     rate_limit_per_minute: Mapped[int] = mapped_column(Integer, default=10)
     monthly_run_limit: Mapped[int] = mapped_column(Integer, default=1000)
-    features: Mapped[dict] = mapped_column(JSON, default=dict) # e.g. {"sync_mode": true, "webhook_custom_headers": true}
+    price_per_run_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    price_per_1k_tokens_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    monthly_fee_brl: Mapped[float] = mapped_column(Float, default=0.0)
+    features: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 class AgentServiceUsage(Base):

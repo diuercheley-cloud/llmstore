@@ -19,6 +19,8 @@ TIMESTAMP="$(date +%Y%m%dT%H%M%S)"
 DRY_RUN=false
 INCLUDE_MODELS=false
 INCLUDE_RAG_FILES=false
+ENCRYPT=false
+ENCRYPTION_KEY=""
 TARGET_DIR=""
 
 usage() {
@@ -29,6 +31,8 @@ Opções:
   --dry-run             Simula o backup (roda apenas preflights, valida conexões e gera relatórios)
   --include-models      Inclui o diretório de modelos no backup
   --include-rag-files   Inclui os arquivos do RAG no backup
+  --encrypt             Criptografa o backup com GPG
+  --gpg-key KEY         Chave GPG para criptografia
   -h, --help            Mostra esta ajuda
 EOF
 }
@@ -44,6 +48,13 @@ while [[ $# -gt 0 ]]; do
       ;;
     --include-rag-files)
       INCLUDE_RAG_FILES=true
+      ;;
+    --encrypt)
+      ENCRYPT=true
+      ;;
+    --gpg-key)
+      shift
+      ENCRYPTION_KEY="$1"
       ;;
     -h|--help)
       usage
@@ -226,7 +237,18 @@ cat <<EOF > "${MANIFEST_FILE}"
 }
 EOF
 
-# 6. Generate Checksums
+# 6. Encrypt backup if requested
+if [[ "${ENCRYPT}" == "true" ]]; then
+  echo "--- Encrypting Backup ---"
+  GPG_RECIPIENT="${ENCRYPTION_KEY:-$(git config --get user.email || echo 'backup@kleber.ai')}"
+  archive="${TARGET_DIR}/backup-${TIMESTAMP}.tar.gz"
+  tar -czf "${archive}" -C "${TARGET_DIR}" .
+  gpg --batch --yes --encrypt --recipient "${GPG_RECIPIENT}" --output "${archive}.gpg" "${archive}"
+  rm -f "${archive}"
+  echo "[backup] Encrypted backup: ${archive}.gpg"
+fi
+
+# 7. Generate Checksums
 echo "--- Generating Checksums ---"
 (
   cd "${TARGET_DIR}"

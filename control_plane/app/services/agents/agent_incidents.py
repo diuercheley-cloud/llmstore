@@ -4,6 +4,7 @@ Status: beta
 """
 import uuid
 import logging
+from datetime import timedelta
 from typing import Any, Dict, Optional, List
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,8 +81,47 @@ class AgentIncidentService:
         return incident
 
     async def _link_related_incidents(self, incident: AgentIncident):
-        # Implementation of auto-linking related incidents
-        pass
+        stmt = select(AgentIncident).where(
+            AgentIncident.agent_id == incident.agent_id,
+            AgentIncident.status == "open",
+            AgentIncident.id != incident.id,
+            AgentIncident.incident_type.in_(["handoff_loop", "tool_failure", "policy_denial"]),
+        ).order_by(AgentIncident.created_at.desc()).limit(10)
+
+        res = await self.db.execute(stmt)
+        related = res.scalars().all()
+
+        for rel in related:
+            link = AgentIncidentLink(
+                incident_id=incident.id,
+                linked_incident_id=rel.id,
+                link_type="related",
+                created_at=utc_now(),
+            )
+            self.db.add(link)
+
+        if related:
+            logger.info(f"Linked {len(related)} related incidents to {incident.id}")
+        else:
+            logger.info(f"No related incidents found for {incident.id}, checking agent-level patterns")
+
+            recent_stmt = select(AgentIncident).where(
+                AgentIncident.agent_id == incident.agent_id,
+                AgentIncident.created_at >= utc_now() - timedelta(hours=1),
+            ).order_by(AgentIncident.created_at.desc())
+            res2 = await self.db.execute(recent_stmt)
+            recent_incidents = res2.scalars().all()
+
+            if len(recent_incidents) >= 3:
+                severity_escalation = AgentIncidentEvent(
+                    incident_id=incident.id,
+                    event_type="severity_escalated",
+                    notes=f"Pattern detected: {len(recent_incidents)} incidents for agent in last hour",
+                    created_at=utc_now(),
+                )
+                self.db.add(severity_escalation)
+                incident.severity = "high"
+                logger.warning(f"Incident {incident.id} severity escalated to high due to pattern")
 
     async def get_incident(self, incident_id: uuid.UUID) -> Optional[AgentIncident]:
         res = await self.db.execute(select(AgentIncident).where(AgentIncident.id == incident_id))

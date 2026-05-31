@@ -114,6 +114,7 @@ from app.api.voice import router as voice_router
 from app.api.admin_model_experiments import router as admin_model_experiments_router
 from app.api.web_ide import router as web_ide_router
 from app.api.mobile_v1 import router as mobile_v1_router
+from app.api.auth import router as auth_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
@@ -249,6 +250,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_studio_enabled:
         from app.api.agent_studio_admin import router as agent_studio_admin_router
         app.include_router(agent_studio_admin_router)
+        if settings.agent_studio_ga_enabled:
+            from app.api.agent_studio_ga_admin import router as agent_studio_ga_admin_router
+            app.include_router(agent_studio_ga_admin_router, prefix="/api/v1")
 
     if settings.agent_human_approval_enabled:
         from app.api.agent_approvals_admin import router as agent_approvals_admin_router
@@ -314,6 +318,8 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if settings.agent_marketplace_enabled:
         from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
         app.include_router(agent_marketplace_admin_router)
+        from app.api.agent_marketplace_public import router as agent_marketplace_public_router
+        app.include_router(agent_marketplace_public_router, prefix="/api/v1")
 
     if settings.agent_event_driven_enabled:
         from app.api.agent_events_admin import router as agent_events_admin_router
@@ -346,6 +352,25 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     from app.api.agent_workspace_admin import router as agent_workspace_admin_router
     app.include_router(agent_workspace_admin_router)
 
+    if settings.agent_canary_agents_enabled:
+        from app.api.agent_canary_admin import router as agent_canary_admin_router
+        app.include_router(agent_canary_admin_router)
+
+    if settings.agent_cognitive_loopback_enabled:
+        from app.api.agent_cognitive_loopback_admin import router as agent_cognitive_loopback_admin_router
+        app.include_router(agent_cognitive_loopback_admin_router)
+
+    if settings.agent_federated_memory_enabled:
+        from app.api.agent_federated_memory_admin import router as agent_federated_memory_admin_router
+        app.include_router(agent_federated_memory_admin_router)
+
+    if settings.agent_sab_enabled:
+        from app.api.agent_sab_admin import router as agent_sab_admin_router
+        app.include_router(agent_sab_admin_router)
+
+    if settings.agent_uncertainty_detection_enabled:
+        from app.api.agent_uncertainty_admin import router as agent_uncertainty_admin_router
+        app.include_router(agent_uncertainty_admin_router)
 
     # Enterprise/Commercial Optional Routers
     if getattr(settings, "commercial_qos_enabled", True):
@@ -546,6 +571,7 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(auth_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)
 app.include_router(saas_admin_router)
@@ -565,7 +591,8 @@ app.include_router(portal_router, prefix="/portal")
 app.include_router(account_router, prefix="/v1") # Alias for /account
 app.include_router(developer_docs_router)
 app.include_router(billing_admin_router)
-app.include_router(wallet_admin_router)
+if settings.agent_wallets_enabled:
+    app.include_router(wallet_admin_router)
 app.include_router(providers_router)
 app.include_router(routing_admin_router)
 app.include_router(routing_test_router)
