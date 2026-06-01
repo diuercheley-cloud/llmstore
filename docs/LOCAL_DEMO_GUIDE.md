@@ -72,6 +72,11 @@ Utilizado para monitorar a saúde da stack, uso global e erros.
 - **URL**: `http://localhost:18080/admin-dashboard`
 - **Autenticação**: Requer o `ADMIN_TOKEN` configurado no `.env`.
 
+### Agent Studio
+Visual flow editor para construir e depurar agentes.
+- **URL**: `http://localhost:18080/admin-dashboard/agents/studio`
+- **Autenticação**: Requer login no Admin Dashboard.
+
 ### Admin Lab
 Interface avançada para gestão de modelos, backends e financeiro.
 - **URL**: `http://localhost:18080/admin-lab`
@@ -227,8 +232,8 @@ open http://localhost:18080/capabilities
 ```
 
 A pagina exibe:
-- **18 recursos** com status (Suportado, Parcial, Nao suportado) e observacoes
-- **6 limitacoes** explicitas (PSP real, PIX real, Tools/FC parcial, hardware, HTTPS, seguranca)
+- **19 recursos** com status (Suportado, Nao suportado) e observacoes
+- **5 limitacoes** explicitas (PSP real, PIX real, hardware, HTTPS, seguranca)
 - Versao atual do sistema carregada via API
 - Links para todas as interfaces
 

@@ -83,7 +83,7 @@ Nenhum blocker detectado.
 1. PSP/PIX real nao implementado — faturamento manual apenas. Documentado como "future" na capability matrix.
 2. Cloud nao e requisito — appliance funciona offline.
 3. Internet nao e requisito — appliance funciona sem internet.
-4. Tools/Function Calling parcial — depende do backend de inferencia.
+4. Tools/Function Calling — Suportado nativamente para backends compatíveis.
 5. TTS requer pocket-tts habilitado.
 6. RAG requer data plane com suporte a embeddings.
 

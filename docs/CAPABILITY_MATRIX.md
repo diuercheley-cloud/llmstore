@@ -12,9 +12,9 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 | `/v1/chat/completions` | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA | - | `scripts/test-chat.sh` |
 | streaming | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/test-stream.sh` |
 | `/v1/models` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui provider_info | `curl /v1/models` |
-| `/v1/embeddings` | ✅ (Deterministic) | ❌ | ⚠️ (Mock) | ✅ | ❌ | ✅ | Partial | Mock por padrão | `scripts/test-embeddings.sh` |
+| `/v1/embeddings` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | GA | Local transformer model ou OpenAI backends | `scripts/validate-embeddings-local.sh` |
 | `/v1/responses` | ✅ | ✅ | ✅ | ✅ | ⚠️ (via chat) | ✅ | Beta | Sem streaming; tools seguem capability do provider/modelo | `scripts/test-responses.sh` |
-| tools/function calling | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | Partial | `llama.cpp` e `openai_compatible` recebem payload OpenAI nativo; `ollama`/`vllm` retornam `capability_not_supported`; logs persistem preview sanitizado | - |
+| tools/function calling | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Suporte nativo para a maioria dos provedores cloud e locais | - |
 | Smart Routing | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-smart-routing-local.sh` |
 | Multi-Provider | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
 | Provider Registry | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
@@ -53,7 +53,7 @@ open http://localhost:18080/capabilities
 curl -s http://localhost:18080/public/capabilities | python3 -m json.tool
 ```
 
-A pagina e atualizada automaticamente com a versao atual do sistema via JS. As limitacoes de PSP/PIX real, tools/function calling parcial, streaming em `/v1/responses` e dependencia de hardware local sao exibidas explicitamente.
+A pagina e atualizada automaticamente com a versao atual do sistema via JS. As limitacoes de PSP/PIX real, streaming em `/v1/responses` e dependencia de hardware local sao exibidas explicitamente.
 
 ## Function Calling
 

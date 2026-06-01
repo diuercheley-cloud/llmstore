@@ -60,7 +60,7 @@ para entrega a cliente como Local AI Appliance.
 ## Limitacoes
 
 1. PSP/PIX real nao implementado — faturamento manual apenas. Documentado como "future".
-2. Tools/Function Calling parcial — depende do backend de inferencia.
+2. Tools/Function Calling — Suportado nativamente para backends compatíveis.
 3. TTS requer pocket-tts habilitado.
 4. RAG requer data plane com suporte a embeddings.
 5. Cloud/internet nao sao requisitos — appliance funciona offline.

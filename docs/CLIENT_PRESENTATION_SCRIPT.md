@@ -404,7 +404,7 @@ Mostre ao cliente a pagina de capacidades para demonstrar transparencia sobre re
 open http://localhost:18080/capabilities
 ```
 
-**O que falar:** "Esta pagina lista todos os recursos do sistema com status claro — o que funciona, o que e parcial e o que nao esta disponivel. As limitacoes sao explicitas: nao temos PSP/PIX real, tools/function calling e parcial, e a performance depende do hardware local. Isso mostra nosso compromisso com transparencia."
+**O que falar:** "Esta pagina lista todos os recursos do sistema com status claro — o que funciona e o que ainda esta em desenvolvimento. As limitacoes sao explicitas: nao temos PSP/PIX real e a performance depende do hardware local. Isso mostra nosso compromisso com transparencia."
 
 ## Comando Unico de Demo Comercial
 

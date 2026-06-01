@@ -18,7 +18,7 @@ Coloque os screenshots em `artifacts/demo-screenshots/<timestamp>/`.
   - Verificar se dados sensíveis não aparecem
 
 - [ ] **2. Capabilities Page** (`/capabilities`)
-  - Mostrar tabela de capacidades com status (Suportado/Parcial/Não suportado)
+  - Mostrar tabela de capacidades com status (Suportado/Não suportado)
   - Verificar se limitações PSP/PIX aparecem explicitamente
 
 - [ ] **3. Client Portal** (`/client-portal`)

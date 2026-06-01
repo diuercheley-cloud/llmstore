@@ -25,7 +25,7 @@ status: consolidated
 | **Ordem** | 2ª tela |
 | **URL** | `http://localhost:18080/capabilities` |
 | **Screenshot esperado** | Tabela de capacidades com 18+ recursos, status e observações |
-| **Fala sugerida** | "Transparência total: aqui listamos o que o sistema faz, o que é parcial e o que não está disponível. Veja que as limitações PSP/PIX e Tools/FC estão explícitas." |
+| **Fala sugerida** | "Transparência total: aqui listamos o que o sistema faz e o que não está disponível. Veja que as limitações PSP/PIX estão explícitas." |
 | **Objetivo** | Demonstrar transparência sobre recursos e limitações |
 | **Pontos de atenção** | Verificar se as limitações PSP/PIX real aparecem na página |
 

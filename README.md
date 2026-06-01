@@ -353,6 +353,7 @@ Storyboard, screenshots e plano de captura: [docs/demo-visual-guide/README.md](d
 |-----------|-----------|
 | Landing Page | `http://localhost:18080/` |
 | Admin Dashboard | `http://localhost:18080/admin-dashboard` |
+| Agent Studio | `http://localhost:18080/admin-dashboard/agents/studio` |
 | Admin Lab | `http://localhost:18080/admin-lab` |
 | Client Portal | `http://localhost:18080/client-portal` |
 | Pricing | `http://localhost:18080/pricing` |
