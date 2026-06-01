@@ -135,13 +135,67 @@
         display: grid;
         gap: 18px;
       }
+      .settings-group {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.52);
+      }
+      .group-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .group-head h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .group-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .toolbar-actions {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        min-width: 240px;
+      }
       .field-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
       }
-      .provider-grid {
+      .provider-group {
+        display: grid;
+        gap: 14px;
+        padding: 22px;
+      }
+      .provider-group + .provider-group {
+        margin-top: 2px;
+      }
+      .provider-group-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .provider-group-head h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .provider-group-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .provider-group-grid {
+        display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
       }
       .provider-card {
         padding: 22px;
@@ -304,6 +358,9 @@
         .field-grid {
           grid-template-columns: 1fr 1fr;
         }
+        .toolbar-actions {
+          min-width: 0;
+        }
       }
       @media (max-width: 640px) {
         .shell { width: min(100% - 20px, 1180px); }
@@ -328,9 +385,9 @@
       <section class="hero">
         <article class="panel hero-copy">
           <span class="eyebrow">Admin Surface</span>
-          <h1>Atualize APIs dos providers sem editar `.env.local` na mão.</h1>
+          <h1>Atualize o registry de providers e suas credenciais sem editar `.env.local` na mão.</h1>
           <p class="lead">
-            Esta tela grava credenciais em `.env.local`, recarrega a configuração do processo e atualiza o registry de providers.
+            Esta tela grava credenciais e flags de runtime em `.env.local`, recarrega a configuração do processo e atualiza o registry de providers.
             As chaves atuais nunca voltam em plaintext. Para trocar uma chave, informe um novo valor. Para remover, marque a limpeza explícita.
           </p>
         </article>
@@ -357,24 +414,68 @@
               Admin Token
               <input id="adminToken" type="password" placeholder="X-Admin-Token" autocomplete="off" />
             </label>
-            <div class="field-grid">
-              <label>
-                Cloud providers
-                <span class="check"><input id="cloudEnabled" type="checkbox" /> Habilitar camada cloud</span>
-              </label>
-              <label>
-                Validação real
-                <span class="check"><input id="validationEnabled" type="checkbox" /> Permitir chamadas reais</span>
-              </label>
-              <label>
-                Max custo por request (BRL)
-                <input id="maxCost" type="number" step="0.01" min="0" />
-              </label>
-              <label>
-                Timeout provider (s)
-                <input id="timeoutSeconds" type="number" step="1" min="1" max="300" />
-              </label>
+            <div class="settings-group">
+              <div class="group-head">
+                <h3>Registry gate</h3>
+                <p>Quem entra no registry e quem pode usar cloud.</p>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Providers habilitados
+                  <input id="providersEnabledList" type="text" placeholder="local,lmstudio" />
+                </label>
+                <label>
+                  Cloud providers
+                  <span class="check"><input id="cloudEnabled" type="checkbox" /> Habilitar camada cloud</span>
+                </label>
+                <label>
+                  Validação real
+                  <span class="check"><input id="validationEnabled" type="checkbox" /> Permitir chamadas reais</span>
+                </label>
+              </div>
             </div>
+            <div class="settings-group">
+              <div class="group-head">
+                <h3>Guardrails</h3>
+                <p>Limites e comportamento em falha.</p>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Max custo por request (BRL)
+                  <input id="maxCost" type="number" step="0.01" min="0" />
+                </label>
+                <label>
+                  Timeout provider (s)
+                  <input id="timeoutSeconds" type="number" step="1" min="1" max="300" />
+                </label>
+                <label>
+                  Max retries
+                  <input id="maxRetries" type="number" step="1" min="0" max="10" />
+                </label>
+                <label>
+                  Fail closed
+                  <span class="check"><input id="failClosed" type="checkbox" /> Bloquear fallback inseguro</span>
+                </label>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="group-head">
+                <h3>Telemetry</h3>
+                <p>Logs e persistência de tráfego real.</p>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Log prompts
+                  <span class="check"><input id="logPrompts" type="checkbox" /> Registrar prompts reais</span>
+                </label>
+                <label>
+                  Store responses
+                  <span class="check"><input id="storeResponses" type="checkbox" /> Persistir respostas reais</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="toolbar-actions">
             <div class="actions">
               <button class="secondary" id="loadBtn" type="button">Carregar configuração</button>
               <button class="primary" id="saveBtn" type="button">Salvar em `.env.local`</button>
@@ -383,164 +484,7 @@
           </div>
         </section>
 
-        <section class="provider-grid">
-          <article class="panel provider-card">
-            <div class="provider-head">
-              <div>
-                <h2>OpenAI</h2>
-                <p>Chat, responses, embeddings.</p>
-              </div>
-              <span class="pill off" id="openaiState">-</span>
-            </div>
-            <div class="form-block">
-              <label>
-                Provider habilitado
-                <span class="check"><input id="openaiEnabled" type="checkbox" /> Ativar no registry</span>
-              </label>
-              <label>
-                API key atual
-                <input id="openaiMasked" type="text" disabled />
-              </label>
-              <label>
-                Nova API key
-                <input id="openaiApiKey" type="password" placeholder="deixe vazio para manter" autocomplete="off" />
-              </label>
-              <label>
-                Remover API key atual
-                <span class="check"><input id="openaiClearKey" type="checkbox" /> Limpar valor salvo</span>
-              </label>
-              <label>
-                Base URL
-                <input id="openaiBaseUrl" type="text" />
-              </label>
-              <label>
-                Chat model
-                <input id="openaiChatModel" type="text" />
-              </label>
-              <label>
-                Embeddings model
-                <input id="openaiEmbeddingsModel" type="text" />
-              </label>
-              <div class="card-actions">
-                <button class="primary" onclick="saveProvider('openai', this)" type="button">Aplicar Alterações</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel provider-card">
-            <div class="provider-head">
-              <div>
-                <h2>Anthropic</h2>
-                <p>Messages API via adapter interno.</p>
-              </div>
-              <span class="pill off" id="anthropicState">-</span>
-            </div>
-            <div class="form-block">
-              <label>
-                Provider habilitado
-                <span class="check"><input id="anthropicEnabled" type="checkbox" /> Ativar no registry</span>
-              </label>
-              <label>
-                API key atual
-                <input id="anthropicMasked" type="text" disabled />
-              </label>
-              <label>
-                Nova API key
-                <input id="anthropicApiKey" type="password" placeholder="deixe vazio para manter" autocomplete="off" />
-              </label>
-              <label>
-                Remover API key atual
-                <span class="check"><input id="anthropicClearKey" type="checkbox" /> Limpar valor salvo</span>
-              </label>
-              <label>
-                Base URL
-                <input id="anthropicBaseUrl" type="text" />
-              </label>
-              <label>
-                Model
-                <input id="anthropicModel" type="text" />
-              </label>
-              <div class="card-actions">
-                <button class="primary" onclick="saveProvider('anthropic', this)" type="button">Aplicar Alterações</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel provider-card">
-            <div class="provider-head">
-              <div>
-                <h2>DeepSeek</h2>
-                <p>Chat provider com custo baixo.</p>
-              </div>
-              <span class="pill off" id="deepseekState">-</span>
-            </div>
-            <div class="form-block">
-              <label>
-                Provider habilitado
-                <span class="check"><input id="deepseekEnabled" type="checkbox" /> Ativar no registry</span>
-              </label>
-              <label>
-                API key atual
-                <input id="deepseekMasked" type="text" disabled />
-              </label>
-              <label>
-                Nova API key
-                <input id="deepseekApiKey" type="password" placeholder="deixe vazio para manter" autocomplete="off" />
-              </label>
-              <label>
-                Remover API key atual
-                <span class="check"><input id="deepseekClearKey" type="checkbox" /> Limpar valor salvo</span>
-              </label>
-              <label>
-                Base URL
-                <input id="deepseekBaseUrl" type="text" />
-              </label>
-              <label>
-                Chat model
-                <input id="deepseekChatModel" type="text" />
-              </label>
-              <div class="card-actions">
-                <button class="primary" onclick="saveProvider('deepseek', this)" type="button">Aplicar Alterações</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel provider-card">
-            <div class="provider-head">
-              <div>
-                <h2>OpenRouter</h2>
-                <p>Segue o gate global de cloud providers.</p>
-              </div>
-              <div class="head-actions">
-                <label class="switch">
-                  <input id="openrouterEnabled" type="checkbox" />
-                  <span class="slider"></span>
-                </label>
-                <span class="pill off" id="openrouterState">-</span>
-              </div>
-            </div>
-            <div class="form-block">
-              <label>
-                API key atual
-                <input id="openrouterMasked" type="text" disabled />
-              </label>
-              <label>
-                Nova API key
-                <input id="openrouterApiKey" type="password" placeholder="deixe vazio para manter" autocomplete="off" />
-              </label>
-              <label>
-                Remover API key atual
-                <span class="check"><input id="openrouterClearKey" type="checkbox" /> Limpar valor salvo</span>
-              </label>
-              <label>
-                Base URL
-                <input id="openrouterBaseUrl" type="text" />
-              </label>
-              <div class="card-actions">
-                <button class="primary" onclick="saveProvider('openrouter', this)" type="button">Aplicar Alterações</button>
-              </div>
-            </div>
-          </article>
+        <section class="provider-grid" id="providerGrid">
         </section>
 
         <section class="panel footer-note">
@@ -556,6 +500,282 @@
     <script>
       const $ = (id) => document.getElementById(id);
       const STORAGE_KEY = 'provider-settings-admin-token';
+      const PROVIDER_SPECS = [
+        {
+          group: 'local',
+          key: 'lmstudio',
+          title: 'LM Studio',
+          description: 'Provider local OpenAI-compatible.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' },
+            { kind: 'text', name: 'default_model', label: 'Default model' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'openai',
+          title: 'OpenAI',
+          description: 'Chat, responses, embeddings.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' },
+            { kind: 'text', name: 'chat_model', label: 'Chat model' },
+            { kind: 'text', name: 'embeddings_model', label: 'Embeddings model' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'anthropic',
+          title: 'Anthropic',
+          description: 'Messages API via adapter interno.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' },
+            { kind: 'text', name: 'model', label: 'Model' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'deepseek',
+          title: 'DeepSeek',
+          description: 'Chat provider com custo baixo.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' },
+            { kind: 'text', name: 'chat_model', label: 'Chat model' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'openrouter',
+          title: 'OpenRouter',
+          description: 'Segue o gate global de cloud providers.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'gemini',
+          title: 'Gemini',
+          description: 'Google Generative Language API.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'base_url', label: 'Base URL' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'azure_openai',
+          title: 'Azure OpenAI',
+          description: 'OpenAI via Azure deployment.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'endpoint', label: 'Endpoint' },
+            { kind: 'text', name: 'api_version', label: 'API version' },
+            { kind: 'text', name: 'deployment', label: 'Deployment' }
+          ],
+        },
+        {
+          group: 'core',
+          key: 'bedrock',
+          title: 'Bedrock',
+          description: 'AWS runtime para foundation models.',
+          fields: [
+            { kind: 'secret', name: 'aws_access_key_id', currentLabel: 'Access key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'secret', name: 'aws_secret_access_key', currentLabel: 'Secret key atual', placeholder: 'deixe vazio para manter' },
+            { kind: 'text', name: 'aws_region', label: 'AWS region' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'mistral',
+          title: 'Mistral',
+          description: 'Cloud provider com API OpenAI-style.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'cohere',
+          title: 'Cohere',
+          description: 'Embeddings e chat via Cohere.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'groq',
+          title: 'Groq',
+          description: 'OpenAI-compatible low-latency provider.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'together',
+          title: 'Together',
+          description: 'Models on Together AI.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'perplexity',
+          title: 'Perplexity',
+          description: 'Provider para respostas com busca integrada.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'replicate',
+          title: 'Replicate',
+          description: 'Inferences via Replicate API.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'xai',
+          title: 'xAI',
+          description: 'Groq-style provider para modelos xAI.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'fireworks',
+          title: 'Fireworks',
+          description: 'Fireworks AI OpenAI-compatible endpoint.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        },
+        {
+          group: 'extended',
+          key: 'ai21',
+          title: 'AI21',
+          description: 'AI21 Studio provider.',
+          fields: [
+            { kind: 'secret', name: 'api_key', currentLabel: 'API key atual', placeholder: 'deixe vazio para manter' }
+          ],
+        }
+      ];
+      const PROVIDER_GROUPS = [
+        {
+          key: 'local',
+          title: 'Local',
+          description: 'Providers que rodam no ambiente local ou compatível com OpenAI.',
+        },
+        {
+          key: 'core',
+          title: 'Cloud principal',
+          description: 'Os adapters cloud mais usados no backend.',
+        },
+        {
+          key: 'extended',
+          title: 'Outros providers',
+          description: 'Adapters adicionais e integrações de menor uso.',
+        },
+      ];
+
+      function toPascal(value) {
+        return value
+          .replace(/[^a-zA-Z0-9]+/g, '_')
+          .split('_')
+          .filter(Boolean)
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join('');
+      }
+
+      function providerFieldId(provider, field) {
+        return `${provider}${toPascal(field)}`;
+      }
+
+      function renderSecretField(provider, field) {
+        const suffix = toPascal(field.name);
+        const maskedId = `${provider}Masked${suffix}`;
+        const inputId = providerFieldId(provider, field.name);
+        const clearId = `${provider}Clear${suffix}`;
+        return `
+              <label>
+                ${field.currentLabel}
+                <input id="${maskedId}" type="text" disabled />
+              </label>
+              <label>
+                Nova ${field.label || field.name.replace(/_/g, ' ')}
+                <input id="${inputId}" type="password" placeholder="${field.placeholder || 'deixe vazio para manter'}" autocomplete="off" />
+              </label>
+              <label>
+                Remover valor atual
+                <span class="check"><input id="${clearId}" type="checkbox" /> Limpar valor salvo</span>
+              </label>`;
+      }
+
+      function renderTextField(provider, field) {
+        const inputId = providerFieldId(provider, field.name);
+        return `
+              <label>
+                ${field.label}
+                <input id="${inputId}" type="text" />
+              </label>`;
+      }
+
+      function renderProviderCard(def) {
+        const fields = def.fields.map((field) => {
+          if (field.kind === 'secret') return renderSecretField(def.key, field);
+          return renderTextField(def.key, field);
+        }).join('');
+        return `
+          <article class="panel provider-card">
+            <div class="provider-head">
+              <div>
+                <h2>${def.title}</h2>
+                <p>${def.description}</p>
+              </div>
+              <span class="pill off" id="${def.key}State">-</span>
+            </div>
+            <div class="form-block">
+              <label>
+                Provider habilitado
+                <span class="check"><input id="${def.key}Enabled" type="checkbox" /> Ativar no registry</span>
+              </label>
+              ${fields}
+              <div class="card-actions">
+                <button class="primary" onclick="saveProvider('${def.key}', this)" type="button">Aplicar Alterações</button>
+              </div>
+            </div>
+          </article>`;
+      }
+
+      function renderProviderGrid() {
+        const grid = $('providerGrid');
+        grid.innerHTML = PROVIDER_GROUPS.map((group) => {
+          const cards = PROVIDER_SPECS.filter((spec) => spec.group === group.key).map(renderProviderCard).join('');
+          return `
+            <section class="panel provider-group">
+              <div class="provider-group-head">
+                <div>
+                  <h2>${group.title}</h2>
+                  <p>${group.description}</p>
+                </div>
+              </div>
+              <div class="provider-group-grid">
+                ${cards}
+              </div>
+            </section>`;
+        }).join('');
+      }
 
       function setMessage(text, kind = '') {
         const el = $('message');
@@ -604,48 +824,74 @@
         pill.className = `pill ${kind}`;
       }
 
-      function fillProvider(prefix, provider) {
-        if ($(prefix + 'Enabled')) $(prefix + 'Enabled').checked = !!provider.enabled;
-        $(prefix + 'Masked').value = provider.masked_api_key || 'nao configurada';
-        $(prefix + 'ApiKey').value = '';
-        $(prefix + 'ClearKey').checked = false;
-        $(prefix + 'BaseUrl').value = provider.base_url || '';
-        if ($(prefix + 'ChatModel')) $(prefix + 'ChatModel').value = provider.chat_model || '';
-        if ($(prefix + 'EmbeddingsModel')) $(prefix + 'EmbeddingsModel').value = provider.embeddings_model || '';
-        if ($(prefix + 'Model')) $(prefix + 'Model').value = provider.model || '';
+      function setProviderFieldValue(provider, fieldName, value) {
+        const input = $(providerFieldId(provider, fieldName));
+        if (input) input.value = value ?? '';
+      }
+
+      function getProviderFieldValue(provider, fieldName) {
+        const input = $(providerFieldId(provider, fieldName));
+        return input ? input.value.trim() : '';
+      }
+
+      function fillProvider(providerKey, providerConfig) {
+        const spec = PROVIDER_SPECS.find((item) => item.key === providerKey);
+        if (!spec || !providerConfig) return;
+        const enabled = $(providerFieldId(providerKey, 'enabled'));
+        if (enabled) enabled.checked = !!providerConfig.enabled;
+        spec.fields.forEach((field) => {
+          if (field.kind === 'secret') {
+            const masked = $(`${providerKey}Masked${toPascal(field.name)}`);
+            if (masked) masked.value = providerConfig[`masked_${field.name}`] || 'nao configurada';
+            const input = $(providerFieldId(providerKey, field.name));
+            if (input) input.value = '';
+            const clear = $(`${providerKey}Clear${toPascal(field.name)}`);
+            if (clear) clear.checked = false;
+          } else {
+            setProviderFieldValue(providerKey, field.name, providerConfig[field.name] || '');
+          }
+        });
       }
 
       function renderConfig(config) {
         $('envFileLabel').textContent = config.env_file || '.env.local';
+        $('providersEnabledList').value = config.global.providers_enabled || 'local,lmstudio';
         $('cloudEnabled').checked = !!config.global.cloud_providers_enabled;
         $('validationEnabled').checked = !!config.global.real_provider_validation_enabled;
         $('maxCost').value = config.global.real_provider_max_cost_brl ?? 2.0;
         $('timeoutSeconds').value = config.global.real_provider_timeout_seconds ?? 30;
+        $('maxRetries').value = config.global.provider_max_retries ?? 2;
+        $('failClosed').checked = !!config.global.provider_fail_closed;
+        $('logPrompts').checked = !!config.global.real_provider_log_prompts;
+        $('storeResponses').checked = !!config.global.real_provider_store_responses;
 
         $('cloudStatus').textContent = config.global.cloud_providers_enabled ? 'Enabled' : 'Disabled';
         $('validationStatus').textContent = config.global.real_provider_validation_enabled ? 'Enabled' : 'Blocked';
 
-        fillProvider('openai', config.providers.openai);
-        fillProvider('anthropic', config.providers.anthropic);
-        fillProvider('deepseek', config.providers.deepseek);
-        fillProvider('openrouter', config.providers.openrouter);
-
-        paintProviderState('openaiState', config.providers.openai);
-        paintProviderState('anthropicState', config.providers.anthropic);
-        paintProviderState('deepseekState', config.providers.deepseek);
-        paintProviderState('openrouterState', config.providers.openrouter);
+        PROVIDER_SPECS.forEach((spec) => {
+          fillProvider(spec.key, config.providers[spec.key] || {});
+          paintProviderState(`${spec.key}State`, config.providers[spec.key] || {});
+        });
       }
 
-      function providerPayload(prefix, options = {}) {
+      function providerPayload(providerKey, spec) {
         const payload = {
-          base_url: $(prefix + 'BaseUrl').value.trim(),
-          api_key: $(prefix + 'ApiKey').value.trim() || null,
-          clear_api_key: $(prefix + 'ClearKey').checked
+          enabled: !!$(providerFieldId(providerKey, 'enabled'))?.checked
         };
-        if (!options.readOnlyEnabled && $(prefix + 'Enabled')) payload.enabled = $(prefix + 'Enabled').checked;
-        if ($(prefix + 'ChatModel')) payload.chat_model = $(prefix + 'ChatModel').value.trim();
-        if ($(prefix + 'EmbeddingsModel')) payload.embeddings_model = $(prefix + 'EmbeddingsModel').value.trim();
-        if ($(prefix + 'Model')) payload.model = $(prefix + 'Model').value.trim();
+        spec.fields.forEach((field) => {
+          if (field.kind === 'secret') {
+            const clear = $(`${providerKey}Clear${toPascal(field.name)}`);
+            if (clear && clear.checked) {
+              payload[`clear_${field.name}`] = true;
+              return;
+            }
+            const value = getProviderFieldValue(providerKey, field.name);
+            if (value) payload[field.name] = value;
+            return;
+          }
+          const value = getProviderFieldValue(providerKey, field.name);
+          payload[field.name] = value;
+        });
         return payload;
       }
 
@@ -664,18 +910,21 @@
         setMessage('Salvando em .env.local...', 'warn');
         const payload = {
           global: {
+            providers_enabled: $('providersEnabledList').value.trim(),
             cloud_providers_enabled: $('cloudEnabled').checked,
             real_provider_validation_enabled: $('validationEnabled').checked,
             real_provider_max_cost_brl: Number($('maxCost').value || 0),
-            real_provider_timeout_seconds: Number($('timeoutSeconds').value || 30)
+            real_provider_timeout_seconds: Number($('timeoutSeconds').value || 30),
+            provider_max_retries: Number($('maxRetries').value || 2),
+            provider_fail_closed: $('failClosed').checked,
+            real_provider_log_prompts: $('logPrompts').checked,
+            real_provider_store_responses: $('storeResponses').checked
           },
-          providers: {
-            openai: providerPayload('openai'),
-            anthropic: providerPayload('anthropic'),
-            deepseek: providerPayload('deepseek'),
-            openrouter: providerPayload('openrouter')
-          }
+          providers: {}
         };
+        PROVIDER_SPECS.forEach((spec) => {
+          payload.providers[spec.key] = providerPayload(spec.key, spec);
+        });
         const res = await fetch('/admin/providers/configuration', {
           method: 'PUT',
           headers: { ...tokenHeaders(), 'Content-Type': 'application/json' },
@@ -693,7 +942,7 @@
         const originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = 'Aplicando...';
-        
+
         const card = btn.closest('.provider-card');
         if (card) {
           card.style.transition = 'all 0.3s ease';
@@ -703,10 +952,10 @@
 
         try {
           await saveConfig();
-          
+
           btn.innerHTML = 'Sucesso! ✓';
           btn.style.background = 'linear-gradient(135deg, #15803d 0%, #166534 100%)';
-          
+
           if (card) {
             card.style.boxShadow = '0 0 20px rgba(22, 101, 52, 0.3)';
             card.style.borderColor = 'var(--ok)';
@@ -726,7 +975,7 @@
           btn.innerHTML = 'Erro ✗';
           btn.style.background = 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)';
           setMessage(err.message || `Falha ao salvar ${providerName}.`, 'error');
-          
+
           if (card) {
             card.style.boxShadow = '0 0 20px rgba(153, 27, 27, 0.3)';
             card.style.borderColor = 'var(--danger)';
@@ -743,6 +992,8 @@
           }, 3000);
         }
       }
+
+      renderProviderGrid();
 
       $('loadBtn').addEventListener('click', async () => {
         try {

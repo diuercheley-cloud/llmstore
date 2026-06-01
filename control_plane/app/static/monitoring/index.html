@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>System Monitoring - LLM Inference Stack</title>
     <script src="/static/www/branding-init.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
         --bg: #0f172a;
@@ -201,50 +200,66 @@
         startMonitoring();
       });
 
-      function createChart(ctx, label, color) {
-        return new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: history.labels,
-            datasets: [{
-              label: label,
-              data: [],
-              borderColor: color,
-              backgroundColor: color + '22',
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2,
-              pointRadius: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 0 },
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 100,
-                grid: { color: '#334155' },
-                ticks: { color: '#94a3b8' }
-              },
-              x: {
-                display: false,
-                grid: { display: false }
-              }
-            },
-            plugins: {
-              legend: { display: false }
+      function createChart(canvas, color) {
+        const ctx = canvas.getContext('2d');
+        const chart = {
+          canvas,
+          ctx,
+          color,
+          data: [],
+          update() {
+            const width = canvas.clientWidth || canvas.parentElement.clientWidth || 320;
+            const height = canvas.clientHeight || canvas.parentElement.clientHeight || 250;
+            if (canvas.width !== width) canvas.width = width;
+            if (canvas.height !== height) canvas.height = height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i += 1) {
+              const y = (height / 4) * i;
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(width, y);
+              ctx.stroke();
             }
+
+            if (!chart.data.length) return;
+
+            const points = chart.data.map((value, index) => {
+              const x = chart.data.length === 1 ? width : (index / (chart.data.length - 1)) * width;
+              const y = height - (Math.max(0, Math.min(100, value)) / 100) * height;
+              return { x, y };
+            });
+
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, height);
+            points.forEach((point) => ctx.lineTo(point.x, point.y));
+            ctx.lineTo(points[points.length - 1].x, height);
+            ctx.closePath();
+            ctx.fillStyle = `${color}22`;
+            ctx.fill();
+
+            ctx.beginPath();
+            points.forEach((point, index) => {
+              if (index === 0) ctx.moveTo(point.x, point.y);
+              else ctx.lineTo(point.x, point.y);
+            });
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
           }
-        });
+        };
+
+        return chart;
       }
 
       function initCharts() {
-        charts.cpu = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU', '#38bdf8');
-        charts.ram = createChart(document.getElementById('ramChart').getContext('2d'), 'RAM', '#10b981');
-        charts.gpu = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU', '#f43f5e');
-        charts.disk = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk', '#fbbf24');
+        charts.cpu = createChart(document.getElementById('cpuChart'), '#38bdf8');
+        charts.ram = createChart(document.getElementById('ramChart'), '#10b981');
+        charts.gpu = createChart(document.getElementById('gpuChart'), '#f43f5e');
+        charts.disk = createChart(document.getElementById('diskChart'), '#fbbf24');
       }
 
       async function fetchData() {
@@ -269,21 +284,21 @@
         if (history.labels.length > MAX_DATA_POINTS) history.labels.shift();
 
         // Update CPU
-        charts.cpu.data.datasets[0].data.push(data.cpu_percent);
-        if (charts.cpu.data.datasets[0].data.length > MAX_DATA_POINTS) charts.cpu.data.datasets[0].data.shift();
+        charts.cpu.data.push(data.cpu_percent);
+        if (charts.cpu.data.length > MAX_DATA_POINTS) charts.cpu.data.shift();
         charts.cpu.update();
         document.getElementById('cpuValue').textContent = `${data.cpu_percent.toFixed(1)}%`;
 
         // Update RAM
-        charts.ram.data.datasets[0].data.push(data.memory.percent);
-        if (charts.ram.data.datasets[0].data.length > MAX_DATA_POINTS) charts.ram.data.datasets[0].data.shift();
+        charts.ram.data.push(data.memory.percent);
+        if (charts.ram.data.length > MAX_DATA_POINTS) charts.ram.data.shift();
         charts.ram.update();
         document.getElementById('ramValue').textContent = `${(data.memory.used_mb / 1024).toFixed(1)} / ${(data.memory.total_mb / 1024).toFixed(1)} GB (${data.memory.percent}%)`;
 
         // Update GPU
         const gpuVal = data.gpu?.available ? data.gpu.utilization_percent : 0;
-        charts.gpu.data.datasets[0].data.push(gpuVal);
-        if (charts.gpu.data.datasets[0].data.length > MAX_DATA_POINTS) charts.gpu.data.datasets[0].data.shift();
+        charts.gpu.data.push(gpuVal);
+        if (charts.gpu.data.length > MAX_DATA_POINTS) charts.gpu.data.shift();
         charts.gpu.update();
         if (data.gpu?.available) {
           document.getElementById('gpuValue').textContent = `${data.gpu.utilization_percent}% (VRAM: ${data.gpu.vram_used_mb} MB)`;
@@ -292,8 +307,8 @@
         }
 
         // Update Disk
-        charts.disk.data.datasets[0].data.push(data.disk.percent);
-        if (charts.disk.data.datasets[0].data.length > MAX_DATA_POINTS) charts.disk.data.datasets[0].data.shift();
+        charts.disk.data.push(data.disk.percent);
+        if (charts.disk.data.length > MAX_DATA_POINTS) charts.disk.data.shift();
         charts.disk.update();
         document.getElementById('diskValue').textContent = `${data.disk.used_gb} / ${data.disk.total_gb} GB (${data.disk.percent}%)`;
 
@@ -326,6 +341,10 @@
           updateCharts(nextData);
         }, 2000);
       }
+
+      window.addEventListener('resize', () => {
+        Object.values(charts).forEach((chart) => chart && chart.update());
+      });
     </script>
   </body>
 </html>

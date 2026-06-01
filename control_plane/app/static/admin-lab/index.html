@@ -411,6 +411,15 @@
                 <a href="#cache" class="nav-item" data-tab="cache">Cache & Jobs</a>
                 <a href="#reports" class="nav-item" data-tab="reports">Relatórios</a>
                 <a href="#test-runner" class="nav-item" data-tab="test-runner">Test Runner</a>
+
+                <div style="margin: 1.5rem 0 0.5rem 0.75rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em;">Enterprise & Agentes (v2)</div>
+                <a href="/admin-dashboard/agents/studio" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> Agent Studio</a>
+                <a href="/admin-dashboard/agents/mcp" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> MCP Stack</a>
+                <a href="/admin-dashboard/advanced/federation" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> Federação</a>
+                <a href="/admin-dashboard/rbac" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> RBAC Admin</a>
+                <a href="/admin-dashboard/security/abuse" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> Abuse Monitor</a>
+                <a href="/admin-dashboard/billing/reconciliation" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> Conciliação</a>
+                <a href="/admin-dashboard/agents/optimization" class="nav-item" data-external="true" style="color: var(--accent);"><span style="margin-right: 8px;">◈</span> Otimização</a>
             </nav>
         </aside>
 
@@ -896,13 +905,16 @@
         };
 
         function bindEvents() {
-            document.querySelectorAll('.nav-item').forEach((item) => {
+            document.querySelectorAll('.nav-item[data-tab]').forEach((item) => {
                 item.addEventListener('click', async (e) => {
                     e.preventDefault();
                     await switchTab(item.dataset.tab);
                 });
             });
 
+            // Handle external links explicitly if needed, but standard <a> behavior should work
+            // if we don't call preventDefault() on them.
+            
             el.btnConnect.onclick = connect;
             el.btnClear.onclick = () => {
                 localStorage.removeItem('admin_token');
@@ -916,6 +928,9 @@
         }
 
         async function switchTab(tab) {
+            if (!tab) {
+                return;
+            }
             state.selectedTab = tab;
             document.querySelectorAll('.nav-item').forEach((i) => i.classList.toggle('active', i.dataset.tab === tab));
             document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.add('hidden'));

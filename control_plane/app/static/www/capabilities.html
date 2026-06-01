@@ -132,9 +132,9 @@
           <tr><td>Chat Completions</td><td class="cap-status supported">Suportado</td><td>GA — /v1/chat/completions com e sem streaming</td></tr>
           <tr><td>Streaming</td><td class="cap-status supported">Suportado</td><td>GA — SSE chunks com delimitador [DONE]</td></tr>
           <tr><td>Models API</td><td class="cap-status supported">Suportado</td><td>GA — /v1/models com capabilities e readiness</td></tr>
-          <tr><td>Embeddings</td><td class="cap-status partial">Parcial</td><td>Mock por padrao, sem backend real</td></tr>
+          <tr><td>Embeddings</td><td class="cap-status supported">Suportado</td><td>GA — Modelos locais (sentence-transformers) e backends OpenAI</td></tr>
           <tr><td>Responses API</td><td class="cap-status supported">Suportado</td><td>Beta — sem streaming; tools seguem capability do provider/modelo</td></tr>
-          <tr><td>Tools / Function Calling</td><td class="cap-status partial">Parcial</td><td>`openai_compatible` nativo; local sem suporte retorna erro explicito</td></tr>
+          <tr><td>Tools / Function Calling</td><td class="cap-status supported">Suportado</td><td>GA — Nativo para backends suportados (OpenAI, Anthropic, etc.)</td></tr>
           <tr><td>RAG</td><td class="cap-status supported">Suportado</td><td>GA — indexacao e consulta de documentos internos</td></tr>
           <tr><td>TTS</td><td class="cap-status supported">Suportado</td><td>GA — via pocket-tts local</td></tr>
           <tr><td>Plugin Runtime</td><td class="cap-status supported">Suportado</td><td>Producao — execucao isolada em sandbox</td></tr>
@@ -155,7 +155,7 @@
         <h3>Limitacoes (fora do escopo nesta versao)</h3>
         <ul>
           <li><strong>PSP/PIX real opt-in</strong> — O modo padrao permanece desabilitado/offline; mock local disponivel para testes.</li>
-          <li><strong>Tools / Function Calling parcial</strong> — Suporte limitado, depende do backend e modelo local.</li>
+          <li><strong>Tools / Function Calling</strong> — Suporte nativo depende da compatibilidade do backend/modelo.</li>
           <li><strong>Modelos dependem do hardware local</strong> — Qualidade e performance variam conforme GPU/CPU disponivel.</li>
           <li><strong>Plugin Runtime local</strong> — Execucao isolada em sandbox; nao e um ecossistema distribuido.</li>
           <li><strong>HTTPS opcional em localhost</strong> — Por padrao a demo usa HTTP. Producao deve configurar TLS via Caddy.</li>

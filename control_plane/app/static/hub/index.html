@@ -437,6 +437,16 @@
       <section class="section">
         <div class="section-header">
           <div>
+            <h2>Novidades</h2>
+            <p>Novas funcionalidades integradas do backend para a interface moderna.</p>
+          </div>
+        </div>
+        <div id="new-grid" class="grid"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <div>
             <h2>Operação</h2>
             <p>Áreas administrativas e de cliente para gestão, testes e observabilidade.</p>
           </div>
@@ -468,6 +478,12 @@
           { title: "Capabilities", href: "/capabilities", icon: "CP", access: "public", route: "/capabilities" },
           { title: "Getting Started", href: "/getting-started", icon: "GS", access: "public", route: "/getting-started" }
         ],
+        new: [
+          { title: "Multi-Cluster", href: "/admin-dashboard/multicluster", icon: "MC", access: "protected", route: "/multicluster" },
+          { title: "Chaos", href: "/admin-dashboard/chaos", icon: "CH", access: "protected", route: "/chaos" },
+          { title: "Compliance", href: "/admin-dashboard/compliance", icon: "CP", access: "protected", route: "/compliance" },
+          { title: "Observabilidade", href: "/admin-dashboard/observability", icon: "OB", access: "protected", route: "/observability" }
+        ],
         ops: [
           { title: "Admin", href: "/admin-dashboard", icon: "AD", access: "protected", route: "/admin-dashboard" },
           { title: "Admin Lab", href: "/admin-lab", icon: "AL", access: "protected", route: "/admin-lab" },
@@ -488,6 +504,10 @@
         "Capabilities": "Resumo funcional do appliance com recursos suportados e limitações atuais.",
         "Getting Started": "Passo a passo inicial para ativação local e primeiro uso da stack.",
         "Admin": "Dashboard administrativo principal com visão operacional e controles centrais.",
+        "Multi-Cluster": "Gestão de federação entre clusters, sincronização de políticas e failover global.",
+        "Chaos": "Plataforma de engenharia de caos para injeção de falhas e validação de resiliência.",
+        "Compliance": "Monitoramento de controles de segurança (SOC2/ISO27001) e coleta de evidências.",
+        "Observabilidade": "Dashboard avançado de tráfego, latência por agente e taxas de erro em tempo real.",
         "Admin Lab": "Área de laboratório para recursos avançados, testes guiados e exploração operacional.",
         "Admin Tests": "Painel de testes administrativos e validações rápidas do sistema.",
         "Portal do Cliente": "Interface de cliente para uso diário, consumo, chaves e recursos contratados.",
@@ -528,6 +548,7 @@
       }
 
       mount("public", "public-grid");
+      mount("new", "new-grid");
       mount("ops", "ops-grid");
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>

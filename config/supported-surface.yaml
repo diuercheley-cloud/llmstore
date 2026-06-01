@@ -22,8 +22,8 @@ capabilities:
   docs_url: docs/OPENAI_COMPATIBILITY.md
   api_prefix: /v1
   since_version: v1.0.0
-  limitations: Supports chat completions and models list; no fine-tuning or assistants
-    endpoint.
+  limitations: Supports chat completions, embeddings, tools/function calling, and models
+    list; no fine-tuning or assistants endpoint.
   test_coverage: 92%
   rollback_story: Standard feature flag deactivation or deployment rollback.
 - id: admin-rbac
