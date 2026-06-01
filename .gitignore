@@ -113,3 +113,7 @@ venv/
 __pycache__/
 *.pyc
 *.pem
+
+test_env.sh
+chat
+frontend/admin/stats.html
