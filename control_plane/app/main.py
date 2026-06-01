@@ -344,10 +344,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_code_interpreter_admin import router as agent_code_interpreter_admin_router
         app.include_router(agent_code_interpreter_admin_router)
 
-    if settings.agent_mcp_enabled:
-        from app.api.agent_mcp_admin import admin_router as agent_mcp_admin_router, server_router as agent_mcp_server_router
-        app.include_router(agent_mcp_admin_router)
-        app.include_router(agent_mcp_server_router)
+    from app.api.agent_mcp_admin import admin_router as agent_mcp_admin_router, server_router as agent_mcp_server_router
+    app.include_router(agent_mcp_admin_router)
+    app.include_router(agent_mcp_server_router)
 
     if settings.agent_auto_optimization_enabled:
         from app.api.agent_optimization_admin import router as agent_optimization_admin_router
