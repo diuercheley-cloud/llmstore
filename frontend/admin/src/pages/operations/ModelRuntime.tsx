@@ -41,7 +41,7 @@ export default function ModelRuntime() {
             </div>
             
             <div className="mt-8 pt-6 border-t border-border flex gap-2">
-              <button className="flex-1 bg-foreground text-white text-xs font-black py-2 rounded-xl hover:bg-foreground transition-colors">
+              <button className="flex-1 bg-foreground text-background text-xs font-black py-2 rounded-xl hover:bg-foreground transition-colors">
                 REDEPLOY
               </button>
               <button className="flex-1 bg-destructive/10 text-destructive text-xs font-black py-2 rounded-xl hover:bg-destructive/20 transition-colors border border-rose-100">
@@ -53,7 +53,7 @@ export default function ModelRuntime() {
       </div>
 
       <ActionPanel title="Ações Globais de Modelo" description="Controles para todos os runtimes de inferência.">
-         <button className="flex items-center gap-2 bg-foreground text-white px-4 py-2 rounded-xl font-bold text-sm">
+         <button className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-xl font-bold text-sm">
            <Zap className="w-4 h-4" />
            Ativar Hot-Swap Automático
          </button>

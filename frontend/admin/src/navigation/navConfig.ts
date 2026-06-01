@@ -18,12 +18,28 @@ import {
   Wallet,
   TrendingUp,
   FileText,
+  BookOpen,
   Shield,
   ShieldAlert,
   Rocket,
   GitBranch,
   Network,
   Inbox,
+  Monitor,
+  Briefcase,
+  History,
+  CheckCircle,
+  Share2,
+  Cpu,
+  Layers,
+  Database,
+  FastForward,
+  Construction,
+  ShieldEllipsis,
+  Gavel,
+  Scale,
+  Trophy,
+  UserCheck,
 } from 'lucide-react'
 
 export type RouteStatus = 'active' | 'beta' | 'coming_soon' | 'disabled'
@@ -37,13 +53,14 @@ export interface NavRoute {
   featureFlag?: string
   description: string
   hidden?: boolean
+  layout?: 'default' | 'minimal' | 'full'
 }
 
 export const navConfig: NavRoute[] = [
   // ── Core ──────────────────────────────────────────
   {
-    label: 'Hub',
-    path: '/',
+    label: 'Módulos',
+    path: '/modules',
     icon: LayoutDashboard,
     section: 'core',
     status: 'active',
@@ -107,12 +124,37 @@ export const navConfig: NavRoute[] = [
     description: 'Planos, pricing e cobrança.',
   },
   {
+    label: 'Reconciliation',
+    path: '/billing/reconciliation',
+    icon: Scale,
+    section: 'core',
+    status: 'active',
+    description: 'Conciliação financeira e gestão de disputas.',
+  },
+  {
+    label: 'Disputes',
+    path: '/billing/disputes',
+    icon: Gavel,
+    section: 'core',
+    status: 'active',
+    description: 'Resolução de disputas de faturamento e créditos manuais.',
+    hidden: true,
+  },
+  {
     label: 'Uso',
     path: '/usage',
     icon: TrendingUp,
     section: 'core',
     status: 'active',
     description: 'Consumo por cliente e métricas agregadas.',
+  },
+  {
+    label: 'RBAC',
+    path: '/rbac',
+    icon: UserCheck,
+    section: 'core',
+    status: 'active',
+    description: 'Gestão de usuários, cargos e permissões administrativas.',
   },
 
   // ── Agentic Platform ──────────────────────────────
@@ -132,6 +174,16 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Visual flow editor para construir e depurar agentes.',
     featureFlag: 'AGENT_STUDIO_ENABLED',
+    layout: 'full',
+  },
+  {
+    label: 'Model Context Protocol',
+    path: '/agents/mcp',
+    icon: Network,
+    section: 'agents',
+    status: 'active',
+    description: 'Integração de ferramentas e recursos via MCP.',
+    featureFlag: 'AGENT_MCP_ENABLED',
   },
   {
     label: 'Analytics',
@@ -149,6 +201,30 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Portal de aprovação humana para ações de agentes.',
     featureFlag: 'AGENT_APPROVAL_PORTAL_ENABLED',
+  },
+  {
+    label: 'Canary & CI/CD',
+    path: '/agents/deployments',
+    icon: FastForward,
+    section: 'agents',
+    status: 'beta',
+    description: 'Deployments progressivos e pipelines automatizados.',
+  },
+  {
+    label: 'Knowledge Graph',
+    path: '/agents/kg',
+    icon: Database,
+    section: 'agents',
+    status: 'beta',
+    description: 'Gestão de grafos de conhecimento e memória cognitiva.',
+  },
+  {
+    label: 'Optimization',
+    path: '/agents/optimization',
+    icon: Trophy,
+    section: 'agents',
+    status: 'beta',
+    description: 'Tournaments e auto-otimização de prompts e modelos.',
   },
   {
     label: 'Chat Colaborativo',
@@ -178,12 +254,28 @@ export const navConfig: NavRoute[] = [
 
   // ── Operations ────────────────────────────────────
   {
-    label: 'Operações',
-    path: '/operations',
+    label: 'Dashboard',
+    path: '/',
     icon: Activity,
     section: 'operations',
     status: 'active',
     description: 'Overview operacional, nós de runtime, readiness e remediação.',
+  },
+  {
+    label: 'GPU Autoscaling',
+    path: '/operations/gpu',
+    icon: Cpu,
+    section: 'operations',
+    status: 'active',
+    description: 'Gestão de grupos de auto-escalonamento de GPUs.',
+  },
+  {
+    label: 'Adapter Registry',
+    path: '/operations/adapters',
+    icon: Layers,
+    section: 'operations',
+    status: 'active',
+    description: 'Catálogo de adaptadores LoRA e promoção de modelos.',
   },
 
   // ── Developers ────────────────────────────────────
@@ -195,6 +287,7 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'IDE web para edição de agentes, plugins e manifests.',
     featureFlag: 'WEB_IDE_ENABLED',
+    layout: 'full',
   },
   {
     label: 'Developer Portal',
@@ -231,6 +324,104 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Preparação para SOC 2 e ISO 27001 com evidências auditáveis.',
   },
+  {
+    label: 'Abuse Monitoring',
+    path: '/security/abuse',
+    icon: ShieldEllipsis,
+    section: 'compliance',
+    status: 'active',
+    description: 'Detecção de abuso, suspensão de contas e sinais de risco.',
+  },
+  {
+    label: 'Control Map',
+    path: '/compliance/controls',
+    icon: FileText,
+    section: 'compliance',
+    status: 'active',
+    description: 'Mapa de controles e requisitos de compliance.',
+    hidden: true,
+  },
+  {
+    label: 'Risk Register',
+    path: '/compliance/risks',
+    icon: ShieldAlert,
+    section: 'compliance',
+    status: 'active',
+    description: 'Registro de riscos de compliance.',
+    hidden: true,
+  },
+  {
+    label: 'Policy Center',
+    path: '/compliance/policies',
+    icon: BookOpen,
+    section: 'compliance',
+    status: 'active',
+    description: 'Políticas de segurança e governança.',
+    hidden: true,
+  },
+  {
+    label: 'Evidence Center',
+    path: '/compliance/evidence',
+    icon: FileText,
+    section: 'compliance',
+    status: 'active',
+    description: 'Evidências sanitizadas e pacotes de auditoria.',
+    hidden: true,
+  },
+
+  // ── Observability ─────────────────────────────────
+  {
+    label: 'Observabilidade',
+    path: '/observability',
+    icon: Monitor,
+    section: 'observability',
+    status: 'active',
+    description: 'Monitoramento em tempo real de tráfego, latência e erros.',
+  },
+  {
+    label: 'Agent Observability',
+    path: '/observability/agents',
+    icon: Bot,
+    section: 'observability',
+    status: 'active',
+    description: 'Observabilidade profunda de execuções de agentes.',
+  },
+
+  // ── Performance ───────────────────────────────────
+  {
+    label: 'Benchmarks',
+    path: '/performance',
+    icon: TrendingUp,
+    section: 'performance',
+    status: 'active',
+    description: 'Benchmarks de performance de modelos e backends.',
+  },
+  {
+    label: 'History',
+    path: '/performance/history',
+    icon: History,
+    section: 'performance',
+    status: 'active',
+    description: 'Histórico de performance e regressões.',
+  },
+
+  // ── Enterprise ────────────────────────────────────
+  {
+    label: 'Onboarding',
+    path: '/enterprise/onboarding',
+    icon: Rocket,
+    section: 'enterprise',
+    status: 'active',
+    description: 'Dashboards de onboarding para clientes Enterprise.',
+  },
+  {
+    label: 'Checklist',
+    path: '/enterprise/checklist',
+    icon: CheckCircle,
+    section: 'enterprise',
+    status: 'active',
+    description: 'Checklist de prontidão para produção Enterprise.',
+  },
 
   // ── Advanced ──────────────────────────────────────
   {
@@ -238,15 +429,23 @@ export const navConfig: NavRoute[] = [
     path: '/multicluster',
     icon: Network,
     section: 'advanced',
-    status: 'coming_soon',
+    status: 'active',
     description: 'Gestão multi-cluster e failover orquestrado.',
   },
   {
-    label: 'Chaos Engineering',
+    label: 'Federation',
+    path: '/advanced/federation',
+    icon: Share2,
+    section: 'advanced',
+    status: 'active',
+    description: 'Federação de governança e sincronização entre clusters.',
+  },
+  {
+    label: 'Chaos',
     path: '/chaos',
     icon: FlaskConical,
     section: 'advanced',
-    status: 'coming_soon',
+    status: 'active',
     description: 'Injeção controlada de falhas para validar resiliência.',
   },
 ]

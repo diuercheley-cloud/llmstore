@@ -31,7 +31,7 @@ export default function Readiness() {
         <button 
           onClick={() => runMutation.mutate()}
           disabled={runMutation.isPending}
-          className="bg-foreground text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-foreground transition-colors shadow-xl shadow-slate-900/20 disabled:opacity-50"
+          className="bg-foreground text-background px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-foreground transition-colors shadow-xl shadow-slate-900/20 disabled:opacity-50"
         >
           <RefreshCw className={`w-5 h-5 ${runMutation.isPending ? 'animate-spin' : ''}`} />
           Recalcular Readiness

@@ -1,53 +1,60 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Info, ChevronRight, FileCode } from 'lucide-react';
+import type { StudioFlowNode } from './studioData';
 
-export default function EvalConfigPanel() {
-  const [suite, setSuite] = useState('baseline_smoke');
-  const [autoOptimize, setAutoOptimize] = useState(false);
+interface EvalConfigPanelProps {
+  selectedNode: StudioFlowNode | null;
+}
 
-  const panelStyle: React.CSSProperties = {
-    padding: '20px',
-  };
+const statusLabel: Record<StudioFlowNode['status'], string> = {
+  idle: 'Aguardando',
+  running: 'Em execução',
+  success: 'Concluido',
+  failed: 'Falhou',
+};
 
-  const headerStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 600,
-    marginBottom: '16px',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em'
-  };
-
-  const selectStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '4px',
-    color: '#fff',
-    padding: '6px 10px',
-    fontSize: '12px',
-    marginBottom: '16px',
-    boxSizing: 'border-box'
-  };
-
-  const rowStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '13px'
-  };
+export default function EvalConfigPanel({ selectedNode }: EvalConfigPanelProps) {
+  if (!selectedNode) return null;
 
   return (
-    <div style={panelStyle}>
-      <h2 style={headerStyle}>Evaluation Suite</h2>
-      <select value={suite} onChange={e => setSuite(e.target.value)} style={selectStyle}>
-        <option value="baseline_smoke">Baseline Agent Smoke (10 cases)</option>
-        <option value="jailbreak_resilience">Jailbreak & Guardrails (25 cases)</option>
-        <option value="production_load">KG High Latency (5 cases)</option>
-      </select>
-      <div style={rowStyle}>
-        <span>Prompt Auto-Optimizer</span>
-        <input type="checkbox" checked={autoOptimize} onChange={e => setAutoOptimize(e.target.checked)} />
+    <div className="p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Info size={16} className="text-blue-400" />
+        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          Detalhes Técnicos
+        </h2>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-500 font-medium">Status Atual</span>
+          <span className={`font-bold ${
+            selectedNode.status === 'success' ? 'text-emerald-400' :
+            selectedNode.status === 'running' ? 'text-amber-400' : 'text-slate-400'
+          }`}>
+            {statusLabel[selectedNode.status]}
+          </span>
+        </div>
+
+        <div className="bg-white/5 border border-white/5 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+            <FileCode size={14} className="text-slate-500" />
+            Configuração Bruta
+          </div>
+          <div className="font-mono text-[10px] text-slate-500 break-all bg-black/20 p-2 rounded-lg border border-white/5">
+            {selectedNode.config}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Próxima Ação</span>
+          <div className="flex gap-2 text-[11px] text-blue-300 leading-relaxed">
+            <ChevronRight size={14} className="flex-shrink-0 mt-0.5" />
+            {selectedNode.nextStep}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

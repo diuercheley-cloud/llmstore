@@ -3,7 +3,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react'
-import { buildSidebarGroups, type RouteConfig, type SidebarGroup, RouteStatus } from '../../routes/adminRoutes'
+import { buildSidebarGroups, type RouteConfig, type SidebarGroup, type RouteStatus } from '../../routes/adminRoutes'
 import type { ReactNode } from 'react'
 
 interface SidebarProps {

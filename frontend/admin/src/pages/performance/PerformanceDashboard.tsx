@@ -59,7 +59,7 @@ export default function PerformanceDashboard() {
            <button 
              onClick={() => benchmarkMutation.mutate('unsloth/gemma-4-E4B-it-GGUF')}
              disabled={isBenchmarking}
-             className="bg-foreground text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-foreground transition-colors disabled:opacity-50"
+             className="bg-foreground text-background px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-foreground transition-colors disabled:opacity-50"
            >
              <RefreshCw className={`w-4 h-4 ${isBenchmarking ? 'animate-spin' : ''}`} />
              {isBenchmarking ? 'Executando Benchmark...' : 'Novo Benchmark'}
@@ -98,7 +98,7 @@ export default function PerformanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {benchmarks && benchmarks.length >= 2 && (
-            <div className="bg-foreground text-white rounded-3xl p-8 shadow-xl">
+            <div className="bg-foreground text-background rounded-3xl p-8 shadow-xl">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-primary" />
                 Comparativo: Últimas 2 Execuções
@@ -113,7 +113,7 @@ export default function PerformanceDashboard() {
                     </div>
                     <div className="flex justify-between items-end border-b border-border pb-2">
                       <span className="text-xs font-bold text-muted-foreground">Latency p95</span>
-                      <span className="text-2xl font-black text-white">{benchmarks[0].latency_p95.toFixed(0)}ms</span>
+                      <span className="text-2xl font-black text-background">{benchmarks[0].latency_p95.toFixed(0)}ms</span>
                     </div>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function PerformanceDashboard() {
 
         <div className="space-y-6">
           <ActionPanel title="Perfis de Runtime" description="Selecione uma estratégia pré-definida.">
-            <Link to="/performance/profiles" className="w-full text-center bg-foreground text-white font-bold py-3 rounded-2xl hover:bg-foreground transition-colors">
+            <Link to="/performance/profiles" className="w-full text-center bg-foreground text-background font-bold py-3 rounded-2xl hover:bg-foreground transition-colors">
               Gerenciar Perfis
             </Link>
           </ActionPanel>

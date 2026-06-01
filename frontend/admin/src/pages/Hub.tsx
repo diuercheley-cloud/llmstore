@@ -1,6 +1,6 @@
 import { Shield, ArrowRight, Construction } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { routes, RouteStatus } from '../routes/adminRoutes'
+import { routes, type RouteStatus } from '../routes/adminRoutes'
 import { PageHeader } from '../components/layout/PageHeader'
 
 interface HubCard {
@@ -39,7 +39,7 @@ function buildHubCards(): HubCard[] {
       title: route.label,
       href: route.path,
       icon: <Icon className="w-6 h-6" />,
-      badge: groupBadgeMap[route.group] || route.group.toUpperCase(),
+      badge: groupBadgeMap[route.section] || route.section.toUpperCase(),
       description: route.description || '',
       status: route.status,
     })

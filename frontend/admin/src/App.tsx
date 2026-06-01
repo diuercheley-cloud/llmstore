@@ -53,7 +53,7 @@ function Login() {
     const ssoToken = params.get('sso_token')
     if (ssoToken) {
       setToken(ssoToken)
-      window.history.replaceState({}, '', '/admin-v2')
+      window.history.replaceState({}, '', '/admin-dashboard')
     }
   })
 
@@ -144,7 +144,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="admin-theme">
       <QueryClientProvider client={queryClient}>
         <Toaster position="top-right" expand={false} richColors closeButton />
-        <BrowserRouter basename="/admin-v2">
+        <BrowserRouter basename="/admin-dashboard">
           <CommandPalette />
           <OnboardingWizard />
           <Routes>
@@ -158,7 +158,7 @@ function App() {
                 path={route.path}
                 element={
                   <ProtectedRoute>
-                    <AdminShell>
+                    <AdminShell layout={route.layout}>
                       <Suspense fallback={<PageLoader />}>
                         <RouteRenderer route={route} />
                       </Suspense>

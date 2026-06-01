@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../../lib/api';
 import ApprovalDetail from './ApprovalDetail';
+import { LoadingCard } from '../../../components/ui-feedback';
 
 interface ApprovalRequest {
   id: string;
@@ -14,37 +17,29 @@ interface ApprovalRequest {
 }
 
 export default function ApprovalPortal() {
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterTenant, setFilterTenant] = useState('all');
 
-  const [requests, setRequests] = useState<ApprovalRequest[]>([
-    {
-      id: 'app-1',
-      agent_run_id: 'run-982',
-      risk_level: 'critical',
-      reason: 'Wants to delete database records on customer-pricing',
-      requested_by: 'Pricing agent',
-      status: 'pending',
-      expires_at: '2026-06-01T12:00:00Z',
-      tenant_id: 'tenant-corporate',
-      agent_name: 'BillingAssistant'
+  const { data, isLoading } = useQuery({
+    queryKey: ['agent-approvals'],
+    queryFn: () => api.listPendingApprovals()
+  });
+
+  const requests: ApprovalRequest[] = data?.items || [];
+
+  const decideMutation = useMutation({
+    mutationFn: async ({ id, decision }: { id: string, decision: string }) => {
+      return api.decideApproval(id, decision);
     },
-    {
-      id: 'app-2',
-      agent_run_id: 'run-103',
-      risk_level: 'high',
-      reason: 'Wants to spawn shell execution to list files',
-      requested_by: 'Deploy agent',
-      status: 'pending',
-      expires_at: '2026-05-30T18:00:00Z',
-      tenant_id: 'tenant-dev',
-      agent_name: 'CodeReviewer'
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agent-approvals'] });
+      setSelectedId(null);
     }
-  ]);
+  });
 
   const handleDecision = (id: string, decision: string) => {
-    setRequests(prev => prev.filter(r => r.id !== id));
-    setSelectedId(null);
+    decideMutation.mutate({ id, decision });
   };
 
   const containerStyle: React.CSSProperties = {
@@ -104,6 +99,8 @@ export default function ApprovalPortal() {
   };
 
   const selectedRequest = requests.find(r => r.id === selectedId);
+
+  if (isLoading) return <LoadingCard />;
 
   return (
     <div style={containerStyle}>

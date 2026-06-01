@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import api from '../lib/api'
 import { Plus, ShieldCheck, ShieldAlert, Edit, Ban, Trash2, Download } from 'lucide-react'
 import { useState, useMemo, useCallback } from 'react'
@@ -18,6 +19,7 @@ interface Client {
 }
 
 export default function Clients() {
+  const queryClient = useQueryClient()
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 25 })
   const [filters, setFilters] = useState<any>({})
   const [sorting, setSorting] = useState<any[]>([])
@@ -112,6 +114,28 @@ export default function Clients() {
     toast.success(`${rows.length} registros exportados!`)
   }, [])
 
+  const handleDelete = useCallback(async (rows: Client[]) => {
+    if (rows.length === 0) return
+
+    if (rows.length > 1) {
+      toast.error('Ação de exclusão em massa requer confirmação extra.')
+      return
+    }
+
+    const client = rows[0]
+    const confirmed = window.confirm(`Excluir o cliente "${client.name}"?`)
+    if (!confirmed) return
+
+    try {
+      await api.deleteClient(client.id)
+      await queryClient.invalidateQueries({ queryKey: ['clients'] })
+      toast.success('Cliente excluído com sucesso')
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'Falha ao excluir cliente'
+      toast.error(detail)
+    }
+  }, [queryClient])
+
   const batchActions = useMemo(() => [
     {
       label: 'Bloquear',
@@ -128,7 +152,7 @@ export default function Clients() {
     {
       label: 'Excluir',
       icon: <Trash2 size={14} />,
-      onClick: (rows: Client[]) => toast.error('Ação de exclusão em massa requer confirmação extra.'),
+      onClick: handleDelete,
       variant: 'destructive' as const
     },
     {
@@ -136,7 +160,7 @@ export default function Clients() {
       icon: <Download size={14} />,
       onClick: handleExport
     }
-  ], [handleExport])
+  ], [handleDelete, handleExport])
 
   const filterConfig = useMemo(() => [
     { id: 'name', label: 'Nome do Cliente', type: 'text' },

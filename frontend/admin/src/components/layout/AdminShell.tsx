@@ -9,9 +9,10 @@ import api from '../../lib/api'
 
 interface AdminShellProps {
   children: React.ReactNode
+  layout?: 'default' | 'minimal' | 'full'
 }
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({ children, layout = 'default' }: AdminShellProps) {
   const logout = useAuthStore(state => state.logout)
   const [showHelp, setShowHelp] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -23,6 +24,10 @@ export function AdminShell({ children }: AdminShellProps) {
     } catch (e) {
       console.error(e)
     }
+  }
+
+  if (layout === 'full') {
+    return <div className="h-screen w-screen overflow-hidden">{children}</div>
   }
 
   return (

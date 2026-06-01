@@ -1,15 +1,19 @@
-import React from 'react';
-import { Bot, Plus, Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Bot, Plus, Search, Loader2 } from 'lucide-react';
 import { AgentStatusBadge } from '../../components/agents/AgentStatusBadge';
 import { AgentRiskBadge } from '../../components/agents/AgentRiskBadge';
+import api from '../../lib/api';
 
 export default function AgentRegistry() {
-  // Mock data
-  const agents = [
-    { id: "1", name: "Support Triage", version: "1.0.0", status: "active", risk: "low", owner: "admin@example.com" },
-    { id: "2", name: "DB Admin Ops", version: "0.9.0", status: "review", risk: "critical", owner: "ops@example.com" },
-    { id: "3", name: "Billing Auditor", version: "1.2.1", status: "paused", risk: "medium", owner: "finance@example.com" },
-  ];
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.listAgentRegistry()
+      .then(setAgents)
+      .catch(err => console.error("Failed to load agents", err))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
@@ -32,40 +36,54 @@ export default function AgentRegistry() {
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-secondary/30 text-muted-foreground text-[10px] font-black uppercase tracking-widest border-b border-border">
-                <th className="px-6 py-4">Nome & Versão</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Risco</th>
-                <th className="px-6 py-4">Dono</th>
-                <th className="px-6 py-4 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {agents.map(agent => (
-                <tr key={agent.id} className="hover:bg-secondary/50 transition-colors cursor-pointer">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                        <Bot size={16} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-foreground text-sm">{agent.name}</h4>
-                        <span className="text-[10px] font-mono text-muted-foreground block mt-0.5">v{agent.version}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4"><AgentStatusBadge status={agent.status} /></td>
-                  <td className="px-6 py-4"><AgentRiskBadge level={agent.risk} /></td>
-                  <td className="px-6 py-4 text-xs font-mono">{agent.owner}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-primary text-xs font-bold hover:underline">Ver Detalhes</button>
-                  </td>
+          {loading ? (
+            <div className="p-20 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="text-sm font-medium">Carregando catálogo de agentes...</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-secondary/30 text-muted-foreground text-[10px] font-black uppercase tracking-widest border-b border-border">
+                  <th className="px-6 py-4">Nome & Versão</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Risco</th>
+                  <th className="px-6 py-4">Dono</th>
+                  <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {agents.map(agent => (
+                  <tr key={agent.id} className="hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                          <Bot size={16} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-foreground text-sm">{agent.name}</h4>
+                          <span className="text-[10px] font-mono text-muted-foreground block mt-0.5">v{agent.semantic_version || agent.version}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><AgentStatusBadge status={agent.status} /></td>
+                    <td className="px-6 py-4"><AgentRiskBadge level={agent.risk_level || agent.risk} /></td>
+                    <td className="px-6 py-4 text-xs font-mono">{agent.owner}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-primary text-xs font-bold hover:underline">Ver Detalhes</button>
+                    </td>
+                  </tr>
+                ))}
+                {agents.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-20 text-center text-muted-foreground text-sm">
+                      Nenhum agente registrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

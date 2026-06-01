@@ -1,28 +1,45 @@
 import React, { useState } from 'react';
 
-const TerminalPanel: React.FC = () => {
+interface TerminalPanelProps {
+  token: string | null;
+}
+
+const TerminalPanel: React.FC<TerminalPanelProps> = ({ token }) => {
   const [history, setHistory] = useState<any[]>([]);
   const [input, setInput] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
 
-  const runCommand = () => {
-    if (!input.trim()) return;
+  const runCommand = async () => {
+    if (!token) {
+      setHistory(prev => [...prev, { type: 'stderr', content: 'Informe uma API key de cliente antes de usar o terminal.' }]);
+      return;
+    }
+    if (!input.trim() || isRunning) return;
     const cmd = input;
     setInput('');
+    setIsRunning(true);
     setHistory(prev => [...prev, { type: 'input', content: `$ ${cmd}` }]);
 
-    fetch('/v1/ide/run', {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ command: cmd })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.stdout) setHistory(prev => [...prev, { type: 'stdout', content: data.stdout }]);
-        if (data.stderr) setHistory(prev => [...prev, { type: 'stderr', content: data.stderr }]);
+    try {
+      const res = await fetch('/v1/ide/run', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ command: cmd })
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.detail || `Falha HTTP ${res.status}`);
+      }
+      if (data.stdout) setHistory(prev => [...prev, { type: 'stdout', content: data.stdout }]);
+      if (data.stderr) setHistory(prev => [...prev, { type: 'stderr', content: data.stderr }]);
+    } catch (err: any) {
+      setHistory(prev => [...prev, { type: 'stderr', content: err?.message || 'Falha ao executar comando.' }]);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   return (
@@ -38,10 +55,12 @@ const TerminalPanel: React.FC = () => {
       <div className="p-2 border-t border-gray-800 flex gap-2">
         <span className="text-blue-400">$</span>
         <input
-          className="flex-1 bg-transparent focus:outline-none text-white"
+          className="flex-1 bg-transparent focus:outline-none text-white disabled:text-gray-600"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && runCommand()}
+          disabled={!token || isRunning}
+          placeholder={token ? 'ls, cat, pytest...' : 'Informe uma API key de cliente'}
         />
       </div>
     </div>

@@ -194,7 +194,7 @@ export default function AgentObservability() {
 
         {/* Sidebar Summary */}
         <div className="space-y-6">
-          <div className="bg-foreground text-white rounded-3xl p-6 shadow-xl">
+          <div className="bg-foreground text-background rounded-3xl p-6 shadow-xl">
             <h3 className="font-black uppercase tracking-tight mb-6 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-primary" />
               Guardrails Status

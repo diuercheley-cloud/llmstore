@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 
-export type StreamStatus = 'connecting' | 'connected' | 'reconnecting' | 'failed';
+export type StreamStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
 
 export interface StreamEvent {
   event: string;
@@ -11,7 +11,7 @@ export interface StreamEvent {
 }
 
 export function useAgentRunStream(runId?: string) {
-  const [status, setStatus] = useState<StreamStatus>('connecting');
+  const [status, setStatus] = useState<StreamStatus>(runId ? 'connecting' : 'idle');
   const [events, setEvents] = useState<StreamEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -23,8 +23,8 @@ export function useAgentRunStream(runId?: string) {
 
   const connect = useCallback(() => {
     if (!runId || !token) {
-      setStatus('failed');
-      setError('Missing runId or auth token');
+      setStatus(runId ? 'failed' : 'idle');
+      if (runId && !token) setError('Missing auth token');
       return;
     }
 

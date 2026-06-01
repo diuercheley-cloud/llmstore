@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { Check, Info, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export default function TuningProfiles() {
   const queryClient = useQueryClient()
@@ -22,7 +23,18 @@ export default function TuningProfiles() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tuning-profiles'] })
       queryClient.invalidateQueries({ queryKey: ['current-profile'] })
-      alert(`Perfil aplicado: ${data.data.profile}${data.data.advisory ? ' (MODO ADVISORY)' : ''}`)
+      toast.success(`Perfil aplicado: ${data.data.profile}${data.data.advisory ? ' (MODO ADVISORY)' : ''}`)
+    }
+  })
+
+  const seedMutation = useMutation({
+    mutationFn: async () => api.post('/admin/performance/seed-profiles'),
+    onSuccess: () => {
+      toast.success('Perfis padrão inicializados')
+      queryClient.invalidateQueries({ queryKey: ['tuning-profiles'] })
+    },
+    onError: () => {
+      toast.error('Falha ao inicializar perfis padrão')
     }
   })
 
@@ -30,8 +42,19 @@ export default function TuningProfiles() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black text-foreground mb-2">Perfis de <span className="text-primary">Runtime Tuning</span></h1>
-      <p className="text-muted-foreground mb-10 font-medium">Configure como o sistema prioriza recursos e responde à carga.</p>
+      <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-black text-foreground mb-2">Perfis de <span className="text-primary">Runtime Tuning</span></h1>
+          <p className="text-muted-foreground font-medium">Configure como o sistema prioriza recursos e responde à carga.</p>
+        </div>
+        <button
+          onClick={() => seedMutation.mutate()}
+          disabled={seedMutation.isPending}
+          className="bg-secondary text-foreground font-bold px-4 py-2.5 rounded-2xl hover:bg-secondary/80 transition-colors disabled:opacity-50"
+        >
+          {seedMutation.isPending ? 'Inicializando...' : 'Inicializar perfis padrão'}
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {profiles?.map((p: any) => (
@@ -45,7 +68,7 @@ export default function TuningProfiles() {
                 {p.is_active ? <Check className="w-6 h-6" /> : <Info className="w-6 h-6" />}
               </div>
               {p.is_active && (
-                <span className="bg-primary text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Ativo</span>
+                <span className="bg-primary text-background text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Ativo</span>
               )}
             </div>
             <h3 className="text-xl font-bold text-foreground mb-1 uppercase tracking-tight">{p.name.replace(/_/g, ' ')}</h3>
@@ -66,7 +89,7 @@ export default function TuningProfiles() {
                 applyMutation.mutate(p.name)
               }}
               disabled={p.is_active || applyMutation.isPending}
-              className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.is_active ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-foreground text-white hover:bg-primary'}`}
+              className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${p.is_active ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-foreground text-background hover:bg-primary'}`}
             >
               {p.is_active ? 'Perfil Atual' : 'Aplicar Perfil'}
             </button>

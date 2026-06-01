@@ -63,6 +63,27 @@ class APIClient {
     return this.client.delete<T>(path, config)
   }
 
+  // Agent Promotion & Environments
+  getAgentEnvironments = (agentId: string) => this.request<any>('GET', `/admin/agents/${agentId}/environments`)
+  getAgentLineage = (agentId: string) => this.request<any>('GET', `/admin/agent-registry/${agentId}/lineage`)
+  promoteAgent = (agentId: string, data: { from_environment: string, to_environment: string, version_id: string, approve?: boolean }) => 
+    this.request<any>('POST', `/admin/agents/${agentId}/promote`, data)
+  rollbackAgent = (agentId: string, environment: string) => 
+    this.request<any>('POST', `/admin/agents/${agentId}/rollback?environment=${environment}`)
+
+  // Collaborative Chat
+  listChatChannels = () => this.request<any[]>('GET', '/v1/chat/channels')
+  createChatChannel = (c: any) => this.request<any>('POST', '/v1/chat/channels', c)
+  listChatMessages = (channelId: string) => this.request<any[]>('GET', `/v1/chat/channels/${channelId}/messages`)
+  postChatMessage = (channelId: string, content: string) => this.request<any>('POST', `/v1/chat/channels/${channelId}/messages`, { content })
+
+  // Model Lifecycle & Supply Chain
+  listModelLifecycle = () => this.request<{items: any[]}>('GET', '/admin/models/lifecycle')
+  getModelLifecycle = (id: string) => this.request<any>('GET', `/admin/models/lifecycle/${id}`)
+  transitionModelLifecycle = (id: string, state: string) => this.request<any>('POST', `/admin/models/lifecycle/${id}/transition`, { target_state: state })
+  quarantineModelLifecycle = (id: string, reason: string) => this.request<any>('POST', `/admin/models/lifecycle/${id}/quarantine`, { reason })
+  verifyModelChecksum = (id: string) => this.request<any>('POST', `/admin/models/lifecycle/${id}/verify`)
+
   // System
   health = () => this.request<{ status: string }>('GET', '/health')
   ready = () => this.request<{ ready: boolean }>('GET', '/ready')
@@ -82,6 +103,7 @@ class APIClient {
   // Admin - Clients
   listClients = () => this.request<any[]>('GET', '/admin/clients')
   createClient = (c: any) => this.request<any>('POST', '/admin/clients', c)
+  deleteClient = (id: string) => this.request<void>('DELETE', `/admin/clients/${id}`)
   blockClient = (id: string) => this.request<any>('POST', `/admin/clients/${id}/block`)
   unblockClient = (id: string) => this.request<any>('POST', `/admin/clients/${id}/unblock`)
 
@@ -97,14 +119,37 @@ class APIClient {
   listInvoices = () => this.request<any[]>('GET', '/admin/billing/invoices')
   listPayments = () => this.request<any[]>('GET', '/admin/billing/payments')
 
+  // Admin - Enterprise Onboarding
+  listEnterpriseProjects = () => this.request<any[]>('GET', '/admin/enterprise/onboarding/projects')
+  createEnterpriseProject = (payload: any) => this.request<any>('POST', '/admin/enterprise/onboarding/projects', payload)
+
+  // Admin - Agents
+  listAgentRegistry = () => this.request<any[]>('GET', '/admin/agent-registry')
+  listMarketplace = () => this.request<any[]>('GET', '/admin/agent-marketplace')
+  getAnalyticsOverview = (days: number = 7) => this.request<any>('GET', `/api/v1/admin/agents/analytics/overview?days=${days}`)
+
   // Admin - RBAC
   listRbacUsers = () => this.request<any[]>('GET', '/admin/rbac/users')
   createRbacUser = (u: any) => this.request<any>('POST', '/admin/rbac/users', u)
   listRbacRoles = () => this.request<any[]>('GET', '/admin/rbac/roles')
   createRbacRole = (r: any) => this.request<any>('POST', '/admin/rbac/roles', r)
+  listRbacPermissions = () => this.request<any[]>('GET', '/admin/rbac/permissions')
+  listRbacAudit = (limit: number = 100) => this.request<any[]>('GET', `/admin/rbac/audit?limit=${limit}`)
 
-  // Admin - Security
+  // Admin - Security & Abuse
   listSecurityEvents = () => this.request<any[]>('GET', '/admin/security/events')
+  listAbuseEvents = (limit: number = 200) => this.request<any[]>('GET', `/admin/security/abuse/events?limit=${limit}`)
+  getAbuseSummary = () => this.request<any>('GET', '/admin/security/abuse/summary')
+  ackAbuseAction = (id: string) => this.request<any>('POST', `/admin/security/abuse/actions/${id}/ack`)
+  suspendClient = (id: string, reason: string) => this.request<any>('POST', `/admin/security/abuse/clients/${id}/suspend?reason=${encodeURIComponent(reason)}`)
+  unsuspendClient = (id: string, reason: string) => this.request<any>('POST', `/admin/security/abuse/clients/${id}/unsuspend?reason=${encodeURIComponent(reason)}`)
+
+  // Admin - Billing Reconciliation
+  getReconciliationOverview = () => this.request<any>('GET', '/admin/billing/reconciliation/overview')
+  runReconciliation = (hours: number = 24) => this.request<any>('POST', '/admin/billing/reconciliation/run', { hours })
+  listReconciliationMismatches = (limit: number = 100) => this.request<any[]>('GET', `/admin/billing/reconciliation/mismatches?limit=${limit}`)
+  listBillingDisputes = (status?: string) => this.request<any[]>('GET', `/admin/billing/disputes${status ? `?status=${status}` : ''}`)
+  resolveDispute = (id: string, data: any) => this.request<any>('POST', `/admin/billing/disputes/${id}/resolve`, data)
 
   // RAG
   getRagUsage = () => this.request<any>('GET', '/admin/rag/usage')
@@ -118,18 +163,56 @@ class APIClient {
   getAgentRuns = (id: string) => this.request<any[]>('GET', `/v1/agents/${id}/runs`)
 
   // Agent Analytics
-  getAnalyticsOverview = () => this.request<any>('GET', '/api/v1/admin/agents/analytics/overview')
   getAgentAnalytics = (id: string) => this.request<any>('GET', `/api/v1/admin/agents/analytics/${id}`)
 
   // Studio
   listStudioFlows = () => this.request<any[]>('GET', '/admin/agents/studio/flows')
   createStudioFlow = (f: any) => this.request<any>('POST', '/admin/agents/studio/flows', f)
 
+  // MCP
+  listMcpServers = () => this.request<any[]>('GET', '/admin/agents/mcp/servers')
+  registerMcpServer = (s: any) => this.request<any>('POST', '/admin/agents/mcp/servers', s)
+  discoverMcpTools = (id: string) => this.request<any>('POST', `/admin/agents/mcp/servers/${id}/discover`)
+  approveMcpTool = (id: string, tool: string) => this.request<any>('POST', `/admin/agents/mcp/servers/${id}/approve-tool`, { tool_name: tool })
+  listMcpTools = () => this.request<any[]>('GET', '/admin/agents/mcp/tools')
+  listMcpAudit = () => this.request<any[]>('GET', '/admin/agents/mcp/audit')
+
+  // Agent Approvals
+  listPendingApprovals = () => this.request<{items: any[]}>('GET', '/admin/agents/approval-portal/pending')
+  decideApproval = (id: string, decision: string, reason?: string) => this.request<any>('POST', `/admin/agents/approval-portal/approvals/${id}/decide`, { decision, reason })
+
+  // Agent Deployments
+  listDeployments = () => this.request<any[]>('GET', '/admin/agents/deployments')
+  rollbackDeployment = (id: string) => this.request<any>('POST', `/admin/agents/deployments/${id}/rollback`)
+  promoteDeployment = (id: string) => this.request<any>('POST', `/admin/agents/deployments/${id}/promote`)
+  pauseDeployment = (id: string) => this.request<any>('POST', `/admin/agents/deployments/${id}/pause`)
+  resumeDeployment = (id: string) => this.request<any>('POST', `/admin/agents/deployments/${id}/resume`)
+  archiveDeployment = (id: string) => this.request<any>('POST', `/admin/agents/deployments/${id}/archive`)
+
+  // Agent Optimization & Tournaments
+  listTournaments = () => this.request<any[]>('GET', '/admin/agents/optimization/tournaments')
+  getTournament = (id: string) => this.request<any>('GET', `/admin/agents/optimization/tournaments/${id}`)
+  createTournament = (agentId: string, candidateIds: string[]) => this.request<any>('POST', `/admin/agents/${agentId}/optimization/tournaments`, { candidate_ids: candidateIds })
+  runTournament = (id: string) => this.request<any>('POST', `/admin/agents/optimization/tournaments/${id}/run`)
+  approveWinner = (id: string) => this.request<any>('POST', `/admin/agents/optimization/tournaments/${id}/approve-winner`)
+  applyWinner = (id: string) => this.request<any>('POST', `/admin/agents/optimization/tournaments/${id}/apply-winner`)
+
+  listFederationPeers = () => this.request<any[]>('GET', '/admin/governance/federation/peers')
+  registerFederationPeer = (p: any) => this.request<any>('POST', '/admin/governance/federation/peers', p)
+  getFederationStatus = () => this.request<any>('GET', '/admin/governance/federation/status')
+  getFederationConsistency = () => this.request<any>('GET', '/admin/governance/federation/consistency')
+  listFederationAudit = () => this.request<any>('GET', '/admin/governance/federation/audit-trail')
+
+  // GPU & Infra
+  listGpuGroups = () => this.request<any[]>('GET', '/admin/infra/gpu/groups')
+  getGpuAutoscalingStatus = () => this.request<any>('GET', '/admin/infra/gpu/autoscaling/status')
+
   // Prompts
-  listPrompts = () => this.request<any[]>('GET', '/admin/prompts')
-  getPrompt = (id: string) => this.request<any>('GET', `/admin/prompts/${id}`)
-  createPrompt = (p: any) => this.request<any>('POST', '/admin/prompts', p)
-  updatePrompt = (id: string, p: any) => this.request<any>('PATCH', `/admin/prompts/${id}`, p)
+  listPrompts = () => this.request<any[]>('GET', '/api/v1/admin/prompts/templates')
+  getPrompt = (id: string) => this.request<any>('GET', `/api/v1/admin/prompts/templates/${id}`)
+  createPromptTemplate = (p: any) => this.request<any>('POST', '/api/v1/admin/prompts/templates', p)
+  createPromptVersion = (id: string, v: any) => this.request<any>('POST', `/api/v1/admin/prompts/templates/${id}/versions`, v)
+  updatePrompt = (id: string, p: any) => this.request<any>('PATCH', `/api/v1/admin/prompts/templates/${id}`, p)
 
   // Portal
   listPlans = () => this.request<any[]>('GET', '/portal/plans')

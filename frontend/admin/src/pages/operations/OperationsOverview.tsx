@@ -47,7 +47,7 @@ export default function OperationsOverview() {
           <h1 className="text-4xl font-black text-foreground tracking-tight">Centro de <span className="text-primary">Operações</span></h1>
           <div className="flex items-center gap-3">
              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Modo:</span>
-             <span className="px-3 py-1 bg-foreground text-white text-[10px] font-black rounded-full uppercase">{overview?.deployment_mode || 'Appliance'}</span>
+             <span className="px-3 py-1 bg-foreground text-background text-[10px] font-black rounded-full uppercase">{overview?.deployment_mode || 'Appliance'}</span>
           </div>
         </div>
         <p className="text-muted-foreground font-medium">Monitoramento em tempo real, diagnóstico de prontidão e ações de remediação.</p>
@@ -138,7 +138,7 @@ export default function OperationsOverview() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-foreground text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
+          <div className="bg-foreground text-background rounded-3xl p-8 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <ShieldCheck className="w-24 h-24" />
             </div>

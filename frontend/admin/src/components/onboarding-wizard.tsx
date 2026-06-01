@@ -71,8 +71,8 @@ export function OnboardingWizard() {
           setIsVisible(true)
         }
       } catch (e) {
-        // If endpoint doesn't exist yet, show wizard by default for now
-        setIsVisible(true)
+        // If endpoint fails or doesn't exist, don't show wizard by default
+        setIsVisible(false)
       }
     }
     checkStatus()
