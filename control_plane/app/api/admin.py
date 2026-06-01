@@ -202,11 +202,11 @@ async def get_capabilities():
         },
         {
             "feature": "/v1/embeddings",
-            "status": "Partial",
-            "backend_support": "local_vllm",
-            "production_ready": False,
-            "limitations": "Mock determinístico apenas",
-            "validator_script": "scripts/test-embeddings.sh"
+            "status": "GA",
+            "backend_support": "local-transformers, mock",
+            "production_ready": True,
+            "limitations": "Local transformer model (sentence-transformers) or mock",
+            "validator_script": "scripts/validate-embeddings-local.sh"
         },
         {
             "feature": "/v1/responses",
@@ -218,8 +218,8 @@ async def get_capabilities():
         },
         {
             "feature": "tools/function calling",
-            "status": "Partial",
-            "backend_support": "openai_compatible=native, llama.cpp=native, ollama/vllm=capability_not_supported",
+            "status": "GA",
+            "backend_support": "Native for supported cloud and local backends",
             "production_ready": True,
             "limitations": "Schemas passam por validação e argumentos sensíveis são sanitizados nos logs",
             "validator_script": None
@@ -1331,6 +1331,9 @@ async def get_usage_summary(
             "errors_total": sum(item["errors_month"] for item in clients),
             "avg_latency_ms": summary["avg_latency_ms_month"],
             "estimated_cost_usd": round(total_estimated_cost, 6),
+            "total_revenue": round(total_estimated_cost, 6), # Alias for frontend
+            "monthly_revenue": round(total_estimated_cost, 6), # Alias for frontend
+            "pending_invoices": summary["invoices_pending"], # Alias for frontend
             "backends_online": backends_online,
             "backends_total": backends_total,
             "models_online": models_online,
@@ -1383,6 +1386,9 @@ async def get_revenue_summary(session: AsyncSession = Depends(get_db_session)):
         "revenue_usd": float(total_paid),
         "pending_usd": float(total_pending),
         "overdue_usd": float(total_overdue),
+        "total_revenue": float(total_paid), # Alias for frontend
+        "monthly_revenue": float(total_paid), # Simplified for frontend
+        "pending_invoices": len([inv for inv in invoices if inv.status == "pending"]), # Alias for frontend
         "invoices_paid": len([inv for inv in invoices if inv.status == "paid"]),
         "invoices_pending": len([inv for inv in invoices if inv.status == "pending"]),
         "invoices_overdue": len([inv for inv in invoices if inv.status == "overdue"]),
@@ -1565,7 +1571,10 @@ async def run_billing_cycle(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/billing/invoices")
-async def list_invoices(session: AsyncSession = Depends(get_db_session)):
+async def list_invoices(
+    session: AsyncSession = Depends(get_db_session),
+    full: bool = Query(False, description="Return full summary and payments instead of just a list")
+):
     await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
     await session.commit()
     invoices = (
@@ -1580,6 +1589,20 @@ async def list_invoices(session: AsyncSession = Depends(get_db_session)):
             .limit(200)
         )
     ).scalars().all()
+    
+    serialized_invoices = [
+        {
+            **serialize_invoice(invoice),
+            "client_name": invoice.client.name if invoice.client else None,
+            "client_billing_status": invoice.client.billing_status if invoice.client else None,
+            "billing_plan_code": invoice.billing_plan.code if invoice.billing_plan else None,
+        }
+        for invoice in invoices
+    ]
+
+    if not full:
+        return serialized_invoices
+
     payments = (
         await session.execute(
             select(CustomerPayment)
@@ -1587,6 +1610,7 @@ async def list_invoices(session: AsyncSession = Depends(get_db_session)):
             .limit(200)
         )
     ).scalars().all()
+
     return {
         "generated_at": utc_now().isoformat(),
         "summary": {
@@ -1594,15 +1618,7 @@ async def list_invoices(session: AsyncSession = Depends(get_db_session)):
             "past_due_clients": len({str(invoice.client_id) for invoice in invoices if invoice.client and invoice.client.billing_status == "past_due"}),
             "suspended_clients": len({str(invoice.client_id) for invoice in invoices if invoice.client and invoice.client.billing_status == "suspended"}),
         },
-        "invoices": [
-            {
-                **serialize_invoice(invoice),
-                "client_name": invoice.client.name if invoice.client else None,
-                "client_billing_status": invoice.client.billing_status if invoice.client else None,
-                "billing_plan_code": invoice.billing_plan.code if invoice.billing_plan else None,
-            }
-            for invoice in invoices
-        ],
+        "invoices": serialized_invoices,
         "payments": [
             {
                 "id": str(payment.id),

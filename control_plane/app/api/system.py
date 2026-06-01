@@ -878,7 +878,14 @@ async def admin_tests():
 async def admin_dashboard():
     if settings.public_exposure:
         return Response(content='{"detail":"disabled"}', status_code=404)
-    static_file = Path(__file__).resolve().parents[1] / "static" / "admin" / "index.html"
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-v2" / "index.html"
+    return FileResponse(static_file)
+
+@router.get("/admin-dashboard/{rest:path}", include_in_schema=False)
+async def admin_dashboard_catch_all(rest: str):
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-v2" / "index.html"
     return FileResponse(static_file)
 
 
@@ -886,8 +893,15 @@ async def admin_dashboard():
 async def admin_v2():
     if settings.public_exposure:
         return Response(content='{"detail":"disabled"}', status_code=404)
-    static_file = Path(__file__).resolve().parents[1] / "static" / "admin-v2" / "index.html"
-    return FileResponse(static_file)
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/admin-dashboard")
+
+@router.get("/admin-v2/{rest:path}", include_in_schema=False)
+async def admin_v2_catch_all(rest: str):
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=f"/admin-dashboard/{rest}")
 
 
 @router.get("/admin-lab", include_in_schema=False)
@@ -916,6 +930,11 @@ async def monitoring_dashboard():
 
 @router.get("/client-portal", include_in_schema=False)
 async def client_portal():
+    static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
+    return FileResponse(static_file)
+
+@router.get("/client-portal/{rest:path}", include_in_schema=False)
+async def client_portal_catch_all(rest: str):
     static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / "index.html"
     return FileResponse(static_file)
 

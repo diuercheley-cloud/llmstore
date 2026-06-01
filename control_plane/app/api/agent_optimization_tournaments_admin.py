@@ -91,6 +91,20 @@ async def create_tournament(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/optimization/tournaments", response_model=List[TournamentResponse])
+async def list_tournaments(
+    tenant_id: str = "default",
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_admin_token),
+):
+    stmt = select(AgentOptimizationTournament).where(
+        AgentOptimizationTournament.tenant_id == tenant_id
+    ).order_by(AgentOptimizationTournament.created_at.desc())
+    res = await db.execute(stmt)
+    tournaments = res.scalars().all()
+    return [_tournament_to_response(t) for t in tournaments]
+
+
 @router.get(
     "/optimization/tournaments/{tournament_id}",
     response_model=TournamentDetailResponse,

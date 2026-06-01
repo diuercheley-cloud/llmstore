@@ -37,26 +37,9 @@ class ProviderGlobalConfig(BaseModel):
     real_provider_timeout_seconds: int = Field(default=30, ge=1, le=300)
 
 
-class EditableProviderConfig(BaseModel):
-    enabled: bool = False
-    base_url: str = ""
-    api_key: str | None = None
-    clear_api_key: bool = False
-    chat_model: str = ""
-    embeddings_model: str = ""
-    model: str = ""
-
-
-class OpenRouterConfig(BaseModel):
-    enabled: bool = False
-    base_url: str = ""
-    api_key: str | None = None
-    clear_api_key: bool = False
-
-
 class ProviderConfigurationPayload(BaseModel):
     global_: ProviderGlobalConfig = Field(alias="global")
-    providers: dict[str, EditableProviderConfig | OpenRouterConfig]
+    providers: dict[str, dict[str, Any]]
 
     model_config = {"populate_by_name": True}
 

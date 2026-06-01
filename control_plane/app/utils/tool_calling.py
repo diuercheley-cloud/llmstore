@@ -33,9 +33,12 @@ OPENROUTER_TOOL_PARAMETERS = {"tools", "tool_choice", "parallel_tool_calls"}
 
 def provider_tool_capability(provider: str | None) -> str:
     normalized = (provider or "").strip().lower()
-    if normalized in {"openai_compatible", "openrouter", "openai", "deepseek"}:
+    if normalized in {
+        "openai_compatible", "openrouter", "openai", "deepseek", 
+        "anthropic", "gemini", "bedrock", "mistral", "groq", "together"
+    }:
         return "supported"
-    if normalized in {"ollama", "vllm"}:
+    if normalized in {"ollama", "vllm", "llama.cpp"}:
         return "unsupported"
     return "unsupported"
 

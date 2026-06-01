@@ -136,6 +136,17 @@ class AgentApiDeploymentService:
         await self.db.flush()
         return deployment
 
+    async def promote_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
+        deployment = await self.get_deployment(deployment_id)
+        if not deployment or deployment.tenant_id != tenant_id:
+            raise DeploymentNotFoundError("Deployment not found")
+        
+        # In a real system, this would involve merging traffic or updating balancer rules.
+        # Here we just mark it as active.
+        deployment.status = "active"
+        await self.db.flush()
+        return deployment
+
     async def archive_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:

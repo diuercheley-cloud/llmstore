@@ -3,13 +3,16 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import uuid
 import logging
+from statistics import mean
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
+from prometheus_client import REGISTRY
 
 from app.core.config import get_settings
 from app.models.agents import AgentRun, AgentRunStep, AgentRunEvent, AgentIncident, AgentPolicyDecision, AgentApprovalRequest
 from app.models.agent_workflows import AgentWorkflowEvent
+from app.services.platform_slo import PlatformSLOService
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,39 @@ class VisualObservabilityService:
             {"name": "Security & RBAC", "url": f"{base_url}/dashboards/security-rbac"},
             {"name": "SLO & Error Budget", "url": f"{base_url}/dashboards/slo-error-budget"},
         ]
+
+    def get_metrics_derived(self) -> Dict[str, Any]:
+        requests_total = self._counter_total("llm_requests_total")
+        errors_total = self._counter_total("llm_request_errors_total")
+        fallbacks_total = self._counter_total("llm_routing_fallbacks_total")
+        decisions_total = self._counter_total("llm_routing_decisions_total")
+        cache_hits_total = self._counter_total("llm_cache_hits_total")
+        cache_misses_total = self._counter_total("llm_cache_misses_total")
+
+        provider_health_scores = self._gauge_values("llm_provider_health_score")
+        provider_reliability_score = mean(provider_health_scores) if provider_health_scores else 0.0
+        if provider_reliability_score == 0.0 and requests_total > 0:
+            provider_reliability_score = max(0.0, 1.0 - (errors_total / requests_total))
+
+        fallback_rate = (fallbacks_total / decisions_total) if decisions_total > 0 else 0.0
+        error_rate = (errors_total / requests_total) if requests_total > 0 else 0.0
+        cache_hit_ratio = (cache_hits_total / (cache_hits_total + cache_misses_total)) if (cache_hits_total + cache_misses_total) > 0 else 0.0
+
+        slo = PlatformSLOService().get_slo_report()
+        health = PlatformSLOService().get_platform_health()
+
+        return {
+            "provider_reliability_score": round(provider_reliability_score, 4),
+            "request_error_rate": round(error_rate, 4),
+            "routing_fallback_rate": round(fallback_rate, 4),
+            "cache_hit_ratio": round(cache_hit_ratio, 4),
+            "total_requests": int(requests_total),
+            "total_errors": int(errors_total),
+            "total_routing_decisions": int(decisions_total),
+            "slo_status": slo.get("api_availability", {}).get("status", "unknown"),
+            "platform_status": health.get("status", "unknown"),
+            "critical_issues": health.get("critical_issues", []),
+        }
 
     async def get_error_budget(self) -> Dict[str, Any]:
         if not self.db:
@@ -94,6 +130,26 @@ class VisualObservabilityService:
             "period_days": 30,
             "is_critical": remaining < 10.0
         }
+
+    def _counter_total(self, metric_name: str) -> float:
+        total = 0.0
+        for family in REGISTRY.collect():
+            if family.name != metric_name:
+                continue
+            for sample in family.samples:
+                if sample.name == metric_name or sample.name == f"{metric_name}_total":
+                    total += float(sample.value)
+        return total
+
+    def _gauge_values(self, metric_name: str) -> List[float]:
+        values: List[float] = []
+        for family in REGISTRY.collect():
+            if family.name != metric_name:
+                continue
+            for sample in family.samples:
+                if sample.name == metric_name:
+                    values.append(float(sample.value))
+        return values
 
     async def get_incident_timeline(self, limit: int = 50) -> Dict[str, Any]:
         if not self.db:

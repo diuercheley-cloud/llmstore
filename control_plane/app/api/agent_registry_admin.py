@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional, Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
@@ -286,12 +287,44 @@ async def get_agent_lineage(
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin)
 ) -> Dict[str, Any]:
+    from app.models.agents import AgentLifecycleEvent, AgentVersion
+    
+    # 1. Fetch lifecycle events
+    stmt_events = select(AgentLifecycleEvent).where(
+        AgentLifecycleEvent.agent_registry_id == id
+    ).order_by(AgentLifecycleEvent.created_at.desc())
+    res_events = await db.execute(stmt_events)
+    events = res_events.scalars().all()
+    
+    # 2. Fetch versions
+    stmt_versions = select(AgentVersion).where(
+        AgentVersion.agent_registry_id == id
+    ).order_by(AgentVersion.created_at.desc())
+    res_versions = await db.execute(stmt_versions)
+    versions = res_versions.scalars().all()
+    
     return {
         "agent_id": str(id),
-        "versions": [],
-        "promotions": [],
-        "eval_baselines": [],
-        "policy_changes": []
+        "events": [
+            {
+                "id": str(e.id),
+                "event_type": e.event_type,
+                "from_status": e.from_status,
+                "to_status": e.to_status,
+                "performed_by": e.performed_by,
+                "notes": e.notes,
+                "created_at": e.created_at.isoformat()
+            }
+            for e in events
+        ],
+        "versions": [
+            {
+                "id": str(v.id),
+                "version": v.semantic_version,
+                "created_at": v.created_at.isoformat()
+            }
+            for v in versions
+        ]
     }
 
 @router.post("/{id}/promote")

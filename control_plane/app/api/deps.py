@@ -19,6 +19,7 @@ from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
 from app.services.queue_manager import QueueManager
+from app.services.embeddings import get_embedding_service, EmbeddingService
 
 
 @lru_cache

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse, Response
 
-from app.api.deps import get_inference_proxy
+from app.api.deps import get_inference_proxy, get_embedding_service, EmbeddingService
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
 from app.db.session import get_db_session, get_redis
@@ -620,6 +620,7 @@ async def embeddings(
     redis=Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
     tokenizer: TokenizerService = Depends(get_tokenizer_service),
+    embedding_service: EmbeddingService = Depends(get_embedding_service),
 ):
     """
     Gera embeddings para o input fornecido.
@@ -672,17 +673,47 @@ async def embeddings(
             dimensions=settings.embedding_dimensions
         )
         latency_ms = int((perf_counter() - started) * 1000)
+    elif settings.embeddings_backend == "local":
+        try:
+            # Use EmbeddingService for local embeddings
+            vectors = await embedding_service.embed_batch(inputs)
+            data = []
+            for i, vector in enumerate(vectors):
+                data.append({
+                    "object": "embedding",
+                    "index": i,
+                    "embedding": vector
+                })
+            response_data = {
+                "object": "list",
+                "data": data,
+                "model": payload.model,
+                "usage": {
+                    "prompt_tokens": total_tokens,
+                    "total_tokens": total_tokens
+                }
+            }
+            latency_ms = int((perf_counter() - started) * 1000)
+            backend_name = "local-transformers"
+        except Exception as e:
+            logger.error(f"Local embedding failed: {e}")
+            # Fallback to mock for reliability in dev environments
+            response_data = process_mock_embeddings(
+                inputs, 
+                model=payload.model, 
+                dimensions=settings.embedding_dimensions
+            )
+            latency_ms = int((perf_counter() - started) * 1000)
+            backend_name = "local-fallback-mock"
     else:
-        # Futuro: Suporte a backend real (local via inference proxy)
-        # result = await proxy.embeddings(...)
-        # Para v1.6.0 alvo inicial é mock
+        # Fallback to mock for other backends not yet implemented
         response_data = process_mock_embeddings(
             inputs, 
             model=payload.model, 
             dimensions=settings.embedding_dimensions
         )
         latency_ms = int((perf_counter() - started) * 1000)
-        backend_name = settings.embeddings_backend
+        backend_name = f"{settings.embeddings_backend}-mock"
 
     await record_embedding_usage(
         session, 

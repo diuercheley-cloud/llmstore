@@ -718,9 +718,11 @@ def serialize_invoice(invoice: BillingInvoice) -> dict:
         "overage_price_per_1k_tokens": float(invoice.overage_price_per_1k_tokens),
         "overage_cost": float(invoice.overage_cost),
         "total_amount": float(invoice.total_amount),
+        "amount": float(invoice.total_amount), # Alias for frontend
         "payment_method": invoice.payment_method,
         "payment_instructions": invoice.payment_instructions,
         "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
+        "due_date": invoice.due_at.isoformat() if invoice.due_at else None, # Alias for frontend
         "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
         "cancelled_at": invoice.cancelled_at.isoformat() if invoice.cancelled_at else None,
         "created_at": invoice.created_at.isoformat(),

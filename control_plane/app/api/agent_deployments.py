@@ -234,6 +234,21 @@ async def resume_deployment(
         raise HTTPException(status_code=404, detail="Deployment not found")
 
 
+@admin_router.post("/deployments/{deployment_id}/promote")
+async def promote_deployment(
+    deployment_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+):
+    _check_enabled()
+    svc = AgentApiDeploymentService(session)
+    try:
+        deployment = await svc.promote_deployment(deployment_id, "admin")
+        await session.commit()
+        return _serialize_deployment(deployment)
+    except DeploymentNotFoundError:
+        raise HTTPException(status_code=404, detail="Deployment not found")
+
+
 @admin_router.post("/deployments/{deployment_id}/archive")
 async def archive_deployment(
     deployment_id: uuid.UUID,

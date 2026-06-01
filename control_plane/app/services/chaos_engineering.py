@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models.operations.chaos import (
@@ -25,6 +25,62 @@ class ChaosEngineeringService:
     async def list_experiments(self) -> List[ChaosExperiment]:
         result = await self.db.execute(select(ChaosExperiment))
         return result.scalars().all()
+
+    async def get_status(self) -> Dict[str, Any]:
+        enabled = os.getenv("CHAOS_ENABLED", "false").lower() == "true"
+        environment = os.getenv("CHAOS_ENVIRONMENT", "test")
+        allow_production = os.getenv("CHAOS_ALLOW_PRODUCTION", "false").lower() == "true"
+        blocked_in_production = environment == "production" and not allow_production
+        operational = enabled and not blocked_in_production
+
+        if not enabled:
+            state = "disabled"
+            reason = "CHAOS_ENABLED=false"
+        elif blocked_in_production:
+            state = "blocked"
+            reason = "CHAOS_ALLOW_PRODUCTION=false"
+        else:
+            state = "operational"
+            reason = None
+
+        return {
+            "enabled": enabled,
+            "environment": environment,
+            "allow_production": allow_production,
+            "blocked_in_production": blocked_in_production,
+            "operational": operational,
+            "state": state,
+            "reason": reason,
+        }
+
+    async def list_runs(self, limit: int = 20) -> List[Dict[str, Any]]:
+        result = await self.db.execute(
+            select(ChaosRun)
+            .options(selectinload(ChaosRun.experiment))
+            .order_by(
+                ChaosRun.started_at.desc().nullslast(),
+                ChaosRun.completed_at.desc().nullslast(),
+                ChaosRun.id.desc(),
+            )
+            .limit(limit)
+        )
+        runs = result.scalars().all()
+        return [
+            {
+                "id": run.id,
+                "experiment_id": run.experiment_id,
+                "experiment_name": run.experiment.name if run.experiment else None,
+                "experiment_type": run.experiment.experiment_type if run.experiment else None,
+                "blast_radius": run.experiment.blast_radius if run.experiment else None,
+                "status": run.status,
+                "environment": run.environment,
+                "operator_id": run.operator_id,
+                "started_at": run.started_at.isoformat() if run.started_at else None,
+                "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+                "error_message": run.error_message,
+            }
+            for run in runs
+        ]
 
     async def create_run(self, experiment_id: str, operator_id: str = None) -> ChaosRun:
         # Safety Check
