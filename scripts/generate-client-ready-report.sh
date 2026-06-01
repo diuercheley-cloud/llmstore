@@ -205,7 +205,7 @@ report = {
     },
     "known_limitations": [
         "PSP/PIX real — Nao implementado. Faturamento manual apenas.",
-        "Tools/Function Calling — Parcial, depende do backend.",
+        "Tools/Function Calling — Suportado nativamente.",
         "TTS — Requer pocket-tts habilitado.",
         "RAG — Requer data plane com suporte a embeddings.",
         "LM Studio — Integracao depende de backend externo.",
@@ -287,7 +287,7 @@ restore/rollback, demo E2E, release history e capability matrix.
 ## Limitacoes Conhecidas
 
 1. **PSP/PIX real** — Nao implementado. Faturamento manual apenas.
-2. **Tools/Function Calling** — Parcial, depende do backend.
+2. **Tools/Function Calling** — Suportado nativamente.
 3. **TTS** — Requer pocket-tts habilitado.
 4. **RAG** — Requer data plane com suporte a embeddings.
 5. **LM Studio** — Integracao depende de backend externo.
@@ -399,7 +399,7 @@ para entrega a cliente como Local AI Appliance.
 ## Limitacoes
 
 1. PSP/PIX real nao implementado — faturamento manual apenas.
-2. Tools/Function Calling parcial — depende do backend de inferencia.
+2. Tools/Function Calling — Suportado nativamente.
 3. TTS requer pocket-tts habilitado.
 4. RAG requer data plane com suporte a embeddings.
 5. LM Studio integration depende de backend externo.

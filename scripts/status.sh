@@ -6,5 +6,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 init_stack_env
 
-cd "${ROOT_DIR}"
-dc --profile "*" down --remove-orphans "$@"
+dc ps "$@"

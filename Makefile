@@ -240,14 +240,14 @@ restart: ## Restart the stack
 	$(MAKE) up
 
 status: ## Show stack status
-	docker compose ps
+	./scripts/status.sh
 
 agent-worker: ## Start the Agent Worker process
 	@chmod +x scripts/run-agent-worker.sh
 	@./scripts/run-agent-worker.sh
 
 agentic-up: ## Start stack with agentic profile (includes agent-worker)
-	docker compose --profile agentic up -d
+	./scripts/up.sh --profile agentic
 
 agentic-readiness: ## Run Agentic Runtime Readiness Checks
 	@chmod +x scripts/agentic-readiness.sh

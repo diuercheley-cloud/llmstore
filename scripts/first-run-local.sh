@@ -135,12 +135,12 @@ fi
 
 # d) Start stack
 log "Starting stack..."
-COMPOSE_CMD="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-if [ "$SKIP_BUILD" = false ]; then
-  $COMPOSE_CMD up -d --build
-else
-  $COMPOSE_CMD up -d
+UP_ARGS=()
+if [ "$SKIP_BUILD" = true ]; then
+  UP_ARGS+=("--no-build")
 fi
+
+./scripts/up.sh "${UP_ARGS[@]}"
 
 log "Waiting for /health..."
 retries=30
