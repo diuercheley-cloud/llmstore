@@ -138,7 +138,7 @@ class PluginExecutionReceipt(Base):
     __tablename__ = "plugin_execution_receipts"
     
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("plugin_runtime_executions.id"), nullable=False, index=True)
+    execution_id: Mapped[str] = mapped_column(String(64), ForeignKey("plugin_runtime_executions.id"), nullable=False, index=True)
     receipt_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     signature: Mapped[str] = mapped_column(String(512), nullable=False)
     signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)

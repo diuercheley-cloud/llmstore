@@ -1001,3 +1001,31 @@ from app.models.prompts import (
     PromptPlaygroundRun,
 )
 from app.models.auth import OAuthState, UserSession
+
+from app.models.agent_deployments import (
+    AgentApiDeployment,
+    AgentApiEndpointKey,
+    AgentApiUsageEvent,
+    AgentApiSlaEvent,
+)
+__all__.extend([
+    "AgentApiDeployment",
+    "AgentApiEndpointKey",
+    "AgentApiUsageEvent",
+    "AgentApiSlaEvent",
+])
+
+from app.models.collab_chat import (
+    ChatChannel,
+    ChatChannelMember,
+    ChatMessage,
+    ChatAgentParticipant,
+    ChatPresenceEvent,
+)
+__all__.extend([
+    "ChatChannel",
+    "ChatChannelMember",
+    "ChatMessage",
+    "ChatAgentParticipant",
+    "ChatPresenceEvent",
+])
