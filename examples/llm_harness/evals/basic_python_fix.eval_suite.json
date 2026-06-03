@@ -1,0 +1,27 @@
+{
+  "name": "Basic Python Fix Suite",
+  "description": "Deterministic Python coding tasks using local environment.",
+  "cases": [
+    {
+      "id": "fix-addition",
+      "task": "Fix the function in calculator.py so that add(2, 3) returns 5. Currently it returns 0.",
+      "input_files": {
+        "calculator.py": "def add(a, b):\n    return 0\n"
+      },
+      "expected_files": {
+        "calculator.py": "def add(a, b):\n    return a + b\n"
+      },
+      "test_command": "python3 -c 'from calculator import add; assert add(2, 3) == 5'",
+      "tags": ["python", "math"]
+    },
+    {
+      "id": "fix-hello-world",
+      "task": "Update hello.py to return 'Hello World' instead of 'Hello'.",
+      "input_files": {
+        "hello.py": "def get_hello():\n    return 'Hello'\n"
+      },
+      "test_command": "python3 -c 'from hello import get_hello; assert get_hello() == \"Hello World\"'",
+      "tags": ["python", "string"]
+    }
+  ]
+}

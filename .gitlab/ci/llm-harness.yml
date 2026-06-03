@@ -1,0 +1,87 @@
+lint_llm_harness:
+  stage: lint
+  image: python:3.12
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install -e .[dev]
+  script:
+    - ruff check scripts/llm_harness tests/llm_harness scripts/agent_harness.py
+  rules:
+    - changes:
+        - scripts/llm_harness/**
+        - tests/llm_harness/**
+        - scripts/validate-llm-harness.sh
+        - pyproject.toml
+        - docs/LLM_HARNESS.md
+
+test_llm_harness:
+  stage: test
+  image: python:3.12
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install -e .[dev]
+  script:
+    - pytest tests/llm_harness/ -v --tb=short --cov=scripts/llm_harness --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=75
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.xml
+  rules:
+    - changes:
+        - scripts/llm_harness/**
+        - tests/llm_harness/**
+        - scripts/validate-llm-harness.sh
+        - pyproject.toml
+        - docs/LLM_HARNESS.md
+
+typecheck_llm_harness:
+  stage: typecheck
+  image: python:3.12
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install -e .[dev]
+  script:
+    - mypy --config-file pyproject.toml scripts/llm_harness
+  rules:
+    - changes:
+        - scripts/llm_harness/**
+        - tests/llm_harness/**
+        - scripts/validate-llm-harness.sh
+        - pyproject.toml
+        - docs/LLM_HARNESS.md
+
+benchmark_llm_harness:
+  stage: benchmark
+  image: python:3.12
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install -e .[dev]
+  script:
+    - python3 scripts/benchmark-llm-harness.py --iterations 1
+  allow_failure: true
+  rules:
+    - changes:
+        - scripts/llm_harness/**
+        - tests/llm_harness/**
+        - scripts/validate-llm-harness.sh
+        - pyproject.toml
+        - docs/LLM_HARNESS.md

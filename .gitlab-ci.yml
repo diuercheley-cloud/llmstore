@@ -2,10 +2,12 @@ stages:
   - preflight
   - lint
   - test
+  - typecheck
   - security
   - build
   - validate
   - chaos
+  - benchmark
   - package
   - release
 
@@ -23,6 +25,7 @@ include:
   - local: .gitlab/ci/chaos.yml
   - local: .gitlab/ci/deploy.yml
   - local: .gitlab/ci/compliance.yml
+  - local: .gitlab/ci/llm-harness.yml
 
 preflight:check:
   stage: preflight

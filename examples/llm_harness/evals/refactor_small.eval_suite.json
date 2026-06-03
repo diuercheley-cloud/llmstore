@@ -1,0 +1,24 @@
+{
+  "name": "Small Refactoring Eval Suite",
+  "description": "Evaluation of small refactoring tasks.",
+  "cases": [
+    {
+      "id": "inline-variable",
+      "task": "Refactor greet function in greet.py to return string directly instead of using intermediate variable.",
+      "input_files": {
+        "greet.py": "def greet(name):\n    msg = f'Hello, {name}'\n    return msg\n"
+      },
+      "test_command": "grep -L 'msg =' greet.py",
+      "tags": ["refactoring", "simple"]
+    },
+    {
+      "id": "convert-to-list-comprehension",
+      "task": "Refactor square_numbers in numbers.py to use list comprehension.",
+      "input_files": {
+        "numbers.py": "def square_numbers(nums):\n    res = []\n    for n in nums:\n        res.append(n * n)\n    return res\n"
+      },
+      "test_command": "grep -L 'for n in nums' numbers.py",
+      "tags": ["refactoring", "comprehension"]
+    }
+  ]
+}

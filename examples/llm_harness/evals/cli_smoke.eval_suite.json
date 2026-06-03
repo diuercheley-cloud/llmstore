@@ -1,0 +1,24 @@
+{
+  "name": "CLI Smoke Eval Suite",
+  "description": "Evaluation of basic CLI interactions and file management.",
+  "cases": [
+    {
+      "id": "create-version-file",
+      "task": "Create a file named VERSION containing exactly '1.0.0'.",
+      "test_command": "cat VERSION | grep '1.0.0'",
+      "expected_files": {
+        "VERSION": "1.0.0"
+      },
+      "tags": ["cli", "file-creation"]
+    },
+    {
+      "id": "list-files-check",
+      "task": "Ensure that the project directory contains a file named README.md with some content.",
+      "input_files": {
+        "README.md": "# Sample Project"
+      },
+      "test_command": "ls README.md",
+      "tags": ["cli", "ls"]
+    }
+  ]
+}

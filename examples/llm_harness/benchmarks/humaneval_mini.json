@@ -1,0 +1,8 @@
+[
+  {
+    "task_id": "HumanEval/0",
+    "prompt": "def add(a, b):\n    # Add two numbers\n",
+    "test": "assert add(2, 3) == 5\nassert add(-1, 1) == 0",
+    "entry_point": "add"
+  }
+]

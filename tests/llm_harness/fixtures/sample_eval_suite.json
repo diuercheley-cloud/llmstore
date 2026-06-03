@@ -1,0 +1,13 @@
+{
+  "name": "Sample Coding Eval Suite",
+  "description": "Basic coding task evaluation",
+  "cases": [
+    {
+      "id": "fix-add-function",
+      "task": "Fix the add function in app.py so that add(1, 2) returns 3",
+      "test_command": "pytest tests/",
+      "timeout_seconds": 60,
+      "tags": ["basic"]
+    }
+  ]
+}

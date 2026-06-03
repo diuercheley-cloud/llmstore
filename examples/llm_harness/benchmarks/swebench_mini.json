@@ -1,0 +1,9 @@
+[
+  {
+    "instance_id": "SWE-bench/0",
+    "problem_description": "Fix the division by zero in calculate_ratio when total is 0.",
+    "test_patch": "--- tests/test_calc.py\n+++ tests/test_calc.py\n@@ -0,0 +1,4 @@\n+def test_ratio():\n+    from calc import calculate_ratio\n+    assert calculate_ratio(5, 0) == 0.0\n+",
+    "fail_to_pass": ["tests/test_calc.py::test_ratio"],
+    "pass_to_pass": []
+  }
+]

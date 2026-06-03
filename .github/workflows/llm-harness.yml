@@ -1,0 +1,96 @@
+name: LLM Harness CI
+
+on:
+  push:
+    branches: [ main, 'release/*' ]
+    paths:
+      - 'scripts/llm_harness/**'
+      - 'tests/llm_harness/**'
+      - 'scripts/validate-llm-harness.sh'
+      - 'pyproject.toml'
+      - 'docs/LLM_HARNESS.md'
+      - 'examples/llm_harness/**'
+  pull_request:
+    branches: [ main, 'release/*' ]
+    paths:
+      - 'scripts/llm_harness/**'
+      - 'tests/llm_harness/**'
+      - 'scripts/validate-llm-harness.sh'
+      - 'pyproject.toml'
+      - 'docs/LLM_HARNESS.md'
+      - 'examples/llm_harness/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-harness:
+    name: Validate LLM Harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install httpx pyyaml pydantic ruff mypy pytest pytest-asyncio pytest-json-report
+
+      - name: Run Validation Script
+        run: ./scripts/validate-llm-harness.sh
+
+      - name: Check Local Health
+        run: PYTHONPATH=. python3 -m scripts.llm_harness.cli health --local-only
+
+      - name: Run Release Gate
+        run: make release-gate-llm-harness
+
+  docker-validate:
+    name: Validate Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t llm-harness:test -f docker/llm-harness/Dockerfile .
+
+      - name: Smoke Test - Help
+        run: docker run --rm llm-harness:test --help
+
+      - name: Smoke Test - Health
+        run: docker run --rm llm-harness:test health --local-only
+
+  benchmark-harness:
+    name: Benchmark LLM Harness
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install httpx pydantic
+
+      - name: Run performance benchmark
+        run: |
+          echo "Running LLM Harness Benchmarks..."
+          PYTHONPATH=. python3 scripts/benchmark-llm-harness.py --iterations 3 --output-dir artifacts/benchmarks/llm-harness
+
+      - name: Upload Benchmark Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-harness-benchmarks
+          path: artifacts/benchmarks/llm-harness/

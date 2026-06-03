@@ -1,0 +1,15 @@
+{
+  "name": "Multi Agent Review Eval Suite",
+  "description": "Evaluation of multi-agent review cooperation workflows.",
+  "cases": [
+    {
+      "id": "planner-coder-reviewer-flow",
+      "task": "Collaborate using planner, coder, and reviewer agents to fix main.py.",
+      "input_files": {
+        "main.py": "def calc(x):\n    return x * 2\n"
+      },
+      "test_command": "grep 'calc' main.py",
+      "tags": ["multi-agent", "cooperation"]
+    }
+  ]
+}

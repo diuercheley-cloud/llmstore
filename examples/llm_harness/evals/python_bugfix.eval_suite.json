@@ -1,0 +1,24 @@
+{
+  "name": "Python Bugfix Eval Suite",
+  "description": "Evaluation of basic python code fixing capabilities.",
+  "cases": [
+    {
+      "id": "fix-divide-by-zero",
+      "task": "Fix the division function in math_utils.py to return 0 when division by zero occurs.",
+      "input_files": {
+        "math_utils.py": "def divide(a, b):\n    return a / b\n"
+      },
+      "test_command": "python3 -c 'from math_utils import divide; assert divide(10, 0) == 0'",
+      "tags": ["bugfix", "math"]
+    },
+    {
+      "id": "fix-list-index-error",
+      "task": "Fix get_first_element in list_utils.py to return None if list is empty.",
+      "input_files": {
+        "list_utils.py": "def get_first_element(lst):\n    return lst[0]\n"
+      },
+      "test_command": "python3 -c 'from list_utils import get_first_element; assert get_first_element([]) is None'",
+      "tags": ["bugfix", "list"]
+    }
+  ]
+}

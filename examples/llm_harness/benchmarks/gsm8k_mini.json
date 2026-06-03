@@ -1,0 +1,12 @@
+[
+  {
+    "task_id": "GSM8K/0",
+    "question": "Janet buys 2 apples and 3 oranges. Each apple costs $1.50 and each orange costs $0.75. How much does she pay in total?",
+    "answer": "#### 5.25"
+  },
+  {
+    "task_id": "GSM8K/1",
+    "question": "A farmer has 12 chickens. Each chicken lays 2 eggs per day. How many eggs does the farmer collect in a week?",
+    "answer": "#### 168"
+  }
+]

@@ -15,6 +15,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.ruff_cache_llm_harness/
 
 # Node (se houver)
 node_modules/
@@ -117,3 +118,5 @@ __pycache__/
 test_env.sh
 chat
 frontend/admin/stats.html
+.llm_harness_memory/
+*.egg-info/

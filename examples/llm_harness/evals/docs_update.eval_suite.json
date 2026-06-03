@@ -1,0 +1,21 @@
+{
+  "name": "Docs Update Eval Suite",
+  "description": "Evaluation of documentation update tasks.",
+  "cases": [
+    {
+      "id": "add-readme-api-doc",
+      "task": "Add API usage instructions to README.md.",
+      "input_files": {
+        "README.md": "# Cool Project\n"
+      },
+      "test_command": "grep 'API usage' README.md",
+      "tags": ["docs", "readme"]
+    },
+    {
+      "id": "document-license",
+      "task": "Create LICENSE file containing MIT License.",
+      "test_command": "grep 'MIT License' LICENSE",
+      "tags": ["docs", "license"]
+    }
+  ]
+}

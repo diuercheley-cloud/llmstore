@@ -1,0 +1,86 @@
+# Agent Execution Report
+{% if provider == "stub" %}
+> **WARNING**: code agent provider is stub; no real task execution was performed.
+{% endif %}
+## Summary
+- **Status**: {{ "SUCCESS" if result.success else "FAILED" }}
+- **Message**: {{ result.message or "N/A" }}
+- **Error**: {{ result.error or "None" }}
+- **Trace ID**: {{ trace_id or "N/A" }}
+- **Trace Hash**: {{ trace_hash or "N/A" }}
+- **Total Duration**: {{ "%.2f"|format(result.duration) }}s
+- **Retry Count**: {{ result.retry_count }}
+
+{% if result.metrics and result.metrics.get("changed_files") %}
+## Changed Files
+{% for file in result.metrics.get("changed_files") %}
+- `{{ file }}`
+{% endfor %}
+{% endif %}
+
+## Performance
+- **Command Duration**: {{ "%.2f"|format(result.command_duration_ms / 1000) }}s
+- **Agent Latency**: {{ "%.2f"|format(result.agent_latency_ms / 1000) }}s
+
+## Tokens & Cache
+- **Total Tokens**: {{ result.total_tokens if result.total_tokens else "unavailable (0)" }}
+- **Prompt Tokens**: {{ result.prompt_tokens if result.prompt_tokens else "unavailable (0)" }}
+- **Completion Tokens**: {{ result.completion_tokens if result.completion_tokens else "unavailable (0)" }}
+- **Estimated Cost**: ${{ "%.4f"|format(result.estimated_cost) }}
+- **Cache Hits**: {{ result.cache_hits }}
+- **Cache Misses**: {{ result.cache_misses }}
+{% set total_cache = result.cache_hits + result.cache_misses %}
+{% if total_cache > 0 %}
+- **Cache Hit Rate**: {{ "%.1f"|format((result.cache_hits / total_cache) * 100) }}%
+{% endif %}
+
+### Slowest Actions
+{% if slowest_actions %}
+{% for s in slowest_actions %}
+- {{ s.action_type }}: {{ s.duration_ms }}ms
+{% endfor %}
+{% else %}
+None
+{% endif %}
+
+## Execution Steps
+| Step | Action | Status | Duration | Message |
+| :--- | :--- | :--- | :--- | :--- |
+{% for e in completed_events %}
+| {{ e.step }} | {{ e.action_type }} | {{ e.status_icon }} {{ e.status }} | {{ e.duration_ms }}ms | {{ e.message_short }} |
+{% endfor %}
+
+## Parsed Output
+{% if parsed_summaries %}
+| Step | Kind | Summary | Errors | Warnings |
+| :--- | :--- | :--- | :--- | :--- |
+{% for item in parsed_summaries %}
+| {{ item.step }} | {{ item.kind }} | {{ item.summary }} | {{ item.error_count }} | {{ item.warning_count }} |
+{% endfor %}
+{% else %}
+None
+{% endif %}
+
+## Security Governance
+- **Blocked Actions**: {{ blocked_actions|length }}
+{% if blocked_actions %}
+{% for action in blocked_actions %}
+- {{ action }}
+{% endfor %}
+{% else %}
+- None
+{% endif %}
+
+{% if git_status or git_diff %}
+## Git Changes
+
+### Status
+```text
+{{ git_status or "Clean" }}
+```
+
+### Diff
+```diff
+{{ git_diff or "No changes" }}
+```
+{% endif %}

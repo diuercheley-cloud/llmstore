@@ -172,12 +172,32 @@ help: ## Show this help message
 validate-llm-harness: ## Validate only the modular LLM harness
 	@bash scripts/validate-llm-harness.sh
 
+integration-local-llm-harness: ## Run integration tests against a real local LLM (requires env vars)
+	@echo "Running local LLM integration tests..."
+	@bash scripts/validate-local-llm-harness-env.sh
+	@PYTHONPATH=. .venv/bin/python3 -m pytest -m "integration and local_llm" tests/llm_harness/integration/test_local_openai_compatible.py
+
+docker-build-llm-harness: ## Build the LLM Harness standalone Docker image
+	@echo "Building LLM Harness image..."
+	@docker build -t llm-harness:latest -f docker/llm-harness/Dockerfile .
+
+docker-run-llm-harness-help: ## Run LLM Harness help inside container
+	@docker run --rm llm-harness:latest --help
+
+docker-run-llm-harness-health: ## Run LLM Harness health check inside container
+	@docker run --rm llm-harness:latest health --local-only
+
+typecheck-llm-harness: ## Run mypy type checking on the LLM harness
+	@echo "Running mypy on LLM harness..."
+	@.venv/bin/mypy --config-file scripts/llm_harness/pyproject.toml scripts/llm_harness
+
 release-gate-llm-harness: ## Run the isolated release gate for the modular LLM harness
 	@$(MAKE) validate-llm-harness
-	@python3 -m scripts.llm_harness.cli --help >/dev/null
-	@python3 -m scripts.llm_harness.cli code --help >/dev/null
-	@python3 -m scripts.llm_harness.cli health --local-only >/dev/null
+	@PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli --help >/dev/null
+	@PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code --help >/dev/null
+	@PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli health --local-only >/dev/null
 	@./scripts/agent-test.sh --help >/dev/null
+	@PYTHONPATH=. .venv/bin/python3 scripts/llm_harness/release_gate.py
 	@echo "LLM harness release gate completed successfully."
 
 operational-readiness: ## Run the Operational Readiness Pack validation
@@ -1095,6 +1115,18 @@ rollback-local: rollback
 post-upgrade-smoke: smoke
 benchmark-quick: benchmark
 benchmark-model: benchmark
+benchmark-llm-harness: ## Run performance benchmark for LLM Harness
+	@if [ -f .venv/bin/python3 ]; then \
+		.venv/bin/python3 scripts/benchmark-llm-harness.py; \
+	else \
+		python3 scripts/benchmark-llm-harness.py; \
+	fi
+production-core-check-llm-harness: ## Validate LLM Harness Production Core readiness criteria
+	@if [ -f .venv/bin/python3 ]; then \
+		PYTHONPATH=. .venv/bin/python3 scripts/check-llm-harness-production-core.py; \
+	else \
+		PYTHONPATH=. python3 scripts/check-llm-harness-production-core.py; \
+	fi
 validate-intelligent-cache: ## Validate intelligent cache (exact + semantic + tenant isolation)
 	chmod +x ./scripts/validate-intelligent-cache-local.sh
 	./scripts/validate-intelligent-cache-local.sh
