@@ -7,6 +7,7 @@ from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.models.commercial_qos_tier import CommercialQoSTier
@@ -35,7 +36,10 @@ class CommercialQoSService:
         default_tier_name = "Basic"
         
         if client_id:
-            client = await db.get(Client, client_id)
+            result = await db.execute(
+                select(Client).options(selectinload(Client.billing_plan)).where(Client.id == client_id)
+            )
+            client = result.scalar_one_or_none()
             if client and client.billing_plan:
                 plan_code = client.billing_plan.code
 

@@ -13,6 +13,7 @@ from app.models.client import Client
 from app.services.auth import require_client
 from app.services.tts_usage import ensure_tts_quota, record_tts_event, check_tts_feature_blocked
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 
 router = APIRouter(prefix="/pocket-tts", tags=["pocket-tts"])
 settings = get_settings()
@@ -41,7 +42,7 @@ async def proxy_pocket_tts(
     if is_blocked:
         raise HTTPException(status_code=403, detail=f"TTS feature blocked: {block_reason}")
 
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     if not effective_plan.tts_enabled:
         raise HTTPException(status_code=403, detail="TTS feature is not enabled for your plan")
 
@@ -105,7 +106,7 @@ async def proxy_pocket_tts(
             
             # Record usage if successful
             if path == "tts" and request.method == "POST" and proxy_resp.status_code in {200, 201}:
-                plan = resolve_effective_plan(client)
+                plan = await resolve_effective_plan_for_session(session, client)
                 await record_tts_event(
                     session,
                     client_id=client.id,

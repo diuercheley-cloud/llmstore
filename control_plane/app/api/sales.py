@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.db.session import get_db_session
 from app.services.auth import AdminRole, require_admin_role
 from app.models.sales_lead import SalesLead, SalesLeadNote
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.schemas.sales import (
     SalesLead as SalesLeadSchema,
     SalesLeadCreate,
@@ -238,7 +239,7 @@ async def monthly_report_preview(
         raise HTTPException(status_code=404, detail="Client not found")
 
     # Resolve plan
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     plan_code = effective_plan.code or "unknown"
     plan_name = effective_plan.name or plan_code
 

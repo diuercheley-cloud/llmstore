@@ -21,9 +21,9 @@ def test_no_tarballs_in_git():
     )
     assert result.stdout.strip() == ""
 
-def test_redaction_logic_mock():
+def test_redaction_logic_mock(tmp_path: Path):
     # Create a dummy release with a secret and check if validation fails
-    dummy_release_dir = Path("releases/v9.9.9-test-security")
+    dummy_release_dir = tmp_path / "releases" / "v9.9.9-test-security"
     dummy_release_dir.mkdir(parents=True, exist_ok=True)
     summary_file = dummy_release_dir / "summary.json"
     
@@ -32,7 +32,7 @@ def test_redaction_logic_mock():
         fake_secret = "sk-" + "123456789012345678901234567890"
         summary_file.write_text(f'{{"token": "{fake_secret}"}}')
         result = subprocess.run(
-            ["./scripts/validate-release-artifacts-security.sh"],
+            ["./scripts/validate-release-artifacts-security.sh", "--release-dir", str(dummy_release_dir)],
             capture_output=True,
             text=True
         )
@@ -42,7 +42,7 @@ def test_redaction_logic_mock():
         # Test with redacted token
         summary_file.write_text('{"token": "__redacted__"}')
         result = subprocess.run(
-            ["./scripts/validate-release-artifacts-security.sh"],
+            ["./scripts/validate-release-artifacts-security.sh", "--release-dir", str(dummy_release_dir)],
             capture_output=True,
             text=True
         )
@@ -56,14 +56,14 @@ def test_redaction_logic_mock():
         if dummy_release_dir.exists():
             dummy_release_dir.rmdir()
 
-def test_logs_dir_in_releases_fails():
-    dummy_release_dir = Path("releases/v9.9.9-test-logs")
+def test_logs_dir_in_releases_fails(tmp_path: Path):
+    dummy_release_dir = tmp_path / "releases" / "v9.9.9-test-logs"
     logs_dir = dummy_release_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         result = subprocess.run(
-            ["./scripts/validate-release-artifacts-security.sh"],
+            ["./scripts/validate-release-artifacts-security.sh", "--release-dir", str(dummy_release_dir)],
             capture_output=True,
             text=True
         )

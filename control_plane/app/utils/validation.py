@@ -2,6 +2,7 @@ import json
 from fastapi import HTTPException
 from app.core.config import get_settings
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.models.client import Client
 from app.utils.tool_calling import tooling_requested
 
@@ -49,6 +50,43 @@ def validate_params(client: Client, payload):
     if not effective_plan.responses_enabled and getattr(payload, "_endpoint", "") == "/v1/responses":
         raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
 
+    if temperature > settings.max_temperature:
+        raise HTTPException(status_code=422, detail="temperature exceeds configured maximum")
+    if top_p > settings.max_top_p:
+        raise HTTPException(status_code=422, detail="top_p exceeds configured maximum")
+    return max_tokens, temperature, top_p, effective_plan
+
+
+async def validate_params_for_session(session, client: Client, payload):
+    effective_plan = await resolve_effective_plan_for_session(session, client)
+
+    client_defaults = {}
+    if client.metadata_json:
+        try:
+            client_defaults = json.loads(client.metadata_json)
+        except Exception:
+            pass
+
+    requested_max_tokens = payload.max_tokens or client_defaults.get("max_tokens") or settings.default_max_tokens
+    limit = min(effective_plan.max_output_tokens, settings.max_completion_tokens)
+    max_tokens = limit if requested_max_tokens > limit else requested_max_tokens
+
+    temperature = payload.temperature
+    if temperature is None:
+        temperature = client_defaults.get("temperature")
+    if temperature is None:
+        temperature = settings.default_temperature
+
+    top_p = payload.top_p
+    if top_p is None:
+        top_p = client_defaults.get("top_p")
+    if top_p is None:
+        top_p = settings.default_top_p
+
+    if getattr(payload, "stream", False) and not effective_plan.allow_streaming:
+        raise HTTPException(status_code=403, detail="streaming is not allowed for this billing plan")
+    if not effective_plan.responses_enabled and getattr(payload, "_endpoint", "") == "/v1/responses":
+        raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
     if temperature > settings.max_temperature:
         raise HTTPException(status_code=422, detail="temperature exceeds configured maximum")
     if top_p > settings.max_top_p:

@@ -8,10 +8,11 @@ from app.models.rag_document import RAGDocument
 from app.models.rag_usage_event import RagUsageEvent
 from app.models.client_feature_block import ClientFeatureBlock
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
 
 async def get_rag_usage_and_limits(session: AsyncSession, client: Client):
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     
     # Get current doc count and storage
     docs_result = await session.execute(

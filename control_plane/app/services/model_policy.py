@@ -73,6 +73,33 @@ def get_effective_allowed_models(client: Client) -> set[str]:
     return _parse_allowed_models(client.billing_plan.allowed_models_json)
 
 
+async def get_effective_allowed_models_for_session(
+    session: AsyncSession,
+    client: Client,
+) -> set[str]:
+    """
+    Returns the effective allowed model list with the billing plan eagerly loaded.
+    This avoids lazy relationship access inside async request paths.
+    """
+    from sqlalchemy.orm import selectinload
+
+    if client is None:
+        return set()
+    if session is None:
+        return get_effective_allowed_models(client)
+    if "billing_plan" not in inspect(client).unloaded:
+        return get_effective_allowed_models(client)
+    refreshed = await session.execute(
+        select(Client)
+        .options(selectinload(Client.billing_plan))
+        .where(Client.id == client.id)
+    )
+    loaded_client = refreshed.scalar_one_or_none()
+    if loaded_client is None:
+        return set()
+    return get_effective_allowed_models(loaded_client)
+
+
 async def list_active_registry_models(session: AsyncSession) -> list[ModelRegistry]:
     result = await session.execute(
         select(ModelRegistry)
@@ -156,7 +183,7 @@ async def resolve_requested_model(
     if not routes:
         raise HTTPException(status_code=503, detail="model backend is not active")
 
-    allowed = get_effective_allowed_models(client)
+    allowed = await get_effective_allowed_models_for_session(session, client)
     if allowed and selected.model_id not in allowed and (selected.model_alias or "") not in allowed:
         # Rewrite to default model instead of 403
         selected = next((item for item in active_models if item.is_default), None) or active_models[0]

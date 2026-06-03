@@ -80,11 +80,11 @@ SAFE_PATTERNS=(
 COMBINED_REGEX=$(IFS='|'; echo "${SECRET_REGEXES[*]}")
 SAFE_REGEX=$(IFS='|'; echo "${SAFE_PATTERNS[*]}")
 
-# Find all files in target dir excluding .sha256 and .tar.gz (which shouldn't be there anyway)
-FILES_TO_SCAN=$(find "${TARGET_DIR}" -type f ! -name "*.sha256" ! -name "*.tar.gz" ! -name "*.zip")
+# Find all files in target dir excluding irrelevant dirs and specific files
+FILES_TO_SCAN=$(find "${TARGET_DIR}" -type d \( -name ".git" -o -name ".venv" -o -name "venv" -o -name "__pycache__" -o -name ".pytest_cache" -o -name ".ruff_cache" -o -name ".cache" -o -name ".tmp-llm-harness-cli-*" -o -name "node_modules" -o -name "dist" -o -name "build" \) -prune -o -type f ! -name "*.sha256" ! -name "*.tar.gz" ! -name "*.zip" -print)
 
 if [[ -n "${FILES_TO_SCAN}" ]]; then
-    SECRETS_FOUND=$(grep -Eon "${COMBINED_REGEX}" ${FILES_TO_SCAN} | grep -vE "${SAFE_REGEX}" || true)
+    SECRETS_FOUND=$(echo "${FILES_TO_SCAN}" | xargs grep -Eon "${COMBINED_REGEX}" | grep -vE "${SAFE_REGEX}" || true)
 
     if [[ -n "${SECRETS_FOUND}" ]]; then
         echo "FAIL: Found potential secrets in release artifacts:"

@@ -60,6 +60,7 @@ from app.services.rag_usage import get_rag_usage_and_limits, check_rag_feature_b
 from app.services.model_policy import resolve_requested_model
 from app.services.quota import ensure_quota, record_usage, QuotaExceeded
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.api.deps import get_inference_proxy
 from app.api.client import _chat_with_fallback
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
@@ -418,7 +419,7 @@ Pergunta:
 Resposta:"""
 
     selected_model, _ = await resolve_requested_model(session, client=client, requested_model=payload.model)
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
 
     from app.services.tokenizer_service import get_tokenizer_service
     tokenizer = get_tokenizer_service()

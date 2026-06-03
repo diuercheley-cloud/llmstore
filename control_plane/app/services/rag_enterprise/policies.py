@@ -12,6 +12,7 @@ from app.models.rag_document import RAGDocument
 from app.models.rag_usage_event import RagUsageEvent
 from app.models.client_feature_block import ClientFeatureBlock
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ async def resolve_enterprise_rag_policy(
     session: AsyncSession,
     client: Client,
 ) -> EnterpriseRagPolicy:
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
 
     block_result = await session.execute(
         select(ClientFeatureBlock).where(

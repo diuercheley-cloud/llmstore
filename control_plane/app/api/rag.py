@@ -31,6 +31,7 @@ from app.services.embeddings import get_embedding_service
 from app.services.model_policy import resolve_requested_model
 from app.services.quota import ensure_quota, record_usage, QuotaExceeded
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.api.deps import get_inference_proxy
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 from app.api.client import _chat_with_fallback
@@ -385,7 +386,7 @@ async def query_rag(
         raise HTTPException(status_code=403, detail="RAG is disabled")
 
     # Delegate to enterprise RAG if plan indicates enterprise or enterprise fields are present
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     has_enterprise_fields = (
         payload.collection_ids is not None or
         payload.document_ids is not None or
@@ -520,7 +521,7 @@ Resposta:"""
     
     # 4. Quota check
     selected_model, _ = await resolve_requested_model(session, client=client, requested_model=payload.model)
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     
     from app.services.tokenizer_service import get_tokenizer_service
     tokenizer = get_tokenizer_service()

@@ -6,25 +6,26 @@ import pytest
 from pathlib import Path
 
 @pytest.fixture
-def clean_releases():
-    release_dir = Path("releases/v-test-pytest")
-    if release_dir.exists():
-        import shutil
-        shutil.rmtree(release_dir)
-    yield "v-test-pytest"
-    if release_dir.exists():
-        import shutil
-        shutil.rmtree(release_dir)
+def clean_releases(tmp_path: Path):
+    version = f"v-test-pytest-{tmp_path.name}"
+    output_dir = tmp_path / "releases"
+    yield version, output_dir
 
 def test_bundle_creation_basic(clean_releases):
-    version = clean_releases
-    cmd = ["./scripts/create-release-bundle.sh", "--version", version]
+    version, output_dir = clean_releases
+    cmd = [
+        "./scripts/create-release-bundle.sh",
+        "--version",
+        version,
+        "--output-dir",
+        str(output_dir),
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     assert result.returncode == 0
     
-    archive_path = Path(f"releases/{version}/llm-inference-stack-{version}.tar.gz")
-    manifest_path = Path(f"releases/{version}/bundle-manifest.json")
-    checksum_path = Path(f"releases/{version}/bundle-checksums.sha256")
+    archive_path = output_dir / version / f"llm-inference-stack-{version}.tar.gz"
+    manifest_path = output_dir / version / "bundle-manifest.json"
+    checksum_path = output_dir / version / "bundle-checksums.sha256"
     
     assert archive_path.exists()
     assert manifest_path.exists()
@@ -37,18 +38,20 @@ def test_bundle_creation_basic(clean_releases):
         assert manifest["models_included"] is False
 
 def test_bundle_inclusions(clean_releases):
-    version = clean_releases
+    version, output_dir = clean_releases
     # Try including everything
     cmd = [
         "./scripts/create-release-bundle.sh", 
         "--version", version, 
+        "--output-dir",
+        str(output_dir),
         "--include-docs", 
         "--include-examples", 
         "--include-demo"
     ]
     subprocess.run(cmd, check=True)
     
-    archive_path = Path(f"releases/{version}/llm-inference-stack-{version}.tar.gz")
+    archive_path = output_dir / version / f"llm-inference-stack-{version}.tar.gz"
     
     with tarfile.open(archive_path, "r:gz") as tar:
         names = tar.getnames()
@@ -59,10 +62,13 @@ def test_bundle_inclusions(clean_releases):
         assert f"{root}/demo/rag-documents" in names
 
 def test_bundle_exclusions(clean_releases):
-    version = clean_releases
-    subprocess.run(["./scripts/create-release-bundle.sh", "--version", version], check=True)
+    version, output_dir = clean_releases
+    subprocess.run(
+        ["./scripts/create-release-bundle.sh", "--version", version, "--output-dir", str(output_dir)],
+        check=True,
+    )
     
-    archive_path = Path(f"releases/{version}/llm-inference-stack-{version}.tar.gz")
+    archive_path = output_dir / version / f"llm-inference-stack-{version}.tar.gz"
     
     with tarfile.open(archive_path, "r:gz") as tar:
         names = tar.getnames()

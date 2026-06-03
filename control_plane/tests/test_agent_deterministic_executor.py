@@ -8,6 +8,7 @@ from app.main import app as main_app
 import app.db.session
 from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent, AgentRunReceipt
 from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
+from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
 from app.db.base import Base
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from pathlib import Path
@@ -120,10 +121,15 @@ async def test_tool_failure_generates_receipt(test_db):
         async def failing_tool(name, inputs):
             raise ValueError("Tool exploded")
 
+        settings = get_settings()
+        orig_mock_mode = settings.agent_executor_mock_mode
+        settings.agent_executor_mock_mode = False
         executor = AgentExecutor(db, run.id, tool_runner=failing_tool)
-        
-        # Manually trigger tool execution
-        await executor._execute_tool_and_process(run, "bad_tool", {"param": 1}, 1)
+        try:
+            # Manually trigger tool execution
+            await executor._execute_tool_and_process(run, "bad_tool", {"param": 1}, 1)
+        finally:
+            settings.agent_executor_mock_mode = orig_mock_mode
         
         # Check for receipt
         stmt = select(AgentRunReceipt).where(AgentRunReceipt.run_id == run.id)
@@ -166,3 +172,47 @@ async def test_replay_mode_is_side_effect_free(test_db):
         
         res = await executor._continue_plan_execution(run, plan)
         assert res is False # Should stop in replay
+
+
+@pytest.mark.asyncio
+async def test_gateway_client_resolution_eager_loads_billing_plan(test_db):
+    session_factory = test_db
+    async with session_factory() as db:
+        from app.models.client import Client
+        from app.models.billing_plan import BillingPlan
+        from app.models.agents import AgentRun
+
+        plan = BillingPlan(
+            code="test-plan",
+            name="Test Plan",
+            rate_limit_per_minute=10,
+            daily_token_quota=50000,
+            monthly_token_quota=500000,
+            max_output_tokens=512,
+            allow_streaming=True,
+            is_active=True,
+        )
+        client = Client(
+            name="tenant-a",
+            billing_plan=plan,
+            billing_status="active",
+        )
+        run = AgentRun(
+            id=uuid.uuid4(),
+            agent_id=uuid.uuid4(),
+            tenant_id="tenant-a",
+            status="running",
+            input_text="X",
+            total_steps=0,
+            total_tokens=0,
+            estimated_cost_brl=0.0,
+        )
+        db.add(plan)
+        db.add(client)
+        db.add(run)
+        await db.commit()
+
+        provider = GatewayAgentLLMProvider(db, proxy=object())
+        resolved = await provider._resolve_client(run)
+        assert resolved.id == client.id
+        assert resolved.billing_plan is not None

@@ -16,7 +16,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from app.api.client import _chat_with_fallback, _error_message_for_log, _backend_errors_for_log
 from app.core.security import short_prefix
 from app.core.time import utc_now
-from app.utils.validation import validate_params
+from app.utils.validation import validate_params, validate_params_for_session
 from app.api.deps import get_inference_proxy
 from app.db.session import get_db_session, get_redis
 from app.models.billing_invoice import BillingInvoice
@@ -450,7 +450,7 @@ async def portal_me(
 ):
     from app.core.config import get_settings
     settings = get_settings()
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     return {
         "id": str(client.id),
         "name": client.name,
@@ -712,7 +712,7 @@ async def portal_account(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
@@ -821,7 +821,7 @@ async def portal_usage(
 ):
     from app.services.tts_usage import get_tts_usage_and_limits
     
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
@@ -1117,7 +1117,7 @@ async def portal_wallet(
     from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
     balance = await get_balance(session, client.id)
     txs = await list_transactions(session, client.id, limit=20)
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     counters = await get_current_usage_snapshot(session, client.id)
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
     monthly_quota = effective_plan.monthly_token_quota
@@ -1339,7 +1339,7 @@ async def portal_test_chat(
     tokens_estimated = token_res.is_estimated
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = validate_params(client, chat_payload)
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, chat_payload)
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)

@@ -10,6 +10,7 @@ from app.models.billing_plan import BillingPlan
 from app.models.quota_counter import QuotaCounter
 from app.models.tts_usage_event import TtsUsageEvent
 from app.services.billing import resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
 
 
@@ -21,7 +22,7 @@ def _result_scalar(result, default=0):
     return default if value is None else value
 
 async def get_tts_usage_and_limits(session: AsyncSession, client: Client) -> Dict[str, Any]:
-    plan = resolve_effective_plan(client)
+    plan = await resolve_effective_plan_for_session(session, client)
     
     today = date.today()
     this_month = month_start(today)

@@ -380,6 +380,12 @@ class AgentExecutor:
             return None
         except Exception as e:
             latency_ms = int((time.time() - start_time) * 1000)
+            logger.exception(
+                "Unhandled LLM decision failure for run %s agent %s step %s",
+                self.run_id,
+                run.agent_id,
+                step_number,
+            )
             await self.obs.record_model_call(self.run_id, "failed", latency_ms, error=str(e))
             await agent_state.log_run_step(self.db, self.run_id, step_number, "model_call", {"input_hash": run.input_hash}, {}, "failed", latency_ms, error=str(e))
             await self._fail_run(f"LLM failure: {str(e)}")

@@ -9,7 +9,13 @@ from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
-from app.services.model_policy import get_effective_allowed_models, plan_routing_order, resolve_requested_model, serialize_model_card
+from app.services.model_policy import (
+    get_effective_allowed_models,
+    get_effective_allowed_models_for_session,
+    plan_routing_order,
+    resolve_requested_model,
+    serialize_model_card,
+)
 
 
 def test_get_effective_allowed_models_prefers_client_override():
@@ -49,6 +55,30 @@ def test_get_effective_allowed_models_falls_back_to_plan():
     assert get_effective_allowed_models(client) == {"gemma", "phi"}
 
 
+@pytest.mark.asyncio
+async def test_get_effective_allowed_models_for_session_reloads_billing_plan(monkeypatch):
+    client = Client(name="demo")
+
+    class DummyPlan:
+        allowed_models_json = json.dumps(["safe-model"])
+
+    class DummyLoadedClient:
+        id = client.id
+        billing_plan = DummyPlan()
+        allowed_models_json = None
+
+    class DummyResult:
+        def scalar_one_or_none(self):
+            return DummyLoadedClient()
+
+    class DummySession:
+        async def execute(self, _stmt):
+            return DummyResult()
+
+    allowed = await get_effective_allowed_models_for_session(DummySession(), client)
+    assert allowed == {"safe-model"}
+
+
 def test_serialize_model_card_uses_alias_as_public_id():
     model = ModelRegistry(
         model_id="unsloth/gemma-4-E4B-it-GGUF",
@@ -61,6 +91,7 @@ def test_serialize_model_card_uses_alias_as_public_id():
         status="configured",
         metadata_json=json.dumps({"recommended_quantization": "Q4_0"}),
     )
+    model.backend_routes = []
 
     payload = serialize_model_card(model)
 
@@ -145,6 +176,9 @@ async def test_resolve_requested_model_allows_explicit_default(monkeypatch):
         return [model]
 
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
+    async def fake_trust(*_args, **_kwargs):
+        return {"allowed": True, "trust_state": "disabled", "mode": "disabled"}
+    monkeypatch.setattr("app.services.model_policy.enforce_model_trust_or_warn", fake_trust)
 
     selected, requested = await resolve_requested_model(None, client=Client(name="demo"), requested_model="default")
 

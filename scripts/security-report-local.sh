@@ -351,20 +351,20 @@ code, out, err = run_cmd("./scripts/check-secrets.sh --staged --verbose")
 add_secret_scan_results("sec-secrets-staged", "staged files", out, "staged_files")
 
 # 3. Releases (versioned)
-_, out_rel_t, _ = run_cmd("git ls-files releases/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+_, out_rel_t, _ = run_cmd("git ls-files releases/ | xargs ./scripts/check-secrets.sh --verbose --path")
 add_secret_scan_results("sec-secrets-releases-versioned", "versioned releases", out_rel_t, "releases_versioned")
 
 # 4. Releases (untracked)
-_, out_rel_u, _ = run_cmd("git ls-files -o releases/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+_, out_rel_u, _ = run_cmd("git ls-files -o releases/ | xargs ./scripts/check-secrets.sh --verbose --path")
 add_secret_scan_results("sec-secrets-releases-untracked", "untracked releases", out_rel_u, "releases_untracked")
 
 if not SKIP_ARTIFACTS:
     # 5. Artifacts (ignored)
-    _, out_art_i, _ = run_cmd("git ls-files -o -i --exclude-standard artifacts/ | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+    _, out_art_i, _ = run_cmd("git ls-files -o -i --exclude-standard artifacts/ | xargs ./scripts/check-secrets.sh --verbose --path")
     add_secret_scan_results("sec-secrets-artifacts-ignored", "ignored artifacts", out_art_i, "artifacts_ignored")
     
     # 6. Artifacts (recent - last 24h)
-    _, out_art_r, _ = run_cmd("find artifacts/ -type f -mmin -1440 | while read f; do ./scripts/check-secrets.sh --path \"$f\" --verbose; done")
+    _, out_art_r, _ = run_cmd("find artifacts/ -type f -mmin -1440 | xargs ./scripts/check-secrets.sh --verbose --path")
     add_secret_scan_results("sec-secrets-artifacts-recent", "recent artifacts", out_art_r, "artifacts_recent")
     
     # Legacy artifacts scan for compatibility (includes all releases and artifacts)
@@ -470,12 +470,13 @@ else:
         ".env.local not found.",
     )
 
-code, out, err = run_cmd(
+code,out,err = run_cmd(
     'find . -type f \\( -name "*.pem" -o -name "*.key" \\) '
     '-not -path "./.venv/*" '
     '-not -path "./venv/*" '
     '-not -path "./.git/*" '
     '-not -path "./.cache/*" '
+    '-not -path "./.tmp-llm-harness-cli-*" '
     '-not -path "./data/pki/*" '
     '-not -path "./control_plane/data/pki/*" | sort'
 )

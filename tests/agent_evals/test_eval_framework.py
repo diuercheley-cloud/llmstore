@@ -95,9 +95,12 @@ async def test_production_requires_eval_baseline(session):
     # Try to activate without baseline - should fail if settings enforce it
     from app.core.config import get_settings
     settings = get_settings()
+    orig_requires_baseline = settings.agent_production_requires_eval_baseline
     orig = settings.agent_eval_allow_mock_for_promotion
+    # Production baseline enforcement is gated by settings in tests; enable it explicitly here.
+    settings.agent_production_requires_eval_baseline = True
     settings.agent_eval_allow_mock_for_promotion = True
-    
+
     try:
         with pytest.raises(ValueError, match="Evaluation baseline is missing"):
             await activate_agent(session, entry.id)
@@ -118,4 +121,5 @@ async def test_production_requires_eval_baseline(session):
         await session.refresh(entry)
         assert entry.status == "active"
     finally:
+        settings.agent_production_requires_eval_baseline = orig_requires_baseline
         settings.agent_eval_allow_mock_for_promotion = orig

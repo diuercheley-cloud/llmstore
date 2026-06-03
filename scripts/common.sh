@@ -198,10 +198,31 @@ issue_demo_api_key() {
   local demo_client_id
   demo_client_id="$(lookup_demo_client_id "${base_url}")" || return 1
   [[ -n "${demo_client_id}" ]] || return 1
+  issue_api_key_for_client_id "${base_url}" "${demo_client_id}" "${key_name}"
+}
+
+issue_api_key_for_client_id() {
+  local base_url="${1:-$(default_base_url)}"
+  local client_id="${2:?client_id is required}"
+  local key_name="${3:-script-access}"
   curl_base_url "${base_url}/admin/api-keys" -fsS \
     -H "X-Admin-Token: ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
-    -d "{\"client_id\":\"${demo_client_id}\",\"name\":\"${key_name}\"}" | python3 -c 'import json, sys; print(json.load(sys.stdin)["api_key"])'
+    -d "{\"client_id\":\"${client_id}\",\"name\":\"${key_name}\"}" | python3 -c 'import json, sys; print(json.load(sys.stdin)["api_key"])'
+}
+
+lookup_first_active_agent_tenant_id() {
+  local base_url="${1:-$(default_base_url)}"
+  local admin_token="${ADMIN_TOKEN:-}"
+  [[ -n "${admin_token}" ]] || return 1
+  curl_base_url "${base_url}/admin/agents" -fsS -H "X-Admin-Token: ${admin_token}" | python3 -c '
+import json, sys
+agents = json.load(sys.stdin)
+for item in agents:
+    if item.get("status") == "active" and item.get("tenant_id"):
+        print(item["tenant_id"])
+        break
+'
 }
 
 require_api_key() {

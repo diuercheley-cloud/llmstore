@@ -169,6 +169,17 @@ help: ## Show this help message
 	@echo ""
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
+validate-llm-harness: ## Validate only the modular LLM harness
+	@bash scripts/validate-llm-harness.sh
+
+release-gate-llm-harness: ## Run the isolated release gate for the modular LLM harness
+	@$(MAKE) validate-llm-harness
+	@python3 -m scripts.llm_harness.cli --help >/dev/null
+	@python3 -m scripts.llm_harness.cli code --help >/dev/null
+	@python3 -m scripts.llm_harness.cli health --local-only >/dev/null
+	@./scripts/agent-test.sh --help >/dev/null
+	@echo "LLM harness release gate completed successfully."
+
 operational-readiness: ## Run the Operational Readiness Pack validation
 	@bash scripts/operational-readiness-pack.sh
 

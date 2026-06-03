@@ -352,6 +352,38 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
     )
 
 
+async def resolve_effective_plan_for_session(session: AsyncSession, client: Client) -> EffectivePlan:
+    """
+    Resolves the effective plan after eagerly loading billing_plan and pricing_rules.
+    This avoids async lazy-loading failures in request/runtime paths.
+    """
+    from sqlalchemy.orm import selectinload
+
+    if client is None:
+        return EffectivePlan(
+            code="legacy",
+            name="Legacy",
+            rate_limit_per_minute=0,
+            daily_token_quota=0,
+            weekly_token_quota=0,
+            monthly_token_quota=0,
+            max_output_tokens=0,
+            allow_streaming=True,
+        )
+
+    if "billing_plan" not in client.__dict__ or "pricing_rules" not in getattr(client.billing_plan, "__dict__", {}):
+        result = await session.execute(
+            select(Client)
+            .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+            .where(Client.id == client.id)
+        )
+        loaded = result.scalar_one_or_none()
+        if loaded is not None:
+            client = loaded
+
+    return resolve_effective_plan(client)
+
+
 async def list_client_billing_snapshots(
     session: AsyncSession,
     client_id=None,

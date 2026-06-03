@@ -9,11 +9,13 @@ from enum import Enum
 from dataclasses import dataclass, field, asdict
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
+from app.models.billing_plan import BillingPlan
 from app.services.inference_proxy import InferenceProxy, ForwardResult
 from app.services.model_policy import (
     resolve_requested_model,
@@ -254,9 +256,13 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
 
         try:
             client_uuid = uuid.UUID(run.tenant_id)
-            stmt = select(Client).where(Client.id == client_uuid)
+            stmt = select(Client).options(
+                selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)
+            ).where(Client.id == client_uuid)
         except ValueError:
-            stmt = select(Client).where(Client.name == run.tenant_id)
+            stmt = select(Client).options(
+                selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)
+            ).where(Client.name == run.tenant_id)
 
         res = await self.db.execute(stmt)
         client = res.scalar_one_or_none()

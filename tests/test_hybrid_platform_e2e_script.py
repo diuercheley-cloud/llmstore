@@ -61,8 +61,8 @@ class TestHybridPlatformE2EScript:
                      "--skip-tts", "--allow-warnings", "--output-dir"]:
             assert flag in result.stdout, f"Flag {flag} missing from --help"
 
-    def test_script_creates_output_dir(self):
-        output_dir = Path("/tmp/hybrid-e2e-test-dir")
+    def test_script_creates_output_dir(self, tmp_path: Path):
+        output_dir = tmp_path / "hybrid-e2e-test-dir"
         # Remove any previous test output
         if output_dir.exists():
             import shutil

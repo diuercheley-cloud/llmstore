@@ -14,8 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
+# Use virtualenv for cleaner dependency management
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY control_plane/requirements.txt /build/requirements.txt
-RUN pip install --no-cache-dir --user -r /build/requirements.txt
+RUN pip install --no-cache-dir -r /build/requirements.txt
 
 COPY control_plane /build/control_plane
 RUN cd /build/control_plane && python -m compileall . -q 2>/dev/null || true
@@ -39,9 +43,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin procps \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /opt/venv /opt/venv
 
-ENV PATH=/root/.local/bin:$PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 

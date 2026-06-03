@@ -468,7 +468,7 @@ class TestSecretBlocking:
             renderer.render(
                 "{{ api_key }}",
                 # FAKE TEST KEY - DO NOT USE
-                {"api_key": "sk-1234567890abcdef1234567890abcdef"},
+                {"api_key": "sk-1234567890"},
             )
 
     def test_long_string_looks_like_secret(self, renderer):

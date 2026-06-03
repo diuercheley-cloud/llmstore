@@ -34,6 +34,7 @@ from app.schemas.inference import (
 from app.services.audit import log_request
 from app.services.auth import require_client
 from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.commercial_guardrails import (
     build_openai_guardrail_error_payload,
     build_runtime_enforcement_context,
@@ -82,7 +83,7 @@ from app.utils.tool_calling import (
     sanitize_tool_calls,
     validate_tooling_request,
 )
-from app.utils.validation import normalize_messages, validate_params
+from app.utils.validation import normalize_messages, validate_params, validate_params_for_session
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,13 @@ settings = get_settings()
 
 class CommercialGuardrailBlockedError(Exception):
     pass
+
+
+async def _ensure_client_billing_plan_loaded(session: AsyncSession, client: Client | None) -> Client | None:
+    if client is None:
+        return None
+    await resolve_effective_plan_for_session(session, client)
+    return client
 
 
 def _unsupported_feature_response(*, code: str, message: str) -> JSONResponse:
@@ -257,6 +265,7 @@ async def _chat_with_fallback(
     from app.services.routing.commercial_qos import CommercialQoSService
     qos_tier = None
     if session:
+        client = await _ensure_client_billing_plan_loaded(session, client)
         qos_tier = await CommercialQoSService.resolve_qos_tier(
             session, 
             client.id if client else None, 
@@ -321,7 +330,7 @@ async def _chat_with_fallback(
     plan_code = "free"
     is_admin = False
     if client:
-        effective_plan = resolve_effective_plan(client)
+        effective_plan = await resolve_effective_plan_for_session(session, client)
         plan_code = effective_plan.code
         if client.metadata_json:
             try:
@@ -425,6 +434,7 @@ async def _completion_with_fallback(
     from app.services.routing.commercial_qos import CommercialQoSService
     qos_tier = None
     if session:
+        client = await _ensure_client_billing_plan_loaded(session, client)
         qos_tier = await CommercialQoSService.resolve_qos_tier(
             session, 
             client.id if client else None, 
@@ -489,7 +499,7 @@ async def _completion_with_fallback(
     plan_code = "free"
     is_admin = False
     if client:
-        effective_plan = resolve_effective_plan(client)
+        effective_plan = await resolve_effective_plan_for_session(session, client)
         plan_code = effective_plan.code
         if client.metadata_json:
             try:
@@ -629,7 +639,7 @@ async def embeddings(
     if not settings.embeddings_enabled:
         raise HTTPException(status_code=404, detail="embeddings endpoint is disabled")
 
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     if not effective_plan.embeddings_enabled:
         raise HTTPException(status_code=403, detail="embeddings are not enabled for your plan")
 
@@ -800,7 +810,7 @@ async def responses(
             message="Streaming is not supported in /v1/responses yet.",
         )
 
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
     if not effective_plan.responses_enabled:
         raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
 
@@ -970,7 +980,7 @@ async def _process_chat_completion(
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
     
     # Still call validate_params for plan and basic params, but use capped max_tokens if needed
-    _, temperature, top_p, effective_plan = validate_params(client, payload)
+    _, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
     max_tokens = max_tokens_capped
 
     # Improve behavior for local small models
@@ -1486,7 +1496,7 @@ async def completions(
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
     
     # Using validate_params instead of _validated_params
-    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
     
     prompt = payload.prompt
     if client.system_prompt:

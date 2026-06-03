@@ -10,7 +10,7 @@ def test_gitignore_exports():
 
 def test_check_secrets_on_export_dir():
     # Create a dummy export dir with a secret
-    test_dir = Path("exports/test-secrets")
+    test_dir = Path("/tmp") / "llm-inference-stack-export-tests" / "exports" / "test-secrets"
     test_dir.mkdir(parents=True, exist_ok=True)
     
     secret_file = test_dir / "secret.txt"

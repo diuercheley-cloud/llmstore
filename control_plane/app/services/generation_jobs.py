@@ -24,6 +24,7 @@ from app.schemas.inference import ChatCompletionRequest
 from app.services.audit import log_request
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.context_manager import get_context_manager
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import plan_routing_order, resolve_requested_model
@@ -37,6 +38,7 @@ from app.services.security_monitor import (
     prompt_fingerprint,
 )
 from app.utils.request_summary import summarize_chat_request
+from app.utils.validation import normalize_messages, validate_params_for_session
 from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 from app.utils.validation import normalize_messages, validate_params
 
@@ -141,7 +143,7 @@ async def prepare_async_chat_job(
         extra={"extra_data": context_metrics}
     )
 
-    max_tokens, temperature, top_p, effective_plan = validate_params(client, payload)
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
     max_tokens = max_tokens_capped
     
     incoming_tokens = prompt_tokens + max_tokens
@@ -395,7 +397,7 @@ async def process_generation_job(
         ASYNC_JOB_COUNTER.labels(status="failed").inc()
         return "failed"
 
-    effective_plan = resolve_effective_plan(client)
+    effective_plan = await resolve_effective_plan_for_session(session, client)
 
     request_body = json.loads(job.request_json)
     include_reasoning = bool(request_body.pop("include_reasoning", False))
