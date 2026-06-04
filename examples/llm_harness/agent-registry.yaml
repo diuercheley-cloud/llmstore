@@ -1,0 +1,108 @@
+# Example Agent Registry for LLM Harness Multi-Agent System
+
+agents:
+  planner:
+    role: "Solution Architect"
+    description: "Responsible for decomposition of complex tasks and high-level planning."
+    tools: ["read_file", "list_dir", "grep", "index_query"]
+    prompt: |
+      You are a Solution Architect. Your goal is to analyze the task and create a detailed plan.
+      Break down the work into logical sub-tasks and identify potential risks.
+
+  developer:
+    role: "Senior Full-Stack Developer"
+    description: "Expert in implementing code changes and fixing bugs."
+    tools: ["read_file", "write_file", "apply_patch", "replace_content", "run_shell"]
+    prompt: |
+      You are a Senior Developer. Implement the changes requested following the plan provided.
+      Write clean, efficient, and well-documented code.
+
+  tester:
+    role: "QA Engineer"
+    description: "Specialized in creating and running tests to ensure quality."
+    tools: ["read_file", "run_shell", "run_tests"]
+    prompt: |
+      You are a QA Engineer. Your goal is to ensure that the implementation works correctly.
+      Create test cases for the new functionality and run regression tests.
+
+  reviewer:
+    role: "Code Reviewer"
+    description: "Reviews code changes for quality, maintainability and style."
+    tools: ["read_file", "grep"]
+    prompt: |
+      You are a Code Reviewer. Analyze the proposed changes and provide constructive feedback.
+      Check for logic errors, style guide violations, and maintainability issues.
+
+  security_reviewer:
+    role: "Security Auditor"
+    description: "Audits code for security vulnerabilities and compliance."
+    tools: ["read_file", "grep", "ast_search"]
+    prompt: |
+      You are a Security Auditor. Focus exclusively on security vulnerabilities.
+      Check for SQL injection, XSS, insecure dependencies, and data leaks.
+
+  autonomous-maintainer:
+    role: "Autonomous System Maintainer"
+    description: "Monitors the system and performs autonomous maintenance tasks."
+    tools: ["read_file", "list_dir", "run_tests", "run_shell"]
+    prompt: |
+      You are an Autonomous System Maintainer. Your goal is to keep the codebase healthy.
+      Monitor for test failures, linting errors, or outdated dependencies and fix them autonomously.
+
+teams:
+  standard_dev:
+    name: "Standard Development Team"
+    description: "A balanced team for regular feature development."
+    topology: "supervisor"
+    members:
+      - agent_id: "planner"
+        role: "planner"
+      - agent_id: "developer"
+        role: "coder"
+      - agent_id: "tester"
+        role: "qa"
+      - agent_id: "reviewer"
+        role: "reviewer"
+
+  secure_dev:
+    name: "Secure Development Team"
+    description: "Team with mandatory security review phase."
+    topology: "linear"
+    members:
+      - agent_id: "planner"
+        role: "planner"
+      - agent_id: "developer"
+        role: "coder"
+      - agent_id: "security_reviewer"
+        role: "security"
+      - agent_id: "tester"
+        role: "qa"
+      - agent_id: "reviewer"
+        role: "reviewer"
+
+roles:
+  planner:
+    name: "Planner"
+    description: "Designs the solution"
+    allowed_tools: ["read_file", "list_dir", "grep", "index_query"]
+  coder:
+    name: "Coder"
+    description: "Implements the code"
+    allowed_tools: ["read_file", "write_file", "apply_patch", "run_shell"]
+  qa:
+    name: "QA"
+    description: "Verifies the code"
+    allowed_tools: ["read_file", "run_tests", "run_shell"]
+  security:
+    name: "Security"
+    description: "Audits for vulnerabilities"
+    allowed_tools: ["read_file", "grep", "ast_search"]
+  reviewer:
+    name: "Reviewer"
+    description: "Ensures quality"
+    allowed_tools: ["read_file", "grep"]
+
+destructive_tools:
+  - "rm_rf"
+  - "format_disk"
+  - "drop_db"

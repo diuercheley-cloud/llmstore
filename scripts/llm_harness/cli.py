@@ -22,6 +22,7 @@ from .cli_args import (
 )
 from .cli_commands import (
     _resolve_code_agent,  # noqa: F401
+    run_autonomous_command,
     run_benchmark_command,
     run_chat_command,
     run_code_batch_command,
@@ -39,6 +40,7 @@ from .cli_commands import (
     run_plugins_command,
     run_security_command,
     run_server_command,
+    run_teams_command,
     run_terminal_command,
 )
 from .config import HarnessConfig, HarnessConfigError
@@ -49,6 +51,7 @@ def main():
     setup_logging()
     parser = argparse.ArgumentParser(description="LLM Harness CLI")
     add_config_args(parser)
+    add_agent_args(parser)
     parser.add_argument("--enable-plugins", action="store_true", help="Enable dynamic plugins")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -342,6 +345,60 @@ def main():
     test_profile_parser = models_subparsers.add_parser("test", help="Test a model profile")
     test_profile_parser.add_argument("profile", help="Name of the model profile to test")
 
+    # Teams command
+    teams_parser = subparsers.add_parser("teams", help="Manage and inspect agent teams")
+    teams_subparsers = teams_parser.add_subparsers(
+        dest="teams_command", help="Teams commands"
+    )
+    teams_subparsers.add_parser("list", help="List all defined teams")
+    inspect_team_parser = teams_subparsers.add_parser("inspect", help="Inspect a specific team")
+    inspect_team_parser.add_argument("team_name", help="Name of the team to inspect")
+    teams_subparsers.add_parser("validate", help="Validate agent registry and teams")
+    
+    run_team_parser = teams_subparsers.add_parser("run", help="Run a specific team task")
+    run_team_parser.add_argument("team_name", help="Name of the team to run")
+    run_team_parser.add_argument("--task", required=True, help="Task description")
+    run_team_parser.add_argument(
+        "--report", choices=["markdown", "json"], default="markdown", help="Report format"
+    )
+    add_provider_args(run_team_parser)
+    add_sandbox_args(run_team_parser)
+
+    inspect_run_parser = teams_subparsers.add_parser(
+        "inspect-run", help="Inspect a specific team run"
+    )
+    inspect_run_parser.add_argument("run_id", help="ID of the run to inspect")
+
+    # Autonomous command
+    auto_parser = subparsers.add_parser("autonomous", help="Manage autonomous agent runs")
+    auto_subparsers = auto_parser.add_subparsers(
+        dest="autonomous_command", help="Autonomous commands"
+    )
+    
+    run_auto_parser = auto_subparsers.add_parser("run", help="Start an autonomous run")
+    run_auto_parser.add_argument("--goal", required=True, help="Autonomous goal")
+    run_auto_parser.add_argument("--budget", type=float, help="Cost budget for the run")
+    run_auto_parser.add_argument("--max-steps", type=int, default=50, help="Maximum steps")
+    run_auto_parser.add_argument("--cooldown", type=int, default=60, help="Seconds between steps")
+    add_provider_args(run_auto_parser)
+    add_sandbox_args(run_auto_parser)
+
+    auto_subparsers.add_parser("list", help="List all autonomous runs")
+    
+    inspect_auto_parser = auto_subparsers.add_parser(
+        "inspect", help="Inspect a specific autonomous run"
+    )
+    inspect_auto_parser.add_argument("run_id", help="ID of the run to inspect")
+    
+    resume_auto_parser = auto_subparsers.add_parser("resume", help="Resume a paused autonomous run")
+    resume_auto_parser.add_argument("run_id", help="ID of the run to resume")
+    
+    pause_auto_parser = auto_subparsers.add_parser("pause", help="Pause an active autonomous run")
+    pause_auto_parser.add_argument("run_id", help="ID of the run to pause")
+    
+    stop_auto_parser = auto_subparsers.add_parser("stop", help="Stop an active autonomous run")
+    stop_auto_parser.add_argument("run_id", help="ID of the run to stop")
+
     args = parser.parse_args()
 
     # Load dynamic plugins after argument parsing
@@ -400,6 +457,10 @@ def main():
             run_ide_command(args)
         elif args.command == "models":
             asyncio.run(run_models_command(args))
+        elif args.command == "teams":
+            asyncio.run(run_teams_command(args))
+        elif args.command == "autonomous":
+            asyncio.run(run_autonomous_command(args))
         else:
             parser.print_help()
     except HarnessConfigError as exc:

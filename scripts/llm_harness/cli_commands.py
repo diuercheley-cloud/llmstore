@@ -65,6 +65,8 @@ def build_config_overrides(args) -> dict[str, Any]:
         "memory_dir": getattr(args, "memory_dir", None),
         "memory_retention_days": getattr(args, "memory_retention_days", None),
         "agent_mode": getattr(args, "agent_mode", None),
+        "team": getattr(args, "team", None),
+        "agent_registry_file": getattr(args, "agent_registry_file", None),
         "approval_mode": getattr(args, "approval_mode", None),
         "approval_default": getattr(args, "approval_default", None),
         "edit_action_before_run": getattr(args, "edit_action_before_run", None),
@@ -1329,3 +1331,228 @@ async def run_models_command(args):
     else:
         print("ERROR: Unknown models subcommand.")
         sys.exit(1)
+
+def _normalize_client_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Ensures numeric arguments are not None to avoid TypeError in providers."""
+    defaults = {
+        "timeout": 30.0,
+        "local_model_timeout": 300.0,
+        "max_retries": 3,
+        "capability_cache_ttl_seconds": 300,
+        "api_key_env": "OPENAI_API_KEY",
+    }
+    for key, default in defaults.items():
+        if kwargs.get(key) is None:
+            kwargs[key] = default
+    return kwargs
+
+
+async def run_teams_command(args):
+    import sys
+
+    from .config import get_config
+    from .mas.registry import AgentRegistry
+
+    cli_overrides = build_config_overrides(args)
+    config = get_config(cli_overrides)
+    
+    registry_file = getattr(args, "agent_registry_file", None) or config.agent_registry_file
+    try:
+        registry = AgentRegistry.load(registry_file)
+    except Exception as e:
+        print(f"ERROR loading registry from {registry_file}: {e}")
+        sys.exit(1)
+
+    if args.teams_command == "list":
+        print(f"Agent Teams (Registry: {registry_file}):")
+        if not registry.teams:
+            print("  No teams defined.")
+        for name, team in registry.teams.items():
+            print(f"  - {name}: {team.description}")
+            print(f"    Topology: {team.topology}")
+            print(f"    Members: {len(team.members)}")
+            
+    elif args.teams_command == "inspect":
+        team_name = args.team_name
+        team = registry.get_team(team_name)
+        if not team:
+            print(f"ERROR: Team '{team_name}' not found.")
+            sys.exit(1)
+            
+        print(f"Team Inspection: {team_name}")
+        print(f"  Description:       {team.description}")
+        print(f"  Topology:          {team.topology}")
+        print(f"  Shared Blackboard: {team.shared_blackboard}")
+        print(f"  Approval Policy:   {team.approval_policy}")
+        print("  Members:")
+        for member in team.members:
+            agent = registry.get_agent(member.agent_id)
+            role_desc = agent.role if agent else "Unknown Agent"
+            print(f"    - Agent: {member.agent_id}")
+            print(f"      Role:  {member.role} ({role_desc})")
+            if member.model_profile:
+                print(f"      Model Profile: {member.model_profile}")
+            if agent and agent.tools:
+                print(f"      Allowed Tools: {', '.join(agent.tools)}")
+
+    elif args.teams_command == "run":
+        team_name = args.team_name
+        task = args.task
+        
+        from .coding_loop import CodingLoop
+        from .mas.team_orchestrator import TeamOrchestrator
+        from .workspace import Workspace
+        import inspect
+        from .agent_client import AgentClient
+        
+        provider_config = build_provider_config(args)
+        provider = provider_config.pop("provider", _resolve_code_agent(args))
+        
+        # Robustly filter arguments based on AgentClient.__init__ signature
+        sig = inspect.signature(AgentClient.__init__)
+        client_kwargs = {
+            k: v for k, v in provider_config.items() 
+            if k in sig.parameters and k != "self"
+        }
+        client_kwargs = _normalize_client_kwargs(client_kwargs)
+        client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
+        
+        async with Workspace(base_path=getattr(args, "workspace", None)) as workspace:
+            # Initialize coding loop
+            loop = CodingLoop(agent_client=client, workspace=workspace)
+            loop.config = config
+            orchestrator = TeamOrchestrator(loop)
+            
+            print(f"Running Team: {team_name}")
+            print(f"Task: {task}")
+            
+            result = await orchestrator.run_team(team_name, task)
+        
+        print("\nTeam Execution Result:")
+        print(f"Success: {result.success}")
+        print(f"Message: {result.message}")
+        
+        if args.report == "markdown":
+            for event in result.events:
+                if event.get("event") == "team.report":
+                    print("\n" + event["report"])
+        elif args.report == "json":
+            print("\nAudit Log (JSON):")
+            for event in result.events:
+                if event.get("event") == "team.blackboard":
+                    print(json.dumps(event["state"], indent=2))
+
+    elif args.teams_command == "inspect-run":
+        # Placeholder for run inspection from persistent memory/logs
+        print(f"Inspecting Run: {args.run_id} - NOT IMPLEMENTED YET")
+
+    elif args.teams_command == "validate":
+        print(f"Validating registry: {registry_file}...")
+        try:
+            registry.validate()
+            print("SUCCESS: Registry is valid.")
+        except ValueError as e:
+            print(f"VALIDATION FAILED:\n{e}")
+            sys.exit(1)
+    else:
+        print(f"ERROR: Unknown teams subcommand: {args.teams_command}")
+        sys.exit(1)
+
+async def run_autonomous_command(args):
+    import sys
+    from .config import get_config
+    from .coding_loop import CodingLoop
+    from .mas.autonomous_runtime import AutonomousAgentRuntime
+    from .workspace import Workspace
+    import inspect
+    from .agent_client import AgentClient
+
+    cli_overrides = build_config_overrides(args)
+    config = get_config(cli_overrides)
+    
+    provider_config = build_provider_config(args)
+    provider = provider_config.pop("provider", _resolve_code_agent(args))
+    
+    # Robustly filter arguments based on AgentClient.__init__ signature
+    sig = inspect.signature(AgentClient.__init__)
+    client_kwargs = {
+        k: v for k, v in provider_config.items() 
+        if k in sig.parameters and k != "self"
+    }
+    client_kwargs = _normalize_client_kwargs(client_kwargs)
+    client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
+    
+    async with Workspace(base_path=getattr(args, "workspace", None)) as workspace:
+        loop = CodingLoop(agent_client=client, workspace=workspace)
+        loop.config = config
+        runtime = AutonomousAgentRuntime(loop)
+
+        if args.autonomous_command == "run":
+            print("Starting Autonomous Run...")
+            print(f"Goal: {args.goal}")
+            
+            result = await runtime.run_autonomous(
+                agent_id=args.agent,
+                team_name=args.team,
+                goal=args.goal,
+                max_steps=getattr(args, "max_steps", 50),
+                budget=getattr(args, "budget", None),
+                cooldown=getattr(args, "cooldown", 60)
+            )
+            
+            print("\nAutonomous Run Finished:")
+            print(f"Success: {result.success}")
+            print(f"Message: {result.message}")
+
+        elif args.autonomous_command == "list":
+            runs = runtime.list_runs()
+            print("Autonomous Runs:")
+            if not runs:
+                print("  No runs found.")
+            for r in runs:
+                task_snippet = r["task"][:50]
+                print(
+                    f"  - ID: {r['run_id']} | Status: {r['status']} | "
+                    f"Step: {r['current_step']} | Task: {task_snippet}..."
+                )
+
+        elif args.autonomous_command == "inspect":
+            from .checkpoint import CheckpointManager
+            cm = CheckpointManager(config.checkpoint_dir)
+            state = cm.load_checkpoint(args.run_id)
+            if not state:
+                print(f"ERROR: Run {args.run_id} not found.")
+                sys.exit(1)
+                
+            print(f"Autonomous Run Inspection: {args.run_id}")
+            print(f"  Status:       {state['status']}")
+            print(f"  Agent:        {state.get('agent_id')}")
+            print(f"  Team:         {state.get('team_name')}")
+            print(f"  Goal:         {state['task']}")
+            print(f"  Current Step: {state['current_step']}")
+            print(f"  Total Cost:   {state.get('total_cost', 0.0):.4f}")
+            print(f"  Total Tokens: {state.get('total_tokens', 0)}")
+            print(f"  Last Update:  {state['timestamp']}")
+
+        elif args.autonomous_command == "resume":
+            print(f"Resuming Autonomous Run: {args.run_id}")
+            result = await runtime.run_autonomous(resume_run_id=args.run_id)
+            print("\nAutonomous Run Finished:")
+            print(f"Success: {result.success}")
+            print(f"Message: {result.message}")
+
+        elif args.autonomous_command in ["pause", "stop"]:
+            # These would need a persistent daemon or shared state to affect a running process.
+            # For now we'll just note that they affect future steps if the process is still alive.
+            print(
+                f"Command '{args.autonomous_command}' sent to run {args.run_id} "
+                "(Note: Only affects active in-memory runs)"
+            )
+            if args.autonomous_command == "pause":
+                runtime.pause_run(args.run_id)
+            else:
+                runtime.stop_run(args.run_id)
+
+        else:
+            print(f"ERROR: Unknown autonomous subcommand: {args.autonomous_command}")
+            sys.exit(1)

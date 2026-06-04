@@ -94,8 +94,12 @@ class HarnessConfig(BaseSettings):
     memory: Literal["disabled", "local"] = "local"
     memory_dir: str = ".llm_harness_memory"
     memory_retention_days: int = 30
-    agent_mode: Literal["single", "planner-coder-reviewer", "supervisor"] = "single"
+    agent_mode: Literal[
+        "single", "team", "supervisor", "autonomous", "planner-coder-reviewer"
+    ] = "single"
     agent_registry_file: str = "config/agent-registry.yaml"
+    teams: dict[str, Any] = Field(default_factory=dict)
+    default_team: str | None = None
     approval_mode: Literal["auto", "deny", "interactive", "non_interactive"] = "auto"
     approval_default: Literal["allow", "deny"] = "deny"
     edit_action_before_run: bool = False

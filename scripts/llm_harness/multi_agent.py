@@ -4,10 +4,10 @@ import re
 from typing import Any
 
 from .coding_loop import CodingLoop
-from .models import ExecutionResult
-from .model_router import ModelRouter
 from .mas.blackboard import Blackboard
-from .mas.registry import AgentRegistry, AgentDefinition
+from .mas.registry import AgentRegistry
+from .model_router import ModelRouter
+from .models import ExecutionResult
 
 logger = logging.getLogger(__name__)
 

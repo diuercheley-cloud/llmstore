@@ -217,6 +217,8 @@ class CodingLoop:
         self._run_started_perf = 0.0
 
         self.current_agent: str | None = None
+        self.current_team: str | None = None
+        self.blackboard: Any = None
         self._registry_cache = None
 
         # LLM API retry config
@@ -1083,17 +1085,68 @@ class CodingLoop:
         # MAS Tool Gating
         if self.current_agent:
             registry = self._get_registry()
-            if registry and not registry.is_tool_allowed(self.current_agent, action_type):
-                error_msg = f"Tool '{action_type}' is not allowed for agent '{self.current_agent}'"
-                logger.warning(error_msg)
-                self._emit_event(
-                    "agent.tool_blocked",
-                    action_type=action_type,
-                    status="blocked",
-                    message=error_msg,
-                    metadata={"agent": self.current_agent}
-                )
-                raise PermissionError(error_msg)
+            if registry:
+                allowed = False
+                if self.current_team:
+                    allowed = registry.is_tool_allowed_for_team_member(
+                        self.current_team, self.current_agent, action_type
+                    )
+                else:
+                    allowed = registry.is_tool_allowed(self.current_agent, action_type)
+                
+                if not allowed:
+                    error_msg = (
+                        f"Tool '{action_type}' is not allowed for agent '{self.current_agent}'"
+                    )
+                    if self.current_team:
+                        error_msg += f" in team '{self.current_team}'"
+                    
+                    logger.warning(error_msg)
+                    if self.blackboard:
+                        self.blackboard.log_policy_block(
+                            self.current_agent, action_type, "Role/Agent tool restriction"
+                        )
+                    
+                    self._emit_event(
+                        "agent.tool_blocked",
+                        action_type=action_type,
+                        status="blocked",
+                        message=error_msg,
+                        metadata={"agent": self.current_agent, "team": self.current_team}
+                    )
+                    raise PermissionError(error_msg)
+                
+                # Side-effect based governance
+                risk_level = registry.get_tool_risk_level(action_type)
+                if risk_level == "destructive":
+                    error_msg = (
+                        f"Hard-deny: Tool '{action_type}' is destructive and strictly forbidden."
+                    )
+                    logger.error(error_msg)
+                    if self.blackboard:
+                        self.blackboard.log_policy_block(
+                            self.current_agent, action_type, "Hard-deny destructive"
+                        )
+                    raise PermissionError(error_msg)
+                
+                if risk_level == "network":
+                    error_msg = (
+                        f"Policy-deny: Network tools like '{action_type}' are blocked by default."
+                    )
+                    logger.warning(error_msg)
+                    if self.blackboard:
+                        self.blackboard.log_policy_block(
+                            self.current_agent, action_type, "Network deny-by-default"
+                        )
+                    raise PermissionError(error_msg)
+
+        if self.blackboard:
+             # arguments can be large, we'll see if we want to limit it here
+             self.blackboard._add_audit_event("tool_attempt", {
+                 "agent_id": self.current_agent,
+                 "tool_name": action_type,
+                 "arguments": {k: v for k, v in action.items() if k not in {"type", "action_type"}}
+             })
 
         if self._run_started_perf > 0 and self.time_to_first_action_ms is None:
             elapsed = time.perf_counter() - self._run_started_perf
@@ -1119,6 +1172,14 @@ class CodingLoop:
             raise PermissionError(f"Action {action.get('action_type')} denied by user approval")
         action = approved_action
 
+        result = await self._execute_tool_dispatch(action)
+        if self.blackboard:
+            self.blackboard.log_tool_call(
+                self.current_agent, action.get("action_type"), action, result
+            )
+        return result
+
+    async def _execute_tool_dispatch(self, action: dict[str, Any]) -> Any:
         action_type = action.get("action_type")
         if action_type == "plan":
             return await self.plan(action.get("message", ""), action.get("reason", ""))

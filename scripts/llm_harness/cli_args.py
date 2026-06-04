@@ -219,9 +219,17 @@ def add_agent_args(parser: argparse.ArgumentParser):
     """Arguments related to agent orchestration."""
     parser.add_argument(
         "--agent-mode",
-        choices=["single", "planner-coder-reviewer", "supervisor"],
+        choices=["single", "team", "supervisor", "autonomous", "planner-coder-reviewer"],
         default="single",
         help="Agent orchestration mode",
+    )
+    parser.add_argument(
+        "--team",
+        help="Team name to use when agent-mode is 'team', 'supervisor' or 'autonomous'",
+    )
+    parser.add_argument(
+        "--agent-registry-file",
+        help="Path to agent registry YAML file",
     )
 
 def add_approval_args(parser: argparse.ArgumentParser):

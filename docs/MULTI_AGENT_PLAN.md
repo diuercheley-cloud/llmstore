@@ -4,75 +4,86 @@ Este documento descreve o estado atual e o plano para transformar o LLM Harness 
 
 ## 1. Estado Atual
 
-Atualmente, o sistema possui uma implementação básica de multi-agente (`planner-coder-reviewer`):
-- **Fluxo Fixo**: Segue uma sequência linear de Planejamento -> Execução (Coder) -> Revisão.
-- **Memória Compartilhada**: Utiliza um `Blackboard` para manter o estado da tarefa, plano e mensagens entre agentes.
-- **Roteamento de Modelos**: Permite usar diferentes perfis de modelo para diferentes tipos de tarefa (`planner`, `coder`, `reviewer`).
-- **Limitações**:
-    - Não há um registro formal de agentes com personalidades e ferramentas específicas.
-    - O orquestrador é rígido e não permite decisões dinâmicas sobre qual agente chamar em seguida.
-    - Todos os agentes têm acesso às mesmas ferramentas (através do Coder).
+O sistema possui uma infraestrutura completa para times de agentes e agentes autônomos:
+- **Agent Teams**: Definição declarativa de times, membros, papéis e topologias (Linear, Supervisor).
+- **Blackboard Avançado**: Memória compartilhada com auditoria completa (Timeline), registro de decisões e artefatos.
+- **Governança por Papel**: Restrição de ferramentas baseada em `roles` e avaliação de risco por side-effect.
+- **Autonomous Runtime**: Ciclo autônomo de longa duração com suporte a checkpoints, budgets e triggers.
 
-## 2. O que falta para ser um Sistema Multi-Agente Completo
+## 2. O que foi implementado
 
-1.  **Registro de Agentes (Agent Registry)**: Definição formal de papéis, prompts de sistema, ferramentas permitidas e modelos preferenciais para cada agente.
-2.  **Orquestração Dinâmica (Supervisor)**: Um agente "Supervisor" que analisa o estado do Blackboard e decide dinamicamente qual agente especializado deve agir em seguida.
-3.  **Gating de Ferramentas por Agente**: Restringir quais ferramentas cada agente pode usar (ex: um Testador não deve poder deletar arquivos de código).
-4.  **Colaboração Estruturada**: Protocolos de comunicação mais ricos entre agentes (ex: requisição de revisão, pedido de ajuda, delegação de sub-tarefas).
-5.  **Hierarquia de Metas**: Capacidade de decompor tarefas complexas em sub-metas rastreáveis no Blackboard.
+1.  **Registro de Agentes (Agent Registry)**: Definição formal de papéis, prompts, ferramentas e modelos.
+2.  **TeamOrchestrator**: Gerenciamento de colaboração entre múltiplos agentes especializados.
+3.  **AutonomousAgentRuntime**: Execução autônoma com controle de ciclo (Observe-Decide-Act-Validate).
+4.  **Enforcement de Políticas**: Bloqueio de ferramentas inseguras ou não autorizadas.
+5.  **Audit Trail**: Timeline detalhada de todas as interações e chamadas de ferramentas.
 
 ## 3. Plano de Ação
 
-### Fase 1: Infraestrutura e Definições
-- [ ] **Formalizar `config/agent-registry.yaml`**:
-    - Adicionar definições de agentes: `architect`, `developer`, `tester`, `security_reviewer`, `doc_writer`.
-    - Especificar `system_prompt`, `tools_allowed` e `model_profile` para cada um.
-- [ ] **Expandir `HarnessConfig`**:
-    - Implementar o carregamento e validação dessas novas definições de agentes.
+### Fase 1: Infraestrutura e Definições (CONCLUÍDO)
+- [x] Formalizar `config/agent-registry.yaml`.
+- [x] Expandir `HarnessConfig`.
+- [x] CLI de Times (`llm-harness teams list/inspect/validate`).
 
-### Fase 2: Orquestrador Inteligente
-- [ ] **Implementar `SupervisorOrchestrator`**:
-    - Criar um novo modo de execução (`--agent-mode supervisor`).
-    - O Supervisor usa o histórico do Blackboard para escolher o próximo agente do registro.
-- [ ] **Aprimorar o `Blackboard`**:
-    - Adicionar suporte para estados de sub-tarefas e árvore de decisões.
-    - Melhorar a sumarização para fornecer contexto otimizado para o Supervisor.
+### Fase 2: Orquestrador de Times (CONCLUÍDO)
+- [x] Implementar `TeamOrchestrator` com topologias Linear e Supervisor.
+- [x] Blackboard com auditoria e timeline.
+- [x] Governança por papel e side-effects.
 
-### Fase 3: Especialização e Segurança
-- [ ] **Implementar Agentes Especializados**:
-    - **Architect**: Focado em design e planejamento de alto nível.
-    - **Developer**: Focado em implementação e refatoração.
-    - **Tester**: Especializado em criar e executar suítes de teste.
-    - **Security Reviewer**: Focado em análise de vulnerabilidades e conformidade.
-- [ ] **Controle de Ferramentas (RBAC para Agentes)**:
-    - Integrar o `PolicyEngine` com o registro de agentes para bloquear ferramentas não autorizadas por papel.
+### Fase 3: Agentes Autônomos (CONCLUÍDO)
+- [x] Implementar `AutonomousAgentRuntime`.
+- [x] Suporte a Checkpoints (Pause/Resume).
+- [x] Governança de Budget e Cooldown.
+- [x] CLI de Autonomia (`llm-harness autonomous run/list/inspect/pause/resume`).
 
-### Fase 4: Validação e Demonstração
+### Fase 4: Especialização e Evals (EM ANDAMENTO)
+- [ ] Implementar Agentes Especializados (Architect, Developer, Tester, Security).
 - [ ] **Criar Suite de Avaliação Multi-Agente**:
-    - Cenários complexos que exijam a colaboração de pelo menos 3 agentes diferentes.
+    - Colaboração entre 3+ agentes.
+    - Conflito de decisão entre papéis.
+    - Recuperação de falha autônoma.
 - [ ] **Dashboard de Orquestração**:
-    - Gerar visualizações (Markdown/JSON) que mostrem claramente a "conversa" e as transições entre agentes.
+    - Visualizações Markdown/JSON ricas.
 
-## 4. Configuração Recomendada (Exemplo)
+## 4. Configuração de Agente Autônomo (Exemplo)
 
 ```yaml
-# config/agent-registry.yaml (Proposto)
+# config/agent-registry.yaml
 agents:
-  architect:
-    role: "System Architect"
+  maintainer:
+    role: "System Maintainer"
     model_profile: "high-reasoning"
-    tools: ["read_file", "list_dir", "index_query"]
-    prompt: "Você é um arquiteto de sistemas. Planeje a solução considerando escalabilidade e padrões de projeto..."
-  
-  developer:
-    role: "Senior Developer"
-    model_profile: "coding-optimized"
-    tools: ["read_file", "write_file", "apply_patch", "run_shell"]
-    prompt: "Você é um desenvolvedor sênior. Implemente as mudanças planejadas seguindo as melhores práticas..."
+    tools: ["read_file", "list_dir", "run_tests", "run_shell"]
+    prompt: "Você é um mantenedor autônomo. Monitore o código e corrija erros..."
 
-  tester:
-    role: "QA Engineer"
-    model_profile: "balanced"
-    tools: ["read_file", "run_shell", "run_tests"]
-    prompt: "Você é um engenheiro de QA. Garanta que o código funcione e não tenha regressões..."
+autonomous_settings:
+  max_steps: 100
+  budget_brl: 5.00
+  cooldown_seconds: 300
+  checkpoint_every_step: true
 ```
+
+## 5. CLI de Autonomia
+
+```bash
+# Iniciar uma meta autônoma
+llm-harness autonomous run --agent maintainer --goal "Corrigir todos os warnings do ruff no diretório scripts/" --budget 2.00
+
+# Listar execuções
+llm-harness autonomous list
+
+# Inspecionar uma execução pausada
+llm-harness autonomous inspect auto-123456789
+
+# Retomar execução
+llm-harness autonomous resume auto-123456789
+```
+
+## 6. Métricas e KPIs
+
+O sistema rastreia:
+- `task_completion_rate`: Sucesso das metas autônomas.
+- `policy_block_rate`: Frequência de ferramentas bloqueadas por governança.
+- `token_cost_per_team`: Custo total da colaboração.
+- `time_to_resolution_ms`: Tempo total para atingir a meta.
+- `checkpoint_count`: Quantidade de estados salvos.
