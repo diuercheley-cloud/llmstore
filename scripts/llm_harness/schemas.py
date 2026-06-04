@@ -21,6 +21,10 @@ class ReplaceContentPayload(BaseModel):
     old_content: str
     new_content: str
 
+class WriteFilePayload(BaseModel):
+    path: str
+    content: str
+
 class ApplyPatchPayload(BaseModel):
     diff: str
     dry_run: bool = False
@@ -73,6 +77,10 @@ class ReplaceContentAction(BaseAction):
     type: Literal["replace_content"]
     payload: ReplaceContentPayload
 
+class WriteFileAction(BaseAction):
+    type: Literal["write_file"]
+    payload: WriteFilePayload
+
 class ApplyPatchAction(BaseAction):
     type: Literal["apply_patch"]
     payload: ApplyPatchPayload
@@ -106,6 +114,7 @@ AgentAction = Union[
     ReadFileAction,
     ListFilesAction,
     ReplaceContentAction,
+    WriteFileAction,
     ApplyPatchAction,
     RunShellAction,
     RunTestsAction,

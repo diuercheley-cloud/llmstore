@@ -92,7 +92,8 @@ class PricingManager:
         return None, model
 
     def calculate_cost(
-        self, model: str, prompt_tokens: int, completion_tokens: int
+        self, model: str, prompt_tokens: int, completion_tokens: int,
+        reasoning_tokens: int | None = None,
     ) -> PricingResult | None:
         lookup_model = self._model_override or model
         model_pricing, matched_key = self._lookup(lookup_model)
@@ -110,6 +111,13 @@ class PricingManager:
 
         prompt_cost = (prompt_tokens / 1_000_000) * p_price
         completion_cost = (completion_tokens / 1_000_000) * c_price
+
+        if reasoning_tokens is not None:
+            effective_completion = completion_tokens - reasoning_tokens
+            if effective_completion < 0:
+                effective_completion = 0
+            prompt_cost = ((prompt_tokens + reasoning_tokens) / 1_000_000) * p_price
+            completion_cost = (effective_completion / 1_000_000) * c_price
 
         return PricingResult(
             cost=round(prompt_cost + completion_cost, 6),

@@ -23,6 +23,11 @@ def test_markdown_report_rendering(tmp_path):
         command_duration_ms=2000,
         agent_latency_ms=8000,
         retry_count=2,
+        metrics={
+            "time_to_first_action_ms": 1200,
+            "time_to_final_ms": 4500,
+            "post_final_llm_calls_blocked": 0,
+        },
         events=[
             {
                 "event": "action.completed",
@@ -45,6 +50,10 @@ def test_markdown_report_rendering(tmp_path):
     assert "run_shell" in report
     assert "- rm -rf /" in report
     assert "- **Retry Count**: 2" in report
+    assert "Time To First Action" in report
+    assert "1200ms" in report
+    assert "Time To Final" in report
+    assert "4500ms" in report
 
 def test_json_summary_unchanged(tmp_path):
     reporter = Reporter(output_dir=str(tmp_path))

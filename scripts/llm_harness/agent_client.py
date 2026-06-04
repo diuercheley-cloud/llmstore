@@ -20,11 +20,18 @@ class AgentClient:
         model: str = "",
         api_key_env: str = "OPENAI_API_KEY",
         timeout: float = 30.0,
+        local_model_timeout: float = 300.0,
+        auto_increase_timeout: bool = False,
         max_retries: int = 3,
         stream: bool = False,
+        stream_local_default: bool = True,
+        verbose_stream: bool = False,
+        tool_calling: str = "auto",
+        supports_tool_calling: bool = False,
         cache: LocalCache | None = None,
         transport=None,
         multimodal: bool = False,
+        event_callback=None,
     ):
         self.agent_id = agent_id
         self.base_url = base_url.rstrip("/")
@@ -32,8 +39,14 @@ class AgentClient:
         self.model = model
         self.api_key_env = api_key_env
         self.timeout = timeout
+        self.local_model_timeout = local_model_timeout
+        self.auto_increase_timeout = auto_increase_timeout
         self.max_retries = max_retries
         self.stream = stream
+        self.stream_local_default = stream_local_default
+        self.verbose_stream = verbose_stream
+        self.tool_calling = tool_calling
+        self.supports_tool_calling = supports_tool_calling
         self.cache = cache
         self.repo_snapshot_hash = "no-repo"
         self.policy_hash = "no-policy"
@@ -45,10 +58,17 @@ class AgentClient:
             "model": model,
             "api_key_env": api_key_env,
             "timeout": timeout,
+            "local_model_timeout": local_model_timeout,
+            "auto_increase_timeout": auto_increase_timeout,
             "max_retries": max_retries,
             "stream": stream,
+            "stream_local_default": stream_local_default,
+            "verbose_stream": verbose_stream,
+            "tool_calling": tool_calling,
+            "supports_tool_calling": supports_tool_calling,
             "transport": transport,
             "multimodal": multimodal,
+            "event_callback": event_callback,
         }
         # Throws ValueError if provider is unknown
         self._provider_inst = create_code_agent(provider, config)

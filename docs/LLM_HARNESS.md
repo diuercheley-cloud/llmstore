@@ -187,7 +187,7 @@ llm-harness code --task "Test task" --provider openai-compatible --model gpt-4o-
 Use `local-openai-compatible` for LM Studio and other local OpenAI-compatible servers.
 
 ```bash
-export LLM_HARNESS_LOCAL_BASE_URL="http://192.168.3.120:1234/v1"
+export LLM_HARNESS_LOCAL_BASE_URL="http://127.0.0.1:1234/v1"
 PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli health \
   --provider local-openai-compatible \
   --base-url "$LLM_HARNESS_LOCAL_BASE_URL"
@@ -195,6 +195,11 @@ PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli health \
 PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
   --provider local-openai-compatible \
   --base-url "$LLM_HARNESS_LOCAL_BASE_URL" \
+  --model qwen/qwen3.6-35b-a3b \
+  --local-model-timeout 300 \
+  --stream \
+  --tool-calling auto \
+  --approval-policy interactive \
   --task "Validate the harness with LM Studio"
 ```
 
@@ -203,7 +208,43 @@ Behavior for local providers:
 - `response_format=json_object` is disabled for LM Studio-style endpoints.
 - If `--model` is omitted, the harness reads `/v1/models` and auto-selects the first model.
 - If `--model` is provided, the harness validates it against the model catalog before execution.
+- Streaming is enabled by default when the base URL points to `localhost`, `127.0.0.1`, or `host.docker.internal`.
+- Local providers default to a `300s` request timeout and can retry once with a larger timeout via `--auto-increase-timeout`.
+- `--tool-calling auto` prefers native OpenAI-compatible `tool_calls`; `json` keeps the legacy action JSON behavior.
+- `--approval-policy interactive` shows the action type, reason, summarized payload, policy decision, command or diff preview, and allows `approve`, `deny`, `edit`, or `abort`.
+- `edit` opens the action JSON in `$VISUAL` or `$EDITOR` instead of forcing one-line terminal input.
 - `health` reports `available_models`, `selected_model`, and `supports_response_format`.
+
+### Using LM Studio / local OpenAI-compatible models
+
+Recommended command:
+
+```bash
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
+  --provider local-openai-compatible \
+  --base-url http://127.0.0.1:1234/v1 \
+  --model qwen/qwen3.6-35b-a3b \
+  --local-model-timeout 300 \
+  --auto-increase-timeout \
+  --stream \
+  --tool-calling native \
+  --approval-policy interactive \
+  --task "Create SMOKE_TEST.md to confirm write_file works"
+```
+
+Smoke test expectations:
+- The model can create `SMOKE_TEST.md` through `write_file`.
+- The harness accepts native `tool_calls` when the local server supports them.
+- If the local server returns plain conversational text plus JSON, the harness extracts the first schema-valid action JSON.
+- If the local server rejects multi-turn history or `tool_calls` with `HTTP 400`, the harness retries once with simplified text-only history, disables streaming for the retry, and omits `tools`.
+- After a `final` action executes, the harness terminates the run immediately and blocks any extra LLM calls.
+- Reports include `time_to_first_action_ms`, `time_to_final_ms`, and `post_final_llm_calls_blocked` for local debugging.
+
+If LM Studio is not running, skip the live smoke test and use:
+
+```bash
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli health --local-only
+```
 
 ### Anthropic Setup
 

@@ -38,8 +38,14 @@ def build_config_overrides(args) -> dict[str, Any]:
         "self_heal": getattr(args, "self_heal", None),
         "api_key_env": getattr(args, "api_key_env", None),
         "timeout": getattr(args, "timeout", None),
+        "local_model_timeout": getattr(args, "local_model_timeout", None),
+        "auto_increase_timeout": getattr(args, "auto_increase_timeout", None),
         "max_retries": getattr(args, "max_retries", None),
         "stream": getattr(args, "stream", None),
+        "stream_local_default": getattr(args, "stream_local_default", None),
+        "verbose_stream": getattr(args, "verbose_stream", None),
+        "tool_calling": getattr(args, "tool_calling", None),
+        "supports_tool_calling": getattr(args, "supports_tool_calling", None),
         "workspace_mount_path": getattr(args, "workspace_mount_path", None),
         "temp_base_dir": getattr(args, "temp_base_dir", None),
         "sandbox_network": getattr(args, "sandbox_network", None),
@@ -58,9 +64,11 @@ def build_config_overrides(args) -> dict[str, Any]:
         "agent_mode": getattr(args, "agent_mode", None),
         "approval_mode": getattr(args, "approval_mode", None),
         "approval_default": getattr(args, "approval_default", None),
+        "edit_action_before_run": getattr(args, "edit_action_before_run", None),
         "checkpoint_dir": getattr(args, "checkpoint_dir", None),
         "checkpoint_every_step": getattr(args, "checkpoint_every_step", None),
         "multimodal": getattr(args, "multimodal", None),
+        "max_tokens": getattr(args, "max_tokens", None),
     }
 
 def build_provider_config(args) -> dict[str, Any]:
@@ -70,9 +78,16 @@ def build_provider_config(args) -> dict[str, Any]:
         "base_url": getattr(args, "base_url", None),
         "api_key_env": getattr(args, "api_key_env", None),
         "timeout": getattr(args, "timeout", None),
+        "local_model_timeout": getattr(args, "local_model_timeout", None),
+        "auto_increase_timeout": getattr(args, "auto_increase_timeout", None),
         "max_retries": getattr(args, "max_retries", None),
         "stream": getattr(args, "stream", None),
+        "stream_local_default": getattr(args, "stream_local_default", None),
+        "verbose_stream": getattr(args, "verbose_stream", None),
+        "tool_calling": getattr(args, "tool_calling", None),
+        "supports_tool_calling": getattr(args, "supports_tool_calling", None),
         "multimodal": getattr(args, "multimodal", None),
+        "max_tokens": getattr(args, "max_tokens", None),
     }
 
 def build_sandbox_config(args) -> dict[str, Any]:
@@ -269,8 +284,14 @@ async def run_health_command(args):
                 "model": getattr(args, "model", None),
                 "api_key_env": getattr(args, "api_key_env", None),
                 "timeout": getattr(args, "timeout", None),
+                "local_model_timeout": getattr(args, "local_model_timeout", None),
+                "auto_increase_timeout": getattr(args, "auto_increase_timeout", None),
                 "max_retries": getattr(args, "max_retries", None),
                 "stream": getattr(args, "stream", None),
+                "stream_local_default": getattr(args, "stream_local_default", None),
+                "verbose_stream": getattr(args, "verbose_stream", None),
+                "tool_calling": getattr(args, "tool_calling", None),
+                "supports_tool_calling": getattr(args, "supports_tool_calling", None),
             }
         )
         provider = _resolve_code_agent(args)
@@ -284,6 +305,13 @@ async def run_health_command(args):
             api_key_env=config.api_key_env,
             timeout=config.timeout,
             max_retries=config.max_retries,
+            local_model_timeout=config.local_model_timeout,
+            auto_increase_timeout=config.auto_increase_timeout,
+            stream=config.stream,
+            stream_local_default=config.stream_local_default,
+            verbose_stream=config.verbose_stream,
+            tool_calling=config.tool_calling,
+            supports_tool_calling=config.supports_tool_calling,
         )
         remote = await HealthCheck.check_provider(client)
         print(f"Remote Health: {remote['status']}")

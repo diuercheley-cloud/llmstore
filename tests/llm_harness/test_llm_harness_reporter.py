@@ -13,6 +13,11 @@ def test_reporter_generation(tmp_path):
         duration=1.5,
         trace_id="trace-123",
         trace_hash="abc123",
+        metrics={
+            "time_to_first_action_ms": 120,
+            "time_to_final_ms": 340,
+            "post_final_llm_calls_blocked": 0,
+        },
         events=[{"event": "run.completed"}],
     )
     filename = reporter.generate_summary(result, trace=[{"step": 1, "output": "ok"}])
@@ -22,6 +27,8 @@ def test_reporter_generation(tmp_path):
         assert '"events"' in data
         assert '"trace_id": "trace-123"' in data
         assert '"trace_hash": "abc123"' in data
+        assert '"time_to_first_action_ms": 120' in data
+        assert '"time_to_final_ms": 340' in data
 
 
 def test_reporter_stub_warning(tmp_path):

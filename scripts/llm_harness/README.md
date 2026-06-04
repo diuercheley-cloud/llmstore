@@ -226,17 +226,58 @@ PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
 For LM Studio or other local OpenAI-compatible servers, prefer `local-openai-compatible`:
 
 ```bash
-export LLM_BASE_URL=http://192.168.3.120:1234/v1
+export LLM_BASE_URL=http://127.0.0.1:1234/v1
 PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
   --task "Validate the harness with LM Studio" \
   --provider local-openai-compatible \
-  --base-url "$LLM_BASE_URL"
+  --base-url "$LLM_BASE_URL" \
+  --model qwen/qwen3.6-35b-a3b \
+  --local-model-timeout 300 \
+  --auto-increase-timeout \
+  --stream \
+  --tool-calling auto
 ```
 
 Behavior:
 - The local provider does not require `OPENAI_API_KEY`.
 - If `--model` is omitted, the harness auto-selects the first model from `/v1/models`.
 - The local provider avoids the `response_format=json_object` fallback loop that some local servers reject.
+- Streaming is enabled by default for local endpoints unless `--no-stream` is passed.
+- Native `tool_calls` can be forced with `--tool-calling native`; `--tool-calling json` keeps the legacy action-in-content path.
+- Remote OpenAI-compatible endpoints can opt into native tools in `auto` mode with `--supports-tool-calling`.
+- Read timeouts suggest `300s` and can retry once with the increased timeout when `--auto-increase-timeout` is enabled.
+- If a local provider returns `HTTP 400` on a multi-turn follow-up, the harness retries once with simplified text-only history, disables streaming for that retry, and omits `tools`.
+- After `final` executes, the run terminates immediately instead of issuing another model call.
+- Generated reports include `time_to_first_action_ms`, `time_to_final_ms`, and `post_final_llm_calls_blocked`.
+
+### Using LM Studio / local OpenAI-compatible models
+
+Recommended interactive smoke test:
+
+```bash
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
+  --provider local-openai-compatible \
+  --base-url http://127.0.0.1:1234/v1 \
+  --model qwen/qwen3.6-35b-a3b \
+  --local-model-timeout 300 \
+  --auto-increase-timeout \
+  --stream \
+  --tool-calling native \
+  --approval-policy interactive \
+  --task "Create SMOKE_TEST.md to validate write_file and then finish"
+```
+
+Expected smoke-test behavior:
+- `SMOKE_TEST.md` is created.
+- `write_file` is validated through the normal policy path.
+- If LM Studio streams partial deltas, the harness waits for complete JSON or complete `tool_calls` before executing anything.
+- If LM Studio rejects native follow-up history, the harness falls back once to a JSON-compatible retry without exposing secrets in logs or reports.
+
+If LM Studio is unavailable, skip the live smoke test and run only:
+
+```bash
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli health --local-only
+```
 
 ### Run with `.harness.yaml`
 

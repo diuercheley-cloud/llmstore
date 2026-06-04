@@ -68,6 +68,7 @@ class CodingLoop:
         memory_retention_days: int = 30,
         approval_mode: str = "auto",
         approval_default: str = "deny",
+        edit_action_before_run: bool = False,
         checkpoint_dir: str = ".llm_harness_checkpoints",
         checkpoint_every_step: bool = False,
     ):
@@ -107,7 +108,8 @@ class CodingLoop:
 
         self.approval_provider = ApprovalProvider(
             mode=approval_mode,
-            default_policy=approval_default
+            default_policy=approval_default,
+            edit_action_before_run=edit_action_before_run,
         )
 
         self.checkpoint_mgr = CheckpointManager(checkpoint_dir=checkpoint_dir)
@@ -200,6 +202,13 @@ class CodingLoop:
         self.llm_calls = 0
         self.changed_files: set[str] = set()
         self.model: str = ""
+        self.timeout_adjusted = False
+        self.final_executed = False
+        self.final_message: str | None = None
+        self.time_to_first_action_ms: int | None = None
+        self.time_to_final_ms: int | None = None
+        self.post_final_llm_calls_blocked = 0
+        self._run_started_perf = 0.0
 
         # LLM API retry config
         self._llm_max_retries = 3
@@ -216,6 +225,12 @@ class CodingLoop:
             "llm_calls": self.llm_calls,
             "step": self._event_step,
             "changed_files": list(self.changed_files),
+            "timeout_adjusted": self.timeout_adjusted,
+            "final_executed": self.final_executed,
+            "final_message": self.final_message,
+            "time_to_first_action_ms": self.time_to_first_action_ms,
+            "time_to_final_ms": self.time_to_final_ms,
+            "post_final_llm_calls_blocked": self.post_final_llm_calls_blocked,
         }
 
     def load_state(self, state: dict[str, Any]):
@@ -228,6 +243,12 @@ class CodingLoop:
         self.llm_calls = state.get("llm_calls", 0)
         self._event_step = state.get("step", 0)
         self.changed_files = set(state.get("changed_files", []))
+        self.timeout_adjusted = state.get("timeout_adjusted", False)
+        self.final_executed = state.get("final_executed", False)
+        self.final_message = state.get("final_message")
+        self.time_to_first_action_ms = state.get("time_to_first_action_ms")
+        self.time_to_final_ms = state.get("time_to_final_ms")
+        self.post_final_llm_calls_blocked = state.get("post_final_llm_calls_blocked", 0)
 
     async def _summarize_content(self, content: str) -> str:
         """
@@ -315,6 +336,15 @@ class CodingLoop:
             self.run_span_id = None
 
         trace_hash = self._hash_payload(self.trace) if self.trace else None
+        metrics = self.metrics.to_dict()
+        metrics.update(
+            {
+                "time_to_first_action_ms": self.time_to_first_action_ms,
+                "time_to_final_ms": self.time_to_final_ms,
+                "post_final_llm_calls_blocked": self.post_final_llm_calls_blocked,
+                "final_executed": self.final_executed,
+            }
+        )
         return ExecutionResult(
             success=success,
             message=message,
@@ -335,7 +365,8 @@ class CodingLoop:
             estimated_cost=getattr(self, "estimated_cost", 0.0),
             cache_hits=getattr(self, "cache_hits", 0),
             cache_misses=getattr(self, "cache_misses", 0),
-            metrics=self.metrics.to_dict(),
+            timeout_adjusted=self.timeout_adjusted,
+            metrics=metrics,
             events=list(self.events),
             trace=list(self.trace),
         )
@@ -619,6 +650,110 @@ class CodingLoop:
         )
         return result
 
+    async def list_files(self, path: str = ".") -> list[str]:
+        decision = self.policy_engine.evaluate_file_path(path)
+        step = self._event_step + 1
+        if not decision.allowed:
+            self._emit_policy_blocked(
+                "list_files",
+                decision.reason or "Path blocked by policy",
+                metadata={"path": path},
+            )
+            self._record_trace(
+                "list_files",
+                step,
+                {"path": path},
+                {"blocked": True, "reason": decision.reason},
+                decision,
+                {"blocked": True, "reason": decision.reason},
+            )
+            raise PermissionError(decision.reason or "Path blocked by policy")
+        result = await self._run_action(
+            "list_files", self.file_tools.list_files, path, metadata={"path": path}
+        )
+        self._record_trace(
+            "list_files",
+            step,
+            {"path": path},
+            {"files": result},
+            decision,
+            {"files": result},
+        )
+        return result
+
+    async def write_file(self, path: str, content: str) -> str:
+        decision = self.policy_engine.evaluate_file_path(path)
+        step = self._event_step + 1
+        if not decision.allowed:
+            self._emit_policy_blocked(
+                "write_file",
+                decision.reason or "Path blocked by policy",
+                metadata={"path": path},
+            )
+            self._record_trace(
+                "write_file",
+                step,
+                {"path": path},
+                {"blocked": True, "reason": decision.reason},
+                decision,
+                {"blocked": True, "reason": decision.reason},
+            )
+            raise PermissionError(decision.reason or "Path blocked by policy")
+        
+        await self._run_action(
+            "write_file", self.file_tools.write_file, path, content, metadata={"path": path}
+        )
+        self.changed_files.add(path)
+        self._record_trace(
+            "write_file",
+            step,
+            {"path": path, "content_len": len(content)},
+            {"success": True},
+            decision,
+            {"success": True},
+        )
+        return "File written successfully"
+
+    async def replace_content(self, path: str, old_content: str, new_content: str) -> str:
+        decision = self.policy_engine.evaluate_file_path(path)
+        step = self._event_step + 1
+        if not decision.allowed:
+            self._emit_policy_blocked(
+                "replace_content",
+                decision.reason or "Path blocked by policy",
+                metadata={"path": path},
+            )
+            self._record_trace(
+                "replace_content",
+                step,
+                {"path": path},
+                {"blocked": True, "reason": decision.reason},
+                decision,
+                {"blocked": True, "reason": decision.reason},
+            )
+            raise PermissionError(decision.reason or "Path blocked by policy")
+        result = await self._run_action(
+            "replace_content",
+            self.editor_tools.find_replace,
+            path,
+            old_content,
+            new_content,
+            metadata={"path": path},
+            failure_message=lambda succeeded: "replace_content did not find the target text"
+            if not succeeded
+            else None,
+        )
+        self.changed_files.add(path)
+        self._record_trace(
+            "replace_content",
+            step,
+            {"path": path},
+            {"success": bool(result)},
+            decision,
+            {"success": bool(result)},
+        )
+        return "Content replaced successfully"
+
     async def apply_patch(self, diff_content: str, dry_run: bool = False):
         step = self._event_step + 1
         result = await self._run_action(
@@ -808,6 +943,10 @@ class CodingLoop:
         return result
 
     async def final(self, message: str) -> str:
+        self.final_executed = True
+        self.final_message = message
+        if self._run_started_perf > 0 and self.time_to_final_ms is None:
+            self.time_to_final_ms = int((time.perf_counter() - self._run_started_perf) * 1000)
         step = self._event_step + 1
         result = await self._run_action(
             "final", lambda: message, metadata={"provider": self.provider}
@@ -840,16 +979,60 @@ class CodingLoop:
         )
         return result
 
+    def _precheck_action_policy(self, action: dict[str, Any]) -> dict[str, Any]:
+        action_type = action.get("action_type")
+        if action_type in {"read_file", "write_file", "replace_content", "list_files"}:
+            path = action.get("path", ".")
+            decision = self.policy_engine.evaluate_file_path(path)
+            return self._policy_payload(decision)
+        if action_type == "run_shell":
+            decision = self.policy_engine.evaluate_shell_command(action.get("command", ""))
+            return self._policy_payload(decision)
+        return {
+            "allowed": True,
+            "reason": None,
+            "policy_level": "internal",
+            "policy_rule": "precheck-allow",
+        }
+
     async def _execute_single_action(self, action: dict[str, Any]) -> Any:
-        if not self.approval_provider.request_approval(action):
+        if self._run_started_perf > 0 and self.time_to_first_action_ms is None:
+            elapsed = time.perf_counter() - self._run_started_perf
+            self.time_to_first_action_ms = int(elapsed * 1000)
+        policy_decision = self._precheck_action_policy(action)
+        if not policy_decision.get("allowed", True):
+            message = policy_decision.get("reason") or (
+                f"Action {action.get('action_type')} blocked by policy"
+            )
+            self._emit_policy_blocked(
+                action.get("action_type", "unknown"),
+                message,
+                metadata=action,
+            )
+            raise PermissionError(message)
+
+        approved, approved_action = self.approval_provider.request_approval(
+            action,
+            policy_decision=policy_decision,
+        )
+        if not approved:
             logger.warning(f"Action {action.get('action_type')} denied by user approval")
             raise PermissionError(f"Action {action.get('action_type')} denied by user approval")
+        action = approved_action
 
         action_type = action.get("action_type")
         if action_type == "plan":
             return await self.plan(action.get("message", ""), action.get("reason", ""))
         elif action_type == "read_file":
             return await self.read_file(action["path"])
+        elif action_type == "list_files":
+            return await self.list_files(action.get("path", "."))
+        elif action_type == "write_file":
+            return await self.write_file(action["path"], action["content"])
+        elif action_type == "replace_content":
+            return await self.replace_content(
+                action["path"], action["old_content"], action["new_content"]
+            )
         elif action_type == "grep":
             return self.search_tools.grep(
                 action["pattern"],
@@ -933,30 +1116,116 @@ class CodingLoop:
             res = await self._execute_single_action(action)
             if action.get("action_type") == "final":
                 final_message = res
+                break
         return final_message
 
     def _parse_agent_actions(self, content: str) -> tuple[list[dict[str, Any]] | None, str | None]:
         cleaned = content.strip()
-        if cleaned.startswith("```") and cleaned.endswith("```"):
-            cleaned = cleaned[3:-3].strip()
-            if cleaned.startswith("json"):
-                cleaned = cleaned[4:].strip()
+        candidates: list[str] = []
+        if "```" in cleaned:
+            for index, part in enumerate(cleaned.split("```")):
+                if index % 2 == 1:
+                    block = part.strip()
+                    if block.startswith("json"):
+                        block = block[4:].strip()
+                    if block:
+                        candidates.append(block)
+        decoder = json.JSONDecoder()
+        for start, char in enumerate(cleaned):
+            if char != "{":
+                continue
+            try:
+                payload, end = decoder.raw_decode(cleaned[start:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(payload, dict):
+                candidates.append(cleaned[start : start + end])
+        if cleaned and cleaned.startswith("["):
+            candidates.append(cleaned)
 
-        try:
-            payload = json.loads(cleaned)
-        except json.JSONDecodeError:
-            return None, None
-
-        if isinstance(payload, list):
-            return payload, None
-        if isinstance(payload, dict):
-            if "actions" in payload and isinstance(payload["actions"], list):
-                return payload["actions"], payload.get("final")
-            if "action_type" in payload:
-                return [payload], payload.get("final")
-            if isinstance(payload.get("final"), str):
-                return [], payload["final"]
+        for candidate in candidates or [cleaned]:
+            try:
+                payload = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(payload, list):
+                return payload, None
+            if isinstance(payload, dict):
+                if "actions" in payload and isinstance(payload["actions"], list):
+                    return payload["actions"], payload.get("final")
+                if "action_type" in payload:
+                    return [payload], payload.get("final")
+                if isinstance(payload.get("final"), str):
+                    return [], payload["final"]
         return None, None
+
+    def _parse_tool_calls(
+        self, response: dict[str, Any]
+    ) -> tuple[list[dict[str, Any]] | None, list[dict[str, Any]]]:
+        try:
+            message = response["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError):
+            return None, []
+        tool_calls = message.get("tool_calls") or []
+        if not isinstance(tool_calls, list) or not tool_calls:
+            return None, []
+        actions: list[dict[str, Any]] = []
+        normalized_calls: list[dict[str, Any]] = []
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                raise ValueError("Malformed tool_call payload")
+            function = tool_call.get("function") or {}
+            name = function.get("name")
+            raw_arguments = function.get("arguments", "{}")
+            if not name:
+                raise ValueError("Tool call is missing function.name")
+            try:
+                arguments = (
+                    json.loads(raw_arguments)
+                    if isinstance(raw_arguments, str)
+                    else raw_arguments
+                )
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Invalid tool_call arguments for {name}") from exc
+            if not isinstance(arguments, dict):
+                raise ValueError(f"Tool call arguments for {name} must be an object")
+            actions.append({"action_type": name, **arguments})
+            normalized_calls.append(
+                {
+                    "id": tool_call.get("id") or f"call_{len(normalized_calls)}",
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": json.dumps(
+                            Sanitizer.sanitize_data(arguments),
+                            ensure_ascii=True,
+                        ),
+                    },
+                }
+            )
+        return actions, normalized_calls
+
+    def _append_native_tool_exchange(
+        self,
+        assistant_message: dict[str, Any],
+        tool_calls: list[dict[str, Any]],
+        tool_outputs: list[tuple[str, str, bool]],
+    ) -> None:
+        self.history.append(
+            {
+                "role": "assistant",
+                "content": assistant_message.get("content", "") or "",
+                "tool_calls": tool_calls,
+            }
+        )
+        for call_id, output, success in tool_outputs:
+            self.history.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "content": self._format_tool_result("tool_call", success, output=output),
+                }
+            )
 
     async def run(
         self,
@@ -999,6 +1268,13 @@ class CodingLoop:
         self.cache_misses = 0
         self.llm_calls = 0
         self.changed_files = set()
+        self.timeout_adjusted = False
+        self.final_executed = False
+        self.final_message = None
+        self.time_to_first_action_ms = None
+        self.time_to_final_ms = None
+        self.post_final_llm_calls_blocked = 0
+        self._run_started_perf = time.perf_counter()
         self.heal_engine.reset_counts()
 
         self._emit_event(
@@ -1025,13 +1301,119 @@ class CodingLoop:
                         ).model_dump()
                     )
 
+                if self.final_executed:
+                    self.post_final_llm_calls_blocked += 1
+                    duration = time.time() - start_time
+                    self._emit_event(
+                        "llm.call_blocked_after_final",
+                        action_type="chat_completion",
+                        status="blocked",
+                        message="Skipped extra LLM call because final was already executed",
+                        metadata={"provider": self.provider},
+                    )
+                    self._emit_event(
+                        "run.completed",
+                        action_type="loop",
+                        status="completed",
+                        message=self.final_message or "Loop finished",
+                        duration_ms=int(duration * 1000),
+                        metadata={
+                            "provider": self.provider,
+                            "changed_files": list(self.changed_files),
+                        },
+                    )
+                    return ExecutionResult(
+                        **self._build_result(
+                            success=True,
+                            message=self.final_message or "Loop finished",
+                            duration=duration,
+                        ).model_dump()
+                    )
+
                 agent_start = time.perf_counter()
                 response = await self._chat_completion_with_retry()
                 agent_lat = int((time.perf_counter() - agent_start) * 1000)
                 self.agent_latency_ms += agent_lat
 
+                provider_meta = response.get("_provider_meta", {})
+                if provider_meta.get("timeout_adjusted"):
+                    self.timeout_adjusted = True
+                for stream_event in provider_meta.get("event_log", []):
+                    self._emit_event(
+                        stream_event.get("event", "llm.delta"),
+                        action_type="chat_completion",
+                        status=stream_event.get("status", "streaming"),
+                        message=stream_event.get("message", ""),
+                        metadata=stream_event.get("metadata", {}),
+                    )
+
                 content = response["choices"][0]["message"]["content"]
                 sanitized_content = SecurityManager.sanitize_output(content)
+
+                tool_actions, normalized_tool_calls = self._parse_tool_calls(response)
+                if tool_actions is not None:
+                    tool_outputs: list[tuple[str, str, bool]] = []
+                    final_from_tool_calls: str | None = None
+                    try:
+                        for tool_call, tool_action in zip(
+                            normalized_tool_calls,
+                            tool_actions,
+                            strict=False,
+                        ):
+                            result = await self._execute_single_action(tool_action)
+                            if tool_action.get("action_type") == "final":
+                                final_from_tool_calls = (
+                                    result if isinstance(result, str) else str(result)
+                                )
+                            rendered = result if isinstance(result, str) else json.dumps(
+                                Sanitizer.sanitize_data(result),
+                                ensure_ascii=True,
+                                default=str,
+                            )
+                            tool_outputs.append((tool_call["id"], rendered, True))
+                            if final_from_tool_calls:
+                                break
+                        self._append_native_tool_exchange(
+                            response["choices"][0]["message"],
+                            normalized_tool_calls,
+                            tool_outputs,
+                        )
+                        if final_from_tool_calls:
+                            duration = time.time() - start_time
+                            self._emit_event(
+                                "run.completed",
+                                action_type="loop",
+                                status="completed",
+                                message=final_from_tool_calls,
+                                duration_ms=int(duration * 1000),
+                                metadata={
+                                    "provider": self.provider,
+                                    "changed_files": list(self.changed_files),
+                                },
+                            )
+                            return ExecutionResult(
+                                **self._build_result(
+                                    success=True,
+                                    message=final_from_tool_calls,
+                                    duration=duration,
+                                ).model_dump()
+                            )
+                    except Exception as exc:
+                        tool_outputs.append(
+                            (
+                                normalized_tool_calls[len(tool_outputs)]["id"],
+                                Sanitizer.sanitize_text(str(exc)),
+                                False,
+                            )
+                        )
+                        self._append_native_tool_exchange(
+                            response["choices"][0]["message"],
+                            normalized_tool_calls,
+                            tool_outputs,
+                        )
+                        logger.warning(f"Native tool call failed, feeding error to LLM: {exc}")
+                    continue
+
                 self.history.append({"role": "assistant", "content": sanitized_content})
 
                 if action_plan:

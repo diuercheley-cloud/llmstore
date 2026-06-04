@@ -1,17 +1,32 @@
 import abc
-import difflib
 import asyncio
 import contextlib
+import difflib
 import json
 import logging
 import os
 from collections.abc import AsyncIterator
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
+from pydantic import BaseModel
 
 from .sanitizer import Sanitizer
-from .schemas import AgentActionResponse
+from .schemas import (
+    AgentActionResponse,
+    ApplyPatchPayload,
+    AstSearchPayload,
+    FinalPayload,
+    GrepPayload,
+    ListFilesPayload,
+    PlanPayload,
+    ReadFilePayload,
+    ReplaceContentPayload,
+    RunShellPayload,
+    RunTestsPayload,
+    WriteFilePayload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +39,18 @@ class CodeAgentProvider(abc.ABC):
         self.base_url = (config.get("base_url") or "").rstrip("/")
         self.api_key_env = config.get("api_key_env", "OPENAI_API_KEY")
         self.timeout = float(config.get("timeout", 30.0))
+        self.local_model_timeout = float(config.get("local_model_timeout", 300.0))
+        self.auto_increase_timeout = bool(config.get("auto_increase_timeout", False))
         self.max_retries = max(0, int(config.get("max_retries", 3)))
-        self.stream = bool(config.get("stream", False))
+        self.stream_local_default = bool(config.get("stream_local_default", True))
+        self.verbose_stream = bool(config.get("verbose_stream", False))
+        self.tool_calling = str(config.get("tool_calling", "auto"))
+        self.event_callback = config.get("event_callback")
         self.transport = config.get("transport")
+        self.supports_tool_calling = bool(config.get("supports_tool_calling", False))
+        self.timeout_adjusted = False
+        self._provider_events: list[dict[str, Any]] = []
+        self.stream = self._resolve_stream_default(config.get("stream"))
 
         # Instantiate the real CodeAgent class to represent/validate this provider's agent helper
         provider_name = config.get("provider")
@@ -51,6 +75,49 @@ class CodeAgentProvider(abc.ABC):
             provider=provider_name,
             config=config
         )
+
+    def _resolve_stream_default(self, configured_stream: Any) -> bool:
+        if configured_stream is not None:
+            return bool(configured_stream)
+        return self._is_local_endpoint() and self.stream_local_default
+
+    def _is_local_provider(self) -> bool:
+        provider_name = str(self.config.get("provider", ""))
+        if provider_name == "local-openai-compatible":
+            return True
+        return self._is_local_endpoint()
+
+    def _is_local_endpoint(self) -> bool:
+        if not self.base_url:
+            return False
+        parsed = urlparse(self.base_url)
+        host = parsed.hostname or ""
+        return host in {"localhost", "127.0.0.1", "host.docker.internal"}
+
+    def _effective_timeout(self) -> float:
+        if self._is_local_provider():
+            return max(self.timeout, self.local_model_timeout)
+        return self.timeout
+
+    def _emit_provider_event(
+        self,
+        event: str,
+        *,
+        message: str = "",
+        status: str = "info",
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        payload = {
+            "event": event,
+            "action_type": "chat_completion",
+            "step": 0,
+            "message": Sanitizer.sanitize_text(message),
+            "status": status,
+            "metadata": Sanitizer.sanitize_data(metadata or {}),
+        }
+        self._provider_events.append(payload)
+        if callable(self.event_callback):
+            self.event_callback(payload)
 
 
     UNSUPPORTED_MEDIA_TYPES = frozenset({"audio_url", "video_url"})
@@ -107,6 +174,12 @@ class CodeAgentProvider(abc.ABC):
             "run_shell",
             "run_tests",
             "final",
+            "write_file",
+            "list_files",
+            "replace_content",
+            "grep",
+            "ast_search",
+            "parallel"
         }
         action_type = action.get("type")
         if action_type not in valid_types:
@@ -122,22 +195,32 @@ class CodeAgentProvider(abc.ABC):
         normalized.update(payload)
         return normalized
 
-    def _validate_and_transform_action(self, content: str) -> str:
+    def _iter_json_candidates(self, content: str) -> list[str]:
         cleaned = content.strip()
-        if cleaned.startswith("```") and cleaned.endswith("```"):
-            cleaned = cleaned[3:-3].strip()
-            if cleaned.startswith("json"):
-                cleaned = cleaned[4:].strip()
+        candidates: list[str] = []
 
-        try:
-            action_data = json.loads(cleaned)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON action from agent: %s", Sanitizer.sanitize_text(cleaned))
-            raise ValueError("invalid_json")
+        if "```" in cleaned:
+            fence_parts = cleaned.split("```")
+            for index in range(1, len(fence_parts), 2):
+                block = fence_parts[index].strip()
+                if block.startswith("json"):
+                    block = block[4:].strip()
+                if block:
+                    candidates.append(block)
 
-        if not isinstance(action_data, dict):
-            raise ValueError("invalid_payload")
+        decoder = json.JSONDecoder()
+        for start, char in enumerate(cleaned):
+            if char != "{":
+                continue
+            try:
+                obj, end = decoder.raw_decode(cleaned[start:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict):
+                candidates.append(cleaned[start : start + end])
+        return candidates
 
+    def _validate_action_dict(self, action_data: dict[str, Any]) -> str:
         action_type = action_data.get("type")
         if not action_type:
             raise ValueError("schema_validation_failed")
@@ -145,26 +228,198 @@ class CodeAgentProvider(abc.ABC):
         supported = {
             "plan", "read_file", "apply_patch", "run_shell",
             "run_tests", "parallel", "final", "grep",
-            "ast_search", "list_files", "replace_content"
+            "ast_search", "list_files", "replace_content", "write_file"
         }
         if action_type not in supported:
             raise ValueError("unsupported_action")
 
         try:
             from pydantic import ValidationError
+
             validated = AgentActionResponse.model_validate(action_data).root
             action_dict = validated.model_dump()
             normalized = self._normalize_action_payload(action_dict)
             return json.dumps(normalized)
         except ValidationError as exc:
-            logger.error("Schema validation failed for agent action: %s", exc)
+            logger.debug("Schema validation failed for candidate action: %s", exc)
             raise ValueError("schema_validation_failed") from exc
-        except Exception as exc:
-            logger.error("Unexpected error during action validation: %s", exc)
-            raise ValueError(f"schema_validation_failed: {exc}") from exc
+
+    def _validate_and_transform_action(self, content: str) -> str:
+        cleaned = content.strip()
+        try:
+            direct_payload = json.loads(cleaned)
+        except json.JSONDecodeError:
+            direct_payload = None
+        else:
+            if not isinstance(direct_payload, dict):
+                raise ValueError("invalid_payload")
+            return self._validate_action_dict(direct_payload)
+
+        errors: list[str] = []
+        for candidate in self._iter_json_candidates(content):
+            try:
+                action_data = json.loads(candidate)
+            except json.JSONDecodeError:
+                errors.append("invalid_json")
+                continue
+            if not isinstance(action_data, dict):
+                errors.append("invalid_payload")
+                continue
+            try:
+                return self._validate_action_dict(action_data)
+            except ValueError as exc:
+                errors.append(str(exc))
+                continue
+
+        logger.error("Invalid JSON action from agent: %s", Sanitizer.sanitize_text(content))
+        if "schema_validation_failed" in errors:
+            raise ValueError("schema_validation_failed")
+        if "unsupported_action" in errors:
+            raise ValueError("unsupported_action")
+        raise ValueError("invalid_json")
 
     def _sanitize_response(self, response_data: dict[str, Any]) -> dict[str, Any]:
         return Sanitizer.sanitize_data(response_data)
+
+    def _tool_definitions(self) -> list[dict[str, Any]]:
+        schema_map: dict[str, type[BaseModel]] = {
+            "plan": PlanPayload,
+            "read_file": ReadFilePayload,
+            "write_file": WriteFilePayload,
+            "list_files": ListFilesPayload,
+            "replace_content": ReplaceContentPayload,
+            "apply_patch": ApplyPatchPayload,
+            "run_shell": RunShellPayload,
+            "run_tests": RunTestsPayload,
+            "grep": GrepPayload,
+            "ast_search": AstSearchPayload,
+            "final": FinalPayload,
+        }
+        descriptions = {
+            "plan": "Summarize the next step without changing files.",
+            "read_file": "Read one file from the workspace.",
+            "write_file": "Write a full file to the workspace.",
+            "list_files": "List files in a directory.",
+            "replace_content": "Replace existing file content with new content.",
+            "apply_patch": "Apply a unified diff patch.",
+            "run_shell": "Run a shell command in the workspace sandbox.",
+            "run_tests": "Run the test suite or one test target.",
+            "grep": "Search text in files.",
+            "ast_search": "Search code symbols by AST heuristics.",
+            "final": "Finish the task with a summary.",
+        }
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": name,
+                    "description": descriptions[name],
+                    "parameters": schema.model_json_schema(),
+                },
+            }
+            for name, schema in schema_map.items()
+        ]
+
+    def _tool_calling_mode(self) -> str:
+        if self.tool_calling == "auto":
+            return "native" if self.supports_tool_calling else "json"
+        return self.tool_calling
+
+    def _message_diagnostics(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
+        diagnostics: list[dict[str, Any]] = []
+        for message in messages:
+            content = message.get("content", "")
+            if isinstance(content, list):
+                content_size = sum(len(str(block)) for block in content)
+                content_type = "list"
+            else:
+                content_size = len(str(content))
+                content_type = "text"
+            diagnostics.append(
+                {
+                    "role": message.get("role", "user"),
+                    "content_type": content_type,
+                    "content_size": content_size,
+                    "has_tool_calls": bool(message.get("tool_calls")),
+                    "has_tool_call_id": bool(message.get("tool_call_id")),
+                }
+            )
+        return {
+            "message_count": len(messages),
+            "messages": diagnostics,
+        }
+
+    def _simplify_messages_for_local_retry(
+        self, messages: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        simplified: list[dict[str, Any]] = []
+        for message in messages:
+            role = message.get("role", "user")
+            content = message.get("content", "")
+            if isinstance(content, list):
+                content = "\n".join(
+                    str(block.get("text", "")) for block in content if isinstance(block, dict)
+                )
+            content_text = Sanitizer.strip_control_chars(str(content))
+            if role == "tool":
+                simplified.append(
+                    {
+                        "role": "user",
+                        "content": f"Tool result:\n{content_text}",
+                    }
+                )
+                continue
+            simplified.append({"role": role, "content": content_text})
+        return simplified
+
+    def _build_local_retry_payload(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        fallback_reason: str,
+    ) -> dict[str, Any]:
+        retry_payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": self._simplify_messages_for_local_retry(messages),
+            "temperature": 0,
+            "stream": False,
+        }
+        max_tokens = self.config.get("max_tokens")
+        if max_tokens is not None:
+            retry_payload["max_tokens"] = max_tokens
+        self._emit_provider_event(
+            "llm.local_retry_mode",
+            message="Retrying local provider in JSON-compatible mode",
+            status="retrying",
+            metadata={
+                "fallback_reason": fallback_reason,
+                "fallback_strategy": "simplified_history_json",
+                "stream": False,
+                "tool_calling": "json-compatible",
+            },
+        )
+        return retry_payload
+
+    async def _iter_sse_data(
+        self, response: httpx.Response
+    ) -> AsyncIterator[str]:
+        buffer: list[str] = []
+        async for line in response.aiter_lines():
+            if line == "":
+                if buffer:
+                    yield "\n".join(buffer)
+                    buffer = []
+                continue
+            if line.startswith(":"):
+                continue
+            if line.startswith("data:"):
+                buffer.append(line[5:].lstrip())
+                continue
+            if line.startswith("event:"):
+                continue
+            raise ValueError("Malformed streaming response from provider")
+        if buffer:
+            yield "\n".join(buffer)
 
     async def _request_with_retry(
         self,
@@ -178,8 +433,9 @@ class CodeAgentProvider(abc.ABC):
         if "json" in kwargs:
             log_payload = Sanitizer.sanitize_data(kwargs["json"])
 
+        effective_timeout = self._effective_timeout()
         async with httpx.AsyncClient(
-            timeout=httpx.Timeout(self.timeout),
+            timeout=httpx.Timeout(effective_timeout),
             transport=self.transport,
         ) as client:
             for attempt in range(self.max_retries + 1):
@@ -202,6 +458,38 @@ class CodeAgentProvider(abc.ABC):
 
                     response.raise_for_status()
                     return response
+                except httpx.ReadTimeout as exc:
+                    if (
+                        self._is_local_provider()
+                        and self.auto_increase_timeout
+                        and not self.timeout_adjusted
+                    ):
+                        self.timeout_adjusted = True
+                        effective_timeout = max(effective_timeout, self.local_model_timeout)
+                        client.timeout = httpx.Timeout(effective_timeout)
+                        self._emit_provider_event(
+                            "llm.timeout_adjusted",
+                            message=(
+                                "Local model timed out; retrying once with "
+                                f"timeout={effective_timeout:.0f}s"
+                            ),
+                            status="retrying",
+                            metadata={
+                                "timeout_adjusted": True,
+                                "timeout_seconds": effective_timeout,
+                            },
+                        )
+                        continue
+                    suggestion = ""
+                    if self._is_local_provider():
+                        suggestion = (
+                            f" Increase timeout to about {int(self.local_model_timeout)}s "
+                            "with --local-model-timeout or enable --auto-increase-timeout."
+                        )
+                    raise httpx.ReadTimeout(
+                        f"Read timeout from provider.{suggestion}",
+                        request=exc.request,
+                    ) from exc
                 except (httpx.TimeoutException, httpx.NetworkError):
                     if attempt < self.max_retries:
                         wait = 2**attempt
@@ -347,7 +635,9 @@ class OpenAICompatibleProvider(CodeAgentProvider):
         available_models = await self._fetch_available_models()
         if not available_models:
             raise ValueError(
-                f"No models returned by {self._build_models_url()} for provider {self.config.get('provider')}"
+                "No models returned by "
+                f"{self._build_models_url()} for provider "
+                f"{self.config.get('provider')}"
             )
 
         selected = self._match_model_in_catalog(available_models)
@@ -378,16 +668,39 @@ class OpenAICompatibleProvider(CodeAgentProvider):
 
     async def chat_completion(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         self._validate_config()
+        self._provider_events = []
         instruction = (
-            "Return exactly one JSON object with this schema: "
-            '{"type":"plan|read_file|apply_patch|run_shell|run_tests|final",'
-            '"reason":"short explanation","payload":{}}. '
-            "Do not wrap JSON in markdown."
+            "You are a coding agent. Your goal is to solve the task by executing actions.\n"
+            "Return EXACTLY one JSON object for each step. "
+            "DO NOT include any text outside the JSON.\n"
+            "Available actions:\n"
+            "- plan: {\"type\":\"plan\", \"payload\":{\"message\":\"...\"}}\n"
+            "- read_file: {\"type\":\"read_file\", \"payload\":{\"path\":\"...\"}}\n"
+            "- write_file: {\"type\":\"write_file\", "
+            "\"payload\":{\"path\":\"...\", \"content\":\"...\"}}\n"
+            "- list_files: {\"type\":\"list_files\", \"payload\":{\"path\":\".\"}}\n"
+            "- replace_content: {\"type\":\"replace_content\", "
+            "\"payload\":{\"path\":\"...\", \"old_content\":\"...\", "
+            "\"new_content\":\"...\"}}\n"
+            "- apply_patch: {\"type\":\"apply_patch\", \"payload\":{\"diff\":\"...\"}}\n"
+            "- run_shell: {\"type\":\"run_shell\", "
+            "\"payload\":{\"command\":\"...\", \"timeout\":30}}\n"
+            "- run_tests: {\"type\":\"run_tests\", \"payload\":{\"test_path\":\"tests/\"}}\n"
+            "- grep: {\"type\":\"grep\", \"payload\":{\"pattern\":\"...\", "
+            "\"path\":\".\", \"recursive\":true}}\n"
+            "- ast_search: {\"type\":\"ast_search\", "
+            "\"payload\":{\"symbol_name\":\"...\", \"path\":\".\"}}\n"
+            "- final: {\"type\":\"final\", \"payload\":{\"message\":\"Summary of work\"}}\n\n"
+            "Constraints:\n"
+            "- No shell redirection (>, >>, |). Use write_file or replace_content instead.\n"
+            "- Keep actions small and incremental.\n"
         )
         enriched_messages = []
         for m in messages:
             role = m.get("role", "user")
             content = m.get("content", "")
+            tool_calls = m.get("tool_calls")
+            tool_call_id = m.get("tool_call_id")
             if isinstance(content, list):
                 if not self.config.get("multimodal", False):
                     raise ValueError(
@@ -405,13 +718,19 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                         sanitized_content.append(block)
                 enriched_messages.append({"role": role, "content": sanitized_content})
             else:
-                enriched_messages.append({
+                entry = {
                     "role": role,
                     "content": Sanitizer.strip_control_chars(str(content))
-                })
+                }
+                if role == "assistant" and isinstance(tool_calls, list):
+                    entry["tool_calls"] = tool_calls
+                if role == "tool" and tool_call_id:
+                    entry["tool_call_id"] = tool_call_id
+                enriched_messages.append(entry)
         enriched_messages.append({"role": "system", "content": instruction})
 
         last_error: Exception | None = None
+        local_compat_retry_used = False
         for url in self._build_chat_paths():
             try:
                 payload = {
@@ -420,7 +739,14 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                     "temperature": 0,
                     "stream": self.stream,
                 }
-                if not self.stream and self._supports_response_format:
+                max_tokens = self.config.get("max_tokens")
+                if max_tokens is not None:
+                    payload["max_tokens"] = max_tokens
+                tool_mode = self._tool_calling_mode()
+                if tool_mode == "native":
+                    payload["tools"] = self._tool_definitions()
+                    payload["tool_choice"] = "auto"
+                if tool_mode == "json" and not self.stream and self._supports_response_format:
                     payload["response_format"] = {"type": "json_object"}
 
                 if self.stream:
@@ -435,6 +761,44 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 if exc.response.status_code == 404:
                     last_error = exc
                     continue
+                if (
+                    exc.response.status_code == 400
+                    and self._is_local_provider()
+                    and not local_compat_retry_used
+                ):
+                    local_compat_retry_used = True
+                    fallback_reason = "http_400_local_provider"
+                    diagnostic = self._message_diagnostics(enriched_messages)
+                    self._emit_provider_event(
+                        "llm.local_400_retry",
+                        message="Local provider rejected request; retrying with simplified history",
+                        status="retrying",
+                        metadata={
+                            **diagnostic,
+                            "tool_mode": tool_mode,
+                            "stream": self.stream,
+                        },
+                    )
+                    logger.warning(
+                        "Local provider returned 400; retrying with simplified history: %s",
+                        Sanitizer.sanitize_data(diagnostic),
+                    )
+                    retry_payload = self._build_local_retry_payload(
+                        enriched_messages,
+                        fallback_reason=fallback_reason,
+                    )
+                    try:
+                        response = await self._request_with_retry(
+                            "POST", url, json=retry_payload, headers=self._build_headers()
+                        )
+                        data = response.json()
+                        return self._process_chat_response(data)
+                    except httpx.HTTPStatusError as retry_exc:
+                        logger.warning(
+                            "Local provider compatibility retry failed with status=%s",
+                            retry_exc.response.status_code,
+                        )
+                        raise
                 if exc.response.status_code == 400 and self._supports_response_format:
                     self._supports_response_format = False
                     logger.debug(
@@ -447,6 +811,12 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                             "messages": enriched_messages,
                             "temperature": 0,
                         }
+                        if tool_mode == "native":
+                            payload["tools"] = self._tool_definitions()
+                            payload["tool_choice"] = "auto"
+                        max_tokens = self.config.get("max_tokens")
+                        if max_tokens is not None:
+                            payload["max_tokens"] = max_tokens
                         response = await self._request_with_retry(
                             "POST", url, json=payload, headers=self._build_headers()
                         )
@@ -466,18 +836,15 @@ class OpenAICompatibleProvider(CodeAgentProvider):
     async def _chat_completion_stream(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         full_content = ""
         usage = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        tool_calls: dict[int, dict[str, Any]] = {}
 
         async with httpx.AsyncClient(
-            timeout=httpx.Timeout(self.timeout), transport=self.transport
+            timeout=httpx.Timeout(self._effective_timeout()), transport=self.transport
         ) as client:
             headers = self._build_headers()
             async with client.stream("POST", url, json=payload, headers=headers) as response:
                 response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-
-                    data_str = line[6:]
+                async for data_str in self._iter_sse_data(response):
                     if data_str == "[DONE]":
                         break
 
@@ -485,28 +852,91 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                         chunk = json.loads(data_str)
                         delta = chunk.get("choices", [{}])[0].get("delta", {})
                         if "content" in delta:
-                            content_delta = delta["content"]
-                            full_content += content_delta
-                            # We could emit an event here if we had a callback
+                            full_content += delta["content"]
+                            self._emit_provider_event(
+                                "llm.delta",
+                                message=delta["content"] if self.verbose_stream else "",
+                                status="streaming",
+                            )
+                        elif "reasoning_content" in delta:
+                            full_content += delta["reasoning_content"]
+                        for tool_delta in delta.get("tool_calls", []):
+                            index = int(tool_delta.get("index", 0))
+                            current = tool_calls.setdefault(
+                            index,
+                            {
+                                "id": tool_delta.get("id"),
+                                "type": "function",
+                                "function": {"name": "", "arguments": ""},
+                            },
+                        )
+                            function = tool_delta.get("function", {})
+                            if function.get("name"):
+                                current["function"]["name"] = function["name"]
+                            if function.get("arguments"):
+                                current["function"]["arguments"] += function["arguments"]
+                            if tool_delta.get("id"):
+                                current["id"] = tool_delta["id"]
 
                         if chunk.get("usage"):
                             usage = chunk["usage"]
                     except json.JSONDecodeError:
-                        continue
+                        raise ValueError("Malformed streaming response from provider") from None
 
-        # Mocking the response structure that _process_chat_response expects
         data = {
-            "choices": [{"message": {"role": "assistant", "content": full_content}}],
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": full_content,
+                        "tool_calls": [tool_calls[index] for index in sorted(tool_calls)],
+                    }
+                }
+            ],
             "usage": usage
         }
+        self._emit_provider_event("llm.completed", status="completed")
         return self._process_chat_response(data)
 
     def _process_chat_response(self, data: dict[str, Any]) -> dict[str, Any]:
+        data.setdefault("_provider_meta", {})
+        data["_provider_meta"]["timeout_adjusted"] = self.timeout_adjusted
+        data["_provider_meta"]["event_log"] = list(self._provider_events)
+        msg = {}
+        if isinstance(data.get("choices"), list) and len(data["choices"]) > 0:
+            msg = data["choices"][0].get("message", {})
+
+        tool_calls = msg.get("tool_calls") or []
+        if self._tool_calling_mode() == "native" and tool_calls:
+            for tool_call in tool_calls:
+                function = tool_call.get("function") or {}
+                name = function.get("name")
+                raw_arguments = function.get("arguments", "{}")
+                if name not in {tool["function"]["name"] for tool in self._tool_definitions()}:
+                    raise ValueError(f"Unknown tool_call received: {name}")
+                try:
+                    parsed_arguments = (
+                        json.loads(raw_arguments)
+                        if isinstance(raw_arguments, str)
+                        else raw_arguments
+                    )
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"Invalid tool_call arguments for {name}") from exc
+                if not isinstance(parsed_arguments, dict):
+                    raise ValueError(f"Invalid tool_call arguments for {name}")
+                self._validate_action_dict({"type": name, "payload": parsed_arguments})
+            usage = data.get("usage", {})
+            if not usage:
+                data["usage"] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+            return self._sanitize_response(data)
+
         content = ""
         if isinstance(data.get("choices"), list) and len(data["choices"]) > 0:
-            content = str(data["choices"][0].get("message", {}).get("content", ""))
+            content = str(msg.get("content", "") or msg.get("reasoning_content", "") or "")
 
         if not content:
+            if tool_calls and self._tool_calling_mode() == "auto":
+                return self._sanitize_response(data)
             raise ValueError("Provider returned empty content")
 
         validated_content = self._validate_and_transform_action(content)
@@ -557,6 +987,7 @@ class LocalOpenAICompatibleProvider(OpenAICompatibleProvider):
     def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self._supports_response_format = False
+        self.supports_tool_calling = True
 
     def _validate_config(self):
         # Override to bypass API key requirement for local development models (Ollama, LM Studio)

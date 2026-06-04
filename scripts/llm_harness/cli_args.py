@@ -29,8 +29,44 @@ def add_provider_args(
     parser.add_argument("--base-url", help="Base URL for provider")
     parser.add_argument("--api-key-env", help="Environment variable containing the API key")
     parser.add_argument("--timeout", type=float, help="Timeout in seconds for API calls")
+    parser.add_argument(
+        "--local-model-timeout",
+        type=float,
+        help="Timeout in seconds for local models and localhost-compatible providers",
+    )
+    parser.add_argument(
+        "--auto-increase-timeout",
+        action="store_true",
+        help="Retry one time with a higher timeout after a local-model read timeout",
+    )
     parser.add_argument("--max-retries", type=int, help="Maximum number of retries for API calls")
     parser.add_argument("--stream", action="store_true", help="Enable streaming for LLM responses")
+    parser.add_argument(
+        "--no-stream",
+        action="store_false",
+        dest="stream",
+        help="Disable streaming",
+    )
+    parser.add_argument(
+        "--stream-local-default",
+        type=lambda value: str(value).lower() in {"1", "true", "yes", "on"},
+        help="Enable streaming by default for local models",
+    )
+    parser.add_argument(
+        "--verbose-stream",
+        action="store_true",
+        help="Print sanitized streamed deltas in the CLI",
+    )
+    parser.add_argument(
+        "--tool-calling",
+        choices=["auto", "native", "json"],
+        help="How to invoke tools for compatible providers",
+    )
+    parser.add_argument(
+        "--supports-tool-calling",
+        action="store_true",
+        help="Declare that the selected provider supports OpenAI-compatible tool calls",
+    )
     parser.add_argument(
         "--allow-stub-code-agent",
         action="store_true",
@@ -41,6 +77,11 @@ def add_provider_args(
         "--multimodal",
         action="store_true",
         help="Enable multimodal capabilities for the provider",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        help="Maximum tokens for LLM response (required for reasoning models like Qwen3)",
     )
 
 def add_sandbox_args(parser: argparse.ArgumentParser):
@@ -148,10 +189,21 @@ def add_approval_args(parser: argparse.ArgumentParser):
         help="Action approval mode",
     )
     parser.add_argument(
+        "--approval-policy",
+        dest="approval_mode",
+        choices=["auto", "deny", "interactive", "non_interactive"],
+        help="Alias for --approval-mode",
+    )
+    parser.add_argument(
         "--approval-default",
         choices=["allow", "deny"],
         default="deny",
         help="Default policy for non-interactive approval",
+    )
+    parser.add_argument(
+        "--edit-action-before-run",
+        action="store_true",
+        help="Allow editing action payloads before approval in interactive mode",
     )
 
 def add_checkpoint_args(parser: argparse.ArgumentParser):

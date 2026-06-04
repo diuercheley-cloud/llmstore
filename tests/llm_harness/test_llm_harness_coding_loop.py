@@ -1,3 +1,4 @@
+import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -257,6 +258,246 @@ async def test_coding_loop_stops_when_final_action_executes_without_explicit_fin
     assert result.message == "Loop finished"
     assert client.chat_completion.await_count == 1
     assert result.events[-1]["event"] == "run.completed"
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_executes_native_tool_call_write_file():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        side_effect=[
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": "",
+                            "tool_calls": [
+                                {
+                                    "id": "call_1",
+                                    "type": "function",
+                                    "function": {
+                                        "name": "write_file",
+                                        "arguments": '{"path":"note.txt","content":"hello"}',
+                                    },
+                                }
+                            ],
+                        }
+                    }
+                ]
+            },
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": '{"action_type":"final","message":"done"}',
+                        }
+                    }
+                ]
+            },
+        ]
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=3)
+        result = await loop.run(task="Create note.txt and finish")
+        assert result.success is True
+        assert ws.read_file("note.txt") == "hello"
+        assert client.chat_completion.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_stops_after_native_final_tool_call():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "final",
+                                    "arguments": '{"message":"done"}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=3)
+        result = await loop.run(task="Finish immediately")
+    assert result.success is True
+    assert result.message == "done"
+    assert client.chat_completion.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_stops_executing_actions_after_final():
+    client = AgentClient(agent_id="test")
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws)
+        result = await loop.run(
+            task="Finish immediately",
+            action_plan=[
+                {"action_type": "write_file", "path": "before.txt", "content": "ok"},
+                {"action_type": "final", "message": "done"},
+                {"action_type": "write_file", "path": "after.txt", "content": "should-not-run"},
+            ],
+        )
+        assert ws.read_file("before.txt") == "ok"
+        assert not os.path.exists(ws.get_path("after.txt"))
+
+    assert result.success is True
+    assert result.message == "done"
+    assert result.metrics["final_executed"] is True
+    assert result.metrics["time_to_first_action_ms"] is not None
+    assert result.metrics["time_to_final_ms"] is not None
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_stops_executing_native_tool_calls_after_final():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "final",
+                                    "arguments": '{"message":"done"}',
+                                },
+                            },
+                            {
+                                "id": "call_2",
+                                "type": "function",
+                                "function": {
+                                    "name": "write_file",
+                                    "arguments": '{"path":"after.txt","content":"should-not-run"}',
+                                },
+                            },
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=3)
+        result = await loop.run(task="Finish immediately")
+        assert not os.path.exists(ws.get_path("after.txt"))
+
+    assert result.success is True
+    assert result.message == "done"
+    assert client.chat_completion.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_native_tool_call_policy_block_remains_blocked():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "run_shell",
+                                    "arguments": '{"command":"rm -rf /","timeout":1}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=1)
+        result = await loop.run(task="Do something dangerous")
+        assert result.success is False
+        assert any(event["event"] == "policy.blocked" for event in result.events)
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_parser_accepts_text_before_json():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": 'Here is the result:\n{"action_type":"final","message":"done"}\nThanks.',
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws)
+        result = await loop.run(task="Finish")
+        assert result.success is True
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_parser_accepts_markdown_json_block():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": '```json\n{"action_type":"final","message":"done"}\n```',
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws)
+        result = await loop.run(task="Finish")
+        assert result.success is True
+
+
+@pytest.mark.asyncio
+async def test_coding_loop_parser_rejects_partial_json():
+    client = AgentClient(agent_id="test")
+    client.chat_completion = AsyncMock(  # type: ignore[method-assign]
+        return_value={
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"action_type":"final","message":"done"',
+                    }
+                }
+            ]
+        }
+    )
+    async with Workspace() as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws)
+        result = await loop.run(task="Finish")
+        assert result.success is False
+        assert "unparseable" in (result.error or "").lower()
 
 
 @pytest.mark.asyncio

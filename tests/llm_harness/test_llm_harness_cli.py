@@ -59,7 +59,13 @@ def test_cli_code_with_config_auto_select():
             with patch.object(
                 AgentClient,
                 "chat_completion",
-                AsyncMock(return_value={"choices": [{"message": {"role": "assistant", "content": '{"final":"done"}'}}]}),
+                AsyncMock(
+                    return_value={
+                        "choices": [
+                            {"message": {"role": "assistant", "content": '{"final":"done"}'}}
+                        ]
+                    }
+                ),
             ):
                 main()
 
@@ -83,7 +89,13 @@ def test_cli_code_explicit_provider():
             with patch.object(
                 AgentClient,
                 "chat_completion",
-                AsyncMock(return_value={"choices": [{"message": {"role": "assistant", "content": '{"final":"done"}'}}]}),
+                AsyncMock(
+                    return_value={
+                        "choices": [
+                            {"message": {"role": "assistant", "content": '{"final":"done"}'}}
+                        ]
+                    }
+                ),
             ):
                 main()
 
@@ -160,8 +172,14 @@ def test_extracted_config_builders():
         self_heal=False,
         api_key_env="CUSTOM_KEY",
         timeout=15.5,
+        local_model_timeout=300.0,
+        auto_increase_timeout=True,
         max_retries=5,
         stream=True,
+        stream_local_default=True,
+        verbose_stream=True,
+        tool_calling="auto",
+        supports_tool_calling=True,
         workspace_mount_path="/mnt",
         temp_base_dir="/tmp/harness",
         sandbox_network="host",
@@ -181,6 +199,7 @@ def test_extracted_config_builders():
         agent_mode="single",
         approval_mode="auto",
         approval_default="deny",
+        edit_action_before_run=True,
         checkpoint_dir=".checkpoints",
         checkpoint_every_step=True,
         code_agent="openai-compatible",
@@ -193,12 +212,17 @@ def test_extracted_config_builders():
     assert overrides["model"] == "gpt-5"
     assert overrides["sandbox"] is True
     assert overrides["cache"] == "llm"
+    assert overrides["local_model_timeout"] == 300.0
+    assert overrides["tool_calling"] == "auto"
+    assert overrides["supports_tool_calling"] is True
 
     provider_cfg = build_provider_config(args)
     assert provider_cfg["provider"] == "openai-compatible"
     assert provider_cfg["model"] == "gpt-5"
     assert provider_cfg["base_url"] == "https://api.openai.com/v1"
     assert provider_cfg["timeout"] == 15.5
+    assert provider_cfg["stream_local_default"] is True
+    assert provider_cfg["supports_tool_calling"] is True
 
     sandbox_cfg = build_sandbox_config(args)
     assert sandbox_cfg["sandbox"] is True

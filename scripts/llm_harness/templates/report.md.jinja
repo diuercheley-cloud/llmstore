@@ -21,6 +21,21 @@
 ## Performance
 - **Command Duration**: {{ "%.2f"|format(result.command_duration_ms / 1000) }}s
 - **Agent Latency**: {{ "%.2f"|format(result.agent_latency_ms / 1000) }}s
+{% if result.metrics %}
+- **Time To First Action**:
+  {% if result.metrics.get("time_to_first_action_ms") is not none %}
+  {{ result.metrics.get("time_to_first_action_ms") }}ms
+  {% else %}
+  N/A
+  {% endif %}
+- **Time To Final**:
+  {% if result.metrics.get("time_to_final_ms") is not none %}
+  {{ result.metrics.get("time_to_final_ms") }}ms
+  {% else %}
+  N/A
+  {% endif %}
+- **Post-Final LLM Calls Blocked**: {{ result.metrics.get("post_final_llm_calls_blocked", 0) }}
+{% endif %}
 
 ## Tokens & Cache
 - **Total Tokens**: {{ result.total_tokens if result.total_tokens else "unavailable (0)" }}

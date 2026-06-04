@@ -9,9 +9,10 @@ from scripts.llm_harness.tools.git import GitTools
 
 class TestGitTool:
     @pytest.fixture
-    def mock_workspace(self):
+    def mock_workspace(self, tmp_path):
         ws = MagicMock()
-        ws.path = "/fake/path"
+        ws.path = str(tmp_path)
+        (tmp_path / ".git").mkdir()
         return ws
 
     @pytest.fixture

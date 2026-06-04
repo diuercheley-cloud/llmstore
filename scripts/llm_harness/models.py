@@ -30,6 +30,7 @@ class ExecutionResult(BaseModel):
     estimated_cost: float = 0.0
     cache_hits: int = 0
     cache_misses: int = 0
+    timeout_adjusted: bool = False
     metrics: dict[str, Any] = Field(default_factory=dict)
     events: list[dict[str, Any]] = Field(default_factory=list)
     trace: list[dict[str, Any]] = Field(default_factory=list)

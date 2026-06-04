@@ -57,3 +57,34 @@ def test_pricing_manager_unknown_model_does_not_warn(caplog):
 
     assert result is None
     assert not caplog.records
+
+
+def test_pricing_manager_with_reasoning_tokens():
+    pm = PricingManager()
+    #
+    # 1M prompt tokens, 1M completion tokens, 900k reasoning_tokens
+    # For gpt-4o: $5/1M prompt, $15/1M completion
+    # With reasoning: prompt_cost = (1M + 900k) / 1M * 5 = 1.9 * 5 = 9.5
+    #                 completion_cost = (100k) / 1M * 15 = 0.1 * 15 = 1.5
+    #                 total = 11.0
+    result = pm.calculate_cost("gpt-4o", 1_000_000, 1_000_000, reasoning_tokens=900_000)
+    assert result is not None
+    assert result.cost == 11.0
+    assert result.known is True
+
+
+def test_pricing_manager_reasoning_tokens_greater_than_completion():
+    pm = PricingManager()
+    result = pm.calculate_cost("gpt-4o", 1_000_000, 100_000, reasoning_tokens=200_000)
+    assert result is not None
+    # completion - reasoning = negative, clamped to 0
+    assert result.cost == 6.0  # (1M + 200k) / 1M * 5 + 0 = 6.0
+
+
+def test_pricing_manager_model_override_with_reasoning():
+    pm = PricingManager()
+    pm.set_model_override("gpt-4o")
+    result = pm.calculate_cost("unknown-model", 1_000_000, 1_000_000, reasoning_tokens=500_000)
+    assert result is not None
+    assert result.cost == 15.0
+    assert result.known is True

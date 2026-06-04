@@ -146,6 +146,7 @@ async def test_provider_local_openai_auto_selects_model(monkeypatch):
         {
             "agent_id": "test",
             "base_url": "http://fake/v1",
+            "stream": False,
         },
     )
 
@@ -252,6 +253,321 @@ async def test_provider_local_openai_invalid_model_suggests_close_matches(monkey
 
         with pytest.raises(ValueError, match="was not found"):
             await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+
+@pytest.mark.asyncio
+async def test_provider_local_timeout_suggests_local_model_timeout():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://localhost:1234/v1",
+        },
+    )
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        request = httpx.Request("POST", "http://localhost:1234/v1/chat/completions")
+        mock_client.request.side_effect = httpx.ReadTimeout("timed out", request=request)
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        with pytest.raises(httpx.ReadTimeout, match="300s"):
+            await agent._request_with_retry("POST", "http://localhost:1234/v1/chat/completions")
+
+
+@pytest.mark.asyncio
+async def test_provider_local_timeout_auto_increase_retries_once():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://localhost:1234/v1",
+            "auto_increase_timeout": True,
+        },
+    )
+    success_response = MagicMock()
+    success_response.status_code = 200
+    success_response.raise_for_status.return_value = None
+    request = httpx.Request("POST", "http://localhost:1234/v1/chat/completions")
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request.side_effect = [
+            httpx.ReadTimeout("timed out", request=request),
+            success_response,
+        ]
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        response = await agent._request_with_retry("POST", "http://localhost:1234/v1/chat/completions")
+
+    assert response is success_response
+    assert agent.timeout_adjusted is True
+    assert mock_client.request.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_provider_remote_timeout_does_not_auto_increase(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "https://api.example.com/v1",
+            "model": "model-1",
+            "auto_increase_timeout": True,
+        },
+    )
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        request = httpx.Request("POST", "https://api.example.com/v1/chat/completions")
+        mock_client.request.side_effect = httpx.ReadTimeout("timed out", request=request)
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        with pytest.raises(httpx.ReadTimeout, match="Read timeout from provider"):
+            await agent._request_with_retry("POST", "https://api.example.com/v1/chat/completions")
+
+    assert agent.timeout_adjusted is False
+    assert mock_client.request.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_provider_native_tool_call_passthrough(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "native",
+        },
+    )
+    response = agent._process_chat_response(
+        {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "write_file",
+                                    "arguments": '{"path":"x.txt","content":"ok"}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    tool_call = response["choices"][0]["message"]["tool_calls"][0]
+    assert tool_call["function"]["name"] == "write_file"
+
+
+@pytest.mark.asyncio
+async def test_provider_unknown_native_tool_call_fails(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "native",
+        },
+    )
+    with pytest.raises(ValueError, match="Unknown tool_call"):
+        agent._process_chat_response(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "id": "call_1",
+                                    "type": "function",
+                                    "function": {"name": "dangerous_tool", "arguments": "{}"},
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        )
+
+
+@pytest.mark.asyncio
+async def test_provider_invalid_native_tool_args_fail_schema(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "native",
+        },
+    )
+    with pytest.raises(ValueError, match="schema_validation_failed"):
+        agent._process_chat_response(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "id": "call_1",
+                                    "type": "function",
+                                    "function": {
+                                        "name": "write_file",
+                                        "arguments": '{"path":"x.txt"}',
+                                    },
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        )
+
+
+@pytest.mark.asyncio
+async def test_provider_auto_tool_calling_uses_declared_support(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "auto",
+            "supports_tool_calling": True,
+        },
+    )
+    response = agent._process_chat_response(
+        {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "type": "function",
+                                "function": {
+                                    "name": "write_file",
+                                    "arguments": '{"path":"x.txt","content":"ok"}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    assert response["choices"][0]["message"]["tool_calls"][0]["function"]["name"] == "write_file"
+
+
+@pytest.mark.asyncio
+async def test_provider_sse_parser_supports_multiline_events():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {"agent_id": "test", "base_url": "http://localhost:1234/v1"},
+    )
+
+    class FakeResponse:
+        async def aiter_lines(self):
+            for line in [
+                "event: message",
+                'data: {"choices":[{"delta":{"content":"he"}}]}',
+                'data: {"choices":[{"delta":{"content":"llo"}}]}',
+                "",
+                "data: [DONE]",
+                "",
+            ]:
+                yield line
+
+    events = []
+    async for item in agent._iter_sse_data(FakeResponse()):
+        events.append(item)
+    assert events[0].startswith('{"choices"')
+    assert events[1] == "[DONE]"
+
+
+@pytest.mark.asyncio
+async def test_provider_local_400_retries_with_simplified_history():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "stream": False,
+        },
+    )
+
+    payloads = []
+
+    async def fake_request(method, url, **kwargs):
+        payloads.append(kwargs.get("json", {}))
+        if method == "GET":
+            mock_models = MagicMock()
+            mock_models.status_code = 200
+            mock_models.json.return_value = {"data": [{"id": "model-1"}]}
+            return mock_models
+        if len(payloads) == 2:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 400
+            mock_resp.request = MagicMock()
+            mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+                "Bad Request", request=mock_resp.request, response=mock_resp
+            )
+            return mock_resp
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"type": "final", "payload": {"message": "done"}}',
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 10},
+        }
+        return mock_resp
+
+    messages = [
+        {"role": "user", "content": "task"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "call_1"}]},
+        {"role": "tool", "tool_call_id": "call_1", "content": "Tool ok"},
+    ]
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+        response = await agent.chat_completion(messages)
+
+    assert response["choices"][0]["message"]["content"].startswith('{"action_type": "final"')
+    assert len(payloads) == 3
+    assert payloads[2]["stream"] is False
+    assert "tools" not in payloads[2]
+    assert all("tool_calls" not in message for message in payloads[2]["messages"])
+    assert any(
+        message["role"] == "user" and "Tool result:" in message["content"]
+        for message in payloads[2]["messages"]
+    )
+    assert any(event["event"] == "llm.local_400_retry" for event in agent._provider_events)
+    assert any(event["event"] == "llm.local_retry_mode" for event in agent._provider_events)
 
 
 @pytest.mark.asyncio
@@ -720,3 +1036,176 @@ def test_provider_secrets_redaction(monkeypatch):
     sanitized = agent._sanitize_response(raw)
     assert "secret-password" not in str(sanitized)
     assert "[REDACTED]" in str(sanitized)
+
+
+@pytest.mark.asyncio
+async def test_provider_local_openai_reasoning_content_fallback(monkeypatch):
+    """Local provider must fall back to reasoning_content when content is empty."""
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+        },
+    )
+
+    mock_models_response = MagicMock()
+    mock_models_response.status_code = 200
+    mock_models_response.json.return_value = {"data": [{"id": "model-1"}]}
+
+    mock_chat_response = MagicMock()
+    mock_chat_response.status_code = 200
+    mock_chat_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": (
+                        '{"type": "final", "payload": {"message": "from reasoning"}}'
+                    ),
+                }
+            }
+        ],
+        "usage": {"total_tokens": 50, "completion_tokens_details": {"reasoning_tokens": 40}},
+    }
+
+    call_count = 0
+    async def fake_request(method, url, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if method == "GET":
+            return mock_models_response
+        return mock_chat_response
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        result = await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+    content = json.loads(result["choices"][0]["message"]["content"])
+    assert content["action_type"] == "final"
+    assert content["message"] == "from reasoning"
+    assert result["usage"]["completion_tokens_details"]["reasoning_tokens"] == 40
+
+
+@pytest.mark.asyncio
+async def test_provider_openai_max_tokens_in_payload(monkeypatch):
+    """OpenAI-compatible provider must include max_tokens in payload when configured."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake",
+            "model": "model-1",
+            "max_tokens": 4096,
+        },
+    )
+
+    sent_payloads = []
+    async def capture_request(method, url, **kwargs):
+        sent_payloads.append(kwargs.get("json", {}))
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"type": "final", "payload": {"message": "done"}}',
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 10},
+        }
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = capture_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+    assert sent_payloads[0].get("max_tokens") == 4096
+
+
+@pytest.mark.asyncio
+async def test_provider_openai_no_max_tokens_when_unset(monkeypatch):
+    """When max_tokens is not configured, it must not appear in the payload."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake",
+            "model": "model-1",
+        },
+    )
+
+    sent_payloads = []
+    async def capture_request(method, url, **kwargs):
+        sent_payloads.append(kwargs.get("json", {}))
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"type": "final", "payload": {"message": "done"}}',
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 10},
+        }
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = capture_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+    assert "max_tokens" not in sent_payloads[0]
+
+
+@pytest.mark.asyncio
+async def test_provider_reasoning_content_empty_raises_error(monkeypatch):
+    """Provider must still raise ValueError when both content and reasoning_content are empty."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    agent = create_code_agent(
+        "openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake",
+            "model": "model-1",
+        },
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "",
+                }
+            }
+        ]
+    }
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request.return_value = mock_response
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        with pytest.raises(ValueError, match="empty content"):
+            await agent.chat_completion([{"role": "user", "content": "hi"}])

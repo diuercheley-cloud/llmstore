@@ -10,7 +10,7 @@ This document provides a matrix of LLM providers supported by the LLM Harness, d
 | :--- | :--- | :--- | :--- | :--- |
 | **stub** | None | `--provider stub` | Static mocked response | Simulated only; no real model invocation |
 | **openai-compatible** | `OPENAI_API_KEY` (or custom) | `--provider openai-compatible`, `--model`, `--base-url` | Chat completions JSON object | Requires standard OpenAI chat routes |
-| **local-openai-compatible**| None (optional API key) | `--provider local-openai-compatible`, `--model`, `--base-url` | Chat completions JSON object | Bypasses API key requirements; local targets only |
+| **local-openai-compatible**| None (optional API key) | `--provider local-openai-compatible`, `--model`, `--base-url`, `--local-model-timeout`, `--tool-calling`, `--stream` | Chat completions JSON object or native `tool_calls` | Bypasses API key requirements; local targets only |
 | **anthropic** | `ANTHROPIC_API_KEY` | `--provider anthropic`, `--model` | Anthropic message schema | Specific system instructions mapping |
 | **google** | `GEMINI_API_KEY` (or custom) | `--provider google`, `--model` | Google Gemini API schema | Different payload structure, requires Gemini key header |
 | **control-plane** | `OPENAI_API_KEY` (or custom) | `--provider control-plane`, `--base-url`, `--agent-id` | Server Sent Events (SSE) JSON | Heavy dependency on list/stream APIs |
@@ -79,19 +79,46 @@ Bypasses mandatory API key validations for local tools like Ollama or LM Studio.
 - **Variables Required**: None (optional API key can still be passed if needed).
 - **CLI Flags**:
   - `--provider local-openai-compatible`
-  - `--model <model-name>` (e.g. `llama3`)
-  - `--base-url <url>` (e.g. `http://localhost:11434/v1`)
+  - `--model <model-name>` (e.g. `qwen/qwen3.6-35b-a3b`)
+  - `--base-url <url>` (e.g. `http://localhost:1234/v1`)
+  - `--local-model-timeout 300`
+  - `--auto-increase-timeout`
+  - `--tool-calling auto|native|json`
+  - `--supports-tool-calling` for remote OpenAI-compatible providers that expose native tools
+  - `--stream` or `--no-stream`
 - **Expected Response Format**:
-  Same as `openai-compatible`.
-- **Limitations**: Designed exclusively for unauthenticated local endpoints.
+  Same as `openai-compatible`, plus native OpenAI-compatible `tool_calls` when the local server supports them.
+- **Limitations**:
+  - Designed for `localhost`, `127.0.0.1`, and `host.docker.internal` style endpoints.
+  - Executes actions only after a full JSON object or a full `tool_call` is accumulated and schema-validated.
+  - Hard-denied policy decisions still block execution even when interactive approval is enabled.
 - **Example Usage**:
   ```bash
   python3 -m scripts.llm_harness.cli code \
     --provider local-openai-compatible \
-    --model llama3 \
-    --base-url http://localhost:11434/v1 \
-    --task "Fix bug in main.py"
+    --model qwen/qwen3.6-35b-a3b \
+    --base-url http://127.0.0.1:1234/v1 \
+    --local-model-timeout 300 \
+    --auto-increase-timeout \
+    --tool-calling auto \
+    --stream \
+    --task "Create SMOKE_TEST.md and validate write_file"
   ```
+
+#### LM Studio Notes
+
+- `http://127.0.0.1:1234/v1` and `http://127.0.0.1:1234/v1/chat/completions` are both accepted.
+- In `auto` mode the harness uses native `tool_calls` if the provider supports them, otherwise it falls back to legacy JSON action extraction.
+- For remote `openai-compatible` endpoints, declare native tools explicitly with `--supports-tool-calling` when the server implements them.
+- Streaming is enabled by default for local endpoints and emits sanitized `llm.delta` and `llm.completed` events.
+- Read timeouts from local models recommend a `300s` timeout and can trigger one retry with the increased timeout when `--auto-increase-timeout` is set.
+- If a local endpoint returns `HTTP 400` on a follow-up turn, the harness retries once in a compatibility mode that:
+  - simplifies prior assistant/tool messages into plain text,
+  - disables streaming for the retry,
+  - omits native `tools` and `tool_choice`,
+  - preserves schema validation before any action executes.
+- Once a `final` action succeeds, the run ends immediately. Subsequent LLM calls are blocked and counted in `post_final_llm_calls_blocked`.
+- Reports and event logs expose `time_to_first_action_ms`, `time_to_final_ms`, `llm.local_400_retry`, and `llm.local_retry_mode` to help diagnose LM Studio behavior.
 
 ---
 

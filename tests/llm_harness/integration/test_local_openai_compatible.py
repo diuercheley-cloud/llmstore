@@ -87,3 +87,69 @@ async def test_local_llm_coding_loop_minimal(agent_client, tmp_path):
         # The agent should eventually emit a 'final' action if it's capable
         has_final = any(e.get("action_type") == "final" for e in result.events if e.get("event") == "action.completed")
         assert has_final, "Agent failed to complete the task with a 'final' action"
+
+
+@pytest.mark.asyncio
+async def test_local_llm_coding_loop_native_stream_write_then_final(tmp_path):
+    """Exercise the LM Studio-style native tool path with streaming enabled."""
+    assert BASE_URL is not None
+    assert MODEL is not None
+    client = AgentClient(
+        agent_id="test-local-native-stream",
+        provider="local-openai-compatible",
+        base_url=cast(str, BASE_URL),
+        model=cast(str, MODEL),
+        api_key_env="LLM_HARNESS_LOCAL_API_KEY",
+        local_model_timeout=300.0,
+        auto_increase_timeout=True,
+        stream=True,
+        tool_calling="auto",
+    )
+
+    async with Workspace(base_path=str(tmp_path)) as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=4, timeout=300)
+        result = await loop.run(
+            task=(
+                "Create a file named SMOKE_TEST_NATIVE.md containing exactly: "
+                "LM Studio native smoke test passed."
+            )
+        )
+
+        assert result.success is True
+        assert ws.read_file("SMOKE_TEST_NATIVE.md") == "LM Studio native smoke test passed."
+        assert result.metrics.get("final_executed") is True
+        assert result.metrics.get("post_final_llm_calls_blocked", 0) == 0
+        assert result.metrics.get("time_to_first_action_ms") is not None
+        assert result.metrics.get("time_to_final_ms") is not None
+
+
+@pytest.mark.asyncio
+async def test_local_llm_coding_loop_json_no_stream_write_then_final(tmp_path):
+    """Exercise the LM Studio-style JSON multi-turn path without streaming."""
+    assert BASE_URL is not None
+    assert MODEL is not None
+    client = AgentClient(
+        agent_id="test-local-json-no-stream",
+        provider="local-openai-compatible",
+        base_url=cast(str, BASE_URL),
+        model=cast(str, MODEL),
+        api_key_env="LLM_HARNESS_LOCAL_API_KEY",
+        local_model_timeout=300.0,
+        auto_increase_timeout=True,
+        stream=False,
+        tool_calling="json",
+    )
+
+    async with Workspace(base_path=str(tmp_path)) as ws:
+        loop = CodingLoop(agent_client=client, workspace=ws, max_steps=4, timeout=300)
+        result = await loop.run(
+            task=(
+                "Create a file named SMOKE_TEST_JSON.md containing exactly: "
+                "LM Studio json smoke test passed."
+            )
+        )
+
+        assert result.success is True
+        assert ws.read_file("SMOKE_TEST_JSON.md") == "LM Studio json smoke test passed."
+        assert result.metrics.get("final_executed") is True
+        assert result.metrics.get("post_final_llm_calls_blocked", 0) == 0

@@ -64,8 +64,14 @@ class HarnessConfig(BaseSettings):
     report_format: str = "markdown"
     self_heal: bool = True
     timeout: float = 30.0
+    local_model_timeout: float = 300.0
     max_retries: int = 3
+    auto_increase_timeout: bool = False
     stream: bool = False
+    stream_local_default: bool = True
+    verbose_stream: bool = False
+    tool_calling: Literal["auto", "native", "json"] = "auto"
+    supports_tool_calling: bool = False
     workspace_mount_path: str = WORKSPACE_MOUNT_PATH
     temp_base_dir: str | None = TEMP_BASE_DIR
     loop_timeout: int = TIMEOUT
@@ -87,9 +93,11 @@ class HarnessConfig(BaseSettings):
     agent_mode: Literal["single", "planner-coder-reviewer"] = "single"
     approval_mode: Literal["auto", "deny", "interactive", "non_interactive"] = "auto"
     approval_default: Literal["allow", "deny"] = "deny"
+    edit_action_before_run: bool = False
     checkpoint_dir: str = ".llm_harness_checkpoints"
     checkpoint_every_step: bool = False
     mcp: MCPConfig = Field(default_factory=MCPConfig)
+    max_tokens: int | None = None
     multimodal: bool = False
     audio_path: str | None = None
     video_path: str | None = None

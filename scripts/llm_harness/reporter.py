@@ -45,6 +45,12 @@ class Reporter:
             "estimated_cost": getattr(result, "estimated_cost", 0.0),
             "cache_hits": getattr(result, "cache_hits", 0),
             "cache_misses": getattr(result, "cache_misses", 0),
+            "timeout_adjusted": getattr(result, "timeout_adjusted", False),
+            "time_to_first_action_ms": (result.metrics or {}).get("time_to_first_action_ms"),
+            "time_to_final_ms": (result.metrics or {}).get("time_to_final_ms"),
+            "post_final_llm_calls_blocked": (result.metrics or {}).get(
+                "post_final_llm_calls_blocked", 0
+            ),
             "llm_calls": result.llm_calls,
             "llm_provider": result.llm_provider,
             "llm_model": result.llm_model,
