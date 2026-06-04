@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_workflows import (
     CommercialWorkflowExecution,
     CommercialWorkflowPolicySnapshot,
     CommercialWorkflowReplaySession,
 )
-from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService, sign_governance_payload
+from app.services.workflows.workflow_governance_ledger import (
+    WorkflowGovernanceLedgerService,
+    sign_governance_payload,
+)
 from app.services.workflows.workflow_provenance import WorkflowProvenanceService, sha256_hex
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkflowReplaySessionService:

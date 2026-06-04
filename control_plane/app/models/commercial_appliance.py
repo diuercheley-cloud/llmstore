@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Any, List
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, ForeignKey, Integer, Text
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
+
 from ..db.base import Base
+
 
 class CommercialApplianceProfile(Base):
     __tablename__ = "commercial_appliance_profiles"

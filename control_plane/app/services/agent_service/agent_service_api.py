@@ -1,15 +1,15 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
+from typing import Any, Dict
 
-from app.models.agent_service import AgentServiceUsage, AgentServiceTier
-from app.services.agent_service.agent_tiers import AgentTierService
+from app.models.agent_service import AgentServiceUsage
 from app.services.agent_service.agent_rate_limits import AgentRateLimitService
+from app.services.agent_service.agent_tiers import AgentTierService
 from app.services.agent_service.sync_mode import SyncInvocationService
 from app.services.agents import agent_runtime
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

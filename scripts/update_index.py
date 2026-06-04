@@ -1,4 +1,3 @@
-import re
 
 with open('control_plane/app/static/portal/index.html', 'r') as f:
     content = f.read()

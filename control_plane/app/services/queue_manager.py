@@ -1,16 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
 from time import perf_counter
-import uuid
 
 from app.core.config import get_settings
 from app.core.metrics import (
     ACTIVE_GENERATIONS,
-    QUEUE_DEPTH,
-    QUEUE_WAITING,
     QUEUE_ACTIVE,
+    QUEUE_DEPTH,
     QUEUE_FAILED,
     QUEUE_WAIT_TIME,
+    QUEUE_WAITING,
     record_queue_wait,
 )
 
@@ -27,7 +26,8 @@ class QueueTimeout(Exception):
         self.queue_name = queue_name
 
 
-from app.contracts.queue import QueueContract, QueueSnapshot, QueueCapabilities
+from app.contracts.queue import QueueCapabilities, QueueContract
+
 
 class QueueManager(QueueContract):
     def __init__(self, backend_slot_manager) -> None:

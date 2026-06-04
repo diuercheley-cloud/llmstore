@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional
 import hashlib
+from typing import Any, Dict, List
+
 
 class OperationalCorrelationRiskAnalysisService:
     """

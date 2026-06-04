@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def test_alembic_integrity_script():
     # Encontra o diretório raiz do projeto
     project_dir = Path(__file__).resolve().parents[2]

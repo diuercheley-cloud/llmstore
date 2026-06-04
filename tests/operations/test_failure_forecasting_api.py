@@ -1,8 +1,5 @@
-import pytest
-from httpx import AsyncClient
-
 from app.api.operations_admin import _sanitize_payload
-
+from httpx import AsyncClient
 
 SIGNAL_PAYLOAD = {
     "client_id": "test-client",

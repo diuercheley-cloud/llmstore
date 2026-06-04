@@ -1,7 +1,8 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.governance.policy_engine import PolicyEngineService
 from app.services.governance.policy_registry import PolicyRegistryService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_validate_policy_bundle(session: AsyncSession):

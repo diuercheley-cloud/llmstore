@@ -1,10 +1,12 @@
-import pytest
 import uuid
+
+import pytest
+from app.core.config import get_settings
+from app.models.digital_twin import DigitalTwinSafetyEvent
 from app.services.agents.digital_twins.twin_registry import TwinRegistry
 from app.services.agents.digital_twins.twin_service import DigitalTwinService
 from app.services.agents.digital_twins.twin_state import TwinState
-from app.models.digital_twin import DigitalTwin, DigitalTwinCommand, DigitalTwinSafetyEvent
-from app.core.config import get_settings
+
 
 @pytest.fixture
 def twin_id():

@@ -3,7 +3,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_claims.py"
 POLICY_PATH = ROOT_DIR / "docs" / "compliance" / "claims_policy.md"

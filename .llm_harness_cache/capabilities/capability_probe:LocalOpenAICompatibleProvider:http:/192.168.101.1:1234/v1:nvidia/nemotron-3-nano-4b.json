@@ -1,0 +1,12 @@
+{
+  "created_at": 1780603431,
+  "value": {
+    "result": {
+      "capability_probe_cache_hit": false,
+      "reason": "Client error '400 Bad Request' for url 'http://192.168.101.1:1234/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "probe_failed",
+      "supported": false
+    },
+    "timestamp": 1780603431.4174058
+  }
+}

@@ -2,8 +2,6 @@
 
 import argparse
 import json
-import sys
-from pathlib import Path
 
 from kleberai import Client
 
@@ -99,7 +97,7 @@ def main():
         print(json.dumps(agent, indent=2, default=str))
 
     elif args.command == "scaffold":
-        from kleberai.scaffold import list_templates, scaffold as _scaffold
+        from kleberai.scaffold import scaffold as _scaffold
         values = {}
         if args.name:
             values["name"] = args.name

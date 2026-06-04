@@ -9,14 +9,14 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_cryptographic_receipts import CommercialInferenceReceipt
-from app.models.commercial_inference_reproducibility import CommercialInferenceReplayEvent, CommercialInferenceRuntimeSnapshot
+from app.models.commercial_inference_reproducibility import (
+    CommercialInferenceReplayEvent,
+    CommercialInferenceRuntimeSnapshot,
+)
 from app.models.commercial_merkle_timelines import (
     CommercialExecutionProof,
     CommercialMerkleLeaf,
@@ -25,7 +25,6 @@ from app.models.commercial_merkle_timelines import (
 from app.models.commercial_witness import (
     CommercialWitness,
     CommercialWitnessSignature,
-    CommercialWitnessQuorumPolicy
 )
 from app.services.inference import witness_federation
 from app.services.inference.merkle_timelines import (
@@ -36,7 +35,8 @@ from app.services.inference.merkle_timelines import (
     validate_timeline_chain,
     verify_inclusion_proof,
 )
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ---------------------------------------------------------------------------
 # Helpers

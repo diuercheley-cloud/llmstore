@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.models.model_lifecycle_manager import discover_model
 from app.services.models.model_lineage import (
     create_lineage_entry,

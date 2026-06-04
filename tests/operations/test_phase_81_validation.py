@@ -4,7 +4,6 @@ import sqlalchemy as sa
 
 from scripts.validate_phase_81_reproducible_builds import validate
 
-
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION_PATH = ROOT / "control_plane" / "alembic" / "versions" / "phase81_reproducible_build_artifact_verification.py"
 

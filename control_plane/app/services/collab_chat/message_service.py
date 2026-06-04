@@ -1,10 +1,11 @@
-import uuid
 import re
-from typing import List, Optional, Dict, Any
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.models.collab_chat import ChatMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.collab_chat import ChatMessage, ChatAgentParticipant
-from app.core.time import utc_now
+
 
 class MessageService:
     def __init__(self, db: AsyncSession):

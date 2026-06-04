@@ -1,6 +1,5 @@
-import pytest
 
-from app.services.billing.pricing_engine import calculate_financials, calculate_margin
+from app.services.billing.pricing_engine import calculate_financials
 
 
 def test_admin_can_see_margin():

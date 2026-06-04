@@ -1,25 +1,25 @@
 import os
-import pytest
-import pytest_asyncio
 import uuid
 from unittest.mock import patch
 
-from sqlalchemy import select
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentDefinition, AgentEvalFailure, AgentEvalSuite, AgentEvalCase, AgentEvalRun
-from app.models.agent_optimization import (
-    AgentOptimizationExperiment,
-    AgentOptimizationCandidate,
-    AgentOptimizationResult,
-    AgentPromptCandidate,
-    AgentPolicyCandidate,
-    AgentToolSelectionCandidate
-)
-from app.services.agents.optimization.optimizer import AgentOptimizerCoordinator
-from app.services.agents.optimization.optimization_experiments import OptimizationExperimentService
-from app.services.agents.optimization.optimization_gate import OptimizationGate
+import pytest
+import pytest_asyncio
 from app.core.config import get_settings
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agent_optimization import (
+    AgentPolicyCandidate,
+    AgentPromptCandidate,
+    AgentToolSelectionCandidate,
+)
+from app.models.agents import (
+    AgentDefinition,
+    AgentEvalFailure,
+)
+from app.services.agents.optimization.optimization_experiments import OptimizationExperimentService
+from app.services.agents.optimization.optimizer import AgentOptimizerCoordinator
+from sqlalchemy import select
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

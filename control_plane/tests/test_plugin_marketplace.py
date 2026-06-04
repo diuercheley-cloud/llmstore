@@ -1,15 +1,14 @@
-import pytest
-import json
 import hashlib
-import zipfile
 import io
-from unittest.mock import AsyncMock, patch
+import json
+import zipfile
 
-from app.services.plugins.plugin_marketplace import PluginMarketplaceService
-from app.services.plugins.plugin_loader import PluginLoader
-from app.contracts.plugin import PluginManifest, ManifestV1
-from app.contracts.plugin_types import PLUGIN_TYPES, ALLOWED_PERMISSIONS
+import pytest
+from app.contracts.plugin import ManifestV1, PluginManifest
+from app.contracts.plugin_types import ALLOWED_PERMISSIONS, PLUGIN_TYPES
 from app.core.config import get_settings
+from app.services.plugins.plugin_loader import PluginLoader
+from app.services.plugins.plugin_marketplace import PluginMarketplaceService
 
 
 def _make_plugin_zip(manifest: dict) -> bytes:

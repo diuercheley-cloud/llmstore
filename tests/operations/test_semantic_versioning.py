@@ -1,6 +1,7 @@
 import pytest
-
-from app.services.operations.compatibility_contracts.semantic_versioning import SemanticVersioningService
+from app.services.operations.compatibility_contracts.semantic_versioning import (
+    SemanticVersioningService,
+)
 
 
 def test_semver_parsing_and_comparison():

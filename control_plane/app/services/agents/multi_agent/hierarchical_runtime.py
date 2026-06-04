@@ -1,10 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
+
 from app.models.multi_agent import AgentTeamDelegation
-from app.services.agents.multi_agent.team_runtime import TeamRuntime
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
+from app.services.agents.multi_agent.team_runtime import TeamRuntime
 
 logger = logging.getLogger(__name__)
 

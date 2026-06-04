@@ -1,10 +1,8 @@
 import csv
-import io
 import logging
-import os
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-from app.services.rag_enterprise.schemas import ParseResult, ParserStatus, SUPPORTED_EXTENSIONS
+from app.services.rag_enterprise.schemas import SUPPORTED_EXTENSIONS, ParseResult, ParserStatus
 
 logger = logging.getLogger(__name__)
 

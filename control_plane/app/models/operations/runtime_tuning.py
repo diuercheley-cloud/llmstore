@@ -1,11 +1,9 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import uuid
-
-from sqlalchemy import Column, String, DateTime, Float, JSON, Boolean, ForeignKey, Integer, Text
-from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from app.db.base_class import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, String, Text
+
 
 class RuntimeBenchmarkRun(Base):
     __tablename__ = "runtime_benchmark_runs"

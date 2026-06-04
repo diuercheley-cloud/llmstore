@@ -2,12 +2,12 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
-import logging
 import hashlib
-from typing import Dict, Any, Optional
-from app.models.agents import AgentBundleSignature
+import logging
+import uuid
+
 from app.core.time import utc_now
+from app.models.agents import AgentBundleSignature
 
 logger = logging.getLogger(__name__)
 

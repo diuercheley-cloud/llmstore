@@ -1,5 +1,4 @@
 import pytest
-
 from app.models.commercial_model_supply_chain import CommercialModelPromotionBundle
 from app.services.models.model_promotion_bundles import (
     create_model_promotion_bundle,

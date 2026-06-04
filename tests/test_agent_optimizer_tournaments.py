@@ -1,24 +1,21 @@
-import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
+import pytest
 from app.models.agent_optimization import (
     AgentOptimizationCandidate,
-    AgentOptimizationExperiment,
 )
 from app.models.agent_optimization_tournament import (
     AgentOptimizationTournament,
     AgentOptimizationTournamentCandidate,
     AgentOptimizationTournamentResult,
-    AgentOptimizationPairwiseResult,
 )
 from app.models.agents import AgentDefinition
-from app.services.agents.optimization.tournament_runner import TournamentRunner
-from app.services.agents.optimization.statistical_scoring import StatisticalScoringService
-from app.services.agents.optimization.candidate_ranker import CandidateRanker
 from app.services.agents.optimization.ab_testing import ABTestingService
+from app.services.agents.optimization.candidate_ranker import CandidateRanker
+from app.services.agents.optimization.statistical_scoring import StatisticalScoringService
+from app.services.agents.optimization.tournament_runner import TournamentRunner
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture

@@ -1,15 +1,13 @@
 # Owner: voice-agent
-import uuid
 import logging
-from typing import Optional, Dict, Any
+import uuid
+from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.realtime_voice import VoiceTurn, VoiceTranscript, VoiceSession
+from app.core.time import utc_now
+from app.models.realtime_voice import VoiceSession, VoiceTranscript, VoiceTurn
 from app.services.agents.sessions.agent_session_service import AgentSessionService
 from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
-from app.services.agents import agent_state
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

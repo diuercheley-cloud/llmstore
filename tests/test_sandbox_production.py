@@ -1,11 +1,17 @@
-import pytest
 import uuid
+
+import pytest
 from app.core.config import get_settings
-from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine, SandboxPolicyViolation
-from app.services.agents.code_interpreter.providers.mock_sandbox import MockSandboxProvider
+from app.services.agents.code_interpreter.providers.firecracker_sandbox import (
+    FirecrackerSandboxProvider,
+)
 from app.services.agents.code_interpreter.providers.gvisor_sandbox import GVisorSandboxProvider
-from app.services.agents.code_interpreter.providers.firecracker_sandbox import FirecrackerSandboxProvider
+from app.services.agents.code_interpreter.sandbox_policy import (
+    SandboxPolicyEngine,
+    SandboxPolicyViolation,
+)
 from app.services.agents.tool_sandbox import execute_in_sandbox
+
 
 @pytest.mark.asyncio
 async def test_production_blocks_mock(session):

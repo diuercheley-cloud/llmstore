@@ -1,12 +1,11 @@
 # Owner: agent-platform
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.services.agents.analytics.agent_analytics import AgentAnalyticsService
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

@@ -1,8 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
-from fastapi.testclient import TestClient
+from app.db.session import get_db, get_redis
 from app.main import app
-from app.db.session import get_redis, get_db
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 

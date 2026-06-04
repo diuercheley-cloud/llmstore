@@ -1,9 +1,9 @@
-import pytest
-import pytest_asyncio
 from unittest.mock import patch
 
+import pytest
+import pytest_asyncio
 from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
-from app.models.commercial_global_traffic import CommercialGlobalTrafficPolicy, CommercialGlobalTrafficDecision
+
 
 @pytest_asyncio.fixture(autouse=True)
 def override_config():

@@ -1,8 +1,10 @@
 import asyncio
 import uuid
-from app.db.session import SessionLocal, redis_client
+
+from app.api.deps import get_backend_slot_manager, get_inference_proxy
+from app.db.session import SessionLocal
 from app.services.generation_jobs import process_generation_job
-from app.api.deps import get_inference_proxy, get_backend_slot_manager
+
 
 async def main():
     job_id = uuid.UUID("e83ae088-4c31-4804-9722-3a4b553f7509")

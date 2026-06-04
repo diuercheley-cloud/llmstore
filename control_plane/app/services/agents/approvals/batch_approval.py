@@ -1,10 +1,10 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import List
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.agents.human_approval import approve_approval_request, AdminRole
+from app.services.agents.human_approval import AdminRole, approve_approval_request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

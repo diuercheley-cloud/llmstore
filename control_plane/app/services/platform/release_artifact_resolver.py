@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from app.services.platform.current_release_context import get_current_tag
+
 
 class ReleaseArtifactResolver:
     def __init__(self, base_dir: Path):

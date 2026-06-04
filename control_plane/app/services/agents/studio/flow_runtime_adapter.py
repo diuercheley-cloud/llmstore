@@ -1,12 +1,13 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
+import uuid
+from typing import Any, Dict
+
+from app.models.agent_studio import AgentFlowDebugEvent, AgentFlowDebugSession, AgentFlowVersion
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from .flow_compiler import FlowCompiler
 from .flow_validator import FlowValidator
-from app.models.agent_studio import AgentFlowVersion, AgentFlowDebugSession, AgentFlowDebugEvent
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +53,9 @@ class FlowRuntimeAdapter:
 
         signature = None
         if not is_dry_run:
-            from app.utils.crypto_signer import sign_payload
             import json
+
+            from app.utils.crypto_signer import sign_payload
             # Sign the execution plan
             signature = sign_payload(json.dumps(plan))
 

@@ -1,12 +1,9 @@
-import uuid
 import logging
-from typing import Dict, Any, List, Optional
+import uuid
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
-from app.core.time import utc_now
-from app.models.agent_cicd import AgentPipeline
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +18,7 @@ class AgentCICDTestService:
         self.db = db
 
     async def run_suite(self, suite_id: uuid.UUID, tenant_id: str) -> Dict[str, Any]:
-        from app.models.agents import AgentDefinition
-        from app.models.agent_test_suites import AgentTestSuite, AgentTestCase
+        from app.models.agent_test_suites import AgentTestCase, AgentTestSuite
 
         stmt = select(AgentTestSuite).where(
             AgentTestSuite.id == suite_id,

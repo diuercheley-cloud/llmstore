@@ -1,12 +1,11 @@
-import pytest
 import asyncio
-import json
 import uuid
-from fastapi import FastAPI, Request, Response, Header
-from uvicorn import Config, Server
-from app.services.agents.connectors.github_connector import GitHubConnector
-from app.services.agents.connectors.connector_mode import ConnectorMode
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents.connectors.github_connector import GitHubConnector
+from fastapi import FastAPI, Header, Request
+from uvicorn import Config, Server
 
 app = FastAPI()
 

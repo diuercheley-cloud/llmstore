@@ -1,5 +1,7 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
+
 
 class AdapterStagingSimulationService:
     def require_staging_simulation(self, target_stage: str) -> bool:

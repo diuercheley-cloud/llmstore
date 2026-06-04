@@ -1,6 +1,8 @@
 import pytest
-
-from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine, SandboxPolicyViolation
+from app.services.agents.code_interpreter.sandbox_policy import (
+    SandboxPolicyEngine,
+    SandboxPolicyViolation,
+)
 
 
 def test_exec_is_never_allowed():

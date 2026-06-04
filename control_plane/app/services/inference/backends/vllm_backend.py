@@ -1,7 +1,8 @@
 import logging
+
 import httpx
-from fastapi import HTTPException
 from app.core.config import get_settings
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 

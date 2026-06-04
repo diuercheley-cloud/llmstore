@@ -1,6 +1,5 @@
 """Tests for Fireworks AI billing mapping — cost estimation, pricing engine integration."""
 
-import pytest
 
 from app.services.billing.pricing_engine import estimate_provider_cost
 from app.services.providers.fireworks_provider import FireworksProvider

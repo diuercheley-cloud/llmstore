@@ -1,6 +1,8 @@
 import os
 import subprocess
+
 import pytest
+
 
 def test_scripts_exist():
     assert os.path.exists("scripts/fix-local-permissions.sh")

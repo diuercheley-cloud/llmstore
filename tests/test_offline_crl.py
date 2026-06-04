@@ -1,8 +1,6 @@
 import uuid
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.client import Client
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.services.governance.airgap_sync import create_airgap_package, export_airgap_package
@@ -15,6 +13,7 @@ from app.services.security.offline_crl import (
     is_peer_revoked,
 )
 from app.services.security.tenant_encryption import TenantEncryptionService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

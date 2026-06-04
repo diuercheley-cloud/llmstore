@@ -1,10 +1,11 @@
-import pytest
 import uuid
-from datetime import datetime, date
-from sqlalchemy import select
+
+import pytest
 from app.models.commercial_routing_event import CommercialRoutingEvent
-from app.services.routing import commercial_analytics
 from app.schemas.routing import TaskType
+from app.services.routing import commercial_analytics
+from sqlalchemy import select
+
 
 @pytest.mark.asyncio
 async def test_record_routing_event(session):

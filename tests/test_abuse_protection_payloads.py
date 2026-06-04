@@ -1,19 +1,18 @@
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from unittest.mock import patch
 
-from app.main import app
+import pytest
+import pytest_asyncio
+from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
+from app.main import app
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
+from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_registry import ModelRegistry
-from app.models.model_backend_route import ModelBackendRoute
-from app.core.security import hash_secret, short_prefix
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture
@@ -42,8 +41,6 @@ async def abuse_payload_env(isolated_db_url, fake_redis):
     await engine.dispose()
 
 
-from app.models.model_registry import ModelRegistry
-from app.models.inference_backend import InferenceBackend
 
 @pytest_asyncio.fixture
 async def payload_setup(abuse_payload_env):

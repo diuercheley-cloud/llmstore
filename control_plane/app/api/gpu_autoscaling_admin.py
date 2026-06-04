@@ -1,15 +1,18 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from app.api.dependencies import get_db, get_current_admin
+from app.api.dependencies import get_current_admin, get_db
+from app.models.runtime.gpu_orchestration import (
+    AutoscalingEvent,
+    AutoscalingPolicy,
+    GpuAllocation,
+    GpuDevice,
+)
 from app.services.gpu_orchestrator import GpuOrchestrator
-from app.models.runtime.gpu_orchestration import GpuDevice, GpuAllocation, AutoscalingPolicy, AutoscalingEvent
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin", tags=["gpu_autoscaling"])
 

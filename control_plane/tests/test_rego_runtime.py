@@ -1,5 +1,5 @@
-import pytest
 from app.services.governance.rego_runtime import RegoRuntime
+
 
 def test_rego_runtime_load_bundle():
     runtime = RegoRuntime()

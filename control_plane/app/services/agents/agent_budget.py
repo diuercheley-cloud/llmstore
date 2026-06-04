@@ -1,8 +1,9 @@
 # Owner: agent-platform
-import yaml
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import yaml
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
 

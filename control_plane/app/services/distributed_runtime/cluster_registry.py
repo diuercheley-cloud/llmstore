@@ -1,8 +1,10 @@
 import uuid
 from typing import List, Optional
+
+from app.models.runtime.distributed_runtime import RuntimeCluster
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.runtime.distributed_runtime import RuntimeCluster
+
 
 class ClusterRegistry:
     def __init__(self, db: AsyncSession):

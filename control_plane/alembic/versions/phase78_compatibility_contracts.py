@@ -5,9 +5,8 @@ Revises: phase77_federation_sync_protocol
 Create Date: 2026-05-16 13:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase78_compatibility_contracts"
 down_revision = "phase77_federation_sync_protocol"

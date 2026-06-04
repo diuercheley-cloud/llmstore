@@ -1,9 +1,9 @@
+
 import pytest
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.mobile.device_registry import DeviceRegistryService
 from app.services.mobile.push_notifications import PushNotificationService
-from app.models.mobile import MobileDevice, PushSubscription
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_device_registration(session: AsyncSession):

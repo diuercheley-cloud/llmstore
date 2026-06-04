@@ -3,20 +3,13 @@ import json
 import logging
 import os
 import uuid
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
-from pydantic import BaseModel
-from sqlalchemy import select, func, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse
-
+from app.api.client import _chat_with_fallback
+from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.client import Client
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
-from app.models.rag_collection import RAGCollection
 from app.models.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
@@ -25,15 +18,13 @@ from app.models.commercial_rag_vault import (
     CommercialRAGVault,
 )
 from app.models.commercial_retrieval_proofs import CommercialRetrievalProof
-from app.services.auth import AdminRole, require_client, require_admin_role
-from app.services.rag_enterprise.schemas import (
-    CollectionCreate, CollectionResponse, CollectionListResponse,
-    EnterpriseDocumentResponse, EnterpriseDocumentListResponse,
-    EnterpriseQueryRequest, EnterpriseQueryResponse,
-    EnterpriseSource, AdminOverview,
-)
-from app.services.rag_enterprise.ingestion import ingest_document, delete_enterprise_document
-from app.services.rag_enterprise.retrieval import execute_enterprise_query, build_rag_context
+from app.models.rag_collection import RAGCollection
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
+from app.services.auth import AdminRole, require_admin_role, require_client
+from app.services.billing.core import resolve_effective_plan_for_session
+from app.services.model_policy import resolve_requested_model
+from app.services.quota import QuotaExceeded, ensure_quota, record_usage
 from app.services.rag.rag_access_control import RetrievalAccessDenied
 from app.services.rag.rag_audit import record_retrieval_audit
 from app.services.rag.rag_vault import get_or_create_default_vault
@@ -47,23 +38,39 @@ from app.services.rag.retrieval_proofs import (
     verify_lineage_consistency,
     verify_retrieval_proof,
 )
+from app.services.rag_enterprise.ingestion import delete_enterprise_document, ingest_document
+from app.services.rag_enterprise.parsers import (
+    get_parser_status,
+)
 from app.services.rag_enterprise.policies import (
-    resolve_enterprise_rag_policy,
+    check_file_type_allowed,
     check_quota_documents,
     check_quota_storage,
-    check_file_type_allowed,
     is_cloud_embedding_allowed,
-    ALLOWED_FILE_TYPES_DEFAULT,
+    resolve_enterprise_rag_policy,
 )
-from app.services.rag_enterprise.parsers import get_parsers_summary, get_parser_status, SUPPORTED_EXTENSIONS
-from app.services.rag_usage import get_rag_usage_and_limits, check_rag_feature_blocked, record_rag_event
-from app.services.model_policy import resolve_requested_model
-from app.services.quota import ensure_quota, record_usage, QuotaExceeded
-from app.services.billing import resolve_effective_plan
-from app.services.billing.core import resolve_effective_plan_for_session
-from app.api.deps import get_inference_proxy
-from app.api.client import _chat_with_fallback
-from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.services.rag_enterprise.retrieval import build_rag_context, execute_enterprise_query
+from app.services.rag_enterprise.schemas import (
+    AdminOverview,
+    CollectionCreate,
+    CollectionListResponse,
+    CollectionResponse,
+    EnterpriseDocumentListResponse,
+    EnterpriseDocumentResponse,
+    EnterpriseQueryRequest,
+    EnterpriseQueryResponse,
+)
+from app.services.rag_usage import (
+    check_rag_feature_blocked,
+    get_rag_usage_and_limits,
+    record_rag_event,
+)
+from app.utils.token_estimator import estimate_tokens_from_text
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -2,15 +2,15 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
+from app.core.config import get_settings
+from app.core.time import utc_now
+from app.models.agent_workflows_external import AgentWorkflowPollingJob
+from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
-
-from app.models.agent_workflows_external import AgentWorkflowPollingJob, AgentWorkflowExternalEvent
-from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
-from app.core.time import utc_now
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 import os
-import pytest
 
 CAPABILITIES_HTML = "control_plane/app/static/www/capabilities.html"
 PUBLIC_API = "control_plane/app/api/public.py"

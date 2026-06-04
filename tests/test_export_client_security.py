@@ -1,7 +1,6 @@
-import os
 import subprocess
-import pytest
 from pathlib import Path
+
 
 def test_gitignore_exports():
     with open(".gitignore", "r") as f:

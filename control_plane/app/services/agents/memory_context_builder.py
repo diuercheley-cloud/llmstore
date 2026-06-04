@@ -4,14 +4,13 @@ Status: beta
 
 Builds a "Relevant Memory" context block for reinjection into the LLM prompt.
 """
-import uuid
 import logging
-from typing import List, Optional, Dict, Any, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, List, Optional
 
-from app.models.agents import AgentMemoryItem
 from app.core.config import get_settings
-from app.services.agents.memory_retriever import MemoryRetriever, MemoryRetrievalResult
+from app.services.agents.memory_retriever import MemoryRetrievalResult, MemoryRetriever
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import json
 import os
 import subprocess
-from pathlib import Path
+
 
 def test_smoke_script_exists():
     assert os.path.exists("scripts/post-upgrade-smoke-local.sh")

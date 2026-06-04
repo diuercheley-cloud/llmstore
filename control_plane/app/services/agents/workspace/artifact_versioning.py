@@ -1,12 +1,14 @@
-import uuid
 import hashlib
 import re
-from typing import Optional, Dict, Any
-from sqlalchemy.future import select
+import uuid
+from typing import Any, Dict, Optional
+
+from app.core.time import utc_now
+from app.models.agent_workspace import AgentArtifactEvent, AgentArtifactVersion, AgentSharedArtifact
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_workspace import AgentSharedArtifact, AgentArtifactVersion, AgentArtifactEvent
-from app.core.time import utc_now
+from sqlalchemy.future import select
+
 
 class ArtifactVersioningManager:
     @staticmethod

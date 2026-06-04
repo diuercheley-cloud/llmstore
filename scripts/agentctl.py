@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-import json
-import yaml
 import argparse
 import os
 import sys
-import uuid
-from pathlib import Path
+
 
 class AgentCTL:
     def __init__(self):

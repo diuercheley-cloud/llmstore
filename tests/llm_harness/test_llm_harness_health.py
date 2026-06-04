@@ -63,7 +63,7 @@ async def test_health_local_env_detects_project_venv(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_run_health_command_respects_provider(monkeypatch):
+async def test_run_health_command_respects_provider(monkeypatch, capsys):
     captured = {}
 
     class FakeArgs:
@@ -80,7 +80,14 @@ async def test_run_health_command_respects_provider(monkeypatch):
 
     async def fake_check_provider(client):
         captured["provider"] = client.provider
-        return {"status": "healthy", "provider": client.provider}
+        return {
+            "status": "healthy",
+            "provider": client.provider,
+            "details": {
+                "selected_model": "qwen/qwen3.6-35b-a3b",
+                "supports_native_tool_calling": False,
+            },
+        }
 
     async def fake_check_local_env():
         return {"status": "healthy", "checks": {}}
@@ -95,5 +102,8 @@ async def test_run_health_command_respects_provider(monkeypatch):
     )
 
     await run_health_command(FakeArgs())
+    captured_out = capsys.readouterr().out
 
     assert captured["provider"] == "local-openai-compatible"
+    assert "selected_model: qwen/qwen3.6-35b-a3b" in captured_out
+    assert "supports_native_tool_calling: False" in captured_out

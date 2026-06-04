@@ -1,12 +1,13 @@
 # Owner: agent-platform
-import os
 import logging
+import os
+
 try:
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 except ImportError:
     JaegerExporter = None
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from app.core.config import get_settings
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
 

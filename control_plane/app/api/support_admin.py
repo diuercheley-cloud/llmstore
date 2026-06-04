@@ -1,14 +1,13 @@
 # Owner: Platform Operations
 # Surface: admin
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse
 import os
-from pathlib import Path
 
 from app.api.deps import get_admin_token
 from app.db.session import get_db_session
 from app.services.support_bundle import SupportBundleService
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/support", tags=["Support"])

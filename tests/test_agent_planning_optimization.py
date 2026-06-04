@@ -1,24 +1,22 @@
 import uuid
-import pytest
 from unittest.mock import AsyncMock
-from sqlalchemy import select
-from datetime import datetime, timedelta
 
+import pytest
 from app.models.agents import (
-    AgentDefinition, 
-    AgentRun, 
-    AgentTool, 
-    AgentPlan, 
-    AgentTask, 
-    AgentStepCacheEntry, 
-    AgentPlanCostEstimate
+    AgentDefinition,
+    AgentPlan,
+    AgentPlanCostEstimate,
+    AgentStepCacheEntry,
+    AgentTask,
+    AgentTool,
 )
 from app.services.agents import agent_state
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.agents.agent_planner import AgentPlanner
-from app.services.agents.planning.step_cache import StepCache
 from app.services.agents.planning.cost_aware_planner import CostAwarePlanner
-from app.core.time import utc_now
+from app.services.agents.planning.step_cache import StepCache
+from sqlalchemy import select
+
 
 @pytest.fixture
 async def setup_agent(session):

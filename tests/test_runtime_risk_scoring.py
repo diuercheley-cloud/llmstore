@@ -1,7 +1,11 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.commercial_predictive_aiops import (
+    CommercialAnomalySignal,
+    CommercialFailurePrediction,
+)
 from app.services.runtime.runtime_risk_scoring import RuntimeRiskScorer
-from app.models.commercial_predictive_aiops import CommercialAnomalySignal, CommercialFailurePrediction
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_runtime_risk_scoring(session: AsyncSession):

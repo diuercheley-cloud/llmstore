@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.operations.federation_sync.audit_events import (
     FEDERATION_SYNC_AUDIT_EVENTS,
     build_federation_sync_audit_event,

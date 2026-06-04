@@ -8,9 +8,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from fastapi import Request
-
 from app.core.config import Settings
+from fastapi import Request
 
 PUBLIC_STATIC_DIR = Path(__file__).resolve().parents[1] / "static" / "www"
 

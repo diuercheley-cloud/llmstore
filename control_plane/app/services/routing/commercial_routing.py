@@ -11,19 +11,16 @@ from app.schemas.routing import (
     RoutingStrategy,
     TaskType,
 )
-from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.billing.pricing_engine import (
     calculate_customer_price,
     calculate_margin,
     estimate_provider_cost,
 )
+from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.routing.smart_router import (
     CLOUD_PROVIDERS,
-    LOCAL_PROVIDERS,
-    _estimate_cost as smart_router_estimate_cost,
     _get_cloud_providers_enabled,
     _is_provider_available,
-    get_smart_router,
 )
 
 logger = logging.getLogger(__name__)

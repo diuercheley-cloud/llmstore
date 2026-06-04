@@ -1,8 +1,7 @@
 from typing import Any
 
-from app.models.operations.federation_sync import SovereignFederationEnvironment, TRUST_LEVELS
+from app.models.operations.federation_sync import TRUST_LEVELS, SovereignFederationEnvironment
 from app.services.operations.federation_sync.hash_utils import compute_negotiation_hash, sha256_hex
-
 
 TRUST_SCORES = {
     "restricted": 1,

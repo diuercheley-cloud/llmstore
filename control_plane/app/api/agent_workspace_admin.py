@@ -1,31 +1,40 @@
 # Owner: agent-platform
 # Surface: admin
 import uuid
-from typing import List, Optional
+from typing import List
+
+from app.api.deps import get_admin_token, get_db
+from app.core.config import get_settings
+from app.models.agent_workspace import (
+    AgentArtifactEvent,
+    AgentArtifactVersion,
+)
+from app.schemas.agent_workspace import (
+    ArtifactCommentCreate,
+    ArtifactCommentRead,
+    ArtifactCreate,
+    ArtifactDiffResponse,
+    ArtifactEventRead,
+    ArtifactLockAcquire,
+    ArtifactLockRead,
+    ArtifactRead,
+    ArtifactReviewCreate,
+    ArtifactReviewRead,
+    ArtifactVersionCreate,
+    ArtifactVersionRead,
+    WorkspaceCreate,
+    WorkspaceRead,
+)
+from app.services.agents.workspace import (
+    ArtifactDiffManager,
+    ArtifactLockManager,
+    ArtifactReviewManager,
+    ArtifactVersioningManager,
+    SharedArtifactRegistry,
+)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from app.api.deps import get_db, get_admin_token
-from app.core.config import get_settings
-from app.models.agent_workspace import AgentSharedArtifact, AgentArtifactVersion, AgentArtifactReview, AgentArtifactComment, AgentArtifactLock, AgentArtifactEvent
-from app.schemas.agent_workspace import (
-    WorkspaceCreate, WorkspaceRead,
-    ArtifactCreate, ArtifactRead,
-    ArtifactVersionCreate, ArtifactVersionRead,
-    ArtifactLockAcquire, ArtifactLockRead,
-    ArtifactReviewCreate, ArtifactReviewRead,
-    ArtifactCommentCreate, ArtifactCommentRead,
-    ArtifactDiffResponse, ArtifactEventRead
-)
-from app.services.agents.workspace import (
-    SharedArtifactRegistry,
-    ArtifactVersioningManager,
-    ArtifactLockManager,
-    ArtifactDiffManager,
-    ArtifactReviewManager,
-    ArtifactPermissionManager
-)
 
 router = APIRouter()
 

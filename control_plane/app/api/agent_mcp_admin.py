@@ -3,24 +3,23 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import require_admin
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
 from app.services.agents.mcp.mcp_audit import MCPAuditLog
 from app.services.agents.mcp.mcp_client import MCPClient
-from app.services.agents.mcp.mcp_registry import MCPRegistry
-from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_oauth import (
     MCPOAuthAuditLog,
-    create_mcp_oauth_client,
     create_mcp_delegated_grant,
+    create_mcp_oauth_client,
     delete_mcp_delegated_grant,
 )
+from app.services.agents.mcp.mcp_registry import MCPRegistry
+from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_token_exchange import exchange_token
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["agent-mcp"])
 

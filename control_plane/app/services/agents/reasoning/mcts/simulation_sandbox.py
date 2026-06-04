@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, Any, Tuple, List
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 

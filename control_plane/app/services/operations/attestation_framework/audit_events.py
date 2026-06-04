@@ -3,7 +3,6 @@ from typing import Any
 from app.services.operations.attestation_framework.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
-
 EVENT_TYPES = {
     "attestation_issued",
     "attestation_verified",

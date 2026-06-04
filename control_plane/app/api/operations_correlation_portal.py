@@ -1,16 +1,13 @@
 # Owner: platform-ops
-import uuid
-from typing import List, Dict, Any
-
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.api.dependencies import get_db
-from app.services.auth import require_client
 from app.models.client import Client
 from app.models.operations.correlation import OperationalCorrelation
+from app.services.auth import require_client
 from app.services.operations.correlation.trust_graph import OperationalTrustGraphService
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/portal/operations/correlations", tags=["portal-operations-correlation"])
 

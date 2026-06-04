@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Boolean, JSON, Integer
+from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.time import utc_now
-from app.db.base import Base
 
 class SignedAdapterRegistryEntry(Base):
     __tablename__ = "signed_adapter_registry_entries"

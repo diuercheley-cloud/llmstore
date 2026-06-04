@@ -1,6 +1,7 @@
-import sys
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 
 class FakeConnectorHandler(BaseHTTPRequestHandler):
     def do_POST(self):

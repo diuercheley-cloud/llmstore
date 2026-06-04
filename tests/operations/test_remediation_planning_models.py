@@ -1,16 +1,16 @@
-import pytest
 import uuid
+
+import pytest
+from app.models.operations.remediation_planning import (
+    RemediationApprovalRequirement,
+    RemediationPlan,
+    RemediationPlanReceipt,
+    RemediationStep,
+    compute_deterministic_hash,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.operations.remediation_planning import (
-    RemediationPlan,
-    RemediationStep,
-    RemediationPlanReceipt,
-    RemediationApprovalRequirement,
-    compute_deterministic_hash,
-)
-from app.core.time import utc_now
 
 class TestRemediationDeterministicHash:
     def test_deterministic_same_input(self):

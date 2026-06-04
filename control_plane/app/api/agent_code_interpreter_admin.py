@@ -1,19 +1,19 @@
 # Owner: agent-platform
 import uuid
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.config import get_settings, Settings
-from app.api.deps import get_db as get_async_db, require_admin
+from app.api.deps import get_db as get_async_db
+from app.api.deps import require_admin
+from app.core.config import Settings, get_settings
 from app.models.agent_tool_synthesis import (
-    AgentSandboxSession,
+    AgentCodeInterpreterRun,
     AgentSandboxArtifact,
-    AgentCodeInterpreterRun
 )
 from app.services.agents.code_interpreter import CodeInterpreter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/code-interpreter", tags=["agent-code-interpreter"])
 

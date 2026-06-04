@@ -1,12 +1,11 @@
-import pytest
 import uuid
-from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from sqlalchemy.ext.asyncio import AsyncSession
+import pytest
 from app.models.commercial_routing_config import CommercialRoutingConfig
 from app.services.routing.commercial_auto_apply import CommercialAutoApplyService
-from app.services.routing.commercial_config_store import CommercialConfigStore
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def mock_db():

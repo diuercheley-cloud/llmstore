@@ -1,10 +1,9 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.rag import confidential_rag_vault, context_sanitizer
-
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.db.base import Base
+from app.services.rag import confidential_rag_vault, context_sanitizer
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url):

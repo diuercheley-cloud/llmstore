@@ -1,17 +1,16 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
 
-from app.db.session import get_db_session
 from app.core.config import get_settings
+from app.db.session import get_db_session
 from app.models.agents import AgentRun
+from app.services.agents import agent_runtime
+from app.services.agents.agent_cancellation import AgentCancellationService
 from app.services.agents.streaming.stream_auth import StreamAuthService
 from app.services.agents.streaming.websocket_manager import ws_manager
-from app.services.agents.agent_cancellation import AgentCancellationService
-from app.services.agents import agent_runtime
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("agents_ws")
 router = APIRouter(tags=["agents-ws"])

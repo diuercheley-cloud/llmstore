@@ -21,10 +21,9 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.models.agent_mcp_registry import AgentMCPServer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.agent_mcp_registry import AgentMCPServer
 
 
 @dataclass

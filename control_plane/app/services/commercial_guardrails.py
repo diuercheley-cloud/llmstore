@@ -1,25 +1,25 @@
 from __future__ import annotations
 
-from collections import Counter, deque
-from datetime import datetime, time as dt_time, timezone
 import logging
+from collections import Counter, deque
+from datetime import datetime, timezone
+from datetime import time as dt_time
 from typing import Any
 from uuid import UUID
-
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.client import Client
 from app.models.request_financial import RequestFinancial
-from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.billing.pricing_engine import calculate_customer_price, estimate_provider_cost
+from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.provider_classification import (
     classify_provider,
     is_cloud_provider,
     is_local_provider,
     normalize_provider_name,
 )
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 WARNING_LIMIT_RATIO = 0.8

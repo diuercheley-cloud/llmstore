@@ -1,4 +1,6 @@
-from app.services.operations.compatibility_contracts.capability_negotiation import CapabilityNegotiationService
+from app.services.operations.compatibility_contracts.capability_negotiation import (
+    CapabilityNegotiationService,
+)
 
 
 def test_capability_denial_precedence():

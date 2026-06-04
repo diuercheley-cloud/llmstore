@@ -1,11 +1,12 @@
 # Owner: Platform Operations
-import uuid
 import logging
-from typing import Dict, Any
+import uuid
+from typing import Any, Dict
+
+from app.core.time import utc_now
+from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflowSignal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_workflows import AgentWorkflowSignal, AgentWorkflowRun
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

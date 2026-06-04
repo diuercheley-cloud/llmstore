@@ -1,9 +1,7 @@
 import uuid
 
 import pytest
-
 from app.models.client import Client
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.services.models.model_provenance import create_provenance_attestation
 from app.services.models.signed_model_registry import (
     approve_model,

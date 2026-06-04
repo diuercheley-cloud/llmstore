@@ -1,23 +1,23 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import Any, Dict, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agents import (
-    AgentRegistryEntry,
-    AgentPromotion,
-    AgentDeprecation,
-    AgentLifecycleEvent,
-    AgentEvalBaseline,
-    AgentEvalSuite,
-    AgentEvalRun,
-    AgentPromotionGateResult
-)
-from app.services.agents.agent_registry import get_registry_entry
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.agents import (
+    AgentDeprecation,
+    AgentEvalBaseline,
+    AgentEvalRun,
+    AgentEvalSuite,
+    AgentLifecycleEvent,
+    AgentPromotion,
+    AgentPromotionGateResult,
+    AgentRegistryEntry,
+)
+from app.services.agents.agent_registry import get_registry_entry
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ async def approve_agent(
     # Enforce risk level approval validation
     if entry.risk_level in ("high", "critical"):
         if not approved_by or not approved_by.strip():
-            raise ValueError(f"Approval signature ('approved_by') is strictly required for high/critical risk level agents.")
+            raise ValueError("Approval signature ('approved_by') is strictly required for high/critical risk level agents.")
 
     # Enforce Evaluation Baseline requirement
     settings = get_settings()

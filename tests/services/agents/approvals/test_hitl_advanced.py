@@ -1,13 +1,14 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agents import AgentApprovalRequest
+from app.services.agents.approvals.batch_approval import BatchApprovalService
+from app.services.agents.approvals.escalation import EscalationService
+from app.services.auth import AdminRole
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agents import AgentApprovalRequest
-from app.services.agents.approvals.escalation import EscalationService
-from app.services.agents.approvals.batch_approval import BatchApprovalService
-from app.services.auth import AdminRole
 
 @pytest.fixture
 def mock_db():
@@ -34,7 +35,6 @@ async def test_batch_approval_logic(mock_db):
     req_ids = [uuid.uuid4(), uuid.uuid4()]
     
     # We need to mock approve_approval_request
-    import app.services.agents.approvals.batch_approval as batch_module
     with pytest.MonkeyPatch().context() as m:
         mock_approve = AsyncMock()
         m.setattr("app.services.agents.approvals.batch_approval.approve_approval_request", mock_approve)

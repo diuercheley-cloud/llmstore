@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class WorkspaceCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=128)

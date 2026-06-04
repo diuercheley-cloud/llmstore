@@ -1,12 +1,13 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
 from app.db.session import get_db_session
+from app.main import app
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_rate_limit_probe_requires_admin_token(isolated_db_url):
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     from app.db.base import Base
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -35,7 +36,6 @@ async def test_rate_limit_probe_requires_admin_token(isolated_db_url):
 @pytest.mark.asyncio
 async def test_rate_limit_probe_logs_sanitization():
     # Verify that the production-readiness script has the sanitization patterns.
-    import re
     from pathlib import Path
     
     script_path = Path("scripts/production-readiness-local.sh")

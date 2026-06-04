@@ -1,19 +1,16 @@
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
 from app.core.config import get_settings
-from app.models.security_pki import CertificateInventory
 from app.core.time import utc_now
+from app.models.security_pki import CertificateInventory
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

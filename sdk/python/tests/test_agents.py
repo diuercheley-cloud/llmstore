@@ -1,8 +1,10 @@
-import unittest
 import os
+import unittest
+
 import yaml
-import json
+
 from scripts.agentctl import AgentCTL
+
 
 class TestAgentManifest(unittest.TestCase):
     def setUp(self):

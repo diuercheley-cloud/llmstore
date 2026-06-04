@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.model_experiments.experiment_registry import ExperimentRegistry
-from app.services.model_experiments.traffic_splitter import TrafficSplitter
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.services.model_experiments.promotion_gate import PromotionGate
+from app.services.model_experiments.traffic_splitter import TrafficSplitter
+
 
 @pytest.mark.asyncio
 async def test_traffic_split_90_10():

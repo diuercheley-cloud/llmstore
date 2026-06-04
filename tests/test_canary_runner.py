@@ -2,7 +2,6 @@ import uuid
 from unittest.mock import AsyncMock
 
 import pytest
-
 from app.services.agents.canary_runner import CanaryRunner
 
 

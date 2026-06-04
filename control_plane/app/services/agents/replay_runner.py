@@ -2,12 +2,13 @@
 import hashlib
 import json
 import logging
-from typing import Dict, List, Any, Optional
 import uuid
+from typing import Any, Dict
+
+from app.models.agents import AgentRun, AgentRunEvent, AgentRunReceipt
+from app.services.agents.deterministic_state_graph import DeterministicStateGraph
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentRun, AgentRunReceipt, AgentRunEvent
-from app.services.agents.deterministic_state_graph import DeterministicStateGraph
 
 logger = logging.getLogger(__name__)
 

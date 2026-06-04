@@ -67,7 +67,7 @@ async def test_agent_client_openai_compatible_http_call(mock_env):
     with patch("scripts.llm_harness.providers.httpx.AsyncClient", return_value=mock_client):
         client = AgentClient(
             agent_id="test",
-            base_url="http://localhost:8000",
+            base_url="http://api.example.com",
             provider="openai-compatible",
             model="test-model",
         )
@@ -108,7 +108,7 @@ async def test_agent_client_retry_503(mock_env):
     ), patch("asyncio.sleep", new_callable=AsyncMock):
         client = AgentClient(
             agent_id="test",
-            base_url="http://localhost:8000",
+            base_url="http://api.example.com",
             provider="openai-compatible",
             model="test-model",
             max_retries=1,
@@ -130,7 +130,7 @@ async def test_agent_client_no_retry_401(mock_env):
     with patch("scripts.llm_harness.providers.httpx.AsyncClient", return_value=mock_client):
         client = AgentClient(
             agent_id="test",
-            base_url="http://localhost:8000",
+            base_url="http://api.example.com",
             provider="openai-compatible",
             model="test-model",
         )
@@ -185,7 +185,7 @@ async def test_agent_client_invalid_json(mock_env):
     with patch("scripts.llm_harness.providers.httpx.AsyncClient", return_value=mock_client):
         client = AgentClient(
             agent_id="test",
-            base_url="http://localhost:8000",
+            base_url="http://api.example.com",
             provider="openai-compatible",
             model="test-model",
         )
@@ -196,7 +196,7 @@ async def test_agent_client_invalid_json(mock_env):
 def test_agent_client_redaction(mock_env, tmp_path):
     client = AgentClient(
         agent_id="test",
-        base_url="http://localhost:8000",
+        base_url="http://api.example.com",
         provider="openai-compatible",
         model="test-model",
     )
@@ -244,7 +244,7 @@ async def test_agent_client_usage_propagates(mock_env):
     with patch("scripts.llm_harness.providers.httpx.AsyncClient", return_value=mock_client):
         client = AgentClient(
             agent_id="test",
-            base_url="http://localhost:8000",
+            base_url="http://api.example.com",
             provider="openai-compatible",
             model="test-model",
         )

@@ -5,9 +5,8 @@ Status: beta
 import logging
 from typing import Any, Dict, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.agent_tool_execution import AgentToolExecutionAudit
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 def sanitize_payload(data: Any) -> Any:
     """Recursively redacts sensitive keys and values from parameter payloads and details."""
     import uuid
-    from datetime import datetime, date
+    from datetime import date, datetime
     if isinstance(data, uuid.UUID):
         return str(data)
     if isinstance(data, (datetime, date)):

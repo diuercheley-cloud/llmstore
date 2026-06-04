@@ -1,25 +1,21 @@
 import logging
 import os
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import List, Optional
 
 import fitz  # PyMuPDF
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.billing_plan import BillingPlan
+from app.models.client import Client
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.services.embeddings import get_embedding_service
-from app.utils.token_estimator import estimate_tokens_from_text
 from app.services.rag_usage import get_rag_usage_and_limits, record_rag_event
-from app.models.client import Client
-from app.models.billing_plan import BillingPlan
+from app.utils.token_estimator import estimate_tokens_from_text
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

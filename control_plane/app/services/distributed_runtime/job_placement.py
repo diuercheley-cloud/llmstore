@@ -1,9 +1,9 @@
-import uuid
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.runtime.distributed_runtime import DistributedAgentJob, RuntimeNode
-from app.services.distributed_runtime.cluster_registry import ClusterRegistry
 from app.services.distributed_runtime.node_registry import NodeRegistry
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class JobPlacementService:
     def __init__(self, db: AsyncSession):

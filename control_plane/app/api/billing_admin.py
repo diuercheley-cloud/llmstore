@@ -1,21 +1,15 @@
 # Owner: platform-ops
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import (
-    calculate_customer_price,
     calculate_financials,
-    calculate_margin,
-    estimate_provider_cost,
-    get_customer_pricing_config,
     get_provider_pricing_config,
 )
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/billing",

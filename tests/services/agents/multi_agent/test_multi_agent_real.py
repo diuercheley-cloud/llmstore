@@ -1,13 +1,13 @@
 # Owner: agent-platform
-import pytest
 import uuid
-import asyncio
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agents import AgentRun
+from app.models.multi_agent import AgentTeam, AgentTeamMember
+from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agents import AgentRun, AgentDefinition
-from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
-from app.models.multi_agent import AgentTeam, AgentTeamMember
 
 @pytest.fixture
 def mock_db():
@@ -42,7 +42,6 @@ async def test_hierarchical_real_delegation(mock_db):
     # REAL DELEGATION MOCK
     sub_run = AgentRun(id=uuid.uuid4(), agent_id=specialist.agent_id, status="completed", estimated_cost_brl=0.01)
     
-    import app.services.agents.agent_runtime as agent_runtime_module
     with pytest.MonkeyPatch().context() as m:
         mock_start_run = AsyncMock(return_value=sub_run)
         m.setattr("app.services.agents.agent_runtime.start_run", mock_start_run)

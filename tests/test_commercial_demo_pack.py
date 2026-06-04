@@ -2,8 +2,6 @@ import json
 import os
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 DEMO_PACK = ROOT / "demo-pack"
 

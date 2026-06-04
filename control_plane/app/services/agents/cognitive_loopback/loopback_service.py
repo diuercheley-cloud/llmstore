@@ -1,12 +1,14 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, List, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .feedback_collector import FeedbackCollector
-from .success_pattern_miner import SuccessPatternMiner
 from .learning_candidate_registry import LearningCandidateRegistry
+from .success_pattern_miner import SuccessPatternMiner
 
 logger = logging.getLogger(__name__)
 

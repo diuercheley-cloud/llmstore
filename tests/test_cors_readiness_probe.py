@@ -1,6 +1,7 @@
 import pytest
 from app.core.config import get_settings
 
+
 @pytest.mark.asyncio
 async def test_status_endpoint_cors_configured(admin_client):
     settings = get_settings()

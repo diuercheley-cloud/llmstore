@@ -1,14 +1,15 @@
 import logging
-import uuid
 import os
+import uuid
 from typing import Optional
+
+from app.core.config import get_settings
+from app.models.agent_iam import AgentIdentityBinding, AgentServicePrincipal
+from app.services.agents.iam.agent_scopes import AgentScopeManager
+from app.services.agents.iam.delegated_tokens import DelegatedTokenService
+from app.services.agents.iam.iam_audit import IAMAuditService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_iam import AgentServicePrincipal, AgentIdentityBinding
-from app.services.agents.iam.delegated_tokens import DelegatedTokenService
-from app.services.agents.iam.agent_scopes import AgentScopeManager
-from app.services.agents.iam.iam_audit import IAMAuditService
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ class CredentialBroker:
                     details={"connector": connector_name, "action": action, "token_type": token.token_type},
                 )
                 raise PermissionError(
-                    f"Write actions require a user delegated grant or explicit approval."
+                    "Write actions require a user delegated grant or explicit approval."
                 )
 
         # Access Granted!

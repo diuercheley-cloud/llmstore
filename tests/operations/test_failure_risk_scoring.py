@@ -1,9 +1,9 @@
 from app.services.operations.forecasting.risk_scoring import (
-    FailureRiskScoringService,
-    RISK_THRESHOLDS,
-    FALLBACK_LEVEL,
     ADVISORY_RECOMMENDATIONS,
     ADVISORY_REQUIRES_APPROVAL,
+    FALLBACK_LEVEL,
+    RISK_THRESHOLDS,
+    FailureRiskScoringService,
 )
 
 SERVICE = FailureRiskScoringService()

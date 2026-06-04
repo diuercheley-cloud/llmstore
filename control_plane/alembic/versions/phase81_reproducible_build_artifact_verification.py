@@ -5,9 +5,8 @@ Revises: phase80_plugin_sbom
 Create Date: 2026-05-16 16:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase81_reproducible_builds"
 down_revision = "phase80_plugin_sbom"

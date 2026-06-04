@@ -1,9 +1,7 @@
 import pytest
-
 from app.services.models.model_lifecycle_manager import (
     discover_model,
     stage_model,
-    transition_lifecycle_state,
 )
 from app.services.models.model_promotion import (
     approve_promotion_request,

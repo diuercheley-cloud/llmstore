@@ -1,13 +1,12 @@
 # Owner: commercial-ops
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.services.routing.commercial_live_balancer import CommercialLiveBalancer
 from app.models.commercial_cluster_registry import CommercialClusterRegistry
+from app.services.routing.commercial_live_balancer import CommercialLiveBalancer
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

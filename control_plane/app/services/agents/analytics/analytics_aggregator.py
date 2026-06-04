@@ -1,11 +1,11 @@
 # Owner: agent-platform
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import timedelta
+from typing import Any, Dict
 
-from app.services.agents.analytics.analytics_queries import AnalyticsQueries
 from app.core.time import utc_now
+from app.services.agents.analytics.analytics_queries import AnalyticsQueries
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

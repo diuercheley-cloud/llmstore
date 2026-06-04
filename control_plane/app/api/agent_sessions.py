@@ -1,25 +1,20 @@
 # Owner: agent-platform
 # Surface: client
-import uuid
 import logging
+import uuid
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
-from app.services.auth import require_client
 from app.models.client import Client
 from app.services.agents.sessions.agent_session_service import (
     AgentSessionService,
-    SessionNotFoundError,
 )
 from app.services.agents.sessions.conversation_thread_service import (
     ConversationThreadService,
 )
-from app.services.agents.sessions.session_context_builder import SessionContextBuilder
-from app.services.agents.sessions.session_history_policy import (
-    SessionHistoryPolicyService,
-)
+from app.services.auth import require_client
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

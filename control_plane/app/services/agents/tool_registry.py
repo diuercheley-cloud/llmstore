@@ -1,17 +1,16 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import Any, Dict, List, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agents import (
     AgentTool,
-    AgentToolVersion,
     AgentToolPermission,
-    AgentToolSafetyReview
+    AgentToolSafetyReview,
+    AgentToolVersion,
 )
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

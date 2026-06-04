@@ -1,27 +1,23 @@
 # Owner: platform-ops
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-
 from app.services.auth import require_admin
-from app.services.providers.registry import (
-    get_all_provider_health,
-    get_all_provider_statuses,
-    get_global_capabilities,
-    get_provider,
-    get_providers,
-)
 from app.services.provider_settings import (
     apply_runtime_updates,
     build_provider_configuration,
     env_updates_from_payload,
     write_env_updates,
 )
+from app.services.providers.registry import (
+    get_all_provider_statuses,
+    get_provider,
+    get_providers,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 

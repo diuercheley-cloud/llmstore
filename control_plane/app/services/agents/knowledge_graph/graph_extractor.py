@@ -1,10 +1,8 @@
 import re
 import uuid
-from typing import Any
 
 from .graph_models import DEFAULT_ENTITY_TYPES, Entity, Relation
 from .graph_policy import graph_policy
-
 
 ENTITY_HINTS = {
     "person": re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b"),

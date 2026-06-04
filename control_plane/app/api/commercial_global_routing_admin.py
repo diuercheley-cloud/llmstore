@@ -3,13 +3,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.services.auth import require_admin
 from app.services.routing import commercial_global_router
 from app.services.routing.commercial_analytics import audit_log
+from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

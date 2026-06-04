@@ -1,11 +1,10 @@
+
 import pytest
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
 from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
-from app.services.prompts.prompt_template_validator import PromptTemplateValidator
 from app.services.prompts.prompt_template_versioning import PromptTemplateVersioningService
-from app.models.prompts import PromptTemplateVersion
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_prompt_template_rendering(session: AsyncSession):
@@ -64,9 +63,9 @@ async def test_version_immutability(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_agent_executor_integration(session: AsyncSession):
-    from app.services.agents.agent_executor import AgentExecutor
-    from app.models.agents import AgentDefinition, AgentRun
     from app.core.config import get_settings
+    from app.models.agents import AgentDefinition, AgentRun
+    from app.services.agents.agent_executor import AgentExecutor
     
     settings = get_settings()
     settings.prompt_templates_enabled = True

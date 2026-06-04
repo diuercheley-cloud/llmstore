@@ -1,15 +1,14 @@
+import uuid
+from pathlib import Path
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy import select
-from app.main import app as main_app
-import app.db.session
-from app.models.agents import AgentDefinition, AgentRun, AgentPolicyDecision, AgentMemoryPolicy
-from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
-from app.services.agents.agent_policy_engine import AgentPolicyEngine
 from app.db.base import Base
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from pathlib import Path
+from app.models.agents import AgentDefinition, AgentMemoryPolicy, AgentPolicyDecision, AgentRun
+from app.services.agents.agent_executor import AgentExecutor
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force SQLite for tests
 TEST_DB_FILE = Path("/tmp/test-policy-enforcement.db")
@@ -34,6 +33,7 @@ async def test_db():
         except: pass
 
 from app.core.config import get_settings
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_settings():

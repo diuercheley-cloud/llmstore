@@ -1,11 +1,13 @@
-import pytest
-import uuid
 import json
+import uuid
 from unittest.mock import MagicMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.agent_deployments.deployment_callback import DeploymentCallbackService
+
+import pytest
 from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
 from app.models.agents import AgentRun
+from app.services.agent_deployments.deployment_callback import DeploymentCallbackService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_trigger_callback_success(session: AsyncSession):

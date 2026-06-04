@@ -1,15 +1,16 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+from app.models.agent_cicd import AgentDeployment, AgentPipeline
 from app.models.agents import AgentDefinition
-from app.models.agent_cicd import AgentPipeline, AgentDeployment
 from app.services.agents.cicd.agent_pipeline import AgentPipelineService
 from app.services.agents.cicd.blue_green_deployment import BlueGreenDeploymentService
-from app.services.agents.cicd.rollback_executor import RollbackExecutor
 from app.services.agents.cicd.cicd_adapters import GitHubActionsAdapter
+from app.services.agents.cicd.rollback_executor import RollbackExecutor
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def mock_db():

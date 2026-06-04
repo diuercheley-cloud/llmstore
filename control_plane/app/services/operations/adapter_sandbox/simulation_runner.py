@@ -1,10 +1,8 @@
-import hashlib
-import json
-from typing import List, Dict, Any, Optional
 import uuid
-from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from app.models.operations.adapter_sandbox import AdapterSandboxRun, AdapterSandboxStepResult, compute_deterministic_hash
+from app.models.operations.adapter_sandbox import compute_deterministic_hash
+
 
 class AdapterSandboxSimulationRunner:
     """

@@ -1,18 +1,20 @@
 import hashlib
-import json
 import uuid
 from datetime import datetime
-from typing import Any, List, Optional
-from sqlalchemy.future import select
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from ...core.config import get_settings
+from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
 from ...models.commercial_witness import (
     CommercialWitness,
-    CommercialWitnessSignature,
+    CommercialWitnessAuditEvent,
     CommercialWitnessQuorumPolicy,
-    CommercialWitnessAuditEvent
+    CommercialWitnessSignature,
 )
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
-from ...core.config import get_settings
+
 
 async def register_witness(
     db: AsyncSession,

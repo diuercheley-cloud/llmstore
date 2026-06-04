@@ -1,10 +1,11 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from httpx import AsyncClient
 
 # Ensure models are registered for tests
-from app.models.operations.correlation import OperationalCorrelation, CorrelatedOperationalEvent, OperationalTrustLink
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def ensure_correlation_tables(admin_client: AsyncClient):

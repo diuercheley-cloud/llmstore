@@ -1,6 +1,5 @@
-import pytest
-from app.services.context_manager import ContextManager
 from app.core.config import get_settings
+from app.services.context_manager import ContextManager
 
 settings = get_settings()
 

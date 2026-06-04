@@ -1,17 +1,17 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
-from app.services.agents.studio.flow_validator import FlowValidator
+from app.db.session import SessionLocal, engine
+from app.models.agent_studio import AgentFlowVersion
 from app.services.agents.studio.flow_compiler import FlowCompiler
+from app.services.agents.studio.flow_validator import FlowValidator
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with engine.begin() as conn:
-        import app.models.agent_studio
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:

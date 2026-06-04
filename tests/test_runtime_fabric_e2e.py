@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_runtime_fabric_status(admin_client: AsyncClient, admin_token_headers: dict):
     response = await admin_client.get("/admin/runtime/fabric", headers=admin_token_headers)

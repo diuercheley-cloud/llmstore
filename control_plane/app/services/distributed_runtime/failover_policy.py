@@ -1,8 +1,9 @@
 import uuid
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.runtime.distributed_runtime import DistributedFailoverEvent
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class FailoverPolicyService:
     def __init__(self, db: AsyncSession):

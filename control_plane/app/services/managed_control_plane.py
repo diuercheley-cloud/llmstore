@@ -1,27 +1,26 @@
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import List, Optional
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.time import utc_now
 from app.models.managed_control_plane import (
-    ManagedOrganization,
-    ManagedWorkspace,
-    ManagedAppliance,
     ApplianceEnrollment,
     ApplianceHeartbeat,
+    ManagedAppliance,
+    ManagedOrganization,
+    ManagedWorkspace,
 )
-from app.services.managed_metrics import managed_appliance_heartbeats_total
 from app.schemas.managed_control_plane import (
-    ManagedOrganizationCreate,
-    ManagedWorkspaceCreate,
     ApplianceEnrollRequest,
     ApplianceHeartbeatPayload,
+    ManagedOrganizationCreate,
+    ManagedWorkspaceCreate,
 )
-from app.core.time import utc_now
+from app.services.managed_metrics import managed_appliance_heartbeats_total
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

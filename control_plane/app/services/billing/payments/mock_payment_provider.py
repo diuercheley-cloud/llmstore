@@ -1,7 +1,9 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from app.services.billing.payments.payment_provider import PaymentProvider
+
 
 class MockPaymentProvider(PaymentProvider):
     async def create_customer(

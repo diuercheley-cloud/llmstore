@@ -1,5 +1,4 @@
 import pytest
-
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter, reset_smart_router
 

@@ -1,10 +1,9 @@
 from types import SimpleNamespace
 
-from fastapi import FastAPI
-
 from app.core.config import Settings
 from app.main import include_optional_routers
 from app.schemas.managed_control_plane import ApplianceHeartbeatPayload
+from fastapi import FastAPI
 
 
 def _settings(**overrides) -> Settings:

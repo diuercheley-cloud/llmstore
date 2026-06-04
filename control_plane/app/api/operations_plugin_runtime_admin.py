@@ -4,34 +4,39 @@ import json
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.plugin_runtime import (
+    PLUGIN_CONTRACT_SCOPES,
+    PLUGIN_CONTRACT_STATUSES,
     DeterministicExtensionLoadPlan,
     PluginABIContract,
-    PluginRuntimeActivation,
     PluginCapabilityBoundary,
-    PluginRuntimeExecution,
     PluginFederationCompatibility,
     PluginIsolationPolicy,
     PluginLifecycleEvent,
     PluginReplayVerificationResult,
+    PluginRuntimeActivation,
     PluginRuntimeCompatibilityCheck,
+    PluginRuntimeExecution,
     PluginRuntimeReceipt,
-    PLUGIN_CONTRACT_SCOPES,
-    PLUGIN_CONTRACT_STATUSES,
 )
 from app.services.operations.plugin_runtime.abi_contracts import PluginABIContractService
 from app.services.operations.plugin_runtime.audit_events import build_plugin_runtime_audit_event
-from app.services.operations.plugin_runtime.capability_boundaries import PluginCapabilityBoundaryService
-from app.services.operations.plugin_runtime.compatibility_enforcer import PluginRuntimeCompatibilityEnforcer
+from app.services.operations.plugin_runtime.capability_boundaries import (
+    PluginCapabilityBoundaryService,
+)
+from app.services.operations.plugin_runtime.compatibility_enforcer import (
+    PluginRuntimeCompatibilityEnforcer,
+)
+from app.services.operations.plugin_runtime.execution_runtime import (
+    GovernedPluginRuntime,
+    PluginExecutionError,
+)
 from app.services.operations.plugin_runtime.extension_loader import DeterministicExtensionLoader
-from app.services.operations.plugin_runtime.execution_runtime import GovernedPluginRuntime, PluginExecutionError
-from app.services.operations.plugin_runtime.federation_compatibility import PluginFederationCompatibilityService
+from app.services.operations.plugin_runtime.federation_compatibility import (
+    PluginFederationCompatibilityService,
+)
+from app.services.operations.plugin_runtime.hash_utils import compute_replay_hash, sha256_hex
 from app.services.operations.plugin_runtime.isolation_policy import PluginIsolationPolicyService
 from app.services.operations.plugin_runtime.lifecycle import PluginLifecycleService
 from app.services.operations.plugin_runtime.receipts import (
@@ -42,7 +47,10 @@ from app.services.operations.plugin_runtime.receipts import (
     build_replay_verification_receipt,
 )
 from app.services.operations.plugin_runtime.replay_verifier import PluginReplayVerifier
-from app.services.operations.plugin_runtime.hash_utils import compute_replay_hash, sha256_hex
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

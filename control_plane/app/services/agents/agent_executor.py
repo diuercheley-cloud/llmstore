@@ -1,33 +1,32 @@
 # Owner: agent-platform
-import uuid
-import time
 import logging
-import json
-from typing import Any, Dict, Optional, List, Callable, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+import time
+import uuid
+from typing import Any, Callable, Dict, Optional, Tuple
+
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.agents import AgentPlan
 from app.services.agents import agent_state
-from app.services.agents.agent_observability import AgentObservabilityService
-from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.agent_budget import AgentBudgetService
-from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
+from app.services.agents.agent_handoffs import AgentHandoffService
 from app.services.agents.agent_llm_provider import (
     AgentLLMProvider,
-    get_agent_llm_provider,
-    MockAgentLLMProvider as MockLLMProvider,
-    ProviderResponse,
     MockProviderError,
+    ProviderResponse,
     ProviderUnavailableError,
+    get_agent_llm_provider,
 )
-from app.services.agents.agent_handoffs import AgentHandoffService
-from app.models.agents import AgentPlan
+from app.services.agents.agent_memory import AgentMemoryService
+from app.services.agents.agent_observability import AgentObservabilityService
 from app.services.agents.agent_planner import AgentPlanner
-from app.services.agents.planning.step_cache import StepCache
-from app.services.agents.task_engine import TaskEngine
+from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
 from app.services.agents.agent_receipts import AgentReceiptsService
+from app.services.agents.planning.step_cache import StepCache
 from app.services.agents.reasoning.reasoning_loop import ReasoningLoop
+from app.services.agents.task_engine import TaskEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +102,8 @@ class AgentExecutor:
 
     async def execute_step(self) -> bool:
         # PII Protection and OTel Tracing Integration
-        from app.services.security.pii_gateway import pii_gateway
         from app.services.agents.telemetry.native_otel import agent_tracer
+        from app.services.security.pii_gateway import pii_gateway
         
         run = await agent_state.get_agent_run(self.db, self.run_id)
         if not run or run.status in ("completed", "failed", "cancelled", "paused", "waiting_approval"):
@@ -125,9 +124,9 @@ class AgentExecutor:
             
             # --- Debugger Integration ---
         if self.settings.agent_debugger_enabled:
-            from app.services.agents.debugger.live_stepper import LiveStepper
-            from app.services.agents.debugger.debug_sessions import DebugSessionManager
             from app.services.agents.debugger.breakpoints import BreakpointManager
+            from app.services.agents.debugger.debug_sessions import DebugSessionManager
+            from app.services.agents.debugger.live_stepper import LiveStepper
             stepper = LiveStepper(
                 self.db, 
                 DebugSessionManager(self.db), 
@@ -455,7 +454,10 @@ class AgentExecutor:
         i_hash = agent_state.compute_sha256(tool_input)
         await agent_state.log_run_step(self.db, self.run_id, step_number, "model_call", {"input_hash": run.input_hash}, {"tool_name": tool_name, "tool_input_hash": i_hash})
         
-        from app.services.agents.human_approval import check_approval_required, create_approval_request
+        from app.services.agents.human_approval import (
+            check_approval_required,
+            create_approval_request,
+        )
         req, risk, reason, role = await check_approval_required(self.db, self.run_id, tool_name, tool_input)
         if req:
             await self.obs.record_approval_request(self.run_id, tool_name, reason)
@@ -675,8 +677,8 @@ class AgentExecutor:
 
         from app.models.agent_optimization import (
             AgentOptimizationCandidate,
-            AgentPromptCandidate,
             AgentPolicyCandidate,
+            AgentPromptCandidate,
             AgentToolSelectionCandidate,
         )
         res_cand = await self.db.execute(select(AgentOptimizationCandidate).where(AgentOptimizationCandidate.id == candidate_id))
@@ -709,8 +711,8 @@ class AgentExecutor:
     async def _resolve_prompt_template(self, agent_def, run) -> Any:
         try:
             from app.models.prompts import PromptTemplateVersion
-            from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
             from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
+            from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 
             version_id = agent_def.prompt_template_version_id
             if not version_id:

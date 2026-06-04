@@ -3,11 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionReceipt,
@@ -17,6 +12,10 @@ from app.models.commercial_autonomous_guardrails import (
 )
 from app.services.governance.autonomous_guardrails import AutonomousGuardrailsService
 from app.services.governance.blast_radius_analysis import BlastRadiusAnalysisService
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/guardrails", tags=["commercial_autonomous_guardrails"])
 

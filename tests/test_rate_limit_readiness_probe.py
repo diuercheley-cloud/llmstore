@@ -1,21 +1,22 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-import uuid
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
+from app.main import app
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
-from app.models.model_registry import ModelRegistry
+from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
-from app.core.security import hash_secret, short_prefix
-from unittest.mock import AsyncMock, MagicMock
+from app.models.model_registry import ModelRegistry
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_rate_limit_readiness_probe_triggers_429(isolated_db_url, fake_redis):
     # Setup similar to abuse_limits_env but specific for this probe
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     from app.db.base import Base
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -27,8 +28,9 @@ async def test_rate_limit_readiness_probe_triggers_429(isolated_db_url, fake_red
         async with testing_session_local() as session:
             yield session
 
-    from app.api.deps import get_inference_proxy
     import json as json_lib
+
+    from app.api.deps import get_inference_proxy
     mock_proxy = AsyncMock()
     mock_result = MagicMock()
     mock_result.response.status_code = 200

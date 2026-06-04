@@ -12,6 +12,7 @@ from .defaults import (
     DOCKER_MEMORY_LIMIT,
     DOCKER_PIDS_LIMIT,
     MAX_OUTPUT_CHARS,
+    MAX_TOKENS,
     REPORT_OUTPUT_PATH,
     TEMP_BASE_DIR,
     TIMEOUT,
@@ -72,6 +73,9 @@ class HarnessConfig(BaseSettings):
     verbose_stream: bool = False
     tool_calling: Literal["auto", "native", "json"] = "auto"
     supports_tool_calling: bool = False
+    allow_native_tools_for_local: bool = False
+    lm_studio_compatibility: bool = True
+    capability_cache_ttl_seconds: int = 300
     workspace_mount_path: str = WORKSPACE_MOUNT_PATH
     temp_base_dir: str | None = TEMP_BASE_DIR
     loop_timeout: int = TIMEOUT
@@ -90,17 +94,29 @@ class HarnessConfig(BaseSettings):
     memory: Literal["disabled", "local"] = "local"
     memory_dir: str = ".llm_harness_memory"
     memory_retention_days: int = 30
-    agent_mode: Literal["single", "planner-coder-reviewer"] = "single"
+    agent_mode: Literal["single", "planner-coder-reviewer", "supervisor"] = "single"
+    agent_registry_file: str = "config/agent-registry.yaml"
     approval_mode: Literal["auto", "deny", "interactive", "non_interactive"] = "auto"
     approval_default: Literal["allow", "deny"] = "deny"
     edit_action_before_run: bool = False
     checkpoint_dir: str = ".llm_harness_checkpoints"
     checkpoint_every_step: bool = False
     mcp: MCPConfig = Field(default_factory=MCPConfig)
-    max_tokens: int | None = None
+    max_tokens: int | None = MAX_TOKENS
     multimodal: bool = False
     audio_path: str | None = None
     video_path: str | None = None
+    auto: bool = False
+    max_auto_fixes: int = 3
+    stop_on_risk: bool = False
+    require_approval_for_edits: bool = False
+    models: dict[str, Any] = Field(default_factory=dict)
+    model_profile: str | None = None
+    fallback_model_profile: str | None = None
+    allow_cloud_models: bool = True
+    is_reasoning_model: bool = False
+
+
 
 
     @classmethod

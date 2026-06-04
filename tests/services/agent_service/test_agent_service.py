@@ -1,13 +1,13 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agent_service import AgentServiceTier
+from app.services.agent_service.agent_rate_limits import AgentRateLimitService
+from app.services.agent_service.agent_service_api import AgentServiceAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agent_service import AgentServiceTier
-from app.services.agent_service.agent_service_api import AgentServiceAPI
-from app.services.agent_service.agent_rate_limits import AgentRateLimitService
-from app.services.agent_service.sync_mode import SyncInvocationService
 
 @pytest.fixture
 def mock_db():

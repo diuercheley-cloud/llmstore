@@ -1,9 +1,11 @@
 import uuid
-import pytest
 from datetime import timedelta
-from app.services.routing.qos_chargeback import CommercialQoSChargebackService
-from app.models.generation_job import GenerationJob
+
+import pytest
 from app.core.time import utc_now
+from app.models.generation_job import GenerationJob
+from app.services.routing.qos_chargeback import CommercialQoSChargebackService
+
 
 @pytest.mark.asyncio
 async def test_calculate_chargeback_logic(session, settings):

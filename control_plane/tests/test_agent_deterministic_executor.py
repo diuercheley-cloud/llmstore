@@ -1,17 +1,20 @@
+import uuid
+from pathlib import Path
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import uuid
-import json
-from datetime import datetime, timedelta
-from sqlalchemy import select
-from app.main import app as main_app
-import app.db.session
-from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent, AgentRunReceipt
+from app.db.base import Base
+from app.models.agents import (
+    AgentDefinition,
+    AgentRun,
+    AgentRunEvent,
+    AgentRunReceipt,
+)
 from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
 from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
-from app.db.base import Base
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from pathlib import Path
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force SQLite for tests
 TEST_DB_FILE = Path("/tmp/test-deterministic-executor.db")
@@ -36,6 +39,7 @@ async def test_db():
         except: pass
 
 from app.core.config import get_settings
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_settings():
@@ -178,9 +182,9 @@ async def test_replay_mode_is_side_effect_free(test_db):
 async def test_gateway_client_resolution_eager_loads_billing_plan(test_db):
     session_factory = test_db
     async with session_factory() as db:
-        from app.models.client import Client
-        from app.models.billing_plan import BillingPlan
         from app.models.agents import AgentRun
+        from app.models.billing_plan import BillingPlan
+        from app.models.client import Client
 
         plan = BillingPlan(
             code="test-plan",

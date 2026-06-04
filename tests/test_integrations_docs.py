@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 DOCS_DIR = "docs/integrations"

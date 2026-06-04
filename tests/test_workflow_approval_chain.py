@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_governance import CommercialPolicyBundle
-from app.models.commercial_workflows import CommercialWorkflowPolicySnapshot, CommercialWorkflowStage
+from app.models.commercial_workflows import (
+    CommercialWorkflowPolicySnapshot,
+    CommercialWorkflowStage,
+)
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 from app.services.workflows.workflow_approval_chain import WorkflowApprovalChainService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _setup_execution(session: AsyncSession):

@@ -6,20 +6,16 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.commercial_confidential_runtime import (
-    CommercialConfidentialInferenceSession,
-    CommercialConfidentialRuntimeProfile,
-)
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
     CommercialAutonomousExecutionReceipt,
     CommercialExecutionBlastRadius,
     CommercialExecutionGuardrailEvent,
     CommercialHumanApprovalCheckpoint,
+)
+from app.models.commercial_confidential_runtime import (
+    CommercialConfidentialInferenceSession,
+    CommercialConfidentialRuntimeProfile,
 )
 from app.models.commercial_cryptographic_receipts import CommercialInferenceReceipt
 from app.models.commercial_governance import CommercialPolicyBundle
@@ -51,6 +47,9 @@ from app.models.commercial_workflows import (
     CommercialWorkflowStage,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

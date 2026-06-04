@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
 from app.models.commercial_governance_federation import CommercialGovernanceFederationPeer
 from app.models.commercial_model_supply_chain import CommercialModelIntegrityEvent
@@ -8,8 +6,12 @@ from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.services.model_policy import resolve_requested_model
-from app.services.models.runtime_integrity_monitor import scan_registered_models, summarize_integrity_status
+from app.services.models.runtime_integrity_monitor import (
+    scan_registered_models,
+    summarize_integrity_status,
+)
 from app.services.models.signed_model_registry import register_model_manifest
+from sqlalchemy import select
 
 
 def _build_runtime_model(path: str, *, alias: str = "runtime-model", model_id: str = "runtime/model") -> ModelRegistry:

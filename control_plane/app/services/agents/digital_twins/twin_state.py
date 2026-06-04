@@ -1,9 +1,11 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+from app.models.digital_twin import DigitalTwinState
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.digital_twin import DigitalTwinState, DigitalTwin
+
 
 class TwinState:
     def __init__(self, db: AsyncSession):

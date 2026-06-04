@@ -1,17 +1,15 @@
 import secrets
-import uuid
 from datetime import datetime, timedelta, timezone
 
 import httpx
+from app.core.config import get_settings
+from app.db.session import get_db_session
+from app.models.auth import OAuthState, UserSession
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
-from app.db.session import get_db_session
-from app.models.auth import OAuthState, UserSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

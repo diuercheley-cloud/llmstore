@@ -1,7 +1,9 @@
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.model_experiments import ModelExperiment
+
 from app.core.time import utc_now
+from app.models.model_experiments import ModelExperiment
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PromotionGate:
     def __init__(self, db: AsyncSession):

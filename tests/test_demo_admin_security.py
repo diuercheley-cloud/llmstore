@@ -1,6 +1,8 @@
 import re
+
 import pytest
 from httpx import AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_demo_admin_security_unauthorized(admin_client: AsyncClient):

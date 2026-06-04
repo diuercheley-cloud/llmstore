@@ -1,8 +1,7 @@
 # Owner: agent-platform
+from app.models.agents import AgentMemoryItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.agents import AgentMemoryItem
 
 
 class SemanticMemoryService:

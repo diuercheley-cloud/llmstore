@@ -2,7 +2,6 @@ from pathlib import Path
 
 from scripts.validate_governance_documentation_foundation import validate
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 

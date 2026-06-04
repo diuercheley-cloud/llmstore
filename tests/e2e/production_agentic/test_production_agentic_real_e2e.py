@@ -1,13 +1,12 @@
-import pytest
-import os
-import sys
-import subprocess
-import time
 import json
-import uuid
-import socket
-from pathlib import Path
+import os
+import subprocess
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 

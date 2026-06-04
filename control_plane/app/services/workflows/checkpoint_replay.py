@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
-from app.models.commercial_workflows import CommercialWorkflowCheckpoint, CommercialWorkflowExecution, CommercialWorkflowStage
+from app.models.commercial_workflows import (
+    CommercialWorkflowCheckpoint,
+    CommercialWorkflowExecution,
+    CommercialWorkflowStage,
+)
 from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService
 from app.services.workflows.workflow_policy_enforcement import WorkflowPolicyEnforcementService
 from app.services.workflows.workflow_provenance import canonical_json, sha256_hex
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _checkpoint_signature(checkpoint_hash: str, algorithm: str = "ed25519") -> str:

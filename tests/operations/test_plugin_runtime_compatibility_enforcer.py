@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 from app.services.operations.plugin_runtime.abi_contracts import PluginABIContractService
-from app.services.operations.plugin_runtime.compatibility_enforcer import PluginRuntimeCompatibilityEnforcer
+from app.services.operations.plugin_runtime.compatibility_enforcer import (
+    PluginRuntimeCompatibilityEnforcer,
+)
 
 
 def test_incompatible_runtime_blocks_load_plan():

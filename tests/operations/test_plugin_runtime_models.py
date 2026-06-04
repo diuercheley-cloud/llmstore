@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
 from app.models.operations.plugin_runtime import (
     DeterministicExtensionLoadPlan,
@@ -13,6 +11,7 @@ from app.models.operations.plugin_runtime import (
     PluginRuntimeCompatibilityCheck,
     PluginRuntimeReceipt,
 )
+from sqlalchemy import select
 
 
 def test_plugin_runtime_models_exposed():

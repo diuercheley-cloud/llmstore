@@ -2,29 +2,28 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
 import logging
+import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional, List
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
+
+from app.core.config import get_settings
+from app.core.time import utc_now
 from app.models.agents import (
-    AgentEvalRun,
-    AgentEvalResult,
+    AgentEvalBaseline,
+    AgentEvalCase,
+    AgentEvalFailure,
     AgentEvalGateResult,
-    AgentRegistryEntry,
-    AgentRun,
-    AgentRunStep,
-    AgentRunEvent,
+    AgentEvalResult,
+    AgentEvalRun,
     AgentEvalSuite,
     AgentPromotionGateResult,
-    AgentEvalBaseline,
-    AgentEvalRegressionResult,
-    AgentEvalFailure,
-    AgentEvalCase
+    AgentRun,
+    AgentRunEvent,
+    AgentRunStep,
 )
-from app.core.time import utc_now
-from app.core.config import get_settings
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -179,11 +178,11 @@ class EvalGateService:
             mode_str = "Strict" if self.settings.agent_eval_gate_strict else "Standard"
             
             md = []
-            md.append(f"# Agent Evaluation Promotion Gate Report")
-            md.append(f"")
+            md.append("# Agent Evaluation Promotion Gate Report")
+            md.append("")
             md.append(f"**Overall Status:** {passed_str}")
-            md.append(f"")
-            md.append(f"## Metadata")
+            md.append("")
+            md.append("## Metadata")
             md.append(f"- **Agent ID:** {agent_id}")
             md.append(f"- **Eval Run ID:** {eval_run_id}")
             md.append(f"- **Provider:** {provider}")
@@ -193,9 +192,9 @@ class EvalGateService:
             if audit_override:
                 md.append(f"  - **Reason:** {override_reason}")
                 md.append(f"  - **By:** {override_by}")
-            md.append(f"")
+            md.append("")
             
-            md.append(f"## Gate Details")
+            md.append("## Gate Details")
             md.append(f"- **Pass Rate:** {gate_res.pass_rate:.2%}")
             md.append(f"- **Average Latency:** {gate_res.avg_latency_ms:.2f} ms")
             md.append(f"- **Total Cost (BRL):** {gate_res.total_cost_brl:.4f}")
@@ -204,9 +203,9 @@ class EvalGateService:
             md.append(f"- **Secret Leak Detected:** {gate_res.secret_leak_detected}")
             md.append(f"- **Cross-Tenant Access Detected:** {gate_res.cross_tenant_access_detected}")
             md.append(f"- **Max Steps Exceeded:** {gate_res.max_steps_exceeded}")
-            md.append(f"")
+            md.append("")
             
-            md.append(f"## Regression Diff")
+            md.append("## Regression Diff")
             if regression_res and regression_res.baseline_run_id:
                 diffs = regression_res.metric_diffs or {}
                 md.append(f"- **Baseline Run ID:** {regression_res.baseline_run_id}")
@@ -214,16 +213,16 @@ class EvalGateService:
                 md.append(f"- **Average Latency Diff:** {diffs.get('avg_latency_diff', 0.0):+.2f} ms")
                 md.append(f"- **Total Cost Diff:** {diffs.get('total_cost_diff', 0.0):+.4f} BRL")
                 if diffs.get("reasons"):
-                    md.append(f"- **Regression Reasons:**")
+                    md.append("- **Regression Reasons:**")
                     for r in diffs["reasons"]:
                         md.append(f"  - {r}")
             else:
-                md.append(f"No baseline exists for comparison.")
-            md.append(f"")
+                md.append("No baseline exists for comparison.")
+            md.append("")
             
-            md.append(f"## Case Results")
-            md.append(f"| Case Name | Passed | Latency | Cost (BRL) | Tokens | Assertion Messages |")
-            md.append(f"| --- | --- | --- | --- | --- | --- |")
+            md.append("## Case Results")
+            md.append("| Case Name | Passed | Latency | Cost (BRL) | Tokens | Assertion Messages |")
+            md.append("| --- | --- | --- | --- | --- | --- |")
             for r_res, c_case in results:
                 passed_case = "PASS" if r_res.passed else "FAIL"
                 assertions_str = "; ".join(f"[{a.get('type')}]: {a.get('message')}" for a in (r_res.assertion_results or []))

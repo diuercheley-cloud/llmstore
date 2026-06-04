@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import desc, select
-
 from app.api.dependencies import get_db
 from app.models.commercial_attestation_runtime import CommercialRuntimeAttestation
 from app.models.commercial_autonomous_guardrails import (
@@ -12,6 +10,7 @@ from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
 from app.models.commercial_sovereign_governance import CommercialHardwareAttestationRecord
 from app.services.governance.autonomous_guardrails import AutonomousGuardrailsService
 from app.services.governance.blast_radius_analysis import sha256_hex
+from sqlalchemy import desc, select
 
 
 async def _seed_runtime_trust(session):

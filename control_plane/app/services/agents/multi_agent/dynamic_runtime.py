@@ -1,6 +1,6 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import Any
 
 from app.models.multi_agent import AgentTeamDelegation
@@ -76,7 +76,7 @@ class DynamicRoutingRuntime(TeamRuntime):
                     result_text = f"Result from {selected.agent_id} (run {sub_run.id}): Task completed."
                     delegation.status = "completed"
                     chosen_agent = selected
-                except RuntimeError as exc:
+                except RuntimeError:
                     delegation.status = "failed"
                     fallback = self._select_member(
                         [member for member in candidates if member.agent_id != selected.agent_id],

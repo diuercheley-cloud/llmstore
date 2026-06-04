@@ -14,7 +14,6 @@ import json
 import os
 import sys
 import time
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -295,18 +294,18 @@ class DeepSeekRealValidator:
 
     def _format_md(self) -> str:
         lines = [
-            f"# DeepSeek Real Provider Report",
-            f"",
+            "# DeepSeek Real Provider Report",
+            "",
             f"**Status**: {self.report['status']}",
             f"**Timestamp**: {self.timestamp}",
             f"**Dry-run**: {self.dry_run}",
             f"**Model**: {self.model}",
             f"**Max Cost BRL**: R$ {self.max_cost_brl}",
-            f"",
-            f"## Summary",
-            f"",
-            f"| Result | Count |",
-            f"|--------|-------|",
+            "",
+            "## Summary",
+            "",
+            "| Result | Count |",
+            "|--------|-------|",
         ]
         for s in ("pass", "fail", "skip", "warn"):
             lines.append(f"| {s.upper()} | {self.report['summary'].get(s, 0)} |")

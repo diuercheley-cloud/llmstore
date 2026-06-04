@@ -8,7 +8,6 @@ Create Date: 2026-05-28 14:15:00.000000
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '20260528_0096'
@@ -20,10 +19,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     from app.db.base import Base
     from app.models.agent_mcp_oauth import (
-        AgentMCPOAuthClient,
         AgentMCPDelegatedGrant,
-        AgentMCPTokenExchange,
+        AgentMCPOAuthClient,
         AgentMCPScopePolicy,
+        AgentMCPTokenExchange,
     )
     bind = op.get_bind()
     tables = [

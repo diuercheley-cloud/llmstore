@@ -1,9 +1,10 @@
-import os
-import yaml
-import pytest
 from unittest.mock import patch
+
+import pytest
+import yaml
 from app.core.config import Settings
 from app.services.platform.feature_flag_audit import FeatureFlagAuditService
+
 
 @pytest.fixture
 def temp_registry_file(tmp_path):

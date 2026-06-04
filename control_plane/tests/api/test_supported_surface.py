@@ -1,7 +1,7 @@
 import pytest
+from app.services.supported_surface import SupportedSurfaceService
 from httpx import AsyncClient
 
-from app.services.supported_surface import SupportedSurfaceService
 
 def test_supported_surface_service():
     service = SupportedSurfaceService()

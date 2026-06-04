@@ -1,7 +1,9 @@
 import uuid
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, Optional
+
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
+from pydantic import BaseModel
+
 
 class AgentToolCallV1(BaseModel):
     tool_name: str

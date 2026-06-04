@@ -4,9 +4,6 @@ import hashlib
 import json
 from typing import Any
 
-from sqlalchemy import desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
 from app.models.commercial_inference_reproducibility import (
@@ -17,6 +14,8 @@ from app.models.commercial_model_supply_chain import CommercialSignedModelRegist
 from app.services.admin_model_management import detect_quantization
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.utils.model_prompting import detect_architecture
+from sqlalchemy import desc, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

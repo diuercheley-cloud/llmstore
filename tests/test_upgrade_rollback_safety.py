@@ -1,7 +1,6 @@
+import shutil
 import subprocess
 from pathlib import Path
-import pytest
-import shutil
 
 ROOT_DIR = Path(__file__).parent.parent
 

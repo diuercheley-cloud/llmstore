@@ -1,17 +1,17 @@
 # Owner: agent-platform
 # Surface: admin
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, Header, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
 from app.api.deps import require_admin
+from app.db.session import get_db_session
+from app.services.agents.a2a.a2a_discovery import A2ADiscoveryService
 from app.services.agents.a2a.a2a_registry import A2ARegistryService
 from app.services.agents.a2a.a2a_security import A2ASecurityService
 from app.services.agents.a2a.a2a_server import A2AServerService
-from app.services.agents.a2a.a2a_discovery import A2ADiscoveryService
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["agent-a2a"])
 

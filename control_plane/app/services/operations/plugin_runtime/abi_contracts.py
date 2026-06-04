@@ -1,6 +1,10 @@
 from typing import Any
 
-from app.models.operations.plugin_runtime import PLUGIN_CONTRACT_SCOPES, PLUGIN_CONTRACT_STATUSES, PluginABIContract
+from app.models.operations.plugin_runtime import (
+    PLUGIN_CONTRACT_SCOPES,
+    PLUGIN_CONTRACT_STATUSES,
+    PluginABIContract,
+)
 from app.services.operations.plugin_runtime.hash_utils import compute_abi_contract_hash, sha256_hex
 
 

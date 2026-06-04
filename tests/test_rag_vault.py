@@ -1,19 +1,22 @@
+from unittest.mock import AsyncMock, patch
+
+import httpx
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, patch
-import httpx
-from fastapi import FastAPI
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.api.rag_enterprise import admin_router
-from app.db.session import get_db_session
 from app.db.base import Base
+from app.db.session import get_db_session
 from app.models.client import Client
-from app.models.commercial_rag_vault_vault import CommercialRAGChunk, CommercialRAGDocument, CommercialRAGVault
+from app.models.commercial_rag_vault_vault import (
+    CommercialRAGChunk,
+    CommercialRAGDocument,
+    CommercialRAGVault,
+)
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.services.rag_enterprise.ingestion import ingest_document
+from fastapi import FastAPI
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

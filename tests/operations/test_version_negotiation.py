@@ -1,4 +1,6 @@
-from app.services.operations.compatibility_contracts.version_negotiation import VersionNegotiationService
+from app.services.operations.compatibility_contracts.version_negotiation import (
+    VersionNegotiationService,
+)
 
 
 def test_version_negotiation_blocks_incompatible_versions():

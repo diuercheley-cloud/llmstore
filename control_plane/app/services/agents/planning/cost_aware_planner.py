@@ -1,12 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import List, Dict, Any, Optional
+import uuid
+from typing import List
+
+from app.models.agents import AgentPlan, AgentPlanCostEstimate, AgentTask, AgentTool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from app.models.agents import AgentPlan, AgentTask, AgentPlanCostEstimate, AgentTool
-from app.services.agents import agent_state
 
 logger = logging.getLogger(__name__)
 

@@ -1,19 +1,17 @@
 # Owner: commercial-ops
-import uuid
-from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Any, List
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from ..api.dependencies import get_admin_user
 from ..db.session import get_db
 from ..models.commercial_rag_vault import (
-    CommercialRAGVault,
-    CommercialRAGDocument,
-    CommercialRAGChunk,
+    CommercialRetrievalPolicyViolation,
     CommercialRetrievalReceipt,
-    CommercialRetrievalPolicyViolation
 )
-from ..services.rag import confidential_rag_vault, retrieval_receipts, chunk_lineage
-from ..api.dependencies import get_admin_user
+from ..services.rag import chunk_lineage
 
 router = APIRouter(prefix="/admin/rag", tags=["Confidential RAG Vault Admin"])
 

@@ -1,5 +1,10 @@
 import pytest
-from app.contracts.attestation import AttestationContract, AttestationReport, AttestationCapabilities
+from app.contracts.attestation import (
+    AttestationCapabilities,
+    AttestationContract,
+    AttestationReport,
+)
+
 
 class MockAttestation(AttestationContract):
     async def generate_report(self) -> AttestationReport:

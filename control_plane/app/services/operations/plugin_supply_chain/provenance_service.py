@@ -5,7 +5,10 @@ from app.models.operations.plugin_supply_chain import (
     PLUGIN_PROVENANCE_STATUSES,
     PluginProvenanceRecord,
 )
-from app.services.operations.plugin_supply_chain.hash_utils import compute_provenance_hash, sha256_hex
+from app.services.operations.plugin_supply_chain.hash_utils import (
+    compute_provenance_hash,
+    sha256_hex,
+)
 
 
 class PluginProvenanceService:

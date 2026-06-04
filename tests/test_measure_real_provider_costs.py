@@ -1,7 +1,6 @@
-import subprocess
-import os
-from pathlib import Path
 import json
+import subprocess
+
 
 def test_measure_script_help():
     result = subprocess.run(["./scripts/measure-real-provider-costs.sh", "--help"], capture_output=True, text=True)

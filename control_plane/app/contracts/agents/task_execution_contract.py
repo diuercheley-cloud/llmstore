@@ -1,9 +1,8 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field
-
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
+from pydantic import BaseModel, Field
 
 
 class ModelReasoningTaskInputV1(BaseModel):

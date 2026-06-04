@@ -1,27 +1,27 @@
 # Owner: platform-ops
-import subprocess
 import json
 import os
+import subprocess
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db_session
-from app.services.auth import AdminRole, require_admin_role
 from app.models.sales_lead import SalesLead, SalesLeadNote
-from app.services.billing.core import resolve_effective_plan_for_session
 from app.schemas.sales import (
-    SalesLead as SalesLeadSchema,
-    SalesLeadCreate,
-    SalesLeadUpdate,
-    SalesLeadNoteCreate,
     LeadAdvanceStage,
     QuotePreviewRequest,
-    QuotePreviewResponse
+    QuotePreviewResponse,
+    SalesLeadCreate,
+    SalesLeadNoteCreate,
+    SalesLeadUpdate,
 )
+from app.schemas.sales import SalesLead as SalesLeadSchema
+from app.services.auth import AdminRole, require_admin_role
+from app.services.billing.core import resolve_effective_plan_for_session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/admin/sales", tags=["sales"])
 
@@ -207,18 +207,14 @@ async def monthly_report_preview(
     session: AsyncSession = Depends(get_db_session),
     _role: AdminRole = Depends(require_admin_role(AdminRole.READ)),
 ):
-    from datetime import date, timezone
+    from datetime import date
+
     from app.models.billing_invoice import BillingInvoice
     from app.models.billing_plan import BillingPlan
     from app.models.quota_counter import QuotaCounter
-    from app.models.usage_record import UsageRecord
     from app.models.request_log import RequestLog
-    from app.models.rag_usage_event import RagUsageEvent
-    from app.models.tts_usage_event import TtsUsageEvent
-    from app.services.billing import list_client_billing_snapshots, resolve_effective_plan
+    from app.models.usage_record import UsageRecord
     from app.services.rag_usage import get_rag_usage_and_limits
-    from app.services.tts_usage import get_tts_usage_and_limits
-    from app.services.quota import month_start
 
     # Parse month
     year, m = month.split("-")

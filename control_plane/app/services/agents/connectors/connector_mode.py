@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ConnectorMode(str, Enum):
     MOCK = "mock"
     REAL = "real"

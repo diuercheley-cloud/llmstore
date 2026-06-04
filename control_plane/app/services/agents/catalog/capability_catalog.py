@@ -1,8 +1,10 @@
 import uuid
 from typing import List, Optional
+
+from app.models.agent_catalog import AgentCapabilityCatalogEntry, CapabilityApprovalEvent
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_catalog import AgentCapabilityCatalogEntry, CapabilityApprovalEvent
+
 
 class CapabilityCatalogService:
     def __init__(self, db: AsyncSession):

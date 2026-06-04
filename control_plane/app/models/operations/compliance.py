@@ -1,11 +1,10 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import uuid
-
-from sqlalchemy import Column, String, DateTime, Float, JSON, Boolean, ForeignKey, Integer, Text
-from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from app.db.base_class import Base
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
 
 class ComplianceFramework(Base):
     __tablename__ = "compliance_frameworks"

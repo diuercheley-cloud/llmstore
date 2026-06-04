@@ -3,11 +3,9 @@ import os
 import httpx
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-
 from app.api.routing_admin import router
-from app.services.auth import require_admin
 from app.services.routing.smart_router import reset_smart_router
+from fastapi import FastAPI
 
 
 @pytest.fixture(autouse=True)

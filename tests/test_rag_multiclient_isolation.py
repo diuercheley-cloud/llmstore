@@ -1,17 +1,15 @@
-import uuid
-import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from unittest.mock import AsyncMock, patch
 
-from app.main import app
+import pytest
+import pytest_asyncio
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
+from app.main import app
 from app.models.api_key import ApiKey
-from app.models.rag_document import RAGDocument
+from app.models.client import Client
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def clients_and_session(isolated_db_url, fake_redis):

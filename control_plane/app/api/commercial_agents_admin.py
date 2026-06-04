@@ -1,18 +1,19 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Any, List
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from ..api.dependencies import get_admin_user
 from ..db.session import get_db
 from ..models.commercial_agents import (
-    CommercialAgentProfile,
     CommercialAgentExecution,
+    CommercialAgentProfile,
     CommercialAgentToolExecution,
-    CommercialAgentDelegationPolicy
 )
 from ..services.inference import agent_governance
-from ..api.dependencies import get_admin_user
 
 router = APIRouter(prefix="/admin/inference/agents", tags=["Agent Governance Admin"])
 

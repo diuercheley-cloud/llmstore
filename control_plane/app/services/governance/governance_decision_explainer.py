@@ -1,10 +1,12 @@
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
+
 from app.models.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorDecision,
     CommercialGovernanceSupervisorIncident,
-    CommercialGovernanceSupervisorPolicy
+    CommercialGovernanceSupervisorPolicy,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class GovernanceDecisionExplainer:
     """

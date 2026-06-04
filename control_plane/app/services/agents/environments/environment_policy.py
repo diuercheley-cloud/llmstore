@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Optional
+
+from app.models.agent_environments import AgentPromotionRequest
+from app.models.agents import AgentDefinition, AgentEvalBaseline, AgentEvalGateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.agents import AgentDefinition, AgentEvalGateResult, AgentEvalBaseline
-from app.models.agent_environments import AgentPromotionRequest, AgentEnvironmentVersion
 
 logger = logging.getLogger("environment_policy")
 

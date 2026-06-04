@@ -1,45 +1,43 @@
 # Owner: platform-ops
-import logging
-import uuid
-import psutil
-import subprocess
-import shutil
-import os
-import time
 import json
-import asyncio
-import httpx
-logger = logging.getLogger(__name__)
-from typing import Any
+import logging
+import os
+import shutil
+import subprocess
+import time
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+import httpx
+import psutil
+
+logger = logging.getLogger(__name__)
+
 import sqlalchemy as sa
-from sqlalchemy import select, update, desc, func
+from app.core.config import get_settings
+from app.core.security import verify_secret
+from app.core.time import utc_now
+from app.db.session import get_db_session, get_redis
+from app.models.admin_action_log import AdminActionLog
+from app.models.api_key import ApiKey
+from app.models.billing_plan import BillingPlan
+from app.models.client import Client
+from app.models.inference_backend import InferenceBackend
+from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_registry import ModelRegistry
+from app.models.quota_counter import QuotaCounter
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.user_quota_override import UserQuotaOverride
+from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin_role
+from app.services.embeddings import get_embedding_service
+from app.services.rag_usage import get_rag_usage_and_limits
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
+from redis.asyncio import Redis
+from sqlalchemy import desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from redis.asyncio import Redis
-
-from app.db.session import get_db_session, get_redis
-from app.services.auth import require_admin_role, AdminRole, admin_key_scheme, get_admin_role
-from app.models.client import Client
-from app.models.api_key import ApiKey
-from app.models.quota_counter import QuotaCounter
-from app.models.billing_plan import BillingPlan
-from app.models.admin_action_log import AdminActionLog
-from app.models.user_quota_override import UserQuotaOverride
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
-from app.models.inference_backend import InferenceBackend
-from app.models.model_registry import ModelRegistry
-from app.models.model_backend_route import ModelBackendRoute
-from app.services.embeddings import get_embedding_service
-from app.core.time import utc_now
-from app.core.config import get_settings
-from app.core.security import verify_secret
-from pydantic import BaseModel
-
-from app.services.rag_usage import get_rag_usage_and_limits
 
 router = APIRouter(prefix="/admin/tests", tags=["admin_tests"])
 

@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../control_plane"))
@@ -8,14 +9,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../control_pla
 from app.services.agents.provider_validation import (
     RealProviderValidator,
     ValidationStatus,
-    ProviderReport,
-    ValidationResult,
-    run_validation_suite,
-    get_latest_results,
     get_provider_matrix,
-    is_recent_validation_available,
+    run_validation_suite,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

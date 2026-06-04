@@ -11,10 +11,10 @@ Create Date: 2026-05-23 10:00:00.000000
 # Model class: AgentCodeInterpreterRun
 # Model class: AgentSandboxSession
 # Model class: AgentSandboxArtifact
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

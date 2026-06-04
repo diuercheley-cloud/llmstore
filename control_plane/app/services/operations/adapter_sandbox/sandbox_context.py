@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
 import uuid
+from dataclasses import dataclass, field
+from typing import List
+
 
 @dataclass(frozen=True)
 class AdapterSandboxContext:

@@ -1,14 +1,15 @@
 # Owner: agent-platform
-import pytest
-import uuid
 import asyncio
-from unittest.mock import MagicMock, AsyncMock
+import uuid
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agent_debugger import AgentBreakpoint, AgentDebugSession
+from app.services.agents.debugger.breakpoints import BreakpointManager
+from app.services.agents.debugger.debug_sessions import DebugSessionManager
+from app.services.agents.debugger.live_stepper import LiveStepper
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agent_debugger import AgentDebugSession, AgentBreakpoint, AgentDebugStepEvent
-from app.services.agents.debugger.live_stepper import LiveStepper
-from app.services.agents.debugger.debug_sessions import DebugSessionManager
-from app.services.agents.debugger.breakpoints import BreakpointManager
 
 @pytest.fixture
 def mock_db():

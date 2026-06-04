@@ -1,17 +1,22 @@
 # Owner: agent-platform
-import pytest
-import uuid
 import json
+import uuid
+
+import pytest
 from sqlalchemy import select
+
 
 @pytest.mark.asyncio
 async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     # Import app models and configurations inside test to respect monkeypatched DB/Session
     from app.core.config import get_settings
     from app.db.session import SessionLocal
-    from app.models.client import Client as DBClient
     from app.models.billing_invoice import BillingInvoice
-    from app.models.payments import PaymentCustomer, PaymentIntent, PaymentProcessingWebhookEvent, PaymentAuditEvent
+    from app.models.client import Client as DBClient
+    from app.models.payments import (
+        PaymentAuditEvent,
+        PaymentIntent,
+    )
 
     settings = get_settings()
     client_id = uuid.uuid4()
@@ -29,8 +34,8 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
         db.add(tenant_client)
         await db.flush()
 
-        from decimal import Decimal
         from datetime import date
+        from decimal import Decimal
         invoice = BillingInvoice(
             id=invoice_id,
             client_id=client_id,

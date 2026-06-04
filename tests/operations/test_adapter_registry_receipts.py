@@ -1,10 +1,14 @@
-import pytest
 import uuid
-from app.models.operations.adapter_registry import SignedAdapterRegistryEntry, AdapterRegistryDecision
-from app.services.operations.adapter_registry.receipts import (
-    build_registry_entry_receipt,
-    build_registry_decision_receipt,
+
+from app.models.operations.adapter_registry import (
+    AdapterRegistryDecision,
+    SignedAdapterRegistryEntry,
 )
+from app.services.operations.adapter_registry.receipts import (
+    build_registry_decision_receipt,
+    build_registry_entry_receipt,
+)
+
 
 class TestAdapterRegistryReceipts:
     def test_build_entry_receipt(self):

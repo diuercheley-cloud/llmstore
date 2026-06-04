@@ -1,11 +1,12 @@
-import uuid
 import hashlib
 import json
+import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, JSON, Boolean, Integer, Float, Text
-from sqlalchemy.orm import Mapped, mapped_column
+
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 def compute_deterministic_hash(*, fields: dict, version: str = "v1") -> str:

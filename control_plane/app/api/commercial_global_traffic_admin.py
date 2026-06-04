@@ -1,16 +1,19 @@
 # Owner: commercial-ops
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 
-from app.services.auth import require_admin as get_admin_user
-from app.db.session import get_db_session as get_db
-from app.models.commercial_global_traffic import CommercialGlobalTrafficPolicy, CommercialGlobalTrafficDecision
-from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
 from app.core.config import get_settings
+from app.db.session import get_db_session as get_db
+from app.models.commercial_global_traffic import (
+    CommercialGlobalTrafficDecision,
+    CommercialGlobalTrafficPolicy,
+)
+from app.services.auth import require_admin as get_admin_user
+from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 cfg = get_settings()

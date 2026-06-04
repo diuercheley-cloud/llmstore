@@ -1,10 +1,10 @@
 import time
-import uuid
-import pytest
 from pathlib import Path
-from app.services.agents.knowledge_graph.graph_store import GraphStore
-from app.services.agents.knowledge_graph.graph_models import GraphQueryRequest
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents.knowledge_graph.graph_store import GraphStore
+
 
 @pytest.mark.asyncio
 async def test_kg_10k_entities_performance(session):

@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from app.schemas.managed_control_plane import ApplianceEnrollRequest, ApplianceHeartbeatPayload
 from app.services.managed_control_plane import ManagedControlPlaneService
 

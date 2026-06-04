@@ -1,32 +1,32 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Dict, Any, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.correlation import (
     OperationalCorrelation,
-    CorrelatedOperationalEvent,
-    OperationalTrustLink,
     compute_deterministic_hash,
-)
-from app.services.operations.correlation.deterministic_correlation_engine import DeterministicOperationsCorrelationEngine
-from app.services.operations.correlation.trust_graph import OperationalTrustGraphService
-from app.services.operations.correlation.correlation_risk_analysis import OperationalCorrelationRiskAnalysisService
-from app.services.operations.correlation.receipts import (
-    build_correlation_receipt,
-    build_trust_link_receipt,
-    build_graph_summary_receipt,
 )
 from app.services.operations.correlation.audit_events import (
     log_correlation_created,
-    log_trust_link_created,
     log_graph_generated,
+    log_trust_link_created,
 )
+from app.services.operations.correlation.correlation_risk_analysis import (
+    OperationalCorrelationRiskAnalysisService,
+)
+from app.services.operations.correlation.deterministic_correlation_engine import (
+    DeterministicOperationsCorrelationEngine,
+)
+from app.services.operations.correlation.receipts import (
+    build_correlation_receipt,
+    build_graph_summary_receipt,
+)
+from app.services.operations.correlation.trust_graph import OperationalTrustGraphService
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

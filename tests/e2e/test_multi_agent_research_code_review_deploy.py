@@ -1,16 +1,15 @@
-import pytest
 import uuid
-from app.services.agents.knowledge_graph.graph_store import GraphStore
-from app.services.agents.code_interpreter.code_interpreter import CodeInterpreter
-from app.services.agents.human_approval import (
-    create_approval_request,
-    approve_approval_request
-)
-from app.services.agents.telemetry.agent_tracer import AgentTracer
-from app.services.agents.code_interpreter.sandbox_artifacts import SandboxArtifactService
+
+import pytest
 from app.core.config import get_settings
-from app.services.auth import AdminRole
 from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents.code_interpreter.code_interpreter import CodeInterpreter
+from app.services.agents.code_interpreter.sandbox_artifacts import SandboxArtifactService
+from app.services.agents.human_approval import approve_approval_request, create_approval_request
+from app.services.agents.knowledge_graph.graph_store import GraphStore
+from app.services.agents.telemetry.agent_tracer import AgentTracer
+from app.services.auth import AdminRole
+
 
 @pytest.mark.asyncio
 async def test_multi_agent_e2e_research_code_review_deploy(session):

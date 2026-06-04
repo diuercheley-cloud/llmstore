@@ -1,10 +1,5 @@
-import uuid
-import hashlib
-import json
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
 from app.models.operations.remediation_execution import (
     RemediationExecution,
@@ -12,16 +7,23 @@ from app.models.operations.remediation_execution import (
     RemediationRollbackPlan,
     compute_deterministic_hash,
 )
-from app.services.operations.remediation_execution.execution_gate import RemediationExecutionGate
-from app.services.operations.remediation_execution.simulation_adapter import SimulatedRemediationExecutionAdapter
-from app.services.operations.remediation_execution.rollback import RemediationRollbackPlanningService
 from app.services.operations.remediation_execution.audit_events import (
+    log_remediation_execution_completed,
+    log_remediation_execution_killed,
     log_remediation_execution_prepared,
     log_remediation_execution_started,
     log_remediation_execution_step_simulated,
-    log_remediation_execution_completed,
-    log_remediation_execution_killed,
 )
+from app.services.operations.remediation_execution.execution_gate import RemediationExecutionGate
+from app.services.operations.remediation_execution.rollback import (
+    RemediationRollbackPlanningService,
+)
+from app.services.operations.remediation_execution.simulation_adapter import (
+    SimulatedRemediationExecutionAdapter,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class ApprovalGatedRemediationExecutor:
     """

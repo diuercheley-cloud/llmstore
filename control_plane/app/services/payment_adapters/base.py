@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Protocol
-import uuid
 
 
 class PaymentAdapterError(Exception):

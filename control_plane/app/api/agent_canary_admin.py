@@ -1,12 +1,13 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+from app.db.session import get_db
+from app.models.agent_canary import AgentCanaryAssignment, AgentCanaryComparison, AgentShadowRun
+from app.services.agents.canary.canary_promotion_gate import CanaryPromotionGate
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.db.session import get_db
-from app.services.agents.canary.canary_promotion_gate import CanaryPromotionGate
-from app.models.agent_canary import AgentCanaryAssignment, AgentCanaryComparison, AgentShadowRun
 
 router = APIRouter(prefix="/admin/agents", tags=["Agent Shadow & Canary"])
 

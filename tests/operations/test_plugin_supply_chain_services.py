@@ -1,14 +1,21 @@
 import json
 import uuid
 
-from app.services.operations.plugin_supply_chain.audit_events import build_plugin_supply_chain_audit_event
-from app.services.operations.plugin_supply_chain.dependency_governance import DependencyGovernanceService
+from app.services.operations.plugin_supply_chain.audit_events import (
+    build_plugin_supply_chain_audit_event,
+)
+from app.services.operations.plugin_supply_chain.dependency_governance import (
+    DependencyGovernanceService,
+)
 from app.services.operations.plugin_supply_chain.lineage_service import PluginArtifactLineageService
 from app.services.operations.plugin_supply_chain.provenance_service import PluginProvenanceService
 from app.services.operations.plugin_supply_chain.receipts import build_supply_chain_receipt
-from app.services.operations.plugin_supply_chain.replay_verifier import PluginSupplyChainReplayVerifier
-from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
-from app.utils.crypto_signer import sign_payload
+from app.services.operations.plugin_supply_chain.replay_verifier import (
+    PluginSupplyChainReplayVerifier,
+)
+from app.services.operations.plugin_supply_chain.sbom_placeholder import (
+    PluginSBOMPlaceholderService,
+)
 
 
 def _provenance_record():

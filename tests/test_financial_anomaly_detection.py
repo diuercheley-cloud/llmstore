@@ -1,11 +1,7 @@
-import pytest
-import uuid
-from datetime import datetime, timedelta
-from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from app.services.billing.financial_anomaly_detection import FinancialAnomalyDetectionService
-from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
 
 
 @pytest.mark.asyncio

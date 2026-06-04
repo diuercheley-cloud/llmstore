@@ -1,10 +1,11 @@
-import os
-import sys
 import json
-import time
 import subprocess
-import requests
+import sys
+import time
 from datetime import datetime
+
+import requests
+
 
 def get_resource_usage(container_name):
     try:

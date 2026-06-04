@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
-from app.models.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowGovernanceEvent
+from app.models.commercial_workflows import (
+    CommercialWorkflowExecution,
+    CommercialWorkflowGovernanceEvent,
+)
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.workflows.workflow_provenance import redact_sensitive_payload, sha256_hex
-
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 VALID_GOVERNANCE_EVENTS = {
     "workflow_started",

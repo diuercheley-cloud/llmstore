@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
 
 from app.models.security_event import SecurityEvent
 from app.services.security_monitor import prompt_fingerprint, serialize_security_event

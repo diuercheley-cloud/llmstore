@@ -1,10 +1,9 @@
 # Owner: agent-platform
 import logging
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentTool
+
 from app.services.agents.tool_adapter_registry import adapter_registry
 from app.services.agents.tool_registry import create_tool, get_tool_by_name, update_tool
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

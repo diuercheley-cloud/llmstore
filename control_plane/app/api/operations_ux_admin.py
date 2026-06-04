@@ -1,18 +1,12 @@
 # Owner: platform-ops
-from datetime import datetime
-from typing import Any, Dict, List
 import uuid
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.dependencies import get_current_admin
-from app.services.auth import require_admin_role, AdminRole
 from app.core.config import get_settings
-from app.db.session import get_db_session
 from app.core.time import utc_now
+from app.services.auth import AdminRole, require_admin_role
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin/operations", tags=["operations_ux"])
 

@@ -1,5 +1,5 @@
-from typing import List, Dict, Any, Optional
-import uuid
+from typing import Any, Dict, List, Optional
+
 
 class RemediationExecutionGate:
     """

@@ -1,12 +1,14 @@
 import os
+
 import pytest
 import pytest_asyncio
 import yaml
-from httpx import AsyncClient
-
 from app.db.base import Base
 from app.db.session import engine
+from httpx import AsyncClient
+
 from scripts.check_api_surface import check_surface
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

@@ -1,19 +1,17 @@
-import uuid
 import logging
+import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.client import Client
+from app.models.client_feature_block import ClientFeatureBlock
 from app.models.rag_document import RAGDocument
 from app.models.rag_usage_event import RagUsageEvent
-from app.models.client_feature_block import ClientFeatureBlock
-from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

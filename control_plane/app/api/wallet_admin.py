@@ -2,20 +2,18 @@
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.services.auth import require_admin
 from app.services.billing.wallet_service import (
     adjustment,
     credit_manual,
     get_balance,
-    get_or_create_wallet,
     list_transactions,
     serialize_transaction,
 )
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/billing/wallets",
@@ -67,8 +65,8 @@ async def admin_list_wallets(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
-    from sqlalchemy import select
     from app.models.ai_wallet import AiWallet
+    from sqlalchemy import select
     result = await session.execute(
         select(AiWallet).order_by(AiWallet.created_at.desc()).offset(offset).limit(limit)
     )

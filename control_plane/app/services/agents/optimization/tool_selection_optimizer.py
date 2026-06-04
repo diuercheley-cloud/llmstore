@@ -1,5 +1,6 @@
 import logging
-from typing import List, Any
+from typing import List
+
 from app.models.agents import AgentEvalFailure
 
 logger = logging.getLogger(__name__)

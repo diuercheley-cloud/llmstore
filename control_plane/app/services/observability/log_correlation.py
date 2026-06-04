@@ -3,6 +3,7 @@ import logging
 import uuid
 from typing import Optional
 
+
 class LogCorrelationService:
     """
     Ensures logs are correlated with run and trace IDs.

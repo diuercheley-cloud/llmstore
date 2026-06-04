@@ -1,5 +1,3 @@
-import os
-import sys
 
 def generate_baseline():
     print("Generating coverage baseline (simulated)...")

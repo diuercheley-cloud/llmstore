@@ -42,8 +42,6 @@ PROVIDER_QUALITY = {
 }
 
 
-from app.services.routing.commercial_config_store import CommercialConfigStore
-from sqlalchemy.ext.asyncio import AsyncSession
 
 def rank_commercial_routes(
     candidates: list[dict[str, Any]],

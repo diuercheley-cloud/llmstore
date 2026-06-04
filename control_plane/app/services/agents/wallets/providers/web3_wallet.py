@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class Web3WalletProvider:
     async def process_transaction(self, amount: float, token: str, destination_address: str) -> Dict[str, Any]:

@@ -46,12 +46,13 @@ class LocalCache:
         return self.mode == "read-only"
 
     def get_json(self, namespace: str, key: str) -> Any | None:
-        if not self.enabled:
+        if not self.enabled and namespace != "capabilities":
             return None
 
         path = self._entry_path(namespace, key)
         if not path.exists():
-            self.misses += 1
+            if self.enabled:
+                self.misses += 1
             return None
 
         try:
@@ -60,27 +61,30 @@ class LocalCache:
 
             created_at = payload.get("created_at", 0)
             if self.ttl_seconds and (time.time() - created_at > self.ttl_seconds):
-                self.expired += 1
+                if self.enabled:
+                    self.expired += 1
                 logger.debug(f"Cache entry expired: {namespace}/{key}")
                 # Optionally delete expired file
                 with contextlib.suppress(OSError):
                     path.unlink()
                 return None
 
-            self.hits += 1
+            if self.enabled:
+                self.hits += 1
             return payload.get("value")
         except Exception as e:
             logger.error(f"Failed to read cache entry {namespace}/{key}: {e}")
-            self.misses += 1
+            if self.enabled:
+                self.misses += 1
             return None
 
     def set_json(self, namespace: str, key: str, value: Any) -> None:
-        if not self.enabled:
+        if not self.enabled and namespace != "capabilities":
             return
 
         # Periodic cleanup if we are over max entries (simplified)
         # In a real system, we'd use a more efficient LRU
-        if self.max_entries > 0:
+        if self.enabled and self.max_entries > 0:
             self.cleanup_expired()
 
         path = self._entry_path(namespace, key)

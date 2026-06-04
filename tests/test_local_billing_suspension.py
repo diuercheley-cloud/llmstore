@@ -1,8 +1,6 @@
 import pytest
 from httpx import AsyncClient
 
-from app.core.config import get_settings
-
 
 @pytest.mark.asyncio
 async def test_local_billing_suspension(admin_client: AsyncClient, admin_token_headers: dict):

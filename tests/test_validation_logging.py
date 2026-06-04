@@ -1,6 +1,5 @@
 import os
 import subprocess
-import pytest
 
 HELPER_PATH = "scripts/lib/validation-logging.sh"
 

@@ -1,13 +1,11 @@
-import uuid
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.config import get_settings
 from app.models.commercial_governance_federation import (
     CommercialFederatedAuditTrail,
     CommercialGovernanceFederationPeer,
 )
 from app.services.governance.federated_audit import FederatedAuditService
-from app.core.config import get_settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

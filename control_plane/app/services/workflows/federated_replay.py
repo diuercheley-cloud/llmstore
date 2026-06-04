@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_federated_workflows import (
     CommercialFederatedWorkflowExecution,
     CommercialWorkflowReplayFederationReport,
@@ -12,7 +9,13 @@ from app.models.commercial_federated_workflows import (
 from app.models.commercial_sovereign_governance import CommercialOfflineRevocationList
 from app.models.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
 from app.services.workflows.federated_execution import sign_federated_payload
-from app.services.workflows.workflow_provenance import canonical_json, redact_sensitive_payload, sha256_hex
+from app.services.workflows.workflow_provenance import (
+    canonical_json,
+    redact_sensitive_payload,
+    sha256_hex,
+)
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FederatedWorkflowReplayService:

@@ -1,6 +1,6 @@
-import pytest
-import subprocess
 import json
+import subprocess
+
 
 def test_e2e_report_generation(tmp_path):
     out_dir = tmp_path / "e2e"

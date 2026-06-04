@@ -1,20 +1,26 @@
 # Owner: commercial-ops
-from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
-from sqlalchemy import select, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_admin_db, get_super_admin_db
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation, CommercialSafetyPolicy, CommercialApprovalRecord
+from app.models.commercial_infra_simulation import (
+    CommercialApprovalRecord,
+    CommercialInfrastructureSimulation,
+    CommercialSafetyPolicy,
+)
+from app.services.compliance.financial_controls import evaluate_control_policy
+from app.services.routing.commercial_infra_execution import get_infra_execution_service
 from app.services.routing.commercial_infra_simulation import (
-    simulate_scale_up, simulate_scale_down, simulate_reroute, simulate_cluster_failover
+    simulate_cluster_failover,
+    simulate_reroute,
+    simulate_scale_down,
+    simulate_scale_up,
 )
 from app.services.routing.commercial_safety_gates import validate_simulation_against_policy
-from app.services.routing.commercial_infra_execution import get_infra_execution_service
-from app.services.compliance.financial_controls import evaluate_control_policy
+from fastapi import APIRouter, Body, Depends, HTTPException
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/routing/infra", tags=["commercial-infra-simulation"])
 

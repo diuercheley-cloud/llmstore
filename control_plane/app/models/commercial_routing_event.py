@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, JSON, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 
 class CommercialRoutingEvent(Base):
     __tablename__ = "commercial_routing_events"

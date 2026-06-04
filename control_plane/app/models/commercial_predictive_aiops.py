@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, Integer, ForeignKey, Float
+
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String
+
 
 class CommercialFailurePrediction(Base):
     __tablename__ = "commercial_failure_predictions"

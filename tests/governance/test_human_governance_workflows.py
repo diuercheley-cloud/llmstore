@@ -1,5 +1,7 @@
 from app.services.governance.human_governance.approval_quorum_service import normalize_roles
-from app.services.governance.human_governance.separation_of_duties import validate_separation_of_duties
+from app.services.governance.human_governance.separation_of_duties import (
+    validate_separation_of_duties,
+)
 
 
 def test_human_governance_normalizes_roles():

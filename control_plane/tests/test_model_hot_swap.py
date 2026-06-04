@@ -1,12 +1,12 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock, patch, AsyncMock
-from app.services.model_runtime_manager import ModelRuntimeManager
-from app.models.operations.model_runtime import ModelRuntimeInstance
-from app.models.model_registry import ModelRegistry
-from app.models.inference_backend import InferenceBackend
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.operations.model_runtime import ModelRuntimeInstance
+from app.services.model_runtime_manager import ModelRuntimeManager
+
 
 @pytest.fixture
 def mock_settings(monkeypatch):
@@ -117,8 +117,8 @@ async def test_rollback_model(mock_settings):
 
 @pytest.mark.asyncio
 async def test_resolve_effective_backend_url(mock_settings):
-    from app.services.model_policy import resolve_effective_backend_url
     from app.models.model_backend_route import ModelBackendRoute
+    from app.services.model_policy import resolve_effective_backend_url
     
     db = MagicMock()
     

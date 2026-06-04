@@ -1,7 +1,7 @@
-import pytest
-import os
 import json
+
 from tools.public_verifier.verifier_cli import verify_file
+
 
 def test_verify_file_non_existent():
     assert verify_file("non_existent.json") is False

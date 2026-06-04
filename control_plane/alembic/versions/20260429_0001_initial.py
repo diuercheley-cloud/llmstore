@@ -1,9 +1,8 @@
 """initial schema"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260429_0001"
 down_revision = None

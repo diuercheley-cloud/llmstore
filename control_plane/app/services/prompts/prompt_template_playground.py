@@ -1,21 +1,17 @@
 # Owner: agent-platform
-import uuid
-import time
-import hashlib
-import json
 import logging
-from typing import Any, Dict, Optional, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import time
+import uuid
+from typing import Any, Dict, List, Optional
 
-from app.core.config import get_settings
 from app.models.prompts import (
-    PromptTemplateVersion,
-    PromptTemplateVariable,
     PromptPlaygroundRun,
+    PromptTemplateVersion,
 )
 from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

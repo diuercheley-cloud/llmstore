@@ -1,8 +1,14 @@
 import uuid
 
-from app.services.operations.federation_sync.conflict_resolution import FederationConflictResolutionService
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
-from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
+from app.services.operations.federation_sync.conflict_resolution import (
+    FederationConflictResolutionService,
+)
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
+from app.services.operations.federation_sync.synchronization_protocol import (
+    SovereignFederationSynchronizationProtocol,
+)
 
 
 def test_conflict_resolution_deterministic_and_blocking():

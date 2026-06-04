@@ -1,11 +1,11 @@
 import uuid
-import pytest
 from datetime import timedelta
-from sqlalchemy import select
-from app.services.routing.qos_fairness import CommercialQoSFairnessService
-from app.models.generation_job import GenerationJob
-from app.models.commercial_queue_metric import CommercialQueueMetric
+
+import pytest
 from app.core.time import utc_now
+from app.models.generation_job import GenerationJob
+from app.services.routing.qos_fairness import CommercialQoSFairnessService
+
 
 @pytest.mark.asyncio
 async def test_calculate_fairness_index():

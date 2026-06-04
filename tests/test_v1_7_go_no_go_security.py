@@ -1,8 +1,6 @@
 import subprocess
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
 SUMMARY_DOC = ROOT / "docs" / "V1_7_GO_NO_GO_SUMMARY.md"
 CHECKLIST_DOC = ROOT / "docs" / "V1_7_RELEASE_CHECKLIST.md"
@@ -120,7 +118,7 @@ def test_check_secrets_runs():
         text=True,
         timeout=120,
     )
-    print(f"STDOUT (last 20 lines):\n" + "\n".join(result.stdout.split("\n")[-20:]))
+    print("STDOUT (last 20 lines):\n" + "\n".join(result.stdout.split("\n")[-20:]))
     # check-secrets may find expected/fixture patterns; we just check it completes
     assert result.returncode in (0, 1), (
         f"check-secrets.sh crashed with exit code {result.returncode}"

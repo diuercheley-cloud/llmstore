@@ -5,14 +5,13 @@ import json
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialSignedModelRegistryEntry,
 )
 from app.services.governance.airgap_sync import validate_chain_of_custody as validate_airgap_chain
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

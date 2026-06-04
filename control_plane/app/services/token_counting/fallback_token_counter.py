@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Union
-from app.utils.token_estimator import estimate_tokens_from_text, estimate_prompt_tokens
+
+from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+
 
 class FallbackTokenCounter:
     """Fallback token counter using character/word heuristic rules."""

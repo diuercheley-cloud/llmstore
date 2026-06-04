@@ -1,7 +1,7 @@
-import pytest
-from fastapi.testclient import TestClient
-from app.main import app
 from app.core.config import get_settings
+from app.main import app
+from fastapi.testclient import TestClient
+
 
 def test_startup_with_defaults():
     """

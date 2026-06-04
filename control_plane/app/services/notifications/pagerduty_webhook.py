@@ -1,13 +1,10 @@
-import hashlib
-import hmac
 import json
 import logging
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import httpx
-
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

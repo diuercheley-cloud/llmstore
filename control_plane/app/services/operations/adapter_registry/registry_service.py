@@ -1,18 +1,14 @@
-import uuid
-from datetime import datetime
-from typing import Optional, List
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.time import utc_now
 from app.models.operations.adapter_registry import (
-    SignedAdapterRegistryEntry,
     AdapterRegistryDecision,
+    SignedAdapterRegistryEntry,
 )
 from app.models.operations.adapter_sandbox import AdapterManifest
 from app.services.operations.adapter_registry.hash_utils import compute_registry_hash, sha256_hex
-from app.core.time import utc_now
 from app.utils.crypto_signer import sign_payload
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class SignedAdapterRegistryService:
     def __init__(self, session: AsyncSession):

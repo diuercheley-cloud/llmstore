@@ -1,9 +1,8 @@
 import logging
-from typing import Any, Dict, Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.core.config import get_settings
 from app.services.notifications.pagerduty_webhook import AlertWebhookService, PagerDutyEvent
+from fastapi import APIRouter, HTTPException, Request
 
 logger = logging.getLogger(__name__)
 

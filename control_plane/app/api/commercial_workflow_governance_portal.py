@@ -4,10 +4,6 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.client import Client
 from app.models.commercial_workflows import (
@@ -17,6 +13,9 @@ from app.models.commercial_workflows import (
 )
 from app.services.auth import require_client
 from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["portal", "workflows-governance"])
 

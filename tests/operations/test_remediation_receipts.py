@@ -1,8 +1,9 @@
 from app.services.operations.remediation.receipts import (
+    build_approval_requirement_receipt,
     build_remediation_plan_receipt,
     build_remediation_step_receipt,
-    build_approval_requirement_receipt,
 )
+
 
 class TestRemediationReceipts:
     def test_build_plan_receipt(self):

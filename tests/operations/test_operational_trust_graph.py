@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.operations.correlation.trust_graph import OperationalTrustGraphService
+
+import pytest
 from app.models.operations.correlation import OperationalTrustLink
+from app.services.operations.correlation.trust_graph import OperationalTrustGraphService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestOperationalTrustGraph:

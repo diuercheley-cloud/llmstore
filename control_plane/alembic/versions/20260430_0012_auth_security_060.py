@@ -1,9 +1,7 @@
 """Add scopes to ApiKey and JWT settings for Release 0.6.0-local"""
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
+from alembic import op
 
 revision = "20260430_0012"
 down_revision = "20260430_0011"

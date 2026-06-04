@@ -1,6 +1,13 @@
+from typing import Any, Dict, List
+
 import pytest
-from app.contracts.provider import ProviderContract, ProviderRequest, ProviderResponse, ProviderCapabilities
-from typing import Dict, Any, List
+from app.contracts.provider import (
+    ProviderCapabilities,
+    ProviderContract,
+    ProviderRequest,
+    ProviderResponse,
+)
+
 
 class MockProvider(ProviderContract):
     async def health_check(self) -> Dict[str, Any]:
@@ -39,5 +46,4 @@ async def test_provider_contract_implementation():
     assert caps.streaming is False
 
 def test_provider_contract_runtime_check():
-    from typing import runtime_checkable
     assert isinstance(MockProvider(), ProviderContract)

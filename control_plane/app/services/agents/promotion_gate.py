@@ -1,19 +1,20 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, List, Optional
+import uuid
+from typing import Any, Dict
+
+from app.core.time import utc_now
+from app.models.agents import (
+    AgentDefinition,
+    AgentEvalBaseline,
+    AgentIncident,
+    AgentPromotionGate,
+    AgentRegistryEntry,
+)
+from app.services.agents.agent_risk_engine import AgentRiskEngine
+from app.services.agents.prompt_baseline_registry import PromptBaselineRegistry
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import (
-    AgentDefinition, 
-    AgentPromotionGate, 
-    AgentRegistryEntry,
-    AgentIncident,
-    AgentEvalBaseline
-)
-from app.services.agents.prompt_baseline_registry import PromptBaselineRegistry
-from app.services.agents.agent_risk_engine import AgentRiskEngine
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +66,8 @@ class AgentPromotionService:
             )
 
         # 1. Eval Baseline Check
-        from app.services.agents.evals.eval_scoring import EvalScoringManager
         from app.models.agents import AgentEvalRun, AgentEvalSuite
+        from app.services.agents.evals.eval_scoring import EvalScoringManager
         
         scoring_manager = EvalScoringManager(self.db)
         # Find latest evaluation run for this agent

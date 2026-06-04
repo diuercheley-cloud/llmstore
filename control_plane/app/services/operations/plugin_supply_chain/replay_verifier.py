@@ -1,6 +1,10 @@
 from typing import Any
 
-from app.services.operations.plugin_supply_chain.hash_utils import compute_lineage_hash, compute_provenance_hash, compute_sbom_hash
+from app.services.operations.plugin_supply_chain.hash_utils import (
+    compute_lineage_hash,
+    compute_provenance_hash,
+    compute_sbom_hash,
+)
 
 
 class PluginSupplyChainReplayVerifier:

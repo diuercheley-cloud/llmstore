@@ -1,7 +1,8 @@
 import os
 import subprocess
-import pytest
 from pathlib import Path
+
+import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent
 CLEAN_SCRIPT = PROJECT_ROOT / "scripts" / "clean-rag-local-data.sh"

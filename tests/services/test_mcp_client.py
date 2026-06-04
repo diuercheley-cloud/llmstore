@@ -18,23 +18,22 @@ Strategy:
 """
 from __future__ import annotations
 
-import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+import os
+import sys
+from unittest.mock import patch
 
+import pytest
+from app.core.config import get_settings
 from app.services.agents.mcp.mcp_audit import MCPAuditLog
 from app.services.agents.mcp.mcp_client import MCPClient
 from app.services.agents.mcp.mcp_registry import MCPRegistry
 from app.services.agents.mcp.mcp_security import MCPSecurity
 from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_transport import MCPTransportError
-from app.core.config import get_settings
-import sys
-import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from fake_mcp_server import FakeMCPServer
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -2,6 +2,7 @@
 # Owner: platform-ops
 import os
 import sys
+
 import yaml
 
 # Add control_plane to python path
@@ -9,6 +10,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(base_dir, "control_plane"))
 
 from app.services.platform.surface_audit import SurfaceAuditService
+
 
 def validate_ga_surface():
     api_surface_path = os.path.join(base_dir, "config/api-surface.yaml")

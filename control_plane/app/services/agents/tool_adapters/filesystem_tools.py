@@ -1,11 +1,12 @@
 # Owner: agent-platform
-import os
 import hashlib
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
-from app.services.agents.tool_adapter_contract import ToolAdapterContract
+
 from app.core.config import get_settings
+from app.services.agents.tool_adapter_contract import ToolAdapterContract
 
 
 def _resolve_and_verify_path(requested_path: str, tenant_id: str) -> Path:

@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import time
 import uuid
 from collections.abc import Callable
@@ -63,6 +64,7 @@ class CodingLoop:
         pricing_file: str | None = None,
         max_cost: float | None = None,
         max_tokens: int | None = None,
+        max_tokens_per_run: int | None = None,
         memory_mode: str = "local",
         memory_dir: str = ".llm_harness_memory",
         memory_retention_days: int = 30,
@@ -71,6 +73,7 @@ class CodingLoop:
         edit_action_before_run: bool = False,
         checkpoint_dir: str = ".llm_harness_checkpoints",
         checkpoint_every_step: bool = False,
+        is_reasoning_model: bool = False,
     ):
         self.agent_client = agent_client
         self.allow_test_short_circuit = allow_test_short_circuit
@@ -85,8 +88,8 @@ class CodingLoop:
         policy_config = {}
         if max_cost is not None:
             policy_config["max_cost"] = max_cost
-        if max_tokens is not None:
-            policy_config["max_tokens"] = max_tokens
+        if max_tokens_per_run is not None:
+            policy_config["max_tokens"] = max_tokens_per_run
 
         self.policy_engine = PolicyEngine(config=policy_config)
         self.pricing_manager = PricingManager(pricing_file=pricing_file)
@@ -127,7 +130,8 @@ class CodingLoop:
         self.prompt_builder = PromptBuilder(
             policy_summary=self.policy_summary,
             memory_context=memory_context,
-            eval_feedback=eval_feedback
+            eval_feedback=eval_feedback,
+            is_reasoning_model=is_reasoning_model,
         )
         self.policy_hash = (
             self.cache.compute_policy_hash(self.policy_summary) if self.cache else "no-policy"
@@ -208,11 +212,18 @@ class CodingLoop:
         self.time_to_first_action_ms: int | None = None
         self.time_to_final_ms: int | None = None
         self.post_final_llm_calls_blocked = 0
+        self.final_tool_calling_mode: str | None = None
+        self.provider_summary: dict[str, Any] = {}
         self._run_started_perf = 0.0
+
+        self.current_agent: str | None = None
+        self._registry_cache = None
 
         # LLM API retry config
         self._llm_max_retries = 3
         self._llm_retry_base_delay = 1.0
+        self._last_action_signature: str | None = None
+        self._repeated_action_count = 0
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -249,6 +260,40 @@ class CodingLoop:
         self.time_to_first_action_ms = state.get("time_to_first_action_ms")
         self.time_to_final_ms = state.get("time_to_final_ms")
         self.post_final_llm_calls_blocked = state.get("post_final_llm_calls_blocked", 0)
+
+    def _record_action_signature(self, action: dict[str, Any]) -> bool:
+        signature = hashlib.sha256(
+            json.dumps(Sanitizer.sanitize_data(action), sort_keys=True, ensure_ascii=True).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        if signature == self._last_action_signature:
+            self._repeated_action_count += 1
+        else:
+            self._last_action_signature = signature
+            self._repeated_action_count = 1
+        return self._repeated_action_count >= 4
+
+    def _can_auto_finalize_repeated_write(self, action: dict[str, Any]) -> bool:
+        config = getattr(self, "config", None)
+        if not config or not getattr(config, "lm_studio_compatibility", False):
+            return False
+        if action.get("action_type") != "write_file":
+            return False
+        path = action.get("path")
+        content = action.get("content")
+        if not isinstance(path, str) or not isinstance(content, str):
+            return False
+        abs_path = os.path.abspath(os.path.join(self.workspace.path, path))
+        workspace_root = os.path.abspath(self.workspace.path)
+        if not abs_path.startswith(workspace_root) or not os.path.exists(abs_path):
+            return False
+        try:
+            with open(abs_path, "r", encoding="utf-8") as handle:
+                current = handle.read()
+        except OSError:
+            return False
+        return current == content
 
     async def _summarize_content(self, content: str) -> str:
         """
@@ -336,13 +381,17 @@ class CodingLoop:
             self.run_span_id = None
 
         trace_hash = self._hash_payload(self.trace) if self.trace else None
+        if self.changed_files:
+            self.metrics.record_changed_files(list(self.changed_files))
         metrics = self.metrics.to_dict()
         metrics.update(
             {
                 "time_to_first_action_ms": self.time_to_first_action_ms,
                 "time_to_final_ms": self.time_to_final_ms,
                 "post_final_llm_calls_blocked": self.post_final_llm_calls_blocked,
+                "final_tool_calling_mode": self.final_tool_calling_mode,
                 "final_executed": self.final_executed,
+                **self.provider_summary,
             }
         )
         return ExecutionResult(
@@ -980,6 +1029,10 @@ class CodingLoop:
         return result
 
     def _precheck_action_policy(self, action: dict[str, Any]) -> dict[str, Any]:
+        if "action_type" not in action and "type" in action:
+            action = {**action, "action_type": action["type"]}
+        elif "type" not in action and "action_type" in action:
+            action = {**action, "type": action["action_type"]}
         action_type = action.get("action_type")
         if action_type in {"read_file", "write_file", "replace_content", "list_files"}:
             path = action.get("path", ".")
@@ -995,7 +1048,53 @@ class CodingLoop:
             "policy_rule": "precheck-allow",
         }
 
+    def _get_registry(self):
+        if self._registry_cache:
+            return self._registry_cache
+        config = getattr(self, "config", None)
+        if config and hasattr(config, "agent_registry_file"):
+            from .mas.registry import AgentRegistry
+            try:
+                self._registry_cache = AgentRegistry.load(config.agent_registry_file)
+                return self._registry_cache
+            except Exception as e:
+                logger.warning(f"Failed to load agent registry: {e}")
+        return None
+
     async def _execute_single_action(self, action: dict[str, Any]) -> Any:
+        if "action_type" not in action and "type" in action:
+            action = {**action, "action_type": action["type"]}
+        elif "type" not in action and "action_type" in action:
+            action = {**action, "type": action["action_type"]}
+
+        action_type = action.get("action_type")
+        repeated_loop_detected = self._record_action_signature(action)
+        if repeated_loop_detected:
+            if self._can_auto_finalize_repeated_write(action):
+                self.provider_summary["fallback_reason"] = "repeated_write_auto_finalized"
+                self.provider_summary["fallback_strategy"] = "lm_studio_idempotent_write_final"
+                return await self.final(
+                    f"File {action.get('path')} already matches the requested content. Task completed."
+                )
+            raise RuntimeError(
+                f"Repeated action loop detected for action_type={action.get('action_type')}"
+            )
+
+        # MAS Tool Gating
+        if self.current_agent:
+            registry = self._get_registry()
+            if registry and not registry.is_tool_allowed(self.current_agent, action_type):
+                error_msg = f"Tool '{action_type}' is not allowed for agent '{self.current_agent}'"
+                logger.warning(error_msg)
+                self._emit_event(
+                    "agent.tool_blocked",
+                    action_type=action_type,
+                    status="blocked",
+                    message=error_msg,
+                    metadata={"agent": self.current_agent}
+                )
+                raise PermissionError(error_msg)
+
         if self._run_started_perf > 0 and self.time_to_first_action_ms is None:
             elapsed = time.perf_counter() - self._run_started_perf
             self.time_to_first_action_ms = int(elapsed * 1000)
@@ -1231,8 +1330,10 @@ class CodingLoop:
         self,
         task: str | list[dict[str, Any]],
         action_plan: list[dict[str, Any]] | None = None,
+        system_override: str | None = None,
+        model_profile_override: str | None = None,
     ) -> ExecutionResult:
-        result = await self._run_inner(task, action_plan)
+        result = await self._run_inner(task, action_plan, system_override, model_profile_override)
         if self.memory:
             task_str = json.dumps(task) if isinstance(task, list) else task
             self.memory.record_run(task_str, result.model_dump())
@@ -1242,6 +1343,8 @@ class CodingLoop:
         self,
         task: str | list[dict[str, Any]],
         action_plan: list[dict[str, Any]] | None = None,
+        system_override: str | None = None,
+        model_profile_override: str | None = None,
     ) -> ExecutionResult:
         start_time = time.time()
         logger.info(f"Starting coding loop for task: {task}")
@@ -1274,8 +1377,27 @@ class CodingLoop:
         self.time_to_first_action_ms = None
         self.time_to_final_ms = None
         self.post_final_llm_calls_blocked = 0
+        self.provider_summary = {}
+        self._last_action_signature = None
+        self._repeated_action_count = 0
         self._run_started_perf = time.perf_counter()
         self.heal_engine.reset_counts()
+
+        # Handle model profile override if present
+        original_agent_client = self.agent_client
+        if model_profile_override:
+            try:
+                from .model_router import ModelRouter
+                router = ModelRouter(self.config)
+                profile_cfg = router.resolve_profile(model_profile_override)
+                if profile_cfg:
+                    from .providers import create_code_agent
+                    cfg_dict = self.config.model_dump()
+                    cfg_dict.update(profile_cfg)
+                    self.agent_client = create_code_agent(profile_cfg.get("provider", "stub"), cfg_dict)
+                    logger.info(f"Switched to model profile: {model_profile_override}")
+            except Exception as e:
+                logger.warning(f"Failed to switch to model profile {model_profile_override}: {e}")
 
         self._emit_event(
             "run.started",
@@ -1285,7 +1407,21 @@ class CodingLoop:
             metadata={"provider": self.provider, "changed_files": list(self.changed_files)},
         )
 
-        system_prompt = self.prompt_builder.build_system_prompt()
+        if system_override:
+            system_prompt = system_override
+        else:
+            system_prompt = self.prompt_builder.build_system_prompt()
+            
+        if self.current_agent:
+            registry = self._get_registry()
+            if registry:
+                agent_def = registry.get_agent(self.current_agent)
+                if agent_def:
+                    allowed_tools = ", ".join(agent_def.tools)
+                    system_prompt += f"\n\nVOCÊ ESTÁ ATUANDO COMO O AGENTE: {self.current_agent.upper()}."
+                    system_prompt += f"\nFERRAMENTAS PERMITIDAS: {allowed_tools}."
+                    system_prompt += "\nNÃO tente usar ferramentas fora desta lista."
+
         self.history.append({"role": "system", "content": system_prompt})
         user_prompt = self.prompt_builder.build_task_prompt(task)
         self.history.append({"role": "user", "content": user_prompt})
@@ -1338,6 +1474,18 @@ class CodingLoop:
                 provider_meta = response.get("_provider_meta", {})
                 if provider_meta.get("timeout_adjusted"):
                     self.timeout_adjusted = True
+                if provider_meta.get("final_tool_calling_mode"):
+                    self.final_tool_calling_mode = provider_meta["final_tool_calling_mode"]
+                for meta_key in (
+                    "selected_model",
+                    "supports_native_tool_calling",
+                    "native_tool_calling_probe",
+                    "fallback_reason",
+                    "fallback_strategy",
+                    "lm_studio_compatibility",
+                ):
+                    if meta_key in provider_meta:
+                        self.provider_summary[meta_key] = provider_meta[meta_key]
                 for stream_event in provider_meta.get("event_log", []):
                     self._emit_event(
                         stream_event.get("event", "llm.delta"),
@@ -1345,6 +1493,13 @@ class CodingLoop:
                         status=stream_event.get("status", "streaming"),
                         message=stream_event.get("message", ""),
                         metadata=stream_event.get("metadata", {}),
+                    )
+
+                if provider_meta.get("reasoning_content", ""):
+                    logger.info(
+                        "Model %s produced reasoning (%d chars)",
+                        self.agent_client.model,
+                        len(provider_meta["reasoning_content"]),
                     )
 
                 content = response["choices"][0]["message"]["content"]
@@ -1474,6 +1629,8 @@ class CodingLoop:
                         except Exception as exc:
                             # Feed error back to LLM so it can self-correct
                             self._append_tool_result("actions", False, error=str(exc))
+                            if "Repeated action loop detected" in str(exc):
+                                raise RuntimeError(str(exc)) from exc
                             # Don't re-raise — let the loop continue so the LLM can try to fix
                             logger.warning(f"Action failed, feeding error to LLM: {exc}")
                             continue
@@ -1628,3 +1785,5 @@ class CodingLoop:
                     duration=duration,
                 ).model_dump()
             )
+        finally:
+            self.agent_client = original_agent_client

@@ -1,7 +1,8 @@
-import subprocess
-import os
 import json
+import os
+import subprocess
 from pathlib import Path
+
 
 def test_operational_readiness_script():
     # Run scripts/operational-readiness-pack.sh using bash

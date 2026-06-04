@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_demo_leads_content(admin_client: AsyncClient, admin_token_headers):
     # Ensure some demo leads exist (they should be created by seed script)

@@ -1,4 +1,5 @@
 import os
+
 from langchain_openai import OpenAIEmbeddings
 
 # Configuração da API
@@ -20,7 +21,7 @@ def main():
     
     try:
         vector = embeddings.embed_query(text)
-        print(f"\nEmbedding gerado com sucesso!")
+        print("\nEmbedding gerado com sucesso!")
         print(f"Dimensões: {len(vector)}")
         print(f"Primeiros 5 valores: {vector[:5]}")
     except Exception as e:

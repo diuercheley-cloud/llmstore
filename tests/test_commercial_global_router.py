@@ -1,9 +1,10 @@
 import os
+
 import pytest
+from app.services.routing.commercial_cluster_registry import register_cluster
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import get_settings
-from app.services.routing.commercial_cluster_registry import register_cluster
+
 
 @pytest.fixture
 def admin_token():

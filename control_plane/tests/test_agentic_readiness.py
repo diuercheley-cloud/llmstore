@@ -1,13 +1,14 @@
-import pytest
-import pytest_asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
+import pytest_asyncio
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentRun, AgentIncident
+from app.db.session import SessionLocal, engine
 from app.models.agent_execution import AgentWorkerHeartbeat
+from app.models.agents import AgentIncident
 from app.services.agents.agent_readiness import AgentReadinessService
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
@@ -99,9 +100,10 @@ async def test_readiness_dlq_zero():
 @pytest.mark.asyncio
 async def test_readiness_retry_backlog():
     async with SessionLocal() as db:
-        from app.models.agent_execution import AgentExecutionRetry
         from datetime import timezone
+
         from app.core.config import get_settings
+        from app.models.agent_execution import AgentExecutionRetry
 
         settings = get_settings()
         settings.agent_runtime_enabled = True
@@ -131,6 +133,7 @@ async def test_compose_config_has_agent_worker():
     This is a static validation that the compose configuration is correct.
     """
     import os
+
     import yaml
     compose_path = os.path.join(os.path.dirname(__file__), "../../docker-compose.yml")
     with open(compose_path) as f:

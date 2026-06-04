@@ -1,11 +1,9 @@
 # Owner: agent-platform
-import time
 import logging
-from typing import Dict, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+import time
+from typing import Dict
 
-from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
-from app.core.time import utc_now
+from app.models.agent_deployments import AgentApiDeployment
 
 logger = logging.getLogger(__name__)
 

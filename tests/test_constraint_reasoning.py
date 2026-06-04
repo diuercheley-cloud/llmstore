@@ -1,7 +1,8 @@
 import pytest
-from app.services.agents.reasoning.constraints.constraint_runtime import ConstraintRuntime
-from app.services.agents.reasoning.constraints.constraint_model import ConstraintModel, Constraint
 from app.core.config import get_settings
+from app.services.agents.reasoning.constraints.constraint_model import Constraint, ConstraintModel
+from app.services.agents.reasoning.constraints.constraint_runtime import ConstraintRuntime
+
 
 @pytest.mark.asyncio
 async def test_plano_valido_passa():

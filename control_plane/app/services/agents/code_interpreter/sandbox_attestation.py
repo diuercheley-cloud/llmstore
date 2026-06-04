@@ -5,10 +5,10 @@
 
 # Owner: agent-platform
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
-import uuid
+
 from app.core.time import utc_now
-from app.utils.crypto_signer import sign_payload
+from pydantic import BaseModel, Field
+
 
 class SandboxAttestation(BaseModel):
     provider: str
@@ -41,8 +41,9 @@ class AttestationService:
         )
         # Sign the attestation payload using the real key
         try:
-            from app.services.inference.cryptographic_receipts import sign_payload
             import json
+
+            from app.services.inference.cryptographic_receipts import sign_payload
             payload_data = att.model_dump(exclude={"signature"}, mode="json")
             canonical_str = json.dumps(payload_data, sort_keys=True)
             att.signature = sign_payload(canonical_str)
@@ -74,8 +75,9 @@ class AttestationService:
                 return not is_prod
             
             try:
-                from app.services.inference.cryptographic_receipts import verify_payload_signature
                 import json
+
+                from app.services.inference.cryptographic_receipts import verify_payload_signature
                 payload_data = {k: v for k, v in attestation.items() if k != "signature"}
                 canonical_str = json.dumps(payload_data, sort_keys=True)
                 return verify_payload_signature(canonical_str, sig)

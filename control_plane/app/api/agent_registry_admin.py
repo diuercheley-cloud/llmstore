@@ -1,15 +1,15 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional, Any, Dict
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from typing import Any, Dict, List, Optional
+
+from app.api.deps import require_admin
+from app.db.session import get_db_session
+from app.services.agents import agent_lifecycle as lifecycle_service
+from app.services.agents import agent_registry as reg_service
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.session import get_db_session
-from app.api.deps import require_admin
-from app.services.agents import agent_registry as reg_service
-from app.services.agents import agent_lifecycle as lifecycle_service
 
 router = APIRouter(prefix="/admin/agent-registry", tags=["agent-registry-admin"])
 

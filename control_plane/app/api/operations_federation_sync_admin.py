@@ -2,42 +2,42 @@
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.federation_sync import (
-    BUNDLE_STATUSES,
     BUNDLE_TYPES,
     CONFLICT_TYPES,
     ENVIRONMENT_TYPES,
-    NEGOTIATION_STATUSES,
     RESOLUTION_STRATEGIES,
-    SovereignFederationEnvironment,
+    TRUST_LEVELS,
     FederationConflictResolution,
     FederationLineageLink,
     FederationSynchronizationBundle,
     FederationSynchronizationReceipt,
     FederationSynchronizationSession,
-    FederationTrustNegotiation,
-    SYNC_STATUSES,
-    TRUST_LEVELS,
+    SovereignFederationEnvironment,
 )
 from app.services.operations.federation_sync.audit_events import build_federation_sync_audit_event
-from app.services.operations.federation_sync.conflict_resolution import FederationConflictResolutionService
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
+from app.services.operations.federation_sync.conflict_resolution import (
+    FederationConflictResolutionService,
+)
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
 from app.services.operations.federation_sync.hash_utils import sha256_hex
 from app.services.operations.federation_sync.receipts import (
-    build_bundle_receipt,
-    build_conflict_resolution_receipt,
     build_sync_session_receipt,
-    build_trust_negotiation_receipt,
 )
 from app.services.operations.federation_sync.replay_verifier import FederationReplayVerifier
-from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
-from app.services.operations.federation_sync.trust_negotiation import FederationTrustNegotiationService
+from app.services.operations.federation_sync.synchronization_protocol import (
+    SovereignFederationSynchronizationProtocol,
+)
+from app.services.operations.federation_sync.trust_negotiation import (
+    FederationTrustNegotiationService,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

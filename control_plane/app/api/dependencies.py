@@ -1,8 +1,10 @@
-from app.services.auth import require_admin, require_admin_role, require_client
+from typing import Any
+
 from app.db.session import get_db_session
+from app.services.auth import require_admin, require_admin_role, require_client
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any
+
 
 async def get_db() -> AsyncSession:
     async for session in get_db_session():

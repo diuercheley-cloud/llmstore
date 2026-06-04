@@ -1,22 +1,13 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
-from app.api.deps import require_admin, get_db_session
-from app.models.agents import (
-    AgentEvalSuite,
-    AgentEvalRun,
-    AgentEvalBaseline,
-    AgentEvalResult,
-    AgentEvalGateResult,
-    AgentPromotionGateResult,
-)
+from app.api.deps import get_db_session, require_admin
 from app.services.agents.agent_evals import AgentEvalService
 from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService
 from app.services.agents.eval_gate import EvalGateService
+from fastapi import APIRouter, Body, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agent-evals", tags=["agent-evals"])
 

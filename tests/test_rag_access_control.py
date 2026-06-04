@@ -2,8 +2,6 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
 from app.models.client import Client
 from app.models.commercial_rag_vault_vault import (
@@ -18,6 +16,7 @@ from app.services.rag.rag_access_control import (
     evaluate_retrieval_access,
     validate_document_access,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

@@ -1,22 +1,21 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Optional
 
-from app.db.session import get_db_session
-from app.api.deps import require_admin
 from app.core.config import Settings, get_settings
-from app.models.agents import AgentApprovalRequest, AgentRun, AgentDefinition
-from app.services.auth import require_admin_role, AdminRole, admin_key_scheme, get_admin_role
-from app.services.admin_rbac import is_rbac_admin_enabled, authenticate_admin_request
+from app.db.session import get_db_session
+from app.models.agents import AgentApprovalRequest, AgentDefinition, AgentRun
+from app.services.admin_rbac import authenticate_admin_request, is_rbac_admin_enabled
 from app.services.agents.human_approval import (
     approve_approval_request,
     reject_approval_request,
-    request_changes_for_approval_request
+    request_changes_for_approval_request,
 )
+from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin_role
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/approval-portal", tags=["agent-approval-portal"])
 

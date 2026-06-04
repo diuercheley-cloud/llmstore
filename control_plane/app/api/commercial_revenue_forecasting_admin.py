@@ -1,20 +1,18 @@
 # Owner: commercial-ops
 import uuid
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, desc, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
+from typing import Optional
 
 from app.db.session import get_db_session
-from app.services.auth import require_admin
-from app.services.billing.revenue_forecasting import RevenueForecastingService
-from app.services.billing.financial_anomaly_detection import FinancialAnomalyDetectionService
-from app.models.commercial_revenue_forecast import CommercialRevenueForecast
 from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
-
+from app.models.commercial_revenue_forecast import CommercialRevenueForecast
+from app.services.auth import require_admin
+from app.services.billing.financial_anomaly_detection import FinancialAnomalyDetectionService
+from app.services.billing.revenue_forecasting import RevenueForecastingService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/billing",

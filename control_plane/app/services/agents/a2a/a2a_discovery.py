@@ -1,13 +1,12 @@
-import uuid
 import logging
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timezone
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func as sa_func
+import uuid
+from typing import Any, Dict, Optional
 
 from app.models.agents import AgentA2ARegistration, AgentDefinition
 from app.services.agents.a2a.a2a_security import A2ASecurityService
+from sqlalchemy import func as sa_func
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

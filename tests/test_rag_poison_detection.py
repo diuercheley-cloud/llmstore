@@ -1,12 +1,14 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
 from app.models.client import Client
 from app.models.commercial_rag_vault_vault import CommercialRAGPoisoningAlert, CommercialRAGVault
-from app.services.rag.rag_poison_detection import analyze_and_record_poisoning, inspect_text_for_poisoning
+from app.services.rag.rag_poison_detection import (
+    analyze_and_record_poisoning,
+    inspect_text_for_poisoning,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

@@ -1,17 +1,15 @@
 import logging
-import threading
 import time
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from app.services.agents.telemetry.backpressure import TelemetryBackpressure
 from app.services.agents.telemetry.leaky_bucket import LeakyBucket, LeakyBucketManager
 from app.services.agents.telemetry.span_priority import (
     SpanPriority,
+    can_drop,
     classify_span_priority,
     should_never_drop,
-    can_drop,
 )
 from app.services.agents.telemetry.span_sampler import SpanSampler
 

@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
 from app.models.operations.federation_sync import (
     FederationConflictResolution,
@@ -12,6 +10,7 @@ from app.models.operations.federation_sync import (
     SovereignFederationEnvironment,
 )
 from app.utils.crypto_signer import sign_payload
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

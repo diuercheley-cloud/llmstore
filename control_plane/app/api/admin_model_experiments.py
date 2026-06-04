@@ -1,15 +1,16 @@
 import uuid
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
+
+from app.core.config import get_settings
+from app.db.session import get_db_session
+from app.models.model_experiments import ModelExperiment
+from app.services.auth import AdminRole, require_admin_role
+from app.services.model_experiments.experiment_registry import ExperimentRegistry
+from app.services.model_experiments.promotion_gate import PromotionGate
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db_session
-from app.services.auth import AdminRole, require_admin_role
-from app.models.model_experiments import ModelExperiment, ModelExperimentVariant
-from app.services.model_experiments.experiment_registry import ExperimentRegistry
-from app.services.model_experiments.promotion_gate import PromotionGate
-from app.core.config import get_settings
 
 router = APIRouter(prefix="/admin/models/experiments", tags=["model_experiments"])
 settings = get_settings()

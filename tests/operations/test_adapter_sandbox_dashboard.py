@@ -1,4 +1,3 @@
-import os
 
 def test_dashboard_adapter_sandbox_markers():
     """Verifies that the adapter sandbox markers are present in the dashboards."""

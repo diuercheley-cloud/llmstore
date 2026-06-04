@@ -5,6 +5,11 @@ import tempfile
 import httpx
 import pytest
 
+@pytest.fixture(autouse=True)
+def clear_probe_cache():
+    from scripts.llm_harness.providers import _PROBE_CACHE
+    _PROBE_CACHE.clear()
+
 from scripts.llm_harness.config import HarnessConfig
 from scripts.llm_harness.providers import StubProvider
 

@@ -11,10 +11,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
 from app.db.session import get_db
@@ -35,9 +31,11 @@ from app.services.inference.execution_proofs import (
 from app.services.inference.merkle_timelines import (
     MerkleError,
     seal_timeline,
-    summarize_timelines,
     validate_timeline_chain,
 )
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/inference/proofs", tags=["admin", "execution-proofs"])
 

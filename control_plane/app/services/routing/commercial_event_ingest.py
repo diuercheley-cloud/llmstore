@@ -4,16 +4,19 @@ import logging
 import uuid
 from typing import Any
 
-from fastapi import HTTPException
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.models.commercial_routing_event_ingest import CommercialRoutingEventIngest
 from app.schemas.routing import TaskType
-from app.services.routing.commercial_report_export import REDACTION, SECRET_VALUE_PATTERNS, sanitize_report_payload
+from app.services.routing.commercial_report_export import (
+    REDACTION,
+    SECRET_VALUE_PATTERNS,
+    sanitize_report_payload,
+)
+from fastapi import HTTPException
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,29 +1,25 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import uuid
-
-from fastapi import HTTPException
-from redis.asyncio import Redis
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from dataclasses import dataclass
 
 from app.core.config import get_settings
 from app.core.metrics import ASYNC_JOB_COUNTER, ASYNC_QUEUE_DEPTH
 from app.core.time import utc_now
 from app.db.session import redis_client
-from app.models.client import Client
 from app.models.billing_plan import BillingPlan
+from app.models.client import Client
 from app.models.generation_job import GenerationJob
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.schemas.inference import ChatCompletionRequest
 from app.services.audit import log_request
 from app.services.backend_slot_manager import BackendSlotManager
-from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.billing import (
+    estimate_request_cost,
+    get_current_usage_snapshot,
+)
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.context_manager import get_context_manager
 from app.services.inference_proxy import InferenceProxy
@@ -38,9 +34,13 @@ from app.services.security_monitor import (
     prompt_fingerprint,
 )
 from app.utils.request_summary import summarize_chat_request
+from app.utils.token_estimator import estimate_tokens_from_text
 from app.utils.validation import normalize_messages, validate_params_for_session
-from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
-from app.utils.validation import normalize_messages, validate_params
+from fastapi import HTTPException
+from redis.asyncio import Redis
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 @dataclass

@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import pytest
-
 from app.core.config import get_settings
-from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine, SandboxPolicyViolation
+from app.services.agents.code_interpreter.sandbox_policy import (
+    SandboxPolicyEngine,
+    SandboxPolicyViolation,
+)
 
 
 @pytest.mark.asyncio

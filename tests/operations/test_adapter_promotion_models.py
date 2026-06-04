@@ -1,13 +1,15 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from app.models.operations.adapter_promotion import (
-    AdapterPromotionWorkflow,
     AdapterPromotionGateResult,
-    AdapterPromotionStageTransition,
     AdapterPromotionReceipt,
     AdapterPromotionRollback,
+    AdapterPromotionStageTransition,
+    AdapterPromotionWorkflow,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_adapter_promotion_models_creation(session: AsyncSession):

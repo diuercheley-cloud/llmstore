@@ -1,25 +1,23 @@
+import os
+from datetime import timedelta
+from unittest.mock import patch
+
 import pytest
 import pytest_asyncio
-import uuid
-import os
-from datetime import datetime, timedelta
-from sqlalchemy import select
-from unittest.mock import patch, MagicMock
-
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
-from app.services.agents.connectors.connector_secret_store import connector_secret_store
-from app.services.agents.connectors.oauth import OAuthService
-from app.services.agents.connectors.connector_token_rotation import TokenRotationService
-from app.services.agents.connectors.connector_scopes import ConnectorScopeManager
-from app.core.time import utc_now
 from app.core.config import get_settings
+from app.core.time import utc_now
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
+from app.services.agents.connectors.connector_scopes import ConnectorScopeManager
+from app.services.agents.connectors.connector_secret_store import connector_secret_store
+from app.services.agents.connectors.connector_token_rotation import TokenRotationService
+from app.services.agents.connectors.oauth import OAuthService
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with engine.begin() as conn:
-        import app.models.connector_auth
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:

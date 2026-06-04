@@ -1,7 +1,8 @@
 # Owner: agent-platform
 import logging
+from typing import Any, Dict
+
 import requests
-from typing import Optional, Dict, Any
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

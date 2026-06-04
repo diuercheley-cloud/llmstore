@@ -1,10 +1,10 @@
 from typing import Optional
 
 from app.db.session import get_db_session
-from app.services.auth import require_admin
 from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 from app.services.agents.web_search.search_audit import SearchAuditService
 from app.services.agents.web_search.search_cache import SearchCacheService
+from app.services.auth import require_admin
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession

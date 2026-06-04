@@ -1,18 +1,16 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.base import Base
-from app.db.session import engine
 from app.core.config import get_settings
-from app.models.agents import AgentTool, AgentRegistryEntry
-from app.services.agents.tool_executor import execute_tool
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agents import AgentTool
 from app.services.agents.tool_adapter_registry import adapter_registry
 from app.services.agents.tool_adapters import register_all_adapters
+from app.services.agents.tool_executor import execute_tool
+from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from app.db.session import SessionLocal
 
 @pytest_asyncio.fixture
 async def db_session():
@@ -137,6 +135,7 @@ async def test_adapter_blocked_by_feature_flag(db_session: AsyncSession):
 
 from app.services.agents.tool_adapter_seeding import seed_tool_adapters
 from app.services.agents.tool_registry import get_tool_by_name
+
 
 @pytest.mark.asyncio
 async def test_adapter_seeding(db_session: AsyncSession):

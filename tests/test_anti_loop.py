@@ -1,4 +1,3 @@
-import pytest
 from app.utils.anti_loop import detect_repetition, truncate_at_repetition
 
 

@@ -1,6 +1,6 @@
-import os
 import pytest
 from app.services.runtime_profiles import RuntimeProfilesService
+
 
 @pytest.fixture
 def temp_env_dir(tmp_path):

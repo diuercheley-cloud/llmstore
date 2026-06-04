@@ -3,39 +3,39 @@ Owner: agent-platform
 Status: beta
 """
 import asyncio
-import uuid
 import logging
-import traceback
+import uuid
 from datetime import timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, func
+
 from app.core.config import get_settings
+from app.core.metrics import (
+    LLM_AGENT_ACTIVE_LEASES,
+    LLM_AGENT_ACTIVE_WORKERS,
+    LLM_AGENT_DEAD_LETTERS_TOTAL,
+    LLM_AGENT_DRAIN_STATUS,
+    LLM_AGENT_JOB_RETRIES_TOTAL,
+    LLM_AGENT_JOBS_CANCELLED_TOTAL,
+    LLM_AGENT_JOBS_COMPLETED_TOTAL,
+    LLM_AGENT_JOBS_FAILED_TOTAL,
+    LLM_AGENT_STUCK_RUNS_TOTAL,
+    LLM_AGENT_WORKER_HEARTBEATS_TOTAL,
+)
 from app.core.time import utc_now
 from app.db import session
 from app.models.agent_execution import (
+    AgentExecutionDeadLetter,
     AgentExecutionJob,
-    AgentWorkerHeartbeat,
     AgentExecutionLease,
     AgentExecutionRetry,
-    AgentExecutionDeadLetter,
+    AgentWorkerHeartbeat,
 )
 from app.models.agents import AgentRun
-from app.services.agents.agent_executor import AgentExecutor
-from app.services.agents.agent_cancellation import AgentCancellationService
-from app.services.agents.agent_queue import AgentQueueManager, update_queue_metrics
 from app.services.agents import agent_state
-from app.core.metrics import (
-    LLM_AGENT_JOBS_COMPLETED_TOTAL,
-    LLM_AGENT_JOBS_FAILED_TOTAL,
-    LLM_AGENT_JOBS_CANCELLED_TOTAL,
-    LLM_AGENT_JOB_RETRIES_TOTAL,
-    LLM_AGENT_DEAD_LETTERS_TOTAL,
-    LLM_AGENT_WORKER_HEARTBEATS_TOTAL,
-    LLM_AGENT_ACTIVE_LEASES,
-    LLM_AGENT_DRAIN_STATUS,
-    LLM_AGENT_ACTIVE_WORKERS,
-    LLM_AGENT_STUCK_RUNS_TOTAL
-)
+from app.services.agents.agent_cancellation import AgentCancellationService
+from app.services.agents.agent_executor import AgentExecutor
+from app.services.agents.agent_queue import AgentQueueManager, update_queue_metrics
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,6 @@ class AgentWorkerService:
         )
         res_count = await db.execute(stmt_count)
         active_count = res_count.scalar() or 0
-        from app.core.metrics import LLM_AGENT_ACTIVE_WORKERS
         LLM_AGENT_ACTIVE_WORKERS.set(active_count)
 
         LLM_AGENT_WORKER_HEARTBEATS_TOTAL.labels(worker_id=self.worker_id).inc()

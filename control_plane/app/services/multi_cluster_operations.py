@@ -1,22 +1,16 @@
-import os
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
-
+from app.core.config import get_settings
 from app.models.operations.multi_cluster import (
     Cluster,
-    ClusterMembership,
-    ClusterHealthSnapshot,
-    ClusterRoutingPolicy,
     ClusterFailoverEvent,
-    ClusterMaintenanceWindow,
+    ClusterHealthSnapshot,
     ClusterSyncEvent,
 )
-from app.core.config import get_settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 class MultiClusterOperationsService:
     def __init__(self, db: AsyncSession):

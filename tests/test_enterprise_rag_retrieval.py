@@ -1,16 +1,15 @@
 import uuid
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from app.models.rag_document_chunk import RAGDocumentChunk
 from app.services.rag_enterprise.retrieval import (
-    cosine_similarity,
-    search_chunks,
-    execute_enterprise_query,
     build_rag_context,
+    cosine_similarity,
+    execute_enterprise_query,
+    search_chunks,
 )
 from app.services.rag_enterprise.schemas import EnterpriseSource
-from app.models.rag_document_chunk import RAGDocumentChunk
-
 
 pytestmark = pytest.mark.asyncio
 

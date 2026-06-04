@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.services.auth import AdminRole, require_admin_role
-from app.services.vectorstores.vectorstore_health import get_all_vectorstores_health, get_current_vectorstore_health
 from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
-from app.core.config import get_settings
+from app.services.vectorstores.vectorstore_health import (
+    get_all_vectorstores_health,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/vectorstores", tags=["admin_vectorstores"])
 settings = get_settings()

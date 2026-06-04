@@ -1,13 +1,16 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
+
 from app.db.session import get_db
-from app.services.agents.cognitive_loopback.loopback_service import CognitiveLoopbackService
-from app.services.agents.cognitive_loopback.learning_candidate_registry import LearningCandidateRegistry
-from app.services.agents.cognitive_loopback.learning_promotion_gate import LearningPromotionGate
 from app.services.agents.cognitive_loopback.fewshot_curator import FewShotCurator
+from app.services.agents.cognitive_loopback.learning_candidate_registry import (
+    LearningCandidateRegistry,
+)
+from app.services.agents.cognitive_loopback.learning_promotion_gate import LearningPromotionGate
+from app.services.agents.cognitive_loopback.loopback_service import CognitiveLoopbackService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents", tags=["Agent Cognitive Loopback"])
 

@@ -1,14 +1,14 @@
 # FAKE SECRET FOR TESTS ONLY
-import os
-import sys
-import json
-import yaml
-import shutil
-import pytest
 import datetime
+import json
+import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+
+import yaml
+
 
 def get_check_allowlist_func():
     with open("scripts/security-report-local.sh") as f:

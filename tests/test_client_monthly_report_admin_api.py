@@ -1,6 +1,5 @@
+
 import pytest
-from fastapi import HTTPException
-from datetime import date
 
 
 @pytest.mark.asyncio
@@ -37,10 +36,10 @@ async def test_monthly_report_preview_imports():
 @pytest.mark.asyncio
 async def test_monthly_report_preview_response_structure():
     """Validate the response structure by calling the function signature."""
-    from app.api.sales import monthly_report_preview
-
     # Verify the function exists and has expected parameters
     import inspect
+
+    from app.api.sales import monthly_report_preview
     sig = inspect.signature(monthly_report_preview)
     params = list(sig.parameters.keys())
     assert "client_id" in params

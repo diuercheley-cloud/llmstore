@@ -1,6 +1,7 @@
 import logging
+from typing import Any, Dict
+
 import requests
-from typing import Dict, Any, Optional, List
 from app.core.config import get_settings
 from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
 from app.services.routing.infra_adapters.base import BaseInfraAdapter
@@ -34,9 +35,9 @@ class ProxmoxAdapter(BaseInfraAdapter):
                 timeout=10
             )
             return response.status_code == 200
-        except Exception as e:
+        except Exception:
             # Token is not in URL or headers logged here
-            logger.error(f"Proxmox connection validation failed")
+            logger.error("Proxmox connection validation failed")
             return False
 
     async def plan_action(self, simulation: CommercialInfrastructureSimulation) -> Dict[str, Any]:
@@ -110,8 +111,8 @@ class ProxmoxAdapter(BaseInfraAdapter):
                 return {"status": "executed", "external_id": response.json().get("data"), "response": response.json()}
             else:
                 return {"status": "failed", "error": f"Proxmox API error: {response.status_code}"}
-        except Exception as e:
-            return {"status": "failed", "error": f"Proxmox request failed"}
+        except Exception:
+            return {"status": "failed", "error": "Proxmox request failed"}
 
     async def rollback_action(self, execution_record_id: str) -> Dict[str, Any]:
         return {"status": "skipped", "message": "Rollback not implemented for Proxmox yet"}

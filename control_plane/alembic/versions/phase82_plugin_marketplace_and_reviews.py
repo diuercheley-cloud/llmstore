@@ -5,9 +5,8 @@ Revises: 20260519_0086
 Create Date: 2026-05-19 18:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase82_plugin_marketplace"
 down_revision = "20260519_0086"

@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock, patch
-from app.services.gpu_orchestrator import GpuOrchestrator
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.models.runtime.gpu_orchestration import AutoscalingPolicy
+from app.services.gpu_orchestrator import GpuOrchestrator
+
 
 @pytest.mark.asyncio
 async def test_sync_local_gpus_no_nvidia_smi():

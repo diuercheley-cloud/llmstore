@@ -1,8 +1,15 @@
-import pytest
 import os
-from control_plane.app.services.governance.release_engineering.release_manifest_service import ReleaseManifestService
-from control_plane.app.services.governance.release_engineering.validation_snapshot_service import ValidationSnapshotService
-from control_plane.app.services.governance.release_engineering.release_notes_generator import ReleaseNotesGenerator
+
+from control_plane.app.services.governance.release_engineering.release_manifest_service import (
+    ReleaseManifestService,
+)
+from control_plane.app.services.governance.release_engineering.release_notes_generator import (
+    ReleaseNotesGenerator,
+)
+from control_plane.app.services.governance.release_engineering.validation_snapshot_service import (
+    ValidationSnapshotService,
+)
+
 
 def test_release_manifest_determinism():
     service = ReleaseManifestService()

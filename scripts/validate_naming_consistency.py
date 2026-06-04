@@ -1,6 +1,6 @@
 import os
-import sys
 import re
+
 
 def validate_naming_consistency():
     print("Validating naming and API consistency...")

@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class StripeWalletProvider:
     async def process_payment(self, amount: float, currency: str, stripe_account_id: str) -> Dict[str, Any]:

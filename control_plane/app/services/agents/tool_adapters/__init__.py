@@ -1,31 +1,31 @@
+from app.services.agents.browser.browser_tool import (
+    BrowserClickToolAdapter,
+    BrowserCloseToolAdapter,
+    BrowserExtractTextToolAdapter,
+    BrowserOpenToolAdapter,
+    BrowserScreenshotToolAdapter,
+)
 from app.services.agents.tool_adapter_registry import adapter_registry
-from app.services.agents.tool_adapters.echo_tool import EchoToolAdapter
-from app.services.agents.tool_adapters.http_get_tool import HttpGetToolAdapter
-from app.services.agents.tool_adapters.rag_search_tool import RagSearchToolAdapter
 from app.services.agents.tool_adapters.admin_readiness_tool import AdminReadinessToolAdapter
-from app.services.agents.tool_adapters.support_bundle_tool import SupportBundleToolAdapter
 from app.services.agents.tool_adapters.compliance_evidence_tool import ComplianceEvidenceToolAdapter
 from app.services.agents.tool_adapters.database_read_tool import DatabaseReadToolAdapter
-from app.services.agents.tool_adapters.shell_command_tool import ShellCommandToolAdapter
-from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
+from app.services.agents.tool_adapters.echo_tool import EchoToolAdapter
 from app.services.agents.tool_adapters.filesystem_tools import (
-    ReadFileToolAdapter,
-    WriteFileToolAdapter,
-    ListDirectoryToolAdapter,
     DeleteFileToolAdapter,
+    ListDirectoryToolAdapter,
+    ReadFileToolAdapter,
     StatFileToolAdapter,
+    WriteFileToolAdapter,
 )
-from app.services.agents.browser.browser_tool import (
-    BrowserOpenToolAdapter,
-    BrowserClickToolAdapter,
-    BrowserExtractTextToolAdapter,
-    BrowserScreenshotToolAdapter,
-    BrowserCloseToolAdapter,
-)
+from app.services.agents.tool_adapters.http_get_tool import HttpGetToolAdapter
 from app.services.agents.tool_adapters.notification_tools import (
     NotifyEmailToolAdapter,
     NotifyPushToolAdapter,
 )
+from app.services.agents.tool_adapters.rag_search_tool import RagSearchToolAdapter
+from app.services.agents.tool_adapters.shell_command_tool import ShellCommandToolAdapter
+from app.services.agents.tool_adapters.support_bundle_tool import SupportBundleToolAdapter
+from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 
 
 def register_all_adapters():

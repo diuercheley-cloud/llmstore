@@ -1,10 +1,11 @@
 # Owner: platform-ops
+import logging
 import os
 import re
-import yaml
-import logging
 from pathlib import Path
-from typing import Dict, Any, List, Set
+from typing import Any, Dict, List, Set
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

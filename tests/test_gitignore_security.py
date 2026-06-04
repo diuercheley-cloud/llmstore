@@ -1,5 +1,5 @@
-import pytest
 from pathlib import Path
+
 
 def test_gitignore_contains_security_patterns():
     gitignore_path = Path(".gitignore")

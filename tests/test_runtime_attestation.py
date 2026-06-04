@@ -1,21 +1,20 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.security.runtime_attestation import (
-    create_runtime_attestation,
-    verify_runtime_attestation,
-    compute_trust_score,
-    detect_drift,
     attestation_chaining,
-    revoke_attestation,
-    summarize_attestation_status,
     collect_enclave_evidence,
-    tpm_placeholder,
+    compute_trust_score,
+    create_runtime_attestation,
+    detect_drift,
+    revoke_attestation,
     sev_placeholder,
     sgx_placeholder,
-    vbs_placeholder,
     software_attested,
+    summarize_attestation_status,
+    tpm_placeholder,
+    vbs_placeholder,
+    verify_runtime_attestation,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -56,8 +55,9 @@ async def test_verify_runtime_attestation(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_verify_expired_attestation(session: AsyncSession):
-    from app.core.time import utc_now
     from datetime import timedelta
+
+    from app.core.time import utc_now
     record = await create_runtime_attestation(session, cluster_id="cluster-c")
     record.expires_at = utc_now() - timedelta(seconds=1)
     await session.flush()

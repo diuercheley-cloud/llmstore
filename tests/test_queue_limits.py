@@ -1,10 +1,11 @@
-import pytest
-import uuid
-from fastapi import HTTPException
-from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
-from app.services.backend_slot_manager import BackendSlotManager
 import asyncio
+import uuid
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.services.backend_slot_manager import BackendSlotManager
+from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
+
 
 @pytest.mark.asyncio
 async def test_queue_mapping():

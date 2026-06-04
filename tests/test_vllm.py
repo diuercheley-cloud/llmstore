@@ -1,20 +1,18 @@
-import pytest
-import json
 import uuid
+from unittest.mock import MagicMock, patch
+
 import httpx
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import HTTPException
+import pytest
 from app.core.config import get_settings
-from app.models.client import Client
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
-from app.models.inference_backend import InferenceBackend
+from app.models.client import Client
 from app.models.model_registry import ModelRegistry
+from app.services.backend_registry import ensure_default_backends
 from app.services.inference.backends.vllm_backend import VllmBackendService
 from app.services.inference.backends.vllm_health import check_vllm_health
-from app.services.inference.backends.vllm_models import list_vllm_models
-from app.services.backend_registry import ensure_default_backends
 from app.services.model_registry import ensure_default_model
+from fastapi import HTTPException
 
 
 @pytest.mark.asyncio

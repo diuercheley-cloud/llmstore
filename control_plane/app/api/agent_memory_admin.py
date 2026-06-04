@@ -1,16 +1,16 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body, Request, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
-from app.api.deps import require_admin, get_db_session
-from app.models.agents import AgentMemoryPolicy, AgentMemoryItem, AgentMemoryAccessEvent
-from app.services.agents.memory_policy import MemoryPolicyService
+from app.api.deps import get_db_session, require_admin
+from app.models.agents import AgentMemoryAccessEvent, AgentMemoryItem
 from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_policy import MemoryPolicyService
 from app.services.agents.memory_retention import MemoryRetentionService
+from fastapi import APIRouter, Body, Depends, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/memory", tags=["agent-memory"])
 

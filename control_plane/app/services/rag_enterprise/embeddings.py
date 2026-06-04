@@ -1,8 +1,7 @@
 import asyncio
 import hashlib
-import json
 import logging
-from typing import List, Optional
+from typing import List
 
 from app.core.config import get_settings
 from app.services.rag_enterprise.schemas import EmbeddingRecord

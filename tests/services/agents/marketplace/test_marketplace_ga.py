@@ -1,13 +1,14 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agent_marketplace import MarketplaceItem, MarketplacePublisher, MarketplaceRating
+from app.services.agents.marketplace.dependency_resolver import DependencyResolver
+from app.services.agents.marketplace.marketplace_ratings import MarketplaceRatingService
+from app.services.agents.marketplace.marketplace_search import MarketplaceSearchService
+from app.services.agents.marketplace.publisher_program import PublisherProgramService
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agent_marketplace import MarketplaceItem, MarketplaceRating, MarketplacePublisher
-from app.services.agents.marketplace.marketplace_search import MarketplaceSearchService
-from app.services.agents.marketplace.marketplace_ratings import MarketplaceRatingService
-from app.services.agents.marketplace.publisher_program import PublisherProgramService
-from app.services.agents.marketplace.dependency_resolver import DependencyResolver
 
 @pytest.fixture
 def mock_db():

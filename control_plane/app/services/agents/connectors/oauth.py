@@ -1,14 +1,14 @@
 # Owner: Platform Operations
 import logging
 import uuid
-from typing import Any, Dict, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
+from typing import Any, Dict
 
+from app.core.config import get_settings
 from app.models.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
 from app.services.agents.connectors.connector_secret_store import connector_secret_store
-from app.core.config import get_settings
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

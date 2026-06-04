@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.realtime_voice.session_service import VoiceSessionService
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from app.services.realtime_voice.audio_stream_service import AudioStreamService
+from app.services.realtime_voice.session_service import VoiceSessionService
+
 
 @pytest.mark.asyncio
 async def test_create_voice_session():

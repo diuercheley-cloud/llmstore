@@ -2,16 +2,9 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.ai_wallet import AiWallet
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
-from app.models.rag_collection import RAGCollection
 from app.models.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
@@ -24,16 +17,21 @@ from app.models.commercial_retrieval_proofs import (
     CommercialRetrievalProof,
     CommercialRetrievalReplayRecord,
 )
+from app.models.rag_collection import RAGCollection
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import get_provider_pricing_config
-
 from app.services.providers.registry import (
     get_all_provider_health,
     get_all_provider_statuses,
     get_providers,
 )
 from app.services.routing.smart_router import get_smart_router
+from fastapi import APIRouter, Depends
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

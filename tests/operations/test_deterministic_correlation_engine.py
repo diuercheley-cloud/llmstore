@@ -1,6 +1,10 @@
-import pytest
 from datetime import datetime, timedelta
-from app.services.operations.correlation.deterministic_correlation_engine import DeterministicOperationsCorrelationEngine
+
+import pytest
+from app.services.operations.correlation.deterministic_correlation_engine import (
+    DeterministicOperationsCorrelationEngine,
+)
+
 
 @pytest.fixture
 def engine():

@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import abc
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 class ToolAdapterContract(abc.ABC):

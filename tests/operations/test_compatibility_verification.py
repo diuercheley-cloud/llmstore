@@ -1,4 +1,6 @@
-from app.services.operations.compatibility_contracts.verification import CompatibilityVerificationService
+from app.services.operations.compatibility_contracts.verification import (
+    CompatibilityVerificationService,
+)
 
 
 def test_verification_respects_replay_safe_and_warnings():

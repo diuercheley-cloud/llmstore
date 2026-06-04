@@ -1,6 +1,5 @@
-import pytest
 import warnings
-import datetime
+
 
 def test_no_utcnow_in_critical_paths():
     """

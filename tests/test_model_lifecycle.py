@@ -1,10 +1,8 @@
 import pytest
-
 from app.services.models.model_lifecycle_manager import (
     discover_model,
     enforce_lifecycle_gates,
     get_lifecycle_by_model,
-    get_lifecycle_record,
     list_lifecycle_records,
     serialize_lifecycle_record,
     stage_model,

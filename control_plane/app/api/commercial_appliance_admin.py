@@ -1,19 +1,19 @@
 # Owner: commercial-ops
-import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Any, List
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from ..api.dependencies import get_admin_user
 from ..db.session import get_db
 from ..models.commercial_appliance import (
-    CommercialApplianceProfile,
-    CommercialOfflineSyncManifest,
+    CommercialOfflineAuditPackage,
     CommercialOfflineModelBundle,
-    CommercialOfflineAuditPackage
+    CommercialOfflineSyncManifest,
 )
 from ..services.inference import sovereign_appliance
-from ..api.dependencies import get_admin_user
 
 router = APIRouter(prefix="/admin/inference/appliance", tags=["Sovereign Appliance Admin"])
 

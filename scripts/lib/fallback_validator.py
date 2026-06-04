@@ -312,19 +312,19 @@ class FallbackValidator:
 
     def _format_md(self) -> str:
         lines = [
-            f"# Fallback Real Provider Report",
-            f"",
+            "# Fallback Real Provider Report",
+            "",
             f"**Status**: {self.report['status']}",
             f"**Timestamp**: {self.timestamp}",
             f"**Dry-run**: {self.dry_run}",
             f"**Provider**: {self.report.get('provider', 'N/A')}",
             f"**Model**: {self.report.get('model', 'N/A')}",
             f"**Max Cost BRL**: R$ {self.max_cost_brl}",
-            f"",
-            f"## Summary",
-            f"",
-            f"| Result | Count |",
-            f"|--------|-------|",
+            "",
+            "## Summary",
+            "",
+            "| Result | Count |",
+            "|--------|-------|",
         ]
         for s in ("pass", "fail", "skip", "warn"):
             lines.append(f"| {s.upper()} | {self.report['summary'].get(s, 0)} |")

@@ -1,5 +1,10 @@
-import pytest
-from app.contracts.routing import RoutingContract, RoutingInput, RoutingDecision, RoutingCapabilities
+from app.contracts.routing import (
+    RoutingCapabilities,
+    RoutingContract,
+    RoutingDecision,
+    RoutingInput,
+)
+
 
 class MockRouter(RoutingContract):
     def route(self, input_data: RoutingInput) -> RoutingDecision:

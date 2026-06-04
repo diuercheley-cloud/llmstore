@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_workflows import CommercialWorkflowGovernanceEvent
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def test_immutable_governance_ledger_validates(session: AsyncSession):

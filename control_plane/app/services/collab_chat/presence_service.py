@@ -1,10 +1,10 @@
-import uuid
-from datetime import datetime
-from typing import List, Dict
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.collab_chat import ChatPresenceEvent
+from typing import Dict, List
+
 from app.core.time import utc_now
+from app.models.collab_chat import ChatPresenceEvent
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PresenceService:
     def __init__(self, db: AsyncSession):

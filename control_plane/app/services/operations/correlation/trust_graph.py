@@ -1,11 +1,11 @@
 import uuid
 from typing import Any, Dict, List
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from app.models.operations.correlation import OperationalTrustLink, compute_deterministic_hash
 from app.core.time import utc_now
+from app.models.operations.correlation import OperationalTrustLink, compute_deterministic_hash
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class OperationalTrustGraphService:
     """

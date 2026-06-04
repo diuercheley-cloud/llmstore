@@ -1,19 +1,18 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+import uuid
+from typing import Any, Dict, List
 
 from app.core.config import get_settings
 from app.models.agents import (
-    AgentDefinition,
-    AgentRun,
-    AgentHandoffPolicy,
-    AgentHandoffEvent,
     AgentCollaborationSession,
+    AgentHandoffEvent,
+    AgentHandoffPolicy,
+    AgentRun,
 )
 from app.services.agents import agent_state
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +85,7 @@ class AgentHandoffService:
         policy = res_policy.scalar_one_or_none()
         
         if not policy:
-            raise HandoffDeniedError(f"No handoff policy found between source and target agent.")
+            raise HandoffDeniedError("No handoff policy found between source and target agent.")
 
         # 2. Check for Collaboration Session
         stmt_session = select(AgentCollaborationSession).where(

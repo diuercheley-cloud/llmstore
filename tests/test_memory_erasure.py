@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from app.services.agents.memory_erasure import MemoryErasureService
+
+import pytest
 from app.models.agents import AgentMemoryItem
-from app.services.agents.memory_retriever import MemoryRetriever
 from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_erasure import MemoryErasureService
+
 
 @pytest.mark.asyncio
 async def test_erasure_remove_memoria_vetorial(session):

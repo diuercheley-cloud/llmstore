@@ -3,34 +3,40 @@ import json
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.plugin_runtime import PluginABIContract
 from app.models.operations.plugin_supply_chain import (
-    DependencyGovernancePolicy,
+    PLUGIN_PROVENANCE_SCOPES,
+    PLUGIN_PROVENANCE_STATUSES,
+    PLUGIN_SIGNATURE_STATUSES,
     PluginArtifactLineage,
     PluginDependencyVerification,
     PluginProvenanceRecord,
     PluginSBOMPlaceholder,
     PluginSignedArtifact,
     PluginSupplyChainReceipt,
-    PLUGIN_PROVENANCE_SCOPES,
-    PLUGIN_PROVENANCE_STATUSES,
-    PLUGIN_SIGNATURE_STATUSES,
 )
-from app.services.operations.plugin_supply_chain.audit_events import build_plugin_supply_chain_audit_event
-from app.services.operations.plugin_supply_chain.dependency_governance import DependencyGovernanceService
+from app.services.operations.plugin_supply_chain.audit_events import (
+    build_plugin_supply_chain_audit_event,
+)
+from app.services.operations.plugin_supply_chain.dependency_governance import (
+    DependencyGovernanceService,
+)
+from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
 from app.services.operations.plugin_supply_chain.lineage_service import PluginArtifactLineageService
 from app.services.operations.plugin_supply_chain.provenance_service import PluginProvenanceService
 from app.services.operations.plugin_supply_chain.receipts import build_supply_chain_receipt
-from app.services.operations.plugin_supply_chain.replay_verifier import PluginSupplyChainReplayVerifier
-from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
-from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
+from app.services.operations.plugin_supply_chain.replay_verifier import (
+    PluginSupplyChainReplayVerifier,
+)
+from app.services.operations.plugin_supply_chain.sbom_placeholder import (
+    PluginSBOMPlaceholderService,
+)
 from app.utils.crypto_signer import sign_payload
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

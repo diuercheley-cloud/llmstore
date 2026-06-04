@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
+
+import pytest
 from app.services.agents.continuous_promotion import ContinuousPromotionService
 from app.services.agents.rollback_controller import RollbackController
+
 
 @pytest.mark.asyncio
 async def test_promotion_confidence_threshold():

@@ -1,10 +1,11 @@
 from app.services.operations.adapter_promotion.hash_utils import (
     canonical_json,
-    sha256_hex,
-    compute_promotion_hash,
     compute_gate_hash,
-    compute_transition_hash
+    compute_promotion_hash,
+    compute_transition_hash,
+    sha256_hex,
 )
+
 
 def test_canonical_json():
     data = {"b": 2, "a": 1}

@@ -3,8 +3,10 @@ Owner: agent-platform
 Status: beta
 """
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.agents import AgentMemoryRedactionEvent
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class MemoryRedactionService:
     def __init__(self, db: AsyncSession):

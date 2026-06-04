@@ -1,13 +1,15 @@
-import pytest
 import json
+
+import pytest
 import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.models.billing_plan import BillingPlan
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url):

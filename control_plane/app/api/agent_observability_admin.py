@@ -1,16 +1,14 @@
 # Owner: agent-platform
 import uuid
-from datetime import datetime
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from typing import Any, Dict, List, Optional
 
-from app.api.deps import require_admin, get_db_session
-from app.models.agents import AgentRun, AgentRunStep, AgentRunEvent, AgentDefinition
+from app.api.deps import get_db_session, require_admin
+from app.core.config import Settings, get_settings
+from app.models.agents import AgentRun, AgentRunEvent, AgentRunStep
 from app.services.agents.agent_observability import AgentObservabilityService
-from app.core.config import get_settings, Settings
-
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/observability", tags=["agent-observability"])
 

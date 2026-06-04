@@ -5,10 +5,9 @@ Revises: 20260515_phase55
 Create Date: 2026-05-15 21:45:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260515_phase56"
 down_revision = "20260515_phase55"

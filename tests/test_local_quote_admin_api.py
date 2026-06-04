@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_quote_preview_endpoint(admin_client: AsyncClient, admin_token_headers):
     payload = {

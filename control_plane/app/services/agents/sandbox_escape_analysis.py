@@ -2,10 +2,10 @@
 Owner: security-ops
 Status: implementation
 """
-import re
-import os
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import re
+from typing import Any, Dict, Optional, Tuple
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

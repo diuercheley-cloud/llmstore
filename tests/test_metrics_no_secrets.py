@@ -1,6 +1,5 @@
-from prometheus_client import generate_latest
-
 from app.core.metrics import record_request_metrics
+from prometheus_client import generate_latest
 
 
 def test_metrics_do_not_expose_secrets(monkeypatch):

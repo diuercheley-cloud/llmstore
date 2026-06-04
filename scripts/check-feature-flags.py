@@ -49,7 +49,7 @@ def main():
     else:
         print("OK: No orphaned flags detected.")
         
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f" - Registered: {scan_results.get('registered_count')}")
     print(f" - Env references: {scan_results.get('env_references_count')}")
     print(f" - Code references (approx): {scan_results.get('code_references_count')}")

@@ -1,11 +1,10 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+import uuid
 
-from app.models.agent_marketplace import MarketplaceRating, MarketplaceItem
+from app.models.agent_marketplace import MarketplaceItem, MarketplaceRating
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

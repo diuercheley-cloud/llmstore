@@ -20,20 +20,16 @@ from __future__ import annotations
 import uuid
 from typing import Any, Sequence
 
-from sqlalchemy import or_, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.models.agent_knowledge_graph import (
     AgentKGEntity,
-    AgentKGExtractionRun,
-    AgentKGQueryEvent,
     AgentKGRelation,
-    AgentKGSource,
 )
 from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
     InternalSQLGraphProvider,
 )
+from sqlalchemy import or_, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PostgresGraphProvider(InternalSQLGraphProvider):

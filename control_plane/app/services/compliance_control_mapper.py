@@ -1,6 +1,8 @@
 import os
-import yaml
 from typing import Any, Dict, List, Optional
+
+import yaml
+
 
 class ComplianceControlMapperService:
     def __init__(self, mapping_path: str = "compliance/mappings/soc2_iso27001_control_map.yaml"):

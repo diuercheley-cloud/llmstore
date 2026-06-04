@@ -1,12 +1,12 @@
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List
 
-from app.models.agent_environments import AgentEnvironmentVersion, AgentEnvironment
+from app.models.agent_environments import AgentEnvironmentVersion
 from app.models.agents import AgentDefinition, AgentRegistryEntry
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("agent_environments")
 

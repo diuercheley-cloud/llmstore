@@ -1,6 +1,8 @@
 import uuid
-from sqlalchemy.orm import Session
+
 from app.models.agent_tool_synthesis import AgentGeneratedTool, AgentGeneratedToolVersion
+from sqlalchemy.orm import Session
+
 
 class GeneratedToolRegistry:
     def __init__(self, db: Session):

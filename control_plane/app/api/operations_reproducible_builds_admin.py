@@ -3,17 +3,11 @@ import json
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.reproducible_builds import (
     ARTIFACT_VERIFICATION_STATUSES,
     REPLAY_STATUSES,
     REPRODUCIBILITY_STATUSES,
-    REPRODUCIBILITY_VERIFICATION_TYPES,
     REPRODUCIBLE_BUILD_SCOPES,
     ArtifactReplayVerification,
     ArtifactVerificationRecord,
@@ -23,11 +17,20 @@ from app.models.operations.reproducible_builds import (
     ReproducibleBuildReceipt,
     SourceArtifactLineage,
 )
-from app.services.operations.reproducible_builds.artifact_verification import ArtifactVerificationService
-from app.services.operations.reproducible_builds.audit_events import build_reproducible_build_audit_event
-from app.services.operations.reproducible_builds.build_environment_policy import BuildEnvironmentPolicyService
+from app.services.operations.reproducible_builds.artifact_verification import (
+    ArtifactVerificationService,
+)
+from app.services.operations.reproducible_builds.audit_events import (
+    build_reproducible_build_audit_event,
+)
+from app.services.operations.reproducible_builds.build_environment_policy import (
+    BuildEnvironmentPolicyService,
+)
+from app.services.operations.reproducible_builds.hash_utils import sha256_hex
 from app.services.operations.reproducible_builds.lineage_service import SourceArtifactLineageService
-from app.services.operations.reproducible_builds.provenance_integration import ReproducibleBuildProvenanceIntegration
+from app.services.operations.reproducible_builds.provenance_integration import (
+    ReproducibleBuildProvenanceIntegration,
+)
 from app.services.operations.reproducible_builds.receipts import (
     build_artifact_receipt,
     build_lineage_receipt,
@@ -35,8 +38,13 @@ from app.services.operations.reproducible_builds.receipts import (
     build_reproducibility_receipt,
 )
 from app.services.operations.reproducible_builds.replay_verifier import ArtifactReplayVerifier
-from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
-from app.services.operations.reproducible_builds.hash_utils import sha256_hex
+from app.services.operations.reproducible_builds.reproducible_build_service import (
+    ReproducibleBuildService,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

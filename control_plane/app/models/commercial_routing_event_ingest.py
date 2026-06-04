@@ -3,11 +3,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, JSON, String, func
+from app.db.base import Base
+from sqlalchemy import JSON, DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db.base import Base
 
 
 class CommercialRoutingEventIngest(Base):

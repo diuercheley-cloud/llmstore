@@ -1,9 +1,8 @@
-import uuid
 import logging
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.billing.payments.pix_service import PixService
+
 from app.services.billing.payments.card_service import CardService
+from app.services.billing.payments.pix_service import PixService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

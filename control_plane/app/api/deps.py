@@ -1,25 +1,20 @@
 from functools import lru_cache
 
-from fastapi import Depends
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.session import get_db_session, get_redis
+from app.db.session import get_db_session
 from app.services.auth import (
     AdminRole,
     admin_key_scheme,
     get_admin_role,
     require_admin_permission,
-    require_admin_role,
-    require_superadmin,
-    require_admin,
     require_client,
+    require_superadmin,
 )
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
 from app.services.queue_manager import QueueManager
-from app.services.embeddings import get_embedding_service, EmbeddingService
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @lru_cache

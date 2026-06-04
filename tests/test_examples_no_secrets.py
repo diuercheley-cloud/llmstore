@@ -1,5 +1,5 @@
-import os
 import glob
+import os
 
 OUT_OF_SCOPE_EXAMPLE_NAMES = {
     "embeddings.sh",

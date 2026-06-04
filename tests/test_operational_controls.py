@@ -3,14 +3,16 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-
-from app.models.commercial_compliance import CommercialOperationalControl, CommercialOperationalEvidence
+from app.models.commercial_compliance import (
+    CommercialOperationalControl,
+    CommercialOperationalEvidence,
+)
 from app.services.compliance.operational_controls import (
     add_operational_evidence,
     create_control,
     detect_stale_evidence,
 )
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

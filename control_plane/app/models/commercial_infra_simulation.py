@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import Column, DateTime, Float, Integer, String, Boolean, JSON, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
+
 
 class CommercialInfrastructureSimulation(Base):
     __tablename__ = "commercial_infra_simulations"

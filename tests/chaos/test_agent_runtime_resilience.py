@@ -7,8 +7,9 @@ These tests verify the system degrades gracefully under failure conditions:
 - Network partition
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, patch
 
 
 @pytest.mark.asyncio
@@ -95,6 +96,7 @@ async def test_health_check_degrades_gracefully():
 async def test_concurrent_requests_do_not_deadlock():
     """Multiple concurrent agent runs should not cause deadlocks."""
     import asyncio
+
     from app.services.agents.agent_executor import AgentExecutor
 
     executor = AgentExecutor()

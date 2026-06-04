@@ -4,10 +4,9 @@ Revision ID: 2c5db4428cce
 Revises: e36887d48784
 Create Date: 2026-06-01 14:55:13.569397
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = '2c5db4428cce'
 down_revision = 'e36887d48784'

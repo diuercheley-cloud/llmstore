@@ -1,7 +1,7 @@
-import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def test_no_python_utilities_in_root():
     """Verify that no Python utility scripts are located in the repository root."""

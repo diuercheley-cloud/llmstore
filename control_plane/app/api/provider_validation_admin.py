@@ -1,17 +1,16 @@
 # Owner: agent-platform
-import asyncio
 import logging
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.services.auth import require_admin
 from app.services.agents.provider_validation import (
-    run_validation_suite,
+    ALLOWED_PROVIDERS,
     get_latest_results,
     get_provider_matrix,
     is_recent_validation_available,
-    ALLOWED_PROVIDERS,
+    run_validation_suite,
 )
+from app.services.auth import require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 

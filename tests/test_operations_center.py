@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_get_graph(admin_client: AsyncClient, admin_token_headers):
     response = await admin_client.get("/admin/ops-center/graph", headers=admin_token_headers)

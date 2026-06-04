@@ -1,7 +1,8 @@
-import json
 import hashlib
-from typing import Dict, List, Any
-from datetime import datetime, UTC
+import json
+from datetime import UTC, datetime
+from typing import Any, Dict, List
+
 
 class ReleaseManifestService:
     def generate_manifest(self, version: str, scope: List[str], snapshot_hash: str) -> Dict[str, Any]:

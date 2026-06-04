@@ -1,10 +1,12 @@
-import uuid
 
 import pytest
-from sqlalchemy import select
-
-from app.models.commercial_agents import CommercialAgentAction, CommercialAgentProfile, CommercialToolRegistry
+from app.models.commercial_agents import (
+    CommercialAgentAction,
+    CommercialAgentProfile,
+    CommercialToolRegistry,
+)
 from app.services.agents.trusted_agent_runtime import trusted_agent_runtime
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

@@ -2,17 +2,18 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
-import json
-import math
 import hashlib
+import json
 import logging
-from typing import List, Optional, Tuple
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentMemoryIndex, AgentMemorySearchEvent, AgentMemoryItem
+import math
+import uuid
+from typing import List
+
 from app.core.config import get_settings
+from app.models.agents import AgentMemoryIndex, AgentMemoryItem, AgentMemorySearchEvent
 from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

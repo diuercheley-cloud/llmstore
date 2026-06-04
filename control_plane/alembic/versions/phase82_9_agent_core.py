@@ -8,8 +8,6 @@ Create Date: 2026-05-22 12:00:00.000000
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'phase82_9_agent_core'
@@ -21,19 +19,57 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     from app.db.base import Base
     from app.models.agents import (
-        AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent, AgentRunCheckpoint, AgentRunReceipt,
-        AgentRegistryEntry, AgentVersion, AgentPromotion, AgentDeprecation, AgentLifecycleEvent,
-        AgentTool, AgentToolVersion, AgentToolPermission, AgentToolInvocation, AgentToolSafetyReview,
-        AgentApprovalRequest, AgentApprovalDecision, AgentApprovalPolicy, AgentMemoryPolicy,
-        AgentMemoryCollection, AgentMemoryItem, AgentMemoryAccessEvent, AgentMemoryRetentionJob,
-        AgentMemoryConsent, AgentMemoryRetentionPolicy, AgentMemoryRedactionEvent, AgentMemoryIndex,
-        AgentMemorySearchEvent, AgentMemoryDeleteRequest, AgentMemoryExportRequest, AgentPlan,
-        AgentTask, AgentTaskDependency, AgentTaskAttempt, AgentCompensationAction, AgentHandoffPolicy,
-        AgentCollaborationSession, AgentHandoffEvent, AgentMarketplaceEntry, AgentBundleVersion,
-        AgentBundleInstall, AgentBundleTrustReport, AgentAdapterPromotionReview,
-        AgentPromotionGate, AgentPublisherProfile, AgentPublicationReview, AgentCatalogItem,
-        AgentCatalogVersion, AgentCatalogRollback, AgentDelegationPolicy, AgentSharedMemoryPolicy,
-        AgentPolicyDecision
+        AgentAdapterPromotionReview,
+        AgentApprovalDecision,
+        AgentApprovalPolicy,
+        AgentApprovalRequest,
+        AgentBundleInstall,
+        AgentBundleTrustReport,
+        AgentBundleVersion,
+        AgentCatalogItem,
+        AgentCatalogRollback,
+        AgentCatalogVersion,
+        AgentCollaborationSession,
+        AgentCompensationAction,
+        AgentDefinition,
+        AgentDelegationPolicy,
+        AgentDeprecation,
+        AgentHandoffEvent,
+        AgentHandoffPolicy,
+        AgentLifecycleEvent,
+        AgentMarketplaceEntry,
+        AgentMemoryAccessEvent,
+        AgentMemoryCollection,
+        AgentMemoryConsent,
+        AgentMemoryDeleteRequest,
+        AgentMemoryExportRequest,
+        AgentMemoryIndex,
+        AgentMemoryItem,
+        AgentMemoryPolicy,
+        AgentMemoryRedactionEvent,
+        AgentMemoryRetentionJob,
+        AgentMemoryRetentionPolicy,
+        AgentMemorySearchEvent,
+        AgentPlan,
+        AgentPolicyDecision,
+        AgentPromotion,
+        AgentPromotionGate,
+        AgentRegistryEntry,
+        AgentRun,
+        AgentRunCheckpoint,
+        AgentRunEvent,
+        AgentRunReceipt,
+        AgentRunStep,
+        AgentSharedMemoryPolicy,
+        AgentTask,
+        AgentTaskAttempt,
+        AgentTaskDependency,
+        AgentTool,
+        AgentToolInvocation,
+        AgentToolPermission,
+        AgentToolSafetyReview,
+        AgentToolVersion,
+        AgentVersion,
     )
     bind = op.get_bind()
     tables = [

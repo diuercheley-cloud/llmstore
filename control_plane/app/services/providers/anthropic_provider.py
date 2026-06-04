@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import httpx
-
 from app.core.config import get_settings
 from app.services.provider_settings import is_real_api_key_configured
 from app.services.providers.base import ProviderAdapter, ProviderType
@@ -184,7 +183,6 @@ class AnthropicProvider(ProviderAdapter):
                         source = block.get("image_url", {})
                         url = source.get("url", "")
                         if url.startswith("data:image"):
-                            import re
                             media_type = url.split(";")[0].split(":")[1] if ";" in url else "image/png"
                             data = url.split(",")[1] if "," in url else url
                             blocks.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}})

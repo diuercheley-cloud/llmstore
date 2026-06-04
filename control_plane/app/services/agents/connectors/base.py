@@ -1,10 +1,10 @@
 # Owner: agent-platform
 import abc
-import os
-import logging
 import json
-from typing import Any, Dict, List, Optional
+import logging
+import os
 from enum import Enum
+from typing import Any, Dict, List
 
 logger = logging.getLogger("connector_base")
 
@@ -138,9 +138,10 @@ class ConnectorAdapter(abc.ABC):
         """
         Logs a connector execution event to the IAM audit trail.
         """
+        import uuid
+
         from app.db.session import SessionLocal
         from app.services.agents.iam.iam_audit import IAMAuditService
-        import uuid
 
         agent_id_str = credentials.get("agent_id")
         agent_id = None
@@ -243,8 +244,9 @@ class ConnectorAdapter(abc.ABC):
             return
 
         import uuid
-        from app.services.agents.iam.credential_broker import CredentialBroker
+
         from app.db.session import SessionLocal
+        from app.services.agents.iam.credential_broker import CredentialBroker
 
         token_string = credentials.get("token") or credentials.get("agent_token")
         agent_id_str = credentials.get("agent_id")

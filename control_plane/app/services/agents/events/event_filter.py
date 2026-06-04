@@ -1,6 +1,6 @@
 # Owner: agent-platform
-import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class EventFilter:
     """

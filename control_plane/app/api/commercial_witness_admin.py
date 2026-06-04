@@ -1,17 +1,18 @@
 # Owner: commercial-ops
 import uuid
-from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Any, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from ..api.deps import get_admin_user
 from ..db.session import get_db
 from ..models.commercial_witness import (
     CommercialWitness,
     CommercialWitnessSignature,
-    CommercialWitnessQuorumPolicy
 )
 from ..services.inference import witness_federation
-from ..api.deps import get_admin_user
 
 router = APIRouter(prefix="/admin/inference", tags=["Witness Federation"])
 

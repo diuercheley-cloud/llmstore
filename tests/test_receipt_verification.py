@@ -3,20 +3,18 @@ from __future__ import annotations
 import hashlib
 
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_cryptographic_receipts import (
-    CommercialInferenceReceipt,
     CommercialInferenceReceiptVerificationReport,
 )
 from app.services.inference.cryptographic_receipts import generate_inference_receipt
 from app.services.inference.receipt_verification import (
-    verify_receipt_signature,
-    verify_receipt_hash,
-    verify_receipt_timestamp,
     detect_receipt_tampering,
     generate_verification_report,
+    verify_receipt_hash,
+    verify_receipt_signature,
+    verify_receipt_timestamp,
 )
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
@@ -160,8 +158,8 @@ async def test_verify_receipt_chain_valid(session, settings):
         prompt_hash=hashlib.sha256(b"cv2").hexdigest(),
         response_hash=hashlib.sha256(b"cv2r").hexdigest(),
     )
-    from app.services.inference.receipt_verification import verify_receipt_chain
     from app.services.inference.cryptographic_receipts import build_receipt_chain
+    from app.services.inference.receipt_verification import verify_receipt_chain
 
     chain = await build_receipt_chain(session, r2)
     result = verify_receipt_chain(chain)

@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Optional
+
 from app.core.config import get_settings
 
 settings = get_settings()

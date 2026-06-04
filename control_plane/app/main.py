@@ -1,133 +1,172 @@
 import asyncio
 import logging
-from pathlib import Path
 from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 import app.models  # noqa: F401
-
-from app.api.deps import get_inference_proxy
-from app.api.admin import router as admin_router
-from app.api.admin_rbac import router as admin_rbac_router
-from app.api.saas_admin import router as saas_admin_router
-from app.api.sales import router as sales_router
-from app.api.admin_tests import router as admin_tests_router
-from app.api.client import router as client_router
-from app.api.rag import router as rag_router, client_rag_router
-from app.api.rag_enterprise import router as rag_enterprise_router, admin_router as admin_rag_router
-from app.api.portal import router as portal_router, account_router
-from app.api.admin_models_runtime import router as admin_models_runtime_router
-from app.api.public import router as public_router
-from app.api.system import router as system_router
-from app.api.pocket_tts import router as pocket_tts_router
-from app.api.pki_attestation_admin import router as pki_attestation_admin_router
-from app.api.developer_docs import router as developer_docs_router
-from app.api.billing_admin import router as billing_admin_router
-from app.api.wallet_admin import router as wallet_admin_router
-from app.api.providers import router as providers_router
-from app.api.routing_admin import router as routing_admin_router
-from app.api.routing_test import router as routing_test_router
-from app.api.hybrid_admin import router as hybrid_admin_router
-from app.api.support_admin import router as support_admin_router
 from app.api.abuse_admin import router as abuse_admin_router
-from app.api.financial_admin import router as financial_admin_router
-from app.api.commercial_guardrails_admin import router as commercial_guardrails_admin_router
-from app.api.commercial_autonomous_guardrails_admin import router as commercial_autonomous_guardrails_admin_router
-from app.api.commercial_routing_admin import router as commercial_routing_admin_router
-from app.api.commercial_distributed_analytics_admin import router as commercial_distributed_analytics_admin_router
-from app.api.commercial_ha_admin import router as commercial_ha_admin_router
-from app.api.commercial_federation_admin import router as commercial_federation_admin_router
+from app.api.admin import router as admin_router
+from app.api.admin_metrics import router as admin_metrics_router
+from app.api.admin_model_experiments import router as admin_model_experiments_router
+from app.api.admin_models_runtime import router as admin_models_runtime_router
+from app.api.admin_onboarding import router as admin_onboarding_router
+from app.api.admin_rbac import router as admin_rbac_router
+from app.api.admin_tests import router as admin_tests_router
+from app.api.admin_vectorstores import router as admin_vectorstores_router
+from app.api.auth import router as auth_router
+from app.api.billing_admin import router as billing_admin_router
 from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
+from app.api.chaos_admin import router as chaos_admin_router
+from app.api.client import router as client_router
+from app.api.collab_chat import router as collab_chat_router
+from app.api.commercial_aiops_admin import router as commercial_aiops_admin_router
+from app.api.commercial_appliance_admin import router as commercial_appliance_admin_router
+from app.api.commercial_attestation_admin import (
+    portal_router as commercial_attestation_portal_router,
+)
+from app.api.commercial_attestation_admin import router as commercial_attestation_admin_router
+from app.api.commercial_attestation_public import router as commercial_attestation_public_router
+from app.api.commercial_autonomous_guardrails_admin import (
+    router as commercial_autonomous_guardrails_admin_router,
+)
 from app.api.commercial_capacity_admin import router as commercial_capacity_admin_router
-from app.api.commercial_infra_admin import router as commercial_infra_admin_router
-from app.api.supported_surface_admin import router as supported_surface_admin_router
-from app.api.runtime_profiles_admin import router as runtime_profiles_admin_router
-from app.api.feature_flags_admin import router as feature_flags_admin_router
-from app.api.commercial_policy_governance_admin import router as commercial_policy_governance_admin_router
-from app.api.commercial_governance_federation_admin import router as commercial_governance_federation_admin_router
+from app.api.commercial_confidential_runtime_admin import (
+    router as commercial_confidential_runtime_admin_router,
+)
+from app.api.commercial_cryptographic_receipts_admin import (
+    router as commercial_cryptographic_receipts_admin_router,
+)
+from app.api.commercial_distributed_analytics_admin import (
+    router as commercial_distributed_analytics_admin_router,
+)
 from app.api.commercial_encryption_admin import router as commercial_encryption_admin_router
-from app.api.commercial_sovereign_governance_admin import router as commercial_sovereign_governance_admin_router
-from app.api.commercial_model_supply_chain_admin import router as commercial_model_supply_chain_admin_router
-from app.api.commercial_inference_reproducibility_admin import router as commercial_inference_reproducibility_admin_router
-from app.api.commercial_cryptographic_receipts_admin import router as commercial_cryptographic_receipts_admin_router
-from app.api.commercial_execution_proofs_admin import router as commercial_execution_proofs_admin_router
-from app.api.commercial_execution_proofs_portal import router as commercial_execution_proofs_portal_router
+from app.api.commercial_execution_proofs_admin import (
+    router as commercial_execution_proofs_admin_router,
+)
+from app.api.commercial_execution_proofs_portal import (
+    router as commercial_execution_proofs_portal_router,
+)
+from app.api.commercial_federation_admin import router as commercial_federation_admin_router
+from app.api.commercial_governance_federation_admin import (
+    router as commercial_governance_federation_admin_router,
+)
+from app.api.commercial_guardrails_admin import router as commercial_guardrails_admin_router
+from app.api.commercial_ha_admin import router as commercial_ha_admin_router
+from app.api.commercial_inference_reproducibility_admin import (
+    router as commercial_inference_reproducibility_admin_router,
+)
+from app.api.commercial_infra_admin import router as commercial_infra_admin_router
+from app.api.commercial_mesh_admin import portal_router as commercial_mesh_portal_router
+from app.api.commercial_mesh_admin import router as commercial_mesh_admin_router
+from app.api.commercial_model_lifecycle_admin import (
+    portal_router as commercial_model_lifecycle_portal_router,
+)
+from app.api.commercial_model_lifecycle_admin import (
+    router as commercial_model_lifecycle_admin_router,
+)
+from app.api.commercial_model_supply_chain_admin import (
+    router as commercial_model_supply_chain_admin_router,
+)
+from app.api.commercial_operations_center import router as commercial_ops_center_router
+from app.api.commercial_operations_center_admin import commercial_ops_center_admin_router
+from app.api.commercial_policy_governance_admin import (
+    router as commercial_policy_governance_admin_router,
+)
+from app.api.commercial_rag_admin import router as commercial_rag_admin_router
+from app.api.commercial_routing_admin import router as commercial_routing_admin_router
+from app.api.commercial_runtime_fabric_admin import (
+    portal_router as commercial_runtime_fabric_portal_router,
+)
+from app.api.commercial_runtime_fabric_admin import router as commercial_runtime_fabric_admin_router
+from app.api.commercial_sovereign_governance_admin import (
+    router as commercial_sovereign_governance_admin_router,
+)
+from app.api.commercial_transparency_admin import router as commercial_transparency_admin_router
 from app.api.commercial_witness_admin import router as commercial_witness_admin_router
 from app.api.commercial_witness_portal import router as commercial_witness_portal_router
-from app.api.commercial_transparency_admin import router as commercial_transparency_admin_router
-from app.api.commercial_attestation_public import router as commercial_attestation_public_router
-from app.api.commercial_attestation_admin import router as commercial_attestation_admin_router
-from app.api.commercial_attestation_admin import portal_router as commercial_attestation_portal_router
-from app.api.commercial_confidential_runtime_admin import router as commercial_confidential_runtime_admin_router
-from app.api.commercial_agents_admin import router as commercial_agents_admin_router
-from app.api.commercial_trusted_agents_admin import router as commercial_trusted_agents_admin_router
-from app.api.commercial_agent_audit_portal import router as commercial_agent_audit_portal_router
-from app.api.commercial_workflows_admin import router as commercial_workflows_admin_router
-from app.api.commercial_workflow_audit_portal import router as commercial_workflow_audit_portal_router
-from app.api.commercial_workflow_governance_portal import router as commercial_workflow_governance_portal_router
-from app.api.commercial_federated_workflows_admin import router as commercial_federated_workflows_admin_router
-from app.api.commercial_appliance_admin import router as commercial_appliance_admin_router
-from app.api.commercial_mesh_admin import router as commercial_mesh_admin_router, portal_router as commercial_mesh_portal_router
-from app.api.commercial_runtime_fabric_admin import router as commercial_runtime_fabric_admin_router, portal_router as commercial_runtime_fabric_portal_router
-from app.api.commercial_aiops_admin import router as commercial_aiops_admin_router
-from app.api.commercial_operations_center_admin import commercial_ops_center_admin_router
-from app.api.commercial_operations_center import router as commercial_ops_center_router
-from app.api.commercial_rag_admin import router as commercial_rag_admin_router
-from app.api.commercial_model_lifecycle_admin import router as commercial_model_lifecycle_admin_router
-from app.api.commercial_model_lifecycle_admin import portal_router as commercial_model_lifecycle_portal_router
+from app.api.compliance_admin import router as compliance_admin_router
+from app.api.deps import get_inference_proxy
+from app.api.developer_docs import router as developer_docs_router
+from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
+from app.api.feature_flags_admin import router as feature_flags_admin_router
+from app.api.financial_admin import router as financial_admin_router
+from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
+from app.api.hybrid_admin import router as hybrid_admin_router
+from app.api.mobile_v1 import router as mobile_v1_router
+from app.api.multi_cluster_admin import router as multi_cluster_admin_router
+from app.api.observability_admin import router as observability_admin_router
+from app.api.operations_adapter_promotion_admin import (
+    router as operations_adapter_promotion_admin_router,
+)
+from app.api.operations_adapter_registry_admin import (
+    router as operations_adapter_registry_admin_router,
+)
+from app.api.operations_adapter_sandbox_admin import (
+    router as operations_adapter_sandbox_admin_router,
+)
 from app.api.operations_admin import router as operations_admin_router
+from app.api.operations_attestation_admin import router as operations_attestation_admin_router
+from app.api.operations_compatibility_admin import router as operations_compatibility_admin_router
 from app.api.operations_correlation_admin import router as operations_correlation_admin_router
 from app.api.operations_correlation_portal import router as operations_correlation_portal_router
-from app.api.operations_remediation_admin import router as operations_remediation_admin_router
-from app.api.operations_remediation_execution_admin import router as operations_remediation_execution_admin_router
-from app.api.operations_adapter_sandbox_admin import router as operations_adapter_sandbox_admin_router
-from app.api.operations_adapter_registry_admin import router as operations_adapter_registry_admin_router
-from app.api.operations_adapter_promotion_admin import router as operations_adapter_promotion_admin_router
-from app.api.operations_attestation_admin import router as operations_attestation_admin_router
-from app.api.operations_federation_sync_admin import router as operations_federation_sync_admin_router
-from app.api.operations_compatibility_admin import router as operations_compatibility_admin_router
+from app.api.operations_federation_sync_admin import (
+    router as operations_federation_sync_admin_router,
+)
 from app.api.operations_plugin_runtime_admin import router as operations_plugin_runtime_admin_router
-from app.api.operations_plugin_supply_chain_admin import router as operations_plugin_supply_chain_admin_router
-from app.api.operations_reproducible_builds_admin import router as operations_reproducible_builds_admin_router
-from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
-from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
-from app.api.observability_admin import router as observability_admin_router
+from app.api.operations_plugin_supply_chain_admin import (
+    router as operations_plugin_supply_chain_admin_router,
+)
+from app.api.operations_remediation_admin import router as operations_remediation_admin_router
+from app.api.operations_remediation_execution_admin import (
+    router as operations_remediation_execution_admin_router,
+)
+from app.api.operations_reproducible_builds_admin import (
+    router as operations_reproducible_builds_admin_router,
+)
 from app.api.operations_ux_admin import router as operations_ux_admin_router
-from app.api.performance_admin import router as performance_admin_router
-from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_admin_router
-from app.services.multimodal.multimodal_router import router as multimodal_router
-from app.api.web_search_admin import router as web_search_admin_router
-from app.api.admin_onboarding import router as admin_onboarding_router
-from app.api.admin_metrics import router as admin_metrics_router
-from app.api.multi_cluster_admin import router as multi_cluster_admin_router
-from app.api.chaos_admin import router as chaos_admin_router
-from app.api.compliance_admin import router as compliance_admin_router
 from app.api.payments import router as payments_router
-from app.api.supported_surface_admin import router as supported_surface_admin_router
+from app.api.performance_admin import router as performance_admin_router
+from app.api.pki_attestation_admin import router as pki_attestation_admin_router
+from app.api.pocket_tts import router as pocket_tts_router
+from app.api.portal import account_router
+from app.api.portal import router as portal_router
+from app.api.providers import router as providers_router
+from app.api.public import router as public_router
+from app.api.rag import client_rag_router
+from app.api.rag import router as rag_router
+from app.api.rag_enterprise import admin_router as admin_rag_router
+from app.api.rag_enterprise import router as rag_enterprise_router
+from app.api.routing_admin import router as routing_admin_router
+from app.api.routing_test import router as routing_test_router
 from app.api.runtime_profiles_admin import router as runtime_profiles_admin_router
-from app.api.admin_vectorstores import router as admin_vectorstores_router
-from app.api.collab_chat import router as collab_chat_router
+from app.api.saas_admin import router as saas_admin_router
+from app.api.sales import router as sales_router
+from app.api.support_admin import router as support_admin_router
+from app.api.supported_surface_admin import router as supported_surface_admin_router
+from app.api.system import router as system_router
 from app.api.voice import router as voice_router
-from app.api.admin_model_experiments import router as admin_model_experiments_router
+from app.api.wallet_admin import router as wallet_admin_router
 from app.api.web_ide import router as web_ide_router
-from app.api.mobile_v1 import router as mobile_v1_router
-from app.api.auth import router as auth_router
+from app.api.web_search_admin import router as web_search_admin_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
 from app.db.session import SessionLocal, engine, redis_client
-from app.middleware import request_context_middleware, deprecation_middleware
-from app.services.billing_scheduler import billing_scheduler_loop
-from app.services.routing.commercial_node_heartbeat import commercial_distributed_analytics_loop
-from app.services.routing.commercial_federation import sync_federation_clusters
-from app.services.routing.commercial_report_scheduler import commercial_report_scheduler_loop
-from app.services.models.runtime_integrity_monitor import runtime_integrity_monitor_loop, scan_registered_models
-from app.services.routing.commercial_node_heartbeat import resolve_node_identity
-from app.services.seed import seed_defaults
+from app.middleware import deprecation_middleware, request_context_middleware
 from app.services.agents.tool_adapters import register_all_adapters
+from app.services.billing_scheduler import billing_scheduler_loop
+from app.services.models.runtime_integrity_monitor import (
+    runtime_integrity_monitor_loop,
+    scan_registered_models,
+)
+from app.services.multimodal.multimodal_router import router as multimodal_router
+from app.services.routing.commercial_federation import sync_federation_clusters
+from app.services.routing.commercial_node_heartbeat import commercial_distributed_analytics_loop
+from app.services.routing.commercial_report_scheduler import commercial_report_scheduler_loop
+from app.services.seed import seed_defaults
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -191,10 +230,11 @@ def include_optional_routers(app: FastAPI, settings) -> None:
 
     # Agentic Platform Routers
     # Always include readiness for release gates
-    from app.api.agent_readiness_admin import router as agent_readiness_admin_router
-    from app.api.agent_capability_catalog_admin import router as capability_catalog_admin_router, plugin_router as plugin_admin_router
     from app.api.admin_readiness import router as admin_readiness_router
+    from app.api.agent_capability_catalog_admin import plugin_router as plugin_admin_router
+    from app.api.agent_capability_catalog_admin import router as capability_catalog_admin_router
     from app.api.agent_execution_admin import router as agent_execution_admin_router
+    from app.api.agent_readiness_admin import router as agent_readiness_admin_router
     from app.api.agent_tools_admin import router as agent_tools_admin_router
     from app.api.platform_ga_admin import router as platform_ga_admin_router
     app.include_router(agent_readiness_admin_router)
@@ -225,13 +265,15 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_routing_admin_router)
 
     if settings.agent_runtime_enabled or settings.agent_execution_enabled:
+        from app.api.agent_cicd_admin import router as agent_cicd_admin_router
+        from app.api.agent_environments_admin import router as agent_environments_admin_router
+        from app.api.agent_registry_admin import router as agent_registry_admin_router
+        from app.api.agent_runtime_admin import router as agent_runtime_admin_router
         from app.api.agents import router as agents_router
         from app.api.agents_v1 import router as agents_v1_router
-        from app.api.agent_cicd_admin import router as agent_cicd_admin_router
-        from app.api.agent_runtime_admin import router as agent_runtime_admin_router
-        from app.api.agent_registry_admin import router as agent_registry_admin_router
-        from app.api.tenant_agentic_readiness_admin import router as tenant_agentic_readiness_admin_router
-        from app.api.agent_environments_admin import router as agent_environments_admin_router
+        from app.api.tenant_agentic_readiness_admin import (
+            router as tenant_agentic_readiness_admin_router,
+        )
         app.include_router(agents_router)
         app.include_router(agents_v1_router)
         app.include_router(agent_cicd_admin_router)
@@ -291,7 +333,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_memory_admin_router)
 
     if settings.agent_cognitive_memory_enabled:
-        from app.api.agent_cognitive_memory_admin import router as agent_cognitive_memory_admin_router
+        from app.api.agent_cognitive_memory_admin import (
+            router as agent_cognitive_memory_admin_router,
+        )
         app.include_router(agent_cognitive_memory_admin_router)
 
     if settings.agent_planning_enabled:
@@ -300,9 +344,13 @@ def include_optional_routers(app: FastAPI, settings) -> None:
 
     if getattr(settings, "commercial_agent_governance_enabled", False):
         from app.api.agent_governance_admin import router as agent_governance_admin_router
+        from app.api.commercial_agent_audit_portal import (
+            router as commercial_agent_audit_portal_router,
+        )
         from app.api.commercial_agents_admin import router as commercial_agents_admin_router
-        from app.api.commercial_trusted_agents_admin import router as commercial_trusted_agents_admin_router
-        from app.api.commercial_agent_audit_portal import router as commercial_agent_audit_portal_router
+        from app.api.commercial_trusted_agents_admin import (
+            router as commercial_trusted_agents_admin_router,
+        )
         app.include_router(agent_governance_admin_router)
         app.include_router(commercial_agents_admin_router)
         app.include_router(commercial_trusted_agents_admin_router)
@@ -310,10 +358,16 @@ def include_optional_routers(app: FastAPI, settings) -> None:
 
     if settings.agent_stateful_workflows_enabled:
         from app.api.agent_workflows_admin import router as agent_workflows_admin_router
+        from app.api.commercial_federated_workflows_admin import (
+            router as commercial_federated_workflows_admin_router,
+        )
+        from app.api.commercial_workflow_audit_portal import (
+            router as commercial_workflow_audit_portal_router,
+        )
+        from app.api.commercial_workflow_governance_portal import (
+            router as commercial_workflow_governance_portal_router,
+        )
         from app.api.commercial_workflows_admin import router as commercial_workflows_admin_router
-        from app.api.commercial_workflow_audit_portal import router as commercial_workflow_audit_portal_router
-        from app.api.commercial_workflow_governance_portal import router as commercial_workflow_governance_portal_router
-        from app.api.commercial_federated_workflows_admin import router as commercial_federated_workflows_admin_router
         app.include_router(agent_workflows_admin_router)
         app.include_router(commercial_workflows_admin_router)
         app.include_router(commercial_workflow_audit_portal_router)
@@ -331,8 +385,8 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_marketplace_public_router, prefix="/api/v1")
 
     if settings.agent_event_driven_enabled:
-        from app.api.agent_events_admin import router as agent_events_admin_router
         from app.api.agent_events import router as agent_events_router
+        from app.api.agent_events_admin import router as agent_events_admin_router
         app.include_router(agent_events_admin_router)
         app.include_router(agent_events_router)
 
@@ -341,10 +395,13 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_iam_admin_router)
 
     if settings.agent_code_interpreter_enabled:
-        from app.api.agent_code_interpreter_admin import router as agent_code_interpreter_admin_router
+        from app.api.agent_code_interpreter_admin import (
+            router as agent_code_interpreter_admin_router,
+        )
         app.include_router(agent_code_interpreter_admin_router)
 
-    from app.api.agent_mcp_admin import admin_router as agent_mcp_admin_router, server_router as agent_mcp_server_router
+    from app.api.agent_mcp_admin import admin_router as agent_mcp_admin_router
+    from app.api.agent_mcp_admin import server_router as agent_mcp_server_router
     app.include_router(agent_mcp_admin_router)
     app.include_router(agent_mcp_server_router)
 
@@ -353,7 +410,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_optimization_admin_router)
 
     if settings.agent_optimizer_tournaments_enabled:
-        from app.api.agent_optimization_tournaments_admin import router as agent_optimization_tournaments_admin_router
+        from app.api.agent_optimization_tournaments_admin import (
+            router as agent_optimization_tournaments_admin_router,
+        )
         app.include_router(agent_optimization_tournaments_admin_router)
 
     # Agent Shared Workspace and Artifacts Routers
@@ -365,11 +424,15 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(agent_canary_admin_router)
 
     if settings.agent_cognitive_loopback_enabled:
-        from app.api.agent_cognitive_loopback_admin import router as agent_cognitive_loopback_admin_router
+        from app.api.agent_cognitive_loopback_admin import (
+            router as agent_cognitive_loopback_admin_router,
+        )
         app.include_router(agent_cognitive_loopback_admin_router)
 
     if settings.agent_federated_memory_enabled:
-        from app.api.agent_federated_memory_admin import router as agent_federated_memory_admin_router
+        from app.api.agent_federated_memory_admin import (
+            router as agent_federated_memory_admin_router,
+        )
         app.include_router(agent_federated_memory_admin_router)
 
     if settings.agent_sab_enabled:
@@ -383,7 +446,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     # Enterprise/Commercial Optional Routers
     if getattr(settings, "commercial_qos_enabled", True):
         from app.api.commercial_qos_admin import router as commercial_qos_admin_router
-        from app.api.commercial_qos_billing_admin import router as commercial_qos_billing_admin_router
+        from app.api.commercial_qos_billing_admin import (
+            router as commercial_qos_billing_admin_router,
+        )
         app.include_router(commercial_qos_admin_router)
         app.include_router(commercial_qos_billing_admin_router, prefix="/admin/billing/qos", tags=["commercial_qos_billing"])
 
@@ -392,44 +457,63 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(commercial_compliance_admin_router)
 
     if getattr(settings, "commercial_revenue_protection_enabled", True):
-        from app.api.commercial_revenue_protection_admin import router as commercial_revenue_protection_admin_router
+        from app.api.commercial_revenue_protection_admin import (
+            router as commercial_revenue_protection_admin_router,
+        )
         app.include_router(commercial_revenue_protection_admin_router, prefix="/admin/billing/revenue-protection", tags=["commercial_revenue_protection"])
 
     if getattr(settings, "commercial_revenue_forecasting_enabled", True):
-        from app.api.commercial_revenue_forecasting_admin import router as commercial_revenue_forecasting_admin_router
+        from app.api.commercial_revenue_forecasting_admin import (
+            router as commercial_revenue_forecasting_admin_router,
+        )
         app.include_router(commercial_revenue_forecasting_admin_router)
 
     if getattr(settings, "commercial_revenue_escalations_enabled", True):
-        from app.api.commercial_revenue_escalations_admin import router as commercial_revenue_escalations_admin_router
+        from app.api.commercial_revenue_escalations_admin import (
+            router as commercial_revenue_escalations_admin_router,
+        )
         app.include_router(commercial_revenue_escalations_admin_router, prefix="/admin/billing/revenue-escalations", tags=["commercial_revenue_escalation"])
 
     if getattr(settings, "commercial_global_routing_enabled", True):
-        from app.api.commercial_global_routing_admin import router as commercial_global_routing_admin_router
-        from app.api.commercial_global_traffic_admin import router as commercial_global_traffic_admin_router
+        from app.api.commercial_global_routing_admin import (
+            router as commercial_global_routing_admin_router,
+        )
+        from app.api.commercial_global_traffic_admin import (
+            router as commercial_global_traffic_admin_router,
+        )
         app.include_router(commercial_global_routing_admin_router, prefix="/admin/routing/global-router", tags=["commercial_global_routing"])
         app.include_router(commercial_global_traffic_admin_router, prefix="/admin/routing/global-traffic", tags=["commercial_global_traffic"])
 
     if getattr(settings, "commercial_cross_cluster_forwarding_enabled", True):
-        from app.api.commercial_cross_cluster_forwarding_admin import router as commercial_cross_cluster_forwarding_admin_router
+        from app.api.commercial_cross_cluster_forwarding_admin import (
+            router as commercial_cross_cluster_forwarding_admin_router,
+        )
         app.include_router(commercial_cross_cluster_forwarding_admin_router, prefix="/admin/routing/cross-cluster-forwarding", tags=["commercial_cross_cluster_forwarding"])
 
     if getattr(settings, "commercial_geo_routing_enabled", True):
-        from app.api.commercial_geo_routing_admin import router as commercial_geo_routing_admin_router
+        from app.api.commercial_geo_routing_admin import (
+            router as commercial_geo_routing_admin_router,
+        )
         app.include_router(commercial_geo_routing_admin_router, prefix="/admin/routing/geo-routing", tags=["commercial_geo_routing"])
 
     if getattr(settings, "commercial_live_balancing_enabled", True):
-        from app.api.commercial_live_balancing_admin import router as commercial_live_balancing_admin_router
+        from app.api.commercial_live_balancing_admin import (
+            router as commercial_live_balancing_admin_router,
+        )
         app.include_router(commercial_live_balancing_admin_router, prefix="/admin/routing/live-balancing", tags=["commercial_live_balancing"])
 
     # Agent Tool Synthesis and Sandbox Routers
-    from app.api.agent_tool_synthesis_admin import admin_router as tool_synthesis_admin_router, sandbox_router as tool_synthesis_sandbox_router, public_router as tool_synthesis_public_router
+    from app.api.agent_tool_synthesis_admin import admin_router as tool_synthesis_admin_router
+    from app.api.agent_tool_synthesis_admin import public_router as tool_synthesis_public_router
+    from app.api.agent_tool_synthesis_admin import sandbox_router as tool_synthesis_sandbox_router
     app.include_router(tool_synthesis_admin_router, prefix="/admin/agents/tool-synthesis", tags=["agent_tool_synthesis"])
     app.include_router(tool_synthesis_sandbox_router, prefix="/admin/agents/sandbox", tags=["agent_sandbox"])
     app.include_router(tool_synthesis_public_router, prefix="/agents/tools/generated", tags=["agent_generated_tools"])
 
     # Agent Knowledge Graph Routers
     if settings.agent_knowledge_graph_enabled:
-        from app.api.agent_knowledge_graph_admin import admin_router as kg_admin_router, public_router as kg_public_router
+        from app.api.agent_knowledge_graph_admin import admin_router as kg_admin_router
+        from app.api.agent_knowledge_graph_admin import public_router as kg_public_router
         app.include_router(kg_admin_router)
         app.include_router(kg_public_router)
 
@@ -459,7 +543,6 @@ async def lifespan(_: FastAPI):
 
     if getattr(settings, "create_tables_on_startup", False):
         from app.db.base import Base
-        from app.models import api_key, billing_invoice, billing_plan, client, customer_payment, generation_job, inference_backend, model_backend_route, model_registry, pricing_rule, quota_counter, request_log, response_cache, security_event, usage_record, admin_action_log, user_quota_override, rag_document, rag_document_chunk, client_feature_block, rag_usage_event, tts_usage_event, ai_wallet, commercial_routing_event, commercial_routing_config, commercial_report_schedule, commercial_report_delivery_log, commercial_node_heartbeat, commercial_routing_event_ingest, commercial_cluster_aggregate, commercial_capacity, commercial_infra_simulation, commercial_revenue_alert_delivery, commercial_revenue_escalation_policy, commercial_compliance, commercial_governance, commercial_governance_federation, commercial_encryption, commercial_sovereign_governance, commercial_model_supply_chain, commercial_cryptographic_receipts, operations, agents
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 

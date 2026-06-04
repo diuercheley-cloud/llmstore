@@ -1,16 +1,14 @@
-import hmac
 import hashlib
+import hmac
 import json
 import logging
 import uuid
-import httpx
-from typing import Any, Dict, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+import httpx
 from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
 from app.models.agents import AgentRun
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

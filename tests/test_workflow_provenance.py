@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 from app.services.workflows.workflow_provenance import WorkflowProvenanceService
 

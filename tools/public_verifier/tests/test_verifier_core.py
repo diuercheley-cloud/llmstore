@@ -1,8 +1,13 @@
 
-import pytest
-import hashlib
 import json
-from tools.public_verifier.verifier_core import Verifier, _sha256_hex, _pair_hash, verify_merkle_path
+
+from tools.public_verifier.verifier_core import (
+    Verifier,
+    _pair_hash,
+    _sha256_hex,
+    verify_merkle_path,
+)
+
 
 def test_merkle_path_validation():
     # Simple tree: [L1, L2] -> Root

@@ -5,8 +5,10 @@
 
 # Owner: platform-ops
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.agent_catalog import PluginSignature
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PluginSignatureService:
     def __init__(self, db: AsyncSession):

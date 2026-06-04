@@ -1,20 +1,21 @@
 # Owner: agent-platform
-import pytest
 import uuid
-import json
+
+import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
+
 
 @pytest.mark.asyncio
 async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
     # Import app models and configurations inside test to respect monkeypatched DB/Session
-    from app.main import app as fastapi_app
     from app.core.config import get_settings
-    from app.db.session import SessionLocal
-    from app.models.client import Client as DBClient
-    from app.models.api_key import ApiKey
-    from app.models.agents import AgentDefinition, AgentRun
     from app.core.security import hash_secret
+    from app.db.session import SessionLocal
+    from app.main import app as fastapi_app
+    from app.models.agents import AgentDefinition, AgentRun
+    from app.models.api_key import ApiKey
+    from app.models.client import Client as DBClient
     from app.services.agents.streaming.run_event_stream import RunEventStreamService
 
     settings = get_settings()

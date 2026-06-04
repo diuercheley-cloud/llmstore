@@ -1,12 +1,11 @@
 import os
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-
-from app.services.rag_enterprise.retrieval import search_chunks
-from app.services.rag_enterprise.embeddings import EnterpriseEmbeddingService
 from app.models.rag_document import RAGDocument
-
+from app.services.rag_enterprise.embeddings import EnterpriseEmbeddingService
+from app.services.rag_enterprise.retrieval import search_chunks
 
 pytestmark = pytest.mark.asyncio
 
@@ -92,7 +91,6 @@ class TestTenantFilterAlwaysApplied:
             session.execute = AsyncMock(side_effect=fake_execute)
 
             from app.services.rag_enterprise.ingestion import ingest_document
-            from app.services.rag_enterprise.ingestion import record_rag_event
             with patch("app.services.rag_enterprise.ingestion.record_rag_event", AsyncMock()):
                 with patch("app.services.rag_enterprise.ingestion.select") as mock_select:
                     mock_client = MagicMock()

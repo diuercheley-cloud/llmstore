@@ -1,6 +1,8 @@
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List
+
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.models.operations.adapter_sandbox import AdapterManifest
+
 
 class AdapterPromotionGateService:
     def evaluate_gates(

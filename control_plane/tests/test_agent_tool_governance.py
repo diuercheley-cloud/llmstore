@@ -1,13 +1,12 @@
+import uuid
+from pathlib import Path
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.main import app as main_app
-import app.db.session
-from app.models.agents import AgentTool, AgentToolVersion
-from app.services.agents import tool_registry
 from app.db.base import Base
-from pathlib import Path
+from app.services.agents import tool_registry
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force SQLite for tests
 TEST_DB_FILE = Path("/tmp/test-tool-governance.db")
@@ -106,8 +105,8 @@ async def test_tool_exceeds_max_calls_per_run(test_db):
         tool = await tool_registry.create_tool(db, data)
         run_id = uuid.uuid4()
         
-        from app.services.agents import tool_executor
         from app.core.config import get_settings
+        from app.services.agents import tool_executor
         settings = get_settings()
         settings.agent_execution_enabled = True
         settings.agent_tool_execution_enabled = True

@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+
 class RAGFileResponse(BaseModel):
     id: uuid.UUID
     filename: str

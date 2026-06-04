@@ -1,14 +1,12 @@
 """Tests for xAI/Grok provider sanitization — API key masking, prompt/response privacy."""
 
 import json
-import os
 import re
 
 import pytest
-
 from app.services.providers.base import ProviderType
-from app.services.providers.xai_provider import XAIProvider
 from app.services.providers.schemas import ProviderCapabilities
+from app.services.providers.xai_provider import XAIProvider
 
 XAI_MASK_KEY = "xai_abcdefghijklmnopqrstuvwxyz123456"
 XAI_REALISTIC_KEY = "xai_test_real_key_1234567890abcdef"
@@ -72,7 +70,7 @@ def test_no_key_in_capabilities():
     assert isinstance(caps, ProviderCapabilities)
     sanitized = json.dumps(caps.model_dump())
     for pat in KEY_LEAK_PATTERNS:
-        assert not pat.search(sanitized), f"Key leak in capabilities"
+        assert not pat.search(sanitized), "Key leak in capabilities"
 
 
 def test_estimate_cost_sanitized():

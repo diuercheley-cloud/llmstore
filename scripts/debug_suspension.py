@@ -1,11 +1,11 @@
 import asyncio
-import os
-from datetime import timedelta
-from sqlalchemy import select
-from app.db.session import async_session_maker
-from app.models.client import Client
-from app.models.billing_invoice import BillingInvoice
+
 from app.core.time import utc_now
+from app.db.session import async_session_maker
+from app.models.billing_invoice import BillingInvoice
+from app.models.client import Client
+from sqlalchemy import select
+
 
 async def main():
     async with async_session_maker() as session:

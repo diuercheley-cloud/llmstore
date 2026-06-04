@@ -1,15 +1,18 @@
-import uuid
 import hashlib
-from datetime import datetime, timedelta
-from typing import Any, List, Optional, Tuple
-from sqlalchemy.future import select
+import uuid
+from datetime import datetime
+from typing import Any, Optional, Tuple
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...models.commercial_confidential_runtime import (
-    CommercialConfidentialRuntimeProfile,
-    CommercialConfidentialInferenceSession,
-    CommercialConfidentialRuntimeAuditEvent
-)
+from sqlalchemy.future import select
+
 from ...core.config import get_settings
+from ...models.commercial_confidential_runtime import (
+    CommercialConfidentialInferenceSession,
+    CommercialConfidentialRuntimeAuditEvent,
+    CommercialConfidentialRuntimeProfile,
+)
+
 
 async def resolve_confidential_profile(
     db: AsyncSession, 
@@ -106,8 +109,9 @@ async def apply_retention_policy(
     retention = profile.max_retention_seconds or get_settings().commercial_confidential_default_retention_seconds
     
     # Generate cryptographic receipt proving cleanup action
-    from app.services.inference.cryptographic_receipts import sign_payload
     import json
+
+    from app.services.inference.cryptographic_receipts import sign_payload
     
     cleanup_data = {
         "session_id": str(session.id),

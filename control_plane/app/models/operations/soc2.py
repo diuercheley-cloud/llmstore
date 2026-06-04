@@ -1,11 +1,9 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import uuid
-
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, ForeignKey, Integer, Text
-from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from app.db.base_class import Base
+from sqlalchemy import JSON, Column, DateTime, String, Text
+
 
 class SOC2ControlReview(Base):
     __abstract__ = True

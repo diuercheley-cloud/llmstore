@@ -5,12 +5,6 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse, JSONResponse, Response
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.commercial_compliance import (
     CommercialApprovalChain,
@@ -20,7 +14,6 @@ from app.models.commercial_compliance import (
     CommercialEvidencePackage,
     CommercialOperationalControl,
     CommercialOperationalEvidence,
-    CommercialOperationalExceptionLink,
     CommercialOperationalReview,
 )
 from app.services.auth import require_admin
@@ -47,11 +40,15 @@ from app.services.compliance.operational_controls import (
     detect_overdue_reviews,
     detect_stale_evidence,
     evaluate_control_effectiveness,
-    link_exception,
     summarize_operational_controls,
     update_control,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/compliance",
@@ -439,6 +436,7 @@ async def get_operational_effectiveness(db: AsyncSession = Depends(get_db_sessio
 
 
 from app.services.compliance.audit_pack import AuditPackService
+
 
 @router.post("/audit-pack/generate")
 async def post_generate_audit_pack(

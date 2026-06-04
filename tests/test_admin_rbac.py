@@ -3,11 +3,10 @@ import os
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy import func, select
-
 from app.db.base import Base
 from app.models.admin_rbac import AdminAuditEvent, AdminPermission, AdminRoleModel, AdminUser
 from app.services.admin_rbac import ensure_admin_rbac_seed
+from sqlalchemy import func, select
 
 
 @pytest_asyncio.fixture
@@ -18,8 +17,8 @@ async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
     from app.core.config import get_settings
     get_settings.cache_clear()
 
-    from app.main import app
     from app.db.session import get_db_session, get_redis
+    from app.main import app
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
@@ -55,8 +54,8 @@ async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
     from app.core.config import get_settings
     get_settings.cache_clear()
 
-    from app.main import app
     from app.db.session import get_db_session, get_redis
+    from app.main import app
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)

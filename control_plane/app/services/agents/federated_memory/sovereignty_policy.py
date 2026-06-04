@@ -1,8 +1,10 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Tuple
+
 from app.models.agent_federated_memory import FederatedMemoryPeer
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class SovereigntyPolicy:
     def __init__(self, db: AsyncSession):

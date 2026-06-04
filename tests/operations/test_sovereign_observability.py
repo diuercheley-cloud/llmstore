@@ -1,5 +1,10 @@
-from app.services.operations.observability.metric_recorder import build_metric_hash, validate_metric_payload
-from app.services.operations.observability.observability_sanitizer import sanitize_observability_payload
+from app.services.operations.observability.metric_recorder import (
+    build_metric_hash,
+    validate_metric_payload,
+)
+from app.services.operations.observability.observability_sanitizer import (
+    sanitize_observability_payload,
+)
 
 
 def test_observability_sanitizes_sensitive_payload():

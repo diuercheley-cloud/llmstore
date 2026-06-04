@@ -1,26 +1,26 @@
 # tests/llm_harness/test_new_platform_features.py
+import asyncio
+import json
 import os
 import sys
-import json
-import asyncio
 import tempfile
-import base64
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
-from scripts.llm_harness.config import HarnessConfig
-from scripts.llm_harness.server.app import app, server_config, ACTIVE_RUNS, ACTIVE_EVAL_RUNS
-from scripts.llm_harness.plugins import plugin_registry, Plugin, PluginMetadata
-from scripts.llm_harness.mcp import mcp_client, initialize_mcp_and_register_tools
 from scripts.llm_harness.benchmarks import BenchmarkSuiteRunner, compare_benchmarks
-from scripts.llm_harness.prompt_builder import PromptBuilder
-from scripts.llm_harness.policy import PolicyEngine, PolicyDecision
-from scripts.llm_harness.legacy_runner import run_harness
-from scripts.llm_harness.workspace import Workspace
-from scripts.llm_harness.sanitizer import Sanitizer
 from scripts.llm_harness.benchmarks.gsm8k import GSM8KAdapter
 from scripts.llm_harness.benchmarks.swebench_adapter import SWEBenchAdapter
+from scripts.llm_harness.config import HarnessConfig
+from scripts.llm_harness.legacy_runner import run_harness
+from scripts.llm_harness.mcp import mcp_client
+from scripts.llm_harness.plugins import Plugin, PluginMetadata, plugin_registry
+from scripts.llm_harness.policy import PolicyEngine
+from scripts.llm_harness.sanitizer import Sanitizer
+from scripts.llm_harness.server.app import ACTIVE_RUNS, app, server_config
+from scripts.llm_harness.workspace import Workspace
+
 
 # 1. API Server Mode Tests
 def test_server_health():
@@ -402,7 +402,7 @@ def test_sanitizer_redacts_base64_image():
 
 # 7. Test CLI commands execution
 def test_cli_commands_plugin_and_server():
-    from scripts.llm_harness.cli_commands import run_server_command, run_plugins_command
+    from scripts.llm_harness.cli_commands import run_plugins_command, run_server_command
     
     mock_args = MagicMock()
     mock_args.host = "127.0.0.1"

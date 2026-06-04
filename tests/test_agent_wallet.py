@@ -1,9 +1,11 @@
-import pytest
 import uuid
-from app.services.agents.wallets.agent_wallet import AgentWalletService
-from app.models.agents import AgentDefinition
-from app.models.agent_wallet import AgentWallet, AgentWalletLedgerEntry, AgentWalletLimit
+
+import pytest
 from app.core.config import get_settings
+from app.models.agent_wallet import AgentWallet, AgentWalletLedgerEntry, AgentWalletLimit
+from app.models.agents import AgentDefinition
+from app.services.agents.wallets.agent_wallet import AgentWalletService
+
 
 @pytest.fixture
 def agent_id():

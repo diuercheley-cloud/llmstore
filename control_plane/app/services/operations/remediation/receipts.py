@@ -1,7 +1,8 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 
 def compute_payload_hash(payload: Dict[str, Any]) -> str:
     """Computes a deterministic hash for a payload."""

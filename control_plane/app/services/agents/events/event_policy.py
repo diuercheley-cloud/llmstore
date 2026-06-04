@@ -1,9 +1,10 @@
 import logging
 from datetime import timedelta
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_events import AgentEventTrigger, AgentEventDelivery
+
 from app.core.time import utc_now
+from app.models.agent_events import AgentEventDelivery, AgentEventTrigger
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

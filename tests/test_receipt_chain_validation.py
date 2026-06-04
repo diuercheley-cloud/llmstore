@@ -3,10 +3,7 @@ from __future__ import annotations
 import hashlib
 
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_cryptographic_receipts import (
-    CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,
 )
 from app.services.inference.cryptographic_receipts import (
@@ -14,6 +11,7 @@ from app.services.inference.cryptographic_receipts import (
     generate_inference_receipt,
     validate_receipt_chain,
 )
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

@@ -1,10 +1,10 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Any, Dict, Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Tuple
 
-from app.models.agents import AgentLLMJudgeRun, AgentEvalResult
+from app.models.agents import AgentLLMJudgeRun
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

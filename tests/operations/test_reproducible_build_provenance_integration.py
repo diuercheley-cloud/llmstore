@@ -1,5 +1,9 @@
-from app.services.operations.reproducible_builds.provenance_integration import ReproducibleBuildProvenanceIntegration
-from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
+from app.services.operations.reproducible_builds.provenance_integration import (
+    ReproducibleBuildProvenanceIntegration,
+)
+from app.services.operations.reproducible_builds.reproducible_build_service import (
+    ReproducibleBuildService,
+)
 
 
 def test_phase80_provenance_integration():

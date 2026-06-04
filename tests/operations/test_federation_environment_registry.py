@@ -1,6 +1,8 @@
 import uuid
 
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
 
 
 def test_environment_registry_defaults_and_explanation():

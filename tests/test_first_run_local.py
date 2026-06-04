@@ -1,6 +1,5 @@
-import pytest
 import subprocess
-import os
+
 
 def test_first_run_help():
     result = subprocess.run(["./scripts/first-run-local.sh", "--help"], capture_output=True, text=True)

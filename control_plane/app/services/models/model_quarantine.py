@@ -1,25 +1,25 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.admin_action_log import AdminActionLog
 from app.models.commercial_model_lifecycle import (
     CommercialModelLifecycleRecord,
     CommercialModelRollbackRecord,
 )
 from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
-from app.services.models.model_lifecycle_manager import _canonical_json, _log_audit, _sanitize_text, _validate_transition
+from app.services.models.model_lifecycle_manager import (
+    _canonical_json,
+    _log_audit,
+    _sanitize_text,
+    _validate_transition,
+)
 from app.services.models.model_lineage import create_lineage_entry
 from app.services.routing.commercial_report_export import sanitize_report_payload
-
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 QUARANTINE_REASONS = {
     "checksum_mismatch",

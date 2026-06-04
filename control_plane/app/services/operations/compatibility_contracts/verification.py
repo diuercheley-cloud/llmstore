@@ -1,8 +1,14 @@
 from typing import Any
 
-from app.services.operations.compatibility_contracts.capability_negotiation import CapabilityNegotiationService
-from app.services.operations.compatibility_contracts.compatibility_matrix import CompatibilityMatrixService
-from app.services.operations.compatibility_contracts.semantic_versioning import SemanticVersioningService
+from app.services.operations.compatibility_contracts.capability_negotiation import (
+    CapabilityNegotiationService,
+)
+from app.services.operations.compatibility_contracts.compatibility_matrix import (
+    CompatibilityMatrixService,
+)
+from app.services.operations.compatibility_contracts.semantic_versioning import (
+    SemanticVersioningService,
+)
 from app.services.operations.compatibility_contracts.validation import validate_schema_compatibility
 
 

@@ -5,29 +5,26 @@ import logging
 import uuid
 from typing import Any, List
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.db.redis import get_redis
 from app.db.session import get_db_session
-from app.services.auth import require_admin as get_admin_user
 from app.models.commercial_qos_tier import CommercialQoSTier
 from app.schemas.routing import (
+    CommercialQoSChargebackSummary,
+    CommercialQoSFairnessSummary,
+    CommercialQoSSimulateRequest,
+    CommercialQoSSimulateResponse,
     CommercialQoSTierCreate,
     CommercialQoSTierRead,
     CommercialQoSTierUpdate,
-    CommercialQoSSimulateRequest,
-    CommercialQoSSimulateResponse,
-    CommercialQoSFairnessSummary,
-    CommercialQoSChargebackSummary,
-    CommercialScoreExplained,
-    TaskType,
 )
+from app.services.auth import require_admin as get_admin_user
 from app.services.routing.commercial_qos import CommercialQoSService
 from app.services.routing.commercial_ranker import rank_commercial_routes
-from app.services.routing.qos_fairness import CommercialQoSFairnessService
 from app.services.routing.qos_chargeback import CommercialQoSChargebackService
-from app.db.redis import get_redis
+from app.services.routing.qos_fairness import CommercialQoSFairnessService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +110,9 @@ async def export_chargeback(
     data = await CommercialQoSChargebackService.summarize_chargeback(db, hours)
     
     if format == "csv":
-        import io
         import csv
+        import io
+
         from fastapi.responses import StreamingResponse
         
         output = io.StringIO()
@@ -220,11 +218,12 @@ async def get_qos_overview(
         "timestamp": uuid.uuid4(), # placeholder
     }
 
-from app.services.routing.qos_priority_queue import QoSPriorityQueue
-from app.services.routing.qos_rate_limiter import QoSRateLimiter
+from app.core.config import get_settings
 from app.db.session import redis_client
 from app.models.generation_job import GenerationJob
-from app.core.config import get_settings
+from app.services.routing.qos_priority_queue import QoSPriorityQueue
+from app.services.routing.qos_rate_limiter import QoSRateLimiter
+
 
 @router.get("/queue/overview")
 async def get_queue_overview(
@@ -256,7 +255,6 @@ async def get_queue_overview(
     oldest = oldest_job.scalar_one_or_none()
     max_wait_ms = 0
     if oldest and oldest.queued_at:
-        import datetime
         from app.core.time import utc_now
         max_wait_ms = int((utc_now() - oldest.queued_at).total_seconds() * 1000)
 

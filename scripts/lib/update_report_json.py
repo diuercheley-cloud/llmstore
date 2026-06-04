@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import sys
 import os
+import sys
 
 report_path = sys.argv[1]
 category = sys.argv[2]

@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from app.core.config import get_settings
+
 from .base import VectorStoreBase
 
 logger = logging.getLogger(__name__)

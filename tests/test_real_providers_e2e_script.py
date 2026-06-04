@@ -1,5 +1,5 @@
 import subprocess
-import os
+
 
 def test_script_help():
     res = subprocess.run(["./scripts/validate-real-providers-e2e.sh", "--help"], capture_output=True, text=True)

@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import Optional
+
 from app.models.agent_routing import AgentModelCapability
 
 

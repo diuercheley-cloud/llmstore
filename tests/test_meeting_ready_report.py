@@ -1,8 +1,7 @@
-import subprocess
-import os
 import json
+import os
+import subprocess
 import tempfile
-import re
 
 SCRIPT = "./scripts/meeting-ready-check-local.sh"
 OFFLINE_ARGS = ["--offline", "--skip-rag", "--skip-tts", "--skip-lmstudio"]

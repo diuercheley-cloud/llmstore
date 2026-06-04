@@ -1,9 +1,4 @@
 # Owner: agent-platform
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import get_db, require_admin
 from app.core.config import Settings, get_settings
 from app.models.agents import AgentMemoryItem
@@ -12,6 +7,9 @@ from app.services.agents.cognitive_memory.memory_explainability import MemoryExp
 from app.services.agents.cognitive_memory.memory_summarizer import MemorySummarizer
 from app.services.agents.cognitive_memory.semantic_memory import SemanticMemoryService
 from app.services.agents.cognitive_memory.working_memory import WorkingMemoryService
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/memory", tags=["agent-cognitive-memory"])
 

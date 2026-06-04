@@ -1,6 +1,7 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
 from app.main import app
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_developer_docs_endpoint_exists_and_contains_expected_content():

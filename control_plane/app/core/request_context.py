@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 
-
 _correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
 _source_ip: ContextVar[str] = ContextVar("source_ip", default="")
 _tenant_id: ContextVar[str] = ContextVar("tenant_id", default="default")

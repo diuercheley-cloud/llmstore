@@ -1,8 +1,9 @@
 # Owner: agent-platform
 import hashlib
-import uuid
 import logging
-from typing import Dict, Any, List
+import uuid
+from typing import Any, Dict, List
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

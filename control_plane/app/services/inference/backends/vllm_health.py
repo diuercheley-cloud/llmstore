@@ -1,5 +1,5 @@
 import logging
-import httpx
+
 from app.core.config import get_settings
 from app.services.inference.backends.vllm_backend import VllmBackendService
 

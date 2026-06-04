@@ -1,8 +1,12 @@
 import uuid
 
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
 from app.services.operations.federation_sync.replay_verifier import FederationReplayVerifier
-from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
+from app.services.operations.federation_sync.synchronization_protocol import (
+    SovereignFederationSynchronizationProtocol,
+)
 
 
 def test_replay_verifier_bundle_and_session():

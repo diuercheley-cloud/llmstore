@@ -1,4 +1,3 @@
-import os
 
 def test_dashboard_contains_registry_section():
     admin_html_path = "control_plane/app/static/admin/index.html"

@@ -1,6 +1,7 @@
 import os
-import sys
 import re
+import sys
+
 
 def validate_internal_security():
     print("Executing internal security review scan...")

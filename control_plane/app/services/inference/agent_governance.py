@@ -1,18 +1,20 @@
-import uuid
 import hashlib
 import json
-from datetime import datetime
-from typing import Any, List, Optional, Tuple, Dict
-from sqlalchemy.future import select
+import uuid
+from typing import Any, List, Optional, Tuple
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...models.commercial_agents import (
-    CommercialAgentProfile,
-    CommercialAgentExecution,
-    CommercialAgentDelegationPolicy,
-    CommercialAgentToolExecution,
-    CommercialAgentMemoryBoundary
-)
+from sqlalchemy.future import select
+
 from ...core.config import get_settings
+from ...models.commercial_agents import (
+    CommercialAgentDelegationPolicy,
+    CommercialAgentExecution,
+    CommercialAgentMemoryBoundary,
+    CommercialAgentProfile,
+    CommercialAgentToolExecution,
+)
+
 
 async def create_agent_profile(
     db: AsyncSession,

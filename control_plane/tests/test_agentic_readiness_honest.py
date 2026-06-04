@@ -1,20 +1,17 @@
-import asyncio
-from pathlib import Path
+import uuid
 from datetime import datetime, timedelta, timezone
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-import os
+from pathlib import Path
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import uuid
-
-from app.main import app as main_app
-import app.db.session
 from app.core.config import get_settings
-from app.services.auth import require_admin
-from app.models.agent_execution import AgentWorkerHeartbeat
-from app.models.agents import AgentRun
 from app.db.base import Base
+from app.main import app as main_app
+from app.models.agents import AgentRun
+from app.services.auth import require_admin
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 async def mock_require_admin():
     return {"role": "super_admin"}

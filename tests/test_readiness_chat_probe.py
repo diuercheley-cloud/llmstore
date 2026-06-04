@@ -1,6 +1,6 @@
-import pytest
 import json
-from unittest.mock import patch, MagicMock
+
+import pytest
 
 # Simple test to verify the logic of the chat probe
 # We will mock the http_request and check if it handles responses correctly

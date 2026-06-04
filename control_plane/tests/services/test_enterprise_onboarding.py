@@ -1,6 +1,7 @@
 import pytest
 from app.services.enterprise_onboarding import EnterpriseOnboardingService
 
+
 @pytest.mark.asyncio
 async def test_enterprise_project_creation(db_session):
     service = EnterpriseOnboardingService(db_session)

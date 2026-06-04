@@ -3,22 +3,18 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Any
-
-from sqlalchemy import func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_attestation_runtime import (
-    CommercialAttestationChallenge,
     CommercialAttestationEvidence,
-    CommercialAttestationPolicy,
     CommercialRuntimeAttestation,
-    CommercialRuntimeMeasurement,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
@@ -34,8 +30,8 @@ def _hash_payload(payload: dict[str, Any]) -> str:
 
 
 def _runtime_fingerprint() -> dict[str, Any]:
-    import platform
     import os
+    import platform
     return {
         "platform": platform.platform(),
         "architecture": platform.machine(),

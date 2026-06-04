@@ -1,12 +1,11 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.security.hardware_attestation import (
     collect_attestation_placeholder,
     enforce_attestation_policy,
     summarize_attestation_status,
     verify_attestation_record,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

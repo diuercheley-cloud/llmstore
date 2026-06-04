@@ -1,7 +1,8 @@
-import subprocess
-import os
 import glob
 import json
+import os
+import subprocess
+
 
 def test_report_generation():
     output_dir = "artifacts/pytest-checklists"

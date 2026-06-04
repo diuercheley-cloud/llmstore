@@ -1,14 +1,12 @@
 # Owner: platform-ops
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException
-
 from app.api.dependencies import get_db, require_admin
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.config import get_settings
 from app.services.security.attestation_service import NodeAttestationService
 from app.services.security.pki_service import PKIService
-from app.core.config import get_settings
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/security", tags=["security-pki-attestation"])
 

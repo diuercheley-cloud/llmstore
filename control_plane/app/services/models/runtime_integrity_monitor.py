@@ -8,10 +8,6 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
-from sqlalchemy import desc, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
@@ -34,6 +30,9 @@ from app.services.models.signed_model_registry import calculate_model_checksum, 
 from app.services.routing.commercial_leader_election import renew_leader_lease, try_acquire_leader
 from app.services.routing.commercial_node_heartbeat import resolve_node_identity
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import desc, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 

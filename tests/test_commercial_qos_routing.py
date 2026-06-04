@@ -1,9 +1,9 @@
-import pytest
-import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
-from app.services.routing.commercial_qos import CommercialQoSService
+import pytest
 from app.models.commercial_qos_tier import CommercialQoSTier
+from app.services.routing.commercial_qos import CommercialQoSService
+
 
 @pytest.mark.asyncio
 async def test_resolve_qos_tier_by_plan():

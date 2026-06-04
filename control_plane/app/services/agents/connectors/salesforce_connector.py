@@ -1,14 +1,16 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
 from app.services.agents.connectors.base import (
     ConnectorAdapter,
     ConnectorCapability,
     RiskLevel,
     SideEffectLevel,
 )
-from app.services.agents.connectors.connector_runtime import ConnectorRuntime
 from app.services.agents.connectors.connector_mode import ConnectorMode
+from app.services.agents.connectors.connector_runtime import ConnectorRuntime
 from app.services.agents.connectors.http_client import ConnectorHTTPClient
+
 
 class SalesforceConnector(ConnectorAdapter):
     @property

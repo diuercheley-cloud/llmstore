@@ -1,6 +1,7 @@
-import time
 import hashlib
 import json
+import time
+
 
 def generate_performance_baseline():
     print("Generating performance baseline metrics...")

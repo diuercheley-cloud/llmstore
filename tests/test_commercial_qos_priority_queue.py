@@ -1,7 +1,9 @@
-import uuid
-import pytest
 import time
+import uuid
+
+import pytest
 from app.services.routing.qos_priority_queue import QoSPriorityQueue
+
 
 @pytest.mark.asyncio
 async def test_qos_priority_queue_ordering(redis_client):

@@ -4,7 +4,6 @@ import re
 import subprocess
 from pathlib import Path
 
-
 SCRIPT_PATH = Path("scripts/diagnose-artifact-secrets.sh")
 DOC_PATH = Path("docs/SECURITY_ARTIFACTS_CLEANUP_v1.5.5.md")
 UNMASKED_SECRET_RE = re.compile(r"sk-local-[A-Za-z0-9_-]{20,}")

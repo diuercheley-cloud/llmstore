@@ -1,15 +1,15 @@
 # Owner: agent-platform
 import uuid
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.services.agents import tool_registry as tool_service
 from app.models.agents import AgentToolInvocation
+from app.services.agents import tool_registry as tool_service
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agent-tools", tags=["agent-tools-admin"])
 
@@ -445,8 +445,9 @@ async def create_credential(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Registers a delegated credential and optionally grants it to a tool/agent."""
-    from app.services.agents.tool_credentials import register_credential, grant_credential
     from datetime import datetime
+
+    from app.services.agents.tool_credentials import grant_credential, register_credential
     
     expires_dt = None
     if payload.expires_at:

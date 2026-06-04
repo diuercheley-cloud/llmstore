@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 
@@ -54,7 +53,7 @@ def test_no_real_keys_in_env_example():
     env_example = PROJECT_ROOT / ".env.example"
     findings = _scan_file_for_secrets(env_example)
     assert not findings, (
-        f"Real-looking keys in .env.example:\n" +
+        "Real-looking keys in .env.example:\n" +
         "\n".join(f"  {f[0]}:{f[1]} {f[2]}" for f in findings)
     )
 
@@ -84,7 +83,7 @@ def test_no_real_keys_in_versioned_files():
                 continue
             findings.extend(_scan_file_for_secrets(f))
     assert not findings, (
-        f"Real-looking keys in versioned files:\n" +
+        "Real-looking keys in versioned files:\n" +
         "\n".join(f"  {f[0]}:{f[1]} {f[2]}" for f in findings[:20])
     )
 

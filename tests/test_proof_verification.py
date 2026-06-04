@@ -7,17 +7,11 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI
-from httpx import AsyncClient
-
-from app.models.commercial_cryptographic_receipts import CommercialInferenceReceipt
 from app.models.commercial_merkle_timelines import (
     CommercialExecutionProof,
-    CommercialMerkleLeaf,
     CommercialMerkleTimeline,
 )
-from app.services.inference.execution_proofs import generate_execution_proof
-from app.services.inference.merkle_timelines import canonical_leaf_hash, seal_timeline
+from httpx import AsyncClient
 
 
 def _admin_headers():

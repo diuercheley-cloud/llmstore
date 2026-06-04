@@ -3,11 +3,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from app.db.base import Base
 from sqlalchemy import DateTime, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db.base import Base
 
 
 class CommercialClusterSyncLog(Base):

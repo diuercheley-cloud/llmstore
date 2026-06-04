@@ -4,14 +4,17 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
-from httpx import AsyncClient
-from starlette.responses import JSONResponse
-
 from app.api.deps import get_inference_proxy
 from app.main import app
 from app.services.billing.core import EffectivePlan
 from app.services.inference_proxy import ForwardResult
-from app.utils.tool_calling import model_supports_native_tools, provider_supports_native_tools, validate_tool_schema
+from app.utils.tool_calling import (
+    model_supports_native_tools,
+    provider_supports_native_tools,
+    validate_tool_schema,
+)
+from httpx import AsyncClient
+from starlette.responses import JSONResponse
 
 
 class FakeToolProxy:

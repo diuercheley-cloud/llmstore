@@ -1,15 +1,13 @@
-import pytest
 import uuid
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
 from app.models.operations.adapter_sandbox import (
     AdapterManifest,
     AdapterSandboxRun,
-    AdapterSandboxStepResult,
-    AdapterSandboxPolicyViolation,
-    AdapterSandboxReceipt,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestAdapterSandboxModels:

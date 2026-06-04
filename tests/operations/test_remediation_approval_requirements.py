@@ -1,4 +1,7 @@
-from app.services.operations.remediation.approval_requirements import RemediationApprovalRequirementService
+from app.services.operations.remediation.approval_requirements import (
+    RemediationApprovalRequirementService,
+)
+
 
 class TestRemediationApprovalRequirements:
     def test_executive_approval_for_critical(self):

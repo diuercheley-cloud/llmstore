@@ -1,6 +1,7 @@
-import pytest
 import os
+
 from app.services.platform.profile_resolver import ProfileResolver
+
 
 def test_appliance_profile_resolution():
     resolver = ProfileResolver()

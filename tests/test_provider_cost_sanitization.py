@@ -1,7 +1,6 @@
-import pytest
-import subprocess
 import json
-from pathlib import Path
+import subprocess
+
 
 def test_sanitization_no_secrets(tmp_path):
     out_dir = tmp_path / "costs"

@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_ops_center_endpoints_unauthorized(async_client: AsyncClient):
     endpoints = [

@@ -1,35 +1,29 @@
-import uuid
-import logging
 import hashlib
-import json
-import zipfile
-import tarfile
 import io
-import os
+import json
+import logging
 import shutil
+import tarfile
+import uuid
+import zipfile
 from pathlib import Path
-from datetime import datetime
-from typing import List, Optional, Dict, Any, Set
+from typing import Dict, List, Optional, Set
 
-from sqlalchemy import select, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
-from app.models.plugins.marketplace import (
-    PluginMarketplaceEntry,
-    PluginVersion,
-    PluginInstall,
-    PluginPermission,
-    PluginTrustReport,
-    PluginReview,
-)
-from app.models.security_pki import PluginRegistry
-from app.models.security_event import SecurityEvent
-from app.core.time import utc_now
-from app.services.security.pki_service import PKIService
-from app.core.config import get_settings
 from app.contracts.plugin import ManifestV1
-from app.contracts.plugin_types import PLUGIN_TYPES, ALLOWED_PERMISSIONS
+from app.core.config import get_settings
+from app.models.plugins.marketplace import (
+    PluginInstall,
+    PluginMarketplaceEntry,
+    PluginPermission,
+    PluginReview,
+    PluginTrustReport,
+    PluginVersion,
+)
+from app.models.security_event import SecurityEvent
+from app.models.security_pki import PluginRegistry
+from app.services.security.pki_service import PKIService
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

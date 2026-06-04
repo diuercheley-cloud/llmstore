@@ -1,7 +1,9 @@
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
-from pydantic import BaseModel, Field
-from app.contracts.base import BaseContract, ContractCapability
+from typing import Any, Dict, Optional, Protocol, runtime_checkable
 from uuid import UUID
+
+from app.contracts.base import BaseContract, ContractCapability
+from pydantic import BaseModel
+
 
 class ModelInstance(BaseModel):
     id: UUID

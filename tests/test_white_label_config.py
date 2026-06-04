@@ -1,7 +1,5 @@
 import json
 import os
-import pytest
-import subprocess
 
 CONFIG_EXAMPLE = "config/branding.example.json"
 REQUIRED_FIELDS = [
@@ -84,9 +82,11 @@ def test_sanitize_string():
 
 
 def test_show_powered_by_disabled():
-    import sys, json, os
+    import json
+    import os
+    import sys
     sys.path.insert(0, "control_plane")
-    from app.services.branding import load_branding, BRANDING_CONFIG_PATH
+    from app.services.branding import BRANDING_CONFIG_PATH, load_branding
 
     original_exists = BRANDING_CONFIG_PATH.exists()
     original_content = None

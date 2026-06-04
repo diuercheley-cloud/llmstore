@@ -3,10 +3,9 @@ import logging
 from typing import Any
 
 from app.core.config import get_settings
-from app.services.provider_settings import is_real_api_key_configured
 from app.services.providers.base import ProviderAdapter, ProviderType
-from app.services.providers.schemas import ProviderCapabilities
 from app.services.providers.errors import ProviderNotConfiguredError
+from app.services.providers.schemas import ProviderCapabilities
 
 logger = logging.getLogger(__name__)
 

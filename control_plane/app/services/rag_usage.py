@@ -1,15 +1,14 @@
-from datetime import datetime
 import uuid
-from sqlalchemy import select, func, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.client import Client
+from app.models.client_feature_block import ClientFeatureBlock
 from app.models.rag_document import RAGDocument
 from app.models.rag_usage_event import RagUsageEvent
-from app.models.client_feature_block import ClientFeatureBlock
-from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 async def get_rag_usage_and_limits(session: AsyncSession, client: Client):
     effective_plan = await resolve_effective_plan_for_session(session, client)

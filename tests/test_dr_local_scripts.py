@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def test_dr_test_local_help():
     """
     Simple check that the DR test script exists and can show help.

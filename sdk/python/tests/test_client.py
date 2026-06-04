@@ -1,12 +1,14 @@
-import unittest
-from unittest.mock import patch, MagicMock
-import httpx
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, patch
+
+import httpx
 
 # Adiciona o diretório do SDK ao path para teste
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from kleberai import Client, KleberAIError
+
 
 class TestClient(unittest.TestCase):
     def setUp(self):

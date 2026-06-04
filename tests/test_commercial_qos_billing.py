@@ -1,16 +1,16 @@
-import pytest
 import uuid
+from datetime import timedelta
 from decimal import Decimal
-from datetime import datetime, timedelta
 
-from sqlalchemy import select
-from app.models.commercial_queue_chargeback import CommercialQueueChargeback
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.ai_wallet import AiWallet, AiWalletTransaction
+import pytest
+from app.core.time import utc_now
+from app.models.ai_wallet import AiWallet
 from app.models.billing_invoice import BillingInvoice
 from app.models.client import Client
+from app.models.commercial_queue_chargeback import CommercialQueueChargeback
 from app.services.billing.qos_billing import CommercialQoSBillingService
-from app.core.time import utc_now
+from sqlalchemy import select
+
 
 @pytest.fixture
 async def sample_client(session):

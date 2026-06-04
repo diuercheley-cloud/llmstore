@@ -3,7 +3,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_phase_66_readiness.py"
 DOC_PATH = ROOT_DIR / "docs" / "phases" / "phase_66_readiness_gate.md"

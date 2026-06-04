@@ -2,8 +2,6 @@ import os
 import subprocess
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
 CHECKLIST_DOC = ROOT / "docs" / "V1_7_RELEASE_CHECKLIST.md"
 VALIDATE_SCRIPT = ROOT / "scripts" / "validate-v1.7-release-checklist.sh"

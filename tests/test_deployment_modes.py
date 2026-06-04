@@ -1,12 +1,10 @@
-import pytest
 import os
-from unittest.mock import patch, MagicMock
-from fastapi import FastAPI
-import httpx
+from unittest.mock import patch
 
+import pytest
 from app.core.config import Settings
 from app.services.platform.deployment_modes import DeploymentModeService
-from app.api.system import get_operational_readiness
+
 
 def test_deployment_modes_service_fallback_defaults():
     service = DeploymentModeService(config_path="/invalid/path/deployment-modes.yaml")

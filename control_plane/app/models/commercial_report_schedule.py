@@ -4,10 +4,9 @@ import uuid
 from datetime import datetime, timezone
 
 import sqlalchemy as sa
+from app.db.base import Base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db.base import Base
 
 
 class CommercialReportSchedule(Base):

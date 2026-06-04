@@ -1,6 +1,6 @@
 import os
 import subprocess
-import pytest
+
 
 def test_quotes_in_gitignore():
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

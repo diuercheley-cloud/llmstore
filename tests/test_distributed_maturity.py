@@ -1,9 +1,10 @@
-import pytest
 import uuid
-import asyncio
-from app.services.batches.redis_queue import RedisAgentQueue
-from app.services.agents.tracing import tracing_service
+
+import pytest
 from app.services.agents.agent_worker import AgentWorkerService
+from app.services.agents.tracing import tracing_service
+from app.services.batches.redis_queue import RedisAgentQueue
+
 
 @pytest.mark.asyncio
 async def test_redis_queue_basic(fake_redis):

@@ -1,8 +1,7 @@
-import pytest
+import importlib.util
 import os
 import sys
-import importlib.util
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 # Setup sys.path to find scripts folder
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
@@ -192,7 +191,6 @@ diff --git a/control_plane/app/api/new_router.py b/control_plane/app/api/new_rou
 """
 
     # Mock subprocess runs
-    import subprocess
     class MockCompletedProcess:
         def __init__(self, stdout, returncode=0):
             self.stdout = stdout

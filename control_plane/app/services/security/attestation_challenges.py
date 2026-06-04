@@ -4,11 +4,8 @@ import hashlib
 import json
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Any
-
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -17,6 +14,8 @@ from app.models.commercial_attestation_runtime import (
     CommercialRuntimeAttestation,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

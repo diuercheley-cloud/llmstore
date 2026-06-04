@@ -1,9 +1,7 @@
 """Add system prompt, prompt template and safety profile for Release 0.5.0-local"""
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
+from alembic import op
 
 revision = "20260430_0011"
 down_revision = "20260430_0010"

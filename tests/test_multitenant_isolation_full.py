@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_multitenant_isolation_full(admin_client: AsyncClient, admin_token_headers):
     # Setup Client A

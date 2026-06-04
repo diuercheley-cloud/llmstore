@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, JSON, Boolean, Text
-from sqlalchemy.dialects.postgresql import UUID
+
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+
 
 class PlatformReleaseBaseline(Base):
     __tablename__ = "platform_release_baselines"

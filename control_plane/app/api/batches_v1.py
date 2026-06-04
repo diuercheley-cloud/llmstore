@@ -1,14 +1,13 @@
 import uuid
-import json
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Header, Body
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
+from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db
 from app.services.batches.batch_registry import BatchRegistry
-from app.services.batches.batch_scheduler import BatchScheduler
 from app.services.batches.batch_result_store import BatchResultStore
+from app.services.batches.batch_scheduler import BatchScheduler
+from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/batches", tags=["Batch API V1"])
 

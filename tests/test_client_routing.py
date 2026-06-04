@@ -1,12 +1,11 @@
 import pytest
-from fastapi import HTTPException
-from starlette.responses import JSONResponse
-
 from app.api.client import _chat_with_fallback
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.services.inference_proxy import ForwardResult
+from fastapi import HTTPException
+from starlette.responses import JSONResponse
 
 
 class FakeProxy:

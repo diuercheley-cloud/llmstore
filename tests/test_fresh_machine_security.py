@@ -1,9 +1,6 @@
-import os
 import re
 import subprocess
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "FRESH_MACHINE_VALIDATION.md"

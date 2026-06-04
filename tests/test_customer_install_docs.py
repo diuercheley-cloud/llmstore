@@ -1,5 +1,6 @@
 import os
 
+
 def test_docs_exist():
     docs = [
         "docs/CUSTOMER_INSTALL_GUIDE.md",

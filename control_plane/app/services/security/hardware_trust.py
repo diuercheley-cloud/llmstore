@@ -1,6 +1,6 @@
 import abc
 import hashlib
-from typing import Dict, Any
+from typing import Any, Dict
 
 from app.core.config import get_settings
 

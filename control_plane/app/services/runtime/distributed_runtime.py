@@ -1,24 +1,23 @@
-import uuid
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict
+import uuid
+from datetime import timedelta
+from typing import List, Optional
 
-from sqlalchemy import select, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.runtime.distributed_runtime import (
-    RuntimeNode,
-    RuntimeNodeHeartbeat,
-    RuntimeModelPlacement,
-    RuntimeRoutingEvent,
-    RuntimeFailoverEvent,
+from app.core.metrics import (
+    LLM_RUNTIME_FAILOVERS_TOTAL,
+    LLM_RUNTIME_NODE_HEARTBEATS_TOTAL,
+    LLM_RUNTIME_NODES_TOTAL,
 )
 from app.core.time import utc_now
-from app.core.metrics import (
-    LLM_RUNTIME_NODES_TOTAL,
-    LLM_RUNTIME_NODE_HEARTBEATS_TOTAL,
-    LLM_RUNTIME_FAILOVERS_TOTAL,
+from app.models.runtime.distributed_runtime import (
+    RuntimeFailoverEvent,
+    RuntimeModelPlacement,
+    RuntimeNode,
+    RuntimeNodeHeartbeat,
+    RuntimeRoutingEvent,
 )
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

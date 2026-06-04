@@ -1,14 +1,15 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock
 
-from app.models.agents import AgentEvalRun, AgentEvalResult, AgentLLMJudgeRun, AgentABEvalRun
-from app.services.agents.evals.llm_judge import LLMJudge
-from app.services.agents.evals.red_team import RedTeamScanner
+import pytest
+from app.models.agents import AgentABEvalRun
 from app.services.agents.evals.ab_comparison import ABComparisonEvaluator
 from app.services.agents.evals.eval_scoring import EvalScoringManager
+from app.services.agents.evals.llm_judge import LLMJudge
+from app.services.agents.evals.red_team import RedTeamScanner
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def mock_db():
@@ -74,7 +75,6 @@ async def test_promotion_gate_logic(mock_db):
     # Case 1: Low score
     with MagicMock() as mock_self:
         mock_self.calculate_run_score = AsyncMock(return_value=0.5)
-        import app.services.agents.evals.eval_scoring as scoring_module
         with pytest.MonkeyPatch().context() as m:
             m.setattr(manager, "calculate_run_score", mock_self.calculate_run_score)
             

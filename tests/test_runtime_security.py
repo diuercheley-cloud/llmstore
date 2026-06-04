@@ -1,5 +1,4 @@
 import pytest
-
 from app.core.config import Settings
 from app.core.runtime_security import is_strong_admin_token, validate_runtime_security
 

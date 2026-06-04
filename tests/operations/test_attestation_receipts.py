@@ -1,7 +1,11 @@
 import uuid
 
-from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
-from app.services.operations.attestation_framework.federation_bundle import AttestationFederationBundleService
+from app.services.operations.attestation_framework.attestation_service import (
+    SovereignExecutionAttestationService,
+)
+from app.services.operations.attestation_framework.federation_bundle import (
+    AttestationFederationBundleService,
+)
 from app.services.operations.attestation_framework.receipts import (
     build_attestation_receipt,
     build_bundle_receipt,

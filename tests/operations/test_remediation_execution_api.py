@@ -1,15 +1,11 @@
-import pytest
 import uuid
-from httpx import AsyncClient
+
+import pytest
 import pytest_asyncio
 
 # Ensure models are registered for tests
-from app.models.operations.remediation_planning import RemediationPlan, RemediationStep
-from app.models.operations.remediation_execution import (
-    RemediationExecution,
-    RemediationExecutionStep,
-    RemediationKillSwitchState,
-)
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def ensure_execution_tables(admin_client: AsyncClient):

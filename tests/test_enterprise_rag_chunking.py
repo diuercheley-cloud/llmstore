@@ -1,8 +1,11 @@
 import pytest
-
-from app.services.rag_enterprise.chunking import chunk_text, chunk_by_fixed, chunk_by_heading, chunk_semantic_placeholder
+from app.services.rag_enterprise.chunking import (
+    chunk_by_fixed,
+    chunk_by_heading,
+    chunk_semantic_placeholder,
+    chunk_text,
+)
 from app.services.rag_enterprise.schemas import ChunkingConfig, ChunkStrategy
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -121,8 +124,8 @@ class TestChunkDispatcher:
         assert chunks[0].metadata["strategy"] == "semantic_placeholder"
 
     def test_unknown_strategy_fallback(self):
-        from app.services.rag_enterprise.schemas import ChunkStrategy
         import app.services.rag_enterprise.chunking as c
+        from app.services.rag_enterprise.schemas import ChunkStrategy
         original_map = c.STRATEGY_MAP.copy()
         try:
             config = ChunkingConfig(chunk_size=100, chunk_overlap=0, strategy=ChunkStrategy.fixed)

@@ -1,8 +1,8 @@
-import pytest
-import uuid
 import json
-from unittest.mock import MagicMock, AsyncMock
+import uuid
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from app.services.agents.memory.redis_memory_store import RedisMemoryStore
 
 

@@ -1,15 +1,14 @@
+import enum
 import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, JSON
+from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.time import utc_now
-from app.db.base import Base
-
-import enum
 
 class CryptoProviderType(str, enum.Enum):
     LOCAL_KEYSTORE = "local_keystore"

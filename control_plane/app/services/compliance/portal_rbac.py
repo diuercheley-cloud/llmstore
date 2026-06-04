@@ -3,10 +3,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from fastapi import HTTPException, Request, status
-
 from app.core.config import get_settings
 from app.models.client import Client
+from fastapi import HTTPException, Request, status
 
 PORTAL_ROLES = {
     "enterprise_auditor",

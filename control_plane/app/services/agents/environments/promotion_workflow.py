@@ -1,13 +1,13 @@
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
 from app.models.agent_environments import AgentPromotionRequest
-from app.services.agents.environments.environment_policy import EnvironmentPolicyService
 from app.services.agents.environments.agent_environments import AgentEnvironmentsService
+from app.services.agents.environments.environment_policy import EnvironmentPolicyService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("promotion_workflow")
 

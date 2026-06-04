@@ -1,16 +1,15 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, Optional
 
 from app.models.agent_deployments import AgentApiDeployment
 from app.services.agent_deployments.agent_api_deployment import (
     AgentApiDeploymentService,
-    DeploymentNotFoundError,
 )
 from app.services.agent_deployments.deployment_router import deployment_router
 from app.services.agents import agent_runtime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,11 @@
-import uuid
-import json
 import logging
-from typing import List, Optional, Dict, Any
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.core.time import utc_now
+from app.models.batches import BatchJob, BatchJobItem
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from app.models.batches import BatchJob, BatchJobItem
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

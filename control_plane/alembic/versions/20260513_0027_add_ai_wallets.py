@@ -4,10 +4,8 @@ Revision ID: 20260513_0027
 Revises: c93fcfd07a5d
 Create Date: 2026-05-13 08:00:00.000000
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = '20260513_0027'
 down_revision = 'c93fcfd07a5d'

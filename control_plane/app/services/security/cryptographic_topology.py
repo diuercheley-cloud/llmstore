@@ -3,14 +3,13 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_model_supply_chain import CommercialModelIntegrityScan
 from app.models.commercial_runtime_fabric import CommercialRuntimeFabricEvent
 from app.models.commercial_sovereign_governance import CommercialHardwareAttestationRecord
 from app.models.commercial_workflows import CommercialWorkflowExecution
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .trust_graph import TrustGraphService
 

@@ -1,6 +1,6 @@
 import os
-import sys
 import re
+
 
 def validate_framework_patterns():
     print("Validating framework patterns and searching for deprecated calls...")

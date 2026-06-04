@@ -1,15 +1,10 @@
 # Owner: platform-ops
 import json
 import logging
+import uuid
 from time import perf_counter
 
-import uuid
-
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse, Response
-
-from app.api.deps import get_inference_proxy, get_embedding_service, EmbeddingService
+from app.api.deps import EmbeddingService, get_embedding_service, get_inference_proxy
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
 from app.db.session import get_db_session, get_redis
@@ -33,7 +28,10 @@ from app.schemas.inference import (
 )
 from app.services.audit import log_request
 from app.services.auth import require_client
-from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+from app.services.billing import (
+    estimate_request_cost,
+    get_current_usage_snapshot,
+)
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.commercial_guardrails import (
     build_openai_guardrail_error_payload,
@@ -41,12 +39,16 @@ from app.services.commercial_guardrails import (
     record_enforcement_outcome,
     record_report_only_events,
 )
-from app.services.routing import commercial_analytics
-from app.services.generation_jobs import cancel_job, create_chat_generation_job, enqueue_generation_job, get_job_for_client, serialize_job
 from app.services.context_manager import ContextManager, get_context_manager
 from app.services.embeddings_mock import process_mock_embeddings
+from app.services.generation_jobs import (
+    cancel_job,
+    create_chat_generation_job,
+    enqueue_generation_job,
+    get_job_for_client,
+    serialize_job,
+)
 from app.services.inference_proxy import InferenceProxy
-from app.services.provider_classification import is_cloud_provider
 from app.services.model_policy import (
     get_effective_allowed_models,
     list_active_registry_models,
@@ -55,26 +57,33 @@ from app.services.model_policy import (
     resolve_requested_model,
     serialize_model_card,
 )
-from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
-from app.services.quota import QuotaExceeded, ensure_quota, ensure_embeddings_quota, record_usage, record_embedding_usage
-from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit, enforce_ip_rate_limit
+from app.services.provider_classification import is_cloud_provider
+from app.services.quota import (
+    QuotaExceeded,
+    ensure_embeddings_quota,
+    ensure_quota,
+    record_embedding_usage,
+    record_usage,
+)
+from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit, enforce_rate_limit
 from app.services.response_cache import (
     build_chat_cache_key,
     build_completion_cache_key,
     lookup_exact_cache,
     store_exact_cache,
 )
+from app.services.routing import commercial_analytics
+from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
 from app.services.security_monitor import (
     maybe_record_plan_usage_anomaly,
     maybe_record_repeated_large_prompt,
     maybe_record_request_error_burst,
     prompt_fingerprint,
 )
+from app.services.tokenizer_service import TokenizerService, get_tokenizer_service
 from app.utils.request_summary import summarize_chat_request, summarize_completion_request
-from app.services.tokenizer_service import get_tokenizer_service, TokenizerService
-from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
+from app.utils.token_estimator import estimate_tokens_from_text
 from app.utils.tool_calling import (
-    chat_response_has_tool_calls,
     enforce_tool_argument_limits,
     extract_tool_calls_from_chat_payload,
     filter_unsupported_tooling_parameters,
@@ -83,7 +92,10 @@ from app.utils.tool_calling import (
     sanitize_tool_calls,
     validate_tooling_request,
 )
-from app.utils.validation import normalize_messages, validate_params, validate_params_for_session
+from app.utils.validation import normalize_messages, validate_params_for_session
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse, Response
 
 logger = logging.getLogger(__name__)
 
@@ -282,8 +294,11 @@ async def _chat_with_fallback(
     
     # Record commercial routing analytics event (best-effort)
     if session:
-        from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
         from app.schemas.routing import TaskType
+        from app.services.billing.pricing_engine import (
+            calculate_customer_price,
+            estimate_provider_cost,
+        )
         
         selected_pid = routes[0].inference_backend.provider if routes else None
         est_cost = 0.0
@@ -451,8 +466,11 @@ async def _completion_with_fallback(
     
     # Record commercial routing analytics event (best-effort)
     if session:
-        from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
         from app.schemas.routing import TaskType
+        from app.services.billing.pricing_engine import (
+            calculate_customer_price,
+            estimate_provider_cost,
+        )
         
         selected_pid = routes[0].inference_backend.provider if routes else None
         est_cost = 0.0
@@ -586,7 +604,6 @@ async def list_models(
     
     # Adiciona o modelo de embedding mock/default se habilitado
     if settings.embeddings_enabled:
-        from app.schemas.inference import ModelCard
         filtered = [
             serialize_model_card(item)
             for item in models
@@ -1228,7 +1245,10 @@ async def _process_chat_completion(
             
             # Update commercial routing analytics with actual results (stream)
             try:
-                from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+                from app.services.billing.pricing_engine import (
+                    calculate_customer_price,
+                    estimate_provider_cost,
+                )
                 act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, estimated_stream_tokens)
                 act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, estimated_stream_tokens)
                 
@@ -1312,7 +1332,10 @@ async def _process_chat_completion(
         
         # Update commercial routing analytics with actual results
         try:
-            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            from app.services.billing.pricing_engine import (
+                calculate_customer_price,
+                estimate_provider_cost,
+            )
             act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, completion_tokens)
             act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, completion_tokens)
             
@@ -1735,7 +1758,10 @@ async def completions(
         
         # Update commercial routing analytics with actual results
         try:
-            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            from app.services.billing.pricing_engine import (
+                calculate_customer_price,
+                estimate_provider_cost,
+            )
             # Try to get completion tokens from local scope if available
             c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
             act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)
@@ -1780,7 +1806,10 @@ async def completions(
         
         # Update commercial routing analytics with actual results
         try:
-            from app.services.billing.pricing_engine import estimate_provider_cost, calculate_customer_price
+            from app.services.billing.pricing_engine import (
+                calculate_customer_price,
+                estimate_provider_cost,
+            )
             # Try to get completion tokens from local scope if available
             c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
             act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)

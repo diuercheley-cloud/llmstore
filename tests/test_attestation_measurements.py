@@ -1,17 +1,16 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.security.attestation_measurements import (
-    snapshot_runtime_measurement,
+    get_measurement_history,
+    snapshot_environment_fingerprint,
     snapshot_loaded_models,
-    snapshot_workflow_hash,
     snapshot_policy_bundle,
     snapshot_routing_hash,
     snapshot_runtime_binary,
-    snapshot_environment_fingerprint,
-    get_measurement_history,
+    snapshot_runtime_measurement,
+    snapshot_workflow_hash,
     summarize_measurements,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -32,8 +31,8 @@ async def test_snapshot_runtime_measurement(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_snapshot_measurement_with_drift(session: AsyncSession):
-    import tempfile
     import os
+    import tempfile
     with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as f:
         f.write(b"test content")
         tmp_path = f.name

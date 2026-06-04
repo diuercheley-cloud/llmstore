@@ -1,11 +1,10 @@
 # Owner: agent-platform
 from datetime import timedelta
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.agents import AgentMemoryItem
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkingMemoryService:

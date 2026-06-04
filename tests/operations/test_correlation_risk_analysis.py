@@ -1,8 +1,11 @@
 import pytest
 
+
 @pytest.fixture
 def service():
-    from app.services.operations.correlation.correlation_risk_analysis import OperationalCorrelationRiskAnalysisService
+    from app.services.operations.correlation.correlation_risk_analysis import (
+        OperationalCorrelationRiskAnalysisService,
+    )
     return OperationalCorrelationRiskAnalysisService()
 
 def test_classify_operational_risk(service):

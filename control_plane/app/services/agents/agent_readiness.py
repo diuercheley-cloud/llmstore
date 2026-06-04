@@ -1,23 +1,22 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import timedelta
 from enum import Enum
-from sqlalchemy.future import select
-from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
-from app.models.agents import AgentRun, AgentIncident, AgentDefinition, AgentMemoryPolicy, AgentApprovalRequest
-from app.models.agent_execution import (
-    AgentWorkerHeartbeat,
-    AgentExecutionJob,
-    AgentExecutionLease,
-    AgentExecutionDeadLetter,
-)
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.agent_execution import (
+    AgentExecutionDeadLetter,
+    AgentExecutionJob,
+    AgentExecutionLease,
+    AgentWorkerHeartbeat,
+)
+from app.models.agents import AgentApprovalRequest, AgentIncident, AgentMemoryPolicy, AgentRun
 from app.services.agents.agent_llm_provider import LLMProviderType
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

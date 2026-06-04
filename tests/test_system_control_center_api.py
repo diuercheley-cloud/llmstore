@@ -1,6 +1,8 @@
-import pytest
 import os
+
+import pytest
 from httpx import AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_control_center_unauthorized(admin_client: AsyncClient):

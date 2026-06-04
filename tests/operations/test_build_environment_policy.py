@@ -1,4 +1,6 @@
-from app.services.operations.reproducible_builds.build_environment_policy import BuildEnvironmentPolicyService
+from app.services.operations.reproducible_builds.build_environment_policy import (
+    BuildEnvironmentPolicyService,
+)
 
 
 def test_environment_policy_denies_external_network_and_resolution():

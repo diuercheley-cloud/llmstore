@@ -1,11 +1,10 @@
 import json
 
+from app.core.config import get_settings
+from app.models.inference_backend import InferenceBackend
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
-from app.models.inference_backend import InferenceBackend
 
 
 async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceBackend]:

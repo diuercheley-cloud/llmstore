@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import csv
+import json
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from io import StringIO
-import json
-import uuid
 
-from fastapi import HTTPException
-from fastapi.responses import JSONResponse, Response
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
+from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.billing_invoice import BillingInvoice
 from app.models.billing_plan import BillingPlan
@@ -21,10 +16,17 @@ from app.models.customer_payment import CustomerPayment
 from app.models.request_log import RequestLog
 from app.models.security_event import SecurityEvent
 from app.models.usage_record import UsageRecord
-from app.services.billing import list_client_billing_snapshots, refresh_billing_statuses, resolve_effective_plan
-from app.services.security_monitor import serialize_security_event
+from app.services.billing import (
+    list_client_billing_snapshots,
+    refresh_billing_statuses,
+)
 from app.services.security.tenant_encryption import TenantEncryptionService
-from app.core.config import get_settings
+from app.services.security_monitor import serialize_security_event
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse, Response
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 _settings = get_settings()
 _encryption_service = TenantEncryptionService(_settings)

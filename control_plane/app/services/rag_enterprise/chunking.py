@@ -1,8 +1,8 @@
 import logging
 import re
-from typing import List, Optional
+from typing import List
 
-from app.services.rag_enterprise.schemas import ChunkResult, ChunkingConfig, ChunkStrategy
+from app.services.rag_enterprise.schemas import ChunkingConfig, ChunkResult, ChunkStrategy
 
 logger = logging.getLogger(__name__)
 

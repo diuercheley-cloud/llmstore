@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_health_basic(admin_client: AsyncClient):
     response = await admin_client.get("/health")

@@ -1,6 +1,7 @@
 import pytest
-
-from app.services.operations.compatibility_contracts.deprecation_lifecycle import DeprecationLifecycleService
+from app.services.operations.compatibility_contracts.deprecation_lifecycle import (
+    DeprecationLifecycleService,
+)
 
 
 def test_deprecation_requires_replacement_when_migration_required():

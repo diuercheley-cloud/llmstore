@@ -1,13 +1,12 @@
 import uuid
 
 import pytest
-from sqlalchemy import select
-
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentTool
+from app.models.agents import AgentDefinition, AgentRunStep, AgentTool
 from app.services.agents import agent_state
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.agents.agent_readiness import AgentReadinessService
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

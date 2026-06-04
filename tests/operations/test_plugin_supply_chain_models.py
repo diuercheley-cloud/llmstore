@@ -1,7 +1,6 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
+from app.models.operations.plugin_runtime import PluginABIContract
 from app.models.operations.plugin_supply_chain import (
     DependencyGovernancePolicy,
     PluginArtifactLineage,
@@ -11,7 +10,7 @@ from app.models.operations.plugin_supply_chain import (
     PluginSignedArtifact,
     PluginSupplyChainReceipt,
 )
-from app.models.operations.plugin_runtime import PluginABIContract
+from sqlalchemy import select
 
 
 def test_plugin_supply_chain_models_exposed():

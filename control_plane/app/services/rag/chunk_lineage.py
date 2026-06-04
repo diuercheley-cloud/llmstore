@@ -1,8 +1,14 @@
-import uuid
 from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from ...models.commercial_rag_vault import CommercialRAGChunk, CommercialRAGDocument, CommercialRAGVault
+
+from ...models.commercial_rag_vault import (
+    CommercialRAGChunk,
+    CommercialRAGDocument,
+    CommercialRAGVault,
+)
+
 
 async def get_chunk_lineage(db: AsyncSession, chunk_hash: str) -> Optional[dict]:
     res = await db.execute(

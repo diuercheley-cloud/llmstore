@@ -1,7 +1,14 @@
 from typing import Any
 
-from app.models.operations.federation_sync import FederationLineageLink, FederationSynchronizationBundle, FederationSynchronizationSession
-from app.services.operations.federation_sync.hash_utils import compute_bundle_hash, compute_session_hash
+from app.models.operations.federation_sync import (
+    FederationLineageLink,
+    FederationSynchronizationBundle,
+    FederationSynchronizationSession,
+)
+from app.services.operations.federation_sync.hash_utils import (
+    compute_bundle_hash,
+    compute_session_hash,
+)
 
 
 class FederationReplayVerifier:

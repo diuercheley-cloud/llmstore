@@ -1,6 +1,7 @@
-from typing import Dict, Any, List
 import hashlib
 import json
+from typing import Any, Dict, List
+
 
 class SimulatedRemediationExecutionAdapter:
     """

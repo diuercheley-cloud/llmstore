@@ -4,8 +4,10 @@
 """Plugin manifest contract for governed catalog/runtime flows."""
 
 # Owner: platform-ops
+from typing import List
+
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+
 
 class PluginManifest(BaseModel):
     name: str

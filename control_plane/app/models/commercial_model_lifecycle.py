@@ -1,13 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, JSON, String, Text, Boolean, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-
 from app.core.time import utc_now
 from app.db.base import Base
-
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 VALID_LIFECYCLE_STATES = {
     "discovered",

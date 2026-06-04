@@ -1,7 +1,7 @@
-import subprocess
 import json
 import os
-import pytest
+import subprocess
+
 
 def test_generate_quote_basic():
     cmd = [

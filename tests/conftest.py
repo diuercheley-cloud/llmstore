@@ -1,9 +1,9 @@
 import os
 import sys
 from collections import defaultdict
-from collections.abc import AsyncIterator, Awaitable, Callable
-from typing import Any, Optional
+from collections.abc import AsyncIterator
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -54,7 +54,6 @@ APP_ROOT = ROOT / "app"
 if APP_ROOT.exists() and str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import app.models
 
 
 class FakeRedis:
@@ -359,9 +358,9 @@ def models_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
     from app.services.admin_rbac import ensure_admin_rbac_seed
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -379,11 +378,11 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
 
 @pytest_asyncio.fixture
 async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator[httpx.AsyncClient]:
-    from app.main import app
-    from app.db.session import get_db_session, get_redis
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
+    from app.db.session import get_db_session, get_redis
+    from app.main import app
     from app.services.admin_rbac import ensure_admin_rbac_seed
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

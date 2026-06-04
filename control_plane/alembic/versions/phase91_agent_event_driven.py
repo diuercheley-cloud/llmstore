@@ -8,8 +8,6 @@ Create Date: 2026-05-27 12:00:00.000000
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'phase91_agent_event_driven'
@@ -21,8 +19,13 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     from app.db.base import Base
     from app.models.agent_events import (
-        AgentEventSource, AgentEventTrigger, AgentEventDelivery, AgentEventDedupKey,
-        AgentEventSubscription, AgentScheduledTrigger, AgentWebhookTrigger
+        AgentEventDedupKey,
+        AgentEventDelivery,
+        AgentEventSource,
+        AgentEventSubscription,
+        AgentEventTrigger,
+        AgentScheduledTrigger,
+        AgentWebhookTrigger,
     )
     bind = op.get_bind()
     tables = [

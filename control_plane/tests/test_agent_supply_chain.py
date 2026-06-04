@@ -1,14 +1,14 @@
+import hashlib
+
 import pytest
 import pytest_asyncio
-import uuid
-import hashlib
+from app.core.config import get_settings
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agents import AgentBundleSignature, AgentBundleVersion, AgentMarketplaceEntry
+from app.services.agents.agent_bundle_verifier import AgentBundleVerifierService
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentBundleVersion, AgentBundleSignature, AgentMarketplaceEntry
-from app.services.agents.agent_bundle_verifier import AgentBundleVerifierService
-from app.core.config import get_settings
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

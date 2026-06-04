@@ -1,12 +1,11 @@
-import uuid
 import logging
-from datetime import datetime, timedelta
-from typing import List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+import uuid
+from datetime import timedelta
 
 from app.core.time import utc_now
 from app.models.runtime.distributed_runtime import RuntimeNodeHeartbeat
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

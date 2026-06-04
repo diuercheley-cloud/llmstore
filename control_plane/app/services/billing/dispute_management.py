@@ -1,18 +1,17 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
-from typing import List, Dict, Any, Optional
-
-from sqlalchemy import select, func, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_billing_dispute import CommercialBillingDispute
 from app.models.ai_wallet import AiWalletTransaction
+from app.models.commercial_billing_dispute import CommercialBillingDispute
 from app.services.billing import wallet_service
 from app.services.billing.financial_audit_trail import FinancialAuditTrailService
 from app.services.notifications.revenue_escalations import evaluate_escalation_policies
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class DisputeManagementService:

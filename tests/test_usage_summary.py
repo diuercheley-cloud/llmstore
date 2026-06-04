@@ -1,9 +1,8 @@
 from types import SimpleNamespace
 from uuid import uuid4
 
-import pytest
-
 import app.api.admin as admin_api
+import pytest
 from app.api.deps import get_inference_proxy
 from app.db.session import get_db_session, get_redis
 from app.main import app

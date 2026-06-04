@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from app.api.commercial_compliance_admin import router as compliance_router
 from app.core.config import get_settings
 from app.db.session import get_db_session

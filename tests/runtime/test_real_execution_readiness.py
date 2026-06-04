@@ -1,7 +1,10 @@
+
 import pytest
-import uuid
+from app.services.runtime.real_execution_readiness import (
+    RealExecutionReadinessService,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.runtime.real_execution_readiness import RealExecutionReadinessService, ReadinessStatus
+
 
 @pytest.mark.asyncio
 async def test_readiness_production_blocked_by_mock(session: AsyncSession, settings):

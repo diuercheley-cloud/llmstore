@@ -1,21 +1,20 @@
 # Owner: platform-ops
 import asyncio
 import json
-import psutil
 import logging
 import subprocess
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 
+import psutil
+from app.api.deps import get_db_session, get_inference_proxy
+from app.models.inference_backend import InferenceBackend
+from app.models.request_log import RequestLog
+from app.services.inference_proxy import InferenceProxy
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.deps import require_admin, get_db_session, get_redis, get_inference_proxy
-from app.models.request_log import RequestLog
-from app.models.inference_backend import InferenceBackend
-from app.services.inference_proxy import InferenceProxy
 
 router = APIRouter(prefix="/admin/metrics", tags=["admin-metrics"])
 

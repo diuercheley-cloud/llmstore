@@ -1,5 +1,5 @@
 import subprocess
-import pytest
+
 
 def test_upgrade_dry_run_creates_backup():
     result = subprocess.run(

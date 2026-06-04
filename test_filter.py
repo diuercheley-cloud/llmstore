@@ -1,7 +1,7 @@
 import json
 import logging
+
 from app.utils.tool_calling import filter_unsupported_tooling_parameters
-import sys
 
 logging.basicConfig(level=logging.WARNING)
 

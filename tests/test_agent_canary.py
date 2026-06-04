@@ -1,11 +1,13 @@
-import pytest
 import uuid
-from app.services.agents.canary.shadow_runner import ShadowRunner
+
+import pytest
+from app.core.config import get_settings
+from app.models.agent_canary import AgentCanaryAssignment, AgentShadowRun
+from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.canary.canary_comparator import CanaryComparator
 from app.services.agents.canary.canary_promotion_gate import CanaryPromotionGate
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.agent_canary import AgentCanaryAssignment, AgentShadowRun, AgentCanaryComparison
-from app.core.config import get_settings
+from app.services.agents.canary.shadow_runner import ShadowRunner
+
 
 @pytest.fixture
 def agent_ids():

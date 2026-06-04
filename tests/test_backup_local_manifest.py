@@ -2,6 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
+
 def test_backup_manifest_exists_and_redacts_secrets():
     """
     Validates that a local backup generates a manifest and that manifest/config 
@@ -54,7 +55,7 @@ def test_backup_manifest_exists_and_redacts_secrets():
                     if "ADMIN_TOKEN" in line:
                         assert "__redacted__" in line
 
-        except Exception as e:
+        except Exception:
             # If we can't run it at all, we at least verify the script content
             content = backup_script.read_text()
             assert "sanitize_env_snapshot" in content

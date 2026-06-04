@@ -1,8 +1,7 @@
-import pytest
-import subprocess
-import os
 import glob
-import shutil
+import os
+import subprocess
+
 
 def test_security_report_flow():
     # Garantir que o diretório de artifacts existe para não falhar por isso

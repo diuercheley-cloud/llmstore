@@ -6,10 +6,9 @@ Supports HashiCorp Vault and AWS Secrets Manager backends.
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import httpx
-
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

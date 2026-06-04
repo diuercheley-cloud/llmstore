@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Context variable to store active experiment metadata for the current request
 experiment_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar("experiment_context", default=None)

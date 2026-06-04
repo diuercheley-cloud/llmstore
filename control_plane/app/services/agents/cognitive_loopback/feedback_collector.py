@@ -1,8 +1,10 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
+
 from app.models.agent_cognitive_loopback import AgentFeedbackEvent
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class FeedbackCollector:
     def __init__(self, db: AsyncSession):

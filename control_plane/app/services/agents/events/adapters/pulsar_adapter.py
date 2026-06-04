@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from typing import Dict, Any, Callable, Awaitable, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 from app.core.config import get_settings
 

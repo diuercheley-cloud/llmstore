@@ -1,9 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
+
 from app.core.config import get_settings
-from app.services.token_counting.fallback_token_counter import FallbackTokenCounter
-from app.services.token_counting.openai_token_counter import OpenAITokenCounter
 from app.services.token_counting.anthropic_token_counter import AnthropicTokenCounter
+from app.services.token_counting.fallback_token_counter import FallbackTokenCounter
 from app.services.token_counting.llama_token_counter import LlamaTokenCounter
+from app.services.token_counting.openai_token_counter import OpenAITokenCounter
+
 
 class TokenCountingResult:
     def __init__(self, prompt_tokens: int, completion_tokens: int, total_tokens: int, tokenizer_used: str, fallback_used: bool):

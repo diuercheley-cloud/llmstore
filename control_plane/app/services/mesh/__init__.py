@@ -1,4 +1,4 @@
 from .control_plane_mesh import ControlPlaneMeshService
 from .mesh_consensus import MeshConsensusService
-from .mesh_replication import MeshReplicationService
 from .mesh_failover import MeshFailoverService
+from .mesh_replication import MeshReplicationService

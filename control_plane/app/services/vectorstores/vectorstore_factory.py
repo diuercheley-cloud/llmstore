@@ -1,11 +1,13 @@
 import logging
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import get_settings
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .base import VectorStoreBase
+from .milvus_store import MilvusStore
 from .pgvector_store import PGVectorStore
 from .qdrant_store import QdrantStore
-from .milvus_store import MilvusStore
 from .weaviate_store import WeaviateStore
 
 logger = logging.getLogger(__name__)

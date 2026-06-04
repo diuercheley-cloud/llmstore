@@ -3,7 +3,6 @@ from typing import Any
 from app.services.operations.compatibility_contracts.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
-
 COMPATIBILITY_AUDIT_EVENTS = {
     "compatibility_contract_created",
     "compatibility_matrix_created",

@@ -1,7 +1,7 @@
-import subprocess
+import glob
 import json
 import os
-import glob
+import subprocess
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent

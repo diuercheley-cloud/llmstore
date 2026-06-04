@@ -1,7 +1,9 @@
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_catalog import PluginTrustReportGov
+
 from app.core.time import utc_now
+from app.models.agent_catalog import PluginTrustReportGov
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class TrustReportService:
     def __init__(self, db: AsyncSession):

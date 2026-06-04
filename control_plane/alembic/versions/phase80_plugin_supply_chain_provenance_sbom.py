@@ -5,9 +5,8 @@ Revises: phase79_plugin_abi
 Create Date: 2026-05-16 15:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase80_plugin_sbom"
 down_revision = "phase79_plugin_abi"

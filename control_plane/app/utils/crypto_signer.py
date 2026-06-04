@@ -1,7 +1,7 @@
 import os
-import hashlib
-from cryptography.hazmat.primitives.asymmetric import ed25519
+
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
 
 # In a real environment, keys would be loaded from a secure vault or HSM.
 # For local operations and testing, we generate or load from a local file.

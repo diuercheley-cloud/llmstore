@@ -1,6 +1,5 @@
-import pytest
-import os
 from pathlib import Path
+
 
 def test_no_misleading_pix_in_public_docs():
     """Validates that public documentation clarifies real PIX/PSP is out of scope."""

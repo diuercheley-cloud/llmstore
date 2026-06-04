@@ -3,15 +3,14 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
-
-from sqlalchemy import select, func, and_, update, desc
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
+from app.models.admin_action_log import AdminActionLog
 from app.models.commercial_routing_config import CommercialRoutingConfig
 from app.models.commercial_routing_event import CommercialRoutingEvent
-from app.models.admin_action_log import AdminActionLog
+from sqlalchemy import desc, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

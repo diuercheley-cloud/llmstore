@@ -1,26 +1,24 @@
 import logging
 import uuid
-from datetime import datetime
-from typing import Dict, Any, List, Optional
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_infra_simulation import (
-    CommercialInfrastructureSimulation, 
-    CommercialApprovalRecord,
-    CommercialExecutionRecord
-)
 from app.models.admin_action_log import AdminActionLog
-from app.services.routing.commercial_leader_election import is_current_leader, _active_lease_query
-from app.services.routing.infra_adapters.mock_adapter import MockAdapter
+from app.models.commercial_infra_simulation import (
+    CommercialApprovalRecord,
+    CommercialExecutionRecord,
+    CommercialInfrastructureSimulation,
+)
+from app.services.routing.commercial_leader_election import _active_lease_query, is_current_leader
+from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.routing.infra_adapters.kubernetes_adapter import KubernetesAdapter
+from app.services.routing.infra_adapters.local_gpu_adapter import LocalGPUAdapter
+from app.services.routing.infra_adapters.mock_adapter import MockAdapter
 from app.services.routing.infra_adapters.nomad_adapter import NomadAdapter
 from app.services.routing.infra_adapters.proxmox_adapter import ProxmoxAdapter
-from app.services.routing.infra_adapters.local_gpu_adapter import LocalGPUAdapter
-from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

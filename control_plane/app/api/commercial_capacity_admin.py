@@ -1,18 +1,22 @@
 # Owner: commercial-ops
-from typing import List, Optional, Any
-import uuid
-from datetime import datetime
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-
-from app.api.deps import get_db, get_admin_user
+from app.api.deps import get_admin_user, get_db
 from app.core.config import get_settings
-from app.models.commercial_capacity import CommercialCapacitySnapshot, CommercialCapacityForecast, CommercialAutoscalingRecommendation
-from app.services.routing.commercial_capacity_monitor import capture_capacity_snapshot, summarize_cluster_capacity
-from app.services.routing.commercial_capacity_forecasting import forecast_capacity
+from app.models.commercial_capacity import (
+    CommercialAutoscalingRecommendation,
+    CommercialCapacityForecast,
+    CommercialCapacitySnapshot,
+)
 from app.services.routing.commercial_autoscaling import generate_autoscaling_recommendations
+from app.services.routing.commercial_capacity_forecasting import forecast_capacity
+from app.services.routing.commercial_capacity_monitor import (
+    capture_capacity_snapshot,
+    summarize_cluster_capacity,
+)
+from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/routing/capacity", tags=["commercial_capacity"])
 

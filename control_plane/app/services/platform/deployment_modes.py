@@ -1,10 +1,12 @@
 # Owner: platform-ops
 """Governed deployment mode resolution for operational activation postures."""
 
-import os
-import yaml
 import logging
-from typing import Dict, Any, List, Tuple, Optional
+import os
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
+
 from .profile_resolver import ProfileResolver
 
 logger = logging.getLogger(__name__)

@@ -1,20 +1,19 @@
 # Owner: agent-platform
 import uuid
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
+import pytest
+from app.services.prompts.prompt_template_playground import PromptTemplatePlaygroundService
+from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
 from app.services.prompts.prompt_template_renderer import (
     PromptTemplateRenderer,
-    VariableIsSecretError,
-    UnsafeVariableNameError,
     TemplateSyntaxError,
+    UnsafeVariableNameError,
+    VariableIsSecretError,
 )
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
-from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
 from app.services.prompts.prompt_template_versioning import PromptTemplateVersioningService
-from app.services.prompts.prompt_template_playground import PromptTemplatePlaygroundService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture

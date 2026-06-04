@@ -1,7 +1,8 @@
-import json
 import hashlib
-from typing import Dict, Any
-from datetime import datetime, UTC
+import json
+from datetime import UTC, datetime
+from typing import Any, Dict
+
 
 class ReleaseReceiptService:
     def generate_receipt(self, baseline_id: str, receipt_type: str, manifest: Dict[str, Any]) -> Dict[str, Any]:

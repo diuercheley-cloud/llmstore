@@ -1,6 +1,11 @@
 from typing import Any
 
-from app.services.operations.reproducible_builds.hash_utils import compute_artifact_hash, compute_build_manifest_hash, compute_lineage_hash, compute_replay_hash
+from app.services.operations.reproducible_builds.hash_utils import (
+    compute_artifact_hash,
+    compute_build_manifest_hash,
+    compute_lineage_hash,
+    compute_replay_hash,
+)
 
 
 class ArtifactReplayVerifier:

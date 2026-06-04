@@ -1,5 +1,5 @@
-import pytest
 from app.core.config import Settings
+
 
 def test_cors_defaults_appliance_mode_empty_origins():
     # Empty CORS_ALLOW_ORIGINS in appliance mode should use secure defaults

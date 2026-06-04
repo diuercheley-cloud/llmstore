@@ -1,9 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricEvent, CommercialRuntimeFabricHealth
-from datetime import datetime
 import uuid
-import json
+from datetime import datetime
+
+from app.models.commercial_runtime_fabric import (
+    CommercialRuntimeFabricEvent,
+    CommercialRuntimeFabricHealth,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class RuntimeFabricService:
     def __init__(self, db: AsyncSession):

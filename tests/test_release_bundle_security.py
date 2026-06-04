@@ -1,8 +1,9 @@
-import subprocess
-import os
 import shutil
-import pytest
+import subprocess
 from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture
 def security_trap_env():

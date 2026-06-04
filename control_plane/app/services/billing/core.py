@@ -1,20 +1,19 @@
 from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal, ROUND_HALF_UP
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from decimal import ROUND_HALF_UP, Decimal
 
 from app.core.time import utc_now
-from app.models.billing_plan import BillingPlan
 from app.models.billing_invoice import BillingInvoice
+from app.models.billing_plan import BillingPlan
 from app.models.client import Client
 from app.models.customer_payment import CustomerPayment
 from app.models.pricing_rule import PricingRule
 from app.models.quota_counter import QuotaCounter
 from app.services.quota import month_start
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 @dataclass

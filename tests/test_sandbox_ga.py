@@ -1,10 +1,15 @@
 import pytest
 from app.core.config import get_settings
-from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine, SandboxPolicyViolation
-from app.services.agents.code_interpreter.sandbox_attestation import AttestationService
+from app.services.agents.code_interpreter.providers.firecracker_sandbox import (
+    FirecrackerSandboxProvider,
+)
 from app.services.agents.code_interpreter.providers.gvisor_sandbox import GVisorSandboxProvider
-from app.services.agents.code_interpreter.providers.firecracker_sandbox import FirecrackerSandboxProvider
-from app.utils.crypto_signer import sign_payload
+from app.services.agents.code_interpreter.sandbox_attestation import AttestationService
+from app.services.agents.code_interpreter.sandbox_policy import (
+    SandboxPolicyEngine,
+    SandboxPolicyViolation,
+)
+
 
 @pytest.mark.asyncio
 async def test_gvisor_indisponivel_nao_retorna_sucesso_simulado():

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
-import yaml
 import sys
+
+import yaml
 
 FEATURE_FLAGS_YAML = "config/feature-flags.yaml"
 ENV_EXAMPLE = ".env.example"
@@ -87,7 +88,7 @@ def main():
                 "usage": usage_count
             })
 
-    print(f"## Feature Flag Audit Report\n")
+    print("## Feature Flag Audit Report\n")
     if not issues_report:
         print("No issues found.")
     else:

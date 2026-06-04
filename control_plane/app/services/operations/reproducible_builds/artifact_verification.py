@@ -1,7 +1,14 @@
 from typing import Any
 
-from app.models.operations.reproducible_builds import ArtifactReplayVerification, ArtifactVerificationRecord
-from app.services.operations.reproducible_builds.hash_utils import compute_artifact_hash, compute_replay_hash, sha256_hex
+from app.models.operations.reproducible_builds import (
+    ArtifactReplayVerification,
+    ArtifactVerificationRecord,
+)
+from app.services.operations.reproducible_builds.hash_utils import (
+    compute_artifact_hash,
+    compute_replay_hash,
+    sha256_hex,
+)
 
 
 class ArtifactVerificationService:

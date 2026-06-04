@@ -1,19 +1,19 @@
-import uuid
 import logging
 import re
+import uuid
 from typing import Any, List, Optional, Tuple
 
 import numpy as np
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.config import get_settings
 from app.models.commercial_encryption import CommercialEncryptedArtifact
-from app.models.commercial_rag_vault import CommercialRAGChunk, CommercialRAGDocument, CommercialRAGVault
+from app.models.commercial_rag_vault import (
+    CommercialRAGChunk,
+    CommercialRAGDocument,
+    CommercialRAGVault,
+)
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
-from app.core.config import get_settings
 from app.services.rag.rag_access_control import (
-    RetrievalAccessDenied,
     evaluate_chunk_acl,
     evaluate_retrieval_access,
     validate_document_access,
@@ -22,13 +22,14 @@ from app.services.rag.rag_audit import hash_payload
 from app.services.rag.rag_poison_detection import analyze_and_record_poisoning
 from app.services.rag.rag_vault import (
     sanitize_chunk_preview,
-    sanitize_metadata,
     sanitize_text,
 )
-from app.services.rag_enterprise.schemas import EnterpriseSource
 from app.services.rag_enterprise.embeddings import get_enterprise_embedding_service
+from app.services.rag_enterprise.schemas import EnterpriseSource
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.tenant_encryption import TenantEncryptionService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

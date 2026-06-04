@@ -1,6 +1,5 @@
-import pytest
-from pathlib import Path
 import re
+from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
 DOCS_PATH = ROOT_DIR / "docs" / "OPERATOR_ERROR_CODES.md"

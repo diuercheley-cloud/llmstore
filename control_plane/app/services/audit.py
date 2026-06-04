@@ -1,14 +1,12 @@
-from datetime import datetime
 import json
 import logging
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.metrics import record_request_metrics
 from app.core.request_context import get_correlation_id, get_source_ip
 from app.core.time import utc_now
 from app.models.request_log import RequestLog
 from app.services.inference.reproducibility import capture_reproducibility_record
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

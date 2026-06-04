@@ -1,10 +1,12 @@
-import pytest
 import uuid
-from sqlalchemy.future import select
+
+import pytest
+from app.models.agents import AgentPlan, AgentTask, AgentTaskDependency
+from app.services.agents import agent_state
 from app.services.agents.agent_planner import AgentPlanner
 from app.services.agents.task_engine import TaskEngine
-from app.services.agents import agent_state
-from app.models.agents import AgentPlan, AgentTask, AgentTaskDependency
+from sqlalchemy.future import select
+
 
 @pytest.mark.asyncio
 async def test_create_plan_and_dependencies(session):

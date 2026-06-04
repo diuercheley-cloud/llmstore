@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.services.operations.adapter_registry.allowlist_blocklist import AdapterRegistryListService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestAdapterRegistryAllowlistBlocklist:

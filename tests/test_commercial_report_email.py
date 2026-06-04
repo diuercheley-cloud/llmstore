@@ -2,18 +2,16 @@ import ssl
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi import HTTPException
-from sqlalchemy import select
-
 from app.core.config import get_settings
 from app.models.commercial_report_delivery_log import CommercialReportDeliveryLog
 from app.services.routing.commercial_report_email import (
-    EmailAttachment,
     SecurityScanError,
     retry_send_with_backoff,
     sanitize_email_payload,
 )
 from app.services.routing.commercial_report_export import CommercialReportExportService
+from fastapi import HTTPException
+from sqlalchemy import select
 
 
 class FakeSMTP:

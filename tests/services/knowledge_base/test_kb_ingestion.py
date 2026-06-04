@@ -1,13 +1,14 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.knowledge_base import KBDocument, KBDocumentVersion, KnowledgeBase
+from app.services.knowledge_base.chunker import KBChunker
+from app.services.knowledge_base.document_ingestion import DocumentIngestionService
+from app.services.knowledge_base.kb_registry import KBRegistry
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.knowledge_base import KnowledgeBase, KBDocument, KBDocumentVersion, KBIngestionJob
-from app.services.knowledge_base.kb_registry import KBRegistry
-from app.services.knowledge_base.document_ingestion import DocumentIngestionService
-from app.services.knowledge_base.chunker import KBChunker
 
 @pytest.fixture
 def mock_db():

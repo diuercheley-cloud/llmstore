@@ -1,16 +1,21 @@
 import logging
 import uuid
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_capacity import CommercialCapacityForecast, CommercialAutoscalingRecommendation
-from app.services.routing.commercial_infra_simulation import simulate_scale_up, simulate_scale_down, simulate_reroute
+from app.models.commercial_capacity import (
+    CommercialAutoscalingRecommendation,
+    CommercialCapacityForecast,
+)
+from app.services.routing.commercial_infra_simulation import (
+    simulate_reroute,
+    simulate_scale_down,
+    simulate_scale_up,
+)
 from app.services.routing.commercial_safety_gates import validate_simulation_against_policy
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

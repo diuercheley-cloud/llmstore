@@ -5,7 +5,10 @@ from app.models.operations.reproducible_builds import (
     REPRODUCIBLE_BUILD_SCOPES,
     ReproducibleBuildManifest,
 )
-from app.services.operations.reproducible_builds.hash_utils import compute_build_manifest_hash, sha256_hex
+from app.services.operations.reproducible_builds.hash_utils import (
+    compute_build_manifest_hash,
+    sha256_hex,
+)
 
 
 class ReproducibleBuildService:

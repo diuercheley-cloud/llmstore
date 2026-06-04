@@ -1,9 +1,10 @@
+import json
 import os
 import tarfile
-import json
+
 import pytest
 from fastapi import status
-from pathlib import Path
+
 
 @pytest.mark.asyncio
 async def test_create_support_bundle_unauthorized(async_client):

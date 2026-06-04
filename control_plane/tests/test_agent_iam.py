@@ -1,28 +1,24 @@
 import os
-import pytest
-import pytest_asyncio
 import uuid
-from datetime import datetime, timedelta
 from unittest.mock import patch
 
-from sqlalchemy import select
+import pytest
+import pytest_asyncio
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentDefinition
+from app.db.session import SessionLocal, engine
 from app.models.agent_iam import (
-    AgentServicePrincipal,
+    AgentCredentialAuditEvent,
     AgentDelegatedToken,
-    AgentTokenGrant,
-    AgentIdentityBinding,
-    AgentCredentialAuditEvent
 )
-from app.services.agents.iam.service_principal import ServicePrincipalService
-from app.services.agents.iam.delegated_tokens import DelegatedTokenService
-from app.services.agents.iam.token_exchange import TokenExchangeService
-from app.services.agents.iam.credential_broker import CredentialBroker
+from app.models.agents import AgentDefinition
 from app.services.agents.iam.agent_identity import AgentIdentityService
 from app.services.agents.iam.agent_scopes import AgentScopeManager
-from app.core.time import utc_now
+from app.services.agents.iam.credential_broker import CredentialBroker
+from app.services.agents.iam.delegated_tokens import DelegatedTokenService
+from app.services.agents.iam.service_principal import ServicePrincipalService
+from app.services.agents.iam.token_exchange import TokenExchangeService
+from sqlalchemy import select
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

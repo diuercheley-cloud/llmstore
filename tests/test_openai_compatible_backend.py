@@ -1,6 +1,8 @@
-import pytest
 import json
+
+import pytest
 from httpx import AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_create_openai_compatible_backend(admin_client: AsyncClient, admin_token_headers):

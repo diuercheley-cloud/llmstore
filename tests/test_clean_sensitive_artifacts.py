@@ -1,10 +1,10 @@
 # tests/test_clean_sensitive_artifacts.py
 # FAKE SECRET FOR TESTS ONLY
+import json
 import os
 import subprocess
+
 import pytest
-import json
-import shutil
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT_PATH = os.path.join(PROJECT_ROOT, "scripts", "clean-sensitive-artifacts-local.sh")

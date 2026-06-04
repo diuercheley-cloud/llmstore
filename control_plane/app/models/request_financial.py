@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
 import uuid
-
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime
 
 from app.db.base import Base
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class RequestFinancial(Base):

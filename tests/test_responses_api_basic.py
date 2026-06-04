@@ -1,9 +1,10 @@
 import pytest
-from httpx import AsyncClient
-from app.main import app
 from app.api.deps import get_inference_proxy
+from app.main import app
 from app.services.inference_proxy import ForwardResult
+from httpx import AsyncClient
 from starlette.responses import JSONResponse
+
 
 class FakeProxy:
     def __init__(self):

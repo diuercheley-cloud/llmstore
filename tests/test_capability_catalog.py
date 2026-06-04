@@ -1,10 +1,12 @@
-import pytest
 import uuid
-from app.services.agents.catalog.capability_catalog import CapabilityCatalogService
-from app.services.agents.catalog.supply_chain_verifier import SupplyChainVerifier
-from app.services.agents.catalog.signature_verifier import SignatureVerifier
-from app.services.plugins.plugin_manifest import PluginManifest
+
+import pytest
 from app.models.agent_catalog import AgentCapabilityCatalogEntry
+from app.services.agents.catalog.capability_catalog import CapabilityCatalogService
+from app.services.agents.catalog.signature_verifier import SignatureVerifier
+from app.services.agents.catalog.supply_chain_verifier import SupplyChainVerifier
+from app.services.plugins.plugin_manifest import PluginManifest
+
 
 @pytest.mark.asyncio
 async def test_capability_install_and_approve(session):

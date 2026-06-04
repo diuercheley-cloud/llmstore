@@ -2,12 +2,11 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
+from app.core.time import utc_now
+from app.db.base import Base
 from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.core.time import utc_now
-from app.db.base import Base
 
 
 class SalesLead(Base):

@@ -2,11 +2,6 @@ import hashlib
 import json
 import re
 
-from fastapi import HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.models.api_key import ApiKey
@@ -15,6 +10,10 @@ from app.models.client import Client
 from app.models.pricing_rule import PricingRule
 from app.schemas.public import PublicSignupRequest
 from app.services.billing import resolve_effective_plan
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 settings = get_settings()
 

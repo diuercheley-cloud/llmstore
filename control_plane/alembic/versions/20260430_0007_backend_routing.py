@@ -1,9 +1,8 @@
 """backend routing and request log routing telemetry"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260430_0007"
 down_revision = "20260430_0006"

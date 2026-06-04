@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from typing import Any
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.time import utc_now
 from app.models.commercial_cryptographic_receipts import (
@@ -19,8 +14,7 @@ from app.services.inference.cryptographic_receipts import (
     summarize_receipt,
     verify_payload_signature,
 )
-from app.services.inference.replay_verification import verify_replay
-from app.services.inference.reproducibility import compare_runtime_snapshots
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _verify_detached_signature(receipt_hash: str, signature: str | None, algorithm: str | None) -> bool:

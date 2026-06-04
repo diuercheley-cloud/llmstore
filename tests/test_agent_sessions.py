@@ -1,13 +1,15 @@
-import pytest
 import uuid
-from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import timedelta
+
+import pytest
+from app.core.time import utc_now
+from app.models.agent_sessions import AgentThreadMessage
 from app.services.agents.sessions.agent_session_service import AgentSessionService
 from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
-from app.services.agents.sessions.session_history_policy import SessionHistoryPolicyService
 from app.services.agents.sessions.session_context_builder import SessionContextBuilder
-from app.models.agent_sessions import AgentSession, AgentThreadMessage
-from app.core.time import utc_now
+from app.services.agents.sessions.session_history_policy import SessionHistoryPolicyService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_agent_session_lifecycle(session: AsyncSession):

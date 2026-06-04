@@ -1,9 +1,10 @@
 import os
 import re
-import yaml
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+import yaml
 from app.core.config import get_settings
+
 
 class FeatureFlagRegistryService:
     def __init__(self, registry_path: Optional[str] = None):

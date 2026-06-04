@@ -1,7 +1,7 @@
 # Owner: agent-platform
-import os
 import logging
-from typing import List, Dict, Any, Optional
+import os
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

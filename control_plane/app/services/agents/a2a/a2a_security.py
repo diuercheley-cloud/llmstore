@@ -1,15 +1,15 @@
 # Owner: agent-platform
-import hmac
 import hashlib
+import hmac
 import json
 from typing import Any, Dict
-from fastapi import HTTPException, Security
-from fastapi.security import APIKeyHeader
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.models.agents import AgentA2ARegistration
+from fastapi import HTTPException
+from fastapi.security import APIKeyHeader
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 X_A2A_TOKEN_HEADER = APIKeyHeader(name="X-Agent-A2A-Token", auto_error=False)
 

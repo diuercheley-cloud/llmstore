@@ -1,10 +1,11 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.billing.payments.pix_service import PixService
+from unittest.mock import AsyncMock, patch
+
+import pytest
 from app.services.billing.payments.card_service import CardService
 from app.services.billing.payments.payment_reconciliation import PaymentReconciliationService
-from app.core.config import get_settings
+from app.services.billing.payments.pix_service import PixService
+
 
 @pytest.mark.asyncio
 async def test_mock_pix_creates_qr():

@@ -3,7 +3,6 @@ import logging
 from typing import AsyncGenerator, Optional
 
 import httpx
-
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

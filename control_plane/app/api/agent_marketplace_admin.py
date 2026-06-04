@@ -1,14 +1,13 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body, UploadFile, File
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
-from app.api.deps import require_admin, get_db_session
-from app.services.agents.agent_marketplace import AgentMarketplaceService
+from app.api.deps import get_db_session, require_admin
 from app.services.agents.agent_bundle_verifier import AgentBundleVerifierService
+from app.services.agents.agent_marketplace import AgentMarketplaceService
 from app.services.agents.agent_supply_chain import AgentSupplyChainService
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agent-marketplace", tags=["agent-marketplace"])
 

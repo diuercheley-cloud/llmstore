@@ -1,5 +1,9 @@
-import pytest
-from control_plane.app.models.governance.release_baseline import PlatformReleaseBaseline, ValidationSnapshot, ReleaseReceipt
+from control_plane.app.models.governance.release_baseline import (
+    PlatformReleaseBaseline,
+    ReleaseReceipt,
+    ValidationSnapshot,
+)
+
 
 def test_platform_release_baseline_structure():
     baseline = PlatformReleaseBaseline(

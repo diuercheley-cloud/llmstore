@@ -1,8 +1,7 @@
-import uuid
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.governance.policy_registry import PolicyRegistryService
-from app.models.commercial_governance import CommercialPolicyBundle
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_create_policy_bundle(session: AsyncSession):

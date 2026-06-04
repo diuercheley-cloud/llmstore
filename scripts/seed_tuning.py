@@ -1,13 +1,13 @@
 import asyncio
-import sys
 import os
+import sys
 
 # Add control_plane to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "control_plane")))
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.runtime_tuning import RuntimeTuningService
 from app.db.session import SessionLocal
+from app.services.runtime_tuning import RuntimeTuningService
+
 
 async def main():
     async with SessionLocal() as db:

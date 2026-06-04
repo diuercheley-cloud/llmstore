@@ -1,14 +1,13 @@
-import pytest
-import uuid
-import sys
 import os
-from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
 from app.services.visual_observability import VisualObservabilityService, sanitize_dict
-from app.models.agents import AgentIncident
+
 
 def test_sanitize_dict():
     data = {

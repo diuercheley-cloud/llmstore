@@ -14,7 +14,6 @@ import json
 import os
 import sys
 import time
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -330,11 +329,11 @@ class OpenAIRealValidator:
 
     def write_report(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        report_path = self.output_dir / f"openai-real-report.json"
+        report_path = self.output_dir / "openai-real-report.json"
         with open(report_path, "w") as f:
             json.dump(self.report, f, indent=2, default=str)
         self.report["artifacts"].append(str(report_path))
-        md_path = self.output_dir / f"openai-real-report.md"
+        md_path = self.output_dir / "openai-real-report.md"
         with open(md_path, "w") as f:
             f.write(self._format_md())
         self.report["artifacts"].append(str(md_path))
@@ -342,19 +341,19 @@ class OpenAIRealValidator:
 
     def _format_md(self) -> str:
         lines = [
-            f"# OpenAI Real Provider Report",
-            f"",
+            "# OpenAI Real Provider Report",
+            "",
             f"**Status**: {self.report['status']}",
             f"**Timestamp**: {self.timestamp}",
             f"**Dry-run**: {self.dry_run}",
             f"**Model**: {self.model}",
             f"**Embeddings Model**: {self.emb_model}",
             f"**Max Cost BRL**: R$ {self.max_cost_brl}",
-            f"",
-            f"## Summary",
-            f"",
-            f"| Result | Count |",
-            f"|--------|-------|",
+            "",
+            "## Summary",
+            "",
+            "| Result | Count |",
+            "|--------|-------|",
         ]
         for s in ("pass", "fail", "skip", "warn"):
             lines.append(f"| {s.upper()} | {self.report['summary'].get(s, 0)} |")

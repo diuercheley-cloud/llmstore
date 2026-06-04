@@ -5,7 +5,6 @@ from pathlib import Path
 
 import sqlalchemy as sa
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION_PATH = ROOT / "control_plane" / "alembic" / "versions" / "20260515_phase56_workflow_policy_enforcement.py"
 

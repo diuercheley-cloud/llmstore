@@ -4,11 +4,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.commercial_agents import (
     CommercialAgentAction,
@@ -24,6 +19,10 @@ from app.services.agents.tool_policy_engine import ToolPolicyEngine
 from app.services.agents.trusted_agent_runtime import trusted_agent_runtime
 from app.services.auth import require_admin
 from app.utils.crypto_signer import sign_payload
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     tags=["admin", "trusted-agent-runtime"],

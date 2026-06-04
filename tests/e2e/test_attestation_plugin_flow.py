@@ -1,5 +1,6 @@
+
 import pytest
-import uuid
+
 
 @pytest.mark.asyncio
 async def test_attestation_plugin_flow(e2e_client, admin_headers):

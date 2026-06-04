@@ -1,7 +1,8 @@
-import httpx
 from typing import Any, Dict
-from app.services.agents.tool_adapter_contract import ToolAdapterContract
+
+import httpx
 from app.core.config import get_settings
+from app.services.agents.tool_adapter_contract import ToolAdapterContract
 
 
 class HttpGetToolAdapter(ToolAdapterContract):

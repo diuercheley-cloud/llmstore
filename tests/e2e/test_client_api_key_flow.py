@@ -1,7 +1,7 @@
-import pytest
-import httpx
-import os
 import uuid
+
+import pytest
+
 
 @pytest.mark.asyncio
 async def test_client_api_key_flow(e2e_client, admin_headers):

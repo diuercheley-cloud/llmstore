@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_demo_admin_summary(admin_client: AsyncClient, admin_token_headers: dict[str, str]):
     response = await admin_client.get(

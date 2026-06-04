@@ -8,15 +8,13 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from unittest.mock import patch
-
-from app.main import app
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
+from app.main import app
 from app.models.client import Client
 from app.services.security import record_abuse_event
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

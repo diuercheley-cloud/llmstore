@@ -11,6 +11,57 @@ The LLM Harness is a tool for the governed execution of agentic code tasks withi
 - Centralize security rules in `scripts/llm_harness/policy.py`.
 - Generate detailed reports and artifacts in `artifacts/llm_harness/`.
 
+## Cursor-like IDE Features
+
+The harness also exposes a Cursor-style CLI surface for IDE-adjacent workflows:
+
+- `chat`: governed chat with file references, memory, rules, and cached docs context.
+- `edit-inline`: inline editing with diff preview, dry-run, and policy-gated patching.
+- `index` and `docs`: repository indexing plus external documentation caching.
+- `code --image`: multimodal task input for screenshots and images.
+- `complete`: fill-in-the-middle code completion suggestions.
+- `fix-error` and `terminal`: stderr diagnosis and repair workflows.
+- `ide`: VS Code and Cursor settings/rules import.
+- `models`: model profile listing and profile smoke tests.
+
+Examples:
+
+```bash
+llm-harness chat --provider stub --allow-stub-code-agent --message "Review @file:scripts/llm_harness/cli.py"
+llm-harness chat --provider stub --allow-stub-code-agent --message "Summarize @scripts/llm_harness and @selection:scripts/llm_harness/cli.py:1-40"
+llm-harness edit-inline scripts/llm_harness/cli.py --range 1:20 --instruction "Tighten help text" --dry-run
+llm-harness code --provider stub --allow-stub-code-agent --image screenshot.png --task "Explain the UI issue in this screenshot"
+llm-harness complete scripts/llm_harness/cli.py --line 20 --column 4 --provider stub --allow-stub-code-agent
+llm-harness fix-error --from-file artifacts/llm_harness/error.log --dry-run --provider stub --allow-stub-code-agent
+llm-harness terminal diagnose --stderr-file artifacts/llm_harness/stderr.log
+llm-harness terminal suggest --stderr-file artifacts/llm_harness/stderr.log --provider stub --allow-stub-code-agent
+llm-harness ide import-vscode --path .
+llm-harness ide show-config
+llm-harness models list
+llm-harness models test local-qwen
+```
+
+Model profiles can be declared in `.harness.yaml` and selected with `--model-profile` or by task routing:
+
+```yaml
+models:
+  default: local-qwen
+  profiles:
+    local-qwen:
+      provider: local-openai-compatible
+      model: nvidia/nemotron-3-nano-4b
+      base_url: http://192.168.101.1:1234/v1
+    cloud-fast:
+      provider: openai-compatible
+      model: gpt-4o-mini
+  routing:
+    chat: local-qwen
+    completion: local-qwen
+    inline-edit: local-qwen
+```
+
+Language-aware helpers currently cover Python, JavaScript, TypeScript, Java, and C# for detection, diagnostics hints, indexing fallback, and prompt metadata.
+
 ## Installation
 
 ### Dependencies
@@ -210,10 +261,15 @@ Behavior for local providers:
 - If `--model` is provided, the harness validates it against the model catalog before execution.
 - Streaming is enabled by default when the base URL points to `localhost`, `127.0.0.1`, or `host.docker.internal`.
 - Local providers default to a `300s` request timeout and can retry once with a larger timeout via `--auto-increase-timeout`.
-- `--tool-calling auto` prefers native OpenAI-compatible `tool_calls`; `json` keeps the legacy action JSON behavior.
-- `--approval-policy interactive` shows the action type, reason, summarized payload, policy decision, command or diff preview, and allows `approve`, `deny`, `edit`, or `abort`.
-- `edit` opens the action JSON in `$VISUAL` or `$EDITOR` instead of forcing one-line terminal input.
-- `health` reports `available_models`, `selected_model`, and `supports_response_format`.
+- `--tool-calling auto` is conservative for local providers and defaults to JSON actions unless `supports_native_tool_calling=true` AND `--allow-native-tools-for-local` is set.
+- `json` keeps the legacy action JSON behavior and is the safest default for LM Studio-style backends.
+- `native` forces native `tool_calls`. If the provider fails the native capability probe, execution fails with a descriptive error.
+- `--allow-native-tools-for-local` (or `LLM_HARNESS_ALLOW_NATIVE_TOOLS_FOR_LOCAL=1`) explicitly enables native tools for local providers in `auto` mode when supported.
+- `health` reports `available_models`, `selected_model`, `supports_response_format`, `supports_native_tool_calling`, and `native_tool_calling_probe` details.
+- Capability probe results are cached for 300s (configurable via `--capability-cache-ttl-seconds`) to avoid redundant expensive probes. Caching is per provider, base URL, and model.
+- Health output indicates `capability_probe_cache_hit=true` when using cached results.
+- Run reports include `final_tool_calling_mode` in `_provider_meta` to verify the decision.
+- Malformed `tool_calls` in `native` mode result in a `schema_validation_failed` error and do not execute partially. Fallback to JSON is only permitted in `auto` mode.
 
 ### Using LM Studio / local OpenAI-compatible models
 
@@ -237,6 +293,7 @@ Smoke test expectations:
 - The harness accepts native `tool_calls` when the local server supports them.
 - If the local server returns plain conversational text plus JSON, the harness extracts the first schema-valid action JSON.
 - If the local server rejects multi-turn history or `tool_calls` with `HTTP 400`, the harness retries once with simplified text-only history, disables streaming for the retry, and omits `tools`.
+- If the local server returns `200 OK` but still produces empty or schema-incompatible action content, the harness retries once in a stricter JSON-compatible mode.
 - After a `final` action executes, the harness terminates the run immediately and blocks any extra LLM calls.
 - Reports include `time_to_first_action_ms`, `time_to_final_ms`, and `post_final_llm_calls_blocked` for local debugging.
 

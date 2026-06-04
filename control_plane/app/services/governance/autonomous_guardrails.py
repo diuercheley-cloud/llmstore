@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
@@ -15,6 +12,8 @@ from app.models.commercial_autonomous_guardrails import (
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.trust_graph import TrustGraphService
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .autonomous_execution_limits import AutonomousExecutionLimitsService
 from .blast_radius_analysis import BlastRadiusAnalysisService, sha256_hex

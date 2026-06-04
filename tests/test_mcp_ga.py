@@ -1,8 +1,7 @@
 import pytest
 from app.core.config import get_settings
-from app.services.agents.mcp.mcp_security import MCPSecurity
 from app.services.agents.mcp.mcp_client import MCPClient
-from app.services.agents.mcp.mcp_registry import MCPRegistry
+
 
 @pytest.fixture
 def mcp_client():

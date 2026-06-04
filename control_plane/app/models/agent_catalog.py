@@ -2,14 +2,13 @@
 # Owner: platform-ops
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional
 
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, ForeignKey, Integer, Float, Text
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.db.base import Base
 from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 JSON_DOCUMENT = JSON().with_variant(JSONB(astext_type=Text()), "postgresql")
 

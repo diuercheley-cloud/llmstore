@@ -3,12 +3,8 @@ import os
 import httpx
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-
 from app.api.billing_admin import router
-from app.models.request_financial import RequestFinancial
-from app.services.billing.pricing_engine import record_request_financials
-from app.services.auth import require_admin
+from fastapi import FastAPI
 
 
 @pytest_asyncio.fixture

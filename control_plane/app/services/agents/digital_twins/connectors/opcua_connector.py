@@ -1,14 +1,15 @@
-import uuid
 import logging
-from typing import Dict, Any, Optional
+import uuid
+from typing import Any, Dict
 
-from app.services.agents.digital_twins.twin_connector import TwinConnector
 from app.models.digital_twin import DigitalTwin
+from app.services.agents.digital_twins.twin_connector import TwinConnector
 
 logger = logging.getLogger(__name__)
 
 try:
-    from asyncua import Client as OPCUAClient, ua
+    from asyncua import Client as OPCUAClient
+    from asyncua import ua
     HAS_OPCUA = True
 except ImportError:
     HAS_OPCUA = False

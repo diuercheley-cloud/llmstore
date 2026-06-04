@@ -1,29 +1,32 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Dict, Any, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any
 
 from app.api.dependencies import get_current_admin, get_db
-from app.models.operations.remediation_planning import RemediationPlan, RemediationStep, RemediationApprovalRequirement
 from app.models.operations.remediation_execution import (
     RemediationExecution,
-    RemediationExecutionStep,
-    RemediationRollbackPlan,
     RemediationExecutionReceipt,
     RemediationKillSwitchState,
+    RemediationRollbackPlan,
     compute_deterministic_hash,
+)
+from app.models.operations.remediation_planning import (
+    RemediationApprovalRequirement,
+    RemediationPlan,
+    RemediationStep,
+)
+from app.services.operations.remediation_execution.audit_events import (
+    log_remediation_kill_switch_updated,
 )
 from app.services.operations.remediation_execution.executor import ApprovalGatedRemediationExecutor
 from app.services.operations.remediation_execution.receipts import (
-    build_pre_execution_receipt,
     build_post_execution_receipt,
-    build_kill_switch_receipt,
+    build_pre_execution_receipt,
 )
-from app.services.operations.remediation_execution.audit_events import log_remediation_kill_switch_updated
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 EXECUTOR = ApprovalGatedRemediationExecutor()

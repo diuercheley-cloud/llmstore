@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-
 SECRET_PATTERNS = [
     re.compile(r"AKIA[0-9A-Z]{12,}"),
     re.compile(r"(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][^'\"]+['\"]"),

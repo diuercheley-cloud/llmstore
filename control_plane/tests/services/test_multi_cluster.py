@@ -1,6 +1,6 @@
 import pytest
 from app.services.multi_cluster_operations import MultiClusterOperationsService
-import pytest_asyncio
+
 
 @pytest.mark.asyncio
 async def test_cluster_creation_and_status(db_session):

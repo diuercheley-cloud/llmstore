@@ -2,6 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 
+
 def test_validate_script_exists_and_executable():
     script_path = Path("scripts/validate-release-artifacts-security.sh")
     assert script_path.exists()

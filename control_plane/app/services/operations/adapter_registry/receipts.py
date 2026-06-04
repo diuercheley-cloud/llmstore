@@ -1,16 +1,15 @@
-import uuid
-from typing import Any
 
+from app.core.time import utc_now
 from app.models.operations.adapter_registry import (
-    SignedAdapterRegistryEntry,
+    AdapterRegistryAllowlistEntry,
+    AdapterRegistryBlocklistEntry,
     AdapterRegistryDecision,
     AdapterRegistryPolicy,
     AdapterRegistryReceipt,
-    AdapterRegistryAllowlistEntry,
-    AdapterRegistryBlocklistEntry,
+    SignedAdapterRegistryEntry,
 )
-from app.services.operations.adapter_registry.hash_utils import sha256_hex, canonical_json
-from app.core.time import utc_now
+from app.services.operations.adapter_registry.hash_utils import canonical_json, sha256_hex
+
 
 def build_registry_entry_receipt(entry: SignedAdapterRegistryEntry) -> AdapterRegistryReceipt:
     payload = {

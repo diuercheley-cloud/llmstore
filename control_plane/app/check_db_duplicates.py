@@ -1,7 +1,9 @@
 import asyncio
+
 from app.db.session import SessionLocal
 from app.models.model_registry import ModelRegistry
-from sqlalchemy import select, func
+from sqlalchemy import func, select
+
 
 async def main():
     async with SessionLocal() as session:

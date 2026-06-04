@@ -1,13 +1,20 @@
-import pytest
-import uuid
-from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation, CommercialSafetyPolicy
-from app.services.routing.commercial_infra_simulation import (
-    simulate_scale_up, simulate_scale_down, estimate_blast_radius
+import pytest
+from app.models.commercial_infra_simulation import (
+    CommercialInfrastructureSimulation,
+    CommercialSafetyPolicy,
 )
-from app.services.routing.commercial_safety_gates import validate_simulation_against_policy, requires_manual_approval
+from app.services.routing.commercial_infra_simulation import (
+    estimate_blast_radius,
+    simulate_scale_down,
+    simulate_scale_up,
+)
+from app.services.routing.commercial_safety_gates import (
+    requires_manual_approval,
+    validate_simulation_against_policy,
+)
+
 
 @pytest.mark.asyncio
 async def test_simulate_scale_up():

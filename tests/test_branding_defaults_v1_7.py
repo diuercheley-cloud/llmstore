@@ -1,6 +1,6 @@
 import json
 import os
-import pytest
+
 from app.services.branding import DEFAULT_BRANDING
 
 BRANDING_JSON = "config/branding.example.json"

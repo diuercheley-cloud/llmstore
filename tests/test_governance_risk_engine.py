@@ -1,6 +1,7 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.governance.governance_risk_engine import GovernanceRiskEngine
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_calculate_risk(session: AsyncSession):

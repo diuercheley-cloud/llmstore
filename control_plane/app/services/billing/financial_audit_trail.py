@@ -5,10 +5,9 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import select, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FinancialAuditTrailService:
@@ -59,7 +58,6 @@ class FinancialAuditTrailService:
         """
         Creates a new audit event with an immutable hash chain.
         """
-        import uuid # Ensure uuid is available if passed as param type hint but not imported
         
         previous_hash = await FinancialAuditTrailService.get_latest_hash(db)
         timestamp = datetime.utcnow() # Use utcnow directly or app.core.time.utc_now

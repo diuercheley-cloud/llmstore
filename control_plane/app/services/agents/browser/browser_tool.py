@@ -1,15 +1,16 @@
 # Owner: agent-platform
 from typing import Any, Dict
-from app.services.agents.tool_adapter_contract import ToolAdapterContract
+
 from app.core.config import get_settings
 from app.services.agents.browser.headless_browser_provider import (
-    get_browser_session,
-    close_browser_session,
-    browser_open_url,
     browser_click_element,
     browser_extract_page_text,
-    browser_take_screenshot
+    browser_open_url,
+    browser_take_screenshot,
+    close_browser_session,
+    get_browser_session,
 )
+from app.services.agents.tool_adapter_contract import ToolAdapterContract
 
 
 class BrowserOpenToolAdapter(ToolAdapterContract):

@@ -1,20 +1,15 @@
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-import uuid
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
-from sqlalchemy.orm import selectinload
+from datetime import datetime
+from typing import Any, Dict, List
 
 from app.models.operations.compliance import (
-    ComplianceFramework,
     ComplianceControl,
     ComplianceEvidenceItem,
-    ComplianceControlTest,
-    ComplianceRiskItem,
-    CompliancePolicyDocument,
+    ComplianceFramework,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 class ComplianceReadinessService:
     def __init__(self, db: AsyncSession):

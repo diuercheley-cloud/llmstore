@@ -1,10 +1,12 @@
-import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from app.core.config import get_settings
-from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
+from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 from app.services.agents.multi_agent.loop_guard import LoopGuard
+
 
 @pytest.mark.asyncio
 async def test_delegation_max_depth_policy():

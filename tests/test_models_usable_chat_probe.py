@@ -1,9 +1,10 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.db.base import Base
 from app.models.model_registry import ModelRegistry
 from app.services.model_policy import get_usable_chat_model
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url):

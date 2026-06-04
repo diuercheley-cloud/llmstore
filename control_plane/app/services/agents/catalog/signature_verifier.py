@@ -5,9 +5,9 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 try:
+    from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
-    from cryptography.exceptions import InvalidSignature
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False

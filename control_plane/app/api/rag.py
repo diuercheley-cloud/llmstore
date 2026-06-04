@@ -1,42 +1,40 @@
 # Owner: platform-ops
+import json
+import logging
 import os
 import uuid
-import logging
-import json
-from typing import List, Optional
 
 import numpy as np
-import sqlalchemy as sa
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
-from sqlalchemy import select, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse
-
+from app.api.client import _chat_with_fallback
+from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.db.session import get_db_session, redis_client
 from app.models.client import Client
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.schemas.rag import (
-    RAGFileResponse, 
-    RAGFileListResponse, 
-    RAGQueryRequest, 
+    RAGFileListResponse,
+    RAGFileResponse,
+    RAGQueryRequest,
     RAGQueryResponse,
     RAGSource,
-    RAGUsage
 )
 from app.services.auth import require_client
-from app.services.rag_processor import delete_rag_document
+from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.embeddings import get_embedding_service
 from app.services.model_policy import resolve_requested_model
-from app.services.quota import ensure_quota, record_usage, QuotaExceeded
-from app.services.billing import resolve_effective_plan
-from app.services.billing.core import resolve_effective_plan_for_session
-from app.api.deps import get_inference_proxy
-from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
-from app.api.client import _chat_with_fallback
-
-from app.services.rag_usage import get_rag_usage_and_limits, check_rag_feature_blocked, record_rag_event
+from app.services.quota import QuotaExceeded, ensure_quota, record_usage
+from app.services.rag_processor import delete_rag_document
+from app.services.rag_usage import (
+    check_rag_feature_blocked,
+    get_rag_usage_and_limits,
+    record_rag_event,
+)
+from app.utils.token_estimator import estimate_tokens_from_text
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/rag", tags=["rag"])

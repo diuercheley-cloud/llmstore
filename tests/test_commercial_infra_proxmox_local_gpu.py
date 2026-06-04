@@ -1,11 +1,11 @@
-import pytest
 import uuid
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 
-from app.services.routing.infra_adapters.proxmox_adapter import ProxmoxAdapter
-from app.services.routing.infra_adapters.local_gpu_adapter import LocalGPUAdapter
+import pytest
 from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+from app.services.routing.infra_adapters.local_gpu_adapter import LocalGPUAdapter
+from app.services.routing.infra_adapters.proxmox_adapter import ProxmoxAdapter
+
 
 @pytest.fixture
 def mock_settings():

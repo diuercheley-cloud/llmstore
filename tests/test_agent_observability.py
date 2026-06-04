@@ -1,10 +1,11 @@
-import pytest
 import uuid
 from unittest.mock import MagicMock
-from app.services.agents.agent_executor import AgentExecutor
+
+import pytest
 from app.services.agents import agent_state
-from app.core import metrics
+from app.services.agents.agent_executor import AgentExecutor
 from prometheus_client import REGISTRY
+
 
 @pytest.mark.asyncio
 async def test_agent_observability_metrics_increment(session):

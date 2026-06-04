@@ -1,20 +1,19 @@
-import logging
 import hashlib
-import json
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import logging
+from datetime import datetime
+from typing import Any, List
+
 from app.models.commercial_predictive_aiops import (
-    CommercialFailurePrediction,
+    CommercialAIOpsRecommendation,
     CommercialAnomalySignal,
-    CommercialNodeHealthForecast,
+    CommercialFailurePrediction,
     CommercialRuntimeRiskTrend,
-    CommercialAIOpsRecommendation
 )
-from app.services.runtime.failure_forecasting import FailureForecaster
 from app.services.runtime.anomaly_correlation import AnomalyCorrelator
+from app.services.runtime.failure_forecasting import FailureForecaster
 from app.services.runtime.runtime_risk_scoring import RuntimeRiskScorer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

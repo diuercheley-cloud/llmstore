@@ -209,7 +209,7 @@ def main():
         else:
             results["provider_matrix_tested"] = {
                 "status": "FAIL",
-                "details": f"Matrix tests found but lacking key coverage.",
+                "details": "Matrix tests found but lacking key coverage.",
             }
     else:
         results["provider_matrix_tested"] = {

@@ -1,8 +1,8 @@
 import logging
-import subprocess
-import json
 import shutil
-from typing import Dict, Any, List, Optional
+import subprocess
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
 from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
 from app.services.routing.infra_adapters.base import BaseInfraAdapter
@@ -78,7 +78,7 @@ class LocalGPUAdapter(BaseInfraAdapter):
             if result.returncode == 0:
                 return {"status": "executed", "output": result.stdout.strip()}
             return {"status": "failed", "error": "nvidia-smi error"}
-        except Exception as e:
+        except Exception:
             return {"status": "failed", "error": "GPU inspection failed"}
 
     def collect_gpu_metrics(self) -> Dict[str, Any]:
@@ -113,7 +113,7 @@ class LocalGPUAdapter(BaseInfraAdapter):
                             continue
                 return {"status": "executed", "gpus": gpus}
             return {"status": "failed", "error": "nvidia-smi metrics failed"}
-        except Exception as e:
+        except Exception:
             return {"status": "failed", "error": "GPU metrics collection failed"}
 
     def apply_power_limit(self, limit_watts: Optional[int]) -> Dict[str, Any]:
@@ -126,7 +126,7 @@ class LocalGPUAdapter(BaseInfraAdapter):
             if result.returncode == 0:
                 return {"status": "executed", "output": result.stdout.strip()}
             return {"status": "failed", "error": "nvidia-smi power limit failed"}
-        except Exception as e:
+        except Exception:
             return {"status": "failed", "error": "Power limit application failed"}
 
     def kill_gpu_process(self, pid: Optional[int]) -> Dict[str, Any]:

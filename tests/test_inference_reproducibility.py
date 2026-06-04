@@ -1,14 +1,13 @@
 import json
 
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
 from app.models.commercial_inference_reproducibility import (
     CommercialInferenceReproducibilityRecord,
     CommercialInferenceRuntimeSnapshot,
 )
 from app.services.audit import log_request
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

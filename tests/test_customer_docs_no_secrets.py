@@ -1,6 +1,7 @@
 import glob
 import re
 
+
 def test_no_secrets_in_customer_docs():
     secret_patterns = [
         r"sk-[a-zA-Z0-9]{32,}",

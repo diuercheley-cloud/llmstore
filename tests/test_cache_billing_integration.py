@@ -1,16 +1,14 @@
 import uuid
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-
 from app.db.base import Base
 from app.services.billing.pricing_engine import (
     calculate_customer_price,
     calculate_financials,
-    calculate_margin,
     estimate_provider_cost,
     record_request_financials,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest.mark.asyncio

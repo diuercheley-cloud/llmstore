@@ -1,4 +1,3 @@
-import re
 
 path = "control_plane/app/main.py"
 with open(path, "r") as f:

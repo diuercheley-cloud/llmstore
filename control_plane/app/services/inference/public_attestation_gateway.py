@@ -1,20 +1,22 @@
-import hashlib
-import json
-import uuid
-from datetime import datetime
-from typing import Any, List, Optional
-from sqlalchemy.future import select
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from ...core.config import get_settings
 from ...models.commercial_attestation import (
     CommercialPublicAttestationRequest,
-    CommercialPublicAttestationResult
+    CommercialPublicAttestationResult,
 )
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
 from ...models.commercial_cryptographic_receipts import CommercialInferenceReceipt
-from ...models.commercial_retrieval_proofs import CommercialRetrievalProof, CommercialRetrievalReplayRecord
+from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
+from ...models.commercial_retrieval_proofs import (
+    CommercialRetrievalProof,
+    CommercialRetrievalReplayRecord,
+)
 from ...services.inference import witness_federation
 from ...services.rag.retrieval_proofs import verify_lineage_consistency, verify_retrieval_proof
-from ...core.config import get_settings
+
 
 async def log_attestation_request(
     db: AsyncSession,

@@ -1,6 +1,7 @@
 # Owner: agent-platform
 from .sab_manifest import AgentSABManifest
 
+
 class SABCompatibility:
     def check(self, manifest: AgentSABManifest, current_platform_version: str) -> bool:
         """

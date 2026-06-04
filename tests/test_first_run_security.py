@@ -1,6 +1,5 @@
-import pytest
 import subprocess
-import os
+
 
 def test_first_run_no_secrets_in_script():
     with open("scripts/first-run-local.sh", "r") as f:

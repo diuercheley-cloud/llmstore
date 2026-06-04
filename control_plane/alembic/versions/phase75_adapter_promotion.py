@@ -4,10 +4,8 @@ Revision ID: phase75_adapter_promotion
 Revises: e68f9a82dc48
 Create Date: 2026-05-15 22:00:00.000000
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = 'phase75_adapter_promotion'
 down_revision = 'e68f9a82dc48'

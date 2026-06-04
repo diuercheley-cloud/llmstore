@@ -1,9 +1,12 @@
 import logging
-from typing import Any
 
 from app.core.config import get_settings
 from app.services.providers.base import ProviderAdapter
-from app.services.providers.schemas import ProviderCapabilities, ProviderHealth, ProviderStatus, ProviderSummary
+from app.services.providers.schemas import (
+    ProviderCapabilities,
+    ProviderHealth,
+    ProviderStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,24 +45,24 @@ def _init_registry() -> None:
     if _registry_initialized:
         return
 
-    from app.services.providers.local_provider import LocalProvider
-    from app.services.providers.lmstudio_provider import LMStudioProvider
-    from app.services.providers.openai_provider import OpenAIProvider
+    from app.services.providers.ai21_provider import AI21Provider
     from app.services.providers.anthropic_provider import AnthropicProvider
-    from app.services.providers.deepseek_provider import DeepSeekProvider
-    from app.services.providers.openrouter_provider import OpenRouterProvider
-    from app.services.providers.gemini_provider import GeminiProvider
-    from app.services.providers.bedrock_provider import BedrockProvider
     from app.services.providers.azure_openai_provider import AzureOpenAIProvider
-    from app.services.providers.mistral_provider import MistralProvider
+    from app.services.providers.bedrock_provider import BedrockProvider
     from app.services.providers.cohere_provider import CohereProvider
+    from app.services.providers.deepseek_provider import DeepSeekProvider
+    from app.services.providers.fireworks_provider import FireworksProvider
+    from app.services.providers.gemini_provider import GeminiProvider
     from app.services.providers.groq_provider import GroqProvider
-    from app.services.providers.together_provider import TogetherProvider
+    from app.services.providers.lmstudio_provider import LMStudioProvider
+    from app.services.providers.local_provider import LocalProvider
+    from app.services.providers.mistral_provider import MistralProvider
+    from app.services.providers.openai_provider import OpenAIProvider
+    from app.services.providers.openrouter_provider import OpenRouterProvider
     from app.services.providers.perplexity_provider import PerplexityProvider
     from app.services.providers.replicate_provider import ReplicateProvider
+    from app.services.providers.together_provider import TogetherProvider
     from app.services.providers.xai_provider import XAIProvider
-    from app.services.providers.fireworks_provider import FireworksProvider
-    from app.services.providers.ai21_provider import AI21Provider
 
     settings = get_settings()
     providers_enabled = [p.strip() for p in settings.providers_enabled.split(",") if p.strip()]
@@ -151,7 +154,7 @@ async def get_all_provider_health() -> list[ProviderHealth]:
                 last_error_sanitized=sanitized,
                 latency_ms=h.get("latency_ms"),
             ))
-        except Exception as e:
+        except Exception:
             results.append(ProviderHealth(
                 provider_id=p.provider_id,
                 enabled=p.enabled,

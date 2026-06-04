@@ -1,6 +1,7 @@
-from typing import Any, Dict, Type, TypeVar, Generic
-from pydantic import BaseModel, ValidationError
 from enum import Enum
+from typing import Any, Dict, Generic, Type, TypeVar
+
+from pydantic import BaseModel, ValidationError
 
 T_Input = TypeVar("T_Input", bound=BaseModel)
 T_Output = TypeVar("T_Output", bound=BaseModel)

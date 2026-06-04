@@ -1,7 +1,8 @@
+
 import pytest
-import asyncio
-from app.services.agents.reasoning.mcts.mcts_runtime import MCTSRuntime
 from app.core.config import get_settings
+from app.services.agents.reasoning.mcts.mcts_runtime import MCTSRuntime
+
 
 @pytest.mark.asyncio
 async def test_mcts_disabled_bloqueia():

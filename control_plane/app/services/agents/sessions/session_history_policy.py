@@ -1,19 +1,17 @@
 # Owner: agent-platform
-import uuid
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from sqlalchemy import select, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from datetime import timedelta
+from typing import Dict, Optional
 
 from app.core.time import utc_now
 from app.models.agent_sessions import (
     AgentSession,
-    AgentThreadMessage,
     AgentSessionSummary,
-    AgentConversationThread,
-    AgentSessionRun,
+    AgentThreadMessage,
 )
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

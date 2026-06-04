@@ -1,12 +1,12 @@
 # Owner: platform-ops
 import json
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends
-from redis.asyncio import Redis
 
 from app.api.deps import require_admin
 from app.db.session import get_redis
 from app.schemas.admin import OnboardingStatusRead, OnboardingStatusUpdate
+from fastapi import APIRouter, Depends
+from redis.asyncio import Redis
 
 router = APIRouter(prefix="/admin/onboarding", tags=["admin-onboarding"], dependencies=[Depends(require_admin)])
 

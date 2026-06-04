@@ -1,11 +1,6 @@
 """Tests for DeepSeek billing BRL mapping — cost estimation, pricing engine integration."""
 
-import os
-from decimal import Decimal
-from pathlib import Path
-from typing import Any
 
-import pytest
 
 from app.services.billing.pricing_engine import (
     calculate_customer_price,

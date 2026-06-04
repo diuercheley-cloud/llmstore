@@ -1,8 +1,8 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.governance.policy_engine import PolicyEngineService
 from app.services.governance.policy_registry import PolicyRegistryService
-from app.models.commercial_governance import CommercialPolicyDriftEvent
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_detect_policy_drift_missing_bundle(session: AsyncSession):

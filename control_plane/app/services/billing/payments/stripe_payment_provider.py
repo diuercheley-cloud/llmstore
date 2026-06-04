@@ -1,10 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
-from fastapi import HTTPException
+import uuid
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
 from app.services.billing.payments.payment_provider import PaymentProvider
+from fastapi import HTTPException
 
 logger = logging.getLogger("stripe_payment_provider")
 

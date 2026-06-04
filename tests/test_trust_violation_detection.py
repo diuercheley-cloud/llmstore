@@ -1,6 +1,7 @@
 import pytest
-from app.services.security.trust_violation_detection import TrustViolationDetectionService
 from app.services.security.trust_graph import TrustGraphService
+from app.services.security.trust_violation_detection import TrustViolationDetectionService
+
 
 @pytest.mark.asyncio
 async def test_run_detection(session):

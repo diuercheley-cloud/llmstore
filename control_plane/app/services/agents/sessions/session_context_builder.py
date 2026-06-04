@@ -1,14 +1,14 @@
 # Owner: agent-platform
-import uuid
-import re
 import logging
+import re
+import uuid
 from typing import Any, Dict, List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agent_sessions import AgentSession, AgentSessionSummary
+from app.models.agent_sessions import AgentSessionSummary
 from app.services.agents.sessions.conversation_thread_service import (
     ConversationThreadService,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,8 @@ class SessionContextBuilder:
         }
 
         if include_summary:
-            from sqlalchemy.future import select
             from sqlalchemy import desc
+            from sqlalchemy.future import select
 
             stmt = (
                 select(AgentSessionSummary)

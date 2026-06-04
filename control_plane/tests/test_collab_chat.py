@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.services.collab_chat.channel_service import ChannelService
 from app.services.collab_chat.message_service import MessageService
-from app.services.collab_chat.agent_participant import AgentParticipantService
+
 
 @pytest.mark.asyncio
 async def test_create_channel_and_add_member():

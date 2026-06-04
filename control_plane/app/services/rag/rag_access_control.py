@@ -4,9 +4,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.models.commercial_confidential_runtime import CommercialConfidentialRuntimeProfile
 from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
@@ -17,7 +14,8 @@ from app.models.commercial_rag_vault import (
     CommercialRAGVault,
 )
 from app.services.rag.rag_vault import resolve_vault_policy
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 

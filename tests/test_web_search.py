@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 import pytest_asyncio
 from app.core.config import get_settings
+from app.db.base import Base
 from app.main import app
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
@@ -12,12 +13,10 @@ from app.models.web_search import (
     AgentWebSearchCache,
     AgentWebSearchPolicyEvent,
     AgentWebSearchQuery,
-    AgentWebSearchResult,
 )
 from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 from sqlalchemy import select
 
-from app.db.base import Base
 print("METADATA TABLES DECLARED IN PYTHON:", list(Base.metadata.tables.keys()))
 
 

@@ -1,12 +1,8 @@
 """Tests for Anthropic provider Messages API mapping — system prompt, role mapping, content blocks."""
 
-import json
-import sys
 from pathlib import Path
-from typing import Any
 
 import pytest
-
 from app.services.providers.anthropic_provider import AnthropicProvider
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

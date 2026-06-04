@@ -11,12 +11,10 @@ Controls:
 from __future__ import annotations
 
 import asyncio
-import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.config import get_settings
-
 
 # Defaults
 DEFAULT_MAX_DEPTH = 3
@@ -102,9 +100,9 @@ class GraphQueryOptimizer:
 
         elif req.query_type in {"neighborhood", "dependencies", "owners"}:
             plan.steps = [
-                f"IndexScan agent_kg_relations ON (tenant_id, source_entity_id) WHERE entity_id=?",
+                "IndexScan agent_kg_relations ON (tenant_id, source_entity_id) WHERE entity_id=?",
                 f"BFS traversal depth_limit={req.max_depth} fan_out_limit={req.max_fan_out}",
-                f"Fetch entities for visited IDs",
+                "Fetch entities for visited IDs",
                 f"Limit {req.limit}",
             ]
             # Compute raw upper-bound BEFORE capping to detect large traversals

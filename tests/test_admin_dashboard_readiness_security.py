@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pytest
 from httpx import AsyncClient
-from pathlib import Path
+
 
 @pytest.mark.asyncio
 async def test_admin_dashboard_html_contains_new_elements(admin_client: AsyncClient):

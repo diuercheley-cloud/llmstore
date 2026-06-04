@@ -1,20 +1,19 @@
 import uuid
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.rag_enterprise.policies import (
-    EnterpriseRagPolicy,
-    resolve_enterprise_rag_policy,
-    check_quota_documents,
-    check_quota_storage,
-    check_quota_pages,
-    check_file_type_allowed,
-    is_cloud_embedding_allowed,
-    ALLOWED_FILE_TYPES_DEFAULT,
-)
+import pytest
 from app.models.billing_plan import BillingPlan
 from app.models.client_feature_block import ClientFeatureBlock
-
+from app.services.rag_enterprise.policies import (
+    ALLOWED_FILE_TYPES_DEFAULT,
+    EnterpriseRagPolicy,
+    check_file_type_allowed,
+    check_quota_documents,
+    check_quota_pages,
+    check_quota_storage,
+    is_cloud_embedding_allowed,
+    resolve_enterprise_rag_policy,
+)
 
 pytestmark = pytest.mark.asyncio
 

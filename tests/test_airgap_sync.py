@@ -1,9 +1,6 @@
 import hashlib
-import uuid
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.services.governance.airgap_sync import (
     create_airgap_package,
@@ -12,6 +9,7 @@ from app.services.governance.airgap_sync import (
     verify_airgap_manifest,
 )
 from app.services.governance.policy_federation import PolicyFederationService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

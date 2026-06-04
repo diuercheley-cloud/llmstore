@@ -1,8 +1,10 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, Dict, Any
+import uuid
+from typing import Any, Dict
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from .confidence_calibrator import ConfidenceCalibrator
 from .evidence_gap_detector import EvidenceGapDetector
 

@@ -1,6 +1,7 @@
-import pytest
 import json
-import io
+
+import pytest
+
 
 def test_sse_parsing_logic():
     # Mocking the SSE stream

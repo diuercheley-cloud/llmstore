@@ -2,6 +2,7 @@
 import re
 from typing import List, Tuple
 
+
 class ContentFilter:
     """
     Filters content for secrets and unsafe patterns.

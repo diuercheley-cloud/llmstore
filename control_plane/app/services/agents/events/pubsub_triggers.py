@@ -1,12 +1,11 @@
-import logging
 import asyncio
 import json
-from typing import Dict, Any
-from redis.asyncio import Redis
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.services.agents.events.event_bus import event_bus
+from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 

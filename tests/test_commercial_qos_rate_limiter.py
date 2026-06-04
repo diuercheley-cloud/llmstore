@@ -1,6 +1,8 @@
 import uuid
+
 import pytest
 from app.services.routing.qos_rate_limiter import QoSRateLimiter
+
 
 @pytest.mark.asyncio
 async def test_qos_rate_limiter_basic(redis_client, settings):

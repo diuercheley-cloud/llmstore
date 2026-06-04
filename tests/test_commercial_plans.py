@@ -1,6 +1,7 @@
-import pytest
+
 import httpx
-from decimal import Decimal
+import pytest
+
 
 @pytest.mark.asyncio
 async def test_commercial_plans_seeded(admin_client: httpx.AsyncClient, admin_token_headers):
@@ -10,7 +11,6 @@ async def test_commercial_plans_seeded(admin_client: httpx.AsyncClient, admin_to
     plans = response.json()
     
     # In a fresh test DB, there might be no plans. Let's create them.
-    from app.services.billing import DEFAULT_BILLING_PLANS
     # Actually, we want to test if our seeding script logic works
     
     # Let's create the Free plan

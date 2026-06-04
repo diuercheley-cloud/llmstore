@@ -3,16 +3,12 @@ from __future__ import annotations
 import csv
 import html
 import io
-import json
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
@@ -28,6 +24,8 @@ from app.services.routing.commercial_cluster_registry import (
     validate_tenant_scope,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

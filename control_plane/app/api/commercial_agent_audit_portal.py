@@ -4,14 +4,17 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from app.db.session import get_db_session
+from app.models.client import Client
+from app.models.commercial_agents import (
+    CommercialAgentAction,
+    CommercialAgentExecution,
+    CommercialAgentReplayRecord,
+)
+from app.services.auth import require_client
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.commercial_agents import CommercialAgentAction, CommercialAgentExecution, CommercialAgentReplayRecord
-from app.services.auth import require_client
 
 router = APIRouter(prefix="/portal/agents/audit", tags=["portal", "trusted-agent-audit"])
 

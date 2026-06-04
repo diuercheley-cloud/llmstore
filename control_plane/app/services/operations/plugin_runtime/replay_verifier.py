@@ -1,7 +1,11 @@
 import json
 from typing import Any
 
-from app.services.operations.plugin_runtime.hash_utils import compute_abi_contract_hash, compute_load_plan_hash, compute_replay_hash
+from app.services.operations.plugin_runtime.hash_utils import (
+    compute_abi_contract_hash,
+    compute_load_plan_hash,
+    compute_replay_hash,
+)
 
 
 class PluginReplayVerifier:

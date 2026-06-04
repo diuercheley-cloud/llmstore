@@ -1,13 +1,13 @@
-import logging
-import urllib.request
-import urllib.error
 import json
-from typing import Any, Dict, List, Optional
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+import urllib.error
+import urllib.request
+from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agent_notifications import PushDevice, NotificationPreference
+from app.models.agent_notifications import NotificationPreference, PushDevice
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("push_provider")
 

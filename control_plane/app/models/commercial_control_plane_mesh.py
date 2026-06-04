@@ -1,7 +1,9 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, Integer, ForeignKey
-from app.db.base import Base
+
 from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
+
 
 class CommercialMeshNode(Base):
     __tablename__ = "commercial_mesh_nodes"

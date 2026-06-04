@@ -1,11 +1,9 @@
 """Tests for Fireworks AI provider sanitization — API key masking, prompt/response privacy."""
 
 import json
-import os
 import re
 
 import pytest
-
 from app.services.providers.base import ProviderType
 from app.services.providers.fireworks_provider import FireworksProvider
 from app.services.providers.schemas import ProviderCapabilities
@@ -72,7 +70,7 @@ def test_no_key_in_capabilities():
     assert isinstance(caps, ProviderCapabilities)
     sanitized = json.dumps(caps.model_dump())
     for pat in KEY_LEAK_PATTERNS:
-        assert not pat.search(sanitized), f"Key leak in capabilities"
+        assert not pat.search(sanitized), "Key leak in capabilities"
 
 
 def test_estimate_cost_sanitized():

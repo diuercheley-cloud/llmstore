@@ -1,5 +1,5 @@
 import subprocess
-import pytest
+
 
 def test_rollback_accepts_backup_id():
     result = subprocess.run(

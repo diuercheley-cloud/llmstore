@@ -1,10 +1,10 @@
-import uuid
 import logging
-from typing import Dict, Any
+import uuid
+
+from app.core.time import utc_now
+from app.models.model_experiments import ModelExperiment, ModelExperimentVariant
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.model_experiments import ModelExperiment, ModelExperimentVariant
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

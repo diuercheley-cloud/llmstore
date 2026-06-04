@@ -1,10 +1,8 @@
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from app.api.dependencies import get_current_admin, get_db
 from app.main import app
 from app.models.client import Client
-from app.utils.crypto_signer import sign_payload
+from httpx import ASGITransport, AsyncClient
 
 
 async def _override_admin():

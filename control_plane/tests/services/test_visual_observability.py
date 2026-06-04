@@ -1,7 +1,8 @@
+import json
+
 import pytest
 from app.services.visual_observability import VisualObservabilityService
-import json
-import os
+
 
 def test_dashboard_json_validity():
     dashboard_path = "monitoring/dashboards/platform-overview.json"

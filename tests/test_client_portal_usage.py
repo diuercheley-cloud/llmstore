@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
+
 @pytest_asyncio.fixture
 async def portal_client_data(admin_client: AsyncClient, admin_token_headers):
     resp = await admin_client.post(

@@ -1,8 +1,7 @@
-import os
 import json
 import logging
-from typing import List, Dict, Any, Optional, Union, BinaryIO
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import httpx
 

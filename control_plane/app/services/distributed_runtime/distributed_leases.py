@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime, timedelta
-from typing import Optional
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.runtime.distributed_runtime import DistributedJobLease
+from datetime import timedelta
+
 from app.core.time import utc_now
+from app.models.runtime.distributed_runtime import DistributedJobLease
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class DistributedLeaseService:
     def __init__(self, db: AsyncSession):

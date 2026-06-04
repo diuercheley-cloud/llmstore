@@ -1,14 +1,13 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import date
 
+import pytest
 from app.services.billing.guardrails import (
-    get_global_provider_cost_today,
     get_client_provider_cost_today,
-    is_cloud_blocked_by_guardrails
+    get_global_provider_cost_today,
+    is_cloud_blocked_by_guardrails,
 )
-from app.core.config import Settings
+
 
 @pytest.mark.asyncio
 async def test_get_global_provider_cost_today():

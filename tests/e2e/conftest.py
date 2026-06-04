@@ -1,35 +1,25 @@
-import pytest
-import pytest_asyncio
-import httpx
 import os
-import uuid
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.db.base import Base
-from app.services.admin_rbac import ensure_admin_rbac_seed
-from app.services.inference_proxy import InferenceProxy
-from data_plane_mock.main import app as mock_data_plane_app
-from app.api.deps import (
-    get_queue_manager,
-    get_inference_proxy,
-    get_backend_slot_manager,
-    get_circuit_breaker,
-)
 
 # Register all models in Base.metadata BEFORE importing app
-import app.models.admin_rbac
-import app.models.api_key
-import app.models.billing_invoice
-import app.models.billing_plan
-import app.models.client
-import app.models.usage_record
-import app.models.rag_document
-import app.models.rag_collection
-import app.models.operations.model_runtime
-import app.models.security_pki
-
-from app.main import app as fastapi_app
-from app.db.session import get_db_session, get_redis
+import httpx
+import pytest
+import pytest_asyncio
 from app.api.dependencies import get_db
+from app.api.deps import (
+    get_backend_slot_manager,
+    get_circuit_breaker,
+    get_inference_proxy,
+    get_queue_manager,
+)
+from app.db.base import Base
+from app.db.session import get_db_session, get_redis
+from app.main import app as fastapi_app
+from app.services.admin_rbac import ensure_admin_rbac_seed
+from app.services.inference_proxy import InferenceProxy
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from data_plane_mock.main import app as mock_data_plane_app
+
 
 @pytest.fixture(scope="session")
 def anyio_backend():
@@ -54,7 +44,6 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     settings = get_settings()
 
     # Ensure model_runtime_instances table is registered before create_all
-    import app.models.operations.model_runtime  # noqa: F401
 
     # Verify table registration
     if "model_runtime_instances" not in Base.metadata.tables:

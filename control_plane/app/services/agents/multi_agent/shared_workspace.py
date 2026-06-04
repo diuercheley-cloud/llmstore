@@ -1,10 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import List, Dict, Any, Optional
+import uuid
+from typing import Any, Dict, Optional
+
+from app.models.multi_agent import AgentSharedWorkspace
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.multi_agent import AgentSharedWorkspace
 
 logger = logging.getLogger(__name__)
 

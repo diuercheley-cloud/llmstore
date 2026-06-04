@@ -1,19 +1,18 @@
-import pytest
 import uuid
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
-from starlette.responses import JSONResponse
 
+import pytest
+from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
 from app.models.client import Client
-from app.models.model_registry import ModelRegistry
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_registry import ModelRegistry
 from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider, ProviderUnavailableError
-from app.services.inference_proxy import InferenceProxy, ForwardResult
-from app.core.config import get_settings
+from app.services.inference_proxy import ForwardResult, InferenceProxy
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
+
 
 @pytest.mark.asyncio
 async def test_gateway_llm_provider_success(session: AsyncSession, monkeypatch):

@@ -1,5 +1,6 @@
-import pytest
 import httpx
+import pytest
+
 
 @pytest.mark.asyncio
 async def test_public_plans_fields(admin_client: httpx.AsyncClient, admin_token_headers):

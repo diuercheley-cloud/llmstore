@@ -1,4 +1,3 @@
-import os
 
 def test_dashboard_markers_phase_75():
     admin_path = "control_plane/app/static/admin/index.html"

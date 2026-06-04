@@ -1,9 +1,7 @@
+
 import pytest
-import json
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.model_registry import ModelRegistry
-from app.core.config import get_settings
+
 
 @pytest.mark.asyncio
 async def test_models_v1_includes_enhanced_metadata(admin_client: AsyncClient, admin_token_headers):

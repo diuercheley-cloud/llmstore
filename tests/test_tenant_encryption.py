@@ -1,9 +1,10 @@
 import uuid
+
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.services.security.tenant_encryption import TenantEncryptionService
-from app.models.commercial_encryption import CommercialTenantEncryptionKey, CommercialEncryptedArtifact
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def encryption_service(settings: Settings):

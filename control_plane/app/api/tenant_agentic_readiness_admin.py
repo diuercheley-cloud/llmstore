@@ -1,10 +1,10 @@
 # Owner: agent-platform
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
-from app.api.deps import require_admin, get_db_session
+from app.api.deps import get_db_session, require_admin
 from app.services.agents.tenant_agentic_readiness import TenantAgenticReadinessService
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/tenants", tags=["tenant-agentic-readiness"])
 

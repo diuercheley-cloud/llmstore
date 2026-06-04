@@ -1,8 +1,10 @@
-import pytest
 import http.server
 import threading
-import requests
 from pathlib import Path
+
+import pytest
+import requests
+
 
 class FakeHTTPServer(http.server.BaseHTTPRequestHandler):
     def do_GET(self):

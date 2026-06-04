@@ -1,9 +1,9 @@
-import uuid
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
+
+from app.models.agent_events import AgentEventSubscription, AgentEventTrigger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_events import AgentEventSubscription, AgentEventTrigger
 
 logger = logging.getLogger(__name__)
 

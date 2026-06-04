@@ -1,8 +1,9 @@
-import pytest
-import os
 import json
-from pathlib import Path
 import shutil
+from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture
 def mock_validation_data():

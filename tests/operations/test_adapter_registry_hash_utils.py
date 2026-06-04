@@ -1,9 +1,9 @@
-import pytest
 from app.services.operations.adapter_registry.hash_utils import (
     canonical_json,
-    sha256_hex,
     compute_registry_hash,
+    sha256_hex,
 )
+
 
 class TestAdapterRegistryHashUtils:
     def test_canonical_json_ordering(self):

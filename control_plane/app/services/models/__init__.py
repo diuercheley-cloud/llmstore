@@ -1,27 +1,3 @@
-from app.services.models.model_provenance import (
-    create_provenance_attestation,
-    link_provenance_to_model,
-    summarize_model_provenance,
-    validate_chain_of_custody,
-)
-from app.services.models.model_promotion_bundles import (
-    create_model_promotion_bundle,
-    promote_model_from_bundle,
-    reject_model_bundle,
-    verify_model_promotion_bundle,
-)
-from app.services.models.signed_model_registry import (
-    approve_model,
-    calculate_model_checksum,
-    get_model_trust_state,
-    list_trusted_models,
-    quarantine_model,
-    register_model_manifest,
-    revoke_model,
-    sign_model_manifest,
-    verify_model_checksum,
-    verify_model_signature,
-)
 from app.services.models.model_lifecycle_manager import (
     discover_model,
     enforce_lifecycle_gates,
@@ -35,6 +11,14 @@ from app.services.models.model_lifecycle_manager import (
     transition_lifecycle_state,
     verify_offline_model,
 )
+from app.services.models.model_lineage import (
+    create_lineage_entry,
+    get_lineage_dag,
+    list_lineage_entries,
+    serialize_lineage_entry,
+    validate_lineage,
+    verify_provenance_chain,
+)
 from app.services.models.model_promotion import (
     approve_promotion_request,
     create_offline_promotion_bundle,
@@ -45,13 +29,17 @@ from app.services.models.model_promotion import (
     reject_promotion_request,
     serialize_promotion_request,
 )
-from app.services.models.model_lineage import (
-    create_lineage_entry,
-    get_lineage_dag,
-    list_lineage_entries,
-    serialize_lineage_entry,
-    validate_lineage,
-    verify_provenance_chain,
+from app.services.models.model_promotion_bundles import (
+    create_model_promotion_bundle,
+    promote_model_from_bundle,
+    reject_model_bundle,
+    verify_model_promotion_bundle,
+)
+from app.services.models.model_provenance import (
+    create_provenance_attestation,
+    link_provenance_to_model,
+    summarize_model_provenance,
+    validate_chain_of_custody,
 )
 from app.services.models.model_quarantine import (
     list_quarantined_models,
@@ -60,6 +48,18 @@ from app.services.models.model_quarantine import (
     release_from_quarantine,
     rollback_model,
     serialize_rollback_record,
+)
+from app.services.models.signed_model_registry import (
+    approve_model,
+    calculate_model_checksum,
+    get_model_trust_state,
+    list_trusted_models,
+    quarantine_model,
+    register_model_manifest,
+    revoke_model,
+    sign_model_manifest,
+    verify_model_checksum,
+    verify_model_signature,
 )
 
 __all__ = [

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-import asyncio
-import time
-import httpx
-import sys
-import os
 import argparse
-from typing import List, Dict
+import asyncio
+import os
+import sys
+import time
+from typing import Dict
+
+import httpx
+
 
 async def send_request(client: httpx.AsyncClient, url: str, api_key: str, model: str, request_id: int) -> Dict:
     payload = {

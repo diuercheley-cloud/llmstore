@@ -1,14 +1,9 @@
 """Tests for fallback sanitization — no secret leak, no prompt leak, no key in artifacts."""
 
 import json
-import os
 import re
-import sys
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter
 

@@ -1,20 +1,17 @@
-import pytest
-import pytest_asyncio
 import asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from unittest.mock import patch
 
-from app.main import app
+import pytest
+import pytest_asyncio
+from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
+from app.main import app
 from app.models.api_key import ApiKey
 from app.models.billing_plan import BillingPlan
-from app.models.inference_backend import InferenceBackend
-from app.models.model_registry import ModelRegistry
-from app.models.model_backend_route import ModelBackendRoute
-from app.core.security import generate_api_key, hash_secret, short_prefix
+from app.models.client import Client
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture
@@ -147,8 +144,8 @@ async def test_light_flood_triggers_rate_limit(mock_verify, abuse_auth_env):
     ac, sessionmaker = abuse_auth_env
 
     async with sessionmaker() as session:
-        from app.models.model_registry import ModelRegistry
         from app.models.inference_backend import InferenceBackend
+        from app.models.model_registry import ModelRegistry
 
         plan = BillingPlan(
             code="flood_test",

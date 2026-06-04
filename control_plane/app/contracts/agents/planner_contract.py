@@ -1,7 +1,9 @@
 import uuid
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List
+
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
+from pydantic import BaseModel, Field
+
 
 class AgentTaskV1(BaseModel):
     task_id: str

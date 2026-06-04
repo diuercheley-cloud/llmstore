@@ -1,8 +1,9 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import os
+from datetime import datetime
+from typing import Any, Dict, List
 
 from app.services.compliance_control_mapper import ComplianceControlMapperService
+
 
 class ComplianceGapAnalysisService:
     def __init__(self, base_artifact_dir: str = "artifacts/compliance/latest"):

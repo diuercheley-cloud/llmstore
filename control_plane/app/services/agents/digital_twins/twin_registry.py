@@ -1,10 +1,11 @@
 # Owner: agent-platform
 import uuid
-import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+from app.models.digital_twin import DigitalTwin
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.digital_twin import DigitalTwin, DigitalTwinState
+
 
 class TwinRegistry:
     def __init__(self, db: AsyncSession):

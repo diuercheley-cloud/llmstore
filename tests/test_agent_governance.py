@@ -1,9 +1,9 @@
-import pytest
 import uuid
-from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
-from app.services.agents.agent_risk_engine import AgentRiskEngine
-from app.services.agents import agent_state
+
+import pytest
 from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
+
 
 @pytest.mark.asyncio
 async def test_policy_destructive_tool_requires_approval(session):

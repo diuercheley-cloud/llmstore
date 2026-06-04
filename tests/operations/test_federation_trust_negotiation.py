@@ -1,7 +1,11 @@
 import uuid
 
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
-from app.services.operations.federation_sync.trust_negotiation import FederationTrustNegotiationService
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
+from app.services.operations.federation_sync.trust_negotiation import (
+    FederationTrustNegotiationService,
+)
 
 
 def test_isolated_trust_blocking_and_verified_requirement():

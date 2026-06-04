@@ -1,15 +1,12 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from app.api.dependencies import get_db, get_current_admin
+from app.api.dependencies import get_current_admin, get_db
 from app.services.plugins.plugin_marketplace import PluginMarketplaceService
-from app.models.plugins.marketplace import PluginMarketplaceEntry, PluginInstall
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/plugins", tags=["plugin_marketplace"])
 

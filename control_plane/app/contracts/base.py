@@ -1,5 +1,7 @@
-from typing import Protocol, runtime_checkable, Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from typing import Protocol, runtime_checkable
+
+from pydantic import BaseModel
+
 
 class ContractError(Exception):
     """Base class for all contract-related errors."""

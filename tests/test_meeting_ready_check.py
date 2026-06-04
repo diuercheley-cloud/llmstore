@@ -1,8 +1,8 @@
-import subprocess
-import os
 import json
-import tempfile
+import os
 import re
+import subprocess
+import tempfile
 
 SCRIPT = "./scripts/meeting-ready-check-local.sh"
 VALIDATION_SCRIPT = "./scripts/validate-meeting-ready-check-local.sh"

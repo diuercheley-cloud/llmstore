@@ -1,12 +1,18 @@
-import pytest
-import uuid
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.models.commercial_capacity import CommercialCapacitySnapshot, CommercialCapacityForecast, CommercialAutoscalingRecommendation
-from app.services.routing.commercial_capacity_monitor import capture_capacity_snapshot, cleanup_old_snapshots
-from app.services.routing.commercial_capacity_forecasting import forecast_capacity
+import pytest
+from app.models.commercial_capacity import (
+    CommercialCapacityForecast,
+    CommercialCapacitySnapshot,
+)
 from app.services.routing.commercial_autoscaling import generate_autoscaling_recommendations
+from app.services.routing.commercial_capacity_forecasting import forecast_capacity
+from app.services.routing.commercial_capacity_monitor import (
+    capture_capacity_snapshot,
+    cleanup_old_snapshots,
+)
+
 
 @pytest.mark.asyncio
 async def test_capture_capacity_snapshot_empty_data():

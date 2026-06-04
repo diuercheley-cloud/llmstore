@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 def test_production_readiness_ready_score():
     reports_dir = Path("artifacts/production-readiness")
     if not reports_dir.exists():

@@ -1,5 +1,5 @@
 import subprocess
-import os
+
 
 def test_script_help():
     result = subprocess.run(["./scripts/pre-client-checklist-local.sh", "--help"], capture_output=True, text=True)

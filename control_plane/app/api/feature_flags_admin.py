@@ -1,9 +1,9 @@
 # Owner: platform-ops
-from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from app.services.auth import require_admin
 from app.services.feature_flag_registry import FeatureFlagRegistryService
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter(
     prefix="/admin/feature-flags",

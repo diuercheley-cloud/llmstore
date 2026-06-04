@@ -2,6 +2,7 @@
 import re
 from typing import Tuple
 
+
 class PIIRedactor:
     """
     Redacts Personally Identifiable Information (PII) from text.

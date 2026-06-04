@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import logging
 from typing import Dict, List, Optional
+
 from app.services.agents.connectors.base import ConnectorAdapter
 
 logger = logging.getLogger(__name__)

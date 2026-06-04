@@ -1,12 +1,11 @@
-import uuid
 import logging
-from typing import List, Optional, Dict, Any
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.models.agents import AgentRun
+from app.services.agents.agent_runtime import start_run
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from app.models.agents import AgentRun, AgentDefinition
-from app.models.assistants import AssistantThread, AssistantMessage
-from app.services.agents.agent_runtime import start_run
 
 logger = logging.getLogger(__name__)
 

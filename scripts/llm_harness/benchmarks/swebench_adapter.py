@@ -16,11 +16,13 @@ class SWEBenchAdapter:
         suite_path: str,
         provider: str = "stub",
         model: str = "",
+        base_url: str = "",
         allow_stub: bool = True,
     ):
         self.suite_path = suite_path
         self.provider = provider
         self.model = model
+        self.base_url = base_url
         self.allow_stub = allow_stub
         self.results: list[dict[str, Any]] = []
 
@@ -69,6 +71,7 @@ class SWEBenchAdapter:
                 code_agent="benchmark-agent",
                 provider=self.provider,
                 model=self.model,
+                base_url=self.base_url,
                 max_steps=8,
             ),
         )

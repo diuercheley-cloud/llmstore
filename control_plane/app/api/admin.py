@@ -1,21 +1,14 @@
 # Owner: platform-ops
 import asyncio
-from typing import Any
 import json
 import os
 import subprocess
 import time
+import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-import uuid
-
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from redis.asyncio import Redis
-from pydantic import Field
-from sqlalchemy import case, delete, desc, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from typing import Any
 
 from app.api.deps import get_circuit_breaker, get_inference_proxy
 from app.core.config import get_settings
@@ -26,25 +19,22 @@ from app.models.api_key import ApiKey
 from app.models.billing_invoice import BillingInvoice
 from app.models.billing_plan import BillingPlan
 from app.models.client import Client
+from app.models.client_feature_block import ClientFeatureBlock
 from app.models.customer_payment import CustomerPayment
+from app.models.generation_job import GenerationJob
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.models.pricing_rule import PricingRule
 from app.models.quota_counter import QuotaCounter
-from app.models.request_log import RequestLog
-from app.models.usage_record import UsageRecord
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
 from app.models.rag_usage_event import RagUsageEvent
-from app.models.generation_job import GenerationJob
-from app.models.tts_usage_event import TtsUsageEvent
-from app.models.user_quota_override import UserQuotaOverride
-from app.models.client_feature_block import ClientFeatureBlock
+from app.models.request_log import RequestLog
 from app.models.security_event import SecurityEvent
-from app.services.security_monitor import log_security_event
-from app.services.tts_usage import get_admin_tts_usage, get_tts_usage_and_limits
+from app.models.tts_usage_event import TtsUsageEvent
+from app.models.usage_record import UsageRecord
+from app.models.user_quota_override import UserQuotaOverride
 from app.schemas.admin import (
     ApiKeyCreate,
     ApiKeyCreated,
@@ -52,8 +42,8 @@ from app.schemas.admin import (
     BackendRouteInput,
     BackendRoutePatch,
     BillingPlanCreate,
-    BillingPlanPatch,
     BillingPlanModelsPatch,
+    BillingPlanPatch,
     BillingPlanRead,
     CapabilityRead,
     ClientBillingPlanPatch,
@@ -65,10 +55,10 @@ from app.schemas.admin import (
     InferenceBackendPatch,
     InvoiceGenerateRequest,
     InvoiceMarkPaidRequest,
-    ModelRegistryCreate,
     ModelDeleteRequest,
-    ModelRegistryPatch,
     ModelPromptTestRequest,
+    ModelRegistryCreate,
+    ModelRegistryPatch,
     ModelReloadResponse,
     PaymentCreate,
     PaymentRead,
@@ -79,6 +69,13 @@ from app.schemas.admin import (
     TestRunRequest,
     TestRunResponse,
 )
+from app.services.security_monitor import log_security_event
+from app.services.tts_usage import get_admin_tts_usage, get_tts_usage_and_limits
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from redis.asyncio import Redis
+from sqlalchemy import delete, desc, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 WHITELISTED_COMMANDS = {
     "health-full": {"name": "Health full", "description": "Run full system health validation", "command": "./scripts/validate-system-health.sh --full"},
@@ -90,19 +87,9 @@ WHITELISTED_COMMANDS = {
     "benchmark": {"name": "Benchmark quick", "description": "Run quick benchmark", "command": "./scripts/benchmark.sh --quick"},
     "test-fallback": {"name": "Real fallback test", "description": "Test real-world fallback routing", "command": "./scripts/test-real-fallback.sh"},
 }
-from app.services.billing import (
-    build_invoice_preview,
-    ensure_default_billing_plans,
-    generate_monthly_invoices,
-    get_current_usage_snapshot,
-    list_client_billing_snapshots,
-    refresh_billing_statuses,
-    resolve_effective_plan,
-    serialize_invoice,
-)
 from app.services.admin_model_management import (
-    archive_model_identity,
     architecture_for_model,
+    archive_model_identity,
     backend_container_snapshot,
     backend_runtime_capabilities,
     backend_service_name,
@@ -120,8 +107,24 @@ from app.services.admin_model_management import (
     sanitize_model_filename,
     sync_allowed_plans,
 )
-from app.services.backend_registry import ensure_default_backends
 from app.services.auth import require_admin
+from app.services.backend_registry import ensure_default_backends
+from app.services.billing import (
+    ensure_default_billing_plans,
+    generate_monthly_invoices,
+    list_client_billing_snapshots,
+    refresh_billing_statuses,
+    serialize_invoice,
+)
+from app.services.cache.intelligent_cache import (
+    cache_stats as intelligent_cache_stats,
+)
+from app.services.cache.intelligent_cache import (
+    ensure_cache_policy,
+    get_cache_policies,
+    invalidate_client_cache,
+    list_cache_entries,
+)
 from app.services.export_reporting import (
     build_monthly_report,
     build_usage_by_client,
@@ -147,19 +150,11 @@ from app.services.model_policy import (
     resolve_requested_model,
     serialize_routing_table,
 )
+from app.services.model_registry import ensure_default_model
 from app.services.models.model_provenance import summarize_model_provenance
 from app.services.models.signed_model_registry import latest_registry_map
-from app.services.model_registry import ensure_default_model
-from app.services.cache.intelligent_cache import (
-    cache_stats as intelligent_cache_stats,
-    ensure_cache_policy,
-    get_cache_policies,
-    invalidate_client_cache,
-    list_cache_entries,
-)
-from app.services.response_cache import clear_response_cache, get_response_cache_stats
+from app.services.response_cache import clear_response_cache
 from app.services.security_monitor import (
-    log_security_event,
     list_security_events,
     observe_billing_status_metrics,
     suspend_client_for_security,
@@ -1158,9 +1153,10 @@ async def get_runtime_summary(
     redis: Redis = Depends(get_redis),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
-    from datetime import datetime, timezone
     from app.api.system import health_deep
-    from app.models.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
+    from app.models.commercial_inference_reproducibility import (
+        CommercialInferenceReproducibilityRecord,
+    )
     
     # Use existing deep health as base
     deep = await health_deep(session, redis, proxy)
@@ -1397,10 +1393,11 @@ async def get_revenue_summary(session: AsyncSession = Depends(get_db_session)):
 
 @router.get("/rag/usage")
 async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
+    from datetime import date
+
     from app.models.rag_document import RAGDocument
     from app.models.rag_usage_event import RagUsageEvent
     from app.services.quota import month_start
-    from datetime import date
     
     # Usage by client
     stmt = (
@@ -1419,7 +1416,6 @@ async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
     else:
         results = list(getattr(results_exec, "_rows", []))
     
-    from datetime import timezone, datetime
     start_of_month = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
     
     usage_stmt = (
@@ -1850,7 +1846,7 @@ async def get_requests(session: AsyncSession = Depends(get_db_session)):
     ]
 
 
-from app.schemas.quality import SystemPromptUpdate, PromptTemplateUpdate
+from app.schemas.quality import PromptTemplateUpdate, SystemPromptUpdate
 
 
 @router.patch("/clients/{client_id}/system-prompt", response_model=ClientRead)
@@ -1987,8 +1983,9 @@ async def get_system_api_surface(
     """
     Returns the full API surface list and status classification.
     """
-    import yaml
     import os
+
+    import yaml
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.abspath(os.path.join(current_dir, "../../../config/api-surface.yaml"))
@@ -3209,10 +3206,11 @@ async def run_test_command(payload: TestRunRequest):
 
 @router.get("/usage/{client_id}/summary")
 async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+    import datetime
+
     from app.models.client import Client
     from app.models.usage_record import UsageRecord
     from sqlalchemy.orm import selectinload
-    import datetime
     
     result = await session.execute(
         select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == client_id)
@@ -3341,6 +3339,7 @@ async def get_model_benchmark(model: str):
 
 
 from pydantic import BaseModel
+
 
 class VllmTestRequest(BaseModel):
     prompt: str = "Hello, tell me a short joke."

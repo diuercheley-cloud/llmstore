@@ -4,10 +4,8 @@ Revision ID: 9eb5fc4a28bd
 Revises: 20260506_0018
 Create Date: 2026-05-06 20:38:59.089269
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = '9eb5fc4a28bd'
 down_revision = '20260506_0018'

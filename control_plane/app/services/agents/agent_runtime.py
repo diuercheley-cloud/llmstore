@@ -1,13 +1,14 @@
 # Owner: agent-platform
-import uuid
-import logging
 import asyncio
-from typing import Any, Dict, Optional, List
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+import uuid
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.services.agents import agent_state
 from app.services.agents.agent_executor import AgentExecutor
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -172,8 +173,8 @@ async def resume_run(
         raise ValueError(f"Cannot resume a run that is not paused or waiting approval. Status: {run.status}")
 
     if run.status == "waiting_approval":
-        from sqlalchemy import select
         from app.models.agents import AgentApprovalRequest
+        from sqlalchemy import select
         stmt = select(AgentApprovalRequest).where(
             AgentApprovalRequest.agent_run_id == run_id,
             AgentApprovalRequest.status == "approved"

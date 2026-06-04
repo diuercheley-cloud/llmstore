@@ -5,9 +5,8 @@ Revises: phase75_adapter_promotion
 Create Date: 2026-05-16 10:30:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase76_attestation_framework"
 down_revision = "phase75_adapter_promotion"

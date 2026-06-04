@@ -1,14 +1,13 @@
-import uuid
-from typing import Any
-from app.models.operations.adapter_promotion import (
-    AdapterPromotionWorkflow,
-    AdapterPromotionGateResult,
-    AdapterPromotionStageTransition,
-    AdapterPromotionRollback,
-    AdapterPromotionReceipt,
-)
-from app.services.operations.adapter_promotion.hash_utils import sha256_hex, canonical_json
 from app.core.time import utc_now
+from app.models.operations.adapter_promotion import (
+    AdapterPromotionGateResult,
+    AdapterPromotionReceipt,
+    AdapterPromotionRollback,
+    AdapterPromotionStageTransition,
+    AdapterPromotionWorkflow,
+)
+from app.services.operations.adapter_promotion.hash_utils import canonical_json, sha256_hex
+
 
 def build_promotion_workflow_receipt(workflow: AdapterPromotionWorkflow) -> AdapterPromotionReceipt:
     payload = {

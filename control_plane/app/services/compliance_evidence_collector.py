@@ -1,15 +1,13 @@
-import os
-import json
 import hashlib
+import json
+import os
 import zipfile
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from app.models.operations.compliance import ComplianceEvidenceItem, ComplianceControl
 from app.services.compliance_control_mapper import ComplianceControlMapperService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class ComplianceEvidenceCollectorService:
     def __init__(self, db: AsyncSession, base_artifact_dir: str = "artifacts/compliance/latest"):

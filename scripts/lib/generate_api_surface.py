@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import yaml
 
 # Add control_plane to python path
@@ -8,6 +9,7 @@ sys.path.insert(0, os.path.join(base_dir, "control_plane"))
 
 from app.main import app
 from starlette.routing import Route
+
 
 def generate():
     yaml_path = os.path.join(base_dir, "config/api-surface.yaml")
@@ -61,7 +63,7 @@ def generate():
 
             # 2. Legacy admin endpoints replaced by Admin v2
             # E.g. legacy billing under /admin/billing/
-            elif path.startswith("/admin/billing") and not "commercial" in path:
+            elif path.startswith("/admin/billing") and "commercial" not in path:
                 status = "deprecated"
                 replacement = "/admin/commercial/billing"
                 since_version = "1.5.0"

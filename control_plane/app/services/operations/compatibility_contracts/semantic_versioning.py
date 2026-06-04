@@ -1,7 +1,6 @@
 import re
 from typing import Any
 
-
 SEMVER_RE = re.compile(
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
     r"(?:-(?P<prerelease>[0-9A-Za-z.-]+))?$"

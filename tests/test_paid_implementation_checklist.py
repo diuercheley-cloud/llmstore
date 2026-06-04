@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 DOC = "docs/PAID_IMPLEMENTATION_CHECKLIST.md"

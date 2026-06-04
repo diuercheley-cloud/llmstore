@@ -1,25 +1,25 @@
 # Owner: platform-ops
 """Plugin runtime entrypoint for governed execution with signature verification and sandboxing."""
 
-import uuid
-import logging
 import hashlib
-from typing import Dict, Any, List, Optional
+import logging
+import uuid
 from datetime import datetime
-from sqlalchemy.future import select
+from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.services.agents.tool_sandbox import execute_in_sandbox
 from app.models.plugins.marketplace import (
-    PluginInstall,
-    PluginVersion,
-    PluginExecutionRecord,
-    PluginPermissionGrant,
-    PluginVerificationResult,
     PluginDryRunResult,
     PluginExecutionReceipt,
-    PluginTrustReport
+    PluginExecutionRecord,
+    PluginInstall,
+    PluginPermissionGrant,
+    PluginTrustReport,
+    PluginVerificationResult,
+    PluginVersion,
 )
+from app.services.agents.tool_sandbox import execute_in_sandbox
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class PluginRuntimeService:
         )
         version_entry = res_ver.scalar_one_or_none()
         if not version_entry:
-            raise ValueError(f"Plugin version not found.")
+            raise ValueError("Plugin version not found.")
 
         manifest = version_entry.manifest_json or {}
         

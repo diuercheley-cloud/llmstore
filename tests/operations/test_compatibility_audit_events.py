@@ -1,6 +1,7 @@
 import pytest
-
-from app.services.operations.compatibility_contracts.audit_events import build_compatibility_audit_event
+from app.services.operations.compatibility_contracts.audit_events import (
+    build_compatibility_audit_event,
+)
 
 
 def test_compatibility_audit_event_sanitizes_payload():

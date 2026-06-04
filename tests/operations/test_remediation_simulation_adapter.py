@@ -1,5 +1,7 @@
-import pytest
-from app.services.operations.remediation_execution.simulation_adapter import SimulatedRemediationExecutionAdapter
+from app.services.operations.remediation_execution.simulation_adapter import (
+    SimulatedRemediationExecutionAdapter,
+)
+
 
 class TestSimulatedRemediationExecutionAdapter:
     def test_execute_step_deterministic(self):

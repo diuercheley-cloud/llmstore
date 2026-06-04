@@ -1,4 +1,7 @@
-from app.services.governance.policy_engine.policy_conflict_resolver import detect_policy_conflicts, resolve_decision
+from app.services.governance.policy_engine.policy_conflict_resolver import (
+    detect_policy_conflicts,
+    resolve_decision,
+)
 from app.services.governance.policy_engine.policy_parser import parse_policy_dsl
 
 

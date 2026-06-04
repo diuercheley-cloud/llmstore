@@ -1,7 +1,8 @@
 from typing import List, Optional
+
+from app.models.agent_routing import AgentModelCapability
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_routing import AgentModelCapability
 
 
 class ModelCapabilityRegistry:

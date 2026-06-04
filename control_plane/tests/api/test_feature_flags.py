@@ -1,14 +1,11 @@
-import os
 import pytest
 import pytest_asyncio
 import yaml
-from httpx import AsyncClient
-
 from app.db.base import Base
 from app.db.session import engine
-import app.models.admin_rbac
-
 from app.services.feature_flag_registry import FeatureFlagRegistryService
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

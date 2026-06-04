@@ -1,7 +1,8 @@
-import pytest
-import os
 import subprocess
 from pathlib import Path
+
+import pytest
+
 
 def test_no_secrets_in_benchmark_artifacts():
     """Verify that benchmark artifacts do not contain potential API keys or Bearer tokens."""

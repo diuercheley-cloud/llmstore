@@ -1,6 +1,6 @@
 # Owner: platform-ops
-from fastapi import APIRouter, Depends
 from app.services.platform.ga_readiness import GAReadinessService
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/admin/platform", tags=["Platform GA Readiness"])
 

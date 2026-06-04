@@ -1,6 +1,6 @@
-import subprocess
 import json
-import pytest
+import subprocess
+
 
 def test_no_prompt_leakage(tmp_path):
     out_dir = tmp_path / "artifacts"

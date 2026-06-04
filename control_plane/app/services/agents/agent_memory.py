@@ -1,28 +1,24 @@
 # Owner: agent-platform
-import uuid
 import logging
-import hashlib
-from datetime import datetime, timedelta
-from typing import Any, List, Optional, Dict
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func
+import uuid
+from datetime import timedelta
+from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
-    AgentMemoryItem,
     AgentMemoryAccessEvent,
-    AgentMemoryPolicy,
-    AgentMemoryCollection,
+    AgentMemoryItem,
 )
-from app.services.agents.memory_policy import MemoryPolicyService
-from app.services.agents.memory_consent import MemoryConsentService
-from app.services.agents.memory_redaction import MemoryRedactionService
-from app.services.agents.memory_indexing import MemoryIndexingService
-from app.services.agents.memory_retriever import MemoryRetriever
-from app.services.agents.memory_context_builder import MemoryContextBuilder
 from app.services.agents import agent_state
+from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_context_builder import MemoryContextBuilder
+from app.services.agents.memory_indexing import MemoryIndexingService
+from app.services.agents.memory_policy import MemoryPolicyService
+from app.services.agents.memory_redaction import MemoryRedactionService
+from app.services.agents.memory_retriever import MemoryRetriever
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +286,7 @@ class AgentMemoryService:
         )
 
     async def get_chat_history(self, run_id: uuid.UUID) -> List[Dict[str, str]]:
-        from app.models.agents import AgentRun, AgentRunStep
+        from app.models.agents import AgentRun
 
         stmt = select(AgentRun).where(AgentRun.id == run_id)
         res = await self.db.execute(stmt)

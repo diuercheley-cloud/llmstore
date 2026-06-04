@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_list_backends(admin_client: AsyncClient, admin_token_headers):
     response = await admin_client.get("/admin/backends", headers=admin_token_headers)

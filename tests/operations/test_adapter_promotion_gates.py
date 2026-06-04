@@ -1,8 +1,9 @@
-import pytest
 import uuid
+
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.models.operations.adapter_sandbox import AdapterManifest
 from app.services.operations.adapter_promotion.gates import AdapterPromotionGateService
+
 
 def test_evaluate_gates_basic():
     service = AdapterPromotionGateService()

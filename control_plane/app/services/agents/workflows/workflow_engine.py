@@ -1,22 +1,25 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from datetime import timedelta
-from typing import Dict, Any
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflow, AgentWorkflowDefinition
-from app.services.agents.workflows.workflow_state_machine import WorkflowStateMachine, WorkflowStatus
-from app.services.agents.workflows.workflow_locks import WorkflowLockManager
-from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
-from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
-from app.services.agents.workflows.workflow_dag import WorkflowDAG
-from app.services.agents.workflows.workflow_branching import WorkflowBranchingManager
-from app.services.agents.workflows.workflow_parallel import WorkflowParallelManager
+from app.models.agent_workflows import AgentWorkflowDefinition, AgentWorkflowRun
 from app.services.agents.workflows.subworkflow_runtime import SubworkflowRuntime
+from app.services.agents.workflows.workflow_branching import WorkflowBranchingManager
+from app.services.agents.workflows.workflow_dag import WorkflowDAG
+from app.services.agents.workflows.workflow_locks import WorkflowLockManager
+from app.services.agents.workflows.workflow_parallel import WorkflowParallelManager
+from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
+from app.services.agents.workflows.workflow_state_machine import (
+    WorkflowStateMachine,
+    WorkflowStatus,
+)
+from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +243,9 @@ class WorkflowEngine:
         """
         Executes logic for a DAG-based workflow.
         """
-        from app.models.agent_workflows import AgentWorkflowNode # local import to avoid circular dependency if any
+        from app.models.agent_workflows import (
+            AgentWorkflowNode,  # local import to avoid circular dependency if any
+        )
         # Load definition
         stmt = select(AgentWorkflowDefinition).where(AgentWorkflowDefinition.id == run.workflow_definition_id)
         res = await self.db.execute(stmt)

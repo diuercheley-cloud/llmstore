@@ -1,7 +1,7 @@
+import glob
+import json
 import os
 import subprocess
-import json
-import glob
 
 SCRIPT_PATH = "scripts/customer-demo-local.sh"
 ARTIFACTS_DIR = "artifacts/customer-demo"

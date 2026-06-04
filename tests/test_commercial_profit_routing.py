@@ -1,7 +1,8 @@
 import pytest
-from httpx import AsyncClient
-from app.schemas.routing import RoutingStrategy, TaskType
 from app.core.config import get_settings
+from app.schemas.routing import RoutingStrategy
+from httpx import AsyncClient
+
 
 @pytest.fixture(autouse=True)
 def commercial_routing_env(monkeypatch: pytest.MonkeyPatch):

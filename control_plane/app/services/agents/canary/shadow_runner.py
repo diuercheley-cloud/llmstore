@@ -1,11 +1,12 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentRun
-from app.models.agent_canary import AgentShadowRun, AgentCanaryAssignment
+import uuid
+from typing import Optional
+
 from app.core.config import get_settings
+from app.models.agent_canary import AgentCanaryAssignment, AgentShadowRun
+from app.models.agents import AgentRun
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

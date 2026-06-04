@@ -1,9 +1,10 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
+from app.models.digital_twin import DigitalTwinSafetyEvent
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import get_settings
-from app.models.digital_twin import DigitalTwin, DigitalTwinSafetyEvent
+
 
 class SafetyInterlock:
     def __init__(self, db: AsyncSession):

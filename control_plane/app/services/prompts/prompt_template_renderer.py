@@ -1,11 +1,11 @@
 # Owner: agent-platform
-import re
 import hashlib
 import json
 import logging
+import re
 from typing import Any, Dict, Optional, Set, Tuple
 
-from jinja2 import Environment, Template, meta, TemplateError, UndefinedError, StrictUndefined
+from jinja2 import StrictUndefined, TemplateError, UndefinedError, meta
 from jinja2.sandbox import SandboxedEnvironment
 
 logger = logging.getLogger(__name__)

@@ -1,11 +1,15 @@
-import pytest
 import uuid
-from pydantic import ValidationError
-from app.contracts.agents.runtime_contract import RuntimeContractV1, AgentRunRequestV1, AgentRunResultV1
-from app.contracts.agents.planner_contract import PlannerContractV1, AgentPlanV1
-from app.contracts.agents.tool_call_contract import ToolCallContractV1, AgentToolResultV1
+
+import pytest
 from app.contracts.agents.memory_injection_contract import MemoryInjectionContractV1
+from app.contracts.agents.planner_contract import AgentPlanV1, PlannerContractV1
+from app.contracts.agents.runtime_contract import (
+    AgentRunRequestV1,
+    RuntimeContractV1,
+)
+from app.contracts.agents.tool_call_contract import AgentToolResultV1, ToolCallContractV1
 from app.contracts.base import ContractValidationError
+
 
 def test_runtime_contract_validation():
     valid_request = {

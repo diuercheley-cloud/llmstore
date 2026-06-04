@@ -1,19 +1,18 @@
 # Owner: platform-ops
 import json
 import os
-from typing import Any, List, Optional, Dict
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
 
 from app.api.dependencies import get_current_admin
 from app.db.session import get_db_session
-from app.services.compliance_readiness import ComplianceReadinessService
 from app.services.compliance_control_mapper import ComplianceControlMapperService
 from app.services.compliance_evidence_collector import ComplianceEvidenceCollectorService
+from app.services.compliance_gap_analysis import ComplianceGapAnalysisService
+from app.services.compliance_readiness import ComplianceReadinessService
 from app.services.isms_manager import ISMSManagerService
 from app.services.soc2_control_operations import SOC2ControlOperationsService
-from app.services.compliance_gap_analysis import ComplianceGapAnalysisService
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/compliance", tags=["compliance"])
 

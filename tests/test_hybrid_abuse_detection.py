@@ -5,34 +5,26 @@ os.environ["ABUSE_DETECTION_ENABLED"] = "true"
 os.environ["ABUSE_DRY_RUN"] = "true"
 os.environ["ABUSE_AUTO_SUSPEND_ENABLED"] = "false"
 
+
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from unittest.mock import patch
-
-from app.main import app
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
-from app.models.billing_plan import BillingPlan
-from app.models.ai_wallet import AiWallet
+from app.main import app
 from app.services.security import (
-    record_abuse_event,
-    check_rate_limit_abuse,
-    check_token_abuse,
     check_auth_error_burst,
-    check_repeated_giant_prompt,
-    check_request_loop,
     check_cache_miss_abuse,
     check_cloud_without_balance,
     check_cost_spike,
-    check_streaming_abort,
-    check_rag_upload_abuse,
-    check_tts_abuse,
-    list_abuse_events,
+    check_rate_limit_abuse,
+    check_repeated_giant_prompt,
+    check_request_loop,
     get_abuse_summary,
+    list_abuse_events,
+    record_abuse_event,
 )
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

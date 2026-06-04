@@ -1,9 +1,7 @@
 # tests/test_artifact_redaction_source.py
 # FAKE SECRET FOR TESTS ONLY
-import os
 import json
 import subprocess
-import pytest
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent

@@ -1,11 +1,9 @@
-from typing import Any
 import uuid
 
-from sqlalchemy import Column, String, JSON, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-
-from app.db.base import Base
 from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class AdminActionLog(Base):

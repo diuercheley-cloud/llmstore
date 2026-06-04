@@ -3,18 +3,15 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from sqlalchemy import select
-from fastapi import FastAPI
-
-from app.core.config import get_settings
 from app.api.commercial_revenue_protection_admin import router as revenue_protection_router
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.client import Client
 from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
 from app.models.commercial_revenue_protection_action import CommercialRevenueProtectionAction
 from app.models.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.schemas.routing import CommercialSimulateRequest, TaskType
 from app.services.billing.revenue_protection import (
-    apply_action,
     evaluate_revenue_protection_policies,
     get_active_revenue_protection_constraints,
     match_anomaly_to_policy,
@@ -22,7 +19,8 @@ from app.services.billing.revenue_protection import (
 )
 from app.services.notifications.revenue_alerts import send_revenue_alert
 from app.services.routing.commercial_routing import simulate_commercial_routing
-from app.schemas.routing import CommercialSimulateRequest, TaskType
+from fastapi import FastAPI
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+
 def test_phase_74_validation_script():
     result = subprocess.run(
         [sys.executable, "scripts/validate_phase_74_adapter_registry.py"],

@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-
 from app.services.agents.multi_agent.team_observability import TeamObservability
 
 

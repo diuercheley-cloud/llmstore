@@ -1,13 +1,15 @@
-import pytest
 import uuid
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
+from app.models.admin_action_log import AdminActionLog
 from app.services.operations.correlation.audit_events import (
     log_correlation_created,
+    log_graph_generated,
     log_trust_link_created,
-    log_graph_generated
 )
-from app.models.admin_action_log import AdminActionLog
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestCorrelationAuditEvents:

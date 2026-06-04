@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import uuid
 import hashlib
 import json
+import uuid
 from typing import Any
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.commercial_workflows import (
     CommercialWorkflowCheckpoint,
@@ -18,6 +15,8 @@ from app.models.commercial_workflows import (
 )
 from app.services.workflows.checkpoint_replay import WorkflowCheckpointReplayService
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _orchestrator = DeterministicWorkflowOrchestrator()
 _checkpoints = WorkflowCheckpointReplayService()

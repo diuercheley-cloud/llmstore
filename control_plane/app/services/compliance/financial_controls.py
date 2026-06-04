@@ -10,9 +10,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import desc, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.admin_action_log import AdminActionLog
@@ -23,9 +20,10 @@ from app.models.commercial_compliance import (
     CommercialControlPolicy,
     CommercialEvidencePackage,
 )
-from app.services.billing.financial_audit_trail import FinancialAuditTrailService
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.tenant_encryption import TenantEncryptionService
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _settings = get_settings()
 _encryption_service = TenantEncryptionService(_settings)

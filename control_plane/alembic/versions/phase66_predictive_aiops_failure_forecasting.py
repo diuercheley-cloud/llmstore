@@ -5,9 +5,8 @@ Revises: 76dbcad4cbd8
 Create Date: 2026-05-15 11:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'phase66_predictive_aiops'

@@ -4,7 +4,6 @@ from typing import Any
 from app.core.time import utc_now
 from app.models.operations.plugin_supply_chain import PluginSupplyChainReceipt
 from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
-from app.utils.crypto_signer import sign_payload
 
 
 def build_supply_chain_receipt(

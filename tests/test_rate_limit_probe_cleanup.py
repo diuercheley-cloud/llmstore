@@ -1,15 +1,16 @@
-import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+
+import pytest
 from app.db.session import get_db_session
+from app.main import app
 from app.models.client import Client
-from sqlalchemy import select
+from httpx import ASGITransport, AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_rate_limit_probe_cleanup_removes_client(isolated_db_url):
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     from app.db.base import Base
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

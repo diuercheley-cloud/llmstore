@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_get_operations_overview(client: AsyncClient, admin_token: str):
     response = await client.get(

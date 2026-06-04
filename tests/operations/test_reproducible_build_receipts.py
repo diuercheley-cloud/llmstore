@@ -7,8 +7,9 @@ from app.services.operations.reproducible_builds.receipts import (
     build_manifest_receipt,
     build_reproducibility_receipt,
 )
-from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
-from app.utils.crypto_signer import sign_payload
+from app.services.operations.reproducible_builds.reproducible_build_service import (
+    ReproducibleBuildService,
+)
 
 
 def _manifest():

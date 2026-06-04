@@ -1,12 +1,13 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from app.core.config import get_settings
+from app.services.vectorstores.milvus_store import MilvusStore
 from app.services.vectorstores.pgvector_store import PGVectorStore
 from app.services.vectorstores.qdrant_store import QdrantStore
-from app.services.vectorstores.milvus_store import MilvusStore
+from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
 from app.services.vectorstores.weaviate_store import WeaviateStore
-from app.core.config import get_settings
 
 settings = get_settings()
 

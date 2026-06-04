@@ -4,11 +4,6 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 from uuid import UUID
 
-from fastapi import HTTPException, Request, status
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix, verify_secret
 from app.core.time import utc_now
@@ -20,6 +15,10 @@ from app.models.admin_rbac import (
     AdminUser,
     AdminUserRole,
 )
+from fastapi import HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 RBAC_ADMIN_PERMISSIONS: dict[str, str] = {
     "clients:read": "Read clients and API keys",

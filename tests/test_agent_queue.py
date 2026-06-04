@@ -1,13 +1,12 @@
-import pytest
 import uuid
-import asyncio
-from datetime import timedelta
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_execution import AgentExecutionJob, AgentExecutionDeadLetter
+
+import pytest
+from app.models.agent_execution import AgentExecutionDeadLetter, AgentExecutionJob
 from app.services.agents.agent_queue import AgentQueueManager
 from app.services.agents.agent_worker import AgentWorkerService
-from app.core.time import utc_now
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture(autouse=True)
 def enable_agent_execution(settings):

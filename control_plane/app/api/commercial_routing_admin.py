@@ -2,30 +2,32 @@
 from __future__ import annotations
 
 import logging
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from fastapi.responses import HTMLResponse, JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.auth import require_admin as get_admin_user
+from app.db.session import get_db_session
 from app.schemas.routing import (
     CommercialCalibrationSimulateRequest,
     CommercialCalibrationSimulateResponse,
+    CommercialConfigApplyRequest,
+    CommercialConfigRead,
     CommercialReportDeliveryListResponse,
-    CommercialReportDeliveryLogRead,
     CommercialReportScheduleCreate,
     CommercialReportScheduleRead,
     CommercialReportScheduleRunResponse,
     CommercialReportSendTestResponse,
-    TaskType,
 )
-from app.services.routing import commercial_analytics, commercial_ranker, commercial_calibration, commercial_auto_apply
-from app.db.session import get_db_session
+from app.services.auth import require_admin as get_admin_user
+from app.services.routing import (
+    commercial_analytics,
+    commercial_auto_apply,
+    commercial_calibration,
+)
 from app.services.routing.commercial_config_store import CommercialConfigStore
-from app.schemas.routing import CommercialConfigApplyRequest, CommercialConfigRead
-import uuid
-from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +250,6 @@ from app.services.routing.commercial_report_export import (
     CommercialReportExportService,
     export_executive_report_csv,
     export_executive_report_html,
-    export_executive_report_json,
     export_executive_report_pdf_optional,
 )
 

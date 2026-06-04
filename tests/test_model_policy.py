@@ -2,8 +2,6 @@ import json
 import random
 
 import pytest
-from fastapi import HTTPException
-
 from app.models.billing_plan import BillingPlan
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
@@ -16,6 +14,7 @@ from app.services.model_policy import (
     resolve_requested_model,
     serialize_model_card,
 )
+from fastapi import HTTPException
 
 
 def test_get_effective_allowed_models_prefers_client_override():

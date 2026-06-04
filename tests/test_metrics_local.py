@@ -1,5 +1,3 @@
-from prometheus_client import generate_latest
-
 from app.core.metrics import (
     record_backend_error,
     record_cache_result,
@@ -8,6 +6,7 @@ from app.core.metrics import (
     record_queue_wait,
     record_request_metrics,
 )
+from prometheus_client import generate_latest
 
 
 def test_local_metrics_expose_expected_families():

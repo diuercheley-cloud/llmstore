@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
+
 @pytest_asyncio.fixture
 async def client_api_key(admin_client: AsyncClient, admin_token_headers):
     # Create a client

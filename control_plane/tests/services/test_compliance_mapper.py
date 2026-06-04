@@ -1,6 +1,7 @@
 import pytest
 from app.services.compliance_control_mapper import ComplianceControlMapperService
 
+
 def test_control_mapping_valid():
     service = ComplianceControlMapperService()
     controls = service.list_controls()

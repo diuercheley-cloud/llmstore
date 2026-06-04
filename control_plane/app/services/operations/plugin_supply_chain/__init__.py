@@ -9,8 +9,12 @@ from app.services.operations.plugin_supply_chain.dependency_governance import (
 )
 from app.services.operations.plugin_supply_chain.lineage_service import PluginArtifactLineageService
 from app.services.operations.plugin_supply_chain.provenance_service import PluginProvenanceService
-from app.services.operations.plugin_supply_chain.replay_verifier import PluginSupplyChainReplayVerifier
-from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
+from app.services.operations.plugin_supply_chain.replay_verifier import (
+    PluginSupplyChainReplayVerifier,
+)
+from app.services.operations.plugin_supply_chain.sbom_placeholder import (
+    PluginSBOMPlaceholderService,
+)
 
 __all__ = [
     "DEFAULT_ALLOWED_DEPENDENCY_CLASSES",

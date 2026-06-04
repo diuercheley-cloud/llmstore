@@ -2,22 +2,23 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
 import logging
+import uuid
 from typing import List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agent_execution import (
-    AgentExecutionJob,
-    AgentWorkerHeartbeat,
-    AgentExecutionLease,
     AgentExecutionDeadLetter,
+    AgentExecutionJob,
+    AgentExecutionLease,
+    AgentWorkerHeartbeat,
 )
-from app.services.agents.agent_queue import AgentQueueManager, update_queue_metrics
-from app.services.agents.agent_cancellation import AgentCancellationService
 from app.services.agents import agent_state
+from app.services.agents.agent_cancellation import AgentCancellationService
+from app.services.agents.agent_queue import AgentQueueManager, update_queue_metrics
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -3,14 +3,12 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from app.domains.financial import FinancialDomainContract
 from app.domains.governance import GovernanceDomainContract
 from app.domains.operations import OperationsDomainContract
 from app.domains.runtime import RuntimeDomainContract
 from app.domains.sovereign import SovereignDomainContract
 from app.domains.trust import TrustDomainContract
-
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_domain_contracts.py"

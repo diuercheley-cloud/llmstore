@@ -5,10 +5,10 @@ Revises: 20260530_0002
 Create Date: 2026-05-30 09:46:00.000000
 
 """
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = '20260530_0003'

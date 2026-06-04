@@ -1,6 +1,7 @@
 import pytest
 from app.services.security.trust_snapshotting import TrustSnapshottingService
 
+
 @pytest.mark.asyncio
 async def test_create_snapshot(session):
     service = TrustSnapshottingService()

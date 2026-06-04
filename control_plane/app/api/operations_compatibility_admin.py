@@ -2,11 +2,6 @@
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.compatibility_contracts import (
     CAPABILITY_NEGOTIATION_STATUSES,
@@ -14,7 +9,6 @@ from app.models.operations.compatibility_contracts import (
     COMPATIBILITY_TYPES,
     CONTRACT_SCOPES,
     CONTRACT_STATUSES,
-    DEPRECATION_STATUSES,
     NEGOTIATION_STATUSES,
     VERIFICATION_STATUSES,
     CapabilityNegotiation,
@@ -25,10 +19,18 @@ from app.models.operations.compatibility_contracts import (
     DeprecationLifecycle,
     VersionNegotiationSession,
 )
-from app.services.operations.compatibility_contracts.audit_events import build_compatibility_audit_event
-from app.services.operations.compatibility_contracts.capability_negotiation import CapabilityNegotiationService
-from app.services.operations.compatibility_contracts.compatibility_matrix import CompatibilityMatrixService
-from app.services.operations.compatibility_contracts.deprecation_lifecycle import DeprecationLifecycleService
+from app.services.operations.compatibility_contracts.audit_events import (
+    build_compatibility_audit_event,
+)
+from app.services.operations.compatibility_contracts.capability_negotiation import (
+    CapabilityNegotiationService,
+)
+from app.services.operations.compatibility_contracts.compatibility_matrix import (
+    CompatibilityMatrixService,
+)
+from app.services.operations.compatibility_contracts.deprecation_lifecycle import (
+    DeprecationLifecycleService,
+)
 from app.services.operations.compatibility_contracts.hash_utils import (
     compute_contract_hash,
     compute_matrix_hash,
@@ -42,8 +44,16 @@ from app.services.operations.compatibility_contracts.receipts import (
     build_verification_receipt,
 )
 from app.services.operations.compatibility_contracts.validation import validate_schema_compatibility
-from app.services.operations.compatibility_contracts.verification import CompatibilityVerificationService
-from app.services.operations.compatibility_contracts.version_negotiation import VersionNegotiationService
+from app.services.operations.compatibility_contracts.verification import (
+    CompatibilityVerificationService,
+)
+from app.services.operations.compatibility_contracts.version_negotiation import (
+    VersionNegotiationService,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

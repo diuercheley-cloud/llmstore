@@ -1,8 +1,8 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
+
 from app.services.agents.agent_llm_provider import AgentLLMProvider
-from app.services.agents.reasoning.structured_output import StructuredOutputValidator
 
 logger = logging.getLogger(__name__)
 

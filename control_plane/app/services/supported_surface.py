@@ -1,6 +1,8 @@
 import os
+from typing import Any, Dict, List, Optional
+
 import yaml
-from typing import List, Dict, Any, Optional
+
 
 class SupportedSurfaceService:
     def __init__(self, config_path: Optional[str] = None):

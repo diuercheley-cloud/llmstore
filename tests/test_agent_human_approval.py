@@ -1,33 +1,24 @@
-import pytest
 import uuid
-import asyncio
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from httpx import AsyncClient
+from datetime import timedelta
 
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
-    AgentDefinition,
-    AgentRun,
-    AgentApprovalRequest,
-    AgentApprovalDecision,
     AgentApprovalPolicy,
+    AgentApprovalRequest,
+    AgentRun,
     AgentTool,
 )
-from app.services.agents import agent_state, agent_runtime
+from app.services.agents import agent_runtime, agent_state
 from app.services.agents.agent_executor import MockLLMProvider
 from app.services.agents.human_approval import (
-    check_approval_required,
-    create_approval_request,
-    approve_approval_request,
-    reject_approval_request,
-    request_changes_for_approval_request,
     check_all_expired_requests,
     sanitize_value,
 )
-from app.services.auth import AdminRole
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(autouse=True)

@@ -3,14 +3,16 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
 from app.models.commercial_federated_aggregate import CommercialFederatedAggregate
-from app.services.routing.commercial_cluster_registry import list_clusters, register_cluster, update_cluster_status
+from app.services.routing.commercial_cluster_registry import (
+    list_clusters,
+    register_cluster,
+    update_cluster_status,
+)
+from sqlalchemy import select
 
 
 def _enable_federation(monkeypatch: pytest.MonkeyPatch) -> None:

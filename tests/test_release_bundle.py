@@ -1,9 +1,10 @@
-import subprocess
-import os
-import tarfile
 import json
-import pytest
+import subprocess
+import tarfile
 from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture
 def clean_releases(tmp_path: Path):

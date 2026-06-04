@@ -1,7 +1,9 @@
-import pytest
 import os
 import zipfile
+
+import pytest
 from app.services.compliance_evidence_collector import ComplianceEvidenceCollectorService
+
 
 @pytest.mark.asyncio
 async def test_evidence_collection_sanitization(db_session):

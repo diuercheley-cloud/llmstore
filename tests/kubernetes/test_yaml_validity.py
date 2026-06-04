@@ -1,6 +1,8 @@
 import os
-import yaml
+
 import pytest
+import yaml
+
 
 def test_kubernetes_manifests_valid_yaml():
     manifest_dir = "deploy/kubernetes"

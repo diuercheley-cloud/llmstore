@@ -2,12 +2,11 @@ import json
 from datetime import datetime
 from uuid import UUID
 
+from app.core.time import utc_now
+from app.db.base import Base
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.core.time import utc_now
-from app.db.base import Base
 
 
 class DeterministicPolicy(Base):

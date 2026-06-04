@@ -2,17 +2,16 @@ from decimal import Decimal
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-
 from app.db.base import Base
 from app.services.billing.wallet_service import (
     InsufficientBalance,
     credit_manual,
     debit_usage,
     get_balance,
-    reserve_amount,
     release_reservation,
+    reserve_amount,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

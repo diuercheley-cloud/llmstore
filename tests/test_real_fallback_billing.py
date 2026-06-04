@@ -1,10 +1,7 @@
 """Tests for fallback billing — cost estimation, financial tracking, wallet debit."""
 
-from decimal import Decimal
-from pathlib import Path
 
 import pytest
-
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter, _estimate_cost
 

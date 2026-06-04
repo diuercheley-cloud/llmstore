@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.agents.connectors.confluence_connector import ConfluenceConnector
 from app.services.agents.connectors.jira_connector import JiraConnector
 from app.services.agents.connectors.microsoft365_connector import Microsoft365Connector

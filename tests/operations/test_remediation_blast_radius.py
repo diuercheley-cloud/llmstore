@@ -1,5 +1,6 @@
 from app.services.operations.remediation.blast_radius import RemediationBlastRadiusService
 
+
 class TestRemediationBlastRadius:
     def test_calculate_blast_radius_low(self):
         service = RemediationBlastRadiusService()

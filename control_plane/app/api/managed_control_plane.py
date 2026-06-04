@@ -3,24 +3,23 @@ import logging
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.schemas.managed_control_plane import (
-    ManagedOrganization,
-    ManagedOrganizationCreate,
-    ManagedWorkspace,
-    ManagedWorkspaceCreate,
-    ManagedAppliance,
     ApplianceEnrollmentToken,
     ApplianceEnrollRequest,
     ApplianceEnrollResponse,
     ApplianceHeartbeatPayload,
+    ManagedAppliance,
+    ManagedOrganization,
+    ManagedOrganizationCreate,
+    ManagedWorkspace,
+    ManagedWorkspaceCreate,
 )
-from app.services.managed_control_plane import ManagedControlPlaneService
 from app.services.auth import require_admin
-from app.core.config import get_settings
+from app.services.managed_control_plane import ManagedControlPlaneService
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -44,8 +43,8 @@ async def create_organization(
 async def list_organizations(
     session: AsyncSession = Depends(get_db_session),
 ):
-    from sqlalchemy import select
     from app.models.managed_control_plane import ManagedOrganization
+    from sqlalchemy import select
     
     stmt = select(ManagedOrganization)
     result = await session.execute(stmt)
@@ -66,8 +65,8 @@ async def list_workspaces(
     organization_id: Optional[uuid.UUID] = None,
     session: AsyncSession = Depends(get_db_session),
 ):
-    from sqlalchemy import select
     from app.models.managed_control_plane import ManagedWorkspace
+    from sqlalchemy import select
     
     stmt = select(ManagedWorkspace)
     if organization_id:

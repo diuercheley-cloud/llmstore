@@ -1,10 +1,11 @@
-import pytest
-import uuid
 import hashlib
+import uuid
+
+import pytest
 from app.core.config import get_settings
+from app.models.agents import AgentBundleSignature, AgentBundleVersion
 from app.services.agents.agent_bundle_verifier import AgentBundleVerifierService
-from app.services.agents.agent_bundle_signing import AgentBundleSigningService
-from app.models.agents import AgentBundleVersion, AgentBundleSignature
+
 
 @pytest.mark.asyncio
 async def test_pacote_externo_unsigned_bloqueia(session):

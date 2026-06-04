@@ -1,9 +1,11 @@
 import uuid
-from typing import Optional, List
+from typing import List, Optional
+
+from app.core.time import utc_now
+from app.models.realtime_voice import VoiceSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.realtime_voice import VoiceSession
-from app.core.time import utc_now
+
 
 class VoiceSessionService:
     def __init__(self, db: AsyncSession):

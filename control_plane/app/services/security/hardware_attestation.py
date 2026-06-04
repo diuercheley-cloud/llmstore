@@ -4,13 +4,12 @@ import hashlib
 import json
 from typing import Any
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_sovereign_governance import CommercialHardwareAttestationRecord
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _evidence_hash(payload: dict[str, Any]) -> str:

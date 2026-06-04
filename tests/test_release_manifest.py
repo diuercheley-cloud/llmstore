@@ -1,8 +1,10 @@
-import os
 import json
-import subprocess
-import pytest
+import os
 import shutil
+import subprocess
+
+import pytest
+
 
 def test_release_manifest_script_exists():
     assert os.path.exists("scripts/generate-release-manifest.sh")

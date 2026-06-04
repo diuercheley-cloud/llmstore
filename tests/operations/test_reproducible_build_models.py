@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.client import Client
 from app.models.operations.reproducible_builds import (
     ArtifactReplayVerification,
@@ -11,6 +9,7 @@ from app.models.operations.reproducible_builds import (
     ReproducibleBuildReceipt,
     SourceArtifactLineage,
 )
+from sqlalchemy import select
 
 
 def test_reproducible_build_models_exposed():

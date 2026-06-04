@@ -1,9 +1,11 @@
 # Owner: agent-platform
 import asyncio
 import uuid
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+
 from app.core.config import get_settings
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
 
 async def register_model():
     settings = get_settings()

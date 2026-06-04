@@ -1,7 +1,6 @@
 import hashlib
 import json
 
-
 ALLOWED_ACTIONS = {"allow_if", "deny_if", "require_approval_if", "require_dry_run_if", "block_if", "warn_if"}
 ALLOWED_OPERATORS = {"eq", "ne", "in", "not_in", "gt", "gte", "lt", "lte", "contains", "exists"}
 

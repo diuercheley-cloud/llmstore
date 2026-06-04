@@ -1,10 +1,16 @@
-import uuid
 import hashlib
 import random
-from typing import Optional, Tuple
+import uuid
+from typing import Optional
+
+from app.models.model_experiments import (
+    ModelExperiment,
+    ModelExperimentAssignment,
+    ModelExperimentVariant,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.model_experiments import ModelExperiment, ModelExperimentVariant, ModelExperimentAssignment
+
 
 class TrafficSplitter:
     def __init__(self, db: AsyncSession):

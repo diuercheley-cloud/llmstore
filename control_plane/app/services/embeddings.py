@@ -1,6 +1,6 @@
-import logging
 import asyncio
-from typing import List, Optional
+import logging
+from typing import List
 
 from app.core.config import get_settings
 

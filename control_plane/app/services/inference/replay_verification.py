@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_inference_reproducibility import (
     CommercialInferenceReplayEvent,
@@ -19,6 +16,8 @@ from app.services.inference.reproducibility import (
     hash_response,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _levenshtein(a: str, b: str) -> int:

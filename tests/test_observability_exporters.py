@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+from app.core.config import Settings
 from app.services.observability.jaeger_exporter import JaegerExporterService
 from app.services.observability.zipkin_exporter import ZipkinExporterService
-from app.core.config import Settings
+
 
 @pytest.fixture
 def settings():

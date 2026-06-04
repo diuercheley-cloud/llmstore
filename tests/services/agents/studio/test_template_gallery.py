@@ -1,9 +1,8 @@
 # Owner: agent-platform
+
 import pytest
-import os
-import shutil
-from pathlib import Path
 from app.services.agents.studio.template_gallery import TemplateGalleryService
+
 
 @pytest.fixture
 def temp_templates(tmp_path):

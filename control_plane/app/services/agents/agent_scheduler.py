@@ -4,15 +4,10 @@ Status: beta
 """
 import asyncio
 import logging
-import uuid
-from datetime import timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+
 from app.core.config import get_settings
-from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.services.agents.events.cron_triggers import check_and_fire_schedules
-from app.models.agent_execution import AgentWorkerHeartbeat # Re-using worker heartbeats for simple leader election or just use row-level locking on triggers
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +52,7 @@ class AgentScheduler:
                     await db.commit()
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception:
                 logger.exception("Error in Agent Scheduler loop")
             
             await asyncio.sleep(self.poll_interval)

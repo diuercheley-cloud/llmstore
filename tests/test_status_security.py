@@ -1,11 +1,11 @@
+import httpx
 import pytest
 import pytest_asyncio
-import httpx
-from httpx import AsyncClient
 from app.core.config import get_settings
-from app.main import app
 from app.db.session import get_db_session, get_redis
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from app.main import app
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 settings = get_settings()

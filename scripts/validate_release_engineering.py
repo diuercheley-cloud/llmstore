@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def check_file_exists(path):
     if not os.path.exists(path):
         print(f"MISSING: {path}")

@@ -4,18 +4,14 @@ Combines knowledge graph traversal with vector retrieval for enriched context,
 and provides agentic retrieval loops that iteratively refine searches.
 """
 
-import asyncio
-import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
-
-from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List
 
 from app.core.config import get_settings
-from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk as RAGChunk
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

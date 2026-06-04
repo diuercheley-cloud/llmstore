@@ -1,9 +1,8 @@
-import json
 from typing import Any
 
 from app.models.operations.plugin_supply_chain import (
-    DependencyGovernancePolicy,
     PLUGIN_DEPENDENCY_VERIFICATION_STATUSES,
+    DependencyGovernancePolicy,
     PluginDependencyVerification,
 )
 from app.services.operations.plugin_supply_chain.hash_utils import canonical_json, sha256_hex

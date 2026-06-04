@@ -4,18 +4,15 @@ Approval workflow, security scanning, and validation for agent marketplace submi
 """
 
 import asyncio
-import json
 import logging
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

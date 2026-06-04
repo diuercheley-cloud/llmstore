@@ -3,10 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.admin_action_log import AdminActionLog
 from app.models.commercial_leader_lease import CommercialLeaderLease
@@ -18,6 +14,9 @@ from app.services.routing.commercial_leader_election import (
     try_acquire_leader,
 )
 from app.services.routing.commercial_node_heartbeat import list_nodes, resolve_node_identity
+from fastapi import APIRouter, Body, Depends
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/routing/ha",

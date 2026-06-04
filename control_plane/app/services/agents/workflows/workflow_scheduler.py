@@ -1,12 +1,11 @@
 # Owner: agent-platform
 import asyncio
 import logging
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.agents.workflows.workflow_engine import WorkflowEngine
-from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
+
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.services.agents.workflows.workflow_engine import WorkflowEngine
+from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class WorkflowScheduler:
                     # 2. Process ready runs
                     await engine.process_ready_runs()
                     
-            except Exception as e:
+            except Exception:
                 logger.exception("Error in Workflow Scheduler loop")
             
             await asyncio.sleep(self.poll_interval)

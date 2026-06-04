@@ -2,17 +2,21 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import get_db, require_admin
 from app.core.config import Settings, get_settings
 from app.services.agents.knowledge_graph.graph_extractor import graph_extractor
-from app.services.agents.knowledge_graph.graph_models import Entity, GraphQueryRequest, GraphQueryResult, Relation
+from app.services.agents.knowledge_graph.graph_models import (
+    Entity,
+    GraphQueryRequest,
+    GraphQueryResult,
+    Relation,
+)
 from app.services.agents.knowledge_graph.graph_policy import graph_policy
 from app.services.agents.knowledge_graph.graph_rag import GraphRAG
 from app.services.agents.knowledge_graph.graph_store import GraphStore
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 admin_router = APIRouter(prefix="/admin/agents/knowledge-graph", tags=["agent-knowledge-graph-admin"])
 public_router = APIRouter(prefix="/agents", tags=["agent-knowledge-graph"])

@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, patch
 import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Mock tiktoken and tokenizers before importing the service
 mock_tiktoken = MagicMock()
@@ -8,17 +9,11 @@ sys.modules["tiktoken"] = mock_tiktoken
 mock_tokenizers = MagicMock()
 sys.modules["tokenizers"] = mock_tokenizers
 
-from app.services.tokenizer_service import TokenizerService, TokenCountResult
-from app.core.config import Settings
 
 # Ensure models are registered
-import app.models.client
-import app.models.usage_record
-import app.models.quota_counter
-import app.models.billing_plan
-import app.models.pricing_rule
-import app.models.api_key
-import app.models.request_financial
+from app.core.config import Settings
+from app.services.tokenizer_service import TokenizerService
+
 
 @pytest.fixture
 def settings(monkeypatch):
@@ -88,11 +83,12 @@ async def test_count_embedding_tokens(tokenizer_service):
 
 @pytest.mark.asyncio
 async def test_usage_record_persistence(tokenizer_service, session):
-    from app.services.quota import record_usage
-    from app.models.usage_record import UsageRecord
-    from app.models.client import Client
-    from sqlalchemy import select
     import uuid
+
+    from app.models.client import Client
+    from app.models.usage_record import UsageRecord
+    from app.services.quota import record_usage
+    from sqlalchemy import select
 
     client = Client(id=uuid.uuid4(), name="test")
     session.add(client)
@@ -117,11 +113,12 @@ async def test_usage_record_persistence(tokenizer_service, session):
 
 @pytest.mark.asyncio
 async def test_billing_record_request_financials(session):
-    from app.services.billing.pricing_engine import record_request_financials
-    from app.models.request_financial import RequestFinancial
-    from app.models.client import Client
-    from sqlalchemy import select
     import uuid
+
+    from app.models.client import Client
+    from app.models.request_financial import RequestFinancial
+    from app.services.billing.pricing_engine import record_request_financials
+    from sqlalchemy import select
 
     client = Client(id=uuid.uuid4(), name="test_billing")
     session.add(client)

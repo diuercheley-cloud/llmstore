@@ -1,12 +1,10 @@
+
 import pytest
 import pytest_asyncio
-import uuid
-import json
-import asyncio
-from httpx import AsyncClient
-from datetime import datetime, timezone
 from app.db.base import Base
 from app.db.session import engine
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_agent_db(monkeypatch):
@@ -17,7 +15,6 @@ async def setup_agent_db(monkeypatch):
     get_settings.cache_clear()
     
     # Force import of all models
-    import app.models
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield

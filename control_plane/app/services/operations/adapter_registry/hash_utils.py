@@ -2,6 +2,7 @@ import hashlib
 import json
 from typing import Any
 
+
 def canonical_json(data: Any) -> str:
     """Returns a canonical JSON string representation of the data."""
     return json.dumps(data, sort_keys=True, ensure_ascii=False, default=str)

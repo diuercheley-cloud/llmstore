@@ -56,8 +56,9 @@ async def test_branding_response_is_public():
 
 @pytest.mark.asyncio
 async def test_branding_colors_valid_format():
-    from app.services.branding import get_safe_branding
     import re
+
+    from app.services.branding import get_safe_branding
     b = get_safe_branding()
     hex_pattern = re.compile(r"^#[0-9a-f]{6}$")
     assert hex_pattern.match(b["primary_color"]), f"Invalid hex: {b['primary_color']}"

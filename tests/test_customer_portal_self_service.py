@@ -1,14 +1,10 @@
 import json
 from datetime import date, timedelta
 from decimal import Decimal
-from uuid import uuid4
 
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
 from app.db.base import Base
@@ -20,6 +16,8 @@ from app.models.request_financial import RequestFinancial
 from app.models.request_log import RequestLog
 from app.models.sales_lead import SalesLead
 from app.services.billing.wallet_service import credit_manual
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

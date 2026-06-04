@@ -1,32 +1,32 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.adapter_promotion import (
-    AdapterPromotionWorkflow,
     AdapterPromotionGateResult,
     AdapterPromotionStageTransition,
-    AdapterPromotionRollback,
-    AdapterPromotionReceipt,
+    AdapterPromotionWorkflow,
 )
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.models.operations.adapter_sandbox import AdapterManifest
-from app.services.operations.adapter_promotion.workflow_service import AdapterPromotionWorkflowService
 from app.services.operations.adapter_promotion.gates import AdapterPromotionGateService
-from app.services.operations.adapter_promotion.staging_simulation import AdapterStagingSimulationService
 from app.services.operations.adapter_promotion.receipts import (
     build_promotion_workflow_receipt,
-    build_gate_result_receipt,
-    build_transition_receipt,
     build_rollback_receipt,
+    build_transition_receipt,
 )
+from app.services.operations.adapter_promotion.staging_simulation import (
+    AdapterStagingSimulationService,
+)
+from app.services.operations.adapter_promotion.workflow_service import (
+    AdapterPromotionWorkflowService,
+)
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

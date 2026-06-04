@@ -1,7 +1,7 @@
 import json
-import os
 import subprocess
 from pathlib import Path
+
 
 def test_smoke_report_generation():
     # Run smoke test

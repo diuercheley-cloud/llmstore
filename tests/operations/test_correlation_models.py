@@ -1,15 +1,16 @@
-import pytest
 import uuid
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
+from app.core.time import utc_now
 from app.models.operations.correlation import (
-    OperationalCorrelation,
     CorrelatedOperationalEvent,
+    OperationalCorrelation,
     OperationalTrustLink,
     compute_deterministic_hash,
 )
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class TestCorrelationDeterministicHash:
     def test_deterministic_same_input(self):

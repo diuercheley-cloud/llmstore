@@ -5,6 +5,8 @@ import difflib
 import json
 import logging
 import os
+import re
+import time
 from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import urlparse
@@ -30,6 +32,40 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
+_PROBE_CACHE: dict[str, dict[str, Any]] = {}
+_RESPONSE_FORMAT_CACHE: dict[str, bool] = {}
+
+
+def _reasoning_indicates_probe_tool_call(reasoning_content: Any) -> bool:
+    if not isinstance(reasoning_content, str):
+        return False
+    normalized = reasoning_content.lower()
+    return "<function=probe>" in normalized or '"name":"probe"' in normalized
+
+
+def _extract_textual_tool_call(reasoning_content: Any) -> dict[str, Any] | None:
+    if not isinstance(reasoning_content, str) or "<tool_call>" not in reasoning_content:
+        return None
+    function_match = re.search(r"<function=([a-zA-Z0-9_\-]+)>", reasoning_content)
+    if not function_match:
+        return None
+    function_name = function_match.group(1).strip()
+    parameters: dict[str, str] = {}
+    for match in re.finditer(
+        r"<parameter=([a-zA-Z0-9_\-]+)>\s*(.*?)\s*</parameter>",
+        reasoning_content,
+        re.DOTALL,
+    ):
+        parameters[match.group(1).strip()] = match.group(2).strip()
+    return {
+        "id": f"lmstudio_{function_name}",
+        "type": "function",
+        "function": {
+            "name": function_name,
+            "arguments": json.dumps(parameters, ensure_ascii=True),
+        },
+    }
+
 
 class CodeAgentProvider(abc.ABC):
     def __init__(self, config: dict[str, Any]):
@@ -48,8 +84,15 @@ class CodeAgentProvider(abc.ABC):
         self.event_callback = config.get("event_callback")
         self.transport = config.get("transport")
         self.supports_tool_calling = bool(config.get("supports_tool_calling", False))
+        self.allow_native_tools_for_local = bool(config.get("allow_native_tools_for_local", False))
+        self.lm_studio_compatibility = bool(config.get("lm_studio_compatibility", True))
+        self.capability_cache_ttl_seconds = int(config.get("capability_cache_ttl_seconds", 300))
         self.timeout_adjusted = False
         self._provider_events: list[dict[str, Any]] = []
+        self._last_native_probe_result: dict[str, Any] | None = None
+        self._last_fallback_reason: str | None = None
+        self._last_fallback_strategy: str | None = None
+        self._last_selected_model: str | None = self.model or None
         self.stream = self._resolve_stream_default(config.get("stream"))
 
         # Instantiate the real CodeAgent class to represent/validate this provider's agent helper
@@ -87,12 +130,23 @@ class CodeAgentProvider(abc.ABC):
             return True
         return self._is_local_endpoint()
 
+    def _use_lm_studio_compatibility(self) -> bool:
+        return self._is_local_provider() and self.lm_studio_compatibility
+
     def _is_local_endpoint(self) -> bool:
         if not self.base_url:
             return False
         parsed = urlparse(self.base_url)
         host = parsed.hostname or ""
-        return host in {"localhost", "127.0.0.1", "host.docker.internal"}
+        if host in {"localhost", "127.0.0.1", "host.docker.internal"}:
+            return True
+        # Treat private / local network IPs as local endpoints
+        import ipaddress
+        try:
+            addr = ipaddress.ip_address(host)
+            return addr.is_private or addr.is_loopback
+        except ValueError:
+            return False
 
     def _effective_timeout(self) -> float:
         if self._is_local_provider():
@@ -116,6 +170,11 @@ class CodeAgentProvider(abc.ABC):
             "metadata": Sanitizer.sanitize_data(metadata or {}),
         }
         self._provider_events.append(payload)
+        if metadata:
+            if metadata.get("fallback_reason"):
+                self._last_fallback_reason = str(metadata["fallback_reason"])
+            if metadata.get("fallback_strategy"):
+                self._last_fallback_strategy = str(metadata["fallback_strategy"])
         if callable(self.event_callback):
             self.event_callback(payload)
 
@@ -123,7 +182,13 @@ class CodeAgentProvider(abc.ABC):
     UNSUPPORTED_MEDIA_TYPES = frozenset({"audio_url", "video_url"})
 
     def _warn_unsupported_media(self, content: Any) -> list[dict[str, Any]]:
-        if not isinstance(content, list):
+        from .multimodal import adapt_content_blocks_for_provider
+        if isinstance(content, list):
+            content = adapt_content_blocks_for_provider(
+                content,
+                multimodal_enabled=True
+            )
+        else:
             return [{"type": "text", "text": str(content)}]
         filtered = []
         for block in content:
@@ -165,6 +230,15 @@ class CodeAgentProvider(abc.ABC):
             f"timeout={self.timeout!r}, "
             f"max_retries={self.max_retries!r})"
         )
+
+    def _build_chat_paths(self) -> list[str]:
+        raise NotImplementedError
+
+    def _build_headers(self) -> dict[str, str]:
+        raise NotImplementedError
+
+    def _process_chat_response(self, data: dict[str, Any], tool_mode: str) -> dict[str, Any]:
+        raise NotImplementedError
 
     def _normalize_action_payload(self, action: dict[str, Any]) -> dict[str, Any]:
         valid_types = {
@@ -221,6 +295,11 @@ class CodeAgentProvider(abc.ABC):
         return candidates
 
     def _validate_action_dict(self, action_data: dict[str, Any]) -> str:
+        # Single-pass normalization for common model output variations
+        # 1. Handle 'action_type' as alias for 'type'
+        if "action_type" in action_data and "type" not in action_data:
+            action_data["type"] = action_data["action_type"]
+
         action_type = action_data.get("type")
         if not action_type:
             raise ValueError("schema_validation_failed")
@@ -235,6 +314,17 @@ class CodeAgentProvider(abc.ABC):
 
         try:
             from pydantic import ValidationError
+
+            # Single-pass: normalize action_type, wrap flat keys, strip meta keys
+            if action_type != "parallel" and "payload" not in action_data:
+                meta_keys = {"type", "reason", "action_type", "action"}
+                payload_keys = set(action_data.keys()) - meta_keys
+                if payload_keys:
+                    action_data["payload"] = {k: action_data[k] for k in payload_keys}
+            # Clean up top-level to avoid pydantic confusion
+            for key in list(action_data.keys()):
+                if key not in {"type", "reason", "payload"}:
+                    del action_data[key]
 
             validated = AgentActionResponse.model_validate(action_data).root
             action_dict = validated.model_dump()
@@ -320,10 +410,42 @@ class CodeAgentProvider(abc.ABC):
             for name, schema in schema_map.items()
         ]
 
-    def _tool_calling_mode(self) -> str:
+    async def resolve_tool_calling_mode(self) -> str:
+        if self.tool_calling == "json":
+            return "json"
+
+        probe = await self._probe_native_tool_calling()
+        self._last_native_probe_result = dict(probe)
+        supported = probe.get("supported", False)
+        
+        if self.tool_calling == "native":
+            if not supported:
+                from .sanitizer import Sanitizer
+                provider_name = getattr(self, "provider", self.__class__.__name__)
+                sanitized_url = Sanitizer.sanitize_text(self.base_url)
+                msg = (
+                    f"Native tool-calling requested but unsupported by {provider_name} "
+                    f"model '{self.model}' at {sanitized_url}. "
+                    f"supports_native_tool_calling=False, "
+                    f"native_tool_calling_probe={probe.get('status', 'unknown')}. "
+                    f"Suggestion: use --tool-calling json or --allow-native-tools-for-local "
+                    f"if you know the backend supports it."
+                )
+                raise ValueError(msg)
+            return "native"
+            
         if self.tool_calling == "auto":
-            return "native" if self.supports_tool_calling else "json"
+            if self._is_local_provider():
+                if self.allow_native_tools_for_local and supported:
+                    return "native"
+                return "json"
+            else:
+                return "native" if supported else "json"
+                
         return self.tool_calling
+
+    def _is_plain_chat_mode(self) -> bool:
+        return bool(self.config.get("plain_chat", False))
 
     def _message_diagnostics(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         diagnostics: list[dict[str, Any]] = []
@@ -352,6 +474,7 @@ class CodeAgentProvider(abc.ABC):
     def _simplify_messages_for_local_retry(
         self, messages: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
+        system_parts: list[str] = []
         simplified: list[dict[str, Any]] = []
         for message in messages:
             role = message.get("role", "user")
@@ -361,6 +484,10 @@ class CodeAgentProvider(abc.ABC):
                     str(block.get("text", "")) for block in content if isinstance(block, dict)
                 )
             content_text = Sanitizer.strip_control_chars(str(content))
+            if role == "system":
+                if content_text:
+                    system_parts.append(content_text)
+                continue
             if role == "tool":
                 simplified.append(
                     {
@@ -370,7 +497,36 @@ class CodeAgentProvider(abc.ABC):
                 )
                 continue
             simplified.append({"role": role, "content": content_text})
+        if system_parts:
+            simplified.insert(0, {"role": "system", "content": "\n\n".join(system_parts)})
         return simplified
+
+    def _fold_system_into_first_user(
+        self, messages: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        system_parts: list[str] = []
+        rewritten: list[dict[str, Any]] = []
+        injected = False
+        for message in messages:
+            role = message.get("role", "user")
+            if role == "system":
+                content = Sanitizer.strip_control_chars(str(message.get("content", "")))
+                if content:
+                    system_parts.append(content)
+                continue
+            cloned = dict(message)
+            if not injected and role == "user" and system_parts:
+                content = Sanitizer.strip_control_chars(str(cloned.get("content", "")))
+                cloned["content"] = (
+                    "Follow these instructions for this reply:\n"
+                    f"{chr(10).join(system_parts)}\n\n"
+                    f"User request:\n{content}"
+                )
+                injected = True
+            rewritten.append(cloned)
+        if system_parts and not injected:
+            rewritten.insert(0, {"role": "user", "content": "\n\n".join(system_parts)})
+        return rewritten
 
     def _build_local_retry_payload(
         self,
@@ -378,9 +534,24 @@ class CodeAgentProvider(abc.ABC):
         *,
         fallback_reason: str,
     ) -> dict[str, Any]:
+        compatibility_instruction = (
+            "Return exactly one JSON object for the next action.\n"
+            "Do not include markdown, explanation, or any text before/after the JSON.\n"
+            "Use this schema: "
+            '{"type":"read_file|write_file|list_files|replace_content|'
+            'apply_patch|run_shell|run_tests|grep|ast_search|final|plan",'
+            '"payload":{...}}\n'
+            'If the task is complete, return {"type":"final","payload":{"message":"..."}}.'
+        )
+        simplified_messages = self._simplify_messages_for_local_retry(messages)
+        if simplified_messages and simplified_messages[0].get("role") == "system":
+            current = str(simplified_messages[0].get("content", ""))
+            simplified_messages[0]["content"] = f"{compatibility_instruction}\n\n{current}".strip()
+        else:
+            simplified_messages.insert(0, {"role": "system", "content": compatibility_instruction})
         retry_payload: dict[str, Any] = {
             "model": self.model,
-            "messages": self._simplify_messages_for_local_retry(messages),
+            "messages": simplified_messages,
             "temperature": 0,
             "stream": False,
         }
@@ -399,6 +570,24 @@ class CodeAgentProvider(abc.ABC):
             },
         )
         return retry_payload
+
+    async def _retry_local_compat_mode(
+        self,
+        *,
+        url: str,
+        messages: list[dict[str, Any]],
+        fallback_reason: str,
+        tool_mode: str,
+    ) -> dict[str, Any]:
+        retry_payload = self._build_local_retry_payload(
+            messages,
+            fallback_reason=fallback_reason,
+        )
+        response = await self._request_with_retry(
+            "POST", url, json=retry_payload, headers=self._build_headers()
+        )
+        data = response.json()
+        return self._process_chat_response(data, tool_mode)
 
     async def _iter_sse_data(
         self, response: httpx.Response
@@ -505,6 +694,121 @@ class CodeAgentProvider(abc.ABC):
                         continue
                     raise
         raise RuntimeError("Request failed after retries")
+
+    async def _probe_native_tool_calling(self) -> dict[str, Any]:
+        cache_key = f"capability_probe:{self.__class__.__name__}:{self.base_url}:{self.model}"
+        now = time.time()
+
+        # 1. Try In-memory cache first
+        if cache_key in _PROBE_CACHE:
+            entry = _PROBE_CACHE[cache_key]
+            if now - entry["timestamp"] < self.capability_cache_ttl_seconds:
+                result = entry["result"].copy()
+                if result.get("status") != "skipped_by_compat_mode":
+                    result["capability_probe_cache_hit"] = True
+                    return result
+
+        # 2. Try persistent cache if available
+        from .cache import LocalCache as _LocalCache
+        cache = self.config.get("cache")
+        if isinstance(cache, _LocalCache):
+            cached_data = cache.get_json("capabilities", cache_key)
+            ts = cached_data.get("timestamp", 0) if cached_data else 0
+            if cached_data and (now - ts < self.capability_cache_ttl_seconds):
+                result = cached_data["result"]
+                if result.get("status") != "skipped_by_compat_mode":
+                    result["capability_probe_cache_hit"] = True
+                    # Sync back to in-memory for this process
+                    _PROBE_CACHE[cache_key] = {"timestamp": cached_data["timestamp"], "result": result}
+                    return result
+
+        if not self._is_local_provider():
+            result = {
+                "supported": self.supports_tool_calling,
+                "status": "not_applicable",
+            }
+            if isinstance(cache, _LocalCache):
+                cache.set_json("capabilities", cache_key, {"timestamp": now, "result": result})
+            _PROBE_CACHE[cache_key] = {"timestamp": now, "result": result}
+            return result
+
+        if (
+            self._use_lm_studio_compatibility()
+            and not self.allow_native_tools_for_local
+            and self.tool_calling != "native"
+            and not self.supports_tool_calling
+        ):
+            return {
+                "supported": False,
+                "status": "skipped_by_compat_mode",
+                "reason": "Native probe disabled by LM Studio compatibility mode",
+            }
+
+        # Use full tool definitions to ensure the model can handle the complex schema
+        tools = self._tool_definitions()
+
+        probe_payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Respond using the 'plan' tool with a short message confirming tool support.",
+                }
+            ],
+            "temperature": 0,
+            "stream": False,
+            "tools": tools,
+            "tool_choice": "auto",
+            "max_tokens": 64,
+        }
+
+        result: dict[str, Any] = {"supported": False, "status": "unknown"}
+        last_exc: Exception | None = None
+
+        for url in self._build_chat_paths():
+            try:
+                response = await self._request_with_retry(
+                    "POST", url, json=probe_payload, headers=self._build_headers()
+                )
+                response.raise_for_status()
+                data = response.json()
+                message = {}
+                if isinstance(data.get("choices"), list) and data["choices"]:
+                    message = data["choices"][0].get("message", {})
+
+                tool_calls = message.get("tool_calls") or []
+                if tool_calls:
+                    result = {"supported": True, "status": "supported"}
+                    break
+                if _reasoning_indicates_probe_tool_call(message.get("reasoning_content")):
+                    result = {
+                        "supported": True,
+                        "status": "supported_via_reasoning_fallback",
+                        "reason": "Provider emitted probe tool intent in reasoning_content",
+                    }
+                    break
+                else:
+                    result = {
+                        "supported": False,
+                        "status": "not_supported",
+                        "reason": "Model returned no tool_calls despite tool_choice=required",
+                    }
+            except Exception as exc:
+                last_exc = exc
+                continue
+
+        if not result.get("supported") and last_exc:
+            result = {
+                "supported": False,
+                "status": "probe_failed",
+                "reason": Sanitizer.sanitize_text(str(last_exc)),
+            }
+        
+        result["capability_probe_cache_hit"] = False
+        if isinstance(cache, _LocalCache):
+            cache.set_json("capabilities", cache_key, {"timestamp": now, "result": result})
+        _PROBE_CACHE[cache_key] = {"timestamp": now, "result": result}
+        return result
 
 
 class StubProvider(CodeAgentProvider):
@@ -663,38 +967,53 @@ class OpenAICompatibleProvider(CodeAgentProvider):
 
         if allow_auto_select and not self.model:
             self.model = selected
+        self._last_selected_model = selected
 
         return selected
 
     async def chat_completion(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         self._validate_config()
         self._provider_events = []
-        instruction = (
-            "You are a coding agent. Your goal is to solve the task by executing actions.\n"
-            "Return EXACTLY one JSON object for each step. "
-            "DO NOT include any text outside the JSON.\n"
-            "Available actions:\n"
-            "- plan: {\"type\":\"plan\", \"payload\":{\"message\":\"...\"}}\n"
-            "- read_file: {\"type\":\"read_file\", \"payload\":{\"path\":\"...\"}}\n"
-            "- write_file: {\"type\":\"write_file\", "
-            "\"payload\":{\"path\":\"...\", \"content\":\"...\"}}\n"
-            "- list_files: {\"type\":\"list_files\", \"payload\":{\"path\":\".\"}}\n"
-            "- replace_content: {\"type\":\"replace_content\", "
-            "\"payload\":{\"path\":\"...\", \"old_content\":\"...\", "
-            "\"new_content\":\"...\"}}\n"
-            "- apply_patch: {\"type\":\"apply_patch\", \"payload\":{\"diff\":\"...\"}}\n"
-            "- run_shell: {\"type\":\"run_shell\", "
-            "\"payload\":{\"command\":\"...\", \"timeout\":30}}\n"
-            "- run_tests: {\"type\":\"run_tests\", \"payload\":{\"test_path\":\"tests/\"}}\n"
-            "- grep: {\"type\":\"grep\", \"payload\":{\"pattern\":\"...\", "
-            "\"path\":\".\", \"recursive\":true}}\n"
-            "- ast_search: {\"type\":\"ast_search\", "
-            "\"payload\":{\"symbol_name\":\"...\", \"path\":\".\"}}\n"
-            "- final: {\"type\":\"final\", \"payload\":{\"message\":\"Summary of work\"}}\n\n"
-            "Constraints:\n"
-            "- No shell redirection (>, >>, |). Use write_file or replace_content instead.\n"
-            "- Keep actions small and incremental.\n"
-        )
+        self._last_fallback_reason = None
+        self._last_fallback_strategy = None
+
+        # Warn if reasoning model without max_tokens
+        if self.config.get("is_reasoning_model") and self.config.get("max_tokens") is None:
+            logger.warning(
+                "Reasoning model %s detected without max_tokens set. "
+                "This may cause truncated responses. "
+                "Set --max-tokens or LLM_HARNESS_MAX_TOKENS to avoid issues.",
+                self.model,
+            )
+
+        instruction = ""
+        if not self._is_plain_chat_mode():
+            instruction = (
+                "You are a coding agent. Your goal is to solve the task by executing actions.\n"
+                "Return EXACTLY one JSON object for each step. "
+                "DO NOT include any text outside the JSON.\n"
+                "Available actions:\n"
+                "- plan: {\"type\":\"plan\", \"payload\":{\"message\":\"...\"}}\n"
+                "- read_file: {\"type\":\"read_file\", \"payload\":{\"path\":\"...\"}}\n"
+                "- write_file: {\"type\":\"write_file\", "
+                "\"payload\":{\"path\":\"...\", \"content\":\"...\"}}\n"
+                "- list_files: {\"type\":\"list_files\", \"payload\":{\"path\":\".\"}}\n"
+                "- replace_content: {\"type\":\"replace_content\", "
+                "\"payload\":{\"path\":\"...\", \"old_content\":\"...\", "
+                "\"new_content\":\"...\"}}\n"
+                "- apply_patch: {\"type\":\"apply_patch\", \"payload\":{\"diff\":\"...\"}}\n"
+                "- run_shell: {\"type\":\"run_shell\", "
+                "\"payload\":{\"command\":\"...\", \"timeout\":30}}\n"
+                "- run_tests: {\"type\":\"run_tests\", \"payload\":{\"test_path\":\"tests/\"}}\n"
+                "- grep: {\"type\":\"grep\", \"payload\":{\"pattern\":\"...\", "
+                "\"path\":\".\", \"recursive\":true}}\n"
+                "- ast_search: {\"type\":\"ast_search\", "
+                "\"payload\":{\"symbol_name\":\"...\", \"path\":\".\"}}\n"
+                "- final: {\"type\":\"final\", \"payload\":{\"message\":\"Summary of work\"}}\n\n"
+                "Constraints:\n"
+                "- No shell redirection (>, >>, |). Use write_file or replace_content instead.\n"
+                "- Keep actions small and incremental.\n"
+            )
         enriched_messages = []
         for m in messages:
             role = m.get("role", "user")
@@ -702,13 +1021,13 @@ class OpenAICompatibleProvider(CodeAgentProvider):
             tool_calls = m.get("tool_calls")
             tool_call_id = m.get("tool_call_id")
             if isinstance(content, list):
-                if not self.config.get("multimodal", False):
-                    raise ValueError(
-                        "Provider or model does not support multimodal input. "
-                        "Enable 'multimodal' or choose a multimodal model."
-                    )
+                from .multimodal import adapt_content_blocks_for_provider
+                adapted_content = adapt_content_blocks_for_provider(
+                    content,
+                    multimodal_enabled=self.config.get("multimodal", False)
+                )
                 sanitized_content = []
-                for block in content:
+                for block in adapted_content:
                     if block.get("type") == "text":
                         sanitized_content.append({
                             "type": "text",
@@ -727,12 +1046,24 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 if role == "tool" and tool_call_id:
                     entry["tool_call_id"] = tool_call_id
                 enriched_messages.append(entry)
-        enriched_messages.append({"role": "system", "content": instruction})
+        if instruction:
+            if enriched_messages and enriched_messages[0].get("role") == "system":
+                current = str(enriched_messages[0].get("content", ""))
+                enriched_messages[0]["content"] = f"{instruction}\n\n{current}".strip()
+            else:
+                enriched_messages.insert(0, {"role": "system", "content": instruction})
+        if self._is_plain_chat_mode() and self._is_local_provider():
+            enriched_messages = self._fold_system_into_first_user(enriched_messages)
 
         last_error: Exception | None = None
         local_compat_retry_used = False
+        local_semantic_retry_used = False
+        
+        resolved_tool_mode = await self.resolve_tool_calling_mode()
+        
         for url in self._build_chat_paths():
             try:
+                tool_mode = "plain" if self._is_plain_chat_mode() else resolved_tool_mode
                 payload = {
                     "model": self.model,
                     "messages": enriched_messages,
@@ -742,21 +1073,27 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 max_tokens = self.config.get("max_tokens")
                 if max_tokens is not None:
                     payload["max_tokens"] = max_tokens
-                tool_mode = self._tool_calling_mode()
                 if tool_mode == "native":
                     payload["tools"] = self._tool_definitions()
                     payload["tool_choice"] = "auto"
-                if tool_mode == "json" and not self.stream and self._supports_response_format:
+                # Check per-model cache before sending response_format
+                rf_cache_key = f"response_format:{self.model}"
+                rf_supported = _RESPONSE_FORMAT_CACHE.get(
+                    rf_cache_key, self._supports_response_format
+                )
+                if tool_mode == "json" and not self.stream and rf_supported:
                     payload["response_format"] = {"type": "json_object"}
 
                 if self.stream:
-                    return await self._chat_completion_stream(url, payload)
+                    # Request usage in final chunk when provider supports it
+                    payload["stream_options"] = {"include_usage": True}
+                    return await self._chat_completion_stream(url, payload, tool_mode)
 
                 response = await self._request_with_retry(
                     "POST", url, json=payload, headers=self._build_headers()
                 )
                 data = response.json()
-                return self._process_chat_response(data)
+                return self._process_chat_response(data, tool_mode)
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 404:
                     last_error = exc
@@ -792,7 +1129,7 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                             "POST", url, json=retry_payload, headers=self._build_headers()
                         )
                         data = response.json()
-                        return self._process_chat_response(data)
+                        return self._process_chat_response(data, tool_mode)
                     except httpx.HTTPStatusError as retry_exc:
                         logger.warning(
                             "Local provider compatibility retry failed with status=%s",
@@ -801,9 +1138,12 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                         raise
                 if exc.response.status_code == 400 and self._supports_response_format:
                     self._supports_response_format = False
+                    rf_cache_key = f"response_format:{self.model}"
+                    _RESPONSE_FORMAT_CACHE[rf_cache_key] = False
                     logger.debug(
                         "Provider rejected response_format=json_object; "
-                        "retrying without response_format for subsequent calls"
+                        "cached as unsupported for model %s",
+                        self.model,
                     )
                     try:
                         payload = {
@@ -821,21 +1161,52 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                             "POST", url, json=payload, headers=self._build_headers()
                         )
                         data = response.json()
-                        return self._process_chat_response(data)
+                        return self._process_chat_response(data, tool_mode)
                     except Exception as fallback_exc:
                         last_error = fallback_exc
                         raise
                 raise
             except ValueError as exc:
+                if (
+                    self._is_local_provider()
+                    and not self._is_plain_chat_mode()
+                    and not local_semantic_retry_used
+                    and self.tool_calling != "native"
+                    and str(exc)
+                    in {
+                        "schema_validation_failed",
+                        "invalid_json",
+                        "Provider returned empty content",
+                    }
+                ):
+                    local_semantic_retry_used = True
+                    logger.warning(
+                        "Local provider returned non-compatible action payload; "
+                        "retrying in compatibility mode: %s",
+                        str(exc),
+                    )
+                    try:
+                        return await self._retry_local_compat_mode(
+                            url=url,
+                            messages=enriched_messages,
+                            fallback_reason=f"semantic_retry:{exc}",
+                            tool_mode=tool_mode,
+                        )
+                    except Exception as retry_exc:
+                        last_error = retry_exc
+                        raise
                 last_error = exc
                 raise
         raise ValueError(
             "OpenAI-compatible provider did not expose a supported endpoint"
         ) from last_error
 
-    async def _chat_completion_stream(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async def _chat_completion_stream(
+        self, url: str, payload: dict[str, Any], tool_mode: str
+    ) -> dict[str, Any]:
         full_content = ""
-        usage = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        reasoning_content = ""
+        usage: dict[str, Any] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
         tool_calls: dict[int, dict[str, Any]] = {}
 
         async with httpx.AsyncClient(
@@ -850,7 +1221,12 @@ class OpenAICompatibleProvider(CodeAgentProvider):
 
                     try:
                         chunk = json.loads(data_str)
-                        delta = chunk.get("choices", [{}])[0].get("delta", {})
+                        choices = chunk.get("choices")
+                        if not choices:
+                            if chunk.get("usage"):
+                                usage = chunk["usage"]
+                            continue
+                        delta = choices[0].get("delta", {})
                         if "content" in delta:
                             full_content += delta["content"]
                             self._emit_provider_event(
@@ -859,7 +1235,12 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                                 status="streaming",
                             )
                         elif "reasoning_content" in delta:
-                            full_content += delta["reasoning_content"]
+                            reasoning_content += delta["reasoning_content"]
+                            self._emit_provider_event(
+                                "llm.reasoning_delta",
+                                message=delta["reasoning_content"] if self.verbose_stream else "",
+                                status="streaming",
+                            )
                         for tool_delta in delta.get("tool_calls", []):
                             index = int(tool_delta.get("index", 0))
                             current = tool_calls.setdefault(
@@ -883,6 +1264,10 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                     except json.JSONDecodeError:
                         raise ValueError("Malformed streaming response from provider") from None
 
+        # If no explicit content but reasoning exists, fall back to reasoning as content
+        if not full_content and reasoning_content:
+            full_content = reasoning_content
+
         data = {
             "choices": [
                 {
@@ -893,21 +1278,45 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                     }
                 }
             ],
-            "usage": usage
+            "usage": usage,
         }
-        self._emit_provider_event("llm.completed", status="completed")
-        return self._process_chat_response(data)
+        if reasoning_content:
+            data.setdefault("_provider_meta", {})
+            data["_provider_meta"]["reasoning_content"] = reasoning_content
+        self._emit_provider_event(
+            "llm.completed",
+            status="completed",
+            metadata={"reasoning_chars": len(reasoning_content)},
+        )
+        return self._process_chat_response(data, tool_mode)
 
-    def _process_chat_response(self, data: dict[str, Any]) -> dict[str, Any]:
+    def _process_chat_response(self, data: dict[str, Any], tool_mode: str) -> dict[str, Any]:
         data.setdefault("_provider_meta", {})
         data["_provider_meta"]["timeout_adjusted"] = self.timeout_adjusted
         data["_provider_meta"]["event_log"] = list(self._provider_events)
+        data["_provider_meta"]["final_tool_calling_mode"] = tool_mode
+        data["_provider_meta"]["selected_model"] = self._last_selected_model or self.model
+        data["_provider_meta"]["lm_studio_compatibility"] = self._use_lm_studio_compatibility()
+        if self._last_native_probe_result is not None:
+            data["_provider_meta"]["supports_native_tool_calling"] = bool(
+                self._last_native_probe_result.get("supported", False)
+            )
+            data["_provider_meta"]["native_tool_calling_probe"] = self._last_native_probe_result
+        if self._last_fallback_reason:
+            data["_provider_meta"]["fallback_reason"] = self._last_fallback_reason
+        if self._last_fallback_strategy:
+            data["_provider_meta"]["fallback_strategy"] = self._last_fallback_strategy
         msg = {}
         if isinstance(data.get("choices"), list) and len(data["choices"]) > 0:
             msg = data["choices"][0].get("message", {})
 
         tool_calls = msg.get("tool_calls") or []
-        if self._tool_calling_mode() == "native" and tool_calls:
+        if self._is_plain_chat_mode():
+            usage = data.get("usage", {})
+            if not usage:
+                data["usage"] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
+            return self._sanitize_response(data)
+        if tool_mode == "native" and tool_calls:
             for tool_call in tool_calls:
                 function = tool_call.get("function") or {}
                 name = function.get("name")
@@ -930,14 +1339,56 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 data["usage"] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
             return self._sanitize_response(data)
 
+        reasoning_content = ""
         content = ""
         if isinstance(data.get("choices"), list) and len(data["choices"]) > 0:
-            content = str(msg.get("content", "") or msg.get("reasoning_content", "") or "")
+            raw = msg.get("content") or ""
+            reasoning_raw = msg.get("reasoning_content") or ""
+            if raw:
+                content = str(raw)
+                reasoning_content = str(reasoning_raw) if reasoning_raw else ""
+            elif reasoning_raw:
+                reasoning_content = str(reasoning_raw)
+
+        if reasoning_content:
+            data.setdefault("_provider_meta", {})
+            data["_provider_meta"]["reasoning_content"] = reasoning_content
+            truncated = (
+                reasoning_content[:200] + "..."
+                if len(reasoning_content) > 200
+                else reasoning_content
+            )
+            logger.debug(
+                "Reasoning content (%d chars): %s",
+                len(reasoning_content),
+                truncated,
+            )
+            # Auto-detect reasoning model on first response with reasoning_content
+            if not getattr(self, "_detected_reasoning_model", False):
+                self._detected_reasoning_model = True
+                self.config["is_reasoning_model"] = True
+                logger.info(
+                    "Auto-detected reasoning model %s from reasoning_content",
+                    self.model,
+                )
+
+        if not tool_calls and reasoning_content and self._use_lm_studio_compatibility():
+            synthesized_tool_call = _extract_textual_tool_call(reasoning_content)
+            if synthesized_tool_call:
+                tool_calls = [synthesized_tool_call]
+                msg["tool_calls"] = tool_calls
+                data["choices"][0]["message"]["tool_calls"] = tool_calls
+                data["_provider_meta"]["tool_calls_synthesized_from_reasoning"] = True
+                data["_provider_meta"]["fallback_reason"] = "reasoning_tool_call_extracted"
+                data["_provider_meta"]["fallback_strategy"] = "lm_studio_textual_tool_call"
 
         if not content:
-            if tool_calls and self._tool_calling_mode() == "auto":
+            if tool_calls and self.tool_calling in ("auto", "native"):
                 return self._sanitize_response(data)
-            raise ValueError("Provider returned empty content")
+            if reasoning_content:
+                content = reasoning_content
+            else:
+                raise ValueError("Provider returned empty content")
 
         validated_content = self._validate_and_transform_action(content)
         data.setdefault("choices", [{"message": {"role": "assistant", "content": ""}}])
@@ -950,6 +1401,8 @@ class OpenAICompatibleProvider(CodeAgentProvider):
     async def health_check(self) -> dict[str, Any]:
         self._validate_config()
         models = await self._fetch_available_models(refresh=True)
+        if self.model:
+            self._last_selected_model = self.model
         details: dict[str, Any] = {
             "models_url": self._build_models_url(),
             "available_models": models,
@@ -987,11 +1440,21 @@ class LocalOpenAICompatibleProvider(OpenAICompatibleProvider):
     def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self._supports_response_format = False
-        self.supports_tool_calling = True
+        self.supports_tool_calling = bool(config.get("supports_tool_calling", False))
 
     def _validate_config(self):
         # Override to bypass API key requirement for local development models (Ollama, LM Studio)
         self.agent_helper.validate_config()
+
+    def _build_chat_paths(self) -> list[str]:
+        # Local providers (LM Studio, Ollama) only support /v1/chat/completions.
+        # Skip /v1/responses to avoid 400 Bad Request on probe.
+        base = self.base_url
+        if base.endswith("/v1"):
+            return [f"{base}/chat/completions"]
+        if base.endswith("/chat/completions"):
+            return [base]
+        return [f"{base}/v1/chat/completions"]
 
 
     def _build_headers(self) -> dict[str, str]:
@@ -1009,6 +1472,9 @@ class LocalOpenAICompatibleProvider(OpenAICompatibleProvider):
     async def health_check(self) -> dict[str, Any]:
         self._validate_config()
         selected_model = await self._resolve_local_model(allow_auto_select=True)
+        self._last_selected_model = selected_model
+        native_probe = await self._probe_native_tool_calling()
+        self._last_native_probe_result = dict(native_probe)
         return {
             "status": "healthy",
             "provider": "local-openai-compatible",
@@ -1017,6 +1483,9 @@ class LocalOpenAICompatibleProvider(OpenAICompatibleProvider):
                 "available_models": self._available_models or [],
                 "selected_model": selected_model,
                 "supports_response_format": self._supports_response_format,
+                "supports_native_tool_calling": native_probe.get("supported", False),
+                "native_tool_calling_probe": native_probe,
+                "lm_studio_compatibility": self._use_lm_studio_compatibility(),
                 "auto_selected_model": not bool(self.config.get("model")),
             },
         }
@@ -1069,6 +1538,19 @@ class AnthropicProvider(CodeAgentProvider):
 
     async def chat_completion(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         self._validate_config()
+        # Enforce multimodal configuration check
+        for m in messages:
+            content = m.get("content", "")
+            if isinstance(content, list):
+                has_image = any(
+                    isinstance(b, dict) and b.get("type") == "image_url"
+                    for b in content
+                )
+                if has_image and not self.config.get("multimodal", False):
+                    raise ValueError(
+                        "Provider or model does not support multimodal input. "
+                        "Enable 'multimodal' or choose a multimodal model."
+                    )
         url = f"{self.base_url}/v1/messages" if self.base_url else "https://api.anthropic.com/v1/messages"
 
         system_content = []
@@ -1171,6 +1653,19 @@ class GoogleProvider(CodeAgentProvider):
 
     async def chat_completion(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         self._validate_config()
+        # Enforce multimodal configuration check
+        for m in messages:
+            content = m.get("content", "")
+            if isinstance(content, list):
+                has_image = any(
+                    isinstance(b, dict) and b.get("type") == "image_url"
+                    for b in content
+                )
+                if has_image and not self.config.get("multimodal", False):
+                    raise ValueError(
+                        "Provider or model does not support multimodal input. "
+                        "Enable 'multimodal' or choose a multimodal model."
+                    )
         api_key = self._get_api_key()
         model = self.model or "gemini-1.5-pro"
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"

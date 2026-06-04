@@ -5,12 +5,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
@@ -19,19 +13,16 @@ from app.models.commercial_cryptographic_receipts import (
 )
 from app.services.auth import require_admin
 from app.services.inference.cryptographic_receipts import (
-    build_receipt_chain,
     export_receipt,
-    generate_inference_receipt,
-    sign_receipt,
     summarize_receipt,
     validate_receipt_chain,
     verify_receipt,
 )
-from app.services.inference.receipt_verification import (
-    detect_receipt_tampering,
-    generate_verification_report,
-)
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     tags=["admin", "cryptographic-receipts"],
@@ -195,7 +186,7 @@ async def verify_receipt_endpoint_new(
 
 @router.get("/admin/receipts/public-key")
 async def get_public_key_endpoint():
-    from app.services.inference.cryptographic_receipts import get_public_key_pem, get_key_id
+    from app.services.inference.cryptographic_receipts import get_key_id, get_public_key_pem
     try:
         return {"public_key": get_public_key_pem(), "key_id": get_key_id()}
     except Exception as e:

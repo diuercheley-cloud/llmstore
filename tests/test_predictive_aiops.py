@@ -1,14 +1,16 @@
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.runtime.predictive_aiops import PredictiveAIOpsService
-from app.models.commercial_predictive_aiops import (
-    CommercialFailurePrediction,
-    CommercialAnomalySignal,
-    CommercialRuntimeRiskTrend,
-    CommercialAIOpsRecommendation
-)
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth, CommercialRuntimeFabricEvent
 import uuid
+
+import pytest
+from app.models.commercial_predictive_aiops import (
+    CommercialAIOpsRecommendation,
+)
+from app.models.commercial_runtime_fabric import (
+    CommercialRuntimeFabricEvent,
+    CommercialRuntimeFabricHealth,
+)
+from app.services.runtime.predictive_aiops import PredictiveAIOpsService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_predictive_aiops_cycle(session: AsyncSession):

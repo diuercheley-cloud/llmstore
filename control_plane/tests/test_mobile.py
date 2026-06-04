@@ -1,9 +1,11 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.services.mobile.device_registry import DeviceRegistry
 from app.services.mobile.mobile_session import MobileSessionService
 from app.services.mobile.push_notifications import PushNotificationsService
+
 
 @pytest.mark.asyncio
 async def test_device_registration():

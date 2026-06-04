@@ -1,12 +1,13 @@
 # Owner: agent-platform
-import pytest
-import uuid
 import logging
-from unittest.mock import MagicMock, AsyncMock
+import uuid
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.services.observability.anomaly_detection import AnomalyDetectionService
+from app.services.observability.log_correlation import LogCorrelationService
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.observability.log_correlation import LogCorrelationService
-from app.services.observability.anomaly_detection import AnomalyDetectionService
 
 @pytest.fixture
 def mock_db():

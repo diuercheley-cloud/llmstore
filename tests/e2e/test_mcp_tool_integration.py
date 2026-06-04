@@ -1,10 +1,11 @@
 import pytest
-from app.services.agents.mcp.mcp_registry import MCPRegistry
-from app.services.agents.mcp.mcp_client import MCPClient
-from app.services.agents.mcp.mcp_server import MCPServer
-from app.services.agents.mcp.mcp_security import MCPSecurity
-from app.services.agents.mcp.mcp_audit import MCPAuditLog
 from app.core.config import get_settings
+from app.services.agents.mcp.mcp_audit import MCPAuditLog
+from app.services.agents.mcp.mcp_client import MCPClient
+from app.services.agents.mcp.mcp_registry import MCPRegistry
+from app.services.agents.mcp.mcp_security import MCPSecurity
+from app.services.agents.mcp.mcp_server import MCPServer
+
 
 def test_mcp_disabled_raises_permission_error():
     settings = get_settings()

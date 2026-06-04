@@ -1,11 +1,12 @@
-import pytest
 import os
 from unittest.mock import patch
-from app.services.agents.connectors.registry import connector_registry
-from app.services.agents.connectors.github_connector import GitHubConnector
-from app.services.agents.connectors.slack_connector import SlackConnector
-from app.services.agents.connectors.base import ConnectorCapability
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents.connectors.github_connector import GitHubConnector
+from app.services.agents.connectors.registry import connector_registry
+from app.services.agents.connectors.slack_connector import SlackConnector
+
 
 def patch_settings(env_dict):
     """Helper to patch environment and clear settings cache."""
@@ -17,6 +18,7 @@ def patch_settings(env_dict):
 import pytest_asyncio
 from app.db.base import Base
 from app.db.session import engine
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

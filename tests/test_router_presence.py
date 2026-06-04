@@ -1,5 +1,5 @@
-import pytest
 from app.main import app
+
 
 def test_required_routers_are_present():
     """

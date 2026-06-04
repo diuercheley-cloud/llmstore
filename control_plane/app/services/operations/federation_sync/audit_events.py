@@ -3,7 +3,6 @@ from typing import Any
 from app.services.operations.federation_sync.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
-
 FEDERATION_SYNC_AUDIT_EVENTS = {
     "federation_environment_registered",
     "federation_sync_session_created",

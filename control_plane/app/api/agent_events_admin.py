@@ -1,17 +1,22 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.api.deps import get_db, get_admin_token
-from app.models.agent_events import (
-    AgentEventSource, AgentEventTrigger, AgentEventDelivery,
-    AgentEventSubscription, AgentScheduledTrigger, AgentWebhookTrigger
-)
-from pydantic import BaseModel, Field
-from datetime import datetime
+from typing import Optional
+
+from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
+from app.models.agent_events import (
+    AgentEventDelivery,
+    AgentEventSource,
+    AgentEventSubscription,
+    AgentEventTrigger,
+    AgentScheduledTrigger,
+    AgentWebhookTrigger,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def verify_event_driven_enabled():
     settings = get_settings()
@@ -74,8 +79,8 @@ async def create_event_trigger(trigger_in: EventTriggerCreate, db: AsyncSession 
         cron_expr = trigger.config.get("cron_expression", "* * * * *")
         tz_str = trigger.config.get("timezone", "UTC")
         
-        from app.services.agents.events.cron_triggers import calculate_next_run
         from app.core.time import utc_now
+        from app.services.agents.events.cron_triggers import calculate_next_run
         next_run = calculate_next_run(cron_expr, utc_now(), tz_str)
         
         scheduled = AgentScheduledTrigger(

@@ -1,7 +1,9 @@
 import uuid
+
+from app.models.commercial_infra_simulation import CommercialSafetyPolicy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.commercial_infra_simulation import CommercialSafetyPolicy
+
 
 async def ensure_default_safety_policies(session: AsyncSession) -> None:
     stmt = select(CommercialSafetyPolicy).where(CommercialSafetyPolicy.policy_name == "default")

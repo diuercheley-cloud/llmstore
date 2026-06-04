@@ -3,11 +3,8 @@ from __future__ import annotations
 
 import inspect
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 from uuid import UUID
-
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.time import utc_now
 from app.models.commercial_agents import (
@@ -27,6 +24,8 @@ from app.services.agents.execution_receipts import (
 from app.services.agents.tool_policy_engine import PolicyDecision, ToolPolicyEngine
 from app.services.billing.financial_audit_trail import FinancialAuditTrailService
 from app.services.inference.confidential_runtime import log_confidential_audit
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 ToolHandler = Callable[[dict[str, Any], dict[str, Any]], Any]
 

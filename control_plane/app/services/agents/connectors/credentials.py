@@ -1,8 +1,7 @@
 # Owner: agent-platform
-import os
 import logging
+import os
 from typing import Any, Dict, Optional
-from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +24,6 @@ class CredentialManager:
 
         # 2. Fetch from DB if id provided
         if credential_id:
-            from app.db.session import SessionLocal
-            from app.models.connector_auth import ConnectorOAuthToken
-            from app.services.agents.connectors.connector_secret_store import connector_secret_store
-            import uuid
-            import asyncio
             
             # Simple sync wrapper for demo, in real app this would be async
             # For this prototype, we'll return empty if not found easily

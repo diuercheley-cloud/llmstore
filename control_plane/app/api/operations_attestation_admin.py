@@ -2,23 +2,22 @@
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.attestation_framework import (
     ATTESTATION_TYPES,
     AttestationFederationBundle,
     AttestationReceipt,
     AttestationTrustPolicy,
-    AttestationVerificationResult,
     SovereignExecutionAttestation,
 )
-from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
+from app.services.operations.attestation_framework.attestation_service import (
+    SovereignExecutionAttestationService,
+)
 from app.services.operations.attestation_framework.audit_events import build_attestation_audit_event
-from app.services.operations.attestation_framework.federation_bundle import AttestationFederationBundleService
+from app.services.operations.attestation_framework.federation_bundle import (
+    AttestationFederationBundleService,
+)
+from app.services.operations.attestation_framework.hash_utils import sha256_hex
 from app.services.operations.attestation_framework.receipts import (
     build_attestation_receipt,
     build_bundle_receipt,
@@ -26,9 +25,14 @@ from app.services.operations.attestation_framework.receipts import (
     build_verification_receipt,
 )
 from app.services.operations.attestation_framework.replay_verifier import AttestationReplayVerifier
-from app.services.operations.attestation_framework.trust_policy_engine import AttestationTrustPolicyEngine
-from app.services.operations.attestation_framework.hash_utils import sha256_hex
+from app.services.operations.attestation_framework.trust_policy_engine import (
+    AttestationTrustPolicyEngine,
+)
 from app.utils.crypto_signer import sign_payload
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

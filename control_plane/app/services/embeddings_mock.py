@@ -1,6 +1,6 @@
 import hashlib
-import struct
 import logging
+import struct
 from typing import List, Union
 
 logger = logging.getLogger(__name__)

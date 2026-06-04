@@ -113,6 +113,10 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
     mock_transport = MagicMock(spec=httpx.AsyncBaseTransport)
 
     async def mock_handle_request(request):
+        print(f"DEBUG: Request {request.method} {request.url}")
+        if not responses:
+            print("DEBUG: No more responses!")
+            return httpx.Response(500, content=b"No more responses")
         resp_data = responses.pop(0)
         return httpx.Response(200, content=json.dumps(resp_data).encode())
 
@@ -127,10 +131,11 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
             agent_client = AgentClient(
                 agent_id="test-e2e", 
                 provider="openai-compatible", 
-                base_url="http://localhost:8080",
+                base_url="http://localhost:8080/v1/chat/completions",
                 model="test-model",
                 api_key_env="DUMMY",
-                transport=mock_transport
+                transport=mock_transport,
+                tool_calling="json"
             )
 
             loop = CodingLoop(agent_client=agent_client, workspace=ws, max_steps=10)

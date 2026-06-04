@@ -1,9 +1,6 @@
 """Tests for Anthropic billing BRL mapping — cost estimation, pricing engine integration."""
 
-import os
-from pathlib import Path
 
-import pytest
 
 from app.services.billing.pricing_engine import (
     calculate_customer_price,

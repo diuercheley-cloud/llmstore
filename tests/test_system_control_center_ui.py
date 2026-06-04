@@ -1,5 +1,6 @@
 import os
 
+
 def test_ui_contains_control_center():
     ui_path = "control_plane/app/static/admin/index.html"
     assert os.path.exists(ui_path)

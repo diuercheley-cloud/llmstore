@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import signal
+
 from app.core.logging import configure_logging
-from app.services.agents.agent_worker import AgentWorkerService
 from app.db.session import engine
+from app.services.agents.agent_worker import AgentWorkerService
 
 configure_logging()
 logger = logging.getLogger(__name__)

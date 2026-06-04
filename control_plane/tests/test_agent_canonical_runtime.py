@@ -6,23 +6,19 @@ from pathlib import Path
 TEST_DB_FILE = Path("/tmp/test-canonical-runtime.db")
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
 
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import json
-from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import status
-
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.main import app as main_app
+from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db, get_db_session
-import app.db.session
+from app.main import app as main_app
+from app.models.agents import AgentDefinition, AgentRun, AgentRunEvent
 from app.models.client import Client
-from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent
-from app.services.auth import require_client, require_admin
-from app.core.config import get_settings
+from app.services.auth import require_admin, require_client
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Create a fresh engine for tests
 engine = create_async_engine(f"sqlite+aiosqlite:///{TEST_DB_FILE}", pool_pre_ping=True)

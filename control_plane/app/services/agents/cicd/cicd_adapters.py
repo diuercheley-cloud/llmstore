@@ -1,6 +1,7 @@
 # Owner: agent-platform
+
 import yaml
-from typing import Dict, Any
+
 
 class GitHubActionsAdapter:
     """

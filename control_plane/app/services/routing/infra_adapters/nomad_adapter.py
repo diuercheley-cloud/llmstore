@@ -1,10 +1,11 @@
 import logging
 import uuid
+from typing import Any, Dict
+
 import httpx
-from typing import Dict, Any
-from app.services.routing.infra_adapters.base import BaseInfraAdapter
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
 from app.core.config import get_settings
+from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+from app.services.routing.infra_adapters.base import BaseInfraAdapter
 
 logger = logging.getLogger(__name__)
 

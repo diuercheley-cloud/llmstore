@@ -1,282 +1,146 @@
 
+from app.models.abuse_action import AbuseAction
+from app.models.abuse_event import AbuseEvent
+from app.models.admin_action_log import AdminActionLog
+from app.models.agent_tool_execution import (
+    AgentToolCredential,
+    AgentToolCredentialGrant,
+    AgentToolExecutionAudit,
+    AgentToolExecutionSandbox,
+    AgentToolQuotaCounter,
+    AgentToolRollbackAction,
+    AgentToolSideEffect,
+)
 from app.models.agent_tool_synthesis import (
+    AgentCodeInterpreterRun,
     AgentGeneratedTool,
     AgentGeneratedToolVersion,
-    AgentCodeInterpreterRun,
-    AgentSandboxSession,
     AgentSandboxArtifact,
     AgentSandboxPolicyEvent,
+    AgentSandboxSession,
 )
-
-from app.models.plugins.marketplace import (
-    PluginMarketplaceEntry,
-    PluginVersion,
-    PluginInstall,
-    PluginPermission,
-    PluginTrustReport,
-    PluginReview,
-    PluginExecutionRecord,
-    PluginPermissionGrant,
-    PluginVerificationResult,
-    PluginDryRunResult,
-    PluginExecutionReceipt,
+from app.models.agent_workspace import (
+    AgentArtifactComment,
+    AgentArtifactEvent,
+    AgentArtifactLock,
+    AgentArtifactReview,
+    AgentArtifactVersion,
+    AgentSharedArtifact,
+    AgentWorkspace,
 )
-
-from app.models.runtime.gpu_orchestration import (
-    GpuDevice,
-    GpuAllocation,
-    GpuCapacitySnapshot,
-    AutoscalingPolicy,
-    AutoscalingEvent,
+from app.models.agents import (
+    AgentA2ARegistration,
+    AgentApprovalDecision,
+    AgentApprovalPolicy,
+    AgentApprovalRequest,
+    AgentBundleCompatibility,
+    AgentBundleInstall,
+    AgentBundleProvenance,
+    AgentBundleSignature,
+    AgentBundleTrustReport,
+    AgentBundleVersion,
+    AgentCollaborationSession,
+    AgentCompensationAction,
+    AgentDefinition,
+    AgentDeprecation,
+    AgentEnvironmentPolicy,
+    AgentEphemeralCredential,
+    AgentEvalBaseline,
+    AgentEvalCase,
+    AgentEvalDataset,
+    AgentEvalDatasetVersion,
+    AgentEvalFailure,
+    AgentEvalGateResult,
+    AgentEvalRegressionResult,
+    AgentEvalResult,
+    AgentEvalRun,
+    AgentEvalSuite,
+    AgentHandoffEvent,
+    AgentHandoffPolicy,
+    AgentIncident,
+    AgentIncidentEvent,
+    AgentIncidentLink,
+    AgentLifecycleEvent,
+    AgentMarketplaceEntry,
+    AgentMemoryAccessEvent,
+    AgentMemoryCollection,
+    AgentMemoryConsent,
+    AgentMemoryDeleteRequest,
+    AgentMemoryExportRequest,
+    AgentMemoryIndex,
+    AgentMemoryItem,
+    AgentMemoryPolicy,
+    AgentMemoryRedactionEvent,
+    AgentMemoryRetentionJob,
+    AgentMemoryRetentionPolicy,
+    AgentMemorySearchEvent,
+    AgentPlan,
+    AgentPolicyException,
+    AgentPromotion,
+    AgentPromotionGateResult,
+    AgentPublicationReview,
+    AgentPublisherProfile,
+    AgentRBACEvent,
+    AgentRegistryEntry,
+    AgentRun,
+    AgentRunCheckpoint,
+    AgentRunCosts,
+    AgentRunEvent,
+    AgentRunMetrics,
+    AgentRunReceipt,
+    AgentRunStep,
+    AgentSLOWindow,
+    AgentTask,
+    AgentTaskAttempt,
+    AgentTaskDependency,
+    AgentTimelineEvent,
+    AgentTool,
+    AgentToolInvocation,
+    AgentToolPermission,
+    AgentToolSafetyReview,
+    AgentToolVersion,
+    AgentTraceLink,
+    AgentTraceSpan,
+    AgentVersion,
 )
-
-from app.models.runtime.distributed_runtime import (
-    RuntimeNode,
-    RuntimeNodeHeartbeat,
-    RuntimeModelPlacement,
-    RuntimeRoutingEvent,
-    RuntimeFailoverEvent,
-)
-
-from app.models.commercial_merkle_timelines import (
-    CommercialMerkleTimeline,
-    CommercialMerkleLeaf,
-    CommercialExecutionProof,
-)
-from app.models.operations.correlation import (
-    OperationalCorrelation,
-    CorrelatedOperationalEvent,
-    OperationalTrustLink,
-)
-from app.models.operations.remediation_planning import (
-    RemediationPlan,
-    RemediationStep,
-    RemediationPlanReceipt,
-    RemediationApprovalRequirement,
-)
-from app.models.operations.remediation_execution import (
-    RemediationExecution,
-    RemediationExecutionStep,
-    RemediationRollbackPlan,
-    RemediationExecutionReceipt,
-    RemediationKillSwitchState,
-)
-from app.models.operations.attestation_framework import (
-    SovereignExecutionAttestation,
-    AttestationTrustPolicy,
-    AttestationFederationBundle,
-    AttestationVerificationResult,
-    AttestationReceipt,
-    AttestationChainLink,
-)
-from app.models.operations.federation_sync import (
-    SovereignFederationEnvironment,
-    FederationSynchronizationSession,
-    FederationSynchronizationBundle,
-    FederationTrustNegotiation,
-    FederationConflictResolution,
-    FederationSynchronizationReceipt,
-    FederationLineageLink,
-)
-from app.models.operations.compatibility_contracts import (
-    CompatibilityContract,
-    CompatibilityMatrix,
-    VersionNegotiationSession,
-    CapabilityNegotiation,
-    FeatureCompatibilityFlag,
-    DeprecationLifecycle,
-    CompatibilityVerificationResult,
-    CompatibilityReceipt,
-)
-from app.models.operations.plugin_runtime import (
-    PluginABIContract,
-    PluginCapabilityBoundary,
-    PluginRuntimeCompatibilityCheck,
-    DeterministicExtensionLoadPlan,
-    PluginIsolationPolicy,
-    PluginLifecycleEvent,
-    PluginReplayVerificationResult,
-    PluginFederationCompatibility,
-    PluginRuntimeReceipt,
-)
-from app.models.operations.plugin_supply_chain import (
-    DependencyGovernancePolicy,
-    PluginArtifactLineage,
-    PluginDependencyVerification,
-    PluginProvenanceRecord,
-    PluginSBOMPlaceholder,
-    PluginSignedArtifact,
-    PluginSupplyChainReceipt,
-)
-from app.models.operations.reproducible_builds import (
-    ReproducibleBuildManifest,
-    ArtifactVerificationRecord,
-    SourceArtifactLineage,
-    BuildEnvironmentConstraint,
-    ReproducibilityVerificationResult,
-    ArtifactReplayVerification,
-    ReproducibleBuildReceipt,
-)
-from app.models.operations.model_runtime import ModelRuntimeInstance
-from app.models.operations.deterministic_events import (
-    DeterministicEventContract,
-    DeterministicEventRecord,
-    EventSchemaCompatibility,
-)
-from app.models.operations.sovereign_observability import (
-    SovereignMetricRecord,
-    SovereignTraceRecord,
-    OperationalTimeline,
-)
-from app.models.operations.disaster_recovery import (
-    SovereignBackupManifest,
-    RecoveryPlan,
-    RecoveryVerificationResult,
-)
-from app.models.governance.policy_engine import (
-    DeterministicPolicy,
-    PolicyEvaluationResult,
-    PolicyBundle,
-    PolicyConflict,
-)
-from app.models.governance.data_governance import (
-    SovereignDataZone,
-    DataLineageRecord,
-    DataRetentionRule,
-    DataExportGovernanceRecord,
-)
-from app.models.governance.human_governance import (
-    GovernanceReviewWorkflow,
-    GovernanceApprovalQuorum,
-    GovernanceEscalation,
-)
-from app.models.operations.adapter_sandbox import (
-    AdapterManifest,
-    AdapterSandboxRun,
-    AdapterSandboxStepResult,
-    AdapterSandboxPolicyViolation,
-    AdapterSandboxReceipt,
-)
-from app.models.api_key import ApiKey
-from app.models.billing_plan import BillingPlan
-from app.models.billing_invoice import BillingInvoice
-from app.models.client import Client
-from app.models.customer_payment import CustomerPayment
-from app.models.generation_job import GenerationJob
-from app.models.inference_backend import InferenceBackend
-from app.models.model_backend_route import ModelBackendRoute
-from app.models.model_registry import ModelRegistry
-from app.models.pricing_rule import PricingRule
-from app.models.quota_counter import QuotaCounter
-from app.models.request_log import RequestLog
-from app.models.response_cache import ResponseCache
-from app.models.semantic_cache_entry import SemanticCacheEntry
-from app.models.cache_policy import CachePolicy
-from app.models.security_event import SecurityEvent
-from app.models.usage_record import UsageRecord
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
-from app.models.client_feature_block import ClientFeatureBlock
-from app.models.rag_usage_event import RagUsageEvent
-from app.models.request_financial import RequestFinancial
-from app.models.commercial_routing_event import CommercialRoutingEvent
-from app.models.commercial_routing_config import CommercialRoutingConfig
-from app.models.commercial_report_schedule import CommercialReportSchedule
-from app.models.commercial_report_delivery_log import CommercialReportDeliveryLog
-from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
-from app.models.commercial_leader_lease import CommercialLeaderLease
-from app.models.commercial_routing_event_ingest import CommercialRoutingEventIngest
-from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
-from app.models.commercial_federated_aggregate import CommercialFederatedAggregate
-from app.models.commercial_cluster_sync_log import CommercialClusterSyncLog
-from app.models.admin_action_log import AdminActionLog
-from app.models.sales_lead import SalesLead, SalesLeadNote
 from app.models.ai_wallet import AiWallet, AiWalletTransaction
-from app.models.abuse_event import AbuseEvent
-from app.models.abuse_action import AbuseAction
-from app.models.commercial_global_traffic import CommercialGlobalTrafficPolicy, CommercialGlobalTrafficDecision
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation, CommercialSafetyPolicy, CommercialApprovalRecord
-from app.models.commercial_capacity import CommercialCapacitySnapshot, CommercialCapacityForecast, CommercialAutoscalingRecommendation
-from app.models.commercial_trust_graph import CommercialTrustGraphNode, CommercialTrustGraphEdge
-from app.models.commercial_operations_center import CommercialOperationsCenterEvent, CommercialCryptographicTrustSnapshot
-from app.models.commercial_trust_violation import CommercialTrustViolation
-from app.models.operations.runtime_tuning import (
-    RuntimeBenchmarkRun,
-    RuntimeTuningProfile,
-    RuntimeTuningRecommendation,
-    RuntimeTuningEvent,
+from app.models.api_key import ApiKey
+from app.models.billing_invoice import BillingInvoice
+from app.models.billing_plan import BillingPlan
+from app.models.cache_policy import CachePolicy
+from app.models.client import Client
+from app.models.client_feature_block import ClientFeatureBlock
+from app.models.commercial_agents import (
+    CommercialAgentAction,
+    CommercialAgentDelegationPolicy,
+    CommercialAgentExecution,
+    CommercialAgentMemoryBoundary,
+    CommercialAgentProfile,
+    CommercialAgentReplayRecord,
+    CommercialAgentToolExecution,
+    CommercialToolApproval,
+    CommercialToolRegistry,
 )
-from app.models.operations.chaos import (
-    ChaosExperiment,
-    ChaosRun,
-    ChaosInjection,
-    ChaosAssertion,
-    ChaosReport,
-)
-from app.models.operations.compliance import (
-    ComplianceFramework,
-    ComplianceControl,
-    ComplianceEvidenceItem,
-    ComplianceControlTest,
-    ComplianceRiskItem,
-    CompliancePolicyDocument,
-)
-from app.models.operations.soc2 import (
-    SOC2AccessReview,
-    SOC2ChangeReview,
-    SOC2IncidentReview,
-    SOC2VendorReview,
-    SOC2BackupRestoreReview,
-    SOC2ControlException,
-)
-from app.models.operations.multi_cluster import (
-    Cluster,
-    ClusterMembership,
-    ClusterHealthSnapshot,
-    ClusterRoutingPolicy,
-    ClusterFailoverEvent,
-    ClusterMaintenanceWindow,
-    ClusterSyncEvent,
-)
-from app.models.commercial_enterprise_onboarding import (
-    EnterpriseCustomer,
-    EnterpriseOnboardingProject,
-    EnterpriseOnboardingTask,
-    EnterpriseAcceptanceCheck,
-    EnterpriseHandoverReport,
-    EnterpriseTrainingSession,
+from app.models.commercial_audit_portal import (
+    CommercialPortalAuditAccessLog,
+    CommercialPortalSavedReport,
 )
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
+    CommercialAutonomousExecutionReceipt,
     CommercialExecutionBlastRadius,
     CommercialExecutionGuardrailEvent,
     CommercialHumanApprovalCheckpoint,
-    CommercialAutonomousExecutionReceipt,
 )
-
-from app.models.commercial_queue_metric import CommercialQueueMetric
-from app.models.commercial_queue_chargeback import CommercialQueueChargeback
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_qos_tier import CommercialQoSTier
-from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
 from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
-from app.models.commercial_revenue_forecast import CommercialRevenueForecast
-from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
-from app.models.managed_control_plane import (
-    ManagedOrganization,
-    ManagedWorkspace,
-    ManagedAppliance,
-    ApplianceEnrollment,
-    ApplianceHeartbeat,
-    ManagedBillingAccount,
-    ManagedSupportCase,
+from app.models.commercial_capacity import (
+    CommercialAutoscalingRecommendation,
+    CommercialCapacityForecast,
+    CommercialCapacitySnapshot,
 )
-from app.models.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
-from app.models.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
+from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
+from app.models.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.commercial_cluster_sync_log import CommercialClusterSyncLog
 from app.models.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlAttestation,
@@ -288,167 +152,142 @@ from app.models.commercial_compliance import (
     CommercialOperationalExceptionLink,
     CommercialOperationalReview,
 )
+from app.models.commercial_cryptographic_receipts import (
+    CommercialInferenceReceipt,
+    CommercialInferenceReceiptLedgerEvent,
+    CommercialInferenceReceiptVerificationReport,
+)
+from app.models.commercial_encryption import (
+    CommercialEncryptedArtifact,
+    CommercialEncryptionAuditEvent,
+    CommercialTenantEncryptionKey,
+)
+from app.models.commercial_enterprise_onboarding import (
+    EnterpriseAcceptanceCheck,
+    EnterpriseCustomer,
+    EnterpriseHandoverReport,
+    EnterpriseOnboardingProject,
+    EnterpriseOnboardingTask,
+    EnterpriseTrainingSession,
+)
+from app.models.commercial_federated_aggregate import CommercialFederatedAggregate
+from app.models.commercial_federated_workflows import (
+    CommercialFederatedWorkflowExecution,
+    CommercialWorkflowConsensusEvent,
+    CommercialWorkflowExecutionLease,
+    CommercialWorkflowExecutionPeer,
+    CommercialWorkflowReplayFederationReport,
+)
+from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
+from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
+from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial_global_traffic import (
+    CommercialGlobalTrafficDecision,
+    CommercialGlobalTrafficPolicy,
+)
 from app.models.commercial_governance import (
-    CommercialPolicyBundle,
-    CommercialPolicyArtifact,
     CommercialPolicyApproval,
+    CommercialPolicyArtifact,
+    CommercialPolicyBundle,
     CommercialPolicyDriftEvent,
 )
 from app.models.commercial_governance_federation import (
-    CommercialGovernanceFederationPeer,
-    CommercialFederatedPolicySync,
     CommercialFederatedAuditTrail,
+    CommercialFederatedPolicySync,
+    CommercialGovernanceFederationPeer,
 )
-from app.models.commercial_encryption import (
-    CommercialTenantEncryptionKey,
-    CommercialEncryptedArtifact,
-    CommercialEncryptionAuditEvent,
-)
-from app.models.commercial_sovereign_governance import (
-    CommercialAirgapSyncPackage,
-    CommercialOfflineRevocationList,
-    CommercialHardwareAttestationRecord,
-)
-from app.models.commercial_model_supply_chain import (
-    CommercialSignedModelRegistryEntry,
-    CommercialModelProvenanceAttestation,
-    CommercialModelRevocationRecord,
-    CommercialModelPromotionBundle,
-    CommercialModelIntegrityScan,
-    CommercialRuntimeModelAttestation,
-    CommercialModelIntegrityEvent,
-)
-from app.models.commercial_audit_portal import (
-    CommercialPortalAuditAccessLog,
-    CommercialPortalSavedReport,
+from app.models.commercial_governance_supervisor import (
+    CommercialGovernanceSupervisorAction,
+    CommercialGovernanceSupervisorDecision,
+    CommercialGovernanceSupervisorIncident,
+    CommercialGovernanceSupervisorPolicy,
+    CommercialGovernanceSupervisorRiskScore,
 )
 from app.models.commercial_inference_reproducibility import (
     CommercialInferenceReplayEvent,
     CommercialInferenceReproducibilityRecord,
     CommercialInferenceRuntimeSnapshot,
 )
-from app.models.commercial_cryptographic_receipts import (
-    CommercialInferenceReceipt,
-    CommercialInferenceReceiptLedgerEvent,
-    CommercialInferenceReceiptVerificationReport,
+from app.models.commercial_infra_simulation import (
+    CommercialApprovalRecord,
+    CommercialInfrastructureSimulation,
+    CommercialSafetyPolicy,
 )
-from app.models.commercial_agents import (
-    CommercialAgentProfile,
-    CommercialAgentExecution,
-    CommercialAgentDelegationPolicy,
-    CommercialAgentToolExecution,
-    CommercialAgentMemoryBoundary,
-    CommercialAgentAction,
-    CommercialToolRegistry,
-    CommercialToolApproval,
-    CommercialAgentReplayRecord,
+from app.models.commercial_leader_lease import CommercialLeaderLease
+from app.models.commercial_merkle_timelines import (
+    CommercialExecutionProof,
+    CommercialMerkleLeaf,
+    CommercialMerkleTimeline,
 )
-from app.models.agents import (
-    AgentDefinition,
-    AgentRun,
-    AgentRunStep,
-    AgentRunEvent,
-    AgentRunCheckpoint,
-    AgentRunReceipt,
-    AgentRegistryEntry,
-    AgentVersion,
-    AgentPromotion,
-    AgentDeprecation,
-    AgentLifecycleEvent,
-    AgentTool,
-    AgentToolVersion,
-    AgentToolPermission,
-    AgentToolInvocation,
-    AgentToolSafetyReview,
-    AgentApprovalRequest,
-    AgentApprovalDecision,
-    AgentApprovalPolicy,
-    AgentEvalSuite,
-    AgentEvalCase,
-    AgentEvalRun,
-    AgentEvalResult,
-    AgentEvalBaseline,
-    AgentEvalDataset,
-    AgentEvalDatasetVersion,
-    AgentEvalGateResult,
-    AgentEvalRegressionResult,
-    AgentPromotionGateResult,
-    AgentEvalFailure,
-    AgentIncidentLink,
-    AgentSLOWindow,
-    AgentTraceLink,
-    AgentEnvironmentPolicy,
-    AgentEphemeralCredential,
-    AgentRBACEvent,
-    AgentPolicyException,
-    AgentMemoryPolicy,
-    AgentMemoryCollection,
-    AgentMemoryItem,
-    AgentMemoryAccessEvent,
-    AgentMemoryRetentionJob,
-    AgentMemoryConsent,
-    AgentMemoryRetentionPolicy,
-    AgentMemoryRedactionEvent,
-    AgentMemoryIndex,
-    AgentMemorySearchEvent,
-    AgentMemoryDeleteRequest,
-    AgentMemoryExportRequest,
-    AgentPlan,
-    AgentTask,
-    AgentTaskDependency,
-    AgentTaskAttempt,
-    AgentCompensationAction,
-    AgentHandoffPolicy,
-    AgentCollaborationSession,
-    AgentHandoffEvent,
-    AgentMarketplaceEntry,
-    AgentBundleVersion,
-    AgentBundleInstall,
-    AgentBundleTrustReport,
-    AgentBundleSignature,
-    AgentBundleProvenance,
-    AgentBundleCompatibility,
-    AgentPublisherProfile,
-    AgentPublicationReview,
-    AgentIncident,
-    AgentIncidentEvent,
-    AgentRunMetrics,
-    AgentRunCosts,
-    AgentTraceSpan,
-    AgentTimelineEvent,
-    AgentA2ARegistration,
+from app.models.commercial_model_lifecycle import (
+    CommercialModelLifecycleRecord,
+    CommercialModelLineage,
+    CommercialModelPromotionRequest,
+    CommercialModelRollbackRecord,
+    CommercialOfflineModelVerification,
 )
-from app.models.agent_workspace import (
-    AgentWorkspace,
-    AgentSharedArtifact,
-    AgentArtifactVersion,
-    AgentArtifactLock,
-    AgentArtifactReview,
-    AgentArtifactComment,
-    AgentArtifactEvent,
+from app.models.commercial_model_supply_chain import (
+    CommercialModelIntegrityEvent,
+    CommercialModelIntegrityScan,
+    CommercialModelPromotionBundle,
+    CommercialModelProvenanceAttestation,
+    CommercialModelRevocationRecord,
+    CommercialRuntimeModelAttestation,
+    CommercialSignedModelRegistryEntry,
 )
-from app.models.agent_tool_execution import (
-    AgentToolCredential,
-    AgentToolCredentialGrant,
-    AgentToolExecutionSandbox,
-    AgentToolSideEffect,
-    AgentToolRollbackAction,
-    AgentToolQuotaCounter,
-    AgentToolExecutionAudit,
+from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
+from app.models.commercial_operations_center import (
+    CommercialCryptographicTrustSnapshot,
+    CommercialOperationsCenterEvent,
 )
+from app.models.commercial_predictive_aiops import (
+    CommercialAIOpsRecommendation,
+    CommercialAnomalySignal,
+    CommercialFailurePrediction,
+    CommercialNodeHealthForecast,
+    CommercialRuntimeRiskTrend,
+)
+from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial_qos_tier import CommercialQoSTier
+from app.models.commercial_queue_chargeback import CommercialQueueChargeback
+from app.models.commercial_queue_metric import CommercialQueueMetric
 from app.models.commercial_rag_vault import (
-    CommercialRAGVault,
-    CommercialRAGDocument,
     CommercialRAGChunk,
-    CommercialRetrievalReceipt,
+    CommercialRAGDocument,
+    CommercialRAGVault,
     CommercialRetrievalPolicyViolation,
+    CommercialRetrievalReceipt,
 )
+from app.models.commercial_report_delivery_log import CommercialReportDeliveryLog
+from app.models.commercial_report_schedule import CommercialReportSchedule
 from app.models.commercial_retrieval_proofs import (
-    CommercialRetrievalProof,
     CommercialContextLineage,
     CommercialRetrievalMerkleLeaf,
+    CommercialRetrievalProof,
     CommercialRetrievalReplayRecord,
 )
+from app.models.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
+from app.models.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
+from app.models.commercial_revenue_forecast import CommercialRevenueForecast
+from app.models.commercial_revenue_protection_action import CommercialRevenueProtectionAction
+from app.models.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial_routing_config import CommercialRoutingConfig
+from app.models.commercial_routing_event import CommercialRoutingEvent
+from app.models.commercial_routing_event_ingest import CommercialRoutingEventIngest
+from app.models.commercial_runtime_fabric import (
+    CommercialRuntimeDeterminismDrift,
+    CommercialRuntimeFabricEvent,
+    CommercialRuntimeFabricHealth,
+    CommercialRuntimeHealingAction,
+    CommercialRuntimeRecoveryPlan,
+)
+from app.models.commercial_sovereign_governance import (
+    CommercialAirgapSyncPackage,
+    CommercialHardwareAttestationRecord,
+    CommercialOfflineRevocationList,
+)
+from app.models.commercial_trust_graph import CommercialTrustGraphEdge, CommercialTrustGraphNode
+from app.models.commercial_trust_violation import CommercialTrustViolation
 from app.models.commercial_workflows import (
     CommercialWorkflowApproval,
     CommercialWorkflowCheckpoint,
@@ -463,42 +302,211 @@ from app.models.commercial_workflows import (
     CommercialWorkflowReplaySession,
     CommercialWorkflowStage,
 )
-from app.models.commercial_federated_workflows import (
-    CommercialFederatedWorkflowExecution,
-    CommercialWorkflowExecutionPeer,
-    CommercialWorkflowExecutionLease,
-    CommercialWorkflowConsensusEvent,
-    CommercialWorkflowReplayFederationReport,
+from app.models.customer_payment import CustomerPayment
+from app.models.generation_job import GenerationJob
+from app.models.governance.data_governance import (
+    DataExportGovernanceRecord,
+    DataLineageRecord,
+    DataRetentionRule,
+    SovereignDataZone,
 )
-from app.models.commercial_runtime_fabric import (
-    CommercialRuntimeFabricEvent,
-    CommercialRuntimeRecoveryPlan,
-    CommercialRuntimeHealingAction,
-    CommercialRuntimeFabricHealth,
-    CommercialRuntimeDeterminismDrift,
+from app.models.governance.human_governance import (
+    GovernanceApprovalQuorum,
+    GovernanceEscalation,
+    GovernanceReviewWorkflow,
 )
-from app.models.commercial_model_lifecycle import (
-    CommercialModelLifecycleRecord,
-    CommercialModelPromotionRequest,
-    CommercialModelLineage,
-    CommercialModelRollbackRecord,
-    CommercialOfflineModelVerification,
+from app.models.governance.policy_engine import (
+    DeterministicPolicy,
+    PolicyBundle,
+    PolicyConflict,
+    PolicyEvaluationResult,
 )
-
-from app.models.commercial_governance_supervisor import (
-    CommercialGovernanceSupervisorPolicy,
-    CommercialGovernanceSupervisorRiskScore,
-    CommercialGovernanceSupervisorIncident,
-    CommercialGovernanceSupervisorDecision,
-    CommercialGovernanceSupervisorAction,
+from app.models.inference_backend import InferenceBackend
+from app.models.managed_control_plane import (
+    ApplianceEnrollment,
+    ApplianceHeartbeat,
+    ManagedAppliance,
+    ManagedBillingAccount,
+    ManagedOrganization,
+    ManagedSupportCase,
+    ManagedWorkspace,
 )
-from app.models.commercial_predictive_aiops import (
-    CommercialFailurePrediction,
-    CommercialAnomalySignal,
-    CommercialNodeHealthForecast,
-    CommercialRuntimeRiskTrend,
-    CommercialAIOpsRecommendation,
+from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_registry import ModelRegistry
+from app.models.operations.adapter_sandbox import (
+    AdapterManifest,
+    AdapterSandboxPolicyViolation,
+    AdapterSandboxReceipt,
+    AdapterSandboxRun,
+    AdapterSandboxStepResult,
 )
+from app.models.operations.attestation_framework import (
+    AttestationChainLink,
+    AttestationFederationBundle,
+    AttestationReceipt,
+    AttestationTrustPolicy,
+    AttestationVerificationResult,
+    SovereignExecutionAttestation,
+)
+from app.models.operations.chaos import (
+    ChaosAssertion,
+    ChaosExperiment,
+    ChaosInjection,
+    ChaosReport,
+    ChaosRun,
+)
+from app.models.operations.compatibility_contracts import (
+    CapabilityNegotiation,
+    CompatibilityContract,
+    CompatibilityMatrix,
+    CompatibilityReceipt,
+    CompatibilityVerificationResult,
+    DeprecationLifecycle,
+    FeatureCompatibilityFlag,
+    VersionNegotiationSession,
+)
+from app.models.operations.compliance import (
+    ComplianceControl,
+    ComplianceControlTest,
+    ComplianceEvidenceItem,
+    ComplianceFramework,
+    CompliancePolicyDocument,
+    ComplianceRiskItem,
+)
+from app.models.operations.correlation import (
+    CorrelatedOperationalEvent,
+    OperationalCorrelation,
+    OperationalTrustLink,
+)
+from app.models.operations.deterministic_events import (
+    DeterministicEventContract,
+    DeterministicEventRecord,
+    EventSchemaCompatibility,
+)
+from app.models.operations.disaster_recovery import (
+    RecoveryPlan,
+    RecoveryVerificationResult,
+    SovereignBackupManifest,
+)
+from app.models.operations.federation_sync import (
+    FederationConflictResolution,
+    FederationLineageLink,
+    FederationSynchronizationBundle,
+    FederationSynchronizationReceipt,
+    FederationSynchronizationSession,
+    FederationTrustNegotiation,
+    SovereignFederationEnvironment,
+)
+from app.models.operations.model_runtime import ModelRuntimeInstance
+from app.models.operations.multi_cluster import (
+    Cluster,
+    ClusterFailoverEvent,
+    ClusterHealthSnapshot,
+    ClusterMaintenanceWindow,
+    ClusterMembership,
+    ClusterRoutingPolicy,
+    ClusterSyncEvent,
+)
+from app.models.operations.plugin_runtime import (
+    DeterministicExtensionLoadPlan,
+    PluginABIContract,
+    PluginCapabilityBoundary,
+    PluginFederationCompatibility,
+    PluginIsolationPolicy,
+    PluginLifecycleEvent,
+    PluginReplayVerificationResult,
+    PluginRuntimeCompatibilityCheck,
+    PluginRuntimeReceipt,
+)
+from app.models.operations.plugin_supply_chain import (
+    DependencyGovernancePolicy,
+    PluginArtifactLineage,
+    PluginDependencyVerification,
+    PluginProvenanceRecord,
+    PluginSBOMPlaceholder,
+    PluginSignedArtifact,
+    PluginSupplyChainReceipt,
+)
+from app.models.operations.remediation_execution import (
+    RemediationExecution,
+    RemediationExecutionReceipt,
+    RemediationExecutionStep,
+    RemediationKillSwitchState,
+    RemediationRollbackPlan,
+)
+from app.models.operations.remediation_planning import (
+    RemediationApprovalRequirement,
+    RemediationPlan,
+    RemediationPlanReceipt,
+    RemediationStep,
+)
+from app.models.operations.reproducible_builds import (
+    ArtifactReplayVerification,
+    ArtifactVerificationRecord,
+    BuildEnvironmentConstraint,
+    ReproducibilityVerificationResult,
+    ReproducibleBuildManifest,
+    ReproducibleBuildReceipt,
+    SourceArtifactLineage,
+)
+from app.models.operations.runtime_tuning import (
+    RuntimeBenchmarkRun,
+    RuntimeTuningEvent,
+    RuntimeTuningProfile,
+    RuntimeTuningRecommendation,
+)
+from app.models.operations.soc2 import (
+    SOC2AccessReview,
+    SOC2BackupRestoreReview,
+    SOC2ChangeReview,
+    SOC2ControlException,
+    SOC2IncidentReview,
+    SOC2VendorReview,
+)
+from app.models.operations.sovereign_observability import (
+    OperationalTimeline,
+    SovereignMetricRecord,
+    SovereignTraceRecord,
+)
+from app.models.plugins.marketplace import (
+    PluginDryRunResult,
+    PluginExecutionReceipt,
+    PluginExecutionRecord,
+    PluginInstall,
+    PluginMarketplaceEntry,
+    PluginPermission,
+    PluginPermissionGrant,
+    PluginReview,
+    PluginTrustReport,
+    PluginVerificationResult,
+    PluginVersion,
+)
+from app.models.pricing_rule import PricingRule
+from app.models.quota_counter import QuotaCounter
+from app.models.rag_document import RAGDocument
+from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.rag_usage_event import RagUsageEvent
+from app.models.request_financial import RequestFinancial
+from app.models.request_log import RequestLog
+from app.models.response_cache import ResponseCache
+from app.models.runtime.distributed_runtime import (
+    RuntimeFailoverEvent,
+    RuntimeModelPlacement,
+    RuntimeNode,
+    RuntimeNodeHeartbeat,
+    RuntimeRoutingEvent,
+)
+from app.models.runtime.gpu_orchestration import (
+    AutoscalingEvent,
+    AutoscalingPolicy,
+    GpuAllocation,
+    GpuCapacitySnapshot,
+    GpuDevice,
+)
+from app.models.sales_lead import SalesLead, SalesLeadNote
+from app.models.security_event import SecurityEvent
+from app.models.semantic_cache_entry import SemanticCacheEntry
+from app.models.usage_record import UsageRecord
 
 __all__ = [
     "CommercialMerkleTimeline",
@@ -826,188 +834,196 @@ __all__ = [
     "PromptExperiment",
     "PromptPlaygroundRun",
 ]
-from app.models.commercial_crypto_trust import CommercialKMSProvider, CommercialKeyMaterial, CommercialSigningProfile, CommercialCryptoOperation, CommercialKeyRotationSchedule
-
-from app.models.commercial_control_plane_mesh import CommercialMeshNode, CommercialMeshConsensusEvent, CommercialMeshReplicationLog, CommercialMeshHealthState, CommercialMeshPartitionEvent
-
-from app.models.operations.failure_signals import (
-    FailureSignal,
-    FailureForecast,
-    FailureRiskAssessment,
-)
 from app.models.admin_rbac import (
-    AdminUser,
-    AdminRoleModel,
-    AdminPermission,
-    AdminUserRole,
-    AdminRolePermission,
     AdminAuditEvent,
+    AdminPermission,
+    AdminRoleModel,
+    AdminRolePermission,
+    AdminUser,
+    AdminUserRole,
 )
-from app.models.security_pki import CertificateInventory, AttestationReport, PluginRegistry
-from app.models.agent_execution import (
-    AgentExecutionJob,
-    AgentWorkerHeartbeat,
-    AgentExecutionLease,
-    AgentExecutionRetry,
-    AgentExecutionDeadLetter,
-)
-from app.models.agent_workflows import (
-    AgentWorkflow,
-    AgentWorkflowRun,
-    AgentWorkflowEvent,
-    AgentWorkflowTimer,
-    AgentWorkflowSignal,
-    AgentWorkflowWebhookWait,
-    AgentWorkflowLock
-)
-from app.models.multi_agent import (
-    AgentTeam,
-    AgentTeamMember,
-    AgentTeamRun,
-    AgentTeamMessage,
-    AgentTeamDelegation,
-    AgentSharedWorkspace,
-    AgentTeamTrace
-)
-from app.models.agent_debugger import (
-    AgentRunSnapshot,
-    AgentDebugReplay,
-    AgentDebugStateEdit,
-    AgentDebugSession,
-    AgentBreakpoint,
-    AgentDebugStepEvent,
-)
-from app.models.agent_studio import (
-    AgentFlowDefinition,
-    AgentFlowVersion,
-    AgentFlowNode,
-    AgentFlowEdge,
-    AgentFlowDebugSession,
-    AgentFlowDebugEvent,
-)
-from app.models.connector_auth import (
-    ConnectorOAuthClient,
-    ConnectorOAuthToken,
-    ConnectorCredentialGrant,
-    ConnectorScopePolicy
-)
-from app.models.agent_workflows_external import (
-    AgentWorkflowWebhookSubscription,
-    AgentWorkflowPollingJob,
-    AgentWorkflowExternalEvent
-)
-
-from app.models.agent_knowledge_graph import (
-    AgentKGEntity,
-    AgentKGRelation,
-    AgentKGSource,
-    AgentKGExtractionRun,
-    AgentKGQueryEvent,
-)
-from app.models.agent_events import ( AgentEventSource, AgentEventTrigger, AgentEventDelivery, AgentEventDedupKey, AgentEventSubscription, AgentScheduledTrigger, AgentWebhookTrigger )
-from app.models.agent_iam import (
-    AgentServicePrincipal,
-    AgentDelegatedToken,
-    AgentTokenGrant,
-    AgentScopePolicy,
-    AgentCredentialAuditEvent,
-    AgentIdentityBinding,
-)
-from app.models.agent_routing import (
-    AgentModelCapability,
-    AgentRoutingPolicy,
-    AgentCostQualityProfile,
-    AgentStepRoutingDecision,
-)
-from app.models.agent_optimization import (
-    AgentOptimizationExperiment,
-    AgentOptimizationCandidate,
-    AgentOptimizationResult,
-    AgentPromptCandidate,
-    AgentPolicyCandidate,
-    AgentToolSelectionCandidate,
-)
-from app.models.agent_optimization_tournament import (
-    AgentOptimizationTournament,
-    AgentOptimizationTournamentCandidate,
-    AgentOptimizationTournamentResult,
-    AgentOptimizationPairwiseResult,
-)
-from app.models.agent_mcp_oauth import (
-    AgentMCPOAuthClient,
-    AgentMCPDelegatedGrant,
-    AgentMCPTokenExchange,
-    AgentMCPScopePolicy,
-)
-from app.models.agent_mcp_registry import AgentMCPServer
-
-
-
-
-from app.models.managed_control_plane import *
 from app.models.agent_catalog import *
-from app.models.payments import *
-
-from app.models.multimodal import (
-    MultimodalAsset,
-    MultimodalRequest,
-    MultimodalUsageEvent,
-    MultimodalPolicyEvent,
-    MultimodalAnalysisEvent,
+from app.models.agent_debugger import (
+    AgentBreakpoint,
+    AgentDebugReplay,
+    AgentDebugSession,
+    AgentDebugStateEdit,
+    AgentDebugStepEvent,
+    AgentRunSnapshot,
 )
-
-from app.models.web_search import (
-    AgentWebSearchQuery,
-    AgentWebSearchResult,
-    AgentWebSearchCache,
-    AgentWebSearchPolicyEvent,
+from app.models.agent_deployments import (
+    AgentApiDeployment,
+    AgentApiEndpointKey,
+    AgentApiSlaEvent,
+    AgentApiUsageEvent,
 )
-
-from app.models.mlops import (
-    MLDataset,
-    MLDatasetVersion,
-    MLTrainingJob,
-    MLExperiment,
-    MLExperimentRun,
-    MLModelLineage,
-    MLEvalArtifact,
-)
-
-from app.models.agent_notifications import (
-    NotificationChannel,
-    NotificationPreference,
-    PushDevice,
-    NotificationEvent,
-)
-
 from app.models.agent_environments import (
     AgentEnvironment,
     AgentEnvironmentVersion,
     AgentPromotionRequest,
 )
+from app.models.agent_events import (
+    AgentEventDedupKey,
+    AgentEventDelivery,
+    AgentEventSource,
+    AgentEventSubscription,
+    AgentEventTrigger,
+    AgentScheduledTrigger,
+    AgentWebhookTrigger,
+)
+from app.models.agent_execution import (
+    AgentExecutionDeadLetter,
+    AgentExecutionJob,
+    AgentExecutionLease,
+    AgentExecutionRetry,
+    AgentWorkerHeartbeat,
+)
+from app.models.agent_iam import (
+    AgentCredentialAuditEvent,
+    AgentDelegatedToken,
+    AgentIdentityBinding,
+    AgentScopePolicy,
+    AgentServicePrincipal,
+    AgentTokenGrant,
+)
+from app.models.agent_knowledge_graph import (
+    AgentKGEntity,
+    AgentKGExtractionRun,
+    AgentKGQueryEvent,
+    AgentKGRelation,
+    AgentKGSource,
+)
+from app.models.agent_mcp_oauth import (
+    AgentMCPDelegatedGrant,
+    AgentMCPOAuthClient,
+    AgentMCPScopePolicy,
+    AgentMCPTokenExchange,
+)
+from app.models.agent_mcp_registry import AgentMCPServer
+from app.models.agent_notifications import (
+    NotificationChannel,
+    NotificationEvent,
+    NotificationPreference,
+    PushDevice,
+)
+from app.models.agent_optimization import (
+    AgentOptimizationCandidate,
+    AgentOptimizationExperiment,
+    AgentOptimizationResult,
+    AgentPolicyCandidate,
+    AgentPromptCandidate,
+    AgentToolSelectionCandidate,
+)
+from app.models.agent_optimization_tournament import (
+    AgentOptimizationPairwiseResult,
+    AgentOptimizationTournament,
+    AgentOptimizationTournamentCandidate,
+    AgentOptimizationTournamentResult,
+)
+from app.models.agent_routing import (
+    AgentCostQualityProfile,
+    AgentModelCapability,
+    AgentRoutingPolicy,
+    AgentStepRoutingDecision,
+)
 from app.models.agent_sessions import (
-    AgentSession,
     AgentConversationThread,
-    AgentThreadMessage,
+    AgentSession,
     AgentSessionRun,
     AgentSessionSummary,
+    AgentThreadMessage,
 )
-from app.models.prompts import (
-    PromptTemplate,
-    PromptTemplateVersion,
-    PromptTemplateVariable,
-    PromptTemplateRenderEvent,
-    PromptExperiment,
-    PromptPlaygroundRun,
+from app.models.agent_studio import (
+    AgentFlowDebugEvent,
+    AgentFlowDebugSession,
+    AgentFlowDefinition,
+    AgentFlowEdge,
+    AgentFlowNode,
+    AgentFlowVersion,
+)
+from app.models.agent_workflows import (
+    AgentWorkflow,
+    AgentWorkflowEvent,
+    AgentWorkflowLock,
+    AgentWorkflowRun,
+    AgentWorkflowSignal,
+    AgentWorkflowTimer,
+    AgentWorkflowWebhookWait,
+)
+from app.models.agent_workflows_external import (
+    AgentWorkflowExternalEvent,
+    AgentWorkflowPollingJob,
+    AgentWorkflowWebhookSubscription,
 )
 from app.models.auth import OAuthState, UserSession
-
-from app.models.agent_deployments import (
-    AgentApiDeployment,
-    AgentApiEndpointKey,
-    AgentApiUsageEvent,
-    AgentApiSlaEvent,
+from app.models.commercial_control_plane_mesh import (
+    CommercialMeshConsensusEvent,
+    CommercialMeshHealthState,
+    CommercialMeshNode,
+    CommercialMeshPartitionEvent,
+    CommercialMeshReplicationLog,
 )
+from app.models.commercial_crypto_trust import (
+    CommercialCryptoOperation,
+    CommercialKeyMaterial,
+    CommercialKeyRotationSchedule,
+    CommercialKMSProvider,
+    CommercialSigningProfile,
+)
+from app.models.connector_auth import (
+    ConnectorCredentialGrant,
+    ConnectorOAuthClient,
+    ConnectorOAuthToken,
+    ConnectorScopePolicy,
+)
+from app.models.managed_control_plane import *
+from app.models.mlops import (
+    MLDataset,
+    MLDatasetVersion,
+    MLEvalArtifact,
+    MLExperiment,
+    MLExperimentRun,
+    MLModelLineage,
+    MLTrainingJob,
+)
+from app.models.multi_agent import (
+    AgentSharedWorkspace,
+    AgentTeam,
+    AgentTeamDelegation,
+    AgentTeamMember,
+    AgentTeamMessage,
+    AgentTeamRun,
+    AgentTeamTrace,
+)
+from app.models.multimodal import (
+    MultimodalAnalysisEvent,
+    MultimodalAsset,
+    MultimodalPolicyEvent,
+    MultimodalRequest,
+    MultimodalUsageEvent,
+)
+from app.models.operations.failure_signals import (
+    FailureForecast,
+    FailureRiskAssessment,
+    FailureSignal,
+)
+from app.models.payments import *
+from app.models.prompts import (
+    PromptExperiment,
+    PromptPlaygroundRun,
+    PromptTemplate,
+    PromptTemplateRenderEvent,
+    PromptTemplateVariable,
+    PromptTemplateVersion,
+)
+from app.models.security_pki import AttestationReport, CertificateInventory, PluginRegistry
+from app.models.web_search import (
+    AgentWebSearchCache,
+    AgentWebSearchPolicyEvent,
+    AgentWebSearchQuery,
+    AgentWebSearchResult,
+)
+
 __all__.extend([
     "AgentApiDeployment",
     "AgentApiEndpointKey",
@@ -1016,12 +1032,13 @@ __all__.extend([
 ])
 
 from app.models.collab_chat import (
+    ChatAgentParticipant,
     ChatChannel,
     ChatChannelMember,
     ChatMessage,
-    ChatAgentParticipant,
     ChatPresenceEvent,
 )
+
 __all__.extend([
     "ChatChannel",
     "ChatChannelMember",

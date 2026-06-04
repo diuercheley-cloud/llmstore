@@ -1,10 +1,10 @@
 import json
-from fastapi import HTTPException
+
 from app.core.config import get_settings
+from app.models.client import Client
 from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
-from app.models.client import Client
-from app.utils.tool_calling import tooling_requested
+from fastapi import HTTPException
 
 settings = get_settings()
 

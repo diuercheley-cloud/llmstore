@@ -1,33 +1,34 @@
 from __future__ import annotations
 
-import os
+import json
 from collections.abc import AsyncIterator
 from datetime import date
-import json
 
 import httpx
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-
 from app.core.config import get_settings
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
 from app.main import app
 from app.models.api_key import ApiKey
+from app.models.billing_invoice import BillingInvoice
 from app.models.client import Client
 from app.models.commercial_billing_dispute import CommercialBillingDispute
 from app.models.commercial_compliance import CommercialControlPolicy
 from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
 from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.billing_invoice import BillingInvoice
 from app.services.compliance.financial_controls import (
     create_attestation,
     create_evidence_package,
     open_exception,
     require_approval_chain,
 )
-from app.services.compliance.operational_controls import add_operational_evidence, create_control, link_exception
+from app.services.compliance.operational_controls import (
+    add_operational_evidence,
+    create_control,
+    link_exception,
+)
 
 
 @pytest.fixture(autouse=True)

@@ -6,10 +6,10 @@ Revises: 20260522_0092
 Create Date: 2026-05-22 21:00:00.000000
 
 """
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '20260522_0093'

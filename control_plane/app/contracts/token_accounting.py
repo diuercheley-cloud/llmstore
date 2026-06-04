@@ -1,6 +1,8 @@
-from typing import Any, Dict, List, Optional, Protocol, Union, runtime_checkable
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+
 from app.contracts.base import BaseContract, ContractCapability
+from pydantic import BaseModel
+
 
 class TokenCountResult(BaseModel):
     input_tokens: int

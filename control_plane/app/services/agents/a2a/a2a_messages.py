@@ -1,8 +1,10 @@
 # Owner: agent-platform
-from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional
 import uuid
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
+
 
 class A2AMessagePayload(BaseModel):
     message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))

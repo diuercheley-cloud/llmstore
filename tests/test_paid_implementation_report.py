@@ -1,7 +1,6 @@
-import os
 import json
+import os
 import subprocess
-import pytest
 
 SCRIPT = "scripts/paid-implementation-checklist-local.sh"
 

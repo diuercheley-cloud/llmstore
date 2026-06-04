@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
-from pydantic import BaseModel, Field, field_validator
+
 from app.contracts.base import BaseContract, ContractCapability
-from app.contracts.plugin_types import PLUGIN_TYPES, ALLOWED_PERMISSIONS
+from app.contracts.plugin_types import ALLOWED_PERMISSIONS, PLUGIN_TYPES
+from pydantic import BaseModel, Field, field_validator
+
 
 class ManifestV1(BaseModel):
     manifest_version: str = "1"

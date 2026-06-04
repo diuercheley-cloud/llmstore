@@ -3,11 +3,13 @@ Owner: agent-platform
 Status: beta
 """
 import uuid
-from typing import List, Optional
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentMemoryItem, AgentMemoryRetentionPolicy, AgentMemoryDeleteRequest
+from typing import Optional
+
 from app.core.time import utc_now
+from app.models.agents import AgentMemoryDeleteRequest, AgentMemoryItem
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 
 class MemoryRetentionService:
     def __init__(self, db: AsyncSession):

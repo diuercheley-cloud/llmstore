@@ -1,5 +1,5 @@
-import pytest
 import re
+
 from app.utils.model_prompting import apply_prompt_template_settings
 
 

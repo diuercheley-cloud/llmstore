@@ -1,28 +1,22 @@
 import os
+
 os.environ["AGENT_MCP_ENABLED"] = "true"
+
 
 import pytest
 import pytest_asyncio
-import uuid
-import hashlib
-from datetime import datetime, timedelta
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.models.agent_mcp_oauth import (
-    AgentMCPOAuthClient,
     AgentMCPDelegatedGrant,
-    AgentMCPTokenExchange,
     AgentMCPScopePolicy,
 )
-from app.services.agents.mcp.mcp_oauth import (
-    create_mcp_oauth_client,
-    create_mcp_delegated_grant,
-    MCPOAuthAuditLog,
-)
-from app.services.agents.mcp.mcp_token_exchange import exchange_token
 from app.services.agents.mcp.mcp_delegated_identity import resolve_mcp_identity
+from app.services.agents.mcp.mcp_oauth import (
+    MCPOAuthAuditLog,
+    create_mcp_delegated_grant,
+)
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture(autouse=True)

@@ -1,8 +1,9 @@
-import uuid
-from typing import List, Optional
+from typing import List
+
+from app.models.runtime.distributed_runtime import RuntimeNode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.runtime.distributed_runtime import RuntimeNode
+
 
 class NodeRegistry:
     def __init__(self, db: AsyncSession):

@@ -1,6 +1,6 @@
-import pytest
-import subprocess
 import json
+import subprocess
+
 
 def test_sanitization_is_called(tmp_path):
     out_dir = tmp_path / "e2e"

@@ -3,7 +3,6 @@ import os
 import subprocess
 from pathlib import Path
 
-
 SCRIPT_PATH = Path("scripts/security-report-local.sh")
 
 

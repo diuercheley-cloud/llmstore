@@ -1,6 +1,8 @@
 # Owner: agent-platform
-from typing import Dict, Any, List
-from .constraint_model import ConstraintModel, Constraint
+from typing import Any, Dict, List
+
+from .constraint_model import Constraint, ConstraintModel
+
 
 class ConstraintValidator:
     """

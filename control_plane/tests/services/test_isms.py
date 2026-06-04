@@ -1,6 +1,7 @@
 import pytest
 from app.services.isms_manager import ISMSManagerService
 
+
 def test_policy_validation():
     service = ISMSManagerService()
     valid_policy = "# Policy\n| **Owner** | Admin |\n| **Review Frequency** | Annual |"

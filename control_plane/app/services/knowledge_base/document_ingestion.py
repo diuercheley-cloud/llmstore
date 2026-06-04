@@ -1,16 +1,15 @@
 # Owner: agent-platform
-import uuid
-import logging
 import hashlib
-from typing import Optional, Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+import uuid
 
-from app.models.knowledge_base import KBDocument, KBDocumentVersion, KBChunk, KBIngestionJob
-from app.services.knowledge_base.kb_registry import KBRegistry
+from app.core.time import utc_now
+from app.models.knowledge_base import KBChunk, KBIngestionJob
 from app.services.knowledge_base.chunker import KBChunker
+from app.services.knowledge_base.kb_registry import KBRegistry
 from app.services.knowledge_base.pdf_ingestor import PDFIngestor
 from app.services.knowledge_base.web_ingestor import WebIngestor
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

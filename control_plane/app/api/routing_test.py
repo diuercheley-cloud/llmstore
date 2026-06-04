@@ -6,11 +6,10 @@ Protected by admin token and only active when REAL_PROVIDER_VALIDATION_ENABLED=t
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-
 from app.core.config import get_settings
 from app.services.auth import require_admin
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/admin/routing/test",

@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def test_demo_full_script_exists():
     assert os.path.exists("scripts/demo-full-local.sh")
 

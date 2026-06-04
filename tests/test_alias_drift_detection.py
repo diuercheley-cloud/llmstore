@@ -1,11 +1,10 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_model_supply_chain import CommercialModelIntegrityEvent
 from app.models.model_registry import ModelRegistry
 from app.services.models.runtime_attestation import collect_runtime_attestation
 from app.services.models.runtime_integrity_monitor import detect_alias_drift, scan_registered_models
 from app.services.models.signed_model_registry import register_model_manifest
+from sqlalchemy import select
 
 
 def _runtime_model(path: str, *, alias: str, model_id: str) -> ModelRegistry:

@@ -1,6 +1,8 @@
 from uuid import uuid4
 
-from app.services.operations.plugin_runtime.capability_boundaries import PluginCapabilityBoundaryService
+from app.services.operations.plugin_runtime.capability_boundaries import (
+    PluginCapabilityBoundaryService,
+)
 
 
 def test_denied_capabilities_take_precedence():

@@ -1,6 +1,6 @@
 import pytest
-from app.main import app
 from app.core.config import get_settings
+
 
 @pytest.mark.asyncio
 async def test_cors_preflight_localhost(admin_client):

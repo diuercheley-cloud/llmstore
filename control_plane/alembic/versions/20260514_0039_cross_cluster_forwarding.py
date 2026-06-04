@@ -5,8 +5,8 @@ Revises: 20260514_0038_global_traffic
 Create Date: 2026-05-14 16:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

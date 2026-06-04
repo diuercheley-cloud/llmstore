@@ -1,10 +1,9 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
-from app.models.agents import AgentTool, AgentRegistryEntry, AgentToolPermission
+from app.models.agents import AgentRegistryEntry, AgentTool
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PolicyDecision:

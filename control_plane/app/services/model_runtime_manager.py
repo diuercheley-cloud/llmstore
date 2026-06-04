@@ -5,21 +5,20 @@ import signal
 import subprocess
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import httpx
+from app.core.config import get_settings
+from app.core.time import utc_now
+from app.models.operations.model_runtime import ModelRuntimeInstance
 from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.models.operations.model_runtime import ModelRuntimeInstance
-from app.models.model_registry import ModelRegistry
-from app.core.time import utc_now
-
 logger = logging.getLogger(__name__)
 
-from app.contracts.model_runtime import ModelRuntimeContract, ModelInstance, ModelRuntimeCapabilities
+from app.contracts.model_runtime import ModelRuntimeCapabilities, ModelRuntimeContract
+
 
 class ModelRuntimeManager(ModelRuntimeContract):
     _processes: Dict[uuid.UUID, subprocess.Popen] = {}

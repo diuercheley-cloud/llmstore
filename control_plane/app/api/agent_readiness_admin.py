@@ -1,10 +1,10 @@
 # Owner: agent-platform
-from typing import Dict, Any
+from typing import Any, Dict
+
+from app.api.deps import get_db_session, require_admin
+from app.services.agents.agent_readiness import AgentReadinessService
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.deps import require_admin, get_db_session
-from app.services.agents.agent_readiness import AgentReadinessService
 
 router = APIRouter(prefix="/admin/agents/readiness", tags=["agent-readiness"])
 

@@ -1,6 +1,4 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
 from app.services.inference.replay_verification import verify_replay
 from app.services.inference.reproducibility import capture_reproducibility_record

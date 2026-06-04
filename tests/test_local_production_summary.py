@@ -1,7 +1,7 @@
 import json
 import os
-import glob
 from pathlib import Path
+
 
 def test_local_production_summary_structure():
     # Find the latest validation artifact

@@ -2,16 +2,14 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
 import logging
-from typing import Any, Dict, List, Optional, Iterable
-from fastapi import HTTPException, Request, status
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
-from app.models.agents import AgentRBACEvent
-from app.services.admin_rbac import AuthenticatedAdmin, record_admin_audit_event
 from app.core.time import utc_now
+from app.models.agents import AgentRBACEvent
+from app.services.admin_rbac import AuthenticatedAdmin
+from fastapi import HTTPException, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

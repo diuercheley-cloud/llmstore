@@ -1,8 +1,8 @@
 from app.services.operations.forecasting.receipts import (
-    build_failure_signal_receipt,
+    SIGNATURE_PLACEHOLDER,
     build_failure_forecast_receipt,
     build_failure_risk_assessment_receipt,
-    SIGNATURE_PLACEHOLDER,
+    build_failure_signal_receipt,
 )
 
 SIGNAL_DICT = {

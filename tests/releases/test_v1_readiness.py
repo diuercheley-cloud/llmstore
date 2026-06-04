@@ -1,9 +1,9 @@
-import pytest
-import sys
 import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
 from validate_v1_readiness import validate_v1_readiness
+
 
 def test_v1_readiness_audit():
     """

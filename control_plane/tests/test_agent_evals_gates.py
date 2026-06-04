@@ -18,41 +18,31 @@ Covers:
 14. Registry update invalidates (stale) baseline
 """
 
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from datetime import datetime, timezone
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
 from app.models.agents import (
     AgentDefinition,
-    AgentRun,
-    AgentRunStep,
-    AgentRunEvent,
-    AgentRegistryEntry,
-    AgentPromotion,
-    AgentEvalSuite,
-    AgentEvalCase,
-    AgentEvalRun,
-    AgentEvalResult,
     AgentEvalBaseline,
-    AgentEvalDataset,
-    AgentEvalDatasetVersion,
-    AgentEvalGateResult,
-    AgentEvalRegressionResult,
-    AgentPromotionGateResult,
-    AgentLifecycleEvent,
+    AgentEvalCase,
+    AgentEvalResult,
+    AgentEvalRun,
+    AgentEvalSuite,
+    AgentRegistryEntry,
 )
-from app.services.agents.agent_evals import AgentEvalService
-from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService as EvalDatasetsService
-from app.services.agents.eval_gate import EvalGateService as EvalGatesService
-from app.services.agents.eval_regression import EvalRegressionService
 from app.services.agents import agent_lifecycle, agent_registry
+from app.services.agents.agent_evals import AgentEvalService
+from app.services.agents.eval_dataset_registry import (
+    EvalDatasetRegistryService as EvalDatasetsService,
+)
+from app.services.agents.eval_gate import EvalGateService as EvalGatesService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture(autouse=True)

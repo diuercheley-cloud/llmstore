@@ -1,14 +1,14 @@
 """Tests for Graph RAG and Agentic RAG — entity extraction, vector search, iterative retrieval."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
+import pytest
 from app.services.rag.graph_rag import (
-    KnowledgeGraphRAGService,
-    AgenticRAGService,
-    GraphRAGRouter,
-    GraphRAGContext,
     AgenticRAGResult,
+    AgenticRAGService,
+    GraphRAGContext,
+    GraphRAGRouter,
+    KnowledgeGraphRAGService,
 )
 
 

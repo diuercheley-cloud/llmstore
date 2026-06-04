@@ -1,5 +1,6 @@
 import os
 
+
 def test_runbook_exists():
     assert os.path.exists("docs/LOCAL_PRODUCTION_RUNBOOK.md")
 

@@ -7,14 +7,13 @@ import socket
 import uuid
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -190,9 +189,15 @@ async def commercial_distributed_analytics_loop(stop_event) -> None:
     cfg = get_settings()
     if not cfg.commercial_distributed_analytics_enabled:
         return
-    from app.services.routing.commercial_cluster_aggregates import aggregate_recent, cleanup_old_analytics
+    from app.services.routing.commercial_cluster_aggregates import (
+        aggregate_recent,
+        cleanup_old_analytics,
+    )
     from app.services.routing.commercial_event_ingest import process_pending_events
-    from app.services.routing.commercial_leader_election import renew_leader_lease, try_acquire_leader
+    from app.services.routing.commercial_leader_election import (
+        renew_leader_lease,
+        try_acquire_leader,
+    )
 
     identity = resolve_node_identity(cfg)
     tick = 0

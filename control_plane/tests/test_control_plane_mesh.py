@@ -1,8 +1,9 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from app.db.base import Base
 from app.services.mesh.control_plane_mesh import ControlPlaneMeshService
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 @pytest.fixture
 def db_session():

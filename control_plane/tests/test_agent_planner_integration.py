@@ -1,15 +1,15 @@
-import pytest
-import pytest_asyncio
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from unittest.mock import AsyncMock, patch
 
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
+import pytest
+import pytest_asyncio
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun, AgentPlan, AgentTask
-from app.services.agents.task_engine import TaskEngine
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agents import AgentDefinition, AgentRun, AgentTask
 from app.services.agents.agent_planner import AgentPlanner
+from app.services.agents.task_engine import TaskEngine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture(autouse=True)

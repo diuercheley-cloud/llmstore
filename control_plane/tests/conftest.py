@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-
-from sqlalchemy.ext.compiler import compiles
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
+
 
 @compiles(JSONB, "sqlite")
 def compile_jsonb_sqlite(type_, compiler, **kw):
@@ -44,8 +44,9 @@ os.environ.setdefault("AGENT_MULTI_AGENT_MOCK_ARBITRATION", "true")
 
 
 
-from app.main import app
 from app.core.config import get_settings
+from app.main import app
+
 
 @pytest_asyncio.fixture
 async def async_client():

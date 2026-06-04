@@ -1,24 +1,21 @@
 # Owner: voice-agent
-import uuid
 import json
 import logging
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
+from typing import Optional
 
-from app.db.session import get_db_session, SessionLocal
-from app.services.auth import require_client
-from app.models.client import Client
-from app.models.realtime_voice import VoiceSession, VoiceStreamEvent
 from app.core.config import get_settings
-
-from app.services.voice.voice_session_service import VoiceSessionService
+from app.db.session import SessionLocal, get_db_session
+from app.models.client import Client
+from app.services.auth import require_client
 from app.services.voice.stt_stream_service import STTStreamService
 from app.services.voice.tts_stream_service import TTSStreamService
 from app.services.voice.turn_detection import TurnDetectionService
 from app.services.voice.voice_agent_bridge import VoiceAgentBridge
+from app.services.voice.voice_session_service import VoiceSessionService
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -1,8 +1,9 @@
-import os
-import sys
-import re
 import ast
 import hashlib
+import os
+import re
+import sys
+
 import yaml
 
 # Add control_plane to python path so we can import services if needed
@@ -352,7 +353,7 @@ def run_analysis():
         recommendations.append({
             "target": f"Endpoint '{ep['method']} {ep['func_name']}' no router {ep['router']}",
             "type": "needs compatibility shim",
-            "description": f"Endpoint marcado oficialmente como deprecated no código. Deve ser mantido ativo para compatibilidade legada, mas monitorado para remoção futura.",
+            "description": "Endpoint marcado oficialmente como deprecated no código. Deve ser mantido ativo para compatibilidade legada, mas monitorado para remoção futura.",
             "impact": "Limpeza futura da área de superfície da API."
         })
 
@@ -361,7 +362,7 @@ def run_analysis():
         recommendations.append({
             "target": f"Feature Flag órfã: {flag_name}",
             "type": "safe cleanup",
-            "description": f"A flag está registrada no YAML de governança mas não é mais referenciada no código Python ou variáveis de ambiente. Pode ser removida com segurança.",
+            "description": "A flag está registrada no YAML de governança mas não é mais referenciada no código Python ou variáveis de ambiente. Pode ser removida com segurança.",
             "impact": "Estabilização e remoção de flags mortas."
         })
         
@@ -369,7 +370,7 @@ def run_analysis():
         recommendations.append({
             "target": f"Feature Flag deprecada: {ff['name']}",
             "type": "deprecated candidate",
-            "description": f"Flag de governança com status 'deprecated'. Planejar remoção definitiva.",
+            "description": "Flag de governança com status 'deprecated'. Planejar remoção definitiva.",
             "impact": "Redução do drift de configuração."
         })
 
@@ -378,7 +379,7 @@ def run_analysis():
         recommendations.append({
             "target": d["rel_path"],
             "type": "needs compatibility shim",
-            "description": f"Documento markdown sem declaração de 'owner:' no topo. Necessita de owner atribuído para governança de documentação.",
+            "description": "Documento markdown sem declaração de 'owner:' no topo. Necessita de owner atribuído para governança de documentação.",
             "impact": "Conformidade com o framework de governança documental."
         })
 

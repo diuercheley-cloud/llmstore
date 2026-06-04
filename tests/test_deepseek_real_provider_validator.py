@@ -1,12 +1,8 @@
 """Tests for DeepSeek real provider validator — no internet required, uses mocks."""
 
 import json
-import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_LIB = PROJECT_ROOT / "scripts" / "lib"

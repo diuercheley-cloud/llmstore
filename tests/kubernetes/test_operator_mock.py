@@ -1,7 +1,6 @@
-import kopf
-import pytest
 import unittest.mock as mock
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec, spec_from_file_location
+
 
 def load_operator_main():
     spec = spec_from_file_location("operator_main", "operator/main.py")

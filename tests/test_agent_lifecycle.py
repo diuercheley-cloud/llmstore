@@ -1,12 +1,14 @@
-import pytest
 import uuid
+
+import pytest
+from app.models.agents import (
+    AgentLifecycleEvent,
+    AgentPromotion,
+)
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agents import AgentRegistryEntry, AgentVersion, AgentLifecycleEvent, AgentPromotion, AgentDeprecation
-from app.services.agents import agent_registry as reg_service
-from app.services.agents import agent_lifecycle as lifecycle_service
 
 @pytest.fixture(autouse=True)
 def disable_baseline_by_default(settings):

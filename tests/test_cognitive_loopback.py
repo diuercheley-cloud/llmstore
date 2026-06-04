@@ -1,10 +1,12 @@
-import pytest
 import uuid
-from app.services.agents.cognitive_loopback.loopback_service import CognitiveLoopbackService
-from app.services.agents.cognitive_loopback.learning_promotion_gate import LearningPromotionGate
-from app.models.agent_cognitive_loopback import AgentLearningCandidate, AgentFewShotExample
-from app.models.agents import AgentDefinition, AgentRun
+
+import pytest
 from app.core.config import get_settings
+from app.models.agent_cognitive_loopback import AgentFewShotExample, AgentLearningCandidate
+from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents.cognitive_loopback.learning_promotion_gate import LearningPromotionGate
+from app.services.agents.cognitive_loopback.loopback_service import CognitiveLoopbackService
+
 
 @pytest.fixture
 def agent_id():

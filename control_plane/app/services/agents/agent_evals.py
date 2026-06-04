@@ -1,29 +1,27 @@
 # Owner: agent-platform
-import uuid
 import logging
-import json
-from datetime import datetime
-from typing import Any, List, Optional, Dict
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
     AgentDefinition,
-    AgentRun,
-    AgentRunStep,
-    AgentEvalSuite,
-    AgentEvalCase,
-    AgentEvalRun,
-    AgentEvalResult,
     AgentEvalBaseline,
+    AgentEvalCase,
     AgentEvalDataset,
     AgentEvalDatasetVersion,
-    AgentRegistryEntry
+    AgentEvalResult,
+    AgentEvalRun,
+    AgentEvalSuite,
+    AgentRegistryEntry,
+    AgentRun,
+    AgentRunStep,
 )
 from app.services.agents import agent_state
 from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

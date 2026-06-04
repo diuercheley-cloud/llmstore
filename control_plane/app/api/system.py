@@ -9,25 +9,23 @@ from pathlib import Path
 from time import perf_counter, time
 from typing import Annotated, Any, Dict
 
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from fastapi import APIRouter, Depends
-from fastapi.responses import FileResponse, Response
 import httpx
-from redis.asyncio import Redis
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import get_inference_proxy
-from app.core.config import get_settings, Settings
-from app.db.session import get_db_session, get_redis, get_db
+from app.core.config import Settings, get_settings
+from app.db.session import get_db, get_db_session, get_redis
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_registry import ModelRegistry
-from app.models.request_log import RequestLog
 from app.services.auth import require_admin
 from app.services.generation_jobs import get_admin_job_snapshot
 from app.services.inference_proxy import InferenceProxy
 from app.services.security_monitor import observe_billing_status_metrics
+from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from redis.asyncio import Redis
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 settings = get_settings()
@@ -645,7 +643,10 @@ async def health_deep(
     # Providers
     providers_data = []
     try:
-        from app.services.providers.registry import get_all_provider_health, get_all_provider_statuses
+        from app.services.providers.registry import (
+            get_all_provider_health,
+            get_all_provider_statuses,
+        )
         provider_health_list = await get_all_provider_health()
         provider_statuses = get_all_provider_statuses()
         status_map = {s.provider_id: s for s in provider_statuses}

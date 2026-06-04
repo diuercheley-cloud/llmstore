@@ -8,11 +8,10 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
-from app.services.security import record_abuse_event, suspend_client
 from app.models.client import Client
+from app.services.security import record_abuse_event, suspend_client
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

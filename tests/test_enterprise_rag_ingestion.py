@@ -1,13 +1,12 @@
 import os
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-
-from app.services.rag_enterprise.ingestion import ingest_document, delete_enterprise_document
-from app.services.rag_enterprise.schemas import SUPPORTED_EXTENSIONS
-from app.services.rag_enterprise.parsers import parse_file, get_parser_status, get_parsers_summary
 from app.models.rag_document import RAGDocument
-
+from app.services.rag_enterprise.ingestion import delete_enterprise_document, ingest_document
+from app.services.rag_enterprise.parsers import get_parser_status, get_parsers_summary, parse_file
+from app.services.rag_enterprise.schemas import SUPPORTED_EXTENSIONS
 
 pytestmark = pytest.mark.asyncio
 

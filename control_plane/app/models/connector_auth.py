@@ -1,12 +1,13 @@
 # Owner: Platform Operations
 import uuid
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, LargeBinary
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, DateTime, ForeignKey, LargeBinary, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
 
 class ConnectorOAuthClient(Base):
     __tablename__ = "connector_oauth_clients"

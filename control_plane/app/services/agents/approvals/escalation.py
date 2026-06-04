@@ -1,12 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
 
-from app.models.agents import AgentApprovalRequest
 from app.core.time import utc_now
+from app.models.agents import AgentApprovalRequest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,6 @@ class EscalationService:
         """
         Escalates pending requests that are close to expiration.
         """
-        from app.core.time import utc_now
         from datetime import timedelta
 
         now = utc_now()

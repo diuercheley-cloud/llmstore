@@ -1,16 +1,23 @@
 import uuid
 
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
+from app.services.operations.federation_sync.conflict_resolution import (
+    FederationConflictResolutionService,
+)
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
 from app.services.operations.federation_sync.receipts import (
     build_bundle_receipt,
     build_conflict_resolution_receipt,
     build_sync_session_receipt,
     build_trust_negotiation_receipt,
 )
-from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
-from app.services.operations.federation_sync.trust_negotiation import FederationTrustNegotiationService
-from app.services.operations.federation_sync.conflict_resolution import FederationConflictResolutionService
-from app.utils.crypto_signer import sign_payload
+from app.services.operations.federation_sync.synchronization_protocol import (
+    SovereignFederationSynchronizationProtocol,
+)
+from app.services.operations.federation_sync.trust_negotiation import (
+    FederationTrustNegotiationService,
+)
 
 
 def test_federation_receipts_shape():

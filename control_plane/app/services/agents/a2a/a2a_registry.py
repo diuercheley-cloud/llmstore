@@ -1,12 +1,13 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from fastapi import HTTPException
+from typing import List, Optional
 
-from app.models.agents import AgentDefinition, AgentA2ARegistration
+from app.models.agents import AgentA2ARegistration, AgentDefinition
 from app.services.agents.a2a.a2a_security import A2ASecurityService
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class A2ARegistryService:
     @staticmethod

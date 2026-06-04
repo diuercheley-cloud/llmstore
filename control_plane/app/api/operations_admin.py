@@ -2,30 +2,29 @@
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_current_admin
 from app.core.time import utc_now
 from app.db.session import get_db_session
 from app.models.operations.failure_signals import (
-    FailureSignal,
     FailureForecast,
     FailureRiskAssessment,
+    FailureSignal,
 )
 from app.services.operations.forecasting.deterministic_engine import (
     DeterministicFailureForecastingEngine,
 )
+from app.services.operations.forecasting.receipts import (
+    build_failure_forecast_receipt,
+    build_failure_risk_assessment_receipt,
+    build_failure_signal_receipt,
+)
 from app.services.operations.forecasting.risk_scoring import (
     FailureRiskScoringService,
 )
-from app.services.operations.forecasting.receipts import (
-    build_failure_signal_receipt,
-    build_failure_forecast_receipt,
-    build_failure_risk_assessment_receipt,
-)
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/operations", tags=["operations"])
 

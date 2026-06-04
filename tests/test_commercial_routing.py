@@ -1,7 +1,4 @@
-import os
 from unittest.mock import patch
-
-import pytest
 
 from app.schemas.routing import CommercialSimulateRequest, TaskType
 from app.services.routing.commercial_routing import simulate_commercial_routing

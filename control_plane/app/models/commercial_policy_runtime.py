@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text
+from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.time import utc_now
-from app.db.base import Base
 
 class CommercialPolicyRuntimeBundle(Base):
     __tablename__ = "commercial_policy_runtime_bundles"

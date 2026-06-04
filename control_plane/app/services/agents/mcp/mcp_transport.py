@@ -29,12 +29,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import subprocess
-import time
 from typing import Any
 
 import httpx
-
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

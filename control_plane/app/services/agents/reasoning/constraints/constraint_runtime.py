@@ -1,11 +1,13 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict
+
 from app.core.config import get_settings
+
 from .constraint_model import ConstraintModel
-from .z3_solver import Z3Solver
-from .glpk_solver import GLPKSolver
 from .constraint_validator import ConstraintValidator
+from .glpk_solver import GLPKSolver
+from .z3_solver import Z3Solver
 
 logger = logging.getLogger(__name__)
 

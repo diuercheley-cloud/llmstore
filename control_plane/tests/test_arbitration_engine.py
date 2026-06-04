@@ -1,19 +1,15 @@
-import pytest
-import pytest_asyncio
-import uuid
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from app.core.config import get_settings
+from app.services.agents.agent_llm_provider import ProviderResponse
 from app.services.agents.multi_agent.arbitration_engine import (
     ArbitrationEngine,
     ArbitrationExecutionError,
     CandidateResponse,
-    CriticReview,
-    ArbitrationDecision,
-    ArbitrationCase
 )
-from app.services.agents.agent_llm_provider import ProviderResponse
+
 
 @pytest.mark.asyncio
 async def test_conflict_between_2_agents_creates_arbitration_case():

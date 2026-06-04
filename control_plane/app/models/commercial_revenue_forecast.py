@@ -2,12 +2,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class CommercialRevenueForecast(Base):

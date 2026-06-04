@@ -1,11 +1,14 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
 from app.models.agent_wallet import AgentWallet, AgentWalletLimit
-from .wallet_ledger import WalletLedger
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .spend_authorization import SpendAuthorization
+from .wallet_ledger import WalletLedger
+
 
 class AgentWalletService:
     def __init__(self, db: AsyncSession):

@@ -1,6 +1,12 @@
-import pytest
 from uuid import uuid4
-from app.contracts.model_runtime import ModelRuntimeContract, ModelInstance, ModelRuntimeCapabilities
+
+import pytest
+from app.contracts.model_runtime import (
+    ModelInstance,
+    ModelRuntimeCapabilities,
+    ModelRuntimeContract,
+)
+
 
 class MockRuntime(ModelRuntimeContract):
     async def load_model(self, model_id, backend_id, model_path, runtime_config=None) -> ModelInstance:

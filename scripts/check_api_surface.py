@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import yaml
 
 # Add control_plane to python path
@@ -8,6 +9,7 @@ sys.path.insert(0, os.path.join(base_dir, "control_plane"))
 
 from app.main import app
 from starlette.routing import Route
+
 
 def check_surface():
     yaml_path = os.path.join(base_dir, "config/api-surface.yaml")

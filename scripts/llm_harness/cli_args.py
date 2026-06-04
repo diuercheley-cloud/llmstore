@@ -68,6 +68,28 @@ def add_provider_args(
         help="Declare that the selected provider supports OpenAI-compatible tool calls",
     )
     parser.add_argument(
+        "--allow-native-tools-for-local",
+        action="store_true",
+        help="Allow native tool-calling for local providers if probe is successful (default false)",
+    )
+    parser.add_argument(
+        "--lm-studio-compatibility",
+        action="store_true",
+        default=None,
+        help="Enable LM Studio compatibility heuristics for local OpenAI-compatible backends",
+    )
+    parser.add_argument(
+        "--no-lm-studio-compatibility",
+        action="store_false",
+        dest="lm_studio_compatibility",
+        help="Disable LM Studio compatibility heuristics",
+    )
+    parser.add_argument(
+        "--capability-cache-ttl-seconds",
+        type=int,
+        help="TTL for caching native tool-calling capability checks",
+    )
+    parser.add_argument(
         "--allow-stub-code-agent",
         action="store_true",
         default=default_allow_stub,
@@ -83,6 +105,28 @@ def add_provider_args(
         type=int,
         help="Maximum tokens for LLM response (required for reasoning models like Qwen3)",
     )
+    parser.add_argument(
+        "--model-profile",
+        help="Model profile to use for routing/execution"
+    )
+    parser.add_argument(
+        "--fallback-model-profile",
+        help="Fallback model profile if primary model profile fails"
+    )
+    parser.add_argument(
+        "--allow-cloud-models",
+        action="store_true",
+        default=None,
+        help="Allow executing tasks using cloud models"
+    )
+    parser.add_argument(
+        "--deny-cloud-models",
+        action="store_false",
+        dest="allow_cloud_models",
+        help="Deny executing tasks using cloud models"
+    )
+
+
 
 def add_sandbox_args(parser: argparse.ArgumentParser):
     """Arguments related to docker sandbox execution."""
@@ -175,7 +219,7 @@ def add_agent_args(parser: argparse.ArgumentParser):
     """Arguments related to agent orchestration."""
     parser.add_argument(
         "--agent-mode",
-        choices=["single", "planner-coder-reviewer"],
+        choices=["single", "planner-coder-reviewer", "supervisor"],
         default="single",
         help="Agent orchestration mode",
     )
@@ -285,4 +329,23 @@ def add_eval_args(parser: argparse.ArgumentParser):
         "--policy-preset",
         default="",
         help="Policy preset name for tracking",
+    )
+
+
+def add_auto_mode_args(parser: argparse.ArgumentParser):
+    """Arguments related to agent auto mode."""
+    parser.add_argument("--auto", action="store_true", help="Enable Agent Auto Mode")
+    parser.add_argument(
+        "--max-auto-fixes",
+        type=int,
+        default=3,
+        help="Max automatic fixing iterations in auto mode",
+    )
+    parser.add_argument(
+        "--stop-on-risk", action="store_true", help="Stop execution if risk is detected"
+    )
+    parser.add_argument(
+        "--require-approval-for-edits",
+        action="store_true",
+        help="Require approval for edits in auto mode",
     )

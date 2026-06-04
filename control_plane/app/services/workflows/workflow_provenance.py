@@ -4,9 +4,6 @@ import hashlib
 import json
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_workflows import (
     CommercialWorkflowCheckpoint,
     CommercialWorkflowDefinition,
@@ -14,6 +11,8 @@ from app.models.commercial_workflows import (
     CommercialWorkflowStage,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def canonical_json(payload: Any) -> str:

@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Any, Optional, List, Dict
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from pydantic import BaseModel, ConfigDict, field_validator
 
 _BLOCKED_HEARTBEAT_METADATA_KEYS = {
     "prompt",

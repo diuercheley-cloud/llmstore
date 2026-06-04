@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
 from app.core.config import get_settings
 from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.services.routing.commercial_report_export import (

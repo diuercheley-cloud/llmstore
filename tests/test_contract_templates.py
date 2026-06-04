@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 CONTRACTS_DIR = "contracts"

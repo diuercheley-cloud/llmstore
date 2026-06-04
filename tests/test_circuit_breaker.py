@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
 

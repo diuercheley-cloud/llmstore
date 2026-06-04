@@ -3,15 +3,9 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
-    CommercialHardwareAttestationRecord,
     CommercialOfflineRevocationList,
 )
 from app.services.auth import require_admin
@@ -28,6 +22,10 @@ from app.services.security.hardware_attestation import (
     verify_attestation_record,
 )
 from app.services.security.offline_crl import apply_offline_crl, create_offline_crl
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     tags=["admin", "sovereign", "airgap"],

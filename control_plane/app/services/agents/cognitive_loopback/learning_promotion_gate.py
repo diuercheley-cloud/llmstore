@@ -1,10 +1,16 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
-from app.models.agent_cognitive_loopback import AgentLearningCandidate, AgentFewShotExample, AgentLearningPromotionReview
+from app.models.agent_cognitive_loopback import (
+    AgentFewShotExample,
+    AgentLearningCandidate,
+    AgentLearningPromotionReview,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .fewshot_curator import FewShotCurator
 
 logger = logging.getLogger(__name__)

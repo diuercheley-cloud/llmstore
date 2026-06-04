@@ -1,15 +1,15 @@
-import uuid
 import hashlib
 import json
+import uuid
 from datetime import datetime
-from typing import Any, Optional
-
-from sqlalchemy import DateTime, ForeignKey, String, Float, Boolean, JSON, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import Optional
 
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
 
 def compute_deterministic_hash(*, fields: dict, version: str = "v1") -> str:
     """Computes a deterministic SHA-256 hash for a dictionary of fields."""

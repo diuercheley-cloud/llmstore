@@ -1,7 +1,11 @@
 import uuid
 
-from app.services.operations.federation_sync.environment_registry import SovereignFederationEnvironmentRegistry
-from app.services.operations.federation_sync.synchronization_protocol import SovereignFederationSynchronizationProtocol
+from app.services.operations.federation_sync.environment_registry import (
+    SovereignFederationEnvironmentRegistry,
+)
+from app.services.operations.federation_sync.synchronization_protocol import (
+    SovereignFederationSynchronizationProtocol,
+)
 
 
 def test_synchronization_protocol_export_import_verify_finalize():

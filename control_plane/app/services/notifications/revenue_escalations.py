@@ -11,9 +11,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_billing_dispute import CommercialBillingDispute
@@ -29,6 +26,8 @@ from app.services.routing.commercial_report_email import (
     send_report_email_dry_run,
     validate_recipient_allowlist,
 )
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

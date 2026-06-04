@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.parametrize("stream_ok,chat_streaming_supported,expected_label", [
     (True, True, "pass"),
     (True, False, "pass"), # Even if not supported by capability, if it works, it's pass

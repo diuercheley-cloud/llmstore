@@ -1,8 +1,8 @@
 # Owner: agent-platform
-import logging
 import json
-from typing import Any, Dict, Optional, Type
-from pydantic import BaseModel
+import logging
+from typing import Any, Dict, Optional
+
 from app.services.agents.agent_llm_provider import AgentLLMProvider
 
 logger = logging.getLogger(__name__)

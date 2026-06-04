@@ -1,6 +1,6 @@
-import pytest
-import subprocess
 import os
+import subprocess
+
 
 def test_placeholder_audit_runs():
     # Run the audit script and ensure it executes and writes report

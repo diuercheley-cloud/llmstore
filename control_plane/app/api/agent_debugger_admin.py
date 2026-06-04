@@ -1,13 +1,12 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.api import deps
-from app.models.agent_debugger import AgentDebugSession, AgentBreakpoint
-from app.services.agents.debugger.debug_sessions import DebugSessionManager
 from app.services.agents.debugger.breakpoints import BreakpointManager
+from app.services.agents.debugger.debug_sessions import DebugSessionManager
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -51,8 +50,8 @@ async def get_session_state(
     db: AsyncSession = Depends(deps.get_db),
     current_user = Depends(deps.get_current_admin_user)
 ):
-    from sqlalchemy import select
     from app.models.agent_debugger import AgentDebugStepEvent
+    from sqlalchemy import select
     
     manager = DebugSessionManager(db)
     session = await manager.get_or_create_session(run_id, current_user.tenant_id)

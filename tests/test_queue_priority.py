@@ -1,8 +1,10 @@
-import pytest
 import asyncio
 import uuid
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from app.services.queue_manager import QueueManager
+
 
 @pytest.mark.asyncio
 async def test_priority_jumping():

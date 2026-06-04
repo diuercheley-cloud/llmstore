@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
+from datetime import datetime, timezone
+
+import pytest
 from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.services.routing import commercial_calibration
+
 
 @pytest.mark.asyncio
 async def test_calculate_estimation_error_no_data(session):

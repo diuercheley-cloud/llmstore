@@ -1,8 +1,9 @@
+
 import pytest
-import uuid
-from app.services.agents.multi_agent_governance import MultiAgentGovernanceService
-from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine, CandidateResponse
 from app.core.config import get_settings
+from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
+from app.services.agents.multi_agent_governance import MultiAgentGovernanceService
+
 
 @pytest.mark.asyncio
 async def test_loop_de_delegacao_e_bloqueado(session):

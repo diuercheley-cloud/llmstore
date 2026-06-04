@@ -2,18 +2,18 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
 import logging
-from typing import Optional, Dict, Any
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+
+from app.core.time import utc_now
 from app.models.agents import (
-    AgentEvalRun,
     AgentEvalBaseline,
     AgentEvalRegressionResult,
-    AgentEvalResult
+    AgentEvalResult,
+    AgentEvalRun,
 )
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

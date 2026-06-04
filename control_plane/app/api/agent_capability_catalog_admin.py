@@ -1,16 +1,15 @@
 # Owner: platform-ops
 # Owner: platform-ops
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.dependencies import get_db, get_current_admin
-from app.services.agents.catalog.capability_catalog import CapabilityCatalogService
-from app.services.agents.catalog.trust_report import TrustReportService
-from app.services.plugins.plugin_signature import PluginSignatureService
-from app.services.plugins.plugin_runtime import PluginRuntimeService
-from app.core.config import get_settings
 import uuid
 from typing import List, Optional
+
+from app.api.dependencies import get_current_admin, get_db
+from app.core.config import get_settings
+from app.services.agents.catalog.capability_catalog import CapabilityCatalogService
+from app.services.plugins.plugin_runtime import PluginRuntimeService
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/capability-catalog", tags=["capability_catalog_admin"])
 settings = get_settings()
@@ -43,8 +42,8 @@ async def disable_capability(entry_id: uuid.UUID, db: AsyncSession = Depends(get
 
 @router.get("/{entry_id}/trust-report")
 async def get_trust_report(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
-    from sqlalchemy import select
     from app.models.agent_catalog import PluginTrustReportGov
+    from sqlalchemy import select
     result = await db.execute(select(PluginTrustReportGov).where(PluginTrustReportGov.catalog_entry_id == entry_id))
     report = result.scalars().first()
     if not report:

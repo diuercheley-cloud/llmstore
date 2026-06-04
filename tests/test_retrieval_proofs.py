@@ -1,9 +1,8 @@
+import sys
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-from pathlib import Path
-import sys
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
 from app.models.client import Client
 from app.models.commercial_rag_vault_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
@@ -15,6 +14,7 @@ from app.services.rag.retrieval_proofs import (
     verify_retrieval_proof,
 )
 from app.services.rag_enterprise.schemas import EnterpriseSource
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1] / "tools"
 if str(TOOLS_ROOT) not in sys.path:

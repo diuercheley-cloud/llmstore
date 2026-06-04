@@ -14,8 +14,13 @@ from app.schemas.routing import (
     RoutingStrategy,
     SmartRouterInput,
 )
+from app.services.provider_classification import (
+    CLOUD_PROVIDER_IDS,
+    LOCAL_PROVIDER_IDS,
+    is_cloud_provider,
+    is_local_provider,
+)
 from app.services.provider_settings import is_real_api_key_configured
-from app.services.provider_classification import CLOUD_PROVIDER_IDS, LOCAL_PROVIDER_IDS, is_cloud_provider, is_local_provider
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +157,8 @@ def _provider_health(provider_id: str) -> str:
         return "error"
 
 
-from app.contracts.routing import RoutingContract, RoutingInput, RoutingDecision as ContractRoutingDecision, RoutingCapabilities
+from app.contracts.routing import RoutingCapabilities, RoutingContract
+
 
 class SmartRouter(RoutingContract):
     def __init__(self) -> None:
@@ -417,8 +423,8 @@ class SmartRouter(RoutingContract):
         warnings: list[str],
         dynamic_configs: list[Any] | None = None,
     ) -> dict[str, Any]:
-        from app.services.routing.commercial_ranker import rank_commercial_routes
         from app.schemas.routing import TaskType
+        from app.services.routing.commercial_ranker import rank_commercial_routes
         
         candidates = []
         for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:

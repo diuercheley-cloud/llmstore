@@ -6,7 +6,6 @@ from app.services.operations.compatibility_contracts.receipts import (
     build_negotiation_receipt,
     build_verification_receipt,
 )
-from app.utils.crypto_signer import sign_payload
 
 
 def test_receipts_include_required_fields():

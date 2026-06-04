@@ -1,12 +1,8 @@
 """Tests for fallback routing logic — local failure, cloud takeover, decision fields."""
 
-import os
-import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter, _is_provider_available
 

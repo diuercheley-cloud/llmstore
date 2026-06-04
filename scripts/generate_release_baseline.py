@@ -1,15 +1,21 @@
-import sys
-import os
 import json
+import os
+import sys
 import uuid
-from datetime import datetime
 
 # Add control_plane to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'control_plane'))
 
-from app.services.governance.release_engineering.release_manifest_service import ReleaseManifestService
-from app.services.governance.release_engineering.release_notes_generator import ReleaseNotesGenerator
-from app.services.governance.release_engineering.validation_snapshot_service import ValidationSnapshotService
+from app.services.governance.release_engineering.release_manifest_service import (
+    ReleaseManifestService,
+)
+from app.services.governance.release_engineering.release_notes_generator import (
+    ReleaseNotesGenerator,
+)
+from app.services.governance.release_engineering.validation_snapshot_service import (
+    ValidationSnapshotService,
+)
+
 
 def main():
     print("Generating deterministic platform release baseline...")

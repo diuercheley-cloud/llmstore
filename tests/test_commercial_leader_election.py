@@ -4,15 +4,15 @@ from datetime import timedelta
 
 import httpx
 import pytest
-from fastapi import FastAPI
-from sqlalchemy import select
-
 from app.api.commercial_ha_admin import router as commercial_ha_admin_router
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_leader_lease import CommercialLeaderLease
 from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
-from app.services.routing.commercial_cluster_aggregates import cleanup_old_analytics, rebuild_aggregates
+from app.services.routing.commercial_cluster_aggregates import (
+    cleanup_old_analytics,
+    rebuild_aggregates,
+)
 from app.services.routing.commercial_leader_election import (
     force_expire_stale_leases,
     get_current_leader,
@@ -21,6 +21,8 @@ from app.services.routing.commercial_leader_election import (
     try_acquire_leader,
     validate_fencing_token,
 )
+from fastapi import FastAPI
+from sqlalchemy import select
 
 
 def _enable_ha(monkeypatch: pytest.MonkeyPatch, *, node_id: str = "node-a") -> None:

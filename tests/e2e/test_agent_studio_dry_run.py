@@ -1,8 +1,10 @@
-import pytest
 import uuid
+
+import pytest
 from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
-from app.services.agents.studio.flow_validator import FlowValidator
 from app.services.agents.studio.flow_compiler import FlowCompiler
+from app.services.agents.studio.flow_validator import FlowValidator
+
 
 @pytest.mark.asyncio
 async def test_agent_studio_compile_and_validate_flow(session):

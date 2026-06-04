@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Any, Optional
-from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, JSON, Integer, Text
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from ..db.base import Base
+
 
 class CommercialWitness(Base):
     __tablename__ = "commercial_witnesses"

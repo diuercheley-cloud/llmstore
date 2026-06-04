@@ -1,8 +1,6 @@
 # Owner: agent-platform
 import uuid
-from datetime import datetime, timedelta
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import timedelta
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -11,6 +9,8 @@ from app.models.agent_mcp_oauth import (
     AgentMCPScopePolicy,
 )
 from app.services.agents.mcp.mcp_oauth import MCPOAuthAuditLog
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def check_scope_policy(

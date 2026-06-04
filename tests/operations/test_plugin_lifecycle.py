@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-
 from app.services.operations.plugin_runtime.abi_contracts import PluginABIContractService
 from app.services.operations.plugin_runtime.lifecycle import PluginLifecycleService
 

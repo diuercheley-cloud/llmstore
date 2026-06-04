@@ -1,6 +1,6 @@
-import subprocess
 import json
 import re
+import subprocess
 
 result = subprocess.run(["make", "platform-freeze-check"], capture_output=True, text=True)
 

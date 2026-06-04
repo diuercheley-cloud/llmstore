@@ -1,10 +1,9 @@
 import logging
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.agent_state import log_run_event, update_run
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("hard_cost_cap")
 

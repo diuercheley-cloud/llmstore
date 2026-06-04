@@ -1,14 +1,12 @@
-import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.time import utc_now
 from app.models.operations.failure_signals import (
-    FailureSignal,
     FailureForecast,
     FailureRiskAssessment,
+    FailureSignal,
     compute_deterministic_hash,
 )
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestComputeDeterministicHash:

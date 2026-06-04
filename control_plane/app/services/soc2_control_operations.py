@@ -1,16 +1,13 @@
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from datetime import datetime
+from typing import Any, Dict, List
 
 from app.models.operations.soc2 import (
     SOC2AccessReview,
-    SOC2ChangeReview,
-    SOC2IncidentReview,
-    SOC2VendorReview,
-    SOC2BackupRestoreReview,
     SOC2ControlException,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class SOC2ControlOperationsService:
     def __init__(self, db: AsyncSession):

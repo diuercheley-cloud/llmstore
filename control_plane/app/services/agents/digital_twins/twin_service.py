@@ -1,11 +1,12 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, Optional
+
 from app.core.config import get_settings
-from app.models.digital_twin import DigitalTwinCommand, DigitalTwin
-from .actuation_policy import ActuationPolicy
+from app.models.digital_twin import DigitalTwinCommand
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .safety_interlock import SafetyInterlock
 from .twin_connector import TwinConnector
 
@@ -75,7 +76,7 @@ class DigitalTwinService:
             record.actuation_receipt = res
             await self.db.commit()
             return {"status": "success", "receipt": res}
-        except Exception as e:
+        except Exception:
             record.status = "failed"
             await self.db.commit()
             raise

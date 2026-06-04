@@ -1,7 +1,5 @@
-import pytest
 import subprocess
-import os
-from pathlib import Path
+
 
 def test_release_gate_help_error():
     # Run with empty tag, should fail with tag error

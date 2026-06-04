@@ -1,8 +1,10 @@
-import pytest
 import uuid
-from app.services.agents.agent_handoffs import AgentHandoffService, HandoffDeniedError
-from app.services.agents import agent_state
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents import agent_state
+from app.services.agents.agent_handoffs import AgentHandoffService, HandoffDeniedError
+
 
 @pytest.mark.asyncio
 async def test_handoff_disabled_blocks(session):

@@ -19,12 +19,9 @@ Feature flags consulted:
 """
 from __future__ import annotations
 
-import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import Any, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.services.agents.knowledge_graph.graph_cache import adjacency_cache
@@ -40,6 +37,7 @@ from app.services.agents.knowledge_graph.graph_query_optimizer import (
 from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
     InternalSQLGraphProvider,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 VECTOR_WEIGHT = 0.6
 GRAPH_WEIGHT = 0.4

@@ -1,6 +1,8 @@
-import yaml
 import json
-from typing import Dict, Any, Tuple
+from typing import Tuple
+
+import yaml
+
 
 class ValidationService:
     @staticmethod

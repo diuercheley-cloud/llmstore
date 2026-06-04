@@ -2,11 +2,10 @@ import uuid
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class RAGCollection(Base):

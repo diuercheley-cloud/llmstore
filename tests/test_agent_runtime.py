@@ -1,24 +1,19 @@
-import pytest
 import uuid
-import time
 from datetime import timedelta
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from httpx import AsyncClient
 
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
-    AgentDefinition,
     AgentRun,
-    AgentRunStep,
-    AgentRunEvent,
-    AgentRunCheckpoint,
     AgentRunReceipt,
 )
-from app.services.agents import agent_state, agent_runtime
+from app.services.agents import agent_runtime, agent_state
 from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
-from app.services.agents.agent_runtime import RuntimeDisabledError, ReplayDisabledError
+from app.services.agents.agent_runtime import ReplayDisabledError, RuntimeDisabledError
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

@@ -1,22 +1,21 @@
 import logging
 import uuid
-from typing import List, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
-from app.models.agents import AgentDefinition, AgentEvalRun, AgentEvalSuite
+from app.core.config import get_settings
+from app.core.time import utc_now
 from app.models.agent_optimization import (
-    AgentOptimizationExperiment,
     AgentOptimizationCandidate,
     AgentOptimizationResult,
-    AgentPromptCandidate,
     AgentPolicyCandidate,
+    AgentPromptCandidate,
     AgentToolSelectionCandidate,
 )
+from app.models.agents import AgentDefinition, AgentEvalRun, AgentEvalSuite
 from app.services.agents.agent_evals import AgentEvalService
 from app.services.agents.optimization.optimization_gate import OptimizationGate
-from app.core.time import utc_now
-from app.core.config import get_settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
 # Owner: platform-ops
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
-from app.api.deps import require_admin, get_db_session
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
+
+from app.api.deps import get_db_session, require_admin
 from app.services.agents.agent_readiness import AgentReadinessService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/readiness", tags=["readiness"])
 

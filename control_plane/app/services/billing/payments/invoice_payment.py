@@ -1,19 +1,19 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from fastapi import HTTPException
+import uuid
+from typing import Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.client import Client
 from app.models.billing_invoice import BillingInvoice
-from app.models.payments import PaymentCustomer, PaymentIntent, PaymentAuditEvent
-from app.services.billing.payments.payment_provider import PaymentProvider
+from app.models.client import Client
+from app.models.payments import PaymentAuditEvent, PaymentCustomer, PaymentIntent
 from app.services.billing.payments.mock_payment_provider import MockPaymentProvider
+from app.services.billing.payments.payment_provider import PaymentProvider
 from app.services.billing.payments.stripe_payment_provider import StripePaymentProvider
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("invoice_payment")
 

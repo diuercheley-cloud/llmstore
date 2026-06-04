@@ -1,7 +1,13 @@
 from typing import Any
 
-from app.models.operations.attestation_framework import AttestationFederationBundle, SovereignExecutionAttestation
-from app.services.operations.attestation_framework.hash_utils import compute_attestation_hash, compute_bundle_hash
+from app.models.operations.attestation_framework import (
+    AttestationFederationBundle,
+    SovereignExecutionAttestation,
+)
+from app.services.operations.attestation_framework.hash_utils import (
+    compute_attestation_hash,
+    compute_bundle_hash,
+)
 
 
 class AttestationReplayVerifier:

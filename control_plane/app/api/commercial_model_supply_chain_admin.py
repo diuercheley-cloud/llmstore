@@ -2,11 +2,6 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.commercial_model_supply_chain import (
@@ -46,6 +41,10 @@ from app.services.models.signed_model_registry import (
     verify_model_signature,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     tags=["admin", "model-supply-chain"],

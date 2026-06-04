@@ -2,10 +2,11 @@ import hashlib
 import logging
 from datetime import timedelta
 from typing import Any
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_events import AgentEventDedupKey
+
 from app.core.time import utc_now
+from app.models.agent_events import AgentEventDedupKey
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

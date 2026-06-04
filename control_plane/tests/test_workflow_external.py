@@ -1,25 +1,24 @@
+import os
+from unittest.mock import patch
+
 import pytest
 import pytest_asyncio
-import uuid
-import os
-from datetime import datetime, timedelta
-from sqlalchemy import select
-from unittest.mock import patch, MagicMock
-
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflow
-from app.models.agent_workflows_external import AgentWorkflowWebhookSubscription, AgentWorkflowPollingJob, AgentWorkflowExternalEvent
-from app.services.agents.workflows.workflow_webhooks import WorkflowWebhookService
-from app.services.agents.workflows.workflow_polling import WorkflowPollingService
-from app.core.time import utc_now
 from app.core.config import get_settings
+from app.core.time import utc_now
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agent_workflows import AgentWorkflow, AgentWorkflowRun
+from app.models.agent_workflows_external import (
+    AgentWorkflowExternalEvent,
+)
+from app.services.agents.workflows.workflow_polling import WorkflowPollingService
+from app.services.agents.workflows.workflow_webhooks import WorkflowWebhookService
+from sqlalchemy import select
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with engine.begin() as conn:
-        import app.models.agent_workflows
-        import app.models.agent_workflows_external
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:

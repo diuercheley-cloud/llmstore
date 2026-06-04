@@ -2,11 +2,6 @@ import json
 import random
 from typing import Any
 
-from fastapi import HTTPException
-from sqlalchemy import inspect, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.core.config import get_settings
 from app.models.client import Client
 from app.models.model_backend_route import ModelBackendRoute
@@ -16,7 +11,10 @@ from app.services.commercial_guardrails import filter_routes_by_commercial_guard
 from app.services.models.signed_model_registry import enforce_model_trust_or_warn
 from app.services.provider_classification import is_cloud_provider
 from app.utils.tool_calling import model_supports_native_tools
-
+from fastapi import HTTPException
+from sqlalchemy import inspect, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm"}
 ROUTE_STATE_ORDER = {"healthy": 0, "degraded": 1, "unhealthy": 2, "disabled": 3}
@@ -141,8 +139,8 @@ async def resolve_requested_model(
     # Model Experiments Phase
     settings = get_settings()
     if settings.model_experiments_enabled:
-        from app.services.model_experiments.traffic_splitter import TrafficSplitter
         from app.services.model_experiments.context import set_experiment_context
+        from app.services.model_experiments.traffic_splitter import TrafficSplitter
         splitter = TrafficSplitter(session)
         variant = await splitter.get_assigned_variant(
             tenant_id=client.id,

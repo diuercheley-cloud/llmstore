@@ -4,11 +4,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, func, and_, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.core.config import get_settings
+from app.models.commercial_routing_event import CommercialRoutingEvent
+from sqlalchemy import and_, desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

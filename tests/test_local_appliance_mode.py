@@ -1,5 +1,5 @@
-import pytest
 from app.core.config import Settings
+
 
 def test_appliance_mode_enforces_secure_defaults():
     # Test that setting LOCAL_APPLIANCE_MODE=True enforces other secure settings

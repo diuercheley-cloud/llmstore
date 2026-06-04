@@ -1,9 +1,9 @@
-from sqlalchemy import Column, String, Boolean, Float, Integer, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
 import uuid
+from datetime import datetime
 
 from app.db.base import Base
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+
 
 class CommercialGlobalTrafficPolicy(Base):
     __tablename__ = "commercial_global_traffic_policies"

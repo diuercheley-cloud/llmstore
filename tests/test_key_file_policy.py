@@ -1,6 +1,6 @@
 import os
 import subprocess
-import pytest
+
 
 def test_key_file_policy_enforcement():
     """

@@ -4,10 +4,9 @@ Revision ID: 2866e45907ab
 Revises: phase61_opa_rego_policy
 Create Date: 2026-05-15 18:31:25.960347
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = '2866e45907ab'
 down_revision = 'phase61_opa_rego_policy'

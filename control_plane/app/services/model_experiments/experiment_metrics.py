@@ -1,7 +1,9 @@
 import uuid
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
+
 from app.models.model_experiments import ModelExperimentMetric
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class ExperimentMetrics:
     def __init__(self, db: AsyncSession):

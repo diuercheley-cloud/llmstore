@@ -1,6 +1,4 @@
 import pytest
-from fastapi import HTTPException
-
 from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
@@ -9,6 +7,7 @@ from app.services.model_policy import resolve_requested_model
 from app.services.models.model_provenance import create_provenance_attestation
 from app.services.models.signed_model_registry import approve_model, register_model_manifest
 from app.services.security.offline_crl import apply_offline_crl, create_offline_crl
+from fastapi import HTTPException
 
 
 def _build_runtime_model() -> ModelRegistry:

@@ -2,6 +2,7 @@
 import time
 from typing import Any, Dict
 
+
 class RateLimitManager:
     """
     Manages rate limits for SaaS connectors per tenant and provider.

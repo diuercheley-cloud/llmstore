@@ -1,6 +1,7 @@
 import os
-import sys
 import re
+import sys
+
 
 def validate_dependency_graph():
     print("Validating architectural dependency graph...")

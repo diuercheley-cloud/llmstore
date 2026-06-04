@@ -1,7 +1,8 @@
-import subprocess
 import os
 import shutil
+import subprocess
 import tempfile
+
 import pytest
 
 WIZARD_PATH = os.path.abspath("scripts/configure-local-wizard.sh")

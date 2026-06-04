@@ -1,6 +1,6 @@
 import os
-import subprocess
 import re
+import subprocess
 
 SCRIPT_PATH = "scripts/customer-demo-local.sh"
 GITIGNORE_PATH = ".gitignore"

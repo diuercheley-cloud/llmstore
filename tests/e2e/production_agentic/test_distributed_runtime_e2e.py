@@ -1,11 +1,10 @@
 from pathlib import Path
 
 import pytest
-
+from app.models.runtime.distributed_runtime import DistributedAgentJob
 from app.services.distributed_runtime.cluster_registry import ClusterRegistry
 from app.services.distributed_runtime.job_placement import JobPlacementService
 from app.services.runtime.distributed_runtime import DistributedRuntimeService
-from app.models.runtime.distributed_runtime import DistributedAgentJob
 
 
 @pytest.mark.asyncio

@@ -2,14 +2,14 @@
 # Owner: platform-ops
 import uuid
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, Integer, ForeignKey, Float
+from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
-from app.core.time import utc_now
 
 class RuntimeNode(Base):
     __tablename__ = "runtime_nodes"

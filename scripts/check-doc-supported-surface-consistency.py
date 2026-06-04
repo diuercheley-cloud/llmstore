@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import sys
 import os
+import sys
+
 import yaml
-import re
+
 
 def main():
     supported_surface_path = "config/supported-surface.yaml"

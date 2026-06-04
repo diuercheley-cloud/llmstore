@@ -5,10 +5,9 @@ Revises: e72a4c1b6d3f
 Create Date: 2026-05-15 18:30:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260515_phase55"
 down_revision = "e72a4c1b6d3f"

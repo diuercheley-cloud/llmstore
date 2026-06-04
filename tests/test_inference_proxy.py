@@ -1,10 +1,9 @@
 import httpx
 import pytest
-from fastapi import HTTPException
-
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
 from app.utils.token_estimator import estimate_prompt_tokens
+from fastapi import HTTPException
 
 
 class DummyQueueManager:

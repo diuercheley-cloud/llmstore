@@ -1,9 +1,10 @@
 # Owner: agent-platform
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List
+
+from app.models.connector_auth import ConnectorScopePolicy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.connector_auth import ConnectorScopePolicy
 
 logger = logging.getLogger(__name__)
 

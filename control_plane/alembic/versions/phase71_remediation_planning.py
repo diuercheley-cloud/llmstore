@@ -5,8 +5,8 @@ Revises: phase70_correlation_engine
 Create Date: 2026-05-15 20:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "phase71_remediation_planning"

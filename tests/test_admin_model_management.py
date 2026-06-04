@@ -1,20 +1,19 @@
 import uuid
 from pathlib import Path
 
+import app.api.admin as admin_api
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.api.admin import router as admin_router
-import app.api.admin as admin_api
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.models.model_registry import ModelRegistry
 from app.services import admin_model_management as model_mgmt
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

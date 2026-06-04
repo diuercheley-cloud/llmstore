@@ -4,10 +4,8 @@ Revision ID: 76dbcad4cbd8
 Revises: phase63_control_plane_mesh
 Create Date: 2026-05-15 16:16:07.490602
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = '76dbcad4cbd8'
 down_revision = 'phase63_control_plane_mesh'

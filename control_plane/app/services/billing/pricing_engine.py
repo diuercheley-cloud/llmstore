@@ -4,16 +4,12 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.models.request_financial import RequestFinancial
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

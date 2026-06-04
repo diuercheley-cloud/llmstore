@@ -1,9 +1,9 @@
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
+from app.db.session import get_redis
 from app.main import app
-from app.db.session import get_db_session, get_redis
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture
 async def fastapi_app(fake_redis):

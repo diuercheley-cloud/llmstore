@@ -1,5 +1,6 @@
-import yaml
 from pathlib import Path
+
+import yaml
 
 ff_path = Path("config/feature-flags.yaml")
 with open(ff_path, "r") as f:

@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Response, Query
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
+from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session
-from app.models.admin_rbac import AdminPermission, AdminRoleModel, AdminUser, AdminUserRole, AdminAuditEvent
+from app.models.admin_rbac import (
+    AdminAuditEvent,
+    AdminPermission,
+    AdminRoleModel,
+    AdminUser,
+    AdminUserRole,
+)
 from app.schemas.admin_rbac import (
     AdminPermissionCreate,
     AdminPermissionRead,
@@ -32,7 +34,10 @@ from app.services.admin_rbac import (
     sync_role_permissions,
 )
 from app.services.auth import require_superadmin
-from app.core.security import hash_secret, short_prefix
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/admin/rbac", tags=["admin_rbac"], dependencies=[Depends(require_superadmin)])
 

@@ -1,10 +1,11 @@
 import json
-import shutil
-import subprocess
+
 # tests/test_security_report_artifact_scoring.py
 # FAKE SECRET FOR TESTS ONLY
-import os
+import shutil
+import subprocess
 from pathlib import Path
+
 
 def init_repo(path: Path) -> None:
     subprocess.run(["git", "init"], cwd=path, check=True, capture_output=True)

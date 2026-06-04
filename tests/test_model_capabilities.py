@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pytest
 from httpx import AsyncClient
-from pathlib import Path
+
 
 @pytest.mark.asyncio
 async def test_model_capabilities_admin_list(admin_client: AsyncClient, admin_token_headers, models_dir: Path):

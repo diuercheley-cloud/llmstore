@@ -1,7 +1,9 @@
 from typing import Any, Dict
-from app.models.operations.adapter_promotion import AdapterPromotionWorkflow
-from app.services.operations.adapter_promotion.hash_utils import sha256_hex, canonical_json
+
 from app.core.time import utc_now
+from app.models.operations.adapter_promotion import AdapterPromotionWorkflow
+from app.services.operations.adapter_promotion.hash_utils import sha256_hex
+
 
 def build_promotion_audit_event(
     event_type: str, 

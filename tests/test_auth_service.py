@@ -1,6 +1,7 @@
 import pytest
-from app.services.auth import AdminRole, get_admin_role, _role_from_permissions
 from app.core.config import Settings
+from app.services.auth import AdminRole, _role_from_permissions, get_admin_role
+
 
 def test_admin_role_ordering():
     assert AdminRole.READ < AdminRole.WRITE

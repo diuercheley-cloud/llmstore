@@ -3,14 +3,14 @@
 Validation script for Agentic Production ON readiness posture.
 Verifies all 10 agentic production validation criteria.
 """
+import asyncio
 import os
 import sys
-import yaml
-import asyncio
 import uuid
-import time
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import yaml
 
 # Inject control_plane paths
 base_path = Path(__file__).resolve().parents[1]
@@ -29,6 +29,7 @@ with open(profile_path, "r", encoding="utf-8") as f:
 
 # Import get_settings to inspect database_url
 from app.core.config import get_settings
+
 settings = get_settings()
 
 is_offline = False
@@ -44,11 +45,12 @@ if "postgresql" in settings.database_url:
         is_offline = True
 
 # Overwrite database session engine/SessionLocal if offline
-import app.db.session
 from unittest.mock import patch
 
+import app.db.session
+
 if is_offline or "sqlite" in settings.database_url:
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     
@@ -57,10 +59,10 @@ if is_offline or "sqlite" in settings.database_url:
     patcher.start()
     
     # Also patch in modules that might have already imported it
-    import app.services.agents.agent_worker
     import app.services.agents.agent_executor
     import app.services.agents.agent_queue
     import app.services.agents.agent_state
+    import app.services.agents.agent_worker
     
     app.services.agents.agent_worker.SessionLocal = SessionLocal
     app.services.agents.agent_executor.SessionLocal = SessionLocal
@@ -73,20 +75,30 @@ else:
     from app.db.session import SessionLocal, engine
 
 # Import all models to register them on Base.metadata
-from app.db.base import Base
-import app.models.agents
 import app.models.agent_execution
-
-from sqlalchemy import select, func
-from app.models.agents import AgentDefinition, AgentRun, AgentTool, AgentRunReceipt, AgentMemoryPolicy, AgentMemoryItem, AgentMemoryAccessEvent
-from app.models.agent_execution import AgentWorkerHeartbeat, AgentExecutionJob
-from app.services.agents import agent_runtime
-from app.services.agents.agent_worker import AgentWorkerService
-from app.services.agents.agent_llm_provider import MockAgentLLMProvider, ProviderResponse, LLMProviderType
-from app.services.agents.knowledge_graph.graph_store import GraphStore
-from app.services.agents.knowledge_graph.graph_models import GraphQueryRequest
-from app.services.agents.agent_evals import AgentEvalService
+import app.models.agents
 from app.core.time import utc_now
+from app.db.base import Base
+from app.models.agent_execution import AgentExecutionJob, AgentWorkerHeartbeat
+from app.models.agents import (
+    AgentDefinition,
+    AgentMemoryAccessEvent,
+    AgentMemoryItem,
+    AgentMemoryPolicy,
+    AgentRunReceipt,
+    AgentTool,
+)
+from app.services.agents import agent_runtime
+from app.services.agents.agent_evals import AgentEvalService
+from app.services.agents.agent_llm_provider import (
+    LLMProviderType,
+    MockAgentLLMProvider,
+    ProviderResponse,
+)
+from app.services.agents.agent_worker import AgentWorkerService
+from app.services.agents.knowledge_graph.graph_models import GraphQueryRequest
+from app.services.agents.knowledge_graph.graph_store import GraphStore
+from sqlalchemy import func, select
 
 # Custom response sequence for MockAgentLLMProvider to traverse execution path
 responses_sequence = [
@@ -162,6 +174,7 @@ async def mock_index_item(*args, **kwargs):
     pass
 
 from app.services.agents.memory_indexing import MemoryIndexingService
+
 MemoryIndexingService.index_item = mock_index_item
 
 

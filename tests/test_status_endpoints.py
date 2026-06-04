@@ -1,14 +1,13 @@
+import httpx
 import pytest
 import pytest_asyncio
-import httpx
-from httpx import AsyncClient
-from app.main import app
-from app.db.session import get_db_session, get_redis
 from app.core.config import get_settings
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import StaticPool
-
+from app.db.session import get_db_session, get_redis
+from app.main import app
 from app.services.auth import require_admin
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 settings = get_settings()
 

@@ -5,7 +5,6 @@ import stat
 import subprocess
 from pathlib import Path
 
-
 ALLOWED_SCORES = {"READY", "READY_WITH_WARNINGS", "NOT_READY"}
 SECRET_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9_-]{10,}"),

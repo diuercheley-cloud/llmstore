@@ -1,11 +1,12 @@
-import pytest
-import json
 import hashlib
-from app.services.security.pki_service import PKIService
-from app.services.security.attestation_service import NodeAttestationService
-from app.services.plugins.plugin_loader import PluginLoader
+
+import pytest
 from app.contracts.plugin import PluginManifest
 from app.core.config import get_settings
+from app.services.plugins.plugin_loader import PluginLoader
+from app.services.security.attestation_service import NodeAttestationService
+from app.services.security.pki_service import PKIService
+
 
 @pytest.fixture
 def mock_settings(monkeypatch):

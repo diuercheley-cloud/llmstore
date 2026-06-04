@@ -1,15 +1,17 @@
-import uuid
 import hashlib
+import uuid
 from datetime import datetime, timedelta
-from typing import Any, List, Optional
-from sqlalchemy.future import select
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 from ...models.commercial_rag_vault import (
-    CommercialRAGVault,
-    CommercialRAGDocument,
     CommercialRAGChunk,
-    CommercialRetrievalPolicyViolation
+    CommercialRAGDocument,
+    CommercialRAGVault,
+    CommercialRetrievalPolicyViolation,
 )
+
 
 async def create_vault(
     db: AsyncSession,

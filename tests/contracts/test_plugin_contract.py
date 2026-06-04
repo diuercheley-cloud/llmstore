@@ -1,5 +1,6 @@
 import pytest
-from app.contracts.plugin import PluginContract, PluginManifest, PluginCapabilities
+from app.contracts.plugin import PluginCapabilities, PluginContract, PluginManifest
+
 
 class MockPluginLoader(PluginContract):
     async def load_plugin(self, manifest: PluginManifest, plugin_binary: bytes):

@@ -1,4 +1,3 @@
-import os
 import subprocess
 from pathlib import Path
 
@@ -38,7 +37,7 @@ class TestClientProposalTemplate:
         ]
         
         for section in sections:
-            assert f"## " in content and section in content, f"Section {section} missing in proposal"
+            assert "## " in content and section in content, f"Section {section} missing in proposal"
 
     def test_placeholders_replaced(self):
         output_dir = ROOT / "artifacts/test-py-placeholders"

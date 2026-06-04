@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
+
 from prometheus_client import REGISTRY
-from app.core import metrics
+
 
 class PlatformSLOService:
     def __init__(self):

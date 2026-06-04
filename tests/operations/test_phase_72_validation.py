@@ -1,5 +1,6 @@
-import subprocess
 import os
+import subprocess
+
 
 def test_phase_72_validation_script():
     """Runs the phase 72 validation script and ensures it passes."""

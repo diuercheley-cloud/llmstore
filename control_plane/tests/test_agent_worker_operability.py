@@ -1,17 +1,19 @@
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-import uuid
-import asyncio
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, func
-from app.main import app as main_app
-import app.db.session
-from app.models.agent_execution import AgentExecutionJob, AgentExecutionLease, AgentExecutionDeadLetter, AgentWorkerHeartbeat
+from app.db.base import Base
+from app.models.agent_execution import (
+    AgentExecutionJob,
+    AgentExecutionLease,
+    AgentWorkerHeartbeat,
+)
 from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.agent_worker import AgentWorkerService
-from app.db.base import Base
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from pathlib import Path
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force SQLite for tests
 TEST_DB_FILE = Path("/tmp/test-worker-operability.db")
@@ -25,7 +27,6 @@ async def test_db():
     session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     
     # Patch the global session and engine
-    import app.db.session
     import app.services.agents.agent_worker
     
     orig_engine = app.db.session.engine
@@ -64,7 +65,6 @@ async def setup_settings():
 
 @pytest.mark.asyncio
 async def test_worker_heartbeat_and_active_metrics(test_db):
-    from app.services.agents.agent_worker import AgentWorkerService
     worker = AgentWorkerService(worker_id="test-worker")
     
     async with test_db() as db:
@@ -77,7 +77,6 @@ async def test_worker_heartbeat_and_active_metrics(test_db):
 
 @pytest.mark.asyncio
 async def test_worker_drain_prevents_pickup(test_db):
-    from app.services.agents.agent_worker import AgentWorkerService
     worker = AgentWorkerService(worker_id="draining-worker")
     worker.drain() # Enter drain mode
     
@@ -96,7 +95,6 @@ async def test_worker_drain_prevents_pickup(test_db):
 
 @pytest.mark.asyncio
 async def test_orphan_lease_recovery(test_db):
-    from app.services.agents.agent_worker import AgentWorkerService
     worker = AgentWorkerService(worker_id="recovery-worker")
     
     async with test_db() as db:
@@ -124,7 +122,6 @@ async def test_orphan_lease_recovery(test_db):
 
 @pytest.mark.asyncio
 async def test_job_reaches_dlq_after_max_attempts(test_db):
-    from app.services.agents.agent_worker import AgentWorkerService
     worker = AgentWorkerService(worker_id="failing-worker")
     
     async with test_db() as db:

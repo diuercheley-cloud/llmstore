@@ -1,11 +1,13 @@
 # Owner: agent-platform
-import uuid
 import hashlib
-from typing import Optional, Dict, Any
+import uuid
+from typing import Optional
+
+from app.models.agent_cognitive_loopback import AgentSuccessPattern
+from app.models.agents import AgentRun
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.agents import AgentRun
-from app.models.agent_cognitive_loopback import AgentSuccessPattern
+
 
 class SuccessPatternMiner:
     def __init__(self, db: AsyncSession):

@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from urllib.parse import urlparse
 
 from app.core.config import get_settings

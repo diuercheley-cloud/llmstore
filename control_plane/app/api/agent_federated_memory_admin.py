@@ -1,12 +1,15 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict
+
+from app.db.session import get_db
+from app.models.agent_federated_memory import FederatedMemoryPeer
+from app.services.agents.federated_memory.memory_summary_sync import MemorySummarySync
+from app.services.agents.federated_memory.remote_memory_reference import (
+    RemoteMemoryReferenceService,
+)
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db
-from app.services.agents.federated_memory.memory_summary_sync import MemorySummarySync
-from app.services.agents.federated_memory.remote_memory_reference import RemoteMemoryReferenceService
-from app.models.agent_federated_memory import FederatedMemoryPeer
 
 router = APIRouter(prefix="/admin/agents/federated-memory", tags=["Federated Memory"])
 

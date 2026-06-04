@@ -1,10 +1,10 @@
 import uuid
 from typing import Any, Dict, Optional
 
+from app.services.governance.policy_engine import PolicyEngineService
+from app.services.governance.policy_registry import PolicyRegistryService
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.governance.policy_registry import PolicyRegistryService
-from app.services.governance.policy_engine import PolicyEngineService
 
 async def get_effective_policy_constraints(
     db: AsyncSession,

@@ -1,5 +1,5 @@
-import pytest
 from app.services.governance.policy_trace import PolicyTraceBuilder
+
 
 def test_policy_trace_builder():
     builder = PolicyTraceBuilder(evaluation_id="eval-123", bundle_id="bundle-abc")

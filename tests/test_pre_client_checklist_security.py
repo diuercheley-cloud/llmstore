@@ -1,7 +1,7 @@
-import os
 import glob
-import json
+import os
 import subprocess
+
 
 def test_no_secrets_in_report():
     output_dir = "artifacts/pytest-checklists-security"

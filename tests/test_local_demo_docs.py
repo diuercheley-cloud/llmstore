@@ -1,5 +1,6 @@
 import os
 
+
 def test_demo_docs_exist():
     """Valida se os arquivos de documentação da demo existem."""
     docs = [

@@ -1,27 +1,23 @@
 from __future__ import annotations
 
 import hashlib
-import json
 
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_cryptographic_receipts import (
-    CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,
     CommercialInferenceReceiptVerificationReport,
 )
 from app.services.inference.cryptographic_receipts import (
+    build_receipt_chain,
     build_receipt_hash,
     export_receipt,
     generate_inference_receipt,
     sign_receipt,
-    build_receipt_chain,
+    summarize_receipt,
     validate_receipt_chain,
     verify_receipt,
-    summarize_receipt,
 )
-from app.utils.crypto_signer import sign_payload
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

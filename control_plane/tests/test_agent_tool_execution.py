@@ -1,42 +1,39 @@
-import pytest
-import pytest_asyncio
-import uuid
 import asyncio
 import importlib
+import uuid
+from datetime import timedelta
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from fastapi import status
 
-from app.db.base import Base
 import app.db.session
+import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import (
-    AgentTool,
-    AgentRegistryEntry,
-    AgentToolInvocation,
-    AgentApprovalRequest,
-)
+from app.db.base import Base
 from app.models.agent_tool_execution import (
-    AgentToolCredential,
-    AgentToolCredentialGrant,
-    AgentToolExecutionSandbox,
-    AgentToolSideEffect,
-    AgentToolRollbackAction,
-    AgentToolQuotaCounter,
     AgentToolExecutionAudit,
+    AgentToolExecutionSandbox,
+    AgentToolQuotaCounter,
+    AgentToolRollbackAction,
+    AgentToolSideEffect,
+)
+from app.models.agents import (
+    AgentApprovalRequest,
+    AgentRegistryEntry,
+    AgentTool,
+    AgentToolInvocation,
+)
+from app.services.agents.tool_credentials import (
+    grant_credential,
+    register_credential,
+    resolve_credential,
+    revoke_credential,
 )
 from app.services.agents.tool_executor import execute_tool
-from app.services.agents.tool_credentials import (
-    register_credential,
-    grant_credential,
-    revoke_credential,
-    resolve_credential,
-)
 from app.services.agents.tool_quota import QuotaExceededError
-from app.services.agents.tool_rollback import rollback_invocation_side_effects
+from fastapi import status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture(autouse=True)

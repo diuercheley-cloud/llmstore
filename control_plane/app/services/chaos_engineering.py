@@ -1,21 +1,19 @@
-import os
 import asyncio
-from datetime import datetime, timedelta
+import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
-import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
+from app.core.config import get_settings
 from app.models.operations.chaos import (
     ChaosExperiment,
-    ChaosRun,
     ChaosInjection,
-    ChaosAssertion,
     ChaosReport,
+    ChaosRun,
 )
-from app.core.config import get_settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 class ChaosEngineeringService:
     def __init__(self, db: AsyncSession):

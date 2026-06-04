@@ -1,5 +1,6 @@
 # Owner: agent-platform
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class ConfidenceCalibrator:
     def calculate(self, metrics: Dict[str, Any]) -> float:

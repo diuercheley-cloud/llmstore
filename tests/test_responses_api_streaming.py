@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_responses_api_streaming_501(admin_client: AsyncClient, admin_token_headers):
     # 1. Create a client and key

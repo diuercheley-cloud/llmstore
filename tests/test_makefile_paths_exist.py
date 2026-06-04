@@ -24,7 +24,7 @@ def test_all_makefile_script_refs_exist():
         script_path = ROOT_DIR / "scripts" / ref
         if not script_path.exists():
             missing.append(ref)
-    assert not missing, f"Makefile references missing scripts:\n" + "\n".join(missing)
+    assert not missing, "Makefile references missing scripts:\n" + "\n".join(missing)
 
 
 def test_all_makefile_script_refs_executable():
@@ -33,4 +33,4 @@ def test_all_makefile_script_refs_executable():
         script_path = ROOT_DIR / "scripts" / ref
         if script_path.exists() and not script_path.stat().st_mode & 0o111:
             not_exec.append(ref)
-    assert not not_exec, f"Makefile scripts not executable:\n" + "\n".join(not_exec)
+    assert not not_exec, "Makefile scripts not executable:\n" + "\n".join(not_exec)

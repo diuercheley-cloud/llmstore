@@ -1,6 +1,3 @@
-import os
-import subprocess
-import pytest
 
 def test_release_script_detects_appliance_mode():
     # We can test if the script contains the expected logic

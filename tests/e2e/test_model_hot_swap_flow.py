@@ -1,6 +1,8 @@
-import pytest
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 
 @pytest.mark.asyncio
 async def test_model_hot_swap_flow(e2e_client, admin_headers):
@@ -28,9 +30,9 @@ async def test_model_hot_swap_flow(e2e_client, admin_headers):
         instance_v1_str = resp_data["id"]
 
         # Force status to "ready" via DB so activate can proceed
-        from sqlalchemy import update as sa_update
-        from app.models.operations.model_runtime import ModelRuntimeInstance
         from app.db.session import get_db_session as _session_factory
+        from app.models.operations.model_runtime import ModelRuntimeInstance
+        from sqlalchemy import update as sa_update
         async for sess in _session_factory():
             await sess.execute(
                 sa_update(ModelRuntimeInstance)

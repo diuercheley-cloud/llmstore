@@ -20,19 +20,13 @@ Public endpoints (endpoint key auth):
   POST /api/agents/{slug}/invoke-sync         - Sync invoke
   GET  /api/agents/{slug}/runs/{run_id}       - Get run status
 """
-import uuid
-import time
 import logging
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+import time
+import uuid
+from typing import Any, Dict, Optional
 
-from app.db.session import get_db_session
-from app.services.auth import require_admin, require_client
-from app.models.client import Client
 from app.core.config import get_settings
-
+from app.db.session import get_db_session
 from app.services.agent_deployments.agent_api_deployment import (
     AgentApiDeploymentService,
     DeploymentNotFoundError,
@@ -41,7 +35,10 @@ from app.services.agent_deployments.agent_api_deployment import (
 from app.services.agent_deployments.agent_endpoint_registry import AgentEndpointRegistry
 from app.services.agent_deployments.deployment_sla import DeploymentSlaService
 from app.services.agent_deployments.deployment_usage import DeploymentUsageService
-from app.services.agent_deployments.deployment_router import deployment_router
+from app.services.auth import require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -143,8 +140,8 @@ async def create_deployment(
         await session.commit()
 
         # Get the default key
-        from sqlalchemy import select
         from app.models.agent_deployments import AgentApiEndpointKey
+        from sqlalchemy import select
         stmt = select(AgentApiEndpointKey).where(
             AgentApiEndpointKey.deployment_id == deployment.id
         )

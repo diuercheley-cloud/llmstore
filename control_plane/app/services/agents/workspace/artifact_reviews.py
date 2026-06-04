@@ -1,9 +1,16 @@
 import uuid
-from typing import List, Optional
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_workspace import AgentSharedArtifact, AgentArtifactReview, AgentArtifactComment, AgentArtifactEvent
+from typing import Optional
+
 from app.core.time import utc_now
+from app.models.agent_workspace import (
+    AgentArtifactComment,
+    AgentArtifactEvent,
+    AgentArtifactReview,
+    AgentSharedArtifact,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 
 class ArtifactReviewManager:
     @staticmethod

@@ -1,12 +1,12 @@
-import re
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_notifications import NotificationEvent
 from app.models.agents import AgentApprovalRequest
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("notification_policy")
 

@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Any, List
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, ForeignKey, Integer, Text, Float
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
+
 from ..db.base import Base
+
 
 class CommercialRAGVault(Base):
     __tablename__ = "commercial_rag_vaults"

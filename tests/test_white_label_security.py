@@ -1,6 +1,7 @@
 import os
-import pytest
 import re
+
+import pytest
 
 CONFIG_EXAMPLE = "config/branding.example.json"
 
@@ -49,9 +50,12 @@ def test_branding_endpoint_no_auth_required():
 
 def test_branding_service_fails_gracefully():
     """Branding service should not crash when config file is missing or broken."""
-    import sys, json, tempfile, os
+    import os
+    import sys
+    import tempfile
     sys.path.insert(0, "control_plane")
     import importlib
+
     from app.services import branding
 
     # Test with broken JSON
@@ -73,9 +77,11 @@ def test_branding_service_fails_gracefully():
 
 def test_branding_service_invalid_types():
     """Branding service should handle wrong types gracefully."""
-    import sys, json, os
+    import json
+    import os
+    import sys
     sys.path.insert(0, "control_plane")
-    from app.services.branding import load_branding, BRANDING_CONFIG_PATH
+    from app.services.branding import BRANDING_CONFIG_PATH, load_branding
 
     original_exists = BRANDING_CONFIG_PATH.exists()
     original_content = None

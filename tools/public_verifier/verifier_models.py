@@ -1,7 +1,10 @@
 
 from __future__ import annotations
-from typing import Any, List, Optional
-from pydantic import BaseModel, Field
+
+from typing import List, Optional
+
+from pydantic import BaseModel
+
 
 class MerkleProofStep(BaseModel):
     sibling_hash: str

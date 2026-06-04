@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class MockWalletProvider:
     async def process_payment(self, amount: float, currency: str) -> Dict[str, Any]:

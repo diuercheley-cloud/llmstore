@@ -1,10 +1,10 @@
-import pytest
 import uuid
+
 import httpx
+import pytest
 import pytest_asyncio
-from app.core.config import get_settings
-from app.models.batches import BatchJob, BatchJobItem
 from app.models.agents import AgentDefinition
+
 
 @pytest_asyncio.fixture
 async def batches_client(isolated_db_url, fake_redis):
@@ -12,10 +12,10 @@ async def batches_client(isolated_db_url, fake_redis):
     os.environ["AGENT_BATCH_API_ENABLED"] = "true"
     os.environ["AGENT_RUNTIME_ENABLED"] = "true"
     
-    from app.main import app
-    from app.db.session import get_db, get_redis
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
+    from app.db.session import get_db, get_redis
+    from app.main import app
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

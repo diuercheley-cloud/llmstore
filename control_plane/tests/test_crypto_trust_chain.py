@@ -1,6 +1,6 @@
-from fastapi.testclient import TestClient
 from app.api.commercial_crypto_admin import router
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 app = FastAPI()
 app.include_router(router, prefix="/admin/crypto")

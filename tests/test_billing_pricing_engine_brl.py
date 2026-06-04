@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 from app.services.billing.pricing_engine import (
     calculate_customer_price,
     calculate_financials,
@@ -56,7 +54,10 @@ def test_estimate_provider_cost_pricing_configured(monkeypatch):
             }
         },
     }
-    import json, tempfile, pathlib
+    import json
+    import pathlib
+    import tempfile
+
     from app.services.billing import pricing_engine
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
     json.dump(pricing, tmp)

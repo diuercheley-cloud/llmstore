@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from app.services.agents.catalog.capability_catalog import CapabilityCatalogService
 
 

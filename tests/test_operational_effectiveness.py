@@ -7,8 +7,6 @@ from datetime import date, timedelta
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-
 from app.core.config import get_settings
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
@@ -16,9 +14,9 @@ from app.main import app
 from app.models.api_key import ApiKey
 from app.models.client import Client
 from app.models.commercial_compliance import (
-    CommercialControlPolicy,
     CommercialControlAttestation,
     CommercialControlException,
+    CommercialControlPolicy,
 )
 from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
 from app.models.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
@@ -32,6 +30,7 @@ from app.services.compliance.operational_controls import (
     link_exception,
     summarize_operational_controls,
 )
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

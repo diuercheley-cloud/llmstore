@@ -9,9 +9,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
@@ -21,6 +18,8 @@ from app.models.commercial_routing_event_ingest import CommercialRoutingEventIng
 from app.services.routing.commercial_leader_election import validate_fencing_token
 from app.services.routing.commercial_node_heartbeat import summarize_cluster_health
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

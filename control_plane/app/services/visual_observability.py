@@ -1,18 +1,22 @@
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-import uuid
 import logging
+import os
+import uuid
+from datetime import datetime, timedelta
 from statistics import mean
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func
-from prometheus_client import REGISTRY
+from typing import Any, Dict, List
 
 from app.core.config import get_settings
-from app.models.agents import AgentRun, AgentRunStep, AgentRunEvent, AgentIncident, AgentPolicyDecision, AgentApprovalRequest
 from app.models.agent_workflows import AgentWorkflowEvent
+from app.models.agents import (
+    AgentIncident,
+    AgentRun,
+    AgentRunEvent,
+    AgentRunStep,
+)
 from app.services.platform_slo import PlatformSLOService
+from prometheus_client import REGISTRY
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,8 @@ import time
 import uuid
 from typing import Optional, Tuple
 
-from redis.asyncio import Redis
-
 from app.core.config import get_settings
+from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 

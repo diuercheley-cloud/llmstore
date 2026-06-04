@@ -2,20 +2,17 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any, cast
-from datetime import datetime
+from typing import Any
 
+from app.models.client import Client
+from app.models.commercial_qos_tier import CommercialQoSTier
+from app.schemas.routing import (
+    CommercialScoreExplained,
+)
+from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
-from app.models.commercial_qos_tier import CommercialQoSTier
-from app.models.client import Client
-from app.schemas.routing import (
-    CommercialScoreExplained,
-    TaskType,
-)
 
 logger = logging.getLogger(__name__)
 

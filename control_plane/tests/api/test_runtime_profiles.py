@@ -1,14 +1,13 @@
 import os
+
+# Import models to register on Base.metadata
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.db.base import Base
 from app.db.session import engine
-# Import models to register on Base.metadata
-import app.models.admin_rbac
-
 from app.services.runtime_profiles import RuntimeProfilesService
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

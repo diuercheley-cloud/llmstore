@@ -1,9 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-import os
-from unittest.mock import patch, MagicMock
-from app.services.agents.connectors.github_connector import GitHubConnector
 from app.services.agents.connectors.connector_mode import ConnectorMode
-from app.services.agents.connectors.connector_runtime import ConnectorRuntime
+from app.services.agents.connectors.github_connector import GitHubConnector
+
 
 @pytest.fixture(autouse=True)
 def mock_settings():

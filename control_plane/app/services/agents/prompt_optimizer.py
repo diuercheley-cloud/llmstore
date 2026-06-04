@@ -4,10 +4,8 @@ Analyzes eval results and suggests concrete prompt improvements.
 Uses LLM-as-judge to identify weaknesses and generate optimized variants.
 """
 
-import json
 import logging
-import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 from app.core.config import get_settings

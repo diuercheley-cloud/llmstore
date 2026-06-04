@@ -3,12 +3,12 @@ import logging
 import time
 import uuid
 from typing import Dict, List, Optional
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

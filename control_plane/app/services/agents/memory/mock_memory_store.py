@@ -1,6 +1,7 @@
-import uuid
 import logging
-from typing import List, Dict, Any
+import uuid
+from typing import Any, Dict, List
+
 from .vector_store import VectorStore
 
 logger = logging.getLogger(__name__)

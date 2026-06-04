@@ -1,10 +1,11 @@
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.models.quota_counter import QuotaCounter
-from app.models.client import Client
-from app.services.quota import record_embedding_usage
 from app.db.base import Base
+from app.models.client import Client
+from app.models.quota_counter import QuotaCounter
+from app.services.quota import record_embedding_usage
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest.mark.asyncio
 async def test_record_embedding_usage(isolated_db_url):
@@ -30,8 +31,9 @@ async def test_record_embedding_usage(isolated_db_url):
         await db_session.commit()
         
         # Verificar contador mensal
-        from app.services.quota import month_start
         from datetime import date
+
+        from app.services.quota import month_start
         
         res = await db_session.execute(
             select(QuotaCounter).where(

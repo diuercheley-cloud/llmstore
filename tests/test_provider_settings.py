@@ -1,10 +1,9 @@
 import os
 
 import pytest
-from httpx import AsyncClient
-
 from app.core.config import get_settings
 from app.services.provider_settings import apply_runtime_updates
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

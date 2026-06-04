@@ -1,7 +1,7 @@
 # Owner: agent-platform
-import re
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import re
+from typing import Any, Dict, List, Optional
 
 from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 

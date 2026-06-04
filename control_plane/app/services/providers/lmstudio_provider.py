@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 import httpx
-
 from app.core.config import get_settings
 from app.services.providers.base import ProviderAdapter, ProviderType
 from app.services.providers.schemas import ProviderCapabilities

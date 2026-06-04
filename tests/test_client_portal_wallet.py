@@ -4,11 +4,9 @@ from uuid import uuid4
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from redis.asyncio import Redis
-
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 class FakeRedis:
@@ -75,9 +73,9 @@ async def db_session(app):
 
 @pytest_asyncio.fixture
 async def demo_client(app, db_session):
-    from app.models.client import Client
-    from app.models.api_key import ApiKey
     from app.core.security import generate_api_key, hash_secret, short_prefix
+    from app.models.api_key import ApiKey
+    from app.models.client import Client
 
     client_obj = Client(name=f"portal-wallet-{uuid4().hex[:8]}")
     db_session.add(client_obj)

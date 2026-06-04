@@ -1,4 +1,6 @@
-from app.services.operations.compatibility_contracts.compatibility_matrix import CompatibilityMatrixService
+from app.services.operations.compatibility_contracts.compatibility_matrix import (
+    CompatibilityMatrixService,
+)
 
 
 def test_matrix_upgrade_and_downgrade_rules():

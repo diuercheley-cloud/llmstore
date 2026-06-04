@@ -1,6 +1,8 @@
 import uuid
 
-from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
+from app.services.operations.attestation_framework.attestation_service import (
+    SovereignExecutionAttestationService,
+)
 from app.services.operations.attestation_framework.replay_verifier import AttestationReplayVerifier
 from app.utils.crypto_signer import sign_payload
 

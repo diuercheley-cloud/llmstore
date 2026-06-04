@@ -1,6 +1,7 @@
-import pytest
-from app.services.queue_manager import QueueManager
 from unittest.mock import MagicMock
+
+from app.services.queue_manager import QueueManager
+
 
 def test_plan_to_queue_name():
     qm = QueueManager(MagicMock())

@@ -1,9 +1,10 @@
-import pytest
 from datetime import datetime, timezone
-from httpx import AsyncClient
 
+import pytest
 from app.models.client import Client
 from app.models.request_financial import RequestFinancial
+from httpx import AsyncClient
+
 
 @pytest.mark.asyncio
 async def test_margin_dashboard_empty(admin_client: AsyncClient, admin_token_headers: dict):
@@ -40,8 +41,8 @@ async def test_margin_dashboard_aggregates_current_day(
     admin_client: AsyncClient,
     admin_token_headers: dict,
 ):
-    from app.main import app
     from app.db.session import get_db_session
+    from app.main import app
 
     session_generator = app.dependency_overrides[get_db_session]()
     session = await session_generator.__anext__()

@@ -1,17 +1,16 @@
-import asyncio
-import uuid
 import logging
-from typing import Optional, Dict, Any
+import uuid
 from datetime import timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Optional
 
+from app.core.time import utc_now
 from app.models.managed_control_plane import (
-    ManagedAppliance,
     ApplianceHeartbeat,
+    ManagedAppliance,
     ManagedControlPlaneLink,
 )
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,9 @@
 import pytest
-
 from app.services.operations.forecasting.audit_events import (
-    build_failure_signal_recorded_event,
+    AUDIT_EVENT_TYPES,
     build_failure_forecast_created_event,
     build_failure_risk_assessment_created_event,
-    AUDIT_EVENT_TYPES,
+    build_failure_signal_recorded_event,
 )
 
 SIGNAL_RECEIPT = {

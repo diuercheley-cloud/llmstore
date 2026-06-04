@@ -1,6 +1,10 @@
-from app.services.operations.adapter_promotion.staging_simulation import AdapterStagingSimulationService
-from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 import uuid
+
+from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
+from app.services.operations.adapter_promotion.staging_simulation import (
+    AdapterStagingSimulationService,
+)
+
 
 def test_staging_simulation_logic():
     service = AdapterStagingSimulationService()

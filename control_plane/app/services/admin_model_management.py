@@ -9,9 +9,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.billing_plan import BillingPlan
@@ -19,6 +16,8 @@ from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.utils.model_prompting import detect_architecture, detect_prompt_template
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _ALLOWED_DOCKER_SERVICES = {
     "data-plane-gemma",

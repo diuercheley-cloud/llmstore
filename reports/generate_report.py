@@ -1,11 +1,10 @@
-import os
-from docx import Document
-from docx.shared import Inches, Pt, Cm, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.section import WD_ORIENT
-from docx.oxml.ns import qn
 from datetime import datetime
+
+from docx import Document
+from docx.enum.section import WD_ORIENT
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Cm, Pt, RGBColor
 
 doc = Document()
 
@@ -82,20 +81,20 @@ doc.add_paragraph(
     'Docker Compose, com opção de deployment em Kubernetes via Helm.'
 )
 doc.add_paragraph(
-    f'• Versão atual: v2.0.2-agentic-ga-readiness\n'
-    f'• Linguagem principal: Python 3.12 (backend) + TypeScript/React 19 (frontend)\n'
-    f'• Commits no git: 99\n'
-    f'• Arquivos de código no backend (Python): 1.107\n'
-    f'• Arquivos de código no frontend (TS/TSX): 8.068\n'
-    f'• Testes automatizados: 847\n'
-    f'• Scripts operacionais: 491\n'
-    f'• Documentos de documentação: 535\n'
-    f'• Feature flags: ~3.136\n'
-    f'• Rotas de API: 134\n'
-    f'• Modelos SQLAlchemy: 105\n'
-    f'• Módulos de serviço: 55 (gerais) + 70 (agentes) + 36 (roteamento)\n'
-    f'• Contextos delimitados (DDD): 15\n'
-    f'• Workflows CI/CD: 13 (GitHub Actions) + 11 estágios (GitLab CI)'
+    '• Versão atual: v2.0.2-agentic-ga-readiness\n'
+    '• Linguagem principal: Python 3.12 (backend) + TypeScript/React 19 (frontend)\n'
+    '• Commits no git: 99\n'
+    '• Arquivos de código no backend (Python): 1.107\n'
+    '• Arquivos de código no frontend (TS/TSX): 8.068\n'
+    '• Testes automatizados: 847\n'
+    '• Scripts operacionais: 491\n'
+    '• Documentos de documentação: 535\n'
+    '• Feature flags: ~3.136\n'
+    '• Rotas de API: 134\n'
+    '• Modelos SQLAlchemy: 105\n'
+    '• Módulos de serviço: 55 (gerais) + 70 (agentes) + 36 (roteamento)\n'
+    '• Contextos delimitados (DDD): 15\n'
+    '• Workflows CI/CD: 13 (GitHub Actions) + 11 estágios (GitLab CI)'
 )
 
 # ════════════════════════════════════════════════════

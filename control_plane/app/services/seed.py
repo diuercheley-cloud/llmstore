@@ -1,16 +1,16 @@
 import logging
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.models.api_key import ApiKey
 from app.models.client import Client
 from app.services.admin_rbac import ensure_admin_rbac_seed
+from app.services.agents.tool_adapter_seeding import seed_tool_adapters
 from app.services.billing import ensure_default_billing_plans, ensure_default_pricing_rules
 from app.services.model_registry import ensure_default_model
 from app.services.routing.commercial_safety_policies import ensure_default_safety_policies
-from app.services.agents.tool_adapter_seeding import seed_tool_adapters
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

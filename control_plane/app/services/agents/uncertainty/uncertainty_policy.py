@@ -1,12 +1,17 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Tuple
+import uuid
+from typing import Any, Dict, Tuple
+
+from app.core.config import get_settings
+from app.models.agent_uncertainty import (
+    AgentConfidenceScore,
+    AgentUncertaintyEvent,
+    AgentUncertaintyPolicy,
+)
+from app.models.agents import AgentDefinition
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.core.config import get_settings
-from app.models.agent_uncertainty import AgentUncertaintyPolicy, AgentUncertaintyEvent, AgentConfidenceScore
-from app.models.agents import AgentDefinition
 
 logger = logging.getLogger(__name__)
 

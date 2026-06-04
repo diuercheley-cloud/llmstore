@@ -1,10 +1,11 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
 from app.core.config import get_settings
 from app.services.agents.agent_llm_provider import AgentLLMProvider
-from app.services.agents.reasoning.react_loop import ReActLoop
 from app.services.agents.reasoning.plan_and_solve_loop import PlanAndSolveLoop
+from app.services.agents.reasoning.react_loop import ReActLoop
 from app.services.agents.reasoning.semantic_model_fallback import SemanticModelFallback
 
 logger = logging.getLogger(__name__)

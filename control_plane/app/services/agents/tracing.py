@@ -1,12 +1,11 @@
-import os
 import logging
 from typing import Any, Dict, Optional
+
+from app.core.config import get_settings
 from opentelemetry import trace
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +26,8 @@ class TracingService:
         
         if settings.agent_otel_tracing_enabled:
             # Multi-exporter setup
-            from app.services.observability.otlp_exporter import OTLPExporter
             from app.services.observability.jaeger_exporter import JaegerExporterService
+            from app.services.observability.otlp_exporter import OTLPExporter
             from app.services.observability.zipkin_exporter import ZipkinExporterService
             
             if settings.otlp_export_enabled:

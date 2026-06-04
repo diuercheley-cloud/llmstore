@@ -5,8 +5,8 @@ Revises: phase71_remediation_planning
 Create Date: 2026-05-15 21:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "phase72_remediation_execution"

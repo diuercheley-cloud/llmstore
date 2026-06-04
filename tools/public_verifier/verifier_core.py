@@ -1,8 +1,10 @@
 
 import hashlib
 import json
-from typing import Any, List, Optional
+from typing import Any, List
+
 from .verifier_models import ExecutionProof, MerkleInclusionProof, VerificationCheck
+
 
 def _sha256_hex(data: str) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()

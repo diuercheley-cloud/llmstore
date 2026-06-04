@@ -1,6 +1,7 @@
 import logging
-from app.models.agent_optimization import AgentOptimizationCandidate, AgentOptimizationResult
+
 from app.core.config import get_settings
+from app.models.agent_optimization import AgentOptimizationCandidate, AgentOptimizationResult
 
 logger = logging.getLogger(__name__)
 

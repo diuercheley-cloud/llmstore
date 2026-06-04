@@ -1,7 +1,9 @@
-from sqlalchemy.orm import Session
-from app.models.commercial_control_plane_mesh import CommercialMeshReplicationLog
 import uuid
 from typing import List
+
+from app.models.commercial_control_plane_mesh import CommercialMeshReplicationLog
+from sqlalchemy.orm import Session
+
 
 class MeshReplicationService:
     def __init__(self, db: Session):

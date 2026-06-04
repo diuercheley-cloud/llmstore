@@ -8,9 +8,8 @@ Create Date: 2026-05-16 14:00:00.000000
 # Model class: PluginRuntimeActivation
 # Model class: PluginRuntimeExecution
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "phase79_plugin_abi"
 down_revision = "phase78_compatibility_contracts"

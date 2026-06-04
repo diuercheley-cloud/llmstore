@@ -1,7 +1,8 @@
 # Owner: agent-platform
-import pytest
 import uuid
 from datetime import datetime, timezone
+
+import pytest
 from sqlalchemy import select
 
 
@@ -9,10 +10,10 @@ from sqlalchemy import select
 async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     from app.core.config import get_settings
     from app.db.session import SessionLocal
-    from app.models.agents import AgentDefinition, AgentA2ARegistration, AgentDelegationPolicy
     from app.models.admin_rbac import AdminAuditEvent
-    from app.services.agents.a2a.a2a_security import A2ASecurityService
+    from app.models.agents import AgentDefinition, AgentDelegationPolicy
     from app.services.agents.a2a.a2a_client import A2AClientService
+    from app.services.agents.a2a.a2a_security import A2ASecurityService
 
     # 1. Access settings
     settings = get_settings()

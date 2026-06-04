@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
-import sys
 import re
+import sys
+
 
 def check_file(path):
     if os.path.exists(path):

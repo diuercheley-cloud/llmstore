@@ -1,16 +1,18 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-import uuid
-from sqlalchemy import select
-from app.main import app
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
+from app.main import app
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def client(isolated_db_url, fake_redis):

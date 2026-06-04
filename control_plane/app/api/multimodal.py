@@ -1,14 +1,13 @@
 import uuid
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Request
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_db, get_current_client
+from app.api.dependencies import get_current_client, get_db
 from app.models.client import Client
 from app.services.multimodal.asset_store import AssetStore
-from app.services.multimodal.vision_service import VisionService
 from app.services.multimodal.speech_to_text_service import SpeechToTextService
+from app.services.multimodal.vision_service import VisionService
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/multimodal", tags=["multimodal"])
 

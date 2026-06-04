@@ -1,10 +1,11 @@
-import pytest
 import uuid
-from httpx import AsyncClient
+
+import pytest
 import pytest_asyncio
 
 # Ensure models are registered
-from app.models.operations.adapter_sandbox import AdapterManifest, AdapterSandboxRun
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def ensure_sandbox_tables(admin_client: AsyncClient):

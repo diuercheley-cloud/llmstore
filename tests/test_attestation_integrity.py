@@ -1,18 +1,19 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.commercial_attestation_runtime import CommercialRuntimeAttestation
-from app.services.security.runtime_attestation import create_runtime_attestation, verify_runtime_attestation, compute_trust_score
+from app.services.security.runtime_attestation import (
+    compute_trust_score,
+    create_runtime_attestation,
+    verify_runtime_attestation,
+)
 from app.services.security.runtime_integrity import (
+    block_untrusted_runtimes,
     create_attestation_policy,
     evaluate_attestation_against_policy,
-    block_untrusted_runtimes,
-    require_attestation_for_sensitive_tenants,
-    require_attestation_for_sovereign,
     measure_loaded_models_integrity,
-    verify_inference_adapter_integrity,
+    require_attestation_for_sensitive_tenants,
     summarize_integrity_status,
+    verify_inference_adapter_integrity,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

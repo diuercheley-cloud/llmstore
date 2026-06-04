@@ -1,18 +1,18 @@
 import hashlib
-import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Any, List, Optional
-from sqlalchemy.future import select
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
 from ...models.commercial_transparency import (
+    CommercialConsistencyCheckpoint,
     CommercialTransparencyGossipPeer,
     CommercialTransparencyGossipRecord,
-    CommercialConsistencyCheckpoint,
-    CommercialTransparencySplitViewAlert
+    CommercialTransparencySplitViewAlert,
 )
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
-from ...core.config import get_settings
+
 
 async def create_consistency_checkpoint(
     db: AsyncSession,

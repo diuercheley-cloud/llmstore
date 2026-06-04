@@ -1,7 +1,9 @@
 import uuid
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List
+
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
+from pydantic import BaseModel, Field
+
 
 class AgentMemoryCitationV1(BaseModel):
     memory_id: uuid.UUID

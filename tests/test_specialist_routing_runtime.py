@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from app.services.agents.multi_agent.specialist_routing_runtime import SpecialistRoutingRuntime
 
 

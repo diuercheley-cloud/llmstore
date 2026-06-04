@@ -1,6 +1,8 @@
+import os
+
 import pytest
 from app.services.chaos_engineering import ChaosEngineeringService
-import os
+
 
 @pytest.mark.asyncio
 async def test_chaos_disabled_by_default(db_session):

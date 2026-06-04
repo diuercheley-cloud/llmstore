@@ -8,12 +8,13 @@ sys.path.append(str(ROOT_DIR / "scripts"))
 
 from llm_stack_client import LLMStackClient
 
+
 def main():
     # In a real scenario, these would come from env vars or config
     API_KEY = os.environ.get("API_KEY", "demo-default")
     BASE_URL = os.environ.get("BASE_URL", "http://localhost:18080")
 
-    print(f"--- LLM Stack Client Demo ---")
+    print("--- LLM Stack Client Demo ---")
     print(f"Connecting to: {BASE_URL}")
 
     try:

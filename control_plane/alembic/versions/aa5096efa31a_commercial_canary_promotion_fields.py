@@ -4,10 +4,8 @@ Revision ID: aa5096efa31a
 Revises: 20260514_0033
 Create Date: 2026-05-14 12:51:08.435923
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = 'aa5096efa31a'
 down_revision = '20260514_0033'

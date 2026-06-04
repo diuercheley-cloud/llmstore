@@ -1,7 +1,7 @@
 import os
-import json
-import subprocess
 import re
+import subprocess
+
 import pytest
 
 SCRIPT = "scripts/generate-client-monthly-report.sh"

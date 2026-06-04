@@ -1,9 +1,10 @@
-import sys
 import asyncio
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+
 from app.core.config import get_settings
 from app.core.security import verify_secret
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
 
 async def main():
     settings = get_settings()

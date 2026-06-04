@@ -1,6 +1,6 @@
 import pytest
 from app.services.security.trust_graph import TrustGraphService
-from app.models.commercial_trust_graph import CommercialTrustGraphNode, CommercialTrustGraphEdge
+
 
 @pytest.mark.asyncio
 async def test_trust_graph_add_node(session):

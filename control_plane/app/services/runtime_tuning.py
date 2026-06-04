@@ -1,18 +1,16 @@
 import os
-from datetime import datetime
 from typing import Any, Dict, List, Optional
-import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-
+from app.core.config import get_settings
 from app.models.operations.runtime_tuning import (
     RuntimeBenchmarkRun,
+    RuntimeTuningEvent,
     RuntimeTuningProfile,
     RuntimeTuningRecommendation,
-    RuntimeTuningEvent,
 )
-from app.core.config import get_settings
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class RuntimeTuningService:
     def __init__(self, db: AsyncSession):

@@ -1,5 +1,10 @@
 import pytest
-from app.contracts.token_accounting import TokenAccountingContract, TokenCountResult, TokenAccountingCapabilities
+from app.contracts.token_accounting import (
+    TokenAccountingCapabilities,
+    TokenAccountingContract,
+    TokenCountResult,
+)
+
 
 class MockTokenizer(TokenAccountingContract):
     async def count_text_tokens(self, text: str, model: str = None) -> TokenCountResult:

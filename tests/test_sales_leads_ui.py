@@ -1,5 +1,5 @@
 import os
-import pytest
+
 
 def test_admin_dashboard_ui_sales_section():
     html_path = 'control_plane/app/static/admin/index.html'

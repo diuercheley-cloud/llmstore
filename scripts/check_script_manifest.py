@@ -1,6 +1,7 @@
 import os
-import sys
 import re
+import sys
+
 import yaml
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

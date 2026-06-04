@@ -1,6 +1,7 @@
+import glob
 import json
 import os
-import glob
+
 
 def test_report_generation():
     # Find latest test report

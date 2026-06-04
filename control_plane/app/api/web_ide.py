@@ -1,16 +1,14 @@
-import uuid
 import logging
-from typing import List, Optional, Dict, Any
+
+from app.core.config import get_settings
+from app.models.client import Client
+from app.services.auth import require_client
+from app.services.web_ide.file_service import FileService
+from app.services.web_ide.sandbox_terminal import SandboxTerminal
+from app.services.web_ide.validation_service import ValidationService
+from app.services.web_ide.workspace_service import WorkspaceService
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from app.db.session import get_db_session
-from app.services.auth import require_client
-from app.models.client import Client
-from app.core.config import get_settings
-from app.services.web_ide.workspace_service import WorkspaceService
-from app.services.web_ide.file_service import FileService
-from app.services.web_ide.validation_service import ValidationService
-from app.services.web_ide.sandbox_terminal import SandboxTerminal
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

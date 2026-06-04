@@ -2,10 +2,12 @@ import enum
 from abc import ABC, abstractmethod
 from typing import Any
 
+from app.contracts.provider import (
+    ProviderCapabilities,
+    ProviderContract,
+)
 from app.services.providers.schemas import ProviderCapabilities
 
-
-from app.contracts.provider import ProviderContract, ProviderRequest, ProviderResponse, ProviderCapabilities
 
 class ProviderType(str, enum.Enum):
     LOCAL = "local"

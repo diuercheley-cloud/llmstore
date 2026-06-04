@@ -1,14 +1,19 @@
 import uuid
+
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from app.models.agent_routing import AgentModelCapability, AgentRoutingPolicy, AgentStepRoutingDecision, AgentCostQualityProfile
+from app.db.base import Base
+from app.models.agent_routing import (
+    AgentCostQualityProfile,
+    AgentModelCapability,
+    AgentStepRoutingDecision,
+)
+from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.routing.agentic_router import AgenticRouterV2
 from app.services.agents.routing.cost_quality_policy import PolicyType
 from app.services.agents.routing.step_classifier import StepClass
-from app.models.agents import AgentDefinition, AgentRun
-from app.db.base import Base
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Use a test-specific SQLite DB
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"

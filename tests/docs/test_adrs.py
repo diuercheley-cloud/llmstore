@@ -2,7 +2,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_adrs.py"
 ADR_ROOT = ROOT_DIR / "docs" / "adr"

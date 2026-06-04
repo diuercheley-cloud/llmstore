@@ -1,7 +1,10 @@
 import asyncio
 import logging
+import os
+import tempfile
 import time
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from .._logging import setup_logging
@@ -53,6 +56,7 @@ class EvalRunner:
         pricing_file: str | None = None,
         max_cost_per_run: float | None = None,
         max_tokens_per_run: int | None = None,
+        model_max_tokens: int | None = None,
         experiment_tracker: str = "local",
         mlflow_tracking_uri: str | None = None,
         mlflow_experiment: str | None = None,
@@ -95,6 +99,7 @@ class EvalRunner:
         self.pricing_file = pricing_file
         self.max_cost_per_run = max_cost_per_run
         self.max_tokens_per_run = max_tokens_per_run
+        self.model_max_tokens = model_max_tokens
         self.experiment_tracker = experiment_tracker
         self.mlflow_tracking_uri = mlflow_tracking_uri
         self.mlflow_experiment = mlflow_experiment
@@ -255,34 +260,38 @@ class EvalRunner:
         tokens = 0
 
         try:
-            harness_result = await run_harness(
-                task=case.task,
-                allow_stub=self.allow_stub,
-                progress_callback=self.progress_callback,
-                config=HarnessConfig(
-                    code_agent="eval-agent",
-                    provider=self.provider,
-                    model=self.model,
-                    base_url=self.base_url,
-                    api_key_env=self.api_key_env,
-                    sandbox=self.sandbox,
-                    docker_image=self.docker_image,
-                    test_command=case.test_command or "pytest",
-                    max_steps=self.max_steps,
-                    self_heal=self.self_heal,
-                    timeout=self.request_timeout,
-                    max_retries=self.max_retries,
-                    workspace_mount_path=self.workspace_mount_path,
-                    temp_base_dir=self.temp_base_dir,
-                    loop_timeout=loop_timeout,
-                    max_output_chars=self.max_output_chars,
-                    report_output_path=self.report_output_path,
-                    pricing_file=self.pricing_file,
-                    max_cost_per_run=self.max_cost_per_run,
-                    max_tokens_per_run=self.max_tokens_per_run,
-                ),
-                allow_test_short_circuit=(self.provider == "stub"),
-            )
+            with tempfile.TemporaryDirectory(prefix="agent-harness-") as workspace_dir:
+                self._materialize_input_files(workspace_dir, case.input_files or {})
+                harness_result = await run_harness(
+                    task=case.task,
+                    workspace_path=workspace_dir,
+                    allow_stub=self.allow_stub,
+                    progress_callback=self.progress_callback,
+                    config=HarnessConfig(
+                        code_agent="eval-agent",
+                        provider=self.provider,
+                        model=self.model,
+                        base_url=self.base_url,
+                        api_key_env=self.api_key_env,
+                        sandbox=self.sandbox,
+                        docker_image=self.docker_image,
+                        test_command=case.test_command or "pytest",
+                        max_steps=self.max_steps,
+                        self_heal=self.self_heal,
+                        timeout=self.request_timeout,
+                        max_retries=self.max_retries,
+                        workspace_mount_path=self.workspace_mount_path,
+                        temp_base_dir=self.temp_base_dir,
+                        loop_timeout=loop_timeout,
+                        max_output_chars=self.max_output_chars,
+                        report_output_path=self.report_output_path,
+                        pricing_file=self.pricing_file,
+                        max_cost_per_run=self.max_cost_per_run,
+                        max_tokens_per_run=self.max_tokens_per_run,
+                        max_tokens=self.model_max_tokens,
+                    ),
+                    allow_test_short_circuit=(self.provider == "stub"),
+                )
 
             elapsed = time.time() - start
             score = score_case(case, harness_result, elapsed)
@@ -350,6 +359,13 @@ class EvalRunner:
                 ),
                 tokens,
             )
+
+    @staticmethod
+    def _materialize_input_files(workspace_dir: str, input_files: dict[str, str]) -> None:
+        for relative_path, content in input_files.items():
+            target = Path(workspace_dir) / relative_path
+            os.makedirs(target.parent, exist_ok=True)
+            target.write_text(content)
 
     def _extract_diff(self, harness_result) -> str:
         events = getattr(harness_result, "events", []) or []

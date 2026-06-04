@@ -1,9 +1,9 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
+import uuid
+from typing import Any, Dict, List
+
 from app.models.agent_studio import AgentFlowVersion
-from app.models.agents import AgentPlan
 
 logger = logging.getLogger(__name__)
 

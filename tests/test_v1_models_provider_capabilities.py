@@ -1,5 +1,9 @@
 import pytest
-from app.services.providers.registry import get_providers, reload_registry, get_enabled_configured_providers
+from app.services.providers.registry import (
+    get_enabled_configured_providers,
+    get_providers,
+    reload_registry,
+)
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from app.models.agent_workflows import AgentWorkflowRun
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,6 @@ import os
 import subprocess
 from pathlib import Path
 
-
 SCRIPT_PATH = Path("scripts/validate-security-cleanup-v1.5.4.sh")
 
 

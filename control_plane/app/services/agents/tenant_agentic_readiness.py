@@ -1,19 +1,17 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, List, Any, Optional
 from pathlib import Path
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import (
-    AgentDefinition, 
-    AgentMemoryConsent, 
-    AgentMemoryPolicy,
-    AgentCatalogItem
-)
-from app.services.agents.memory_consent import MemoryConsentService
-from app.services.agents.memory_policy import MemoryPolicyService
+from typing import Any, Dict, List
+
 from app.core.config import get_settings
+from app.models.agents import (
+    AgentCatalogItem,
+    AgentDefinition,
+    AgentMemoryConsent,
+    AgentMemoryPolicy,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

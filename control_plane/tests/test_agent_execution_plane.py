@@ -1,28 +1,25 @@
+import uuid
+from datetime import timedelta
+
 import pytest
 import pytest_asyncio
-import uuid
-import asyncio
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import status
-
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
 from app.core.config import get_settings
 from app.core.time import utc_now
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
 from app.models.agent_execution import (
-    AgentExecutionJob,
-    AgentWorkerHeartbeat,
-    AgentExecutionLease,
-    AgentExecutionRetry,
     AgentExecutionDeadLetter,
+    AgentExecutionJob,
+    AgentExecutionRetry,
 )
 from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents import agent_runtime
+from app.services.agents.agent_execution_plane import AgentExecutionPlane
 from app.services.agents.agent_queue import AgentQueueManager, BackpressureError
 from app.services.agents.agent_worker import AgentWorkerService
-from app.services.agents.agent_execution_plane import AgentExecutionPlane
-from app.services.agents import agent_runtime
+from fastapi import status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture(autouse=True)

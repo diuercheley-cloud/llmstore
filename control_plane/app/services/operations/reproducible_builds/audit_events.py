@@ -3,7 +3,6 @@ from typing import Any
 from app.services.operations.reproducible_builds.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
-
 REPRODUCIBLE_BUILD_AUDIT_EVENTS = {
     "reproducible_build_manifest_created",
     "artifact_verified",

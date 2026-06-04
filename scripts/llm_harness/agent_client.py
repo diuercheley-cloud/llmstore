@@ -28,9 +28,13 @@ class AgentClient:
         verbose_stream: bool = False,
         tool_calling: str = "auto",
         supports_tool_calling: bool = False,
+        allow_native_tools_for_local: bool = False,
+        lm_studio_compatibility: bool = True,
+        capability_cache_ttl_seconds: int = 300,
         cache: LocalCache | None = None,
         transport=None,
         multimodal: bool = False,
+        max_tokens: int | None = None,
         event_callback=None,
     ):
         self.agent_id = agent_id
@@ -47,7 +51,11 @@ class AgentClient:
         self.verbose_stream = verbose_stream
         self.tool_calling = tool_calling
         self.supports_tool_calling = supports_tool_calling
+        self.allow_native_tools_for_local = allow_native_tools_for_local
+        self.lm_studio_compatibility = lm_studio_compatibility
+        self.capability_cache_ttl_seconds = capability_cache_ttl_seconds
         self.cache = cache
+        self.max_tokens = max_tokens
         self.repo_snapshot_hash = "no-repo"
         self.policy_hash = "no-policy"
 
@@ -66,8 +74,13 @@ class AgentClient:
             "verbose_stream": verbose_stream,
             "tool_calling": tool_calling,
             "supports_tool_calling": supports_tool_calling,
+            "allow_native_tools_for_local": allow_native_tools_for_local,
+            "lm_studio_compatibility": lm_studio_compatibility,
+            "capability_cache_ttl_seconds": capability_cache_ttl_seconds,
             "transport": transport,
+            "cache": cache,
             "multimodal": multimodal,
+            "max_tokens": max_tokens,
             "event_callback": event_callback,
         }
         # Throws ValueError if provider is unknown

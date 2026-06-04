@@ -1,29 +1,27 @@
 # Owner: agent-platform
 import abc
-import logging
-import uuid
 import json
+import logging
 import time
-from typing import Any, Dict, List, Optional
+import uuid
 from enum import Enum
-from dataclasses import dataclass, field, asdict
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from fastapi import HTTPException
+from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
 from app.models.billing_plan import BillingPlan
-from app.services.inference_proxy import InferenceProxy, ForwardResult
+from app.services.billing import estimate_request_cost, resolve_effective_plan
+from app.services.inference_proxy import ForwardResult, InferenceProxy
 from app.services.model_policy import (
-    resolve_requested_model,
     plan_routing_order,
     resolve_effective_backend_url,
+    resolve_requested_model,
 )
-from app.services.quota import record_usage, ensure_quota
-from app.services.billing import estimate_request_cost, resolve_effective_plan
+from app.services.quota import ensure_quota, record_usage
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 
@@ -319,9 +317,9 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
         if settings.multimodal_enabled and multimodal_asset_id:
             try:
                 from app.services.multimodal.asset_store import AssetStore
-                from app.services.multimodal.vision_service import VisionService
                 from app.services.multimodal.document_vision_service import DocumentVisionService
                 from app.services.multimodal.speech_to_text_service import SpeechToTextService
+                from app.services.multimodal.vision_service import VisionService
 
                 store = AssetStore(self.db)
                 asset = await store.get_asset(multimodal_asset_id, run.tenant_id)

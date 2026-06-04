@@ -1,19 +1,17 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import Any, Dict, List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
 
-from app.core.time import utc_now
-from app.core.config import get_settings
 from app.models.prompts import (
     PromptTemplate,
-    PromptTemplateVersion,
-    PromptTemplateVariable,
     PromptTemplateRenderEvent,
+    PromptTemplateVariable,
+    PromptTemplateVersion,
 )
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

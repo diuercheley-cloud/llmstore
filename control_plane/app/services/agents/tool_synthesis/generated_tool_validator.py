@@ -1,5 +1,6 @@
 import ast
 
+
 class SecurityException(Exception):
     pass
 

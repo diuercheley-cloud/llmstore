@@ -1,12 +1,13 @@
 # Owner: agent-platform
 import uuid
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 
 class AssistantThread(Base):
     __tablename__ = "assistant_threads"

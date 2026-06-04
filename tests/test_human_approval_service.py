@@ -1,6 +1,6 @@
-import pytest
-from app.services.agents.human_approval import sanitize_value, has_sufficient_role
+from app.services.agents.human_approval import has_sufficient_role, sanitize_value
 from app.services.auth import AdminRole
+
 
 def test_sanitize_value():
     data = {

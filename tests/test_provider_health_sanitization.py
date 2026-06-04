@@ -1,5 +1,5 @@
 import pytest
-from app.services.providers.registry import get_provider, get_all_provider_health, reload_registry
+from app.services.providers.registry import get_all_provider_health, get_provider, reload_registry
 
 
 @pytest.fixture(autouse=True)

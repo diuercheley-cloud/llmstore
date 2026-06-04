@@ -1,8 +1,11 @@
-import uuid
 import hashlib
+import uuid
 from typing import List
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ...models.commercial_rag_vault import CommercialRetrievalReceipt
+
 
 async def generate_retrieval_receipt(
     db: AsyncSession,

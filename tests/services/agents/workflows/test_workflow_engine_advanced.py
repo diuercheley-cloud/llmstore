@@ -1,16 +1,18 @@
 # Owner: agent-platform
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from app.models.agent_workflows import (
+    AgentWorkflowDefinition,
+    AgentWorkflowEdge,
+    AgentWorkflowNode,
+    AgentWorkflowRun,
+)
+from app.services.agents.workflows.workflow_dag import WorkflowDAG
+from app.services.agents.workflows.workflow_engine import WorkflowEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.agent_workflows import (
-    AgentWorkflowRun, AgentWorkflowDefinition, AgentWorkflowNode, AgentWorkflowEdge,
-    AgentWorkflowParallelGroup, AgentSubworkflowRun
-)
-from app.services.agents.workflows.workflow_engine import WorkflowEngine
-from app.services.agents.workflows.workflow_dag import WorkflowDAG
-from app.services.agents.workflows.workflow_state_machine import WorkflowStatus
 
 @pytest.fixture
 def mock_db():
@@ -151,7 +153,6 @@ async def test_subworkflow_execution(workflow_engine, mock_db):
         mock_runtime.get_subworkflow_results = AsyncMock(return_value={"result": "ok"})
         
         # We need to mock the instantiation of SubworkflowRuntime
-        import app.services.agents.workflows.workflow_engine as engine_module
         with pytest.MonkeyPatch().context() as m:
             m.setattr("app.services.agents.workflows.workflow_engine.SubworkflowRuntime", lambda db, run: mock_runtime)
             

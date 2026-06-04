@@ -1,14 +1,11 @@
-import uuid
 import logging
+import uuid
 from typing import Optional
-from decimal import Decimal
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.models.agent_service import AgentServiceTier, AgentServiceUsage
-from app.models.agents import AgentRunCosts
 from app.services.agents.wallets.agent_wallet import AgentWalletService
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

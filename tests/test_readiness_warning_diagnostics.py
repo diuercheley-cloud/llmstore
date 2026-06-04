@@ -1,8 +1,8 @@
-import os
 import json
+import os
 import subprocess
-import pytest
 from pathlib import Path
+
 
 def test_diagnose_script_exists_and_executable():
     script_path = Path("scripts/diagnose-readiness-warnings-local.sh")

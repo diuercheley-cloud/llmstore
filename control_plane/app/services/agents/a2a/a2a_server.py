@@ -1,14 +1,14 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from fastapi import HTTPException
+from typing import Any, Dict
 
-from app.models.agents import AgentDefinition, AgentA2ARegistration, AgentDelegationPolicy
+from app.models.agents import AgentA2ARegistration, AgentDelegationPolicy
 from app.services.admin_rbac import record_admin_audit_event
 from app.services.agents.a2a.a2a_security import A2ASecurityService
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("a2a_server")
 

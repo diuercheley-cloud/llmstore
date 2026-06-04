@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Any, Dict
-from sqlalchemy import Column, String, DateTime, JSON, ForeignKey, Text
+
+from sqlalchemy import JSON, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
+
 from ..db.base import Base
+
 
 class CommercialOperationsCenterEvent(Base):
     __tablename__ = "commercial_operations_center_events"

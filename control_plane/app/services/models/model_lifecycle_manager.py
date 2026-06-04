@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from typing import Any
 from uuid import UUID
-
-from sqlalchemy import desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -16,16 +12,10 @@ from app.models.commercial_model_lifecycle import (
     CommercialModelLifecycleRecord,
     CommercialOfflineModelVerification,
 )
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
-from app.services.models.model_provenance import validate_chain_of_custody
-from app.services.models.signed_model_registry import (
-    get_model_trust_state,
-    verify_model_checksum,
-    verify_model_signature,
-)
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.offline_crl import is_bundle_revoked, is_peer_revoked
-
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 STATE_TRANSITIONS: dict[str, set[str]] = {
     "discovered": {"staged", "quarantined", "archived"},

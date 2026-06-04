@@ -1,9 +1,10 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.agent_canary import AgentCanaryComparison, AgentShadowRun
 from app.models.agents import AgentRun
-from app.models.agent_canary import AgentShadowRun, AgentCanaryComparison
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class CanaryComparator:
     def __init__(self, db: AsyncSession):

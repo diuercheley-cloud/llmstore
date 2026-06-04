@@ -1,15 +1,13 @@
-import time
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-
 from app.db.base import Base
 from app.services.cache.intelligent_cache import (
     build_cache_key,
     get_exact,
-    set_exact,
     normalize_request,
+    set_exact,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest.mark.asyncio

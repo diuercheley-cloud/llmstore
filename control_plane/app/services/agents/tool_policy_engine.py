@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_agents import (
     CommercialAgentAction,
@@ -15,7 +12,13 @@ from app.models.commercial_agents import (
     CommercialAgentProfile,
     CommercialToolRegistry,
 )
-from app.services.agents.execution_receipts import canonical_json, redact_confidential_payload, sha256_hex
+from app.services.agents.execution_receipts import (
+    canonical_json,
+    redact_confidential_payload,
+    sha256_hex,
+)
+from sqlalchemy import func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass

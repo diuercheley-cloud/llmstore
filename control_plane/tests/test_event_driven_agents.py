@@ -1,11 +1,11 @@
+import asyncio
+import hashlib
+import hmac
+import json
 import os
 import uuid
-import hmac
-import hashlib
-import json
-import asyncio
-from datetime import datetime, timedelta
 import zoneinfo
+from datetime import datetime
 from pathlib import Path
 
 # Force SQLite for tests and enable feature flags before app import
@@ -22,27 +22,23 @@ os.environ["AGENT_RUNTIME_ENABLED"] = "true"
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from fastapi import status
-
-from app.main import app as main_app
-from app.db.base import Base
-from app.db.session import get_db, get_db_session
-import app.db.session
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.agent_events import (
-    AgentEventSource, AgentEventTrigger, AgentEventDelivery,
-    AgentScheduledTrigger, AgentWebhookTrigger, AgentEventDedupKey
-)
 from app.core.config import get_settings
-from app.core.time import utc_now
-from app.services.agents.events.cron_triggers import calculate_next_run, check_and_fire_schedules
+from app.db.base import Base
+from app.db.session import SessionLocal, engine, get_db, get_db_session
+from app.main import app as main_app
+from app.models.agent_events import (
+    AgentEventDedupKey,
+    AgentEventDelivery,
+    AgentEventSource,
+    AgentEventTrigger,
+    AgentScheduledTrigger,
+    AgentWebhookTrigger,
+)
+from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents.events.cron_triggers import calculate_next_run
 from app.services.agents.events.event_deduplication import is_duplicate, sanitize_payload
-from app.services.agents.events.event_policy import check_policy
-
-from app.db.session import engine, SessionLocal
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 
 
 async def override_get_db():
@@ -76,17 +72,26 @@ async def setup_db():
     settings.agent_execution_plane_enabled = True
     settings.agent_async_execution_enabled = True  # Avoid executing actual LLM steps
     
-    from app.models.client import Client
-    from app.models.agents import AgentDefinition, AgentRun, AgentRunEvent, AgentRunStep, AgentPolicyDecision
-    from app.models.agent_execution import (
-        AgentExecutionJob, AgentWorkerHeartbeat, AgentExecutionLease,
-        AgentExecutionRetry, AgentExecutionDeadLetter
-    )
     from app.models.agent_events import (
-        AgentEventSource, AgentEventTrigger, AgentEventDelivery,
-        AgentScheduledTrigger, AgentWebhookTrigger, AgentEventDedupKey,
-        AgentEventSubscription
+        AgentEventDelivery,
+        AgentEventSubscription,
+        AgentWebhookTrigger,
     )
+    from app.models.agent_execution import (
+        AgentExecutionDeadLetter,
+        AgentExecutionJob,
+        AgentExecutionLease,
+        AgentExecutionRetry,
+        AgentWorkerHeartbeat,
+    )
+    from app.models.agents import (
+        AgentDefinition,
+        AgentPolicyDecision,
+        AgentRun,
+        AgentRunEvent,
+        AgentRunStep,
+    )
+    from app.models.client import Client
     tables = [
         Client.__table__,
         AgentDefinition.__table__,

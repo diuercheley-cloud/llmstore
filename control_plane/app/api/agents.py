@@ -1,14 +1,15 @@
 # Owner: agent-platform
 # Surface: client
 import uuid
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
+
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.services.agents import agent_state, agent_runtime, agent_api_facade
+from app.services.agents import agent_api_facade, agent_runtime, agent_state
 from app.services.auth import require_admin
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/agents",
@@ -127,8 +128,8 @@ async def list_runs(
     tenant_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session)
 ):
-    from sqlalchemy.future import select
     from app.models.agents import AgentRun
+    from sqlalchemy.future import select
     
     stmt = select(AgentRun)
     if tenant_id:

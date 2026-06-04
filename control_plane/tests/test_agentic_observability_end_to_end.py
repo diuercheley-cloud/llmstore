@@ -1,15 +1,16 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentDefinition, AgentRun, AgentIncident, AgentTraceSpan
+from app.db.session import SessionLocal, engine
+from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.agent_incidents import AgentIncidentService
+from app.services.agents.agent_observability import AgentObservabilityService
 from app.services.agents.agent_slo import AgentSLOService
 from app.services.agents.agent_trace_correlation import AgentTraceCorrelationService
-from app.services.agents.agent_observability import AgentObservabilityService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

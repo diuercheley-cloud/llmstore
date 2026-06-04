@@ -1,7 +1,9 @@
+import uuid
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-import uuid
+
 
 @pytest_asyncio.fixture
 async def temp_client(admin_client: AsyncClient, admin_token_headers):

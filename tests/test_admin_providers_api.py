@@ -1,8 +1,8 @@
 import os
-import pytest
-from httpx import AsyncClient
 
+import pytest
 from app.services.providers.registry import reload_registry
+from httpx import AsyncClient
 
 
 @pytest.fixture(autouse=True)

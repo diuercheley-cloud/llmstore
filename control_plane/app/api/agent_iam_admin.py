@@ -1,17 +1,17 @@
 # Owner: Platform Operations
 import uuid
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import List, Optional
 
-from app.api.deps import get_db, get_admin_token
+from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
+from app.models.agent_iam import AgentCredentialAuditEvent
 from app.services.agents.iam.service_principal import ServicePrincipalService
 from app.services.agents.iam.token_exchange import TokenExchangeService
-from app.services.agents.iam.iam_audit import IAMAuditService
-from app.models.agent_iam import AgentCredentialAuditEvent
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def verify_iam_enabled():
     settings = get_settings()

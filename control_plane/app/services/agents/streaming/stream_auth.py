@@ -1,15 +1,13 @@
 # Owner: agent-platform
 import logging
-from typing import Optional
-from fastapi import WebSocket, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.core.security import verify_secret
 from app.core.time import utc_now
 from app.models.api_key import ApiKey
 from app.models.client import Client
+from fastapi import HTTPException, WebSocket, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("stream_auth")
 

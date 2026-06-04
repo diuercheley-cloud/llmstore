@@ -3,8 +3,6 @@ import re
 import subprocess
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 SCRIPT = ROOT / "scripts" / "validate-readme-product-local.sh"
@@ -61,7 +59,7 @@ def test_readme_no_env_file_values():
         if "ADMIN_TOKEN=" in line and not line.strip().startswith("#") and not line.strip().startswith("```"):
             value = line.split("ADMIN_TOKEN=", 1)[1].strip()
             assert "ChangeMe" in value or "***" in value or "..." in value or value == "", (
-                f"Possible real ADMIN_TOKEN in README"
+                "Possible real ADMIN_TOKEN in README"
             )
 
 

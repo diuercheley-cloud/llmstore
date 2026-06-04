@@ -1,14 +1,12 @@
 import pytest
-from httpx import AsyncClient
-from starlette.responses import JSONResponse
-
 from app.api.deps import get_inference_proxy
-from app.models.client import Client
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.services.commercial_guardrails import clear_commercial_guardrail_runtime_events
 from app.services.inference_proxy import ForwardResult
+from httpx import AsyncClient
+from starlette.responses import JSONResponse
 
 
 class FakeProxy:
@@ -122,8 +120,8 @@ async def _seed_routable_model(
     suffix: str,
     providers: list[tuple[str, str, int]],
 ) -> tuple[str, str]:
-    from app.main import app
     from app.db.session import get_db_session
+    from app.main import app
 
     create_client = await admin_client.post(
         "/admin/clients",

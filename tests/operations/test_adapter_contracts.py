@@ -1,4 +1,8 @@
-from app.services.operations.adapter_sandbox.contracts import AdapterContract, AdapterExecutionRequest
+from app.services.operations.adapter_sandbox.contracts import (
+    AdapterContract,
+    AdapterExecutionRequest,
+)
+
 
 def test_adapter_contract_instantiation():
     contract = AdapterContract(

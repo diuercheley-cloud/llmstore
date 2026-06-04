@@ -2,19 +2,15 @@
 
 import base64
 import os
-from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import select
-
-from app.api.enterprise_sso import EnterpriseSSOService, PROVIDER_CONFIGS, router as enterprise_sso_router
+from app.api.enterprise_sso import EnterpriseSSOService
+from app.api.enterprise_sso import router as enterprise_sso_router
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.main import app
-from app.models.auth import OAuthState, UserSession
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.fixture(autouse=True)
@@ -179,10 +175,10 @@ class TestEnterpriseSSOEndpoints:
 
     @pytest.fixture
     def app_with_db(self):
-        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-        from sqlalchemy.orm import sessionmaker
-        from app.db.base import Base
         import app.models.auth
+        from app.db.base import Base
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+        from sqlalchemy.orm import sessionmaker
 
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
 

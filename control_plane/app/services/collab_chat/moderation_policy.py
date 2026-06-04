@@ -1,8 +1,6 @@
 import logging
-from typing import Optional
-from sqlalchemy import select
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.collab_chat import ChatMessage
 
 logger = logging.getLogger(__name__)
 

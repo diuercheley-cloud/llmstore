@@ -3,9 +3,8 @@ import hashlib
 import uuid
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.agent_tool_synthesis import AgentSandboxPolicyEvent
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class SandboxAuditService:

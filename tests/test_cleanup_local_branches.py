@@ -1,6 +1,5 @@
-import subprocess
 import json
-import time
+import subprocess
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent

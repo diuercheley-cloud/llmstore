@@ -1,14 +1,13 @@
 # Owner: platform-ops
 """Objective GA readiness scoring from repository and artifact evidence."""
 
+import asyncio
 import json
 import os
-import re
-import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
-import yaml
 
+import yaml
 from app.core.config import get_settings
 from app.services.platform.current_release_context import get_current_tag
 from app.services.platform.release_artifact_resolver import ReleaseArtifactResolver
@@ -50,7 +49,6 @@ class GAReadinessService:
         return config_path.parent.parent
 
     def _run_sync(self, coro):
-        import threading
         from concurrent.futures import ThreadPoolExecutor
         try:
             loop = asyncio.get_event_loop()
@@ -131,11 +129,11 @@ class GAReadinessService:
 
     async def _check_active_workers_db(self) -> bool:
         try:
+            from app.core.time import utc_now
             from app.db.session import SessionLocal
             from app.models.agent_execution import AgentWorkerHeartbeat
-            from sqlalchemy.future import select
             from sqlalchemy import func
-            from app.core.time import utc_now
+            from sqlalchemy.future import select
             
             async with SessionLocal() as db:
                 res = await db.execute(

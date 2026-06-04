@@ -1,14 +1,15 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
-from app.services.agents.studio.flow_versioning import FlowVersioningService
-from app.services.agents.studio.flow_validator import FlowValidator
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_runtime_adapter import FlowRuntimeAdapter
+from app.services.agents.studio.flow_validator import FlowValidator
+from app.services.agents.studio.flow_versioning import FlowVersioningService
 from app.services.agents.studio.template_gallery import TemplateGalleryService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def mock_db():

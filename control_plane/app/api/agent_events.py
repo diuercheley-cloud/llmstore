@@ -1,12 +1,13 @@
 # Surface: public
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+
 from app.api.deps import get_db
-from app.services.agents.events.webhook_triggers import process_webhook
 from app.core.config import get_settings
 from app.models.agent_events import AgentWebhookTrigger
+from app.services.agents.events.webhook_triggers import process_webhook
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/agents/events", tags=["agent-events-public"])
 

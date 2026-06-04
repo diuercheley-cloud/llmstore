@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
-from sqlalchemy import Column, DateTime, Float, String, Boolean, Text, Enum
 import sqlalchemy as sa
+from app.db.base import Base
+from sqlalchemy import Boolean, Column, DateTime, Float, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.db.base import Base
 
 class CommercialRoutingConfig(Base):
     __tablename__ = "commercial_routing_config"

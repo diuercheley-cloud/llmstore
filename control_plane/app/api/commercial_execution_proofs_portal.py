@@ -9,13 +9,11 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from app.db.session import get_db
+from app.models.commercial_merkle_timelines import CommercialExecutionProof
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.dependencies import require_admin  # reusing for simplicity; portal uses tenant-scoped auth
-from app.db.session import get_db
-from app.models.commercial_merkle_timelines import CommercialExecutionProof
 
 router = APIRouter(prefix="/portal/inference/proofs", tags=["portal", "execution-proofs"])
 

@@ -1,10 +1,8 @@
+
+import httpx
 import pytest
 import pytest_asyncio
-import uuid
-import httpx
-from app.core.config import get_settings
-from app.models.assistants import AssistantThread, AssistantMessage
-from app.models.agents import AgentDefinition, AgentRun
+
 
 @pytest_asyncio.fixture
 async def assistants_client(isolated_db_url, fake_redis):
@@ -13,10 +11,10 @@ async def assistants_client(isolated_db_url, fake_redis):
     os.environ["AGENT_ASSISTANTS_API_ENABLED"] = "true"
     os.environ["AGENT_RUNTIME_ENABLED"] = "true"
     
-    from app.main import app
-    from app.db.session import get_db, get_redis
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.db.base import Base
+    from app.db.session import get_db, get_redis
+    from app.main import app
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

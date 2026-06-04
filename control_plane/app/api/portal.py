@@ -6,24 +6,52 @@ from pathlib import Path
 from time import perf_counter
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, Query, Request
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from starlette.responses import HTMLResponse, JSONResponse
-
-from app.api.client import _chat_with_fallback, _error_message_for_log, _backend_errors_for_log
-from app.core.security import short_prefix
-from app.core.time import utc_now
-from app.utils.validation import validate_params, validate_params_for_session
+from app.api.client import _backend_errors_for_log, _chat_with_fallback, _error_message_for_log
 from app.api.deps import get_inference_proxy
+from app.core.security import generate_api_key, hash_secret, short_prefix
+from app.core.time import utc_now
 from app.db.session import get_db_session, get_redis
+from app.models.ai_wallet import AiWalletTransaction
+from app.models.api_key import ApiKey
 from app.models.billing_invoice import BillingInvoice
+from app.models.billing_plan import BillingPlan
 from app.models.client import Client
+from app.models.commercial_audit_portal import CommercialPortalSavedReport
+from app.models.commercial_billing_dispute import CommercialBillingDispute
+from app.models.commercial_cryptographic_receipts import (
+    CommercialInferenceReceipt,
+)
+from app.models.commercial_model_supply_chain import (
+    CommercialModelIntegrityScan,
+    CommercialRuntimeModelAttestation,
+)
+from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial_rag_vault import (
+    CommercialRAGDocument,
+    CommercialRAGLegalHold,
+    CommercialRAGRetrievalAudit,
+    CommercialRAGVault,
+)
+from app.models.commercial_sovereign_governance import (
+    CommercialAirgapSyncPackage,
+    CommercialHardwareAttestationRecord,
+    CommercialOfflineRevocationList,
+)
 from app.models.customer_payment import CustomerPayment
-from app.schemas.inference import ChatCompletionRequest, PortalTestChatRequest, OnboardingEventRequest, PortalWalletRechargeRequest
+from app.models.model_registry import ModelRegistry
+from app.models.request_financial import RequestFinancial
+from app.models.request_log import RequestLog
+from app.models.sales_lead import SalesLead
+from app.schemas.admin import ApiKeyCreate, ApiKeyCreated
+from app.schemas.billing import BillingDisputeOpen
+from app.schemas.inference import (
+    ChatCompletionRequest,
+    OnboardingEventRequest,
+    PortalTestChatRequest,
+    PortalWalletRechargeRequest,
+)
 from app.schemas.payments import WalletTopUpCreate
+from app.schemas.public import PortalUpgradeRequest
 from app.services.audit import log_request
 from app.services.auth import require_client
 from app.services.billing import (
@@ -31,58 +59,8 @@ from app.services.billing import (
     estimate_request_cost,
     get_current_usage_snapshot,
     refresh_billing_statuses,
-    resolve_effective_plan,
     serialize_invoice,
 )
-from app.services.inference_proxy import InferenceProxy
-from app.services.model_policy import resolve_requested_model, get_effective_allowed_models
-from app.services.providers.registry import get_provider
-from app.services.quota import month_start, ensure_quota, record_usage, QuotaExceeded
-from app.services.tts_usage import get_tts_usage_and_limits
-from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
-from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
-from app.utils.request_summary import summarize_chat_request
-from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
-from app.services.tokenizer_service import get_tokenizer_service, TokenizerService
-
-from app.models.billing_plan import BillingPlan
-from app.models.pricing_rule import PricingRule
-from app.models.ai_wallet import AiWallet, AiWalletTransaction
-from app.models.api_key import ApiKey
-from app.models.request_log import RequestLog
-from app.models.request_financial import RequestFinancial
-from app.models.model_registry import ModelRegistry
-from app.services.models.model_provenance import summarize_model_provenance
-from app.services.models.runtime_attestation import serialize_runtime_attestation
-from app.services.models.signed_model_registry import get_model_trust_state
-from app.models.sales_lead import SalesLead
-from app.schemas.public import PortalUpgradeRequest
-from app.schemas.admin import ApiKeyCreate, ApiKeyCreated
-from app.services.public_onboarding import list_public_plans
-from app.core.security import generate_api_key, hash_secret, short_prefix
-from app.services.payment_topups import create_topup_intent, list_topup_intents, serialize_topup
-
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial_audit_portal import CommercialPortalSavedReport
-from app.models.commercial_rag_vault import (
-    CommercialRAGDocument,
-    CommercialRAGLegalHold,
-    CommercialRAGPoisoningAlert,
-    CommercialRAGRetrievalAudit,
-    CommercialRAGVault,
-)
-from app.models.commercial_cryptographic_receipts import (
-    CommercialInferenceReceipt,
-    CommercialInferenceReceiptVerificationReport,
-)
-from app.models.commercial_model_supply_chain import CommercialModelIntegrityScan, CommercialRuntimeModelAttestation
-from app.models.commercial_sovereign_governance import (
-    CommercialAirgapSyncPackage,
-    CommercialHardwareAttestationRecord,
-    CommercialOfflineRevocationList,
-)
-from app.schemas.billing import BillingDisputeOpen, BillingDisputeRead
 from app.services.billing.dispute_management import DisputeManagementService
 from app.services.compliance.customer_audit_portal import (
     generate_customer_audit_report,
@@ -99,6 +77,27 @@ from app.services.compliance.customer_audit_portal import (
     validate_portal_resource_access,
 )
 from app.services.compliance.portal_rbac import get_portal_capabilities, require_portal_permission
+from app.services.inference_proxy import InferenceProxy
+from app.services.model_policy import get_effective_allowed_models, resolve_requested_model
+from app.services.models.model_provenance import summarize_model_provenance
+from app.services.models.runtime_attestation import serialize_runtime_attestation
+from app.services.models.signed_model_registry import get_model_trust_state
+from app.services.payment_topups import create_topup_intent, list_topup_intents, serialize_topup
+from app.services.providers.registry import get_provider
+from app.services.public_onboarding import list_public_plans
+from app.services.quota import QuotaExceeded, ensure_quota, month_start, record_usage
+from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
+from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
+from app.services.tts_usage import get_tts_usage_and_limits
+from app.utils.request_summary import summarize_chat_request
+from app.utils.token_estimator import estimate_tokens_from_text
+from app.utils.validation import validate_params_for_session
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from starlette.responses import HTMLResponse, JSONResponse
 
 # Surface: portal
 router = APIRouter(tags=["portal"])
@@ -575,8 +574,9 @@ async def portal_usage_stats(
     session: AsyncSession = Depends(get_db_session),
     client: Client = Depends(require_client),
 ):
-    from sqlalchemy import func
     from datetime import timedelta
+
+    from sqlalchemy import func
     
     # Last 30 days daily usage
     thirty_days_ago = utc_now() - timedelta(days=30)
@@ -717,7 +717,9 @@ async def portal_account(
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-    from app.models.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
+    from app.models.commercial_inference_reproducibility import (
+        CommercialInferenceReproducibilityRecord,
+    )
 
     repro_total = (
         await session.execute(
@@ -776,7 +778,9 @@ async def portal_inference_reproducibility(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
+    from app.models.commercial_inference_reproducibility import (
+        CommercialInferenceReproducibilityRecord,
+    )
 
     rows = (
         await session.execute(
@@ -1113,8 +1117,11 @@ async def portal_wallet(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.services.billing.wallet_service import get_balance, list_transactions, serialize_transaction
-    from app.services.billing import estimate_request_cost, get_current_usage_snapshot, resolve_effective_plan
+    from app.services.billing import get_current_usage_snapshot
+    from app.services.billing.wallet_service import (
+        get_balance,
+        list_transactions,
+    )
     balance = await get_balance(session, client.id)
     txs = await list_transactions(session, client.id, limit=20)
     effective_plan = await resolve_effective_plan_for_session(session, client)
@@ -2024,9 +2031,9 @@ async def portal_governance_federation_summary(
     session: AsyncSession = Depends(get_db_session),
 ):
     from app.models.commercial_governance_federation import (
-        CommercialGovernanceFederationPeer,
-        CommercialFederatedPolicySync,
         CommercialFederatedAuditTrail,
+        CommercialFederatedPolicySync,
+        CommercialGovernanceFederationPeer,
     )
     from app.services.governance.governance_consistency import GovernanceConsistencyService
 

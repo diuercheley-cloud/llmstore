@@ -48,6 +48,15 @@ class Reporter:
             "timeout_adjusted": getattr(result, "timeout_adjusted", False),
             "time_to_first_action_ms": (result.metrics or {}).get("time_to_first_action_ms"),
             "time_to_final_ms": (result.metrics or {}).get("time_to_final_ms"),
+            "final_tool_calling_mode": (result.metrics or {}).get("final_tool_calling_mode"),
+            "selected_model": (result.metrics or {}).get("selected_model"),
+            "supports_native_tool_calling": (result.metrics or {}).get(
+                "supports_native_tool_calling"
+            ),
+            "native_tool_calling_probe": (result.metrics or {}).get("native_tool_calling_probe"),
+            "fallback_reason": (result.metrics or {}).get("fallback_reason"),
+            "fallback_strategy": (result.metrics or {}).get("fallback_strategy"),
+            "lm_studio_compatibility": (result.metrics or {}).get("lm_studio_compatibility"),
             "post_final_llm_calls_blocked": (result.metrics or {}).get(
                 "post_final_llm_calls_blocked", 0
             ),

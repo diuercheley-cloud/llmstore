@@ -1,9 +1,8 @@
 """security events, ip policy, and correlation observability"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260430_0010"
 down_revision = "20260430_0009"

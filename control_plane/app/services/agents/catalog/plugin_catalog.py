@@ -1,6 +1,8 @@
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.agent_catalog import PluginCatalogEntry
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PluginCatalogService:
     def __init__(self, db: AsyncSession):

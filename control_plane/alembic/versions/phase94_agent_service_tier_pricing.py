@@ -4,9 +4,8 @@ Revision ID: phase94_agent_service_tier_pricing
 Revises: phase93_agent_optimization
 Create Date: 2026-05-30 10:00:00.000000
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 
 revision = "phase94_agent_service_tier_pricing"
 down_revision = "phase93_agent_optimization"

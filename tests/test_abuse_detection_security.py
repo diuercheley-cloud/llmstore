@@ -8,10 +8,9 @@ import uuid
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
-from app.services.security import record_abuse_event, list_abuse_events
+from app.services.security import list_abuse_events, record_abuse_event
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

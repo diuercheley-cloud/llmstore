@@ -1,12 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import Mapped, mapped_column
-
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 REPRODUCIBLE_BUILD_SCOPES = (
     "plugin",

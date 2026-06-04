@@ -1,17 +1,17 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.testclient import TestClient
-
-from app.main import app
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.core.config import get_settings
+from app.db.session import SessionLocal, engine
+from app.main import app
+from app.models.agents import AgentDefinition, AgentRun
+from app.services.agents.agent_cost_meter import AgentCostMeterService
 from app.services.agents.agent_incidents import AgentIncidentService
 from app.services.agents.agent_run_timeline import AgentRunTimelineService
-from app.services.agents.agent_cost_meter import AgentCostMeterService
-from app.models.agents import AgentDefinition, AgentRun
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

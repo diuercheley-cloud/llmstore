@@ -1,11 +1,12 @@
 """Resolve supported platform profiles into effective flags."""
 
 # Owner: platform-ops
-import os
-import yaml
 import logging
+import os
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

@@ -21,12 +21,18 @@ import hashlib
 import time
 import uuid
 
+from app.core.config import get_settings
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-
 from .graph_cache import adjacency_cache
-from .graph_models import Entity, GraphQueryRequest, GraphQueryResult, PathResult, PathStatus, Relation
+from .graph_models import (
+    Entity,
+    GraphQueryRequest,
+    GraphQueryResult,
+    PathResult,
+    PathStatus,
+    Relation,
+)
 from .graph_policy import graph_policy
 from .providers.falkordb_graph import FalkorDBGraphProvider
 from .providers.internal_sql_graph import InternalSQLGraphProvider

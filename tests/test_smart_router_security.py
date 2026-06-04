@@ -1,9 +1,8 @@
 import json
 
 import pytest
-
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
-from app.services.routing.smart_router import SmartRouter, reset_smart_router, _sanitize_reason
+from app.services.routing.smart_router import SmartRouter, _sanitize_reason, reset_smart_router
 
 
 @pytest.fixture(autouse=True)

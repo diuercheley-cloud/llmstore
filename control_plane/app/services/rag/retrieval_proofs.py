@@ -6,9 +6,6 @@ import uuid
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_merkle_timelines import CommercialMerkleLeaf, CommercialMerkleTimeline
 from app.models.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
@@ -28,6 +25,8 @@ from app.services.inference.merkle_timelines import (
 )
 from app.services.inference.witness_federation import evaluate_witness_quorum
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical(payload: Any) -> str:

@@ -1,6 +1,7 @@
 import pytest
-
-from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
+from app.services.operations.reproducible_builds.reproducible_build_service import (
+    ReproducibleBuildService,
+)
 
 
 def _payload():

@@ -4,10 +4,9 @@ Revision ID: f5a5ea240ea1
 Revises: 0fac86d22991
 Create Date: 2026-05-29 08:16:09.178948
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = 'f5a5ea240ea1'
 down_revision = '0fac86d22991'

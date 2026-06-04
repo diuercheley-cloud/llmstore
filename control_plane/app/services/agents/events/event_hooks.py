@@ -1,7 +1,8 @@
 import logging
 from typing import Any, Dict
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.services.agents.events.event_bus import event_bus
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

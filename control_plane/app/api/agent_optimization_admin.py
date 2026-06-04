@@ -1,16 +1,15 @@
 # Owner: Platform Operations
 import uuid
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import List
 
-from app.api.deps import get_db, get_admin_token
+from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
-from app.services.agents.optimization.optimizer import AgentOptimizerCoordinator
 from app.services.agents.optimization.optimization_experiments import OptimizationExperimentService
-from app.models.agent_optimization import AgentOptimizationExperiment, AgentOptimizationCandidate, AgentOptimizationResult
+from app.services.agents.optimization.optimizer import AgentOptimizerCoordinator
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def verify_optimization_enabled():
     settings = get_settings()

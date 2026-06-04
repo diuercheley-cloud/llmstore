@@ -1,12 +1,12 @@
 # Owner: agent-platform
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, JSON
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class AgentSession(Base):

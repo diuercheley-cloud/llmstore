@@ -1,7 +1,6 @@
 import pytest
-import httpx
-from app.main import app
 from app.core.config import get_settings
+
 
 @pytest.mark.asyncio
 async def test_status_shows_appliance_mode(admin_client):

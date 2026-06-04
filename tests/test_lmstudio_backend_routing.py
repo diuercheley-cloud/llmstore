@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import pytest
-import json
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch
+
 
 @pytest.mark.asyncio
 async def test_lmstudio_routing_fallback(admin_client: AsyncClient, admin_token_headers):

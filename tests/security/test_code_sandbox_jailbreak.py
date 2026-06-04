@@ -1,8 +1,10 @@
 import pytest
-
 from app.services.agents.code_interpreter.providers.mock_sandbox import MockSandboxProvider
 from app.services.agents.code_interpreter.sandbox_limits import ExecutionLimits
-from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine, SandboxPolicyViolation
+from app.services.agents.code_interpreter.sandbox_policy import (
+    SandboxPolicyEngine,
+    SandboxPolicyViolation,
+)
 
 
 def test_attempt_to_read_dotenv_is_blocked():

@@ -1,9 +1,8 @@
 import asyncio
-import uuid
-import time
-import httpx
 import sys
-from typing import List
+import time
+
+import httpx
 
 BASE_URL = "http://localhost:8000"
 TENANT_ID = "load-test-tenant"

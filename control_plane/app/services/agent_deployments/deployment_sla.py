@@ -1,11 +1,10 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, Optional
 
 from app.models.agent_deployments import AgentApiDeployment, AgentApiSlaEvent
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +68,8 @@ class DeploymentSlaService:
 
     async def get_sla_summary(self, deployment_id: uuid.UUID) -> Dict[str, Any]:
         """Get SLA health summary for a deployment."""
-        from sqlalchemy import select, func
         from app.models.agent_deployments import AgentApiUsageEvent
+        from sqlalchemy import func, select
 
         # Total invocations
         total_stmt = select(func.count()).where(

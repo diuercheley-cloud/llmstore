@@ -1,10 +1,8 @@
 # Owner: agent-platform
-import uuid
 import logging
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
 
-from app.models.knowledge_base import KBDocument, KBDocumentVersion
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

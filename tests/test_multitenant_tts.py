@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_multitenant_tts_isolation(admin_client: AsyncClient, admin_token_headers):
     # Create two clients

@@ -5,10 +5,6 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-
-from app.contracts.base import ContractValidationError
 from app.contracts.agents.task_execution_contract import (
     ApprovalWaitTaskContractV1,
     FinalResponseTaskContractV1,
@@ -16,10 +12,10 @@ from app.contracts.agents.task_execution_contract import (
     MemoryReadTaskContractV1,
     MemoryWriteTaskContractV1,
     ModelReasoningTaskContractV1,
-    TaskExecutionResultV1,
     ToolCallTaskContractV1,
     WorkflowSignalTaskContractV1,
 )
+from app.contracts.base import ContractValidationError
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import AgentPlan, AgentTask, AgentTaskAttempt, AgentTaskDependency, AgentTool
@@ -34,6 +30,8 @@ from app.services.agents.human_approval import check_approval_required, create_a
 from app.services.agents.tool_adapter_registry import adapter_registry
 from app.services.agents.tool_executor import execute_tool
 from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 
 class TaskExecutionError(RuntimeError):

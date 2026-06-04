@@ -1,13 +1,14 @@
-import pytest
 import uuid
-import json
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.voice.voice_session_service import VoiceSessionService
-from app.services.voice.voice_agent_bridge import VoiceAgentBridge
+
+import pytest
+from app.models.agent_sessions import AgentSession
+from app.models.realtime_voice import VoiceSession, VoiceTranscript, VoiceTurn
 from app.services.voice.stt_stream_service import STTStreamService
 from app.services.voice.tts_stream_service import TTSStreamService
-from app.models.realtime_voice import VoiceSession, VoiceTurn, VoiceTranscript
-from app.models.agent_sessions import AgentSession, AgentThreadMessage
+from app.services.voice.voice_agent_bridge import VoiceAgentBridge
+from app.services.voice.voice_session_service import VoiceSessionService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_voice_session_lifecycle(session: AsyncSession):

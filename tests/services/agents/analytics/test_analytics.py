@@ -1,12 +1,10 @@
 # Owner: agent-platform
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-import uuid
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, AsyncMock
+from app.services.agents.analytics.analytics_aggregator import AnalyticsAggregator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.agents.analytics.analytics_aggregator import AnalyticsAggregator
-from app.services.agents.analytics.analytics_queries import AnalyticsQueries
 
 @pytest.fixture
 def mock_db():

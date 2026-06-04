@@ -1,7 +1,9 @@
 import os
-import yaml
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
+import yaml
+
 
 class ISMSManagerService:
     def __init__(self, base_path: str = "compliance"):

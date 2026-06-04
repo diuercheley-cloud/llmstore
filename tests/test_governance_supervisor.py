@@ -1,13 +1,11 @@
 import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.governance.governance_supervisor import GovernanceSupervisor
 from app.models.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorIncident,
-    CommercialGovernanceSupervisorDecision,
-    CommercialGovernanceSupervisorAction,
-    CommercialGovernanceSupervisorPolicy
+    CommercialGovernanceSupervisorPolicy,
 )
+from app.services.governance.governance_supervisor import GovernanceSupervisor
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_supervisor_cycle(session: AsyncSession):

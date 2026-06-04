@@ -1,17 +1,14 @@
-import pytest
 import uuid
-import json
-import asyncio
-from datetime import datetime, timezone
-from sqlalchemy import select
 
+import pytest
 from app.core.config import get_settings
+from app.services.agents.agent_llm_provider import (
+    LLMProviderType,
+    MockAgentLLMProvider,
+    ProviderResponse,
+)
 from app.services.agents.agent_worker import AgentWorkerService
-from app.services.agents.tool_adapters import register_all_adapters
-from app.services.agents.agent_llm_provider import MockAgentLLMProvider, ProviderResponse, LLMProviderType
-from app.services.agents.human_approval import approve_approval_request
-from app.services.auth import AdminRole
-from app.core.time import utc_now
+from sqlalchemy import select
 
 
 class ExplicitMockLLMProvider(MockAgentLLMProvider):
@@ -64,26 +61,23 @@ async def test_agent_executor_real_flow(e2e_client, monkeypatch):
     and Observability traces operate end-to-end without silent mocks.
     """
     # 1. Ensure the background AgentWorker uses the exact same monkeypatched SessionLocal (isolated in-memory DB)
-    import app.services.agents.agent_worker as agent_worker_mod
     import app.db.session as db_session_mod
+    import app.services.agents.agent_worker as agent_worker_mod
     monkeypatch.setattr(agent_worker_mod, "SessionLocal", db_session_mod.SessionLocal)
 
     # Import SessionLocal, and models
-    from app.db.session import SessionLocal
     from app.db.base import Base
-    from app.models.client import Client
+    from app.db.session import SessionLocal
     from app.models.agents import (
-        AgentDefinition,
-        AgentRun,
-        AgentRunStep,
-        AgentRunEvent,
-        AgentRunReceipt,
-        AgentMemoryPolicy,
         AgentApprovalPolicy,
         AgentApprovalRequest,
-        AgentTimelineEvent,
+        AgentDefinition,
+        AgentMemoryPolicy,
         AgentPolicyDecision,
-        AgentTool
+        AgentRun,
+        AgentRunEvent,
+        AgentRunReceipt,
+        AgentTool,
     )
     from sqlalchemy.ext.asyncio import create_async_engine
 

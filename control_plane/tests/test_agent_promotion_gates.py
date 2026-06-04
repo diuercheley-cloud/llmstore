@@ -1,15 +1,18 @@
+import uuid
+from pathlib import Path
+
+import app.db.session
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy import select
-from app.main import app as main_app
-import app.db.session
-from app.models.agents import AgentDefinition, AgentRun, AgentEvalBaseline, AgentIncident, AgentPromptBaseline
+from app.db.base import Base
+from app.models.agents import (
+    AgentDefinition,
+    AgentEvalBaseline,
+    AgentIncident,
+)
 from app.services.agents.promotion_gate import AgentPromotionService
 from app.services.agents.prompt_baseline_registry import PromptBaselineRegistry
-from app.db.base import Base
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from pathlib import Path
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force SQLite for tests
 TEST_DB_FILE = Path("/tmp/test-promotion-gates.db")

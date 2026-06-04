@@ -1,42 +1,45 @@
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import List, Optional
-
-from sqlalchemy import select, delete as sa_delete
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.client import Client
 from app.models.rag_document import RAGDocument
 from app.models.rag_document_chunk import RAGDocumentChunk
-from app.services.rag_enterprise.parsers import parse_file, get_parser_status
-from app.services.rag_enterprise.chunking import chunk_text
-from app.services.rag_enterprise.schemas import ChunkingConfig, ChunkStrategy, SUPPORTED_EXTENSIONS
-from app.services.rag_enterprise.embeddings import get_enterprise_embedding_service
-from app.services.rag_enterprise.policies import (
-    EnterpriseRagPolicy,
-    check_quota_documents,
-    check_quota_storage,
-    check_quota_pages,
-    check_file_type_allowed,
-    resolve_enterprise_rag_policy,
-    is_cloud_embedding_allowed,
-)
-from app.services.rag_usage import record_rag_event
 from app.services.rag.rag_poison_detection import analyze_and_record_poisoning
 from app.services.rag.rag_vault import (
     get_or_create_default_vault,
     hash_text,
-    register_chunk as register_regulated_chunk,
-    register_document as register_regulated_document,
     sanitize_chunk_preview,
     should_encrypt_payload,
     should_store_plaintext,
 )
+from app.services.rag.rag_vault import (
+    register_chunk as register_regulated_chunk,
+)
+from app.services.rag.rag_vault import (
+    register_document as register_regulated_document,
+)
+from app.services.rag_enterprise.chunking import chunk_text
+from app.services.rag_enterprise.embeddings import get_enterprise_embedding_service
+from app.services.rag_enterprise.parsers import get_parser_status, parse_file
+from app.services.rag_enterprise.policies import (
+    check_file_type_allowed,
+    check_quota_documents,
+    check_quota_pages,
+    check_quota_storage,
+    is_cloud_embedding_allowed,
+    resolve_enterprise_rag_policy,
+)
+from app.services.rag_enterprise.schemas import ChunkingConfig, ChunkStrategy
+from app.services.rag_usage import record_rag_event
 from app.utils.token_estimator import estimate_tokens_from_text
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

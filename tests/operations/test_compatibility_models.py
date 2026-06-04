@@ -1,12 +1,12 @@
 from app.models.operations.compatibility_contracts import (
+    CapabilityNegotiation,
     CompatibilityContract,
     CompatibilityMatrix,
-    VersionNegotiationSession,
-    CapabilityNegotiation,
-    FeatureCompatibilityFlag,
-    DeprecationLifecycle,
-    CompatibilityVerificationResult,
     CompatibilityReceipt,
+    CompatibilityVerificationResult,
+    DeprecationLifecycle,
+    FeatureCompatibilityFlag,
+    VersionNegotiationSession,
 )
 
 

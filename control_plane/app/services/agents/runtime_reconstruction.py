@@ -1,12 +1,13 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, List, Any, Optional
 import uuid
+from typing import Any, Dict
+
+from app.core.time import utc_now
+from app.models.agent_execution import AgentExecutionJob
+from app.models.agents import AgentRun, AgentRunReceipt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentRun, AgentRunReceipt, AgentRunEvent
-from app.models.agent_execution import AgentExecutionJob
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

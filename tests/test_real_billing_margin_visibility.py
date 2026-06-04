@@ -1,6 +1,6 @@
-import pytest
-import subprocess
 import json
+import subprocess
+
 
 def test_margin_visibility(tmp_path):
     out_dir = tmp_path / "billing"

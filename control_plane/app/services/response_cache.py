@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 import hashlib
 import json
-
-from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from dataclasses import dataclass
+from datetime import timedelta
 
 from app.core.config import get_settings
 from app.core.metrics import record_cache_result
 from app.core.time import utc_now
 from app.models.request_log import RequestLog
 from app.models.response_cache import ResponseCache
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 CACHE_SCHEMA_VERSION = 2

@@ -12,26 +12,22 @@ Covers:
   8. GraphRAG injects path with provenance
   9. Existing: entity persistence, provenance, cross-tenant, write-flag, redaction
 """
-import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock
 
-from app.services.agents.knowledge_graph.graph_store import GraphStore
-from app.services.agents.knowledge_graph.graph_retriever import GraphRetriever
-from app.services.agents.knowledge_graph.graph_rag import GraphRAG
-from app.services.agents.knowledge_graph.graph_reasoner import GraphReasoner
+import pytest
+from app.core.config import get_settings
 from app.services.agents.knowledge_graph.graph_models import (
     GraphQueryRequest,
     PathStatus,
     Relation,
 )
 from app.services.agents.knowledge_graph.graph_policy import graph_policy
-from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
-    InternalSQLGraphProvider,
-)
+from app.services.agents.knowledge_graph.graph_rag import GraphRAG
+from app.services.agents.knowledge_graph.graph_reasoner import GraphReasoner
+from app.services.agents.knowledge_graph.graph_retriever import GraphRetriever
+from app.services.agents.knowledge_graph.graph_store import GraphStore
 from app.services.agents.knowledge_graph.providers.neo4j_graph import Neo4jGraphProvider
-from app.core.config import get_settings
-
 
 # ---------------------------------------------------------------------------
 # Helpers

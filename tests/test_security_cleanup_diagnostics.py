@@ -1,6 +1,8 @@
 import os
 import subprocess
+
 import pytest
+
 
 def test_diagnostic_file_exists():
     assert os.path.exists("docs/SECURITY_CLEANUP_v1.5.4.md")

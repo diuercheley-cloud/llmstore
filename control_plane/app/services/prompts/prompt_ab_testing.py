@@ -1,11 +1,12 @@
 # Owner: agent-platform
-import uuid
 import random
-from typing import Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
+from typing import Optional
 
-from app.models.prompts import PromptExperiment, PromptTemplateVersion
+from app.models.prompts import PromptExperiment
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PromptABTestingService:
     """

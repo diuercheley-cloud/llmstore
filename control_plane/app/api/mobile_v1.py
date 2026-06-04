@@ -1,14 +1,13 @@
-import uuid
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.api import deps
+from app.core.config import get_settings
 from app.db.session import get_db
+from app.models.client import Client
 from app.services.mobile.device_registry import DeviceRegistryService
 from app.services.mobile.push_notifications import PushNotificationService
-from app.core.config import get_settings
-from app.models.client import Client
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/mobile", tags=["client", "mobile"])
 

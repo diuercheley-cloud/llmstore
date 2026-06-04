@@ -1,13 +1,15 @@
-import pytest
-import uuid
-import sys
 import os
-from unittest.mock import MagicMock, AsyncMock, patch
+import sys
+import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
+from app.models.plugins.marketplace import PluginInstall, PluginPermissionGrant, PluginVersion
 from app.services.plugins.plugin_runtime import PluginRuntimeService
-from app.models.plugins.marketplace import PluginInstall, PluginVersion, PluginPermissionGrant
+
 
 @pytest.mark.asyncio
 async def test_plugin_no_manifest_fails():

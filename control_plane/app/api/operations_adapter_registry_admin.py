@@ -1,32 +1,27 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, List, Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.adapter_registry import (
-    SignedAdapterRegistryEntry,
-    AdapterRegistryPolicy,
-    AdapterRegistryDecision,
-    AdapterRegistryReceipt,
-    AdapterRegistryBlocklistEntry,
     AdapterRegistryAllowlistEntry,
+    AdapterRegistryBlocklistEntry,
+    AdapterRegistryPolicy,
+    SignedAdapterRegistryEntry,
 )
 from app.models.operations.adapter_sandbox import AdapterManifest
-from app.services.operations.adapter_registry.registry_service import SignedAdapterRegistryService
-from app.services.operations.adapter_registry.policy_engine import AdapterRegistryPolicyEngine
 from app.services.operations.adapter_registry.allowlist_blocklist import AdapterRegistryListService
+from app.services.operations.adapter_registry.hash_utils import compute_policy_hash
+from app.services.operations.adapter_registry.policy_engine import AdapterRegistryPolicyEngine
 from app.services.operations.adapter_registry.receipts import (
     build_registry_entry_receipt,
-    build_registry_decision_receipt,
-    build_policy_receipt,
 )
-from app.services.operations.adapter_registry.hash_utils import sha256_hex, compute_policy_hash
+from app.services.operations.adapter_registry.registry_service import SignedAdapterRegistryService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

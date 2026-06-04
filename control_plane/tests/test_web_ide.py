@@ -1,12 +1,12 @@
-import pytest
 import os
-import shutil
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.web_ide.workspace_service import WorkspaceService
+from unittest.mock import MagicMock, patch
+
+import pytest
 from app.services.web_ide.file_service import FileService
-from app.services.web_ide.validation_service import ValidationService
 from app.services.web_ide.sandbox_terminal import SandboxTerminal
+from app.services.web_ide.validation_service import ValidationService
+from app.services.web_ide.workspace_service import WorkspaceService
+
 
 @pytest.fixture
 def temp_workspace_dir(tmp_path):

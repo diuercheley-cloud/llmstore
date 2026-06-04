@@ -1,4 +1,3 @@
-import uuid
 import logging
 from typing import Any, Optional
 
@@ -27,7 +26,9 @@ class FalkorDBGraphProvider:
 
     async def _get_internal(self):
         if self._internal is None and self._db is not None:
-            from app.services.agents.knowledge_graph.providers.internal_sql_graph import InternalSQLGraphProvider
+            from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
+                InternalSQLGraphProvider,
+            )
             self._internal = InternalSQLGraphProvider(self._db)
         return self._internal
 

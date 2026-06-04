@@ -1,7 +1,8 @@
 import logging
+
+from app.core.config import get_settings
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

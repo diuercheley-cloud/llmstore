@@ -1,8 +1,7 @@
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_workflows import CommercialWorkflowReceipt, CommercialWorkflowStage
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

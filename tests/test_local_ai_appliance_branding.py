@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 BRANDING_DOC = "docs/LOCAL_AI_APPLIANCE_BRANDING.md"

@@ -3,12 +3,10 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import text
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.agents import AgentMemoryIndex
 from app.models.rag_document_chunk import RAGDocumentChunk
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import VectorStoreBase
 

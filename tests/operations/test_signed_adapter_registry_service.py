@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from app.models.operations.adapter_sandbox import AdapterManifest
 from app.services.operations.adapter_registry.registry_service import SignedAdapterRegistryService
-from app.utils.crypto_signer import sign_payload
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestSignedAdapterRegistryService:

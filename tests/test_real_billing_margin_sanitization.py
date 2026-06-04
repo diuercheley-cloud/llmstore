@@ -1,6 +1,6 @@
-import pytest
-import subprocess
 import json
+import subprocess
+
 
 def test_sanitization(tmp_path):
     out_dir = tmp_path / "billing"

@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add scripts to path for imports
 ROOT_DIR = Path(__file__).resolve().parent.parent

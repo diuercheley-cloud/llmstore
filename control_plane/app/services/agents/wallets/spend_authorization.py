@@ -1,8 +1,10 @@
 # Owner: agent-platform
 import uuid
-from typing import Dict, Any, Tuple, Optional
+from typing import Optional, Tuple
+
+from app.models.agent_wallet import AgentSpendAuthorization, AgentWalletLimit
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_wallet import AgentSpendAuthorization, AgentWalletLimit, AgentWallet
+
 
 class SpendAuthorization:
     def __init__(self, db: AsyncSession):

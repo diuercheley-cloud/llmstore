@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import json
 import os
-import sys
 import subprocess
-import urllib.request
+import sys
 import urllib.error
+import urllib.request
 import uuid
+
 
 # Helper functions to load and save keys in untracked .env.local
 def load_env_val(key_name):

@@ -4,8 +4,6 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-
 from app.db.base import Base
 from app.models.semantic_cache_entry import SemanticCacheEntry
 from app.services.cache.intelligent_cache import (
@@ -14,6 +12,7 @@ from app.services.cache.intelligent_cache import (
     get_semantic,
     set_semantic,
 )
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest.mark.asyncio

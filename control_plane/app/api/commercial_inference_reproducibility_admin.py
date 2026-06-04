@@ -4,11 +4,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.commercial_inference_reproducibility import (
@@ -19,6 +14,10 @@ from app.models.commercial_inference_reproducibility import (
 from app.services.auth import require_admin
 from app.services.inference.replay_verification import verify_replay
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     tags=["admin", "inference-reproducibility"],

@@ -1,13 +1,13 @@
+
 import pytest
-import uuid
-from fastapi import HTTPException
 from app.core.config import get_settings
 from app.services.mlops.dataset_registry import DatasetRegistry
-from app.services.mlops.training_job_registry import TrainingJobRegistry
-from app.services.mlops.finetuning_service import FineTuningService
-from app.services.mlops.experiment_tracker import ExperimentTracker
 from app.services.mlops.evaluation_artifacts import EvaluationArtifacts
+from app.services.mlops.experiment_tracker import ExperimentTracker
+from app.services.mlops.finetuning_service import FineTuningService
 from app.services.mlops.model_lineage import ModelLineage
+from app.services.mlops.training_job_registry import TrainingJobRegistry
+from fastapi import HTTPException
 
 
 @pytest.mark.asyncio
@@ -141,8 +141,8 @@ async def test_external_integration_disabled_por_default(session):
 
     # In SQLite, log_run will log the event and details.
     # Let's inspect the AdminAuditEvent recorded
-    from sqlalchemy import select
     from app.models.admin_rbac import AdminAuditEvent
+    from sqlalchemy import select
     result = await session.execute(
         select(AdminAuditEvent).where(AdminAuditEvent.event_type == "experiment_run_log")
     )

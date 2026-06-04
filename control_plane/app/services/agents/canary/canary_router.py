@@ -1,11 +1,13 @@
 # Owner: agent-platform
-import uuid
 import random
-from typing import Optional, Tuple
+import uuid
+from typing import Optional
+
+from app.core.config import get_settings
+from app.models.agent_canary import AgentCanaryAssignment
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.agent_canary import AgentCanaryAssignment
-from app.core.config import get_settings
+
 
 class CanaryRouter:
     def __init__(self, db: AsyncSession):

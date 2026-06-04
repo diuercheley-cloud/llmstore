@@ -8,17 +8,14 @@ import json
 import logging
 import tarfile
 import tempfile
-import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from app.core.config import get_settings
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +134,8 @@ class AgentBackupService:
         backups = []
         for f in sorted(self._backup_dir.glob("backup-*.tar.gz"), reverse=True):
             try:
-                import tarfile, json, io
+                import json
+                import tarfile
                 with tarfile.open(str(f), "r:gz") as tar:
                     mf = tar.extractfile(f"{f.stem}/manifest.json")
                     if mf:
@@ -150,7 +148,7 @@ class AgentBackupService:
         return backups
 
     async def _backup_agent_config(self, agent_id: str, agent_dir: Path):
-        from app.models.agents import AgentDefinition, AgentRegistryEntry
+        from app.models.agents import AgentDefinition
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )

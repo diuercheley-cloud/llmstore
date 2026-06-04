@@ -1,8 +1,8 @@
-import os
 import re
 import subprocess
-import pytest
 from pathlib import Path
+
+import pytest
 
 ROOT_DIR = Path(__file__).parent.parent
 SCRIPTS_LIB = ROOT_DIR / "scripts" / "lib"

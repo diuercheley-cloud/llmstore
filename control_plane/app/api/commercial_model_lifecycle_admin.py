@@ -2,19 +2,9 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.commercial_model_lifecycle import (
-    CommercialModelLifecycleRecord,
-    CommercialModelLineage,
-    CommercialModelPromotionRequest,
-    CommercialModelRollbackRecord,
     CommercialOfflineModelVerification,
-    VALID_LIFECYCLE_STATES,
 )
 from app.services.auth import require_admin
 from app.services.models.model_lifecycle_manager import (
@@ -57,6 +47,10 @@ from app.services.models.model_quarantine import (
     serialize_rollback_record,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/admin/models/lifecycle",

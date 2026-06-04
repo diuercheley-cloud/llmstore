@@ -1,18 +1,19 @@
-import uuid
 import logging
-from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+import uuid
+from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.models.agents import AgentMemoryItem
 from app.services.agents.memory_indexing import MemoryIndexingService
-from .vector_store import VectorStore
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from .chroma_memory_store import ChromaMemoryStore
 from .mock_memory_store import MockMemoryStore
 from .pgvector_memory_store import PGVectorMemoryStore
-from .chroma_memory_store import ChromaMemoryStore
-from .redis_memory_store import RedisMemoryStore
 from .pinecone_memory_store import PineconeMemoryStore
+from .redis_memory_store import RedisMemoryStore
+from .vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 

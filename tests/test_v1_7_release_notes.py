@@ -1,5 +1,6 @@
 import os
 import re
+
 import pytest
 
 RELEASE_NOTES_PATH = "docs/V1_7_RELEASE_NOTES.md"

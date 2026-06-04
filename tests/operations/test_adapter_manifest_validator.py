@@ -1,5 +1,5 @@
-import pytest
 from app.services.operations.adapter_sandbox.manifest_validator import AdapterManifestValidator
+
 
 def test_manifest_validation_valid():
     validator = AdapterManifestValidator()

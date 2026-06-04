@@ -1,17 +1,16 @@
 # Owner: Platform Operations
 import uuid
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
-from app.services.agents.connectors.registry import connector_registry
-from app.services.agents.connectors.base import ConnectorAdapter
-from app.services.agents.connectors.credentials import credential_manager
 from app.services.agents.connectors.audit import connector_audit
-from app.services.agents.connectors.oauth import OAuthService
 from app.services.agents.connectors.connector_token_rotation import TokenRotationService
+from app.services.agents.connectors.credentials import credential_manager
+from app.services.agents.connectors.oauth import OAuthService
+from app.services.agents.connectors.registry import connector_registry
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/connectors", tags=["agent-connectors-admin"])
 
@@ -131,7 +130,7 @@ async def execute_connector(name: str, payload: ExecuteRequest):
         raise HTTPException(status_code=404, detail=f"Connector {name} not found")
     
     credentials = credential_manager.get_credentials(payload.tenant_id, name, payload.credential_id)
-    if not credentials and not name.upper() in ["GITHUB", "SLACK", "JIRA", "CONFLUENCE", "SALESFORCE", "MICROSOFT365"]: # Simplified check
+    if not credentials and name.upper() not in ["GITHUB", "SLACK", "JIRA", "CONFLUENCE", "SALESFORCE", "MICROSOFT365"]: # Simplified check
          raise HTTPException(status_code=401, detail="No credentials found for this connector")
 
     try:

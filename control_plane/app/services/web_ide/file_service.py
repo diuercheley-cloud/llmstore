@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from fastapi import HTTPException
+
 
 class FileService:
     def __init__(self, workspace_path: Path):

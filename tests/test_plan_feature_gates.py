@@ -1,6 +1,7 @@
-import pytest
+
 import httpx
-import json
+import pytest
+
 
 @pytest.mark.asyncio
 async def test_feature_gates_rag(admin_client: httpx.AsyncClient, admin_token_headers):

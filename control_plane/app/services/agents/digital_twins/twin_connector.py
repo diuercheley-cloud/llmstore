@@ -1,9 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Dict, Any, Optional
-from .twin_state import TwinState
+import uuid
+from typing import Any, Dict
+
 from app.models.digital_twin import DigitalTwin
+
+from .twin_state import TwinState
 
 logger = logging.getLogger(__name__)
 

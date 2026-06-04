@@ -4,19 +4,19 @@ Status: beta
 
 Semantic memory retrieval with tenant isolation, consent, redaction, and scoring.
 """
-import uuid
 import logging
-from typing import List, Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from datetime import timezone
+from typing import Any, Dict, List, Optional
 
-from app.models.agents import AgentMemoryItem
 from app.core.config import get_settings
 from app.core.time import utc_now
-from datetime import timezone
-from app.services.agents.memory_indexing import MemoryIndexingService
-from app.services.agents.memory_redaction import MemoryRedactionService
+from app.models.agents import AgentMemoryItem
 from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_indexing import MemoryIndexingService
 from app.services.agents.memory_policy import MemoryPolicyService
+from app.services.agents.memory_redaction import MemoryRedactionService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +104,8 @@ class MemoryRetriever:
 
             score = 1.0
             if semantic and item.id:
-                from sqlalchemy.future import select
                 from app.models.agents import AgentMemoryIndex
+                from sqlalchemy.future import select
                 stmt = select(AgentMemoryIndex).where(
                     AgentMemoryIndex.memory_item_id == item.id,
                     AgentMemoryIndex.tenant_id == tenant_id,
@@ -113,7 +113,8 @@ class MemoryRetriever:
                 res = await self.db.execute(stmt)
                 idx = res.scalar_one_or_none()
                 if idx and idx.embedding:
-                    import json, math
+                    import json
+                    import math
                     query_emb = await self.indexing._compute_embedding(query)
                     try:
                         item_emb = json.loads(idx.embedding)

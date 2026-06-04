@@ -3,20 +3,16 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import time
 import uuid
-
-from fastapi import HTTPException, status
-from redis.asyncio import Redis
-from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.abuse_event import AbuseEvent
 from app.models.abuse_action import AbuseAction
+from app.models.abuse_event import AbuseEvent
 from app.models.client import Client
-from app.models.ai_wallet import AiWallet
+from redis.asyncio import Redis
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

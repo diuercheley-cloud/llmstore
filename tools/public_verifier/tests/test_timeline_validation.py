@@ -1,6 +1,7 @@
-import pytest
 import hashlib
+
 from tools.public_verifier.verifier_core import verify_timeline_chain
+
 
 def test_verify_timeline_chain_valid():
     root = hashlib.sha256(b"root").hexdigest()

@@ -1,18 +1,16 @@
-import pytest
 import uuid
-from decimal import Decimal
-from unittest.mock import patch, MagicMock
-from sqlalchemy import select
+from unittest.mock import MagicMock, patch
 
+import pytest
 from app.core.config import get_settings
-from app.services.token_counting.token_counter import TokenCounter
-from app.services.tokenizer_service import get_tokenizer_service
-from app.models.client import Client
 from app.models.agents import AgentDefinition, AgentRun
+from app.models.client import Client
+from app.models.request_financial import RequestFinancial
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.billing.pricing_engine import record_request_financials
-from app.models.request_financial import RequestFinancial
-from app.models.usage_record import UsageRecord
+from app.services.token_counting.token_counter import TokenCounter
+from sqlalchemy import select
+
 
 @pytest.mark.asyncio
 async def test_token_counter_fallback_explicit(monkeypatch):

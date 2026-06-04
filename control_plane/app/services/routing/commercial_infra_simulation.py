@@ -1,13 +1,10 @@
 import logging
 import uuid
-from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

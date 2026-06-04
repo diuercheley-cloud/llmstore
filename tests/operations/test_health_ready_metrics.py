@@ -1,14 +1,15 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
 import pytest
 import pytest_asyncio
-import httpx
-from httpx import AsyncClient
-from app.main import app
 from app.db.session import get_db_session, get_redis
-from app.core.config import get_settings, Settings
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from app.main import app
+from httpx import AsyncClient
 from sqlalchemy import text
-from unittest.mock import AsyncMock, MagicMock, patch
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
+
 
 @pytest_asyncio.fixture
 async def async_client(fake_redis):

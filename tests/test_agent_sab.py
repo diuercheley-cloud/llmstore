@@ -1,11 +1,10 @@
-import pytest
 import uuid
+
+import pytest
+from app.models.agents import AgentDefinition
 from app.services.agents.sab.sab_exporter import SABExporter
 from app.services.agents.sab.sab_importer import SABImporter
-from app.services.agents.sab.sab_verifier import SABVerifier
-from app.services.agents.sab.sab_manifest import AgentSABManifest
-from app.models.agents import AgentDefinition
-from app.core.config import get_settings
+
 
 @pytest.fixture
 async def setup_agent(session):
@@ -63,7 +62,8 @@ async def test_memory_snapshot_com_secret_bloqueia(session, setup_agent):
     # Add memory with secret
     manifest.memory_snapshot = [{"id": "m1", "content": "My key is sk-12345"}]
     # Update checksum and signature to pass integrity check but fail security check
-    import json, hashlib
+    import hashlib
+    import json
     data_to_hash = manifest.model_dump(exclude={"checksums", "signature"})
     payload = json.dumps(data_to_hash, sort_keys=True).encode()
     new_checksum = hashlib.sha256(payload).hexdigest()

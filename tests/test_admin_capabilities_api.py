@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_admin_capabilities_auth(admin_client: AsyncClient):
     """

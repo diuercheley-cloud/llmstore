@@ -17,7 +17,6 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from app.core.config import get_settings
 from app.services.agents.knowledge_graph.graph_cache import (
     AdjacencyCache,
@@ -26,22 +25,17 @@ from app.services.agents.knowledge_graph.graph_cache import (
 )
 from app.services.agents.knowledge_graph.graph_models import (
     Entity,
-    GraphQueryRequest,
     Relation,
 )
 from app.services.agents.knowledge_graph.graph_query_optimizer import (
     GraphQueryOptimizer,
     OptimizedQueryRequest,
-    query_optimizer,
 )
 from app.services.agents.knowledge_graph.graph_store import GraphStore
 from app.services.agents.knowledge_graph.vector_graph_hybrid import (
     HybridQueryRequest,
     VectorGraphHybrid,
-    _orm_to_entity,
-    _orm_to_relation,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -546,6 +540,7 @@ async def test_graphrag_dense_graph_10k_entities_100k_relations(session):
     - Hybrid query latency < 5 s
     """
     from pathlib import Path
+
     from app.services.agents.knowledge_graph.vector_graph_hybrid import (
         HybridQueryRequest,
         VectorGraphHybrid,
@@ -577,7 +572,6 @@ async def test_graphrag_dense_graph_10k_entities_100k_relations(session):
     from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
         InternalSQLGraphProvider,
     )
-    from app.models.agent_knowledge_graph import AgentKGRelation
 
     provider = InternalSQLGraphProvider(session)
     rel_count = 0

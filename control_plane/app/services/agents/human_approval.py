@@ -1,23 +1,23 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, List, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents import (
-    AgentApprovalRequest,
     AgentApprovalDecision,
     AgentApprovalPolicy,
-    AgentTool,
+    AgentApprovalRequest,
     AgentRegistryEntry,
     AgentRun,
+    AgentTool,
 )
-from app.services.auth import AdminRole
 from app.services.admin_rbac import record_admin_audit_event
+from app.services.auth import AdminRole
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

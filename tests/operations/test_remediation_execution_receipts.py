@@ -1,8 +1,9 @@
 from app.services.operations.remediation_execution.receipts import (
-    build_pre_execution_receipt,
-    build_post_execution_receipt,
     build_kill_switch_receipt,
+    build_post_execution_receipt,
+    build_pre_execution_receipt,
 )
+
 
 class TestRemediationExecutionReceipts:
     def test_build_pre_receipt(self):

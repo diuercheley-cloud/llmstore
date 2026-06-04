@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
@@ -17,7 +15,10 @@ from app.services.routing.commercial_cluster_aggregates import (
     cleanup_old_analytics,
     get_cluster_overview,
 )
-from app.services.routing.commercial_event_ingest import ingest_routing_event, process_pending_events
+from app.services.routing.commercial_event_ingest import (
+    ingest_routing_event,
+    process_pending_events,
+)
 from app.services.routing.commercial_node_heartbeat import (
     list_nodes,
     mark_stale_nodes_offline,
@@ -25,6 +26,7 @@ from app.services.routing.commercial_node_heartbeat import (
     summarize_cluster_health,
     write_heartbeat,
 )
+from sqlalchemy import select
 
 
 def _enable_distributed(monkeypatch: pytest.MonkeyPatch) -> None:

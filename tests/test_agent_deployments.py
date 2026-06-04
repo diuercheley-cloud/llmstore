@@ -1,11 +1,15 @@
-import pytest
 import uuid
-import time
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.agent_deployments.agent_api_deployment import AgentApiDeploymentService, DeploymentValidationError
+
+import pytest
+from app.models.agent_deployments import AgentApiDeployment
+from app.models.agents import AgentDefinition
+from app.services.agent_deployments.agent_api_deployment import (
+    AgentApiDeploymentService,
+    DeploymentValidationError,
+)
 from app.services.agent_deployments.agent_endpoint_registry import AgentEndpointRegistry
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.agent_deployments import AgentApiDeployment, AgentApiEndpointKey
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_agent_deployment_lifecycle(session: AsyncSession):

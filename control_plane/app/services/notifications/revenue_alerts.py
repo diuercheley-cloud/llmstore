@@ -4,7 +4,6 @@ import logging
 from typing import Any
 
 import httpx
-
 from app.core.config import get_settings
 from app.services.routing.commercial_report_export import sanitize_report_payload
 

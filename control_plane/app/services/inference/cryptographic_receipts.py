@@ -1,19 +1,12 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
-import uuid
 import os
-import base64
-from datetime import datetime
-from typing import Any
+import uuid
 from pathlib import Path
-
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives import serialization
-
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -23,6 +16,10 @@ from app.models.commercial_cryptographic_receipts import (
     CommercialInferenceReceiptVerificationReport,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 KEY_PATH_DEFAULT = "config/receipts_private_key.pem"
 

@@ -2,8 +2,6 @@ import json
 import re
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 FAKE_DIR = ROOT / "demo-pack" / "fake-data"
 

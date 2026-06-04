@@ -2,6 +2,7 @@
 import re
 from typing import List, Tuple
 
+
 class JailbreakDetector:
     """
     Detects jailbreak attempts and prompt injections in agent inputs.

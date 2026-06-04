@@ -1,10 +1,12 @@
-import uuid
 import logging
-from typing import List, Dict, Any
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from .vector_store import VectorStore
+import uuid
+from typing import Any, Dict, List
+
 from app.models.agents import AgentMemoryIndex
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from .vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +65,9 @@ class PGVectorMemoryStore(VectorStore):
         # SELECT memory_item_id, 1 - (embedding <=> :q) as score ...
         # Since we are using SQLAlchemy and might not have the extension mapped:
         
-        from sqlalchemy import text
         import json
+
+        from sqlalchemy import text
 
         # Fallback to loading all embeddings for this tenant/agent if native vector search is not configured
         # But here we implement the intended SQL logic

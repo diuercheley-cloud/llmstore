@@ -1,10 +1,9 @@
 # tests/test_release_summaries_no_tokens.py
 # FAKE SECRET FOR TESTS ONLY
-import os
 import subprocess
-import shutil
-import pytest
 from pathlib import Path
+
+import pytest
 
 # Path to the script to test
 ROOT_DIR = Path(__file__).parent.parent

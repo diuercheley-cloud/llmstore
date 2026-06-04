@@ -4,13 +4,12 @@ import hashlib
 import json
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_operations_center import CommercialCryptographicTrustSnapshot
 from app.models.commercial_trust_violation import CommercialTrustViolation
 from app.models.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .cryptographic_topology import CryptographicTopologyService
 from .trust_graph import TrustGraphService

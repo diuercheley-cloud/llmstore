@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.governance.blast_radius_analysis import BlastRadiusAnalysisService
 
 

@@ -1,7 +1,9 @@
-from sqlalchemy.orm import Session
-from app.models.commercial_control_plane_mesh import CommercialMeshNode, CommercialMeshHealthState
 import uuid
 from typing import List, Optional
+
+from app.models.commercial_control_plane_mesh import CommercialMeshHealthState, CommercialMeshNode
+from sqlalchemy.orm import Session
+
 
 class ControlPlaneMeshService:
     def __init__(self, db: Session):

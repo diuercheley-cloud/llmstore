@@ -1,12 +1,12 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from app.models.agents import AgentA2ARegistration, AgentDelegationPolicy
+from app.services.agents.a2a.a2a_security import A2ASecurityService
+from app.services.agents.a2a.a2a_server import A2AServerService
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.agents import AgentA2ARegistration, AgentDelegationPolicy
-from app.services.agents.a2a.a2a_server import A2AServerService
-from app.services.agents.a2a.a2a_security import A2ASecurityService
 
 
 @pytest.fixture(autouse=True)

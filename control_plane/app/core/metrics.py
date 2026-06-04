@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+from prometheus_client import Counter, Gauge, Histogram
 
 
 def _label(value: object | None, fallback: str = "unknown") -> str:

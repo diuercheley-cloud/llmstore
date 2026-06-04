@@ -1,11 +1,12 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.governance.governance_decision_explainer import GovernanceDecisionExplainer
 from app.models.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorDecision,
     CommercialGovernanceSupervisorIncident,
-    CommercialGovernanceSupervisorPolicy
+    CommercialGovernanceSupervisorPolicy,
 )
+from app.services.governance.governance_decision_explainer import GovernanceDecisionExplainer
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_generate_explanation(session: AsyncSession):

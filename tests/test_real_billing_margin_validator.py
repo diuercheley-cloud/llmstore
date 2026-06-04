@@ -1,5 +1,6 @@
-import subprocess
 import os
+import subprocess
+
 
 def test_script_help():
     res = subprocess.run(["./scripts/validate-real-billing-margin.sh", "--help"], capture_output=True, text=True)

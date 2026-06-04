@@ -1,12 +1,14 @@
-import pytest
-import sys
 import os
-from unittest.mock import MagicMock, patch
+import sys
+from unittest.mock import patch
+
+import pytest
 
 # Ensure control plane is in PYTHONPATH
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
 from app.services.platform.ga_readiness import GAReadinessService
+
 
 @pytest.mark.asyncio
 async def test_ga_readiness_runtime_disabled():

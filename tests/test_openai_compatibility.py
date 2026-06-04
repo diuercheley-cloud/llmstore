@@ -1,9 +1,10 @@
 import pytest
-from fastapi import HTTPException
-from app.utils.validation import normalize_messages, validate_params
-from app.schemas.inference import ChatCompletionRequest, ChatMessage
-from app.models.client import Client
 from app.models.billing_plan import BillingPlan
+from app.models.client import Client
+from app.schemas.inference import ChatCompletionRequest
+from app.utils.validation import normalize_messages, validate_params
+from fastapi import HTTPException
+
 
 def test_normalize_messages_string():
     messages = [{"role": "user", "content": "hello"}]

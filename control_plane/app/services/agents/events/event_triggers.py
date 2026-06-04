@@ -2,14 +2,15 @@ import asyncio
 import logging
 import uuid
 from typing import Any, Dict
+
+from app.core.config import get_settings
+from app.core.time import utc_now
+from app.models.agent_events import AgentEventDelivery, AgentEventTrigger
+from app.services.agents.agent_runtime import start_run
+from app.services.agents.events.event_deduplication import sanitize_payload
+from app.services.agents.events.event_policy import check_policy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_events import AgentEventTrigger, AgentEventDelivery
-from app.services.agents.events.event_policy import check_policy
-from app.services.agents.agent_runtime import start_run
-from app.core.time import utc_now
-from app.core.config import get_settings
-from app.services.agents.events.event_deduplication import sanitize_payload
 
 logger = logging.getLogger(__name__)
 

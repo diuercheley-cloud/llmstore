@@ -1,23 +1,28 @@
+import base64
 import hashlib
 import json
 import logging
-import base64
-from typing import Dict, Any
-
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Dict
 
 from app.core.config import get_settings
-from app.models.security_pki import AttestationReport as AttestationReportDB, PluginRegistry
+from app.core.time import utc_now
+from app.models.security_pki import AttestationReport as AttestationReportDB
+from app.models.security_pki import PluginRegistry
 from app.services.security.hardware_trust import get_hardware_trust_provider
 from app.services.security.pki_service import PKIService
-from app.core.time import utc_now
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-from app.contracts.attestation import AttestationContract, AttestationReport, AttestationCapabilities
+from app.contracts.attestation import (
+    AttestationCapabilities,
+    AttestationContract,
+    AttestationReport,
+)
+
 
 class NodeAttestationService(AttestationContract):
     def __init__(self, db: AsyncSession):

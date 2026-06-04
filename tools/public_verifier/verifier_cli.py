@@ -4,11 +4,13 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
-from .verifier_core import Verifier
-from .verifier_reports import format_terminal_report, generate_json_report
-from .verifier_models import VerificationReport
 
-import requests # Need to add this to requirements.txt
+import requests  # Need to add this to requirements.txt
+
+from .verifier_core import Verifier
+from .verifier_models import VerificationReport
+from .verifier_reports import format_terminal_report, generate_json_report
+
 
 def verify_file(file_path: str, export_path: str = None, gateway_url: str = None):
     if not os.path.exists(file_path):

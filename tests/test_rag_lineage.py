@@ -1,11 +1,11 @@
-import pytest
 import hashlib
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.rag import confidential_rag_vault, chunk_lineage
 
+import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.db.base import Base
+from app.services.rag import chunk_lineage, confidential_rag_vault
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url):

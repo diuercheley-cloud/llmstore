@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 KEYWORDS = [
     "placeholder", "stub", "mock", "dry_run", "simulated", 

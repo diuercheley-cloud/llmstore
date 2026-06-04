@@ -1,10 +1,10 @@
-import uuid
 import json
 import logging
-from typing import Dict, Any, Optional
+import uuid
+from typing import Any, Dict, Optional
 
-from app.services.agents.digital_twins.twin_connector import TwinConnector
 from app.models.digital_twin import DigitalTwin
+from app.services.agents.digital_twins.twin_connector import TwinConnector
 
 logger = logging.getLogger(__name__)
 

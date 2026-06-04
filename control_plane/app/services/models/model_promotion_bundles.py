@@ -5,9 +5,6 @@ import json
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.admin_action_log import AdminActionLog
 from app.models.commercial_model_supply_chain import (
@@ -23,6 +20,8 @@ from app.services.models.signed_model_registry import (
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.offline_crl import is_bundle_revoked, is_peer_revoked
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

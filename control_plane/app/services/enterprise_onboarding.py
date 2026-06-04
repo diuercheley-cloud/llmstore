@@ -1,21 +1,17 @@
-import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
-
+from app.core.config import get_settings
 from app.models.commercial_enterprise_onboarding import (
     EnterpriseCustomer,
+    EnterpriseHandoverReport,
     EnterpriseOnboardingProject,
     EnterpriseOnboardingTask,
-    EnterpriseAcceptanceCheck,
-    EnterpriseHandoverReport,
-    EnterpriseTrainingSession,
 )
-from app.core.config import get_settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 class EnterpriseOnboardingService:
     def __init__(self, db: AsyncSession):

@@ -1,23 +1,20 @@
-import uuid
-from typing import Optional, List, Dict, Any
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List
 
 from app.models.operations.adapter_promotion import (
-    AdapterPromotionWorkflow,
     AdapterPromotionGateResult,
-    AdapterPromotionStageTransition,
     AdapterPromotionRollback,
+    AdapterPromotionStageTransition,
+    AdapterPromotionWorkflow,
 )
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.services.operations.adapter_promotion.hash_utils import (
-    sha256_hex, 
-    compute_promotion_hash, 
-    compute_gate_hash, 
-    compute_transition_hash
+    compute_gate_hash,
+    compute_promotion_hash,
+    compute_transition_hash,
+    sha256_hex,
 )
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class AdapterPromotionWorkflowService:
     def __init__(self, session: AsyncSession):

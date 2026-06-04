@@ -1,9 +1,8 @@
 """response cache and request log cache telemetry"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260430_0008"
 down_revision = "20260430_0007"

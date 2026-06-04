@@ -1,6 +1,6 @@
 import subprocess
-import pytest
 from pathlib import Path
+
 
 def run_make(target, env=None, extra_args=None):
     cmd = ["make", target]

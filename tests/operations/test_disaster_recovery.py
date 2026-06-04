@@ -1,5 +1,7 @@
 from app.services.operations.disaster_recovery.recovery_plan_service import build_recovery_hash
-from app.services.operations.disaster_recovery.recovery_replay_verifier import verify_recovery_replay
+from app.services.operations.disaster_recovery.recovery_replay_verifier import (
+    verify_recovery_replay,
+)
 
 
 def test_disaster_recovery_is_dry_run_replay_safe():

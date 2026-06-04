@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import re
 import sys
-import argparse
 
 # Regex patterns for sensitive data
 REDACT_PATTERNS = [

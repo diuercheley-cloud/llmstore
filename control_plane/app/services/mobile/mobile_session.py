@@ -1,9 +1,11 @@
-import uuid
 import secrets
+import uuid
 from datetime import timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.mobile import MobileSession
+
 from app.core.time import utc_now
+from app.models.mobile import MobileSession
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class MobileSessionService:
     def __init__(self, db: AsyncSession):

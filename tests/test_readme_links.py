@@ -31,7 +31,7 @@ def test_doc_links_resolve():
         target = ROOT / link
         if not target.exists():
             missing.append(link)
-    assert not missing, f"Broken doc links:\n" + "\n".join(missing)
+    assert not missing, "Broken doc links:\n" + "\n".join(missing)
 
 
 def test_no_broken_script_links():
@@ -43,7 +43,7 @@ def test_no_broken_script_links():
         target = ROOT / ref
         if not target.exists():
             missing.append(ref)
-    assert not missing, f"Broken script refs:\n" + "\n".join(missing)
+    assert not missing, "Broken script refs:\n" + "\n".join(missing)
 
 
 def test_release_notes_link():

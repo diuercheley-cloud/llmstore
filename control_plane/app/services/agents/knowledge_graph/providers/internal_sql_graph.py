@@ -24,14 +24,10 @@ Feature flags:
 """
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
 from collections import deque
 from typing import Any
-
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_knowledge_graph import (
     AgentKGEntity,
@@ -40,6 +36,8 @@ from app.models.agent_knowledge_graph import (
     AgentKGRelation,
     AgentKGSource,
 )
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class InternalSQLGraphProvider:

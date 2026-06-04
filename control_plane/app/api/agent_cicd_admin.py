@@ -2,15 +2,14 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import get_db_session, require_admin
 from app.models.agent_cicd import AgentDeployment, AgentPipeline, AgentRollback
 from app.services.agents.cicd.agent_pipeline import AgentPipelineService
 from app.services.agents.cicd.rollback_executor import RollbackExecutor
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/cicd", tags=["agent-cicd"])
 

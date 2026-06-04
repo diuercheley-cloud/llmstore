@@ -1,12 +1,12 @@
 # Owner: agent-platform
 import uuid
 from datetime import datetime
-from typing import Dict, Any
-
-from sqlalchemy import Column, String, DateTime, ForeignKey, Index, JSON, UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Any, Dict
 
 from app.db.base import Base
+from sqlalchemy import JSON, UUID, DateTime, ForeignKey, Index, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 
 class AgentKGEntity(Base):
     __tablename__ = "agent_kg_entities"

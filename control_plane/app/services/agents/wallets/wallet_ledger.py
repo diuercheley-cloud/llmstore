@@ -1,10 +1,12 @@
 # Owner: agent-platform
-import uuid
 import hashlib
-from typing import List, Dict, Any
+import uuid
+from typing import List
+
+from app.models.agent_wallet import AgentWallet, AgentWalletLedgerEntry
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.agent_wallet import AgentWalletLedgerEntry, AgentWallet
+
 
 class WalletLedger:
     def __init__(self, db: AsyncSession):

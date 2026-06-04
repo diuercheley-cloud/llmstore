@@ -1,16 +1,13 @@
 """Tests for Prompt Optimization Engine — pattern detection, scoring, variant generation."""
 
 import pytest
-
 from app.services.agents.prompt_optimizer import (
-    PromptOptimizationEngine,
-    PromptOptimizerAPI,
-    OptimizationGoal,
-    EvalResult,
-    PromptOptimizationSuggestion,
-    PromptVariant,
-    OptimizationReport,
     OPTIMIZATION_PATTERNS,
+    EvalResult,
+    OptimizationReport,
+    PromptOptimizationEngine,
+    PromptOptimizationSuggestion,
+    PromptOptimizerAPI,
 )
 
 

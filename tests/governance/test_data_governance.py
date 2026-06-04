@@ -1,4 +1,6 @@
-from app.services.governance.data_governance.data_minimization_checker import check_payload_for_sensitive_keys
+from app.services.governance.data_governance.data_minimization_checker import (
+    check_payload_for_sensitive_keys,
+)
 from app.services.governance.data_governance.export_governance_service import build_export_hash
 
 

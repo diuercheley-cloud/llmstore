@@ -1,6 +1,8 @@
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
-from pydantic import BaseModel, Field
+
 from app.contracts.base import BaseContract, ContractCapability
+from pydantic import BaseModel, Field
+
 
 class RoutingInput(BaseModel):
     requested_model: Optional[str] = None

@@ -1,29 +1,25 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
 from app.core.config import get_settings
-from app.core.time import utc_now
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
 from app.models.agents import (
     AgentDefinition,
-    AgentRegistryEntry,
-    AgentEvalSuite,
-    AgentEvalCase,
-    AgentEvalRun,
-    AgentEvalResult,
     AgentEvalBaseline,
-    AgentEvalDataset,
-    AgentEvalDatasetVersion,
-    AgentEvalFailure,
+    AgentEvalCase,
+    AgentEvalResult,
+    AgentEvalRun,
+    AgentEvalSuite,
+    AgentRegistryEntry,
     AgentRun,
     AgentRunStep,
 )
-from app.services.agents.eval_gate import EvalGateService
 from app.services.agents.eval_dataset_registry import EvalDatasetRegistryService
+from app.services.agents.eval_gate import EvalGateService
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
@@ -249,7 +245,7 @@ async def test_promotion_with_mock_blocks():
 
 @pytest.mark.asyncio
 async def test_gateway_eval_uses_agent_runtime():
-    from app.services.agents.agent_evals import get_eval_provider, GatewayEvalProvider
+    from app.services.agents.agent_evals import GatewayEvalProvider, get_eval_provider
     provider = get_eval_provider("gateway")
     assert isinstance(provider, GatewayEvalProvider)
 

@@ -3,14 +3,11 @@ from __future__ import annotations
 import json
 import uuid
 from decimal import Decimal
-from datetime import timezone
 
+from app.core.time import utc_now
+from app.models.ai_wallet import AiWallet, AiWalletTransaction
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.ai_wallet import AiWallet, AiWalletTransaction, WALLET_TYPES
-from app.models.client import Client
-from app.core.time import utc_now
 
 
 class InsufficientBalance(Exception):

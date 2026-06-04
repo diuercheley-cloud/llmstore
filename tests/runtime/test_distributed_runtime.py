@@ -1,10 +1,9 @@
-import pytest
 import uuid
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from app.services.runtime.distributed_runtime import DistributedRuntimeService
-from app.models.runtime.distributed_runtime import RuntimeNode
-from app.core.time import utc_now
+
 
 @pytest.mark.asyncio
 async def test_register_node_mock():

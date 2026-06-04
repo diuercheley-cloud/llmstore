@@ -1,23 +1,20 @@
 # Owner: agent-platform
-import uuid
 import logging
-from datetime import datetime
-from typing import Any, List, Optional, Dict
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func
+import uuid
+from typing import Any, Dict, List, Optional
 
-from app.core.time import utc_now
 from app.core.config import get_settings
+from app.core.time import utc_now
 from app.models.agent_sessions import (
     AgentSession,
-    AgentConversationThread,
-    AgentThreadMessage,
     AgentSessionRun,
     AgentSessionSummary,
 )
 from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
 from app.services.agents.sessions.session_history_policy import SessionHistoryPolicyService
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

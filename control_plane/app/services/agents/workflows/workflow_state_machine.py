@@ -1,10 +1,10 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, Any, Optional
 from enum import Enum
+from typing import Any, Dict, Optional
 
-from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflowEvent
 from app.core.time import utc_now
+from app.models.agent_workflows import AgentWorkflowEvent, AgentWorkflowRun
 
 logger = logging.getLogger(__name__)
 

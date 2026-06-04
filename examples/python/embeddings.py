@@ -1,6 +1,6 @@
-import requests
-import json
 import os
+
+import requests
 
 # Exemplo de uso do endpoint /v1/embeddings com Python
 

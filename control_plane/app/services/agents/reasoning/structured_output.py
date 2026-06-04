@@ -1,7 +1,8 @@
 # Owner: agent-platform
-import logging
 import json
-from typing import Any, Dict, List, Optional, Type
+import logging
+from typing import Any, Dict, Optional, Type
+
 from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)

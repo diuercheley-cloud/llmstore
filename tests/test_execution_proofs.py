@@ -7,8 +7,6 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_cryptographic_receipts import CommercialInferenceReceipt
 from app.models.commercial_merkle_timelines import (
     CommercialExecutionProof,

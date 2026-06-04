@@ -1,10 +1,10 @@
 import hashlib
 import json
-from datetime import datetime
 from typing import Any, Dict
 
 from app.core.time import utc_now
 from app.utils.crypto_signer import sign_payload
+
 
 def _canonical_json(payload: Any) -> str:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)

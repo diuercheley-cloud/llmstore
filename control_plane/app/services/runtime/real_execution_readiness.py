@@ -5,17 +5,15 @@ Status: implementation
 import enum
 import logging
 import os
-import socket
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agent_execution import AgentWorkerHeartbeat
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

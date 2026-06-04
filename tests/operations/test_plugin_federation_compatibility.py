@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 from app.services.operations.plugin_runtime.abi_contracts import PluginABIContractService
-from app.services.operations.plugin_runtime.federation_compatibility import PluginFederationCompatibilityService
+from app.services.operations.plugin_runtime.federation_compatibility import (
+    PluginFederationCompatibilityService,
+)
 
 
 def test_federation_compatibility_requires_replay_safe():

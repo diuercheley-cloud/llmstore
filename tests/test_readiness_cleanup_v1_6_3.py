@@ -1,5 +1,5 @@
-import json
 from pathlib import Path
+
 
 def test_readiness_cleanup_script_exists():
     script_path = Path("scripts/validate-readiness-cleanup-v1.6.3.sh")

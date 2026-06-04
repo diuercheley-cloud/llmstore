@@ -1,8 +1,9 @@
-import pytest
-import uuid
 import json
-from app.services.agents.agent_marketplace import AgentMarketplaceService
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents.agent_marketplace import AgentMarketplaceService
+
 
 @pytest.mark.asyncio
 async def test_bundle_install_valid(session):

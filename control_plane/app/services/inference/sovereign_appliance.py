@@ -1,16 +1,19 @@
-import uuid
 import hashlib
+import uuid
 from datetime import datetime
-from typing import Any, List, Optional, Tuple, Dict
-from sqlalchemy.future import select
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from ...core.config import get_settings
 from ...models.commercial_appliance import (
     CommercialApplianceProfile,
-    CommercialOfflineSyncManifest,
+    CommercialOfflineAuditPackage,
     CommercialOfflineModelBundle,
-    CommercialOfflineAuditPackage
+    CommercialOfflineSyncManifest,
 )
-from ...core.config import get_settings
+
 
 async def ensure_appliance_profile(db: AsyncSession) -> CommercialApplianceProfile:
     appliance_id = get_settings().commercial_appliance_id

@@ -169,8 +169,12 @@ async def run_harness(
             verbose_stream=config.verbose_stream,
             tool_calling=config.tool_calling,
             supports_tool_calling=config.supports_tool_calling,
+            allow_native_tools_for_local=config.allow_native_tools_for_local,
+            lm_studio_compatibility=config.lm_studio_compatibility,
+            capability_cache_ttl_seconds=config.capability_cache_ttl_seconds,
             cache=cache,
             multimodal=config.multimodal,
+            max_tokens=config.max_tokens,
             event_callback=progress_callback,
         )
 
@@ -264,7 +268,8 @@ async def run_harness(
             cache=cache,
             pricing_file=config.pricing_file,
             max_cost=config.max_cost_per_run,
-            max_tokens=config.max_tokens_per_run,
+            max_tokens=config.max_tokens,
+            max_tokens_per_run=config.max_tokens_per_run,
             memory_mode=config.memory,
             memory_dir=config.memory_dir,
             memory_retention_days=config.memory_retention_days,
@@ -273,6 +278,7 @@ async def run_harness(
             edit_action_before_run=config.edit_action_before_run,
             checkpoint_dir=config.checkpoint_dir,
             checkpoint_every_step=config.checkpoint_every_step,
+            is_reasoning_model=config.is_reasoning_model,
         )
         loop.provider = provider  # Pass provider to loop for reporting
         loop.model = config.model  # Pass model name to loop for metrics
@@ -287,14 +293,27 @@ async def run_harness(
                 return ExecutionResult(success=False, error=f"Checkpoint {resume_run_id} not found")
 
         try:
+            loop.config = config
             from .mcp import initialize_mcp_and_register_tools, mcp_client
             mcp_client.enabled = config.mcp.enabled
             mcp_client.servers_config = [s.model_dump() for s in config.mcp.servers]
             await initialize_mcp_and_register_tools(loop.policy_engine)
 
-            if config.agent_mode == "planner-coder-reviewer":
+            if getattr(config, "auto", False):
+                from .auto_mode import AutoModeRunner
+                runner = AutoModeRunner(
+                    coding_loop=loop,
+                    max_auto_fixes=getattr(config, "max_auto_fixes", 3),
+                    stop_on_risk=getattr(config, "stop_on_risk", False),
+                    require_approval_for_edits=getattr(config, "require_approval_for_edits", False),
+                )
+                result = await runner.run_task(task=task_content)
+            elif config.agent_mode == "planner-coder-reviewer":
                 orchestrator = MultiAgentOrchestrator(coding_loop=loop)
                 result = await orchestrator.run_planner_coder_reviewer(task=task_content)
+            elif config.agent_mode == "supervisor":
+                orchestrator = MultiAgentOrchestrator(coding_loop=loop)
+                result = await orchestrator.run_supervisor(task=task_content)
             else:
                 result = await loop.run(task=task_content)
 

@@ -1,11 +1,13 @@
 # Owner: agent-platform
-import uuid
 import hashlib
 import json
-from typing import Dict, Any, List, Optional
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.models.agent_debugger import AgentRunSnapshot
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.agent_debugger import AgentRunSnapshot
+
 
 class RunSnapshotStore:
     def __init__(self, db: AsyncSession):
@@ -42,7 +44,6 @@ class RunSnapshotStore:
         """
         Removes sensitive data and masks internal reasoning (CoT) from snapshots.
         """
-        import copy
         s = json.loads(json.dumps(state)) # Deep copy
         
         # Mask Chain of Thought if present

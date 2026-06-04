@@ -1,14 +1,13 @@
 import uuid
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.base import Base
 from app.services.agents.knowledge_graph.graph_extractor import GraphExtractor
-from app.services.agents.knowledge_graph.graph_models import GraphQueryRequest, Relation
+from app.services.agents.knowledge_graph.graph_models import Relation
 from app.services.agents.knowledge_graph.graph_policy import GraphPolicy
 from app.services.agents.knowledge_graph.graph_rag import GraphRAG
 from app.services.agents.knowledge_graph.graph_store import GraphStore
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest.fixture

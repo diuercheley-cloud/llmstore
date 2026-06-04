@@ -1,13 +1,12 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.dependencies import get_db, get_current_admin
+from app.api.dependencies import get_current_admin, get_db
 from app.services.runtime.distributed_runtime import DistributedRuntimeService
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/runtime/nodes", tags=["distributed_runtime"])
 

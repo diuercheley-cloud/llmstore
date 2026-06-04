@@ -1,8 +1,9 @@
 import uuid
 
 import pytest
-
-from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
+from app.services.operations.attestation_framework.attestation_service import (
+    SovereignExecutionAttestationService,
+)
 from app.utils.crypto_signer import sign_payload
 
 

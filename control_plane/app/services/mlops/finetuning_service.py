@@ -5,13 +5,12 @@ import subprocess
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import get_settings
-from app.services.mlops.training_job_registry import TrainingJobRegistry
-from app.services.mlops.model_lineage import ModelLineage
+from typing import Any, Dict, Optional
 
+from app.core.config import get_settings
+from app.services.mlops.model_lineage import ModelLineage
+from app.services.mlops.training_job_registry import TrainingJobRegistry
+from sqlalchemy.ext.asyncio import AsyncSession
 
 GPU_TRAINING_SCRIPT = """
 import json, os, sys

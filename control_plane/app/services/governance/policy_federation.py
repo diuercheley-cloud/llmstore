@@ -1,24 +1,22 @@
 import hashlib
 import json
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
-
-from sqlalchemy import select, desc, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_governance_federation import (
-    CommercialGovernanceFederationPeer,
     CommercialFederatedPolicySync,
+    CommercialGovernanceFederationPeer,
 )
 from app.services.governance.policy_engine import PolicyEngineService
 from app.services.governance.policy_registry import PolicyRegistryService
 from app.services.routing.commercial_report_export import sanitize_report_payload
-from app.services.security.tenant_encryption import TenantEncryptionService
 from app.services.security.offline_crl import is_peer_revoked
+from app.services.security.tenant_encryption import TenantEncryptionService
+from sqlalchemy import and_, desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _settings = get_settings()
 _encryption_service = TenantEncryptionService(_settings)
@@ -144,6 +142,7 @@ class PolicyFederationService:
         # Optional: Encrypt full payload for transit if mode is enforce
         if _settings.commercial_tenant_encryption_mode == "enforce":
             import base64
+
             from app.services.security.local_aead import AESGCM
             
             transport_key = hashlib.sha256((self.settings.commercial_governance_federation_shared_token or "").encode()).digest()

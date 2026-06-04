@@ -1,13 +1,12 @@
-import pytest
-import uuid
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.inference import transparency_gossip
-from app.models.commercial_transparency import CommercialConsistencyCheckpoint
 
+import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.db.base import Base
+from app.models.commercial_transparency import CommercialConsistencyCheckpoint
+from app.services.inference import transparency_gossip
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 
 @pytest_asyncio.fixture
 async def session(isolated_db_url):

@@ -15,6 +15,27 @@ def test_cli_help():
             main()
         assert e.value.code == 0
 
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["cli.py", "chat", "--help"],
+        ["cli.py", "edit-inline", "--help"],
+        ["cli.py", "index", "--help"],
+        ["cli.py", "docs", "--help"],
+        ["cli.py", "complete", "--help"],
+        ["cli.py", "fix-error", "--help"],
+        ["cli.py", "terminal", "--help"],
+        ["cli.py", "ide", "--help"],
+        ["cli.py", "models", "--help"],
+    ],
+)
+def test_cli_subcommand_help(argv):
+    with patch("sys.argv", argv):
+        with pytest.raises(SystemExit) as e:
+            main()
+        assert e.value.code == 0
+
 def test_cli_health_local():
     with patch("sys.argv", ["cli.py", "health", "--local-only"]):
         main()
@@ -204,6 +225,9 @@ def test_extracted_config_builders():
         checkpoint_every_step=True,
         code_agent="openai-compatible",
         allow_stub_code_agent=False,
+        model_profile="fast-local",
+        fallback_model_profile="safe-fallback",
+        allow_cloud_models=False,
     )
 
     overrides = build_config_overrides(args)
@@ -215,6 +239,9 @@ def test_extracted_config_builders():
     assert overrides["local_model_timeout"] == 300.0
     assert overrides["tool_calling"] == "auto"
     assert overrides["supports_tool_calling"] is True
+    assert overrides["model_profile"] == "fast-local"
+    assert overrides["fallback_model_profile"] == "safe-fallback"
+    assert overrides["allow_cloud_models"] is False
 
     provider_cfg = build_provider_config(args)
     assert provider_cfg["provider"] == "openai-compatible"
@@ -223,6 +250,9 @@ def test_extracted_config_builders():
     assert provider_cfg["timeout"] == 15.5
     assert provider_cfg["stream_local_default"] is True
     assert provider_cfg["supports_tool_calling"] is True
+    assert provider_cfg["model_profile"] == "fast-local"
+    assert provider_cfg["fallback_model_profile"] == "safe-fallback"
+    assert provider_cfg["allow_cloud_models"] is False
 
     sandbox_cfg = build_sandbox_config(args)
     assert sandbox_cfg["sandbox"] is True

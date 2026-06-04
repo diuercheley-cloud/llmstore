@@ -6,9 +6,6 @@ import re
 import uuid
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.models.client import Client
 from app.models.commercial_rag_vault import (
@@ -19,7 +16,8 @@ from app.models.commercial_rag_vault import (
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.tenant_encryption import TenantEncryptionService
-
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 

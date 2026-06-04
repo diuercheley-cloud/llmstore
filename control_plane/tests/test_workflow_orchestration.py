@@ -8,22 +8,24 @@ TEST_TMP.mkdir(parents=True, exist_ok=True)
 TEST_DB_FILE = TEST_TMP / "workflow-test.db"
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
 
+from unittest.mock import patch
+
 import pytest
 import pytest_asyncio
-import asyncio
-from datetime import datetime, timedelta
-from sqlalchemy import select
-from unittest.mock import patch, MagicMock
-
+from app.core.config import get_settings
+from app.core.time import utc_now
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agent_workflows import AgentWorkflow, AgentWorkflowRun, AgentWorkflowTimer, AgentWorkflowSignal, AgentWorkflowEvent
+from app.db.session import SessionLocal, engine
+from app.models.agent_workflows import (
+    AgentWorkflow,
+    AgentWorkflowEvent,
+    AgentWorkflowTimer,
+)
 from app.services.agents.workflows.workflow_engine import WorkflowEngine
-from app.services.agents.workflows.workflow_timers import WorkflowTimerManager
 from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
 from app.services.agents.workflows.workflow_state_machine import WorkflowStatus
-from app.core.time import utc_now
-from app.core.config import get_settings
+from sqlalchemy import select
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():

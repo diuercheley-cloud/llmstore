@@ -2,29 +2,30 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
 import logging
+import uuid
 from datetime import timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete, update
+
 from app.core.config import get_settings
+from app.core.metrics import (
+    LLM_AGENT_DEAD_LETTERS_TOTAL,
+    LLM_AGENT_JOB_RETRIES_TOTAL,
+    LLM_AGENT_JOBS_FAILED_TOTAL,
+    LLM_AGENT_JOBS_QUEUED,
+    LLM_AGENT_JOBS_RUNNING,
+    LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL,
+)
 from app.core.time import utc_now
 from app.models.agent_execution import (
+    AgentExecutionDeadLetter,
     AgentExecutionJob,
     AgentExecutionLease,
     AgentExecutionRetry,
-    AgentExecutionDeadLetter,
 )
-from app.models.agents import AgentDefinition, AgentRun
+from app.models.agents import AgentDefinition
 from app.services.agents import agent_state
-from app.core.metrics import (
-    LLM_AGENT_JOBS_QUEUED,
-    LLM_AGENT_JOBS_RUNNING,
-    LLM_AGENT_JOBS_FAILED_TOTAL,
-    LLM_AGENT_JOB_RETRIES_TOTAL,
-    LLM_AGENT_DEAD_LETTERS_TOTAL,
-    LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL,
-)
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,9 @@
-import pytest
-import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from app.services.billing.revenue_forecasting import RevenueForecastingService
-from app.models.commercial_revenue_forecast import CommercialRevenueForecast
-from app.models.request_financial import RequestFinancial
 
 
 @pytest.mark.asyncio

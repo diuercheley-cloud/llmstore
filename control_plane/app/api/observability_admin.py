@@ -1,17 +1,14 @@
 # Owner: platform-ops
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from typing import Any, Dict
+import uuid
+from typing import Any, Dict, List
 
+from app.db.session import get_db_session
 from app.services.platform_slo import PlatformSLOService
 from app.services.visual_observability import VisualObservabilityService
-from app.db.session import get_db_session
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from typing import Any, Dict, List
-import uuid
-from fastapi import HTTPException
 
 router = APIRouter(prefix="/admin/observability", tags=["observability"])
 

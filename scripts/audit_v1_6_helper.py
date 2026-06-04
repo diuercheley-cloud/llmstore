@@ -19,8 +19,6 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
-
 
 SECRET_PATTERNS = [
     r"sk-[a-zA-Z0-9][a-zA-Z0-9._-]{20,}",

@@ -1,14 +1,11 @@
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
 import uuid
+from dataclasses import dataclass
 from time import perf_counter
 
 import httpx
-from fastapi import HTTPException, status
-from starlette.responses import JSONResponse, StreamingResponse
-
 from app.core.config import get_settings
 from app.core.metrics import (
     BACKEND_ERROR_COUNTER,
@@ -21,13 +18,14 @@ from app.core.metrics import (
 )
 from app.models.inference_backend import InferenceBackend
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
-from app.services.queue_manager import QueueManager, QueueOverloaded, QueueTimeout
 from app.services.context_manager import get_context_manager
+from app.services.queue_manager import QueueOverloaded, QueueTimeout
 from app.utils.anti_loop import detect_repetition, truncate_at_repetition
 from app.utils.model_prompting import apply_prompt_template_settings
 from app.utils.openai_response import normalize_chat_completion, normalize_chat_stream_line
-from app.utils.token_estimator import estimate_tokens_from_text
 from app.utils.tool_calling import sanitize_tool_calls
+from fastapi import HTTPException, status
+from starlette.responses import JSONResponse, StreamingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +46,7 @@ class ForwardResult:
 
 
 from app.contracts.queue import QueueContract
+
 
 class InferenceProxy:
     def __init__(self, queue_manager: QueueContract, circuit_breaker: CircuitBreaker) -> None:
@@ -924,10 +923,10 @@ class InferenceProxy:
                 if corr_id:
                     try:
                         from app.db.session import SessionLocal
-                        from sqlalchemy import select
-                        from app.models.request_log import RequestLog
                         from app.models.request_financial import RequestFinancial
+                        from app.models.request_log import RequestLog
                         from app.services.quota import update_usage_with_real_tokens
+                        from sqlalchemy import select
 
                         async with SessionLocal() as db_session:
                             stmt_log = select(RequestLog).where(RequestLog.correlation_id == corr_id)

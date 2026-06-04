@@ -1,12 +1,12 @@
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from typing import Optional
+
+from app.core.time import utc_now
 from app.models.mlops import MLModelLineage
 from app.services.mlops.dataset_registry import log_mlops_audit
-from app.core.time import utc_now
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 class ModelLineage:

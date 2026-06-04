@@ -55,7 +55,6 @@ async def _run_once() -> None:
         if result == "requeue":
             # Re-enqueue logic needs to respect priority queue too
             if settings.commercial_qos_priority_queue_enabled:
-                from app.services.generation_jobs import enqueue_generation_job
                 # We need to fetch the job to get its priority, but process_generation_job 
                 # might have already fetched it. For simplicity, we'll use default or fetch.
                 # In active mode, we should ideally put it back in the sorted set.

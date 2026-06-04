@@ -1,5 +1,5 @@
 import subprocess
-import pytest
+
 
 def test_upgrade_skip_backup_fails_without_yes():
     result = subprocess.run(

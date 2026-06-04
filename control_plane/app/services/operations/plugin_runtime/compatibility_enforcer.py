@@ -1,7 +1,9 @@
 from typing import Any
 
 from app.models.operations.plugin_runtime import PluginRuntimeCompatibilityCheck
-from app.services.operations.compatibility_contracts.semantic_versioning import SemanticVersioningService
+from app.services.operations.compatibility_contracts.semantic_versioning import (
+    SemanticVersioningService,
+)
 from app.services.operations.compatibility_contracts.validation import validate_schema_compatibility
 from app.services.operations.plugin_runtime.hash_utils import compute_compatibility_hash, sha256_hex
 

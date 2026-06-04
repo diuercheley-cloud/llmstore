@@ -1,7 +1,6 @@
-import subprocess
 import os
-import json
 import re
+import subprocess
 import tempfile
 
 SCRIPT = "./scripts/meeting-ready-check-local.sh"

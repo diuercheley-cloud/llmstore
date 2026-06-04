@@ -1,9 +1,9 @@
-import pytest
 import uuid
-from unittest.mock import MagicMock
-from app.services.agents.agent_evals import AgentEvalService
+
+import pytest
 from app.services.agents import agent_state
-from app.models.agents import AgentEvalSuite, AgentEvalCase, AgentEvalRun
+from app.services.agents.agent_evals import AgentEvalService
+
 
 @pytest.mark.asyncio
 async def test_eval_suite_run_with_mock_agent(session):

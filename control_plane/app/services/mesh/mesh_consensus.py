@@ -1,7 +1,12 @@
-from sqlalchemy.orm import Session
-from app.models.commercial_control_plane_mesh import CommercialMeshConsensusEvent, CommercialMeshNode
 import uuid
-from typing import List, Optional
+from typing import Optional
+
+from app.models.commercial_control_plane_mesh import (
+    CommercialMeshConsensusEvent,
+    CommercialMeshNode,
+)
+from sqlalchemy.orm import Session
+
 
 class MeshConsensusService:
     def __init__(self, db: Session):

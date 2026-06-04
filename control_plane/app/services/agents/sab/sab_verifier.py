@@ -1,8 +1,10 @@
 # Owner: agent-platform
-import json
 import hashlib
+import json
 from typing import Tuple
+
 from .sab_manifest import AgentSABManifest
+
 
 class SABVerifier:
     def verify(self, manifest: AgentSABManifest) -> Tuple[bool, str]:

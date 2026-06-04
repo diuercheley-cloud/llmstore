@@ -1,15 +1,14 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Body
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
-from app.api.deps import require_admin, get_db_session
-from app.services.agents.agent_policy_engine import AgentPolicyEngine
-
-from app.services.agents.promotion_gate import AgentPromotionService
+from app.api.deps import get_db_session, require_admin
 from app.models.agents import AgentPromotionGate
+from app.services.agents.agent_policy_engine import AgentPolicyEngine
+from app.services.agents.promotion_gate import AgentPromotionService
+from fastapi import APIRouter, Body, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/governance", tags=["agent-governance"])
 

@@ -5,14 +5,13 @@ import json
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.models.api_key import ApiKey
 from app.models.client import Client
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

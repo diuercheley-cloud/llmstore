@@ -1,21 +1,26 @@
-import pytest
 import uuid
-import json
-import math
+from datetime import timedelta
 from unittest.mock import patch
-from app.services.agents.agent_memory import AgentMemoryService, MemoryDisabledError, SecretFoundError, ConsentRequiredError
-from app.services.agents.memory_policy import MemoryPolicyService
-from app.services.agents.memory_retention import MemoryRetentionService
-from app.services.agents.memory_consent import MemoryConsentService
-from app.services.agents.memory_indexing import MemoryIndexingService, cosine_similarity, get_mock_embedding
-from app.services.agents.memory_retriever import MemoryRetriever
-from app.services.agents.memory_context_builder import MemoryContextBuilder
-from app.services.agents import agent_state
+
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
-from datetime import timedelta
-from app.services.agents.agent_policy_engine import AgentPolicyEngine
 from app.models.agents import AgentPolicyDecision
+from app.services.agents.agent_memory import (
+    AgentMemoryService,
+    ConsentRequiredError,
+    MemoryDisabledError,
+    SecretFoundError,
+)
+from app.services.agents.agent_policy_engine import AgentPolicyEngine
+from app.services.agents.memory_consent import MemoryConsentService
+from app.services.agents.memory_indexing import (
+    cosine_similarity,
+    get_mock_embedding,
+)
+from app.services.agents.memory_policy import MemoryPolicyService
+from app.services.agents.memory_retention import MemoryRetentionService
+
 
 @pytest.fixture(autouse=True)
 def mock_agent_policy_engine():
@@ -435,8 +440,9 @@ async def test_secret_like_memory_not_reinjected(session):
 
     service = AgentMemoryService(session)
     # This will fail to write due to secret detection, so we write directly
-    from app.models.agents import AgentMemoryItem
     from datetime import timedelta
+
+    from app.models.agents import AgentMemoryItem
     item = AgentMemoryItem(
         tenant_id=tenant_id,
         agent_id=agent_id,

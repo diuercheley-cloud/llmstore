@@ -1,6 +1,7 @@
-import os
-import requests
 import json
+import os
+
+import requests
 
 # Configuration from environment variables
 BASE_URL = os.getenv("BASE_URL", "http://localhost:18080")

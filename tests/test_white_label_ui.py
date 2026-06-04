@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 HTML_FILES = [

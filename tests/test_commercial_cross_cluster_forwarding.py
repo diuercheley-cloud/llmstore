@@ -1,10 +1,14 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 import pytest_asyncio
-from httpx import Response, AsyncClient
-from unittest.mock import patch, MagicMock, AsyncMock
-
-from app.services.routing.commercial_cross_cluster_forwarder import CommercialCrossClusterForwarder, _circuit_breakers
 from app.models.commercial_cluster_registry import CommercialClusterRegistry
+from app.services.routing.commercial_cross_cluster_forwarder import (
+    CommercialCrossClusterForwarder,
+    _circuit_breakers,
+)
+from httpx import Response
+
 
 @pytest_asyncio.fixture(autouse=True)
 def override_config():

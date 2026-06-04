@@ -1,26 +1,23 @@
 # Owner: agent-platform
 # Surface: client
-import uuid
-import json
 import asyncio
+import json
 import logging
-from typing import List, Dict, Any, Optional, AsyncGenerator
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
-from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+import uuid
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from app.api.deps import get_db
 from app.core.config import get_settings
-from app.db.session import get_db_session
-from app.services.auth import require_client
+from app.models.agents import AgentDefinition, AgentRunEvent
 from app.models.client import Client
-from app.models.agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent
-from app.services.agents import agent_state, agent_api_facade
-from app.services.agents.agent_executor import AgentExecutor
-from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
-from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
+from app.services.agents import agent_api_facade, agent_state
 from app.services.agents.sessions.agent_session_service import AgentSessionService
+from app.services.agents.sessions.conversation_thread_service import ConversationThreadService
+from app.services.auth import require_client
+from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +181,7 @@ async def cancel_run(
             tenant_id=str(client.id),
             is_admin=False
         )
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(status_code=404, detail="Run not found")
         
     return {"status": "cancelled"}

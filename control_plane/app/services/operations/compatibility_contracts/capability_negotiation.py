@@ -1,6 +1,5 @@
 from typing import Any, Iterable
 
-
 RESTRICTED_CAPABILITIES = {
     "shell",
     "subprocess",

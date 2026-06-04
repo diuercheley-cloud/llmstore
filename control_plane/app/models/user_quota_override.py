@@ -1,10 +1,9 @@
-import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from app.core.time import utc_now
+from app.db.base import Base
+from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.db.base import Base
-from app.core.time import utc_now
 
 class UserQuotaOverride(Base):
     __tablename__ = "user_quota_overrides"

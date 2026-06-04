@@ -1,10 +1,11 @@
-import pytest
 import uuid
+
+import pytest
+from app.models.agent_uncertainty import AgentUncertaintyEvent
+from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.uncertainty.uncertainty_estimator import UncertaintyEstimator
 from app.services.agents.uncertainty.uncertainty_policy import UncertaintyPolicyEngine
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.agent_uncertainty import AgentUncertaintyEvent, AgentUncertaintyPolicy
-from app.core.config import get_settings
+
 
 @pytest.fixture
 def agent_id():

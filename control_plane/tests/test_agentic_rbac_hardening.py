@@ -1,17 +1,17 @@
+import uuid
+from datetime import timedelta
+
 import pytest
 import pytest_asyncio
-import uuid
-from datetime import datetime, timezone, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agents import AgentRBACEvent
+from app.services.admin_rbac import AdminUser, AuthenticatedAdmin
+from app.services.agents.agent_environment_policy import AgentEnvironmentPolicyService
+from app.services.agents.agent_rbac import check_agent_permission
+from app.services.agents.ephemeral_credentials import EphemeralCredentialService
 from fastapi import HTTPException
 
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents import AgentDefinition, AgentRun, AgentPolicyException, AgentRBACEvent
-from app.services.agents.agent_rbac import check_agent_permission, AGENT_PERMISSIONS
-from app.services.agents.agent_environment_policy import AgentEnvironmentPolicyService
-from app.services.agents.ephemeral_credentials import EphemeralCredentialService
-from app.services.admin_rbac import AuthenticatedAdmin, AdminUser
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
@@ -80,8 +80,8 @@ async def test_expired_credential_fails():
         run_id = uuid.uuid4()
         
         # Issue expired credential
-        from app.models.agents import AgentEphemeralCredential
         from app.core.time import utc_now
+        from app.models.agents import AgentEphemeralCredential
         cred = AgentEphemeralCredential(
             run_id=run_id,
             scope="tool_a",

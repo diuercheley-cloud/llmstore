@@ -1,19 +1,19 @@
 # Owner: agent-platform
 import hashlib
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
 
 from app.core.time import utc_now
 from app.models.agent_mcp_oauth import (
     AgentMCPDelegatedGrant,
-    AgentMCPTokenExchange,
     AgentMCPScopePolicy,
+    AgentMCPTokenExchange,
 )
 from app.services.agents.mcp.mcp_oauth import MCPOAuthAuditLog
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def exchange_token(

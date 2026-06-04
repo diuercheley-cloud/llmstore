@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 CHANGELOG_PATH = "CHANGELOG.md"

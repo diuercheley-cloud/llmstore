@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import logging
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
 from .constraint_model import ConstraintModel
 
 logger = logging.getLogger(__name__)

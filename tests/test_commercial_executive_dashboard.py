@@ -1,10 +1,10 @@
-import pytest
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
+
+import pytest
 from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.services.routing.commercial_executive_dashboard import CommercialExecutiveDashboardService
-from app.schemas.routing import TaskType
+
 
 @pytest.mark.asyncio
 async def test_executive_overview_empty(session):

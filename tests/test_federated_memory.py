@@ -1,10 +1,17 @@
+
 import pytest
-import uuid
-from app.services.agents.federated_memory.memory_summary_sync import MemorySummarySync
-from app.services.agents.federated_memory.sovereignty_policy import SovereigntyPolicy
-from app.services.agents.federated_memory.remote_memory_reference import RemoteMemoryReferenceService
-from app.models.agent_federated_memory import FederatedMemoryPeer, FederatedMemorySummary, RemoteMemoryReference
 from app.core.config import get_settings
+from app.models.agent_federated_memory import (
+    FederatedMemoryPeer,
+    FederatedMemorySummary,
+    RemoteMemoryReference,
+)
+from app.services.agents.federated_memory.memory_summary_sync import MemorySummarySync
+from app.services.agents.federated_memory.remote_memory_reference import (
+    RemoteMemoryReferenceService,
+)
+from app.services.agents.federated_memory.sovereignty_policy import SovereigntyPolicy
+
 
 @pytest.fixture
 async def setup_peer(session):

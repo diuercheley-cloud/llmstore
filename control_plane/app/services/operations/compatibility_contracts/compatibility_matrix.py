@@ -1,6 +1,8 @@
 from typing import Any
 
-from app.services.operations.compatibility_contracts.semantic_versioning import SemanticVersioningService
+from app.services.operations.compatibility_contracts.semantic_versioning import (
+    SemanticVersioningService,
+)
 
 
 class CompatibilityMatrixService:

@@ -1,6 +1,8 @@
-from app.services.operations.adapter_promotion.audit_events import build_promotion_audit_event
-from app.models.operations.adapter_promotion import AdapterPromotionWorkflow
 import uuid
+
+from app.models.operations.adapter_promotion import AdapterPromotionWorkflow
+from app.services.operations.adapter_promotion.audit_events import build_promotion_audit_event
+
 
 def test_audit_event_generation():
     workflow = AdapterPromotionWorkflow(

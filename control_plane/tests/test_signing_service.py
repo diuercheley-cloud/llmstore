@@ -1,15 +1,15 @@
-import pytest
 import uuid
 from unittest.mock import MagicMock
 
+import pytest
 from app.models.commercial_crypto_trust import (
-    CommercialKMSProvider,
     CommercialKeyMaterial,
+    CommercialKMSProvider,
     CommercialSigningProfile,
     CryptoProviderType,
-    KeyUsageStatus
+    KeyUsageStatus,
 )
-from app.services.security.signing_service import SigningService, SigningServiceError
+from app.services.security.signing_service import SigningService
 
 
 @pytest.fixture

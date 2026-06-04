@@ -6,11 +6,10 @@ Revises: phase90_agent_supply_chain
 Create Date: 2026-05-22 19:30:00.000000
 
 """
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '20260522_0091'

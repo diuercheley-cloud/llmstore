@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
 
 import pytest
-from httpx import AsyncClient
-
 from app.models.client import Client
 from app.models.request_financial import RequestFinancial
 from app.services.commercial_guardrails import clear_commercial_guardrail_runtime_events
+from httpx import AsyncClient
 
 
 @pytest.fixture(autouse=True)
@@ -36,8 +35,8 @@ def _apply_guardrail_env(monkeypatch: pytest.MonkeyPatch, **values: str) -> None
 
 
 async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> tuple[str, str]:
-    from app.main import app
     from app.db.session import get_db_session
+    from app.main import app
 
     session_generator = app.dependency_overrides[get_db_session]()
     session = await session_generator.__anext__()

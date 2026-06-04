@@ -1,5 +1,6 @@
 # Owner: agent-platform
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
+
 
 class ReviewerDecisionEngine:
     def consolidate(self, findings: List[Dict[str, Any]]) -> Tuple[str, str]:

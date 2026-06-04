@@ -1,18 +1,15 @@
-import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_governance_federation import (
-    CommercialGovernanceFederationPeer,
     CommercialFederatedPolicySync,
-    CommercialFederatedAuditTrail,
+    CommercialGovernanceFederationPeer,
 )
 from app.services.governance.policy_registry import PolicyRegistryService
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class GovernanceConsistencyService:

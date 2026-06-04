@@ -1,16 +1,18 @@
 import uuid
+
 from app.models.operations.adapter_promotion import (
-    AdapterPromotionWorkflow,
     AdapterPromotionGateResult,
-    AdapterPromotionStageTransition,
     AdapterPromotionRollback,
+    AdapterPromotionStageTransition,
+    AdapterPromotionWorkflow,
 )
 from app.services.operations.adapter_promotion.receipts import (
-    build_promotion_workflow_receipt,
     build_gate_result_receipt,
-    build_transition_receipt,
+    build_promotion_workflow_receipt,
     build_rollback_receipt,
+    build_transition_receipt,
 )
+
 
 def test_build_receipts():
     client_id = uuid.uuid4()

@@ -1,12 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+import uuid
 
 from app.core.time import utc_now
 from app.models.agents import AgentCompensationAction
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class CompensationService:
                 # Reversal logic would go here
                 action.status = "executed"
                 action.executed_at = utc_now()
-            except Exception as e:
+            except Exception:
                 logger.exception(f"Compensation action {action.id} failed")
                 action.status = "failed"
             

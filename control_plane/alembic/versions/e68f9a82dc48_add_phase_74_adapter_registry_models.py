@@ -4,10 +4,8 @@ Revision ID: e68f9a82dc48
 Revises: phase73_adapter_sandbox
 Create Date: 2026-05-15 21:25:20.883747
 """
-from alembic import op
 import sqlalchemy as sa
-
-
+from alembic import op
 
 revision = 'e68f9a82dc48'
 down_revision = 'phase73_adapter_sandbox'

@@ -1,7 +1,8 @@
-import json
 import hashlib
-from typing import Dict, Any, List
-from datetime import datetime, UTC
+import json
+from datetime import UTC, datetime
+from typing import Any, Dict
+
 
 class ValidationSnapshotService:
     def create_snapshot(self, baseline_id: str, scope: str, results: Dict[str, Any]) -> Dict[str, Any]:

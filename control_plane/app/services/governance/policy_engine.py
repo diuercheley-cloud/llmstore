@@ -3,15 +3,14 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.commercial_governance import (
+    CommercialPolicyArtifact,
     CommercialPolicyBundle,
     CommercialPolicyDriftEvent,
-    CommercialPolicyArtifact,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PolicyEngineService:

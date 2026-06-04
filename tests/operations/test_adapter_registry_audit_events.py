@@ -1,6 +1,6 @@
-import pytest
 from app.services.operations.adapter_registry.audit_events import build_adapter_registry_audit_event
 from app.utils.crypto_signer import sign_payload
+
 
 class TestAdapterRegistryAuditEvents:
     def test_build_audit_event(self):

@@ -6,6 +6,7 @@ from ._logging import setup_logging
 from .cli_args import (
     add_agent_args,
     add_approval_args,
+    add_auto_mode_args,
     add_cache_args,
     add_checkpoint_args,
     add_config_args,
@@ -22,13 +23,23 @@ from .cli_args import (
 from .cli_commands import (
     _resolve_code_agent,  # noqa: F401
     run_benchmark_command,
+    run_chat_command,
     run_code_batch_command,
     run_code_command,
+    run_complete_command,
+    run_docs_command,
+    run_edit_inline_command,
     run_eval_command,
+    run_fix_error_command,
     run_health_command,
+    run_ide_command,
+    run_index_command,
+    run_models_command,
+    run_multimodal_command,
     run_plugins_command,
     run_security_command,
     run_server_command,
+    run_terminal_command,
 )
 from .config import HarnessConfig, HarnessConfigError
 from .sanitizer import Sanitizer
@@ -132,6 +143,7 @@ def main():
     add_agent_args(code_parser)
     add_approval_args(code_parser)
     add_checkpoint_args(code_parser)
+    add_auto_mode_args(code_parser)
 
     # Code Batch command
     batch_parser = subparsers.add_parser("code-batch", help="Run batch of coding tasks")
@@ -173,6 +185,163 @@ def main():
     add_checkpoint_args(eval_parser)
     add_tracking_args(eval_parser)
 
+    # Chat command
+    chat_parser = subparsers.add_parser("chat", help="Run integrated chat session")
+    chat_parser.add_argument("--message", help="Single message to send directly")
+    chat_parser.add_argument("--image", help="Path to image file for multi-modal task")
+    chat_parser.add_argument("--workspace", help="Custom workspace path")
+    chat_parser.add_argument(
+        "--token-budget", type=int, default=4096, help="Token budget for history"
+    )
+    add_provider_args(chat_parser)
+    add_sandbox_args(chat_parser)
+    add_policy_args(chat_parser)
+    add_memory_args(chat_parser)
+
+    # Edit Inline command
+    edit_inline_parser = subparsers.add_parser("edit-inline", help="Run inline code editor")
+    edit_inline_parser.add_argument("file_path", help="Target file path")
+    edit_inline_parser.add_argument(
+        "--range", required=True, help="Line range (e.g. 10:25 or 10-25)"
+    )
+    edit_inline_parser.add_argument(
+        "--instruction", required=True, help="Refactoring/editing instruction"
+    )
+    edit_inline_parser.add_argument(
+        "--context", nargs="*", default=[], help="Context references starting with @"
+    )
+    edit_inline_parser.add_argument("--workspace", help="Custom workspace path")
+    edit_inline_parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Generate and validate diff without writing to file"
+    )
+    add_provider_args(edit_inline_parser)
+    add_sandbox_args(edit_inline_parser)
+    add_policy_args(edit_inline_parser)
+    add_memory_args(edit_inline_parser)
+
+    # Index command
+    index_parser = subparsers.add_parser("index", help="Repository indexing and querying")
+    index_parser.add_argument("--workspace", help="Custom workspace path")
+    index_subparsers = index_parser.add_subparsers(
+        dest="index_command", help="Index commands"
+    )
+    index_subparsers.add_parser("build", help="Build repository index")
+    query_parser = index_subparsers.add_parser("query", help="Query repository index")
+    query_parser.add_argument("query", help="Search query string")
+
+    # Docs command
+    docs_parser = subparsers.add_parser("docs", help="External documentation helper")
+    docs_parser.add_argument("--workspace", help="Custom workspace path")
+    add_policy_args(docs_parser)
+    docs_subparsers = docs_parser.add_subparsers(
+        dest="docs_command", help="Docs commands"
+    )
+    doc_add_parser = docs_subparsers.add_parser(
+        "add", help="Add external documentation configuration"
+    )
+    doc_add_parser.add_argument("--name", required=True, help="Doc name")
+    doc_add_parser.add_argument("--url", required=True, help="Doc URL")
+    doc_add_parser.add_argument(
+        "--allowlist-domain", help="Allowed domain pattern (optional)"
+    )
+    docs_subparsers.add_parser("refresh", help="Refresh external documentation cache")
+
+    # Fix Error command
+    fix_error_parser = subparsers.add_parser(
+        "fix-error", help="Run automated error correction"
+    )
+    fix_error_parser.add_argument("--from-file", help="Path to error log file")
+    fix_error_parser.add_argument(
+        "--command", dest="run_command", help="Command to run that produces errors"
+    )
+    fix_error_parser.add_argument(
+        "--dry-run", action="store_true", help="Generate patch without applying it"
+    )
+    fix_error_parser.add_argument("--workspace", help="Custom workspace path")
+    add_provider_args(fix_error_parser)
+    add_sandbox_args(fix_error_parser)
+    add_policy_args(fix_error_parser)
+    add_report_args(fix_error_parser)
+    add_cache_args(fix_error_parser)
+    add_execution_args(fix_error_parser)
+    add_pricing_args(fix_error_parser)
+    add_memory_args(fix_error_parser)
+    add_agent_args(fix_error_parser)
+    add_approval_args(fix_error_parser)
+    add_checkpoint_args(fix_error_parser)
+    add_auto_mode_args(fix_error_parser)
+
+    # Terminal command
+    terminal_parser = subparsers.add_parser("terminal", help="Terminal helper commands")
+    terminal_parser.add_argument("--workspace", help="Custom workspace path")
+    add_policy_args(terminal_parser)
+    terminal_subparsers = terminal_parser.add_subparsers(
+        dest="terminal_command", help="Terminal commands"
+    )
+    diagnose_parser = terminal_subparsers.add_parser(
+        "diagnose", help="Diagnose last terminal command output"
+    )
+    diagnose_group = diagnose_parser.add_mutually_exclusive_group(required=True)
+    diagnose_group.add_argument("--last-command", help="Last executed command")
+    diagnose_group.add_argument(
+        "--stderr-file", help="Path to a stderr log file to diagnose"
+    )
+
+    suggest_parser = terminal_subparsers.add_parser(
+        "suggest", help="Suggest fix for command error from stderr log"
+    )
+    suggest_parser.add_argument("--stderr-file", required=True, help="Stderr log file path")
+
+    # Multimodal command
+    multimodal_parser = subparsers.add_parser("multimodal", help="Multimodal helper commands")
+    multimodal_subparsers = multimodal_parser.add_subparsers(
+        dest="multimodal_command", help="Multimodal commands"
+    )
+    inspect_parser = multimodal_subparsers.add_parser(
+        "inspect", help="Inspect image file and return metadata"
+    )
+    inspect_parser.add_argument("image_path", help="Path to the image file")
+    inspect_parser.add_argument("--workspace", help="Custom workspace path")
+
+    complete_parser = subparsers.add_parser(
+        "complete", help="Retrieve code completion suggestions"
+    )
+    complete_parser.add_argument("file_path", help="Path to the file to complete")
+    complete_parser.add_argument(
+        "--line", type=int, required=True, help="Cursor line (1-indexed)"
+    )
+    complete_parser.add_argument(
+        "--column", type=int, required=True, help="Cursor column (0-indexed)"
+    )
+    complete_parser.add_argument("--workspace", help="Custom workspace path")
+    add_provider_args(complete_parser)
+
+    # IDE command
+    ide_parser = subparsers.add_parser("ide", help="IDE integration and compatibility helper")
+    ide_parser.add_argument("--workspace", help="Custom workspace path")
+    ide_subparsers = ide_parser.add_subparsers(
+        dest="ide_command", help="IDE commands"
+    )
+    import_parser = ide_subparsers.add_parser(
+        "import-vscode", help="Import VS Code / Cursor configurations"
+    )
+    import_parser.add_argument(
+        "--path", required=True, help="Path to VS Code config folder or file"
+    )
+    ide_subparsers.add_parser(
+        "show-config", help="Show the imported configuration context"
+    )
+
+    # Models command
+    models_parser = subparsers.add_parser("models", help="Model routing and profiles helper")
+    models_subparsers = models_parser.add_subparsers(
+        dest="models_command", help="Models commands"
+    )
+    models_subparsers.add_parser("list", help="List all configured model profiles")
+    test_profile_parser = models_subparsers.add_parser("test", help="Test a model profile")
+    test_profile_parser.add_argument("profile", help="Name of the model profile to test")
+
     args = parser.parse_args()
 
     # Load dynamic plugins after argument parsing
@@ -211,6 +380,26 @@ def main():
             run_security_command(args.check_only)
         elif args.command == "eval":
             asyncio.run(run_eval_command(args))
+        elif args.command == "chat":
+            asyncio.run(run_chat_command(args))
+        elif args.command == "edit-inline":
+            asyncio.run(run_edit_inline_command(args))
+        elif args.command == "index":
+            run_index_command(args)
+        elif args.command == "docs":
+            run_docs_command(args)
+        elif args.command == "fix-error":
+            asyncio.run(run_fix_error_command(args))
+        elif args.command == "terminal":
+            asyncio.run(run_terminal_command(args))
+        elif args.command == "multimodal":
+            run_multimodal_command(args)
+        elif args.command == "complete":
+            asyncio.run(run_complete_command(args))
+        elif args.command == "ide":
+            run_ide_command(args)
+        elif args.command == "models":
+            asyncio.run(run_models_command(args))
         else:
             parser.print_help()
     except HarnessConfigError as exc:

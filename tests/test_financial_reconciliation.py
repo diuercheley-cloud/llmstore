@@ -1,17 +1,15 @@
-import pytest
 import uuid
+from datetime import timedelta
 from decimal import Decimal
-from datetime import datetime, timedelta
 
-from sqlalchemy import select
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_queue_chargeback import CommercialQueueChargeback
-from app.models.ai_wallet import AiWallet, AiWalletTransaction
-from app.models.billing_invoice import BillingInvoice
+import pytest
+from app.core.time import utc_now
+from app.models.ai_wallet import AiWallet
 from app.models.client import Client
 from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial_queue_chargeback import CommercialQueueChargeback
 from app.services.billing.financial_reconciliation import FinancialReconciliationService
-from app.core.time import utc_now
 
 
 @pytest.fixture

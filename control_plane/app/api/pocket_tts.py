@@ -2,18 +2,16 @@
 from pathlib import Path
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request, Response, Depends
-from fastapi.responses import FileResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.datastructures import UploadFile
-
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.client import Client
 from app.services.auth import require_client
-from app.services.tts_usage import ensure_tts_quota, record_tts_event, check_tts_feature_blocked
-from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
+from app.services.tts_usage import check_tts_feature_blocked, ensure_tts_quota, record_tts_event
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import FileResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.datastructures import UploadFile
 
 router = APIRouter(prefix="/pocket-tts", tags=["pocket-tts"])
 settings = get_settings()

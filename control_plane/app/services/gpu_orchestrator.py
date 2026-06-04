@@ -1,33 +1,28 @@
-import uuid
 import logging
 import subprocess
-import json
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+import uuid
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, update, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.runtime.gpu_orchestration import (
-    GpuDevice,
-    GpuAllocation,
-    GpuCapacitySnapshot,
-    AutoscalingPolicy,
-    AutoscalingEvent,
-)
-from app.models.runtime.distributed_runtime import RuntimeNode, RuntimeNodeHeartbeat
-from app.core.time import utc_now
 from app.core.metrics import (
-    LLM_GPU_MEMORY_PRESSURE_RATIO,
-    LLM_GPU_DEVICES_TOTAL,
-    LLM_GPU_MEMORY_USED_BYTES,
-    LLM_GPU_MEMORY_TOTAL_BYTES,
-    LLM_GPU_UTILIZATION_RATIO,
-    LLM_GPU_TEMPERATURE_CELSIUS,
     LLM_AUTOSCALING_DECISIONS_TOTAL,
-    LLM_AUTOSCALING_REPLICAS_DESIRED,
     LLM_AUTOSCALING_REPLICAS_CURRENT,
+    LLM_AUTOSCALING_REPLICAS_DESIRED,
+    LLM_GPU_DEVICES_TOTAL,
+    LLM_GPU_MEMORY_PRESSURE_RATIO,
+    LLM_GPU_MEMORY_TOTAL_BYTES,
+    LLM_GPU_MEMORY_USED_BYTES,
+    LLM_GPU_TEMPERATURE_CELSIUS,
+    LLM_GPU_UTILIZATION_RATIO,
 )
+from app.core.time import utc_now
+from app.models.runtime.gpu_orchestration import (
+    AutoscalingEvent,
+    AutoscalingPolicy,
+    GpuAllocation,
+    GpuDevice,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

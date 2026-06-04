@@ -2,14 +2,15 @@
 Owner: agent-platform
 Status: beta
 """
-import uuid
-import logging
 import hashlib
-from typing import Dict, Any, Optional, List
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentBundleVersion, AgentBundleSignature, AgentBundleTrustReport
+import logging
+import uuid
+from typing import Any, Dict
+
 from app.core.config import get_settings
+from app.models.agents import AgentBundleSignature, AgentBundleTrustReport, AgentBundleVersion
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class AgentBundleVerifierService:
             if not allow_unsigned_internal:
                 return {"passed": False, "reason": "Unsigned internal bundles are blocked by policy"}
             
-            logger.warning(f"[AUDIT WARNING] Permitting unsigned internal bundle in dev/local (dev_only).")
+            logger.warning("[AUDIT WARNING] Permitting unsigned internal bundle in dev/local (dev_only).")
         
         if is_signed:
              # Mock signature verification

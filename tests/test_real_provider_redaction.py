@@ -1,6 +1,6 @@
-import subprocess
 import json
-import pytest
+import subprocess
+
 
 def test_redaction_json(tmp_path):
     out_dir = tmp_path / "artifacts"

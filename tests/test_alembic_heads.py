@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+
 import pytest
 
 ROOT_DIR = Path(__file__).parent.parent

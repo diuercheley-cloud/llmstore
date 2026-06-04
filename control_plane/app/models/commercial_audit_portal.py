@@ -3,12 +3,11 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, JSON, String
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.core.time import utc_now
 from app.db.base import Base
+from sqlalchemy import JSON, Date, DateTime, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class CommercialPortalAuditAccessLog(Base):

@@ -1,19 +1,17 @@
-import uuid
 import logging
+import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field
-
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_current_user, get_db
 from app.models.agent_marketplace import MarketplaceItem, MarketplacePublisher
-from app.services.agents.marketplace.marketplace_search import MarketplaceSearchService
-from app.services.agents.marketplace.marketplace_ratings import MarketplaceRatingService
-from app.services.agents.marketplace.publisher_program import PublisherProgramService
-from app.services.agents.marketplace.marketplace_analytics import MarketplaceAnalyticsService
-from app.services.agents.marketplace.dependency_resolver import DependencyResolver
 from app.services.agents.agent_state import get_agent_definition
+from app.services.agents.marketplace.marketplace_analytics import MarketplaceAnalyticsService
+from app.services.agents.marketplace.marketplace_ratings import MarketplaceRatingService
+from app.services.agents.marketplace.marketplace_search import MarketplaceSearchService
+from app.services.agents.marketplace.publisher_program import PublisherProgramService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

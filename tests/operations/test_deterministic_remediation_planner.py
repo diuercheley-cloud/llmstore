@@ -1,5 +1,7 @@
-import pytest
-from app.services.operations.remediation.deterministic_planner import DeterministicRemediationPlanner
+from app.services.operations.remediation.deterministic_planner import (
+    DeterministicRemediationPlanner,
+)
+
 
 class TestDeterministicRemediationPlanner:
     def test_normalize_inputs(self):

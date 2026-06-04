@@ -6,18 +6,17 @@ Extends the existing OAuth2 flow (Google/GitHub) in auth.py.
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import httpx
+from app.core.config import get_settings
+from app.db.session import get_db_session
+from app.models.auth import OAuthState, UserSession
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
-from app.db.session import get_db_session
-from app.models.auth import OAuthState, UserSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -155,7 +154,6 @@ class EnterpriseSSOService:
             }
 
     def _build_saml_request(self, entity_id: str, acs_url: str) -> str:
-        import uuid
         request_id = f"_{uuid.uuid4().hex}"
         return (
             f'<?xml version="1.0" encoding="UTF-8"?>'

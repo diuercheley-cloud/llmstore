@@ -1,6 +1,8 @@
 import uuid
+
 from app.services.operations.adapter_sandbox.policy_guard import AdapterSandboxPolicyGuard
 from app.services.operations.adapter_sandbox.sandbox_context import AdapterSandboxContext
+
 
 def test_policy_guard_inspect_manifest_network():
     guard = AdapterSandboxPolicyGuard()

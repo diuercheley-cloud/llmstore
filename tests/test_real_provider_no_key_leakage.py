@@ -1,5 +1,5 @@
 import subprocess
-import pytest
+
 
 def test_no_key_leakage(tmp_path):
     out_dir = tmp_path / "artifacts"

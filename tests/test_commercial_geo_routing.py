@@ -1,6 +1,7 @@
 import pytest
-from app.services.routing.commercial_geo_router import CommercialGeoRouter
 from app.models.commercial_cluster_registry import CommercialClusterRegistry
+from app.services.routing.commercial_geo_router import CommercialGeoRouter
+
 
 @pytest.fixture
 def geo_router():

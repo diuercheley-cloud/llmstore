@@ -1,15 +1,15 @@
 # Owner: agent-platform
-import hmac
 import hashlib
+import hmac
 import json
 import logging
-import requests
 import uuid
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict
 
+import requests
 from app.models.agent_service import AgentCallbackWebhook
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

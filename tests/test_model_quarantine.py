@@ -1,11 +1,9 @@
 import pytest
-
 from app.services.models.model_lifecycle_manager import (
     discover_model,
     stage_model,
     transition_lifecycle_state,
 )
-from app.services.models.model_promotion import create_promotion_request
 from app.services.models.model_quarantine import (
     list_quarantined_models,
     list_rollback_records,

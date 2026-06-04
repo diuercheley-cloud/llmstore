@@ -1,16 +1,16 @@
-import pytest
 import asyncio
-from unittest.mock import MagicMock, patch
-from fastapi.testclient import TestClient
-from app.main import app
+from unittest.mock import patch
+
+import pytest
 from app.core import metrics
+from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
 @pytest.mark.asyncio
 async def test_chaos_provider_timeout():
     # Simulate a provider timeout and check circuit breaker / metrics
-    from app.services.inference_proxy import InferenceProxy
     
     with patch("httpx.AsyncClient.post") as mock_post:
         # Simulate timeout

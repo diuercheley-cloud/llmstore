@@ -1,12 +1,12 @@
 # Owner: agent-platform
-import uuid
 import logging
+import uuid
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.models.prompts import PromptTemplateVersion, PromptTemplate
+from app.models.prompts import PromptTemplateVersion
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

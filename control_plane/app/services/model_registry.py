@@ -1,15 +1,14 @@
 import json
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
 from app.models.model_registry import ModelRegistry
 from app.services.backend_registry import ensure_default_backends
 from app.utils.model_prompting import detect_architecture, detect_prompt_template
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 async def ensure_default_model(session: AsyncSession) -> ModelRegistry:

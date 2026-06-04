@@ -1,14 +1,13 @@
 # Owner: agent-platform
-import os
 import re
 import uuid
-import httpx
-from datetime import datetime, timezone
 from pathlib import Path
-from PIL import Image, ImageDraw
+
+import httpx
 from app.core.config import get_settings
 from app.services.agents.browser.browser_policy import check_browser_url_policy
 from app.services.agents.browser.browser_sanitizer import sanitize_and_check_injection
+from PIL import Image, ImageDraw
 
 
 class HeadlessBrowserSession:

@@ -2,8 +2,7 @@ import uuid
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-
+from app.core.config import get_settings
 from app.models.agent_workflows import AgentWorkflow, AgentWorkflowRun, AgentWorkflowSignal
 from app.models.agents import (
     AgentApprovalRequest,
@@ -14,7 +13,6 @@ from app.models.agents import (
     AgentMemoryItem,
     AgentMemoryPolicy,
     AgentPlan,
-    AgentRun,
     AgentRunReceipt,
     AgentRunStep,
     AgentTask,
@@ -24,7 +22,7 @@ from app.models.agents import (
 from app.services.agents import agent_state
 from app.services.agents.agent_llm_provider import MockAgentLLMProvider
 from app.services.agents.task_engine import TaskEngine
-from app.core.config import get_settings
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

@@ -10,6 +10,73 @@ Harness for governed execution of agentic coding tasks within the LLM Inference 
 - Centralizes security rules in `scripts/llm_harness/policy.py`.
 - Generates batch artifacts in `artifacts/llm_harness/`.
 
+## Cursor-like IDE Features
+
+The modular harness includes a Cursor-style CLI layer for interactive coding support:
+
+- `chat` for integrated chat with `@file`, `@folder`, `@symbol`, and `@selection` references.
+- `edit-inline` for policy-gated inline refactors with unified diff previews.
+- `code --image` for screenshot and image-driven tasks.
+- `index` and `docs` for local codebase indexing and cached external docs.
+- `complete` for fill-in-the-middle suggestions that never auto-apply.
+- `fix-error` and `terminal` for diagnostics, repair prompts, and policy-aware command suggestions.
+- `ide` for VS Code/Cursor config import.
+- `models` for model profile listing, routing, and smoke tests.
+
+Examples:
+
+```bash
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli chat \
+  --provider stub \
+  --allow-stub-code-agent \
+  --message "Review @file:scripts/llm_harness/cli.py"
+
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli edit-inline \
+  scripts/llm_harness/cli.py \
+  --range 1:20 \
+  --instruction "Tighten help text" \
+  --dry-run \
+  --provider stub \
+  --allow-stub-code-agent
+
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli code \
+  --provider stub \
+  --allow-stub-code-agent \
+  --image screenshot.png \
+  --task "Explain the UI issue in this screenshot"
+
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli complete \
+  scripts/llm_harness/cli.py \
+  --line 20 \
+  --column 4 \
+  --provider stub \
+  --allow-stub-code-agent
+
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli terminal diagnose \
+  --stderr-file artifacts/llm_harness/stderr.log
+
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli ide import-vscode --path .
+PYTHONPATH=. .venv/bin/python3 -m scripts.llm_harness.cli models list
+```
+
+Example `.harness.yaml` with model profiles:
+
+```yaml
+models:
+  default: local-qwen
+  profiles:
+    local-qwen:
+      provider: local-openai-compatible
+      model: nvidia/nemotron-3-nano-4b
+      base_url: http://192.168.101.1:1234/v1
+  routing:
+    chat: local-qwen
+    completion: local-qwen
+    inline-edit: local-qwen
+```
+
+Language-aware behavior currently covers Python, JavaScript, TypeScript, Java, and C#.
+
 ## Execution Modes
 
 ### `legacy agent run`
@@ -243,10 +310,16 @@ Behavior:
 - If `--model` is omitted, the harness auto-selects the first model from `/v1/models`.
 - The local provider avoids the `response_format=json_object` fallback loop that some local servers reject.
 - Streaming is enabled by default for local endpoints unless `--no-stream` is passed.
-- Native `tool_calls` can be forced with `--tool-calling native`; `--tool-calling json` keeps the legacy action-in-content path.
-- Remote OpenAI-compatible endpoints can opt into native tools in `auto` mode with `--supports-tool-calling`.
+- `--tool-calling auto` is conservative for local providers and defaults to JSON actions unless `supports_native_tool_calling=true` AND `--allow-native-tools-for-local` is set.
+- Native `tool_calls` can be forced with `--tool-calling native`. If the model fails the capability probe, execution fails with a clear error and troubleshooting hints.
+- Remote OpenAI-compatible endpoints can opt into native tools in `auto` mode with `--supports-tool-calling` if the backend supports it.
+- `--allow-native-tools-for-local` explicitly allows native tools for local backends in `auto` mode when supported.
+- Probe results are cached per (provider, base_url, model) with a 300s TTL (configurable via `--capability-cache-ttl-seconds`).
+- Reports include `final_tool_calling_mode` to confirm the selected execution path.
+- In `native` mode, malformed `tool_calls` from the provider cause a `schema_validation_failed` error without partial execution or automatic fallback. Fallback to JSON is restricted to `auto` mode.
 - Read timeouts suggest `300s` and can retry once with the increased timeout when `--auto-increase-timeout` is enabled.
 - If a local provider returns `HTTP 400` on a multi-turn follow-up, the harness retries once with simplified text-only history, disables streaming for that retry, and omits `tools`.
+- If a local provider returns a `200` response with invalid action JSON, empty tool output, or schema-incompatible content, the harness retries once in a stricter JSON-compatible mode.
 - After `final` executes, the run terminates immediately instead of issuing another model call.
 - Generated reports include `time_to_first_action_ms`, `time_to_final_ms`, and `post_final_llm_calls_blocked`.
 

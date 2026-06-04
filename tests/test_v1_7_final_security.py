@@ -139,11 +139,11 @@ def test_checksums_no_secrets():
     for line in content.split("\n"):
         parts = line.strip().split()
         assert len(parts) == 2, f"Invalid checksum line: {line}"
-        assert len(parts[0]) == 64, f"Hash not 64 hex chars"
+        assert len(parts[0]) == 64, "Hash not 64 hex chars"
         try:
             int(parts[0], 16)
         except ValueError:
-            assert False, f"Invalid hex in checksum"
+            assert False, "Invalid hex in checksum"
         assert parts[1].endswith(".tar.gz"), "Filename must end with .tar.gz"
         # No secret patterns in filename
         for pat in ["sk-", "ghp_", "token"]:

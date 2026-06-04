@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import uuid
 from datetime import date
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import select
-
-from app.core.config import get_settings
 from app.api.commercial_compliance_admin import router as compliance_router
-from app.db.session import get_db_session
+from app.core.config import get_settings
 from app.models.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlException,
@@ -24,6 +20,7 @@ from app.services.compliance.financial_controls import (
     create_attestation,
     evaluate_control_policy,
 )
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

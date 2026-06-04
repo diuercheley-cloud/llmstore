@@ -1,9 +1,9 @@
 import pytest
+from app.core import metrics
+from app.main import app
+from app.services.platform_slo import PlatformSLOService
 from fastapi.testclient import TestClient
 from prometheus_client import REGISTRY
-from app.main import app
-from app.core import metrics
-from app.services.platform_slo import PlatformSLOService
 
 client = TestClient(app)
 

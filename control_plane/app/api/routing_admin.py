@@ -24,6 +24,7 @@ from app.db.session import get_db_session
 from app.services.routing.commercial_config_store import CommercialConfigStore
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 @router.post("/simulate", response_model=SimulateRoutingResponse)
 async def simulate_routing(
     req: SimulateRoutingRequest,

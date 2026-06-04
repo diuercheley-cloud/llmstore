@@ -7,9 +7,6 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial_encryption import CommercialTenantEncryptionKey
@@ -19,9 +16,14 @@ from app.models.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.commercial_sovereign_governance import CommercialAirgapSyncPackage, CommercialOfflineRevocationList
+from app.models.commercial_sovereign_governance import (
+    CommercialAirgapSyncPackage,
+    CommercialOfflineRevocationList,
+)
 from app.services.models.signed_model_registry import revoke_model
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:

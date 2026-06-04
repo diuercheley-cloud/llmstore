@@ -1,8 +1,5 @@
-import os
 import pytest
-
 from app.services.providers.registry import (
-    _init_registry,
     get_all_provider_statuses,
     get_provider,
     get_providers,

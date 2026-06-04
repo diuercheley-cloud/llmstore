@@ -1,4 +1,3 @@
-import os
 
 def test_dashboard_remediation_execution_markers():
     """Verifies that the remediation execution markers are present in the dashboards."""

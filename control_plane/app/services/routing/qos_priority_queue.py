@@ -1,12 +1,10 @@
-import json
 import logging
 import time
 import uuid
-from typing import Any, Optional
-
-from redis.asyncio import Redis
+from typing import Optional
 
 from app.core.config import get_settings
+from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 

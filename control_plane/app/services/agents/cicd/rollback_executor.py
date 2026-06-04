@@ -1,11 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import uuid
 
-from app.models.agent_cicd import AgentRollback, AgentDeployment, AgentDeploymentEvent
+from app.models.agent_cicd import AgentDeployment, AgentDeploymentEvent, AgentRollback
 from app.models.agents import AgentRegistryEntry
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

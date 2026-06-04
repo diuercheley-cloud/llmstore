@@ -1,18 +1,17 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import uuid
-import hashlib
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
 
-from sqlalchemy import select, update, and_, desc, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.commercial_routing_config import CommercialRoutingConfig
-from app.models.admin_action_log import AdminActionLog
 from app.core.config import get_settings
+from app.models.admin_action_log import AdminActionLog
+from app.models.commercial_routing_config import CommercialRoutingConfig
 from app.services.routing.commercial_config_store import CommercialConfigStore
+from sqlalchemy import and_, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

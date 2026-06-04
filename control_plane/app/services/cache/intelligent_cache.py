@@ -3,12 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any
-
-from sqlalchemy import and_, delete, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from dataclasses import dataclass
+from datetime import timedelta
 
 from app.core.config import get_settings
 from app.core.metrics import record_cache_result
@@ -17,6 +13,8 @@ from app.models.cache_policy import CachePolicy
 from app.models.request_log import RequestLog
 from app.models.response_cache import ResponseCache
 from app.models.semantic_cache_entry import SemanticCacheEntry
+from sqlalchemy import and_, delete, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

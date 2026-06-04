@@ -1,14 +1,14 @@
 import uuid
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Header
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
+from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db
 from app.services.assistants.assistant_registry import AssistantRegistry
-from app.services.assistants.thread_store import ThreadStore
-from app.services.assistants.message_store import MessageStore
 from app.services.assistants.assistant_run_adapter import AssistantRunAdapter
+from app.services.assistants.message_store import MessageStore
+from app.services.assistants.thread_store import ThreadStore
+from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1", tags=["Assistants API V1 Compatibility"])
 

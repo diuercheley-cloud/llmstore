@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from app.services.model_policy import plan_routing_order
-from app.models.model_registry import ModelRegistry
+import pytest
 from app.models.inference_backend import InferenceBackend
 from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_registry import ModelRegistry
+from app.services.model_policy import plan_routing_order
+
 
 def mock_route(provider: str, name: str):
     route = MagicMock(spec=ModelBackendRoute)

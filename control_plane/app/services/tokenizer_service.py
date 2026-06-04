@@ -1,11 +1,15 @@
-import logging
 import functools
-import httpx
 import importlib
-from typing import List, Dict, Any, Optional, Union
-from app.utils.token_estimator import estimate_tokens_from_text, estimate_prompt_tokens
+import logging
+from typing import List, Union
+
+from app.contracts.token_accounting import (
+    TokenAccountingCapabilities,
+    TokenAccountingContract,
+    TokenCountResult,
+)
 from app.core.config import get_settings
-from app.contracts.token_accounting import TokenAccountingContract, TokenCountResult, TokenAccountingCapabilities
+from app.utils.token_estimator import estimate_prompt_tokens, estimate_tokens_from_text
 
 logger = logging.getLogger(__name__)
 

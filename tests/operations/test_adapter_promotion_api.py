@@ -1,12 +1,13 @@
-import pytest
 import uuid
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.main import app
+
+import pytest
 from app.api.dependencies import get_current_admin, get_db
+from app.main import app
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
 from app.models.operations.adapter_sandbox import AdapterManifest
-from app.models.operations.adapter_promotion import AdapterPromotionWorkflow
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 class TestAdapterPromotionAPI:

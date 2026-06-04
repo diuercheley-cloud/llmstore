@@ -3,9 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.commercial_attestation_runtime import CommercialRuntimeAttestation
 from app.models.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
@@ -20,6 +17,8 @@ from app.models.commercial_model_supply_chain import (
 from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
 from app.models.commercial_sovereign_governance import CommercialHardwareAttestationRecord
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .blast_radius_analysis import sha256_hex
 from .human_checkpointing import HumanCheckpointingService

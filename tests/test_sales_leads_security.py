@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_sales_endpoints_no_auth(admin_client: AsyncClient):
     endpoints = [

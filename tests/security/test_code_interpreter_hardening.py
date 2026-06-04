@@ -1,10 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from app.core.config import get_settings
 from app.services.agents.code_interpreter.providers.docker_sandbox import DockerSandboxProvider
-from app.services.agents.code_interpreter.sandbox_runtime import SandboxRuntime
 from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyViolation
+from app.services.agents.code_interpreter.sandbox_runtime import SandboxRuntime
 
 
 @pytest.mark.asyncio

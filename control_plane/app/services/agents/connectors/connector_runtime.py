@@ -1,5 +1,11 @@
-from typing import Any, Dict, Optional
-from app.services.agents.connectors.connector_mode import ConnectorMode, get_connector_mode, is_real_http_enabled
+from typing import Any, Dict
+
+from app.services.agents.connectors.connector_mode import (
+    ConnectorMode,
+    get_connector_mode,
+    is_real_http_enabled,
+)
+
 
 class ConnectorRuntime:
     @staticmethod

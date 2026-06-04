@@ -1,24 +1,29 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
+from app.db.session import SessionLocal, engine
 from app.models.agents import AgentDefinition
-from app.models.multi_agent import AgentTeamRun, AgentSharedWorkspace, AgentTeamDelegation, AgentTeamMessage
-from app.services.agents.multi_agent.team_registry import TeamRegistry
-from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
+from app.models.multi_agent import (
+    AgentSharedWorkspace,
+    AgentTeamDelegation,
+    AgentTeamMessage,
+    AgentTeamRun,
+)
 from app.services.agents.multi_agent.debate_runtime import DebateRuntime
 from app.services.agents.multi_agent.dynamic_runtime import DynamicRoutingRuntime
+from app.services.agents.multi_agent.hierarchical_runtime import HierarchicalRuntime
 from app.services.agents.multi_agent.loop_guard import LoopGuard
 from app.services.agents.multi_agent.shared_workspace import SharedWorkspace
+from app.services.agents.multi_agent.team_registry import TeamRegistry
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     async with engine.begin() as conn:
-        import app.models.agents
-        import app.models.multi_agent
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:

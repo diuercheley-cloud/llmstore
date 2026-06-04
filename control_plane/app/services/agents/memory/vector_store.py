@@ -1,6 +1,7 @@
 import abc
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
+
 
 class VectorStore(abc.ABC):
     @abc.abstractmethod

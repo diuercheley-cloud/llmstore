@@ -1,8 +1,12 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from app.models.operations.adapter_registry import SignedAdapterRegistryEntry
-from app.services.operations.adapter_promotion.workflow_service import AdapterPromotionWorkflowService
+from app.services.operations.adapter_promotion.workflow_service import (
+    AdapterPromotionWorkflowService,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_workflow_service_lifecycle(session: AsyncSession):

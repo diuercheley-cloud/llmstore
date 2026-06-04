@@ -1,7 +1,3 @@
-import os
-import json
-import pytest
-from pathlib import Path
 
 def test_benchmark_report_fields():
     # We test with the schema definition to make sure the runner provides correct fields

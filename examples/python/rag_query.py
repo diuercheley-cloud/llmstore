@@ -5,6 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../sdk/python"))
 
 from kleberai import Client
 
+
 def main():
     api_key = os.getenv("KLEBERAI_API_KEY", "test-key")
     base_url = os.getenv("KLEBERAI_BASE_URL", "http://localhost:18080")

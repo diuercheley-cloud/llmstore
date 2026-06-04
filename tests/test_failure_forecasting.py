@@ -1,8 +1,10 @@
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.runtime.failure_forecasting import FailureForecaster
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
 import uuid
+
+import pytest
+from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
+from app.services.runtime.failure_forecasting import FailureForecaster
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_failure_forecasting_node_exhaustion(session: AsyncSession):

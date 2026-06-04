@@ -1,5 +1,4 @@
 import pytest
-
 from app.models.billing_plan import BillingPlan
 from app.models.pricing_rule import PricingRule
 from app.services.public_onboarding import build_account_name, marketing_summary, normalize_email

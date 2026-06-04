@@ -3,11 +3,13 @@ Owner: agent-platform
 Status: beta
 """
 import uuid
-from typing import Optional, List
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents import AgentMemoryConsent
+from typing import List, Optional
+
 from app.core.time import utc_now
+from app.models.agents import AgentMemoryConsent
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 
 class MemoryConsentService:
     def __init__(self, db: AsyncSession):

@@ -1,7 +1,8 @@
+import os
+
 import pytest
 from app.services.runtime_tuning import RuntimeTuningService
-from app.models.operations.runtime_tuning import RuntimeTuningProfile
-import os
+
 
 @pytest.mark.asyncio
 async def test_recommendation_engine_queue_wait(db_session):

@@ -1,8 +1,8 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Any, Dict, List, Optional
-from app.models.agents import AgentDefinition, AgentTask
+from typing import Any, Dict
+
+from app.models.agents import AgentDefinition
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,6 @@
 
-import json
-from datetime import datetime, timezone
-from typing import List
-from .verifier_models import VerificationReport, VerificationCheck
+from .verifier_models import VerificationReport
+
 
 def format_terminal_report(report: VerificationReport):
     colors = {
@@ -26,7 +24,7 @@ def format_terminal_report(report: VerificationReport):
         print(f"[{status_color}{check.status}{reset}] {check.name}")
         print(f"    {check.message}")
         if "Witness Quorum" in check.name and check.status != "SKIP":
-            print(f"    Details: Multi-party verification enabled")
+            print("    Details: Multi-party verification enabled")
     
     print("-" * 60)
     overall_color = colors.get(report.overall_status, "")

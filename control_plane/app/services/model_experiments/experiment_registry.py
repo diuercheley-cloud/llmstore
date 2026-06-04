@@ -1,8 +1,10 @@
 import uuid
 from typing import List, Optional
+
+from app.models.model_experiments import ModelExperiment, ModelExperimentVariant
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.model_experiments import ModelExperiment, ModelExperimentVariant
+
 
 class ExperimentRegistry:
     def __init__(self, db: AsyncSession):

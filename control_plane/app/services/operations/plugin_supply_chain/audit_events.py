@@ -3,7 +3,6 @@ from typing import Any
 from app.services.operations.plugin_supply_chain.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
-
 PLUGIN_SUPPLY_CHAIN_AUDIT_EVENTS = {
     "provenance_created",
     "provenance_verified",

@@ -1,8 +1,13 @@
-from sqlalchemy.orm import Session
-from app.models.commercial_control_plane_mesh import CommercialMeshPartitionEvent, CommercialMeshNode
 import uuid
 from typing import List
+
 from app.core.time import utc_now
+from app.models.commercial_control_plane_mesh import (
+    CommercialMeshNode,
+    CommercialMeshPartitionEvent,
+)
+from sqlalchemy.orm import Session
+
 
 class MeshFailoverService:
     def __init__(self, db: Session):

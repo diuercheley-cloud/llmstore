@@ -1,6 +1,9 @@
 import pytest
-
-from app.models.commercial_agents import CommercialAgentExecution, CommercialAgentProfile, CommercialToolRegistry
+from app.models.commercial_agents import (
+    CommercialAgentExecution,
+    CommercialAgentProfile,
+    CommercialToolRegistry,
+)
 from app.services.agents.tool_policy_engine import ToolPolicyEngine
 
 

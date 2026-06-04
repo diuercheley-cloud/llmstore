@@ -1,6 +1,7 @@
 import os
-import pytest
 import re
+
+import pytest
 
 EXAMPLES = [
     "examples/langchain/chat.py",
@@ -25,8 +26,9 @@ def test_example_no_secrets(example_path):
 def test_langchain_example_syntax():
     # Apenas se as dependências existirem
     try:
-        import langchain_openai
         import py_compile
+
+        import langchain_openai
         
         py_compile.compile("examples/langchain/chat.py", dự=True)
         py_compile.compile("examples/langchain/embeddings.py", dự=True)

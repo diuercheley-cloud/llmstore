@@ -1,13 +1,13 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional, Dict
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.api import deps
-from app.services.knowledge_base.kb_registry import KBRegistry
 from app.services.knowledge_base.document_ingestion import DocumentIngestionService
+from app.services.knowledge_base.kb_registry import KBRegistry
 from app.services.knowledge_base.kb_reindex import KBReindexService
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -65,8 +65,8 @@ async def list_documents(
     db: AsyncSession = Depends(deps.get_db),
     current_user = Depends(deps.get_current_admin_user)
 ):
-    from sqlalchemy import select
     from app.models.knowledge_base import KBDocument
+    from sqlalchemy import select
     stmt = select(KBDocument).where(KBDocument.kb_id == kb_id)
     res = await db.execute(stmt)
     return list(res.scalars().all())

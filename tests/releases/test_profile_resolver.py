@@ -1,10 +1,12 @@
-import pytest
 import os
 import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
 from app.services.platform.profile_resolver import ProfileResolver
+
 
 def test_profile_unknown_env_override_fails():
     # Setting an unknown UPPERCASE env variable should block

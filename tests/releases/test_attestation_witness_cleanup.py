@@ -1,25 +1,29 @@
-import pytest
-import uuid
-import sys
 import os
-import hashlib
-from unittest.mock import MagicMock, AsyncMock, patch
+import sys
+import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
-from app.services.agents.code_interpreter.sandbox_attestation import AttestationService, SandboxAttestation
-from app.services.operations.plugin_supply_chain.sbom_placeholder import PluginSBOMPlaceholderService
-from app.services.inference import witness_federation
-from app.models.commercial_witness import CommercialWitness, CommercialWitnessSignature, CommercialWitnessAuditEvent
-from app.models.commercial_merkle_timelines import CommercialMerkleTimeline
-from app.models.operations.plugin_supply_chain import PluginSBOMPlaceholder
-from app.services.inference import confidential_runtime
-from app.utils.crypto_signer import sign_payload
 from app.models.commercial_confidential_runtime import (
     CommercialConfidentialInferenceSession,
     CommercialConfidentialRuntimeProfile,
-    CommercialConfidentialRuntimeAuditEvent
 )
+from app.models.commercial_merkle_timelines import CommercialMerkleTimeline
+from app.models.commercial_witness import (
+    CommercialWitness,
+    CommercialWitnessAuditEvent,
+    CommercialWitnessSignature,
+)
+from app.models.operations.plugin_supply_chain import PluginSBOMPlaceholder
+from app.services.agents.code_interpreter.sandbox_attestation import AttestationService
+from app.services.inference import confidential_runtime, witness_federation
+from app.services.operations.plugin_supply_chain.sbom_placeholder import (
+    PluginSBOMPlaceholderService,
+)
+
 
 @pytest.mark.asyncio
 async def test_sbom_placeholder_fails_in_production():
@@ -101,8 +105,9 @@ async def test_attestation_requires_signature_in_production():
         
         # Real signature should pass
         # Let's generate a valid signature first using the real functions
-        from app.services.inference.cryptographic_receipts import sign_payload
         import json
+
+        from app.services.inference.cryptographic_receipts import sign_payload
         payload_data = {k: v for k, v in att.items() if k != "signature"}
         canonical_str = json.dumps(payload_data, sort_keys=True)
         att["signature"] = sign_payload(canonical_str)

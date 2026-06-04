@@ -8,9 +8,6 @@ from datetime import timedelta
 
 import httpx
 import pytest
-from fastapi import FastAPI
-from sqlalchemy import select
-
 from app.api.commercial_revenue_escalations_admin import router as revenue_escalations_router
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -24,6 +21,8 @@ from app.services.notifications.revenue_escalations import (
     retry_alert_delivery,
     sanitize_alert_payload,
 )
+from fastapi import FastAPI
+from sqlalchemy import select
 
 
 @pytest.fixture(autouse=True)

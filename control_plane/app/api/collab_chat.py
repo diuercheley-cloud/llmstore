@@ -1,24 +1,20 @@
-import uuid
-import json
 import logging
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Request
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.services.auth import (
-    require_client, 
-    require_admin, 
-    admin_key_scheme, 
+    AdminRole,
     bearer_scheme,
     get_admin_role,
-    AdminRole
+    require_client,
 )
-from app.models.client import Client
-from app.core.config import get_settings
 from app.services.collab_chat.channel_service import ChannelService
 from app.services.collab_chat.message_service import MessageService
-from app.services.collab_chat.presence_service import PresenceService
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -1,17 +1,14 @@
 import uuid
 from datetime import date, datetime, timezone
-from typing import Dict, Any
-
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
 from app.models.client import Client
-from app.models.billing_plan import BillingPlan
 from app.models.quota_counter import QuotaCounter
 from app.models.tts_usage_event import TtsUsageEvent
-from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _result_scalar(result, default=0):

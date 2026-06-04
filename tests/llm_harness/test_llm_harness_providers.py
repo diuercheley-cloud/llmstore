@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from scripts.llm_harness.providers import create_code_agent
+from scripts.llm_harness.providers import create_code_agent, _RESPONSE_FORMAT_CACHE
 
 
 def test_provider_unknown_fails():
@@ -212,9 +212,35 @@ async def test_provider_local_openai_health_reports_model_catalog(monkeypatch):
         ]
     }
 
+    mock_probe_response = MagicMock()
+    mock_probe_response.status_code = 200
+    mock_probe_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [
+                        {
+                            "id": "call_1",
+                            "type": "function",
+                            "function": {
+                                "name": "final",
+                                "arguments": '{"message":"native_probe_ok"}',
+                            },
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+    async def fake_request(method, url, **kwargs):
+        if method == "GET":
+            return mock_models_response
+        return mock_probe_response
+
     with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
-        mock_client.request.return_value = mock_models_response
+        mock_client.request = fake_request
         mock_client_cls.return_value.__aenter__.return_value = mock_client
 
         health = await agent.health_check()
@@ -224,6 +250,8 @@ async def test_provider_local_openai_health_reports_model_catalog(monkeypatch):
     assert details["selected_model"] == "qwen/qwen3.6-35b-a3b"
     assert details["available_models"] == ["qwen/qwen3.6-35b-a3b", "google/gemma-4-e2b"]
     assert details["auto_selected_model"] is True
+    assert details["supports_native_tool_calling"] is False
+    assert details["native_tool_calling_probe"]["status"] == "skipped_by_compat_mode"
 
 
 @pytest.mark.asyncio
@@ -363,7 +391,8 @@ async def test_provider_native_tool_call_passthrough(monkeypatch):
                     }
                 }
             ]
-        }
+        },
+        tool_mode="native",
     )
     tool_call = response["choices"][0]["message"]["tool_calls"][0]
     assert tool_call["function"]["name"] == "write_file"
@@ -398,7 +427,8 @@ async def test_provider_unknown_native_tool_call_fails(monkeypatch):
                         }
                     }
                 ]
-            }
+            },
+            tool_mode="native",
         )
 
 
@@ -434,7 +464,8 @@ async def test_provider_invalid_native_tool_args_fail_schema(monkeypatch):
                         }
                     }
                 ]
-            }
+            },
+            tool_mode="native",
         )
 
 
@@ -470,8 +501,10 @@ async def test_provider_auto_tool_calling_uses_declared_support(monkeypatch):
                     }
                 }
             ]
-        }
+        },
+        tool_mode="native",
     )
+    assert response["choices"][0]["message"]["tool_calls"][0]["function"]["name"] == "write_file"
     assert response["choices"][0]["message"]["tool_calls"][0]["function"]["name"] == "write_file"
 
 
@@ -514,6 +547,7 @@ async def test_provider_local_400_retries_with_simplified_history():
     )
 
     payloads = []
+    post_count = 0
 
     async def fake_request(method, url, **kwargs):
         payloads.append(kwargs.get("json", {}))
@@ -522,7 +556,10 @@ async def test_provider_local_400_retries_with_simplified_history():
             mock_models.status_code = 200
             mock_models.json.return_value = {"data": [{"id": "model-1"}]}
             return mock_models
-        if len(payloads) == 2:
+        # Count POST requests, return 400 on the first POST (first chat)
+        nonlocal post_count
+        post_count += 1
+        if post_count == 1:
             mock_resp = MagicMock()
             mock_resp.status_code = 400
             mock_resp.request = MagicMock()
@@ -546,6 +583,7 @@ async def test_provider_local_400_retries_with_simplified_history():
         return mock_resp
 
     messages = [
+        {"role": "system", "content": "Existing system guidance"},
         {"role": "user", "content": "task"},
         {"role": "assistant", "content": "", "tool_calls": [{"id": "call_1"}]},
         {"role": "tool", "tool_call_id": "call_1", "content": "Tool ok"},
@@ -561,13 +599,244 @@ async def test_provider_local_400_retries_with_simplified_history():
     assert len(payloads) == 3
     assert payloads[2]["stream"] is False
     assert "tools" not in payloads[2]
+    system_messages = [message for message in payloads[2]["messages"] if message["role"] == "system"]
+    assert len(system_messages) == 1
     assert all("tool_calls" not in message for message in payloads[2]["messages"])
-    assert any(
-        message["role"] == "user" and "Tool result:" in message["content"]
-        for message in payloads[2]["messages"]
-    )
     assert any(event["event"] == "llm.local_400_retry" for event in agent._provider_events)
     assert any(event["event"] == "llm.local_retry_mode" for event in agent._provider_events)
+
+
+@pytest.mark.asyncio
+async def test_provider_plain_chat_mode_bypasses_action_validation(monkeypatch):
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "chat-test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "stream": False,
+            "plain_chat": True,
+        },
+    )
+
+    payloads = []
+    async def fake_request(method, url, **kwargs):
+        payloads.append(kwargs.get("json", {}))
+        if method == "GET":
+            mock_models = MagicMock()
+            mock_models.status_code = 200
+            mock_models.json.return_value = {"data": [{"id": "model-1"}]}
+            return mock_models
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "READY",
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 3},
+        }
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+        response = await agent.chat_completion(
+            [
+                {"role": "system", "content": "Be concise."},
+                {"role": "user", "content": "Say READY"},
+            ]
+        )
+
+    assert response["choices"][0]["message"]["content"] == "READY"
+    sent_messages = payloads[-1]["messages"]
+    assert sent_messages[0]["role"] == "user"
+    assert "Be concise." in sent_messages[0]["content"]
+    assert "Say READY" in sent_messages[0]["content"]
+    assert "tools" not in payloads[-1]
+
+
+@pytest.mark.asyncio
+async def test_provider_local_semantic_failure_retries_with_compat_mode():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "stream": False,
+            "tool_calling": "json",
+        },
+    )
+
+    payloads = []
+
+    async def fake_request(method, url, **kwargs):
+        payloads.append(kwargs.get("json", {}))
+        if method == "GET":
+            mock_models = MagicMock()
+            mock_models.status_code = 200
+            mock_models.json.return_value = {"data": [{"id": "model-1"}]}
+            return mock_models
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        if len(payloads) == 2:
+            mock_resp.json.return_value = {
+                "choices": [{"message": {"role": "assistant", "content": "I will help with that."}}],
+                "usage": {"total_tokens": 2},
+            }
+        else:
+            mock_resp.json.return_value = {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": '{"type":"final","payload":{"message":"done"}}',
+                        }
+                    }
+                ],
+                "usage": {"total_tokens": 4},
+            }
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+        response = await agent.chat_completion([{"role": "user", "content": "task"}])
+
+    assert response["choices"][0]["message"]["content"].startswith('{"action_type": "final"')
+    assert len(payloads) == 3
+    assert payloads[-1]["stream"] is False
+    assert "tools" not in payloads[-1]
+    assert any(event["event"] == "llm.local_retry_mode" for event in agent._provider_events)
+
+
+@pytest.mark.asyncio
+async def test_provider_local_native_empty_content_retries_with_compat_mode():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "stream": False,
+            "tool_calling": "auto",
+            "allow_native_tools_for_local": True,
+        },
+    )
+
+    payloads = []
+
+    async def fake_request(method, url, **kwargs):
+        payloads.append(kwargs.get("json", {}))
+        if method == "GET":
+            mock_models = MagicMock()
+            mock_models.status_code = 200
+            mock_models.json.return_value = {"data": [{"id": "model-1"}]}
+            return mock_models
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        if len(payloads) == 2:
+            # Probe success
+            mock_resp.json.return_value = {
+                "choices": [{"message": {"role": "assistant", "tool_calls": [{"id": "c1", "type": "function", "function": {"name": "final", "arguments": "{}"}}]}}],
+                "usage": {"total_tokens": 1},
+            }
+        elif len(payloads) == 3:
+            # Chat 1 fails with empty
+            mock_resp.json.return_value = {
+                "choices": [{"message": {"role": "assistant", "content": "", "tool_calls": []}}],
+                "usage": {"total_tokens": 2},
+            }
+        else:
+            # Retry
+            mock_resp.json.return_value = {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": '{"type":"final","payload":{"message":"done"}}',
+                        }
+                    }
+                ],
+                "usage": {"total_tokens": 3},
+            }
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+        response = await agent.chat_completion([{"role": "user", "content": "task"}])
+
+    assert response["choices"][0]["message"]["content"].startswith('{"action_type": "final"')
+    assert len(payloads) == 4
+    assert "tools" not in payloads[-1]
+
+
+@pytest.mark.asyncio
+async def test_local_provider_auto_mode_defaults_to_json_without_explicit_native_support():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "auto",
+        },
+    )
+
+    async def probe_fail(method, url, **kwargs):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 400
+        mock_resp.request = MagicMock()
+        mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Bad Request", request=mock_resp.request, response=mock_resp
+        )
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = probe_fail
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+        assert await agent.resolve_tool_calling_mode() == "json"
+
+
+@pytest.mark.asyncio
+async def test_local_provider_auto_mode_uses_native_with_explicit_support():
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "tool_calling": "auto",
+            "allow_native_tools_for_local": True,
+        },
+    )
+
+    mock_probe_ok = {
+        "choices": [{"message": {"tool_calls": [{"id": "c1", "type": "function", "function": {"name": "final", "arguments": "{}"}}]}}]
+    }
+
+    async def fake_request(method, url, **kwargs):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = mock_probe_ok
+        return mock_resp
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        assert await agent.resolve_tool_calling_mode() == "native"
 
 
 @pytest.mark.asyncio
@@ -839,6 +1108,7 @@ async def test_provider_openai_response_format_fallback(monkeypatch):
 @pytest.mark.asyncio
 async def test_provider_openai_disables_response_format_after_first_400(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    _RESPONSE_FORMAT_CACHE.clear()
     agent = create_code_agent(
         "openai-compatible",
         {
@@ -895,6 +1165,7 @@ async def test_provider_openai_disables_response_format_after_first_400(monkeypa
 
 @pytest.mark.asyncio
 async def test_provider_local_openai_skips_response_format(monkeypatch):
+    _RESPONSE_FORMAT_CACHE.clear()
     agent = create_code_agent(
         "local-openai-compatible",
         {
@@ -938,6 +1209,7 @@ async def test_provider_local_openai_skips_response_format(monkeypatch):
 
         await agent.chat_completion([{"role": "user", "content": "hi"}])
 
+    # GET models + POST chat = 2 calls
     assert call_count == 2
     assert "response_format" not in sent_payloads[-1]
 

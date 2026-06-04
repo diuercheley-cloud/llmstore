@@ -1,5 +1,6 @@
 import os
 
+
 def test_examples_directory_structure():
     """Verify that all expected example files exist."""
     expected_files = [

@@ -5,14 +5,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, func, and_, desc, case
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
-from app.models.commercial_routing_event import CommercialRoutingEvent
-from app.models.commercial_routing_config import CommercialRoutingConfig
 from app.models.admin_action_log import AdminActionLog
+from app.models.commercial_routing_event import CommercialRoutingEvent
 from app.services.routing.commercial_canary_promotion import CommercialCanaryPromotionService
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

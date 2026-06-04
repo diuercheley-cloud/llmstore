@@ -1,5 +1,5 @@
 import subprocess
-import os
+
 
 def test_help_command():
     result = subprocess.run(

@@ -2,14 +2,14 @@
 import asyncio
 import json
 import logging
-from typing import Dict, Any, Callable, Awaitable, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 try:
-    from aio_pika import connect_robust, IncomingMessage, Message
+    from aio_pika import IncomingMessage, Message, connect_robust
     from aio_pika.abc import AbstractIncomingMessage
     HAS_RABBITMQ = True
 except ImportError:

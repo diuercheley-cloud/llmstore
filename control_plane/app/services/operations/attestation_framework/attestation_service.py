@@ -5,12 +5,12 @@ from app.models.operations.attestation_framework import (
     AttestationVerificationResult,
     SovereignExecutionAttestation,
 )
-from app.utils.crypto_signer import sign_payload
 from app.services.operations.attestation_framework.hash_utils import (
     compute_attestation_hash,
     compute_chain_link_hash,
     sha256_hex,
 )
+from app.utils.crypto_signer import sign_payload
 
 
 def _sanitize_subject(subject: dict[str, Any]) -> dict[str, Any]:

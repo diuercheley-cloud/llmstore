@@ -20,51 +20,51 @@ def upgrade() -> None:
     from app.db.base import Base
     from app.models.agent_canary import (
         AgentCanaryAssignment,
-        AgentShadowRun,
         AgentCanaryComparison,
         AgentCanaryPromotionReview,
+        AgentShadowRun,
     )
     from app.models.agent_cognitive_loopback import (
         AgentFeedbackEvent,
-        AgentSuccessPattern,
         AgentFewShotExample,
         AgentLearningCandidate,
         AgentLearningPromotionReview,
+        AgentSuccessPattern,
     )
     from app.models.agent_debugger import (
-        AgentRunSnapshot,
         AgentDebugReplay,
         AgentDebugStateEdit,
+        AgentRunSnapshot,
     )
     from app.models.agent_federated_memory import (
+        FederatedGraphFact,
         FederatedMemoryPeer,
         FederatedMemorySummary,
-        FederatedGraphFact,
-        RemoteMemoryReference,
         FederatedSyncEvent,
+        RemoteMemoryReference,
     )
     from app.models.agent_meta_reviewer import (
         AgentMetaReview,
-        AgentMetaReviewFinding,
         AgentMetaReviewDecision,
+        AgentMetaReviewFinding,
     )
     from app.models.agent_uncertainty import (
-        AgentUncertaintyEvent,
         AgentConfidenceScore,
         AgentEvidenceGap,
+        AgentUncertaintyEvent,
         AgentUncertaintyPolicy,
     )
     from app.models.agent_wallet import (
+        AgentSpendAuthorization,
         AgentWallet,
         AgentWalletLedgerEntry,
-        AgentSpendAuthorization,
         AgentWalletLimit,
     )
     from app.models.digital_twin import (
         DigitalTwin,
-        DigitalTwinState,
         DigitalTwinCommand,
         DigitalTwinSafetyEvent,
+        DigitalTwinState,
     )
 
     bind = op.get_bind()

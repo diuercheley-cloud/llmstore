@@ -1,9 +1,12 @@
-from types import SimpleNamespace
 
-from app.services.operations.reproducible_builds.artifact_verification import ArtifactVerificationService
+from app.services.operations.reproducible_builds.artifact_verification import (
+    ArtifactVerificationService,
+)
 from app.services.operations.reproducible_builds.lineage_service import SourceArtifactLineageService
 from app.services.operations.reproducible_builds.replay_verifier import ArtifactReplayVerifier
-from app.services.operations.reproducible_builds.reproducible_build_service import ReproducibleBuildService
+from app.services.operations.reproducible_builds.reproducible_build_service import (
+    ReproducibleBuildService,
+)
 
 
 def test_artifact_replay_verifier():

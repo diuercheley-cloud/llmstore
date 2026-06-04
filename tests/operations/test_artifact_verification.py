@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 
-from app.services.operations.reproducible_builds.artifact_verification import ArtifactVerificationService
+from app.services.operations.reproducible_builds.artifact_verification import (
+    ArtifactVerificationService,
+)
 
 
 def _manifest():

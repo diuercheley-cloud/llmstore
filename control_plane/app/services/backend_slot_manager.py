@@ -1,15 +1,13 @@
 import asyncio
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
 from time import monotonic
-
-from sqlalchemy import select
 
 from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.models.inference_backend import InferenceBackend
 from app.services.queue_manager import QueueTimeout
+from sqlalchemy import select
 
 
 class BackendSlotManager:

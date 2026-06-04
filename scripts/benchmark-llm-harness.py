@@ -23,8 +23,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from scripts.llm_harness.agent_client import AgentClient
 from scripts.llm_harness.coding_loop import CodingLoop
-from scripts.llm_harness.workspace import Workspace
 from scripts.llm_harness.reporter import Reporter
+from scripts.llm_harness.workspace import Workspace
 
 RESPONSES = [
     # 1. Plan

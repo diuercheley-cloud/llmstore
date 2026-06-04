@@ -1,39 +1,36 @@
 # Owner: platform-ops
 import uuid
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.adapter_sandbox import (
     AdapterManifest,
-    AdapterSandboxRun,
-    AdapterSandboxStepResult,
     AdapterSandboxPolicyViolation,
     AdapterSandboxReceipt,
+    AdapterSandboxRun,
+    AdapterSandboxStepResult,
     compute_deterministic_hash,
 )
 from app.models.operations.remediation_execution import RemediationExecution
+from app.services.operations.adapter_sandbox.audit_events import (
+    log_adapter_manifest_blocked,
+    log_adapter_policy_violation_detected,
+    log_adapter_sandbox_run_completed,
+    log_adapter_sandbox_run_prepared,
+)
 from app.services.operations.adapter_sandbox.manifest_validator import AdapterManifestValidator
 from app.services.operations.adapter_sandbox.policy_guard import AdapterSandboxPolicyGuard
-from app.services.operations.adapter_sandbox.simulation_runner import AdapterSandboxSimulationRunner
-from app.services.operations.adapter_sandbox.sandbox_context import AdapterSandboxContext
 from app.services.operations.adapter_sandbox.receipts import (
     build_manifest_receipt,
     build_sandbox_run_receipt,
-    build_policy_violation_receipt,
 )
-from app.services.operations.adapter_sandbox.audit_events import (
-    log_adapter_manifest_registered,
-    log_adapter_manifest_blocked,
-    log_adapter_sandbox_run_prepared,
-    log_adapter_sandbox_run_completed,
-    log_adapter_policy_violation_detected,
-)
+from app.services.operations.adapter_sandbox.sandbox_context import AdapterSandboxContext
+from app.services.operations.adapter_sandbox.simulation_runner import AdapterSandboxSimulationRunner
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

@@ -5,9 +5,8 @@ Revises: 6aa96c5bcb12
 Create Date: 2026-05-14 00:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "20260514_0029"
 down_revision = "6aa96c5bcb12"

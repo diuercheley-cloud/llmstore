@@ -1,26 +1,20 @@
-import os
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
-from sqlalchemy.future import select
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
 from app.core.config import get_settings
-from app.models.agent_workspace import (
-    AgentWorkspace,
-    AgentSharedArtifact,
-    AgentArtifactVersion,
-    AgentArtifactLock,
-    AgentArtifactReview,
-    AgentArtifactComment
-)
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agent_workspace import AgentArtifactVersion
 from app.services.agents.workspace import (
-    SharedArtifactRegistry,
-    ArtifactVersioningManager,
-    ArtifactLockManager,
     ArtifactDiffManager,
-    ArtifactReviewManager
+    ArtifactLockManager,
+    ArtifactReviewManager,
+    ArtifactVersioningManager,
+    SharedArtifactRegistry,
 )
+from sqlalchemy.future import select
+
 
 @pytest.fixture(autouse=True)
 def enable_feature_flags():

@@ -1,11 +1,12 @@
-import logging
 import hashlib
+import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import List
+
 from app.models.commercial_predictive_aiops import CommercialAnomalySignal
 from app.models.commercial_runtime_fabric import CommercialRuntimeFabricEvent
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

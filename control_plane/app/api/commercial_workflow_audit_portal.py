@@ -4,15 +4,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db_session
 from app.models.client import Client
 from app.models.commercial_workflows import (
     CommercialWorkflowExecution,
-    CommercialWorkflowGovernanceEvent,
     CommercialWorkflowPolicySnapshot,
     CommercialWorkflowReceipt,
     CommercialWorkflowReplaySession,
@@ -21,6 +16,9 @@ from app.services.auth import require_client
 from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService
 from app.services.workflows.workflow_provenance import WorkflowProvenanceService
 from app.services.workflows.workflow_receipts import WorkflowReceiptService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/portal/workflows/audit", tags=["portal", "workflows-audit"])
 

@@ -1,7 +1,7 @@
-import yaml
 import os
 import re
-import sys
+
+import yaml
 
 # Platform Consolidation Script
 # Objective: Reduce operational complexity by classifying and cleaning endpoints, flags, and docs.

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+
 
 class BaseInfraAdapter(ABC):
     @abstractmethod

@@ -1,7 +1,7 @@
-import pytest
-import subprocess
 import json
 import os
+import subprocess
+
 
 def test_skip_policy(tmp_path):
     out_dir = tmp_path / "e2e"

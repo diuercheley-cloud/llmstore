@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.operations.environment_preflight import EnvironmentPreflightService
 
 

@@ -2,6 +2,7 @@
 import re
 from typing import List, Tuple
 
+
 class OutputJailbreakDetector:
     """
     Detects if the agent's output contains unsafe instructions or signs of policy bypass.

@@ -1,9 +1,9 @@
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
-from fastapi import HTTPException
-
 from app.api.client import _should_fallback_to_default_model
+from fastapi import HTTPException
+from httpx import AsyncClient
+
 
 @pytest_asyncio.fixture
 async def portal_client_data(admin_client: AsyncClient, admin_token_headers):

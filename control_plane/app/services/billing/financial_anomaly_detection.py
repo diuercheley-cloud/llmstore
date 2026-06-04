@@ -1,20 +1,18 @@
-import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List
 
 import numpy as np
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
-from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.request_financial import RequestFinancial
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.core.time import utc_now
 from app.models.ai_wallet import AiWalletTransaction
 from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.core.time import utc_now
+from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
+from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.request_financial import RequestFinancial
 from app.services.notifications.revenue_escalations import evaluate_escalation_policies
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FinancialAnomalyDetectionService:

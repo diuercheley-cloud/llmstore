@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Any
-from sqlalchemy import Column, String, DateTime, JSON, Boolean, ForeignKey, Integer, Float
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
+
 from ..db.base import Base
+
 
 class CommercialTransparencyGossipPeer(Base):
     __tablename__ = "commercial_transparency_gossip_peers"

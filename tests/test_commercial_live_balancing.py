@@ -1,6 +1,8 @@
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 from app.services.routing.commercial_live_balancer import CommercialLiveBalancer
+
 
 @pytest.fixture
 def balancer():

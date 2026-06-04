@@ -1,9 +1,10 @@
 # Owner: agent-platform
-import uuid
-from typing import Dict, Any, List
+from typing import Any, Dict
+
+from app.models.agent_federated_memory import RemoteMemoryReference
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.agent_federated_memory import RemoteMemoryReference
+
 
 class RemoteMemoryReferenceService:
     def __init__(self, db: AsyncSession):

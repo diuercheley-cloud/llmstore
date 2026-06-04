@@ -1,8 +1,9 @@
 import os
-import pytest
-from fastapi.testclient import TestClient
+
 from app.main import app
 from app.services.platform.surface_audit import SurfaceAuditService
+from fastapi.testclient import TestClient
+
 
 def test_deprecated_endpoint_headers():
     """Test that a deprecated endpoint returns the deprecation and sunset headers."""

@@ -1,5 +1,5 @@
-import pytest
 from app.services.embeddings_mock import get_mock_embedding, process_mock_embeddings
+
 
 def test_mock_embedding_determinism():
     """

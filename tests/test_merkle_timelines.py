@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 
 import pytest
-
 from app.services.inference.merkle_timelines import (
     MerkleError,
     calculate_merkle_root,

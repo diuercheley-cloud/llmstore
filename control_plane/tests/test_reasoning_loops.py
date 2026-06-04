@@ -1,14 +1,14 @@
-import pytest
-import uuid
-import json
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.agents.reasoning.structured_output import StructuredOutputValidator
-from app.services.agents.reasoning.output_repair import OutputRepairService
-from app.services.agents.reasoning.context_compressor import ContextCompressor
-from app.services.agents.reasoning.semantic_model_fallback import SemanticModelFallback
-from app.services.agents.agent_llm_provider import MockAgentLLMProvider
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from app.core.config import get_settings
+from app.services.agents.agent_llm_provider import MockAgentLLMProvider
+from app.services.agents.reasoning.context_compressor import ContextCompressor
+from app.services.agents.reasoning.output_repair import OutputRepairService
+from app.services.agents.reasoning.semantic_model_fallback import SemanticModelFallback
+from app.services.agents.reasoning.structured_output import StructuredOutputValidator
+
 
 def patch_settings(env_dict):
     patcher = patch.dict(os.environ, env_dict)

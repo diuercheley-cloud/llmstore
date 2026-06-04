@@ -3,14 +3,13 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-
 from app.models.commercial_compliance import CommercialOperationalReview
 from app.services.compliance.operational_controls import (
     complete_review,
     create_control,
     detect_overdue_reviews,
 )
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

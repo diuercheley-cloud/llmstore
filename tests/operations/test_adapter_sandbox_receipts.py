@@ -1,5 +1,10 @@
 import uuid
-from app.services.operations.adapter_sandbox.receipts import build_manifest_receipt, build_sandbox_run_receipt
+
+from app.services.operations.adapter_sandbox.receipts import (
+    build_manifest_receipt,
+    build_sandbox_run_receipt,
+)
+
 
 def test_build_manifest_receipt():
     manifest = {

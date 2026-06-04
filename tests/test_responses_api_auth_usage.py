@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_responses_api_auth_required(admin_client: AsyncClient):
     resp = await admin_client.post("/v1/responses", json={

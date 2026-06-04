@@ -1,11 +1,17 @@
-import uuid
 import logging
+import uuid
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from sqlalchemy import select, func, and_, case
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
-from app.models.agents import AgentRun, AgentDefinition, AgentPolicyDecision, AgentTool, AgentToolInvocation
+from app.models.agents import (
+    AgentDefinition,
+    AgentPolicyDecision,
+    AgentRun,
+    AgentTool,
+    AgentToolInvocation,
+)
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("agent_analytics")
 

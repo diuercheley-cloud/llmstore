@@ -1,8 +1,9 @@
 # Owner: agent-platform
-import logging
 import math
 from datetime import datetime, timedelta
+
 from app.core.time import utc_now
+
 
 class EventRetryPolicy:
     """

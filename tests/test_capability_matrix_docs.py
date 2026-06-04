@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+
 
 def test_capability_matrix_exists():
     """

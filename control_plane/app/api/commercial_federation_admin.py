@@ -3,10 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Response, status
-from fastapi.responses import HTMLResponse, JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.services.auth import require_admin
@@ -21,6 +17,9 @@ from app.services.routing.commercial_federation import (
     summarize_federated_overview,
     sync_federation_clusters,
 )
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Response, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/routing/federation", tags=["Commercial Federation"])
 

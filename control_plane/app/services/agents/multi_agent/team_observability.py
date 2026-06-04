@@ -1,11 +1,11 @@
 # Owner: Platform Operations
-import uuid
 import logging
-from typing import List, Dict, Any, Optional
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.models.multi_agent import AgentTeamMessage, AgentTeamTrace
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.multi_agent import AgentTeamRun, AgentTeamTrace, AgentTeamMessage
-from app.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 

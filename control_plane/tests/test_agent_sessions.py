@@ -1,31 +1,28 @@
 # Owner: agent-platform
 import uuid
+from datetime import timedelta
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.time import utc_now
 from app.models.agent_sessions import (
     AgentSession,
-    AgentConversationThread,
-    AgentThreadMessage,
     AgentSessionRun,
     AgentSessionSummary,
+    AgentThreadMessage,
 )
 from app.services.agents.sessions.agent_session_service import (
     AgentSessionService,
-    SessionNotFoundError,
 )
 from app.services.agents.sessions.conversation_thread_service import (
     ConversationThreadService,
 )
 from app.services.agents.sessions.session_context_builder import SessionContextBuilder
 from app.services.agents.sessions.session_history_policy import (
-    SessionHistoryPolicyService,
     SUMMARY_TRIGGER_MESSAGE_COUNT,
+    SessionHistoryPolicyService,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture
@@ -330,7 +327,6 @@ class TestSessionContextBuilder:
         async def execute_side_effect(*args, **kwargs):
             return mock_msg_result
 
-        from sqlalchemy import desc
 
         async def execute_with_summary(*args, **kwargs):
             query = args[0]

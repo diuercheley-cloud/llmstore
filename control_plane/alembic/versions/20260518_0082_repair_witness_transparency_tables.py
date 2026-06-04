@@ -5,9 +5,8 @@ Revises: phase81_reproducible_builds
 Create Date: 2026-05-18 00:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "20260518_0082"
 down_revision = "phase81_reproducible_builds"

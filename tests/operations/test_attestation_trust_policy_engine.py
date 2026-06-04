@@ -1,8 +1,12 @@
 import uuid
 
 from app.models.operations.attestation_framework import AttestationTrustPolicy
-from app.services.operations.attestation_framework.attestation_service import SovereignExecutionAttestationService
-from app.services.operations.attestation_framework.trust_policy_engine import AttestationTrustPolicyEngine
+from app.services.operations.attestation_framework.attestation_service import (
+    SovereignExecutionAttestationService,
+)
+from app.services.operations.attestation_framework.trust_policy_engine import (
+    AttestationTrustPolicyEngine,
+)
 from app.utils.crypto_signer import sign_payload
 
 

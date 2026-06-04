@@ -2,16 +2,16 @@
 import hashlib
 import uuid
 from datetime import datetime
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_secret
 from app.core.time import utc_now
 from app.models.agent_mcp_oauth import (
-    AgentMCPOAuthClient,
     AgentMCPDelegatedGrant,
+    AgentMCPOAuthClient,
     AgentMCPScopePolicy,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class MCPOAuthAuditLog:

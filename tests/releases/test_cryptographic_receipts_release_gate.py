@@ -1,17 +1,18 @@
-import pytest
 import os
 import sys
 from unittest.mock import patch
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
 from app.services.inference.cryptographic_receipts import (
+    _make_timestamp_token,
+    get_signing_key,
     sign_payload,
     verify_payload_signature,
-    get_signing_key,
-    _make_detached_signature,
-    _make_timestamp_token
 )
+
 
 def test_sign_and_verify_receipt():
     # Key default path setup for tests

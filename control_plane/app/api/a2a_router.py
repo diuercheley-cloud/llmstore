@@ -4,14 +4,12 @@ Implements both client and server sides of the Google A2A spec.
 """
 
 import logging
-from typing import Any, Dict, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
 from app.api import deps
 from app.core.config import get_settings
 from app.services.agents.a2a.a2a_protocol import A2AClient, A2AServer
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +86,13 @@ async def a2a_send_task(
         raise HTTPException(status_code=400, detail="target_url is required")
 
     client = A2AClient()
-    from app.services.agents.a2a.a2a_protocol import A2ATask, A2ATaskState, A2AMessage, A2AMessageRole, A2APart
+    from app.services.agents.a2a.a2a_protocol import (
+        A2AMessage,
+        A2AMessageRole,
+        A2APart,
+        A2ATask,
+        A2ATaskState,
+    )
 
     task = A2ATask(
         id=task_data.get("id", ""),

@@ -1,18 +1,18 @@
+import html
+import json
 import logging
 import re
-import html
 import smtplib
-import urllib.request
 import urllib.error
-import json
-from email.mime.text import MIMEText
+import urllib.request
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Any, Dict, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.agent_notifications import NotificationPreference
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("email_provider")
 

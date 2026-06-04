@@ -1,9 +1,9 @@
 import os
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
-from unittest.mock import AsyncMock
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../control_plane"))
 

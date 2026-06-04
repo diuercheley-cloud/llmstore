@@ -1,11 +1,11 @@
 # Owner: agent-platform
-import uuid
 import logging
-from typing import Optional, List
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+from typing import List, Optional
+
 from app.models.agents import AgentMemoryPolicy
-from app.core.time import utc_now
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 

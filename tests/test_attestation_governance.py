@@ -1,12 +1,15 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.security.runtime_attestation import create_runtime_attestation, verify_runtime_attestation, compute_trust_score
+from app.services.security.runtime_attestation import (
+    compute_trust_score,
+    create_runtime_attestation,
+    verify_runtime_attestation,
+)
 from app.services.security.runtime_integrity import (
     block_untrusted_runtimes,
     require_attestation_for_sensitive_tenants,
     require_attestation_for_sovereign,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -122,8 +125,9 @@ async def test_evidence_replay_protection(session: AsyncSession):
     assert challenge.status == "pending"
     assert challenge.response_received is False
 
-    from app.core.time import utc_now
     from datetime import timedelta
+
+    from app.core.time import utc_now
     challenge.expires_at = utc_now() - timedelta(seconds=1)
     await session.flush()
     with pytest.raises(ValueError, match="Challenge has expired"):

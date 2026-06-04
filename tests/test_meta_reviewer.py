@@ -1,9 +1,10 @@
-import pytest
 import uuid
-from app.services.agents.meta_reviewer.meta_reviewer import MetaReviewerService
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.agent_meta_reviewer import AgentMetaReview, AgentMetaReviewFinding
+
+import pytest
 from app.core.config import get_settings
+from app.models.agents import AgentDefinition
+from app.services.agents.meta_reviewer.meta_reviewer import MetaReviewerService
+
 
 @pytest.fixture
 def agent_id():
@@ -75,8 +76,8 @@ async def test_blocking_mode_behavior(session, setup_agent, agent_id, run_id):
     
     assert decision == "block"
     # Even though decision is 'block', check the review record
-    from sqlalchemy.future import select
     from app.models.agent_meta_reviewer import AgentMetaReviewDecision
+    from sqlalchemy.future import select
     stmt = select(AgentMetaReviewDecision).order_by(AgentMetaReviewDecision.created_at.desc())
     res = await session.execute(stmt)
     last_decision = res.scalars().first()

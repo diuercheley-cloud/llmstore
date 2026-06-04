@@ -1,8 +1,5 @@
 import os
 import subprocess
-import tempfile
-import time
-
 
 SCRIPT_PATH = "scripts/prepare-demo-screenshots-local.sh"
 ARTIFACTS_DIR = "artifacts/demo-screenshots"

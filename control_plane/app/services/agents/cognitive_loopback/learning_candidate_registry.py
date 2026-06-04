@@ -1,14 +1,16 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional, List, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from typing import List
+
 from app.models.agent_cognitive_loopback import (
-    AgentLearningCandidate, 
-    AgentSuccessPattern, 
-    AgentFeedbackEvent
+    AgentFeedbackEvent,
+    AgentLearningCandidate,
+    AgentSuccessPattern,
 )
 from app.models.agents import AgentRun
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 
 class LearningCandidateRegistry:
     def __init__(self, db: AsyncSession):

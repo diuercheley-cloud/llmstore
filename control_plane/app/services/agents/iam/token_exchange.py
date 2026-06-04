@@ -1,13 +1,14 @@
 import logging
 import uuid
 from typing import List, Optional, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agent_iam import AgentTokenGrant, AgentDelegatedToken
+
+from app.core.config import get_settings
 from app.core.time import utc_now
+from app.models.agent_iam import AgentDelegatedToken, AgentTokenGrant
 from app.services.agents.iam.delegated_tokens import DelegatedTokenService
 from app.services.agents.iam.iam_audit import IAMAuditService
-from app.core.config import get_settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

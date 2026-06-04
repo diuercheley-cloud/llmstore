@@ -1,11 +1,14 @@
-import logging
 import hashlib
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.models.commercial_predictive_aiops import CommercialFailurePrediction, CommercialNodeHealthForecast
+import logging
+from datetime import datetime
+from typing import Any, List, Optional
+
+from app.models.commercial_predictive_aiops import (
+    CommercialFailurePrediction,
+)
 from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
