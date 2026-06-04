@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from scripts.llm_harness.completions import CompletionSuggestion
 from scripts.llm_harness.agent_client import AgentClient
 from scripts.llm_harness.cli import _resolve_code_agent, main
 from scripts.llm_harness.cli_commands import _validate_provider_settings
@@ -127,6 +128,50 @@ def test_cli_security_check_only(capsys):
     captured = capsys.readouterr()
     assert "Security Audit:" in captured.out
     assert "sanitizer_redacts_secrets: OK" in captured.out
+
+
+def test_cli_complete_command_prints_suggestion(tmp_path, capsys):
+    test_file = tmp_path / "sample.py"
+    test_file.write_text("def answer():\n    return \n")
+
+    with patch(
+        "sys.argv",
+        [
+            "cli.py",
+            "complete",
+            str(test_file),
+            "--line",
+            "2",
+            "--column",
+            "11",
+            "--workspace",
+            str(tmp_path),
+            "--provider",
+            "local-openai-compatible",
+            "--base-url",
+            "http://127.0.0.1:1234/v1",
+            "--model",
+            "test-model",
+        ],
+        ):
+            with patch(
+                "scripts.llm_harness.completions.get_completion_suggestions",
+                AsyncMock(
+                    return_value=[
+                        CompletionSuggestion(
+                            text="42",
+                            confidence=0.9,
+                            explanation="Insert a literal return value.",
+                        )
+                    ]
+                ),
+            ):
+                main()
+
+    captured = capsys.readouterr()
+    assert "Completion Suggestions:" in captured.out
+    assert "Code:       42" in captured.out
+    assert "Confidence: 0.90" in captured.out
 
 
 class FakeArgs:

@@ -1365,6 +1365,124 @@ async def test_provider_local_openai_reasoning_content_fallback(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_provider_local_plain_chat_uses_reasoning_content_as_content(monkeypatch):
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "plain_chat": True,
+        },
+    )
+
+    mock_models_response = MagicMock()
+    mock_models_response.status_code = 200
+    mock_models_response.json.return_value = {"data": [{"id": "model-1"}]}
+
+    mock_chat_response = MagicMock()
+    mock_chat_response.status_code = 200
+    mock_chat_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "final answer from reasoning",
+                }
+            }
+        ],
+        "usage": {"total_tokens": 12},
+    }
+
+    async def fake_request(method, url, **kwargs):
+        if method == "GET":
+            return mock_models_response
+        return mock_chat_response
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        result = await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+    assert result["choices"][0]["message"]["content"] == "final answer from reasoning"
+    assert result["_provider_meta"]["fallback_reason"] == "plain_chat_reasoning_content"
+
+
+@pytest.mark.asyncio
+async def test_provider_local_plain_chat_retries_truncated_empty_content(monkeypatch):
+    agent = create_code_agent(
+        "local-openai-compatible",
+        {
+            "agent_id": "test",
+            "base_url": "http://fake/v1",
+            "model": "model-1",
+            "plain_chat": True,
+            "max_tokens": 256,
+        },
+    )
+
+    mock_models_response = MagicMock()
+    mock_models_response.status_code = 200
+    mock_models_response.json.return_value = {"data": [{"id": "model-1"}]}
+
+    first_chat_response = MagicMock()
+    first_chat_response.status_code = 200
+    first_chat_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "reasoning_content": "thinking...",
+                },
+                "finish_reason": "length",
+            }
+        ],
+        "usage": {"total_tokens": 256},
+    }
+
+    second_chat_response = MagicMock()
+    second_chat_response.status_code = 200
+    second_chat_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "final plain answer",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"total_tokens": 300},
+    }
+
+    post_payloads = []
+    responses = [first_chat_response, second_chat_response]
+
+    async def fake_request(method, url, **kwargs):
+        if method == "GET":
+            return mock_models_response
+        post_payloads.append(kwargs.get("json", {}))
+        return responses.pop(0)
+
+    with patch("scripts.llm_harness.providers.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.request = fake_request
+        mock_client_cls.return_value.__aenter__.return_value = mock_client
+
+        result = await agent.chat_completion([{"role": "user", "content": "hi"}])
+
+    assert result["choices"][0]["message"]["content"] == "final plain answer"
+    assert len(post_payloads) == 2
+    assert post_payloads[0]["max_tokens"] == 256
+    assert post_payloads[1]["max_tokens"] == 1024
+    assert result["_provider_meta"]["fallback_strategy"] == "plain_chat_higher_max_tokens"
+
+
+@pytest.mark.asyncio
 async def test_provider_openai_max_tokens_in_payload(monkeypatch):
     """OpenAI-compatible provider must include max_tokens in payload when configured."""
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")

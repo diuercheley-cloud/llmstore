@@ -30,6 +30,93 @@ class CompletionRequest(BaseModel):
     context_refs: Optional[List[str]] = Field(default_factory=list)
 
 
+def _build_completion_prompt(
+    request: CompletionRequest,
+    *,
+    profile: Any,
+    retrieved_context: str,
+    compact: bool = False,
+) -> str:
+    pref_lines = (request.prefix or "").splitlines()
+    suff_lines = (request.suffix or "").splitlines()
+    prefix_window = 40 if compact else 100
+    suffix_window = 40 if compact else 100
+    local_prefix = "\n".join(pref_lines[-prefix_window:])
+    local_suffix = "\n".join(suff_lines[:suffix_window])
+
+    if compact:
+        prompt = (
+            "Return exactly one JSON object for a code completion.\n"
+            'Schema: {"text":"...", "confidence":0.9, "range":{"start_line":1,"start_column":1}, "explanation":"..."}\n'
+            "No markdown, no prose, no code fences.\n"
+        )
+    else:
+        prompt = (
+            "You are a code completion engine (FIM - Fill-in-the-Middle style).\n"
+            "Given the PREFIX and SUFFIX of a file, generate the code that "
+            "should be inserted at the cursor position.\n"
+            "Respond ONLY with the code to insert, wrapped in a JSON object "
+            "with this schema:\n"
+            '{"text": "code to insert", "confidence": 0.9, '
+            '"range": {"start_line": 20, "start_column": 5}, '
+            '"explanation": "short optional explanation"}\n\n'
+            "Return EXACTLY one JSON object, no other text or explanation.\n\n"
+        )
+
+    if retrieved_context and not compact:
+        prompt += f"## Retrieved Context:\n{retrieved_context}\n\n"
+
+    prompt += f"## File Path: {request.file_path}\n"
+    prompt += f"## Language: {request.language or 'unknown'}\n"
+    if profile:
+        prompt += f"## Comment Style: {profile.comment_style}\n"
+    prompt += (
+        f"## Cursor Position: Line {request.cursor_line}, "
+        f"Column {request.cursor_column}\n\n"
+    )
+    prompt += f"## PREFIX:\n{local_prefix}\n\n"
+    prompt += f"## SUFFIX:\n{local_suffix}\n\n"
+    return prompt
+
+
+def _parse_completion_response(
+    response: dict[str, Any],
+    request: CompletionRequest,
+) -> tuple[CompletionSuggestion, bool]:
+    content = ""
+    finish_reason = ""
+
+    if response and "choices" in response and response["choices"]:
+        choice = response["choices"][0]
+        msg = choice.get("message", {})
+        content = msg.get("content", "").strip()
+        finish_reason = str(choice.get("finish_reason") or "")
+
+    if content:
+        try:
+            json_match = re.search(r"\{.*\}", content, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group(0))
+                suggestion = CompletionSuggestion(
+                    text=data.get("text", ""),
+                    confidence=data.get("confidence"),
+                    range=data.get("range"),
+                    explanation=data.get("explanation"),
+                )
+                needs_retry = not suggestion.text.strip() or finish_reason == "length"
+                return suggestion, needs_retry
+        except Exception:
+            pass
+
+    suggestion = CompletionSuggestion(
+        text=content,
+        confidence=0.5,
+        range={"start_line": request.cursor_line, "start_column": request.cursor_column},
+    )
+    needs_retry = not suggestion.text.strip() or finish_reason == "length"
+    return suggestion, needs_retry
+
+
 def split_file_at_cursor(
     file_content: str, cursor_line: int, cursor_column: int
 ) -> Tuple[str, str]:
@@ -128,68 +215,35 @@ async def get_completion_suggestions(
         pass
 
     # 4. Formulate Prompt
-    pref_lines = (request.prefix or "").splitlines()
-    suff_lines = (request.suffix or "").splitlines()
-    local_prefix = "\n".join(pref_lines[-100:])
-    local_suffix = "\n".join(suff_lines[:100])
-
-    prompt = (
-        "You are a code completion engine (FIM - Fill-in-the-Middle style).\n"
-        "Given the PREFIX and SUFFIX of a file, generate the code that "
-        "should be inserted at the cursor position.\n"
-        "Respond ONLY with the code to insert, wrapped in a JSON object "
-        "with this schema:\n"
-        '{"text": "code to insert", "confidence": 0.9, '
-        '"range": {"start_line": 20, "start_column": 5}, '
-        '"explanation": "short optional explanation"}\n\n'
-        "Return EXACTLY one JSON object, no other text or explanation.\n\n"
-    )
-    if retrieved_context:
-        prompt += f"## Retrieved Context:\n{retrieved_context}\n\n"
-        
-    prompt += f"## File Path: {request.file_path}\n"
-    prompt += f"## Language: {request.language or 'unknown'}\n"
-    if profile:
-        prompt += f"## Comment Style: {profile.comment_style}\n"
-    prompt += (
-        f"## Cursor Position: Line {request.cursor_line}, "
-        f"Column {request.cursor_column}\n\n"
-    )
-    prompt += f"## PREFIX:\n{local_prefix}\n\n"
-    prompt += f"## SUFFIX:\n{local_suffix}\n\n"
-
-    # Limit LLM output tokens to 512
     cfg_dict = config_overrides or {}
-    cfg_dict["max_tokens"] = 512
+    cfg_dict["max_tokens"] = max(int(cfg_dict.get("max_tokens") or 0), 512)
 
     # Instantiate Agent and get completion
     agent = create_code_agent(provider_name, cfg_dict)
+    prompt = _build_completion_prompt(
+        request,
+        profile=profile,
+        retrieved_context=retrieved_context,
+        compact=False,
+    )
     response = await agent.chat_completion([{"role": "user", "content": prompt}])
+    suggestion, needs_retry = _parse_completion_response(response, request)
+    if suggestion.text.strip() and not needs_retry:
+        return [suggestion]
 
-    content = ""
-    if response and "choices" in response and response["choices"]:
-        msg = response["choices"][0].get("message", {})
-        content = msg.get("content", "").strip()
-
-    try:
-        json_match = re.search(r"\{.*\}", content, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            return [
-                CompletionSuggestion(
-                    text=data.get("text", ""),
-                    confidence=data.get("confidence"),
-                    range=data.get("range"),
-                    explanation=data.get("explanation")
-                )
-            ]
-    except Exception:
-        pass
-
-    return [
-        CompletionSuggestion(
-            text=content,
-            confidence=0.5,
-            range={"start_line": request.cursor_line, "start_column": request.cursor_column}
-        )
-    ]
+    retry_cfg = dict(cfg_dict)
+    retry_cfg["max_tokens"] = max(int(retry_cfg.get("max_tokens") or 0), 1024)
+    retry_agent = create_code_agent(provider_name, retry_cfg)
+    retry_prompt = _build_completion_prompt(
+        request,
+        profile=profile,
+        retrieved_context="",
+        compact=True,
+    )
+    retry_response = await retry_agent.chat_completion(
+        [{"role": "user", "content": retry_prompt}]
+    )
+    retry_suggestion, _ = _parse_completion_response(retry_response, request)
+    if retry_suggestion.text.strip():
+        return [retry_suggestion]
+    return [suggestion]

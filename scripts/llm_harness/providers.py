@@ -269,6 +269,22 @@ class CodeAgentProvider(abc.ABC):
         normalized.update(payload)
         return normalized
 
+    def _extract_plain_chat_response_state(self, data: dict[str, Any]) -> dict[str, str]:
+        content = ""
+        reasoning_content = ""
+        finish_reason = ""
+        if isinstance(data.get("choices"), list) and data["choices"]:
+            choice = data["choices"][0]
+            msg = choice.get("message", {})
+            content = str(msg.get("content") or "")
+            reasoning_content = str(msg.get("reasoning_content") or "")
+            finish_reason = str(choice.get("finish_reason") or "")
+        return {
+            "content": content,
+            "reasoning_content": reasoning_content,
+            "finish_reason": finish_reason,
+        }
+
     def _iter_json_candidates(self, content: str) -> list[str]:
         cleaned = content.strip()
         candidates: list[str] = []
@@ -570,6 +586,40 @@ class CodeAgentProvider(abc.ABC):
             },
         )
         return retry_payload
+
+    def _build_local_plain_chat_retry_payload(
+        self,
+        payload: dict[str, Any],
+        *,
+        fallback_reason: str,
+    ) -> dict[str, Any]:
+        retry_payload = dict(payload)
+        current_max_tokens = retry_payload.get("max_tokens")
+        retry_payload["max_tokens"] = max(
+            1024,
+            int(current_max_tokens) * 2 if current_max_tokens is not None else 1024,
+        )
+        retry_payload["stream"] = False
+        self._emit_provider_event(
+            "llm.local_plain_chat_retry",
+            message="Retrying local plain-chat request with higher max_tokens",
+            status="retrying",
+            metadata={
+                "fallback_reason": fallback_reason,
+                "fallback_strategy": "plain_chat_higher_max_tokens",
+                "max_tokens": retry_payload["max_tokens"],
+            },
+        )
+        return retry_payload
+
+    def _should_retry_local_plain_chat_response(self, data: dict[str, Any]) -> bool:
+        if not (self._is_local_provider() and self._is_plain_chat_mode() and not self.stream):
+            return False
+        state = self._extract_plain_chat_response_state(data)
+        return (
+            not state["content"].strip()
+            and state["finish_reason"] == "length"
+        )
 
     async def _retry_local_compat_mode(
         self,
@@ -1058,6 +1108,7 @@ class OpenAICompatibleProvider(CodeAgentProvider):
         last_error: Exception | None = None
         local_compat_retry_used = False
         local_semantic_retry_used = False
+        local_plain_chat_retry_used = False
         
         resolved_tool_mode = await self.resolve_tool_calling_mode()
         
@@ -1093,6 +1144,19 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                     "POST", url, json=payload, headers=self._build_headers()
                 )
                 data = response.json()
+                if (
+                    self._should_retry_local_plain_chat_response(data)
+                    and not local_plain_chat_retry_used
+                ):
+                    local_plain_chat_retry_used = True
+                    retry_payload = self._build_local_plain_chat_retry_payload(
+                        payload,
+                        fallback_reason="plain_chat_truncated_empty_content",
+                    )
+                    response = await self._request_with_retry(
+                        "POST", url, json=retry_payload, headers=self._build_headers()
+                    )
+                    data = response.json()
                 return self._process_chat_response(data, tool_mode)
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 404:
@@ -1312,6 +1376,12 @@ class OpenAICompatibleProvider(CodeAgentProvider):
 
         tool_calls = msg.get("tool_calls") or []
         if self._is_plain_chat_mode():
+            state = self._extract_plain_chat_response_state(data)
+            if not state["content"].strip() and state["reasoning_content"].strip():
+                msg["content"] = state["reasoning_content"]
+                data["choices"][0]["message"]["content"] = state["reasoning_content"]
+                data["_provider_meta"]["fallback_reason"] = "plain_chat_reasoning_content"
+                data["_provider_meta"]["fallback_strategy"] = "reasoning_as_content"
             usage = data.get("usage", {})
             if not usage:
                 data["usage"] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
