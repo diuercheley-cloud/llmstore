@@ -80,6 +80,8 @@ PLUGIN_FEDERATION_STATUSES = (
     "blocked",
 )
 
+signature_placeholder = "conceptual_only_no_real_crypto"
+
 
 class PluginABIContract(Base):
     __tablename__ = "plugin_abi_contracts"

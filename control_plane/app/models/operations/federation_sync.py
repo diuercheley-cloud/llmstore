@@ -80,6 +80,8 @@ RESOLUTION_STATUSES = (
     "blocked",
 )
 
+signature_placeholder = "conceptual_only_no_real_crypto"
+
 
 class SovereignFederationEnvironment(Base):
     __tablename__ = "sovereign_federation_environments"

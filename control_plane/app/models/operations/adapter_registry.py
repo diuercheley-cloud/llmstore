@@ -8,6 +8,8 @@ from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+signature_placeholder = "conceptual_only_no_real_crypto"
+
 
 class SignedAdapterRegistryEntry(Base):
     __tablename__ = "signed_adapter_registry_entries"

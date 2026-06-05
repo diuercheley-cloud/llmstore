@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
@@ -24,7 +24,7 @@ class ChaosExperiment(Base):
     safety_limits = Column(JSON, default={})
     tags = Column(JSON, default=[])
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     runs = relationship("ChaosRun", back_populates="experiment")
 
 class ChaosRun(Base):
@@ -55,7 +55,7 @@ class ChaosInjection(Base):
     target = Column(String)
     parameters = Column(JSON)
     
-    injected_at = Column(DateTime, default=datetime.utcnow)
+    injected_at = Column(DateTime, default=lambda: datetime.now(UTC))
     rolled_back_at = Column(DateTime, nullable=True)
     
     run = relationship("ChaosRun", back_populates="injections")
@@ -76,7 +76,7 @@ class ChaosReport(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     run_id = Column(String, ForeignKey("chaos_runs.id"))
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.now(UTC))
     
     summary = Column(Text)
     resilience_score = Column(Float) # 0.0 to 1.0

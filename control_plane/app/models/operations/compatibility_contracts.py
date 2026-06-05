@@ -65,6 +65,8 @@ VERIFICATION_STATUSES = (
     "warning",
 )
 
+signature_placeholder = "conceptual_only_no_real_crypto"
+
 
 class CompatibilityContract(Base):
     __tablename__ = "compatibility_contracts"

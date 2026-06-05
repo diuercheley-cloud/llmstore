@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
@@ -28,14 +28,14 @@ class ClusterMembership(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     cluster_id = Column(String, ForeignKey("clusters.id"))
     node_id = Column(String) # RuntimeNode ID
-    joined_at = Column(DateTime, default=datetime.utcnow)
+    joined_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class ClusterHealthSnapshot(Base):
     __tablename__ = "cluster_health_snapshots"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     cluster_id = Column(String, ForeignKey("clusters.id"))
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC))
     health_score = Column(Float)
     metrics_json = Column(JSON) # CPU, Memory, GPU, Error Rate
     
@@ -49,14 +49,14 @@ class ClusterRoutingPolicy(Base):
     policy_type = Column(String) # weight_based, latency_based, location_based
     config = Column(JSON) # weights per cluster, etc.
     is_active = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class ClusterFailoverEvent(Base):
     __tablename__ = "cluster_failover_events"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     cluster_id = Column(String, ForeignKey("clusters.id"))
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC))
     from_status = Column(String)
     to_status = Column(String)
     reason = Column(Text)
@@ -81,7 +81,7 @@ class ClusterSyncEvent(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     source_cluster_id = Column(String, ForeignKey("clusters.id"))
     target_cluster_id = Column(String, ForeignKey("clusters.id"))
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC))
     sync_type = Column(String) # CONFIG, METRICS, HEARBEAT
     status = Column(String) # success, failed
     payload_size_bytes = Column(Integer)

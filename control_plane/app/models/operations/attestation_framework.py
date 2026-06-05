@@ -40,6 +40,8 @@ VERIFICATION_STATUSES = (
     "warning",
 )
 
+signature_placeholder = "conceptual_only_no_real_crypto"
+
 
 class SovereignExecutionAttestation(Base):
     __tablename__ = "sovereign_execution_attestations"

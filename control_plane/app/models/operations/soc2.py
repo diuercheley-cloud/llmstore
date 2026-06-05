@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Column, DateTime, String, Text
@@ -19,7 +19,7 @@ class SOC2ControlReview(Base):
     remediation_actions = Column(Text)
     approval_status = Column(String, default="pending") # pending, approved, rejected
     approved_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class SOC2AccessReview(SOC2ControlReview):
     __tablename__ = "soc2_access_reviews"
@@ -45,4 +45,4 @@ class SOC2ControlException(Base):
     owner = Column(String)
     expiration_date = Column(DateTime)
     status = Column(String, default="active") # active, expired, closed
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

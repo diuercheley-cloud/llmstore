@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
@@ -40,7 +40,7 @@ class ComplianceEvidenceItem(Base):
     description = Column(Text)
     source_type = Column(String) # auto_script, manual_upload, system_log
     content_reference = Column(String) # file path or hash
-    collected_at = Column(DateTime, default=datetime.utcnow)
+    collected_at = Column(DateTime, default=lambda: datetime.now(UTC))
     status = Column(String, default="valid") # valid, expired, rejected
     
     control = relationship("ComplianceControl", back_populates="evidence_items")
