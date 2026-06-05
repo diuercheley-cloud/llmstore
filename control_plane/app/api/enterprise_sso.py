@@ -5,7 +5,7 @@ Extends the existing OAuth2 flow (Google/GitHub) in auth.py.
 
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Any, Dict
 
 import httpx
@@ -159,7 +159,7 @@ class EnterpriseSSOService:
             f'<?xml version="1.0" encoding="UTF-8"?>'
             f'<saml2p:AuthnRequest xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" '
             f'ID="{request_id}" Version="2.0" '
-            f'IssueInstant="{datetime.utcnow().isoformat()}Z" '
+            f'IssueInstant="{datetime.now(UTC).isoformat()}Z" '
             f'Destination="{acs_url}" '
             f'AssertionConsumerServiceURL="{acs_url}">'
             f'<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">{entity_id}</saml2:Issuer>'

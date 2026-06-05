@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class ConnectorAuditLog:
         
         audit_event = {
             "invocation_id": invocation_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "tenant_id": tenant_id,
             "connector": connector_name,
             "action": action,

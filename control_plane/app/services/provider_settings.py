@@ -49,7 +49,7 @@ _MANAGED_KEYS = [
     "LMSTUDIO_ENABLED",
     "LMSTUDIO_BASE_URL",
     "LMSTUDIO_API_KEY",
-    "LMSTUDIO_DEFAULT_MODEL",
+    "LMSTUDIO_CHAT_MODEL",
     "GEMINI_PROVIDER_ENABLED",
     "GEMINI_API_KEY",
     "GEMINI_BASE_URL",
@@ -281,7 +281,7 @@ def build_provider_configuration() -> dict[str, Any]:
     )
     lmstudio_base_url = env_values.get("LMSTUDIO_BASE_URL", settings.lmstudio_base_url)
     lmstudio_api_key = env_values.get("LMSTUDIO_API_KEY", settings.lmstudio_api_key)
-    lmstudio_default_model = env_values.get("LMSTUDIO_DEFAULT_MODEL", settings.lmstudio_default_model)
+    lmstudio_chat_model = env_values.get("LMSTUDIO_CHAT_MODEL", settings.lmstudio_chat_model)
 
     gemini_enabled = _coerce_bool(
         env_values.get("GEMINI_PROVIDER_ENABLED"),
@@ -423,7 +423,7 @@ def build_provider_configuration() -> dict[str, Any]:
                 "configured": lmstudio_configured,
                 "masked_api_key": masked_real_api_key(lmstudio_api_key),
                 "base_url": lmstudio_base_url,
-                "default_model": lmstudio_default_model,
+                "chat_model": lmstudio_chat_model,
             },
             "openai": {
                 "enabled": openai_enabled,
@@ -555,7 +555,7 @@ def env_updates_from_payload(payload: dict[str, Any]) -> dict[str, str]:
         "REAL_PROVIDER_STORE_RESPONSES": _bool_string(bool(global_cfg.get("real_provider_store_responses", False))),
         "LMSTUDIO_ENABLED": _bool_string(bool(providers.get("lmstudio", {}).get("enabled"))),
         "LMSTUDIO_BASE_URL": str(providers.get("lmstudio", {}).get("base_url", "")).strip(),
-        "LMSTUDIO_DEFAULT_MODEL": str(providers.get("lmstudio", {}).get("default_model", "")).strip(),
+        "LMSTUDIO_CHAT_MODEL": str(providers.get("lmstudio", {}).get("chat_model", "")).strip(),
         "OPENAI_PROVIDER_ENABLED": _bool_string(bool(providers.get("openai", {}).get("enabled"))),
         "OPENAI_BASE_URL": str(providers.get("openai", {}).get("base_url", "")).strip(),
         "OPENAI_CHAT_MODEL": str(providers.get("openai", {}).get("chat_model", "")).strip(),

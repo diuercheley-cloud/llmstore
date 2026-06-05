@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -16,7 +16,7 @@ class CommercialTrustGraphNode(Base):
     label = Column(String(255), nullable=False)
     metadata_json = Column(JSON, nullable=True)
     hash = Column(String(128), nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialTrustGraphEdge(Base):
     __tablename__ = "commercial_trust_graph_edges"
@@ -27,4 +27,4 @@ class CommercialTrustGraphEdge(Base):
     edge_type = Column(String(50), nullable=False)  # lineage|dependency|propagation|mapping
     metadata_json = Column(JSON, nullable=True)
     hash = Column(String(128), nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -21,8 +21,8 @@ class CommercialWitness(Base):
     status = Column(String(50), default="active") # active|disabled|offline|untrusted
     trust_level = Column(String(50), default="medium") # low|medium|high
     metadata_json = Column(JSON, default={})
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialWitnessSignature(Base):
     __tablename__ = "commercial_witness_signatures"
@@ -33,7 +33,7 @@ class CommercialWitnessSignature(Base):
     merkle_root = Column(String(255), nullable=False)
     signature = Column(Text, nullable=False)
     signature_algorithm = Column(String(50), nullable=False)
-    signed_at = Column(DateTime, default=datetime.utcnow)
+    signed_at = Column(DateTime, default=lambda: datetime.now(UTC))
     verification_status = Column(String(50), default="pending") # pending|valid|invalid|expired
     metadata_json = Column(JSON, default={})
 
@@ -50,8 +50,8 @@ class CommercialWitnessQuorumPolicy(Base):
     required_signatures = Column(Integer, default=1)
     allowed_witnesses_json = Column(JSON, default=[]) # list of witness IDs or types
     require_external_witness = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialWitnessAuditEvent(Base):
     __tablename__ = "commercial_witness_audit_events"
@@ -62,4 +62,4 @@ class CommercialWitnessAuditEvent(Base):
     timeline_id = Column(UUID(as_uuid=True), nullable=True)
     summary = Column(Text, nullable=False)
     immutable_hash = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

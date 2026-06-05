@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, List, Optional
 
 from app.models.commercial_predictive_aiops import (
@@ -52,7 +52,7 @@ class FailureForecaster:
                 confidence_score=0.85,
                 predicted_failure_window_seconds=1800,
                 details={"cpu": cpu, "mem": mem, "reason": "resource_exhaustion"},
-                deterministic_hash=hashlib.sha256(f"node-{node.node_id}-{datetime.utcnow().isoformat()}".encode()).hexdigest()
+                deterministic_hash=hashlib.sha256(f"node-{node.node_id}-{datetime.now(UTC).isoformat()}".encode()).hexdigest()
             )
         return None
 
@@ -66,6 +66,6 @@ class FailureForecaster:
                 confidence_score=0.92,
                 predicted_failure_window_seconds=900,
                 details={"anomaly_count": len(gpu_anomalies)},
-                deterministic_hash=hashlib.sha256(f"gpu-{client_id}-{datetime.utcnow().isoformat()}".encode()).hexdigest()
+                deterministic_hash=hashlib.sha256(f"gpu-{client_id}-{datetime.now(UTC).isoformat()}".encode()).hexdigest()
             )]
         return []

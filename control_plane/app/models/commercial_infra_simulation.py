@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String
@@ -31,7 +31,7 @@ class CommercialInfrastructureSimulation(Base):
     safety_gate_status = Column(String, index=True, default="allowed")
     
     created_by = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialSafetyPolicy(Base):
     __tablename__ = "commercial_safety_policies"
@@ -56,8 +56,8 @@ class CommercialSafetyPolicy(Base):
     
     metadata_json = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialApprovalRecord(Base):
     __tablename__ = "commercial_approval_records"
@@ -71,7 +71,7 @@ class CommercialApprovalRecord(Base):
     approver = Column(String, nullable=True)
     notes = Column(String, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     decided_at = Column(DateTime, nullable=True)
 
 class CommercialExecutionRecord(Base):
@@ -102,6 +102,6 @@ class CommercialExecutionRecord(Base):
     result_json = Column(JSON, nullable=True)
     error_message = Column(String, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     executed_at = Column(DateTime, nullable=True)
 

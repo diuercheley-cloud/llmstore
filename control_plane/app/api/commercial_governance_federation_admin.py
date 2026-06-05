@@ -4,7 +4,7 @@ import html
 import io
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db_session
@@ -177,7 +177,7 @@ async def export_federation(
     audit_summary = await audit_service.summarize_federated_audit(db, limit=50)
 
     report = {
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "federation": status_data,
         "consistency": consistency,
         "audit": audit_summary,

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.models.commercial_runtime_fabric import (
     CommercialRuntimeFabricEvent,
@@ -29,7 +29,7 @@ class RuntimeFabricService:
 
         health.status = status
         health.metrics = metrics
-        health.last_check = datetime.utcnow()
+        health.last_check = datetime.now(UTC)
         
         # Check for anomalies
         if status != "healthy":
@@ -52,7 +52,7 @@ class RuntimeFabricService:
             source_node_id=source_node_id,
             component=component,
             details=details,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         self.db.add(event)
         return event

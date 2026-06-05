@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -20,8 +20,8 @@ class CommercialApplianceProfile(Base):
     
     last_sync_hash = Column(String(128), nullable=True)
     health_status = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialOfflineSyncManifest(Base):
     __tablename__ = "commercial_offline_sync_manifests"
@@ -36,7 +36,7 @@ class CommercialOfflineSyncManifest(Base):
     media_uuid = Column(String(128), nullable=True) # ID of removable media
     is_verified = Column(Boolean, default=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialOfflineModelBundle(Base):
     __tablename__ = "commercial_offline_model_bundles"
@@ -49,7 +49,7 @@ class CommercialOfflineModelBundle(Base):
     promotion_status = Column(String(32), default="staged") # staged|promoted|rejected
     
     manifest_id = Column(UUID(as_uuid=True), ForeignKey("commercial_offline_sync_manifests.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialOfflineAuditPackage(Base):
     __tablename__ = "commercial_offline_audit_packages"
@@ -64,4 +64,4 @@ class CommercialOfflineAuditPackage(Base):
     export_status = Column(String(32), default="generated") # generated|exported|verified
     
     manifest_id = Column(UUID(as_uuid=True), ForeignKey("commercial_offline_sync_manifests.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

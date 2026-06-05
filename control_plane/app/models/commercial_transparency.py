@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -18,8 +18,8 @@ class CommercialTransparencyGossipPeer(Base):
     status = Column(String(50), default="active")  # active|disabled|offline
     last_seen_at = Column(DateTime, nullable=True)
     metadata_json = Column(JSON, default={})
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialTransparencyGossipRecord(Base):
     __tablename__ = "commercial_transparency_gossip_records"
@@ -32,7 +32,7 @@ class CommercialTransparencyGossipRecord(Base):
     checkpoint_hash = Column(String(255), nullable=True)
     gossip_type = Column(String(50), nullable=False)  # push|pull|manual|offline
     verification_status = Column(String(50), default="unknown")  # valid|invalid|conflict|unknown
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialConsistencyCheckpoint(Base):
     __tablename__ = "commercial_consistency_checkpoints"
@@ -44,7 +44,7 @@ class CommercialConsistencyCheckpoint(Base):
     root_hash = Column(String(255), nullable=False, index=True)
     signed_checkpoint = Column(String(1024), nullable=True)
     witness_summary_json = Column(JSON, default={})
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialTransparencySplitViewAlert(Base):
     __tablename__ = "commercial_transparency_split_view_alerts"
@@ -56,5 +56,5 @@ class CommercialTransparencySplitViewAlert(Base):
     observed_hash = Column(String(255), nullable=True)
     summary = Column(String(1024), nullable=True)
     resolved = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     resolved_at = Column(DateTime, nullable=True)

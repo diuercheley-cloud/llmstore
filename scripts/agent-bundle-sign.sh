@@ -149,7 +149,7 @@ signature_data = {
     'checksum': '$CHECKSUM',
     'signature': '$SIGNATURE',
     'public_key': '$PUBLIC_KEY',
-    'signed_at': datetime.datetime.utcnow().isoformat() + 'Z',
+    'signed_at': datetime.datetime.now(datetime.UTC).isoformat() + 'Z',
     'bundle_dir': '$BUNDLE_DIR'
 }
 

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 import yaml
@@ -20,7 +20,7 @@ class ISMSManagerService:
             "policies_count": len(policies),
             "risks_count": len(risks.get("risks", [])),
             "soa_progress": self._calculate_soa_progress(soa),
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(UTC).isoformat()
         }
 
     def list_policies(self) -> List[Dict[str, Any]]:

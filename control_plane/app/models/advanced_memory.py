@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -50,7 +50,7 @@ class MemoryEvent(Base):
     logical_counter: Mapped[int] = mapped_column(Integer, default=0)
     
     # Metadata
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     # Scoring for Forgetting Curves
     importance_score: Mapped[float] = mapped_column(Float, default=1.0)
@@ -70,4 +70,4 @@ class MemorySnapshot(Base):
     event_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     state: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

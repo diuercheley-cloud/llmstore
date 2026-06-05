@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 from app.models.operations.soc2 import (
@@ -36,7 +36,7 @@ class SOC2ControlOperationsService:
         return result.scalars().all()
 
     async def check_expired_exceptions(self) -> List[SOC2ControlException]:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         result = await self.db.execute(
             select(SOC2ControlException).where(
                 SOC2ControlException.expiration_date < now,

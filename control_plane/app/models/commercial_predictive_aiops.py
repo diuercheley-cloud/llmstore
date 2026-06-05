@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String
@@ -17,7 +17,7 @@ class CommercialFailurePrediction(Base):
     deterministic_hash = Column(String)
     immutable_hash = Column(String)
     sovereign_mode = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialAnomalySignal(Base):
     __tablename__ = "commercial_anomaly_signals"
@@ -32,7 +32,7 @@ class CommercialAnomalySignal(Base):
     immutable_hash = Column(String)
     signed_receipt_id = Column(String, nullable=True)
     sovereign_mode = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialNodeHealthForecast(Base):
     __tablename__ = "commercial_node_health_forecasts"
@@ -44,7 +44,7 @@ class CommercialNodeHealthForecast(Base):
     risk_factors = Column(JSON)
     deterministic_hash = Column(String)
     immutable_hash = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRuntimeRiskTrend(Base):
     __tablename__ = "commercial_runtime_risk_trends"
@@ -56,7 +56,7 @@ class CommercialRuntimeRiskTrend(Base):
     contributing_events = Column(JSON)
     deterministic_hash = Column(String)
     immutable_hash = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialAIOpsRecommendation(Base):
     __tablename__ = "commercial_aiops_recommendations"
@@ -70,4 +70,4 @@ class CommercialAIOpsRecommendation(Base):
     status = Column(String, default="pending")  # pending, applied, dismissed
     deterministic_hash = Column(String)
     immutable_hash = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

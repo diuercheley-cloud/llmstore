@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 from app.contracts.base import BaseContract, ContractCapability
@@ -10,7 +10,7 @@ class PlatformEvent(BaseModel):
     severity: str
     title: str
     details: Dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     client_id: Optional[str] = None
     request_id: Optional[str] = None
 

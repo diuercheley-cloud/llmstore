@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.models.commercial_attestation_runtime import CommercialRuntimeAttestation
@@ -126,7 +126,7 @@ class AutonomousExecutionLimitsService:
     def _within_window(self, policy: CommercialAutonomousExecutionPolicy | None, now: datetime | None = None) -> bool:
         if policy is None or not policy.guarded_window_start or not policy.guarded_window_end:
             return True
-        now = now or datetime.utcnow()
+        now = now or datetime.now(UTC)
         current = now.strftime("%H:%M")
         return policy.guarded_window_start <= current <= policy.guarded_window_end
 

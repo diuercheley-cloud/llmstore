@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,7 +41,7 @@ async def create_offline_sync_manifest(
 ) -> CommercialOfflineSyncManifest:
     profile = await ensure_appliance_profile(db)
     
-    manifest_hash = hashlib.sha256(f"{profile.appliance_id}-{datetime.utcnow().timestamp()}".encode()).hexdigest()
+    manifest_hash = hashlib.sha256(f"{profile.appliance_id}-{datetime.now(UTC).timestamp()}".encode()).hexdigest()
     
     manifest = CommercialOfflineSyncManifest(
         appliance_id=profile.appliance_id,

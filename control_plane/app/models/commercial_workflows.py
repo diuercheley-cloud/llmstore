@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -28,8 +28,8 @@ class CommercialWorkflowDefinition(Base):
     is_deterministic = Column(Boolean, default=True)
     enforce_reproducibility = Column(Boolean, default=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class CommercialWorkflowExecution(Base):
@@ -55,7 +55,7 @@ class CommercialWorkflowExecution(Base):
     determinism_status = Column(String(32), default="unknown")
     drift_detected = Column(Boolean, default=False)
     offline_bundle_hash = Column(String(64), nullable=True)
-    started_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, default=lambda: datetime.now(UTC))
     paused_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     metadata_json = Column(JSON, nullable=True)
@@ -99,7 +99,7 @@ class CommercialWorkflowStage(Base):
     governance_mode = Column(String(32), default="enforce")
     drift_status = Column(String(32), default="unknown")
     executed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class CommercialWorkflowCheckpoint(Base):
@@ -120,7 +120,7 @@ class CommercialWorkflowCheckpoint(Base):
     immutable_hash = Column(String(64), nullable=True)
     merkle_root = Column(String(128), nullable=True)
     replay_nonce = Column(String(64), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class CommercialWorkflowReceipt(Base):
@@ -140,7 +140,7 @@ class CommercialWorkflowReceipt(Base):
     immutable_hash = Column(String(64), nullable=True)
     receipt_json = Column(JSON, nullable=True)
     export_classification = Column(String(32), default="sanitized")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     verified_at = Column(DateTime, nullable=True)
 
 
@@ -153,7 +153,7 @@ class CommercialWorkflowReplay(Base):
     status = Column(String(32), default="pending")
     mismatched_step_index = Column(Integer, nullable=True)
     replay_report = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class CommercialWorkflowDeterminismReport(Base):
@@ -165,7 +165,7 @@ class CommercialWorkflowDeterminismReport(Base):
     drift_detected = Column(Boolean, default=False)
     drift_summary = Column(Text, nullable=True)
     verification_proof_id = Column(UUID(as_uuid=True), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class CommercialWorkflowPolicyBinding(Base):
@@ -184,7 +184,7 @@ class CommercialWorkflowPolicyBinding(Base):
     rollback_from_binding_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_policy_bindings.id"), nullable=True)
     immutable_hash = Column(String(64), nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowPolicySnapshot(Base):
@@ -205,7 +205,7 @@ class CommercialWorkflowPolicySnapshot(Base):
     policy_json = Column(JSON, nullable=False)
     runtime_context_json = Column(JSON, nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowApproval(Base):
@@ -233,7 +233,7 @@ class CommercialWorkflowApproval(Base):
     detached_signature = Column(String(255), nullable=True)
     signature_algorithm = Column(String(64), nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowGovernanceEvent(Base):
@@ -254,7 +254,7 @@ class CommercialWorkflowGovernanceEvent(Base):
     ledger_hash = Column(String(64), nullable=False, index=True)
     detached_signature = Column(String(255), nullable=True)
     signature_algorithm = Column(String(64), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowReplaySession(Base):
@@ -275,5 +275,5 @@ class CommercialWorkflowReplaySession(Base):
     drift_score = Column(Float, nullable=True)
     replay_report_json = Column(JSON, nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     completed_at = Column(DateTime, nullable=True)

@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.schemas.compliance_evidence import ComplianceFramework, EvidenceItem, EvidenceType
@@ -51,7 +51,7 @@ class ComplianceEvidenceService:
         return [
             self._create_evidence(
                 ComplianceFramework.ISO27001, "A.12.3", EvidenceType.BACKUP_VERIFICATION,
-                "Backup Verification Report", {"last_verified": datetime.utcnow().isoformat(), "status": "success"}
+                "Backup Verification Report", {"last_verified": datetime.now(UTC).isoformat(), "status": "success"}
             ),
             self._create_evidence(
                 ComplianceFramework.ISO27001, "A.14.2", EvidenceType.POLICY_DECISION,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.models.commercial_autonomous_guardrails import (
@@ -1034,7 +1034,7 @@ class TrustGraphService:
 
         return {
             "deterministic": True,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "graph_hash": _sha256({"nodes": node_hashes, "edges": edge_hashes}),
             "merkle_root": _merkle_root(node_hashes + edge_hashes),
             "nodes": sorted_nodes,

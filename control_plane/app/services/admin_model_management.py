@@ -148,6 +148,11 @@ def sanitize_model_filename(filename: str, *, provider: str) -> str:
     value = (filename or "").strip()
     if not value:
         raise ValueError("model file is required")
+    
+    # Remote/API-based providers use identifiers that might contain slashes
+    if provider in ["openai_compatible", "ollama", "openai", "anthropic", "deepseek", "vllm"]:
+        return value
+
     path = Path(value)
     if path.is_absolute() or ".." in path.parts:
         raise ValueError("model file must stay inside /models")

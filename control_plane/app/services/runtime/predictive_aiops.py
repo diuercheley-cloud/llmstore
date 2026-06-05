@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, List
 
 from app.models.commercial_predictive_aiops import (
@@ -84,14 +84,14 @@ class PredictiveAIOpsService:
         return mapping.get(forecast.prediction_type, "enable_safe_mode")
 
     def _generate_hash(self, obj):
-        data = f"{obj.client_id}-{obj.action_type}-{obj.target_id}-{datetime.utcnow().isoformat()}"
+        data = f"{obj.client_id}-{obj.action_type}-{obj.target_id}-{datetime.now(UTC).isoformat()}"
         return hashlib.sha256(data.encode()).hexdigest()
 
     async def get_status(self):
         return {
             "status": "active",
             "mode": "sovereign_local",
-            "last_cycle": datetime.utcnow().isoformat(),
+            "last_cycle": datetime.now(UTC).isoformat(),
             "engine": "local_heuristics_v1"
         }
 

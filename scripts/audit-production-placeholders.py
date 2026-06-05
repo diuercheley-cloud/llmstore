@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 KEYWORDS = [
@@ -62,7 +62,7 @@ def audit():
     
     report_content = f"""# Production Placeholders Audit Report
 
-- **Timestamp**: {datetime.utcnow().isoformat()}Z
+- **Timestamp**: {datetime.now(UTC).isoformat()}Z
 - **Total Findings**: {len(findings)}
 - **Production Blockers**: {len(blockers)}
 - **Result**: {"FAIL" if blockers else "PASS"}

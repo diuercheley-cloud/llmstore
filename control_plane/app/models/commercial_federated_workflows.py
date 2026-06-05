@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import (
     JSON,
@@ -55,8 +55,8 @@ class CommercialFederatedWorkflowExecution(Base):
     reconciliation_status = Column(String(32), default="clean", nullable=False, index=True)
     drift_detected = Column(Boolean, default=False, nullable=False)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowExecutionPeer(Base):
@@ -90,8 +90,8 @@ class CommercialWorkflowExecutionPeer(Base):
     trust_status = Column(String(32), default="trusted", nullable=False, index=True)
     last_seen_at = Column(DateTime, nullable=True, index=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowExecutionLease(Base):
@@ -122,7 +122,7 @@ class CommercialWorkflowExecutionLease(Base):
     expires_at = Column(DateTime, nullable=False, index=True)
     renewed_at = Column(DateTime, nullable=True)
     metadata_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowConsensusEvent(Base):
@@ -153,7 +153,7 @@ class CommercialWorkflowConsensusEvent(Base):
     quorum_size = Column(Integer, default=0, nullable=False)
     quorum_threshold = Column(Integer, default=0, nullable=False)
     event_payload_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
 
 class CommercialWorkflowReplayFederationReport(Base):
@@ -185,4 +185,4 @@ class CommercialWorkflowReplayFederationReport(Base):
     replay_report_json = Column(JSON, nullable=True)
     report_signature = Column(Text, nullable=True)
     report_bundle_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)

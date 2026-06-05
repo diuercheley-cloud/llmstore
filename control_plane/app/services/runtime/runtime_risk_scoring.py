@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, List
 
 from app.models.commercial_predictive_aiops import CommercialRuntimeRiskTrend
@@ -26,7 +26,7 @@ class RuntimeRiskScorer:
                 "anomalies": len(anomalies),
                 "forecasts": len(forecasts)
             },
-            deterministic_hash=hashlib.sha256(f"risk-{client_id}-{datetime.utcnow().isoformat()}".encode()).hexdigest()
+            deterministic_hash=hashlib.sha256(f"risk-{client_id}-{datetime.now(UTC).isoformat()}".encode()).hexdigest()
         )
         self.db.add(trend)
         trends.append(trend)

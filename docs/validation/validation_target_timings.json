@@ -1,9 +1,9 @@
 [
   {
     "target": "validate-makefile-governance",
-    "status": "FAIL",
-    "exit_code": 2,
-    "elapsed_seconds": 0.04,
-    "output_summary": "python3 ./scripts/validate_makefile_governance.py\nMakefile governance validation failed:\n- Makefile: duplicate target definition for agent-worker-status at lines 238, 251"
+    "status": "PASS",
+    "exit_code": 0,
+    "elapsed_seconds": 1.16,
+    "output_summary": "ce validation passed.\n.venv/bin/python -m pytest tests/build/test_makefile_governance.py -q --tb=short\n......                                                                   [100%]\n6 passed in 0.26s"
   }
 ]

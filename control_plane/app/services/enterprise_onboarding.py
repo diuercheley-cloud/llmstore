@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
@@ -90,7 +90,7 @@ class EnterpriseOnboardingService:
         if notes:
             task.notes = notes
         if status == "completed":
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(UTC)
             
         await self.db.commit()
         await self.db.refresh(task)
@@ -109,7 +109,7 @@ class EnterpriseOnboardingService:
         report_content = {
             "project_name": project.name,
             "customer_name": "Enterprise Client", # Should come from project.customer
-            "handover_date": datetime.utcnow().isoformat(),
+            "handover_date": datetime.now(UTC).isoformat(),
             "status": project.status,
             "tasks_completed": len([t for t in project.tasks if t.status == "completed"]),
             "total_tasks": len(project.tasks),

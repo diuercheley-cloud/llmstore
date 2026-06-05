@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -211,7 +211,7 @@ async def evaluate_witness_quorum(
             }
             for s in sigs
         ],
-        "verified_at": datetime.utcnow().isoformat()
+        "verified_at": datetime.now(UTC).isoformat()
     }
 
 async def summarize_witness_status(db: AsyncSession) -> dict:
@@ -242,7 +242,7 @@ async def record_witness_audit_event(
     summary: str = ""
 ) -> CommercialWitnessAuditEvent:
     # Use a fixed ISO string for consistent datetime parsing and validation
-    now_str = datetime.utcnow().isoformat()
+    now_str = datetime.now(UTC).isoformat()
     payload = f"{event_type}:{witness_id}:{timeline_id}:{summary}:{now_str}"
     
     is_prod = get_settings().app_env == "production"

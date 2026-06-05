@@ -1,5 +1,5 @@
 # Owner: commercial-ops
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict
 
 from app.api.dependencies import get_current_admin
@@ -11,7 +11,7 @@ commercial_ops_center_admin_router = APIRouter(prefix="/admin/ops", tags=["comme
 async def get_ops_overview(request: Request, admin: Any = Depends(get_current_admin)) -> Dict[str, Any]:
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "active_tenants": 142,
         "active_workflows": 38,
         "governance_status": "enforced",

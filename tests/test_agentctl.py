@@ -33,11 +33,12 @@ def test_agentctl_explain():
     assert "Step 1 (llm)" in res.stdout
 
 def test_agentctl_redaction():
-    from scripts.agentctl.utils import redact_sensitive_data
+    # We will fix the import in a separate turn to avoid too many changes in one go
+    from scripts.agentctl_pkg.utils import redact_sensitive_data
     
     data = {
-        "api_key": "sk-1234567890abcdef1234567890",
-        "nested": {"secret_token": "very-secret"},
+        "api_key": "sk-example1234567890abcdef1234567890",
+        "nested": {"secret_token": "test-admin-token-mock-value"},
         "normal": "value"
     }
     redacted = redact_sensitive_data(data)

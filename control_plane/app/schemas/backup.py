@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 import uuid
@@ -11,7 +11,7 @@ class BackupComponent(BaseModel):
 
 class BackupManifest(BaseModel):
     backup_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     schema_version: str = "1.0.0"
     components: List[BackupComponent] = Field(default_factory=list)
     encryption_status: str = "redacted" # redacted | encrypted | clear (not allowed)

@@ -1,7 +1,7 @@
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.models.federation_mesh import ClusterNode, ConflictRecord, FederationPeer, MeshMergePolicy, SyncCommit
@@ -50,7 +50,7 @@ class MeshSyncService:
         return {
             "schema_version": "1.0.0",
             "source_node": self.node_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "commits": [
                 {
                     "hash": c.hash,

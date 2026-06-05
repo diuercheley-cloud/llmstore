@@ -7,7 +7,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -61,7 +61,7 @@ class Submission:
         if not self.id:
             self.id = str(uuid.uuid4())
         if not self.created_at:
-            self.created_at = datetime.utcnow().isoformat()
+            self.created_at = datetime.now(UTC).isoformat()
         if not self.updated_at:
             self.updated_at = self.created_at
 
@@ -85,7 +85,7 @@ class MarketplaceGovernanceService:
     async def submit_for_review(self, submission_id: str) -> Submission:
         sub = self._get_submission(submission_id)
         sub.status = SubmissionStatus.PENDING_REVIEW
-        sub.updated_at = datetime.utcnow().isoformat()
+        sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Submission %s submitted for review", submission_id)
         return sub
 
@@ -108,7 +108,7 @@ class MarketplaceGovernanceService:
             sub.status = SubmissionStatus.APPROVED
             sub.reviewer_notes = f"Security scan passed: {len(findings)} low/info findings"
 
-        sub.updated_at = datetime.utcnow().isoformat()
+        sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Security scan for %s: status=%s, findings=%d", submission_id, sub.status, len(findings))
         return sub
 
@@ -118,7 +118,7 @@ class MarketplaceGovernanceService:
         sub.reviewed_by = reviewer
         if notes:
             sub.reviewer_notes = notes
-        sub.updated_at = datetime.utcnow().isoformat()
+        sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Submission %s approved by %s", submission_id, reviewer)
         return sub
 
@@ -127,7 +127,7 @@ class MarketplaceGovernanceService:
         sub.status = SubmissionStatus.REJECTED
         sub.reviewed_by = reviewer
         sub.reviewer_notes = reason
-        sub.updated_at = datetime.utcnow().isoformat()
+        sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Submission %s rejected by %s: %s", submission_id, reviewer, reason)
         return sub
 
@@ -136,7 +136,7 @@ class MarketplaceGovernanceService:
         if sub.status != SubmissionStatus.APPROVED:
             raise ValueError(f"Cannot publish submission in status '{sub.status}'. Must be 'approved'.")
         sub.status = SubmissionStatus.PUBLISHED
-        sub.updated_at = datetime.utcnow().isoformat()
+        sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Submission %s published to marketplace", submission_id)
         return sub
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.models.commercial_operations_center import (
@@ -102,7 +102,7 @@ class TrustSnapshottingService:
             "nodes": graph["nodes"],
             "edges": graph["edges"],
             "snapshot": {
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
                 "graph_hash": graph["graph_hash"],
                 "merkle_root": graph["merkle_root"],
                 "node_count": graph["summary"]["node_count"],
@@ -133,7 +133,7 @@ class TrustSnapshottingService:
         except SQLAlchemyError:
             await db.rollback()
             snapshot.id = snapshot.id or uuid.uuid4()
-            snapshot.created_at = snapshot.created_at or datetime.utcnow()
+            snapshot.created_at = snapshot.created_at or datetime.now(UTC)
         return snapshot
 
     def verify_snapshot(
@@ -159,7 +159,7 @@ class TrustSnapshottingService:
         payload = sanitize_report_payload(snapshot.snapshot_data)
         manifest = {
             "air_gap_ready": True,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "format": format,
             "immutable_hash": snapshot.immutable_hash,
             "offline_capable": True,

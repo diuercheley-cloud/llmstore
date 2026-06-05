@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
@@ -14,7 +14,7 @@ class CommercialRuntimeFabricEvent(Base):
     component = Column(String) # workflow, mesh, governance, runtime
     details = Column(JSON)
     signature = Column(String) # for auditability
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRuntimeRecoveryPlan(Base):
     __tablename__ = "commercial_runtime_recovery_plans"
@@ -25,8 +25,8 @@ class CommercialRuntimeRecoveryPlan(Base):
     steps = Column(JSON) # ordered list of healing actions
     approved_by = Column(String, nullable=True) # governance supervisor ID or admin
     execution_log = Column(JSON, default=[])
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialRuntimeHealingAction(Base):
     __tablename__ = "commercial_runtime_healing_actions"
@@ -47,7 +47,7 @@ class CommercialRuntimeFabricHealth(Base):
     node_id = Column(String, index=True)
     status = Column(String) # healthy, degraded, critical, isolated
     metrics = Column(JSON) # cpu, mem, latency, drift_factor
-    last_check = Column(DateTime, default=datetime.utcnow)
+    last_check = Column(DateTime, default=lambda: datetime.now(UTC))
     quarum_status = Column(Boolean, default=True)
     degraded_mode_active = Column(Boolean, default=False)
 
@@ -59,6 +59,6 @@ class CommercialRuntimeDeterminismDrift(Base):
     expected_hash = Column(String)
     actual_hash = Column(String)
     drift_details = Column(JSON)
-    detected_at = Column(DateTime, default=datetime.utcnow)
+    detected_at = Column(DateTime, default=lambda: datetime.now(UTC))
     repaired_at = Column(DateTime, nullable=True)
     repair_plan_id = Column(String, ForeignKey("commercial_runtime_recovery_plans.id"), nullable=True)

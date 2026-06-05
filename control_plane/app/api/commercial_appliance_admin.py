@@ -1,5 +1,5 @@
 # Owner: commercial-ops
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any, List
 
 from fastapi import APIRouter, Depends
@@ -84,7 +84,7 @@ async def list_audit_packages(db: AsyncSession = Depends(get_db), admin: Any = D
 @router.post("/audit-packages")
 async def generate_audit_package(payload: dict, db: AsyncSession = Depends(get_db), admin: Any = Depends(get_admin_user)):
     # Default to last 24 hours
-    end = datetime.utcnow()
+    end = datetime.now(UTC)
     start = end - timedelta(hours=24)
     
     package = await sovereign_appliance.generate_offline_audit_package(

@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.core.time import utc_now
 from app.db.base import Base

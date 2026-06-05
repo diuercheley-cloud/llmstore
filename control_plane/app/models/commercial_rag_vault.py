@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -20,8 +20,8 @@ class CommercialRAGVault(Base):
     retention_policy_days = Column(Integer, default=30)
     strict_policy_enforcement = Column(Boolean, default=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialRAGDocument(Base):
     __tablename__ = "commercial_rag_documents"
@@ -35,7 +35,7 @@ class CommercialRAGDocument(Base):
     classification_level = Column(String(64), default="confidential") # internal|confidential|restricted
     status = Column(String(32), default="active") # active|archived|deleted
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     expires_at = Column(DateTime, nullable=True)
 
 class CommercialRAGChunk(Base):
@@ -49,7 +49,7 @@ class CommercialRAGChunk(Base):
     
     embedding_metadata_encrypted = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRetrievalReceipt(Base):
     __tablename__ = "commercial_retrieval_receipts"
@@ -64,7 +64,7 @@ class CommercialRetrievalReceipt(Base):
     receipt_hash = Column(String(128), nullable=False, index=True)
     signature = Column(String(256), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRetrievalPolicyViolation(Base):
     __tablename__ = "commercial_retrieval_policy_violations"
@@ -78,7 +78,7 @@ class CommercialRetrievalPolicyViolation(Base):
     violation_type = Column(String(64), nullable=False) # cross_tenant|classification_mismatch|expired_document
     action_taken = Column(String(32), default="blocked")
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRAGLegalHold(Base):
     __tablename__ = "commercial_rag_legal_holds"
@@ -90,7 +90,7 @@ class CommercialRAGLegalHold(Base):
     reason = Column(Text, nullable=True)
     status = Column(String(32), default="active") # active|released
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     released_at = Column(DateTime, nullable=True)
 
 class CommercialRAGPoisoningAlert(Base):
@@ -104,7 +104,7 @@ class CommercialRAGPoisoningAlert(Base):
     severity = Column(String(32))
     metadata_json = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRAGRetrievalAudit(Base):
     __tablename__ = "commercial_rag_retrieval_audits"
@@ -115,7 +115,7 @@ class CommercialRAGRetrievalAudit(Base):
     query_hash = Column(String(128))
     results_hashes = Column(JSON)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialRAGAccessPolicy(Base):
     __tablename__ = "commercial_rag_access_policies"
@@ -128,4 +128,4 @@ class CommercialRAGAccessPolicy(Base):
     
     permissions = Column(JSON) # ["read", "write", "admin"]
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

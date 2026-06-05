@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
@@ -25,7 +25,7 @@ class EvidenceItem(BaseModel):
     control_id: str
     evidence_type: EvidenceType
     source: str
-    collected_at: datetime = Field(default_factory=datetime.utcnow)
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: str = "collected"
     content_hash: str
     redaction_status: str = "redacted"

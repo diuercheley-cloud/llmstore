@@ -1,6 +1,6 @@
 # Owner: commercial-ops
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_admin_db, get_super_admin_db
@@ -284,8 +284,8 @@ async def create_approval(
         status=status,
         notes=notes,
         approver=approver,
-        created_at=datetime.utcnow(),
-        decided_at=datetime.utcnow()
+        created_at=datetime.now(UTC),
+        decided_at=datetime.now(UTC)
     )
     db.add(approval)
     

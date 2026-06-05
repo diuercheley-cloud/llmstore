@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.models.commercial_runtime_fabric import (
     CommercialRuntimeDeterminismDrift,
@@ -21,7 +21,7 @@ class DeterminismRepairService:
             expected_hash=expected_hash,
             actual_hash=actual_hash,
             drift_details=drift_details,
-            detected_at=datetime.utcnow()
+            detected_at=datetime.now(UTC)
         )
         self.db.add(drift)
         
@@ -37,7 +37,7 @@ class DeterminismRepairService:
                 "step_index": step_index,
                 "drift_id": drift.id
             },
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         self.db.add(event)
         await self.db.commit()
@@ -50,7 +50,7 @@ class DeterminismRepairService:
         if not drift:
             raise ValueError("Drift record not found")
         
-        drift.repaired_at = datetime.utcnow()
+        drift.repaired_at = datetime.now(UTC)
         drift.repair_plan_id = repair_plan_id
         await self.db.commit()
         return drift

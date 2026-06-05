@@ -5,7 +5,7 @@ import uuid
 import pytest
 from app.services.plugins.dev_kit import PluginHarness
 
-from scripts.agentctl import AgentCTL
+from scripts.agentctl_pkg import AgentCTL
 
 
 @pytest.fixture
@@ -21,8 +21,8 @@ def test_agentctl_init_and_validate(test_dir):
     ctl = AgentCTL()
     
     # 1. Init
-    ctl.init(test_dir, "support-triage")
-    assert os.path.exists(os.path.join(test_dir, "agent.yaml"))
+    ctl.init(test_dir)
+    assert os.path.exists(os.path.join(test_dir, "manifest.json"))
     
     # 2. Validate
     # Should not raise SystemExit
@@ -30,7 +30,7 @@ def test_agentctl_init_and_validate(test_dir):
 
 def test_agentctl_bundle(test_dir):
     ctl = AgentCTL()
-    ctl.init(test_dir, "support-triage")
+    ctl.init(test_dir)
     
     bundle_path = f"{test_dir}.zip"
     ctl.bundle(test_dir, bundle_path)
@@ -48,7 +48,7 @@ def test_plugin_harness_validation():
     assert "Dry-run" in result["data"]
 
 def test_agent_template_content():
-    template_path = "examples/agents/support-triage/agent.yaml"
+    template_path = "examples/agents/support-triage-agent/agent.yaml"
     assert os.path.exists(template_path)
     with open(template_path, "r") as f:
         content = f.read()

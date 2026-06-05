@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -25,8 +25,8 @@ class CommercialConfidentialRuntimeProfile(Base):
     max_retention_seconds = Column(Integer, nullable=True)
     metadata_json = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 class CommercialConfidentialInferenceSession(Base):
     __tablename__ = "commercial_confidential_inference_sessions"
@@ -43,7 +43,7 @@ class CommercialConfidentialInferenceSession(Base):
     model_trust_state = Column(String(64), nullable=True)
     retention_policy_applied = Column(Boolean, default=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
 
 class CommercialConfidentialRuntimeAuditEvent(Base):
@@ -57,4 +57,4 @@ class CommercialConfidentialRuntimeAuditEvent(Base):
     
     summary = Column(Text, nullable=True)
     immutable_hash = Column(String(128), nullable=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

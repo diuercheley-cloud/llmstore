@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
@@ -110,7 +110,7 @@ class ChaosEngineeringService:
             raise ValueError("Run not found")
 
         run.status = "running"
-        run.started_at = datetime.utcnow()
+        run.started_at = datetime.now(UTC)
         await self.db.commit()
 
         # In a real scenario, this would trigger actual fault injection logic
@@ -129,9 +129,9 @@ class ChaosEngineeringService:
             await asyncio.sleep(2) 
 
             # Rollback simulation
-            injection.rolled_back_at = datetime.utcnow()
+            injection.rolled_back_at = datetime.now(UTC)
             run.status = "completed"
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC)
             
             # Generate dummy report
             report = ChaosReport(
@@ -153,7 +153,7 @@ class ChaosEngineeringService:
         run = await self.db.get(ChaosRun, run_id)
         if run and run.status == "running":
             run.status = "aborted"
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC)
             await self.db.commit()
 
     async def get_report(self, run_id: str) -> Optional[ChaosReport]:

@@ -5,7 +5,7 @@ import json
 import os
 import uuid
 import zoneinfo
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Force SQLite for tests and enable feature flags before app import
@@ -157,8 +157,8 @@ async def setup_agent():
         return agent.id
 
 async def wait_for_delivery(delivery_id: uuid.UUID, timeout: float = 2.0) -> AgentEventDelivery:
-    start_time = datetime.utcnow()
-    while (datetime.utcnow() - start_time).total_seconds() < timeout:
+    start_time = datetime.now(UTC)
+    while (datetime.now(UTC) - start_time).total_seconds() < timeout:
         async with SessionLocal() as db:
             stmt = select(AgentEventDelivery).where(AgentEventDelivery.id == delivery_id)
             res = await db.execute(stmt)

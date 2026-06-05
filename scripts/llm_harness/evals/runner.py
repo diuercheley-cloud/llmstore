@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import subprocess
 import tempfile
 import time
 from collections.abc import Callable
@@ -275,7 +276,7 @@ class EvalRunner:
                         api_key_env=self.api_key_env,
                         sandbox=self.sandbox,
                         docker_image=self.docker_image,
-                        test_command=case.test_command or "pytest",
+                        test_command="pytest",
                         max_steps=self.max_steps,
                         self_heal=self.self_heal,
                         timeout=self.request_timeout,
@@ -293,8 +294,19 @@ class EvalRunner:
                     allow_test_short_circuit=(self.provider == "stub"),
                 )
 
-            elapsed = time.time() - start
-            score = score_case(case, harness_result, elapsed)
+                test_command_result = None
+                if case.test_command:
+                    test_command_result = await self._execute_test_command(
+                        workspace_dir, case.test_command
+                    )
+
+                elapsed = time.time() - start
+                score = score_case(
+                    case,
+                    harness_result,
+                    elapsed,
+                    test_command_result=test_command_result,
+                )
 
             # Judge evaluation
             if self.judge_provider != "disabled":
@@ -366,6 +378,28 @@ class EvalRunner:
             target = Path(workspace_dir) / relative_path
             os.makedirs(target.parent, exist_ok=True)
             target.write_text(content)
+
+    @staticmethod
+    async def _execute_test_command(workspace_dir: str, command: str) -> dict:
+        try:
+            proc = await asyncio.create_subprocess_shell(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=workspace_dir,
+            )
+            stdout, stderr = await proc.communicate()
+            return {
+                "returncode": proc.returncode or 0,
+                "stdout": stdout.decode("utf-8", errors="replace"),
+                "stderr": stderr.decode("utf-8", errors="replace"),
+            }
+        except Exception as exc:
+            return {
+                "returncode": -1,
+                "stdout": "",
+                "stderr": str(exc),
+            }
 
     def _extract_diff(self, harness_result) -> str:
         events = getattr(harness_result, "events", []) or []

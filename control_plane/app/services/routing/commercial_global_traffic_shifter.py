@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.core.config import get_settings
 from app.models.commercial_cluster_registry import CommercialClusterRegistry
@@ -46,7 +46,7 @@ class CommercialGlobalTrafficShifter:
             created_by=kwargs.get("created_by")
         )
         if mode == "canary":
-            policy.activated_at = datetime.utcnow()
+            policy.activated_at = datetime.now(UTC)
 
         self.db.add(policy)
         await self.db.commit()
@@ -70,7 +70,7 @@ class CommercialGlobalTrafficShifter:
             policy.status = "rolled_back"
             policy.reason = reason
             policy.enabled = False
-            policy.rolled_back_at = datetime.utcnow()
+            policy.rolled_back_at = datetime.now(UTC)
             await self.db.commit()
             await self.db.refresh(policy)
         return policy
@@ -106,7 +106,7 @@ class CommercialGlobalTrafficShifter:
             bucket=0,
             traffic_percent=0,
             reason="no_active_policy",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
 
         if not cfg.commercial_global_traffic_shifting_enabled:

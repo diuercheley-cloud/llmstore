@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -46,7 +46,7 @@ class EvalRun(Base):
     agent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     
     status: Mapped[str] = mapped_column(String(32), default="pending")
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     results = relationship("EvalResult", back_populates="run", cascade="all, delete-orphan")
@@ -85,7 +85,7 @@ class ArenaMatch(Base):
     score_a: Mapped[float] = mapped_column(Float, default=0.0)
     score_b: Mapped[float] = mapped_column(Float, default=0.0)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 
 class EloRating(Base):
@@ -95,7 +95,7 @@ class EloRating(Base):
     entity_name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True) # model or agent name
     rating: Mapped[float] = mapped_column(Float, default=1200.0, nullable=False)
     matches_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 
 class RedTeamFinding(Base):
@@ -110,4 +110,4 @@ class RedTeamFinding(Base):
     payload_used: Mapped[Text] = mapped_column(Text, nullable=True)
     evidence: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

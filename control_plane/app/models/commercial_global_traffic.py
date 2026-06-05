@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
@@ -23,8 +23,8 @@ class CommercialGlobalTrafficPolicy(Base):
     status = Column(String, nullable=False, default="pending") # pending, active, paused, rolled_back, completed
     reason = Column(String, nullable=True)
     created_by = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     activated_at = Column(DateTime, nullable=True)
     rolled_back_at = Column(DateTime, nullable=True)
 
@@ -44,4 +44,4 @@ class CommercialGlobalTrafficDecision(Base):
     bucket = Column(Integer, nullable=False)
     traffic_percent = Column(Integer, nullable=False)
     reason = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

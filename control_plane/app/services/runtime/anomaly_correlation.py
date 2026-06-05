@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List
 
 from app.models.commercial_predictive_aiops import CommercialAnomalySignal
@@ -20,7 +20,7 @@ class AnomalyCorrelator:
         # 1. Check for drift in runtime events
         stmt = select(CommercialRuntimeFabricEvent).filter(
             CommercialRuntimeFabricEvent.event_type == "drift_detected",
-            CommercialRuntimeFabricEvent.created_at >= datetime.utcnow() - timedelta(minutes=10)
+            CommercialRuntimeFabricEvent.created_at >= datetime.now(UTC) - timedelta(minutes=10)
         )
         result = await self.db.execute(stmt)
         drift_events = result.scalars().all()

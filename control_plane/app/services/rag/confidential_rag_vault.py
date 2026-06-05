@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -41,7 +41,7 @@ async def add_document_to_vault(
     # Check vault retention
     res = await db.execute(select(CommercialRAGVault).where(CommercialRAGVault.id == vault_id))
     vault = res.scalar_one()
-    expires_at = datetime.utcnow() + timedelta(days=vault.retention_policy_days)
+    expires_at = datetime.now(UTC) + timedelta(days=vault.retention_policy_days)
     
     doc = CommercialRAGDocument(
         vault_id=vault_id,

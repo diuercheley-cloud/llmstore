@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.models.commercial_runtime_fabric import CommercialRuntimeHealingAction
 from sqlalchemy import select
@@ -21,7 +21,7 @@ class RuntimeHealingService:
             raise ValueError("Action not found")
 
         action.status = "executing"
-        action.started_at = datetime.utcnow()
+        action.started_at = datetime.now(UTC)
         await self.db.commit()
 
         try:
@@ -33,7 +33,7 @@ class RuntimeHealingService:
             action.status = "failed"
             action.result = {"error": str(e)}
         finally:
-            action.finished_at = datetime.utcnow()
+            action.finished_at = datetime.now(UTC)
             await self.db.commit()
 
         return action

@@ -1,14 +1,9 @@
----
-owner: platform-ops
-status: consolidated
----
-
 # Validation Target Timings
 
 | Target | Status | Time (s) |
 |---|---|---|
-| validate-makefile-governance | FAIL | 0.04 |
+| validate-makefile-governance | PASS | 1.16 |
 
-**Total elapsed: 0.0s**
+**Total elapsed: 1.2s**
 
-**Passed: 0 | Failed: 1 | Timed out: 0**
+**Passed: 1 | Failed: 0 | Timed out: 0**

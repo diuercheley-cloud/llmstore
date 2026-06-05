@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict
 
 from app.db.base import Base
@@ -16,8 +16,8 @@ class AgentKGEntity(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
     metadata_: Mapped[Dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     
     # Relationships
     sources: Mapped[list["AgentKGSource"]] = relationship("AgentKGSource", secondary="agent_kg_entity_sources", back_populates="entities")
@@ -35,7 +35,7 @@ class AgentKGRelation(Base):
     target_entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_kg_entities.id", ondelete="CASCADE"), nullable=False)
     relation_type: Mapped[str] = mapped_column(String, nullable=False)
     source_provenance: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     source_entity: Mapped["AgentKGEntity"] = relationship("AgentKGEntity", foreign_keys=[source_entity_id])
     target_entity: Mapped["AgentKGEntity"] = relationship("AgentKGEntity", foreign_keys=[target_entity_id])
@@ -52,7 +52,7 @@ class AgentKGSource(Base):
     tenant_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
     uri: Mapped[str] = mapped_column(String, nullable=False)
     content_hash: Mapped[str] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     entities: Mapped[list["AgentKGEntity"]] = relationship("AgentKGEntity", secondary="agent_kg_entity_sources", back_populates="sources")
     
@@ -69,7 +69,7 @@ class AgentKGExtractionRun(Base):
     tenant_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
     document_id: Mapped[str] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 class AgentKGQueryEvent(Base):
     __tablename__ = "agent_kg_query_events"
@@ -78,4 +78,4 @@ class AgentKGQueryEvent(Base):
     tenant_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
     query: Mapped[str] = mapped_column(String, nullable=False)
     execution_time_ms: Mapped[float] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

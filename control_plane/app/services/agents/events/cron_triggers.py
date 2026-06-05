@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import zoneinfo
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.core.config import get_settings
 from app.core.time import utc_now

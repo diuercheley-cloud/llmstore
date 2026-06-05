@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.db.base import Base
@@ -17,7 +17,7 @@ class ExecutionRun(Base):
     workflow_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     
     status: Mapped[str] = mapped_column(String(32), default="started")
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Configuration for determinism
@@ -52,7 +52,7 @@ class ExecutionStep(Base):
     policy_decisions: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     routing_decisions: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     
-    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     run = relationship("ExecutionRun", back_populates="steps")
     tool_calls = relationship("ToolCallRecord", back_populates="step", cascade="all, delete-orphan")
@@ -69,7 +69,7 @@ class ToolCallRecord(Base):
     tool_output: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True) # Redacted if sensitive
     
     is_redacted: Mapped[bool] = mapped_column(Boolean, default=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     step = relationship("ExecutionStep", back_populates="tool_calls")
 
@@ -80,7 +80,7 @@ class PromptVersionRecord(Base):
     prompt_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 
 class ModelVersionRecord(Base):
@@ -89,4 +89,4 @@ class ModelVersionRecord(Base):
     model_name: Mapped[str] = mapped_column(String(120), nullable=False)
     backend_version: Mapped[str] = mapped_column(String(64), nullable=False)
     config_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

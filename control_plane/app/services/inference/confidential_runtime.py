@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -118,7 +118,7 @@ async def apply_retention_policy(
         "client_id": session.client_id,
         "action": "confidential_runtime_cleanup",
         "retention_seconds": retention,
-        "cleanup_time": datetime.utcnow().isoformat()
+        "cleanup_time": datetime.now(UTC).isoformat()
     }
     
     canonical_str = json.dumps(cleanup_data, sort_keys=True)
@@ -132,7 +132,7 @@ async def apply_retention_policy(
         
     await log_confidential_audit(db, session.id, "retention_policy_applied", summary)
     
-    session.completed_at = datetime.utcnow()
+    session.completed_at = datetime.now(UTC)
     await db.commit()
 
 async def log_confidential_audit(
@@ -141,7 +141,7 @@ async def log_confidential_audit(
     event_type: str,
     summary: str
 ) -> CommercialConfidentialRuntimeAuditEvent:
-    now_str = datetime.utcnow().isoformat()
+    now_str = datetime.now(UTC).isoformat()
     payload = f"{session_id}:{event_type}:{summary}:{now_str}"
     
     is_prod = get_settings().app_env == "production"

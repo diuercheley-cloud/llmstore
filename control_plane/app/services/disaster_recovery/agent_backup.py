@@ -9,7 +9,7 @@ import logging
 import tarfile
 import tempfile
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -26,7 +26,7 @@ class BackupManifest:
         self.backup_id = backup_id
         self.agent_ids = agent_ids
         self.backup_type = backup_type
-        self.created_at = created_at or datetime.utcnow().isoformat()
+        self.created_at = created_at or datetime.now(UTC).isoformat()
         self.checksum = checksum
 
     def to_dict(self) -> dict:

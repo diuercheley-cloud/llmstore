@@ -1,7 +1,7 @@
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Optional
 
@@ -60,7 +60,6 @@ class FinancialAuditTrailService:
         """
         
         previous_hash = await FinancialAuditTrailService.get_latest_hash(db)
-        timestamp = datetime.utcnow() # Use utcnow directly or app.core.time.utc_now
         
         # We'll use the app's utc_now if possible
         from app.core.time import utc_now

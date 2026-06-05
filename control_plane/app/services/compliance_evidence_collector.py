@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 import zipfile
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict
 
 from app.services.compliance_control_mapper import ComplianceControlMapperService
@@ -46,7 +46,7 @@ class ComplianceEvidenceCollectorService:
                 evidence_index.append({
                     "source": source_name,
                     "original_path": path,
-                    "collected_at": datetime.utcnow().isoformat(),
+                    "collected_at": datetime.now(UTC).isoformat(),
                     "hash_sha256": file_hash,
                     "artifact": target_filename
                 })

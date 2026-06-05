@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 from app.models.operations.compliance import (
@@ -39,7 +39,7 @@ class ComplianceReadinessService:
                 "partial": partial,
                 "not_started": total_controls - implemented - partial
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
     async def seed_frameworks(self):

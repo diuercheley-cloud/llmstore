@@ -4,7 +4,7 @@
 import hashlib
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict
 
 from app.core.config import get_settings
@@ -68,7 +68,7 @@ class PluginRuntimeService:
         verification = PluginVerificationResult(
             id=uuid.uuid4(),
             plugin_id=plugin_id,
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(UTC),
             checksum_valid=checksum_valid,
             signature_valid=signature_valid,
             manifest_valid=manifest_valid,
@@ -110,7 +110,7 @@ class PluginRuntimeService:
         dry_run = PluginDryRunResult(
             id=uuid.uuid4(),
             plugin_id=plugin_id,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(UTC),
             is_success=is_success,
             sandbox_type=sandbox_type,
             output=output,
@@ -199,7 +199,7 @@ class PluginRuntimeService:
             plugin_id=plugin_id,
             tenant_id=tenant_id,
             invocation_id=invocation_id,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(UTC),
             parameters=parameters,
             status=status,
             output=output,
@@ -214,7 +214,7 @@ class PluginRuntimeService:
             "plugin_id": str(plugin_id),
             "tenant_id": tenant_id,
             "status": status,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
         payload_str = json_canonical_str(receipt_payload)
         receipt_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
@@ -224,7 +224,7 @@ class PluginRuntimeService:
             execution_id=execution.id,
             receipt_hash=receipt_hash,
             signature=f"sig_{receipt_hash[:16]}",
-            signed_at=datetime.utcnow(),
+            signed_at=datetime.now(UTC),
             payload_json=receipt_payload
         )
         self.db.add(receipt)
@@ -273,7 +273,7 @@ class PluginRuntimeService:
                 "is_success": dry_run.is_success,
                 "sandbox_type": dry_run.sandbox_type,
             } if dry_run else None,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(UTC).isoformat()
         }
 
         # Store to DB PluginTrustReport
@@ -282,7 +282,7 @@ class PluginRuntimeService:
         trust_report = PluginTrustReport(
             id=uuid.uuid4(),
             plugin_version_id=install.current_version_id,
-            scanned_at=datetime.utcnow(),
+            scanned_at=datetime.now(UTC),
             vulnerabilities_found=0 if is_trusted else 1,
             trust_score=1.0 if is_trusted else 0.5,
             report_details=report_details,

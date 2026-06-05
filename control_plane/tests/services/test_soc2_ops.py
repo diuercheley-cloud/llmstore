@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.services.soc2_control_operations import SOC2ControlOperationsService
@@ -9,7 +9,7 @@ async def test_access_review_validation(db_session):
     service = SOC2ControlOperationsService(db_session)
     
     # Missing reviewer
-    invalid_data = {"owner": "CISO", "period_start": datetime.utcnow()}
+    invalid_data = {"owner": "CISO", "period_start": datetime.now(UTC)}
     with pytest.raises(ValueError, match="must have a designated reviewer"):
         await service.create_access_review(invalid_data)
 
@@ -27,7 +27,7 @@ async def test_expired_exception_detection(db_session):
     service = SOC2ControlOperationsService(db_session)
     
     # Create expired exception
-    expired_date = datetime.utcnow() - timedelta(days=1)
+    expired_date = datetime.now(UTC) - timedelta(days=1)
     await service.create_exception({
         "control_id": "CC7.1",
         "reason": "Test",

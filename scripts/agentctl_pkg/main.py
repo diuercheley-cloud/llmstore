@@ -5,7 +5,7 @@ import time
 from typing import Optional
 
 import httpx
-from scripts.agentctl.utils import (
+from scripts.agentctl_pkg.utils import (
     CLIColor, confirm_action, format_output, load_yaml, redact_sensitive_data
 )
 

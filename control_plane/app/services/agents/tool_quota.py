@@ -3,7 +3,7 @@ Owner: agent-platform
 Status: beta
 """
 import logging
-from datetime import timedelta
+from datetime import timedelta, UTC
 from typing import Any, Optional
 
 from app.core.time import utc_now

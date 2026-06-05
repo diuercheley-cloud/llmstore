@@ -83,7 +83,7 @@ async def get_last_decisions(
     limit: int = Query(default=50, ge=1, le=200),
     smart_router: SmartRouter = Depends(get_smart_router),
 ):
-    from datetime import datetime
+    from datetime import datetime, UTC
     decisions = smart_router.get_last_decisions(limit=limit)
     result = []
     for d in decisions:
@@ -92,7 +92,7 @@ async def get_last_decisions(
             try:
                 ts = datetime.fromisoformat(ts)
             except (ValueError, TypeError):
-                ts = datetime.utcnow()
+                ts = datetime.now(UTC)
         result.append(LastDecisionRead(
             id=d.get("id", ""),
             timestamp=ts,

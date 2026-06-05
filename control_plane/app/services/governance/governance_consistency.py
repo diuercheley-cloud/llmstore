@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
@@ -179,7 +179,7 @@ class GovernanceConsistencyService:
             region_coverage[region_key] = region_coverage.get(region_key, 0) + 1
 
         report = {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "local_cluster_id": self.settings.commercial_governance_federation_cluster_id,
             "federation_mode": self.settings.commercial_governance_federation_mode,
             "federation_enabled": self.settings.commercial_governance_federation_enabled,

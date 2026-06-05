@@ -2,7 +2,12 @@
 from .schema import CaseScore, EvalCase, EvalResult, EvalSuite
 
 
-def score_case(case: EvalCase, harness_result, case_duration: float) -> CaseScore:
+def score_case(
+    case: EvalCase,
+    harness_result,
+    case_duration: float,
+    test_command_result: dict | None = None,
+) -> CaseScore:
     checks: dict[str, bool] = {}
     details: dict[str, object] = {}
     error: str | None = None
@@ -14,7 +19,7 @@ def score_case(case: EvalCase, harness_result, case_duration: float) -> CaseScor
 
     # 2. Test command (if configured)
     if case.test_command:
-        test_ok = _check_test_command(harness_result, case.test_command)
+        test_ok = _check_test_command(harness_result, case.test_command, test_command_result)
         checks["test_command"] = test_ok
 
     # 3. Expected stdout (if configured)
@@ -59,7 +64,13 @@ def score_case(case: EvalCase, harness_result, case_duration: float) -> CaseScor
     )
 
 
-def _check_test_command(harness_result, test_command: str) -> bool:
+def _check_test_command(
+    harness_result,
+    test_command: str,
+    test_command_result: dict | None = None,
+) -> bool:
+    if test_command_result is not None:
+        return test_command_result.get("returncode", -1) == 0
     events = getattr(harness_result, "events", []) or []
     for ev in events:
         if ev.get("action_type") == "run_shell" and ev.get("event") == "action.completed":

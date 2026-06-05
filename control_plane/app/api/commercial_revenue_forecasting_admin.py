@@ -1,6 +1,6 @@
 # Owner: commercial-ops
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from app.db.session import get_db_session
@@ -47,7 +47,7 @@ async def get_forecast_overview(session: AsyncSession = Depends(get_db_session))
         next_30_days_cost=0.0,
         next_30_days_margin=0.0,
         confidence="low",
-        last_updated=datetime.utcnow()
+        last_updated=datetime.now(UTC)
     )
     
     found = {"revenue": False, "cost": False, "margin": False}

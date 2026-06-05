@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.models.commercial_runtime_fabric import (
     CommercialRuntimeFabricEvent,
@@ -27,7 +27,7 @@ class RuntimeRecoveryService:
             mode=mode,
             status="pending",
             steps=self._determine_steps(event),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC)
         )
         self.db.add(plan)
         await self.db.commit()
@@ -57,7 +57,7 @@ class RuntimeRecoveryService:
             raise ValueError("Plan not found")
 
         plan.status = "executing"
-        plan.updated_at = datetime.utcnow()
+        plan.updated_at = datetime.now(UTC)
         await self.db.commit()
 
         for step in plan.steps:
@@ -68,7 +68,7 @@ class RuntimeRecoveryService:
                 target_id=step["target_id"],
                 parameters=step["parameters"],
                 status="pending",
-                started_at=datetime.utcnow()
+                started_at=datetime.now(UTC)
             )
             self.db.add(action)
             await self.db.commit()
@@ -76,11 +76,11 @@ class RuntimeRecoveryService:
             # Simulate success
             action.status = "completed"
             action.result = {"success": True}
-            action.finished_at = datetime.utcnow()
+            action.finished_at = datetime.now(UTC)
             action.signed_receipt = "signed-receipt-" + str(uuid.uuid4())
             await self.db.commit()
 
         plan.status = "completed"
-        plan.updated_at = datetime.utcnow()
+        plan.updated_at = datetime.now(UTC)
         await self.db.commit()
         return plan

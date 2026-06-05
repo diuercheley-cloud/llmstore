@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
@@ -15,7 +15,7 @@ class CommercialCapacitySnapshot(Base):
     provider = Column(String, index=True, nullable=True)
     model = Column(String, index=True, nullable=True)
     qos_tier = Column(String, index=True, nullable=True)
-    timestamp = Column(DateTime, index=True, default=datetime.utcnow)
+    timestamp = Column(DateTime, index=True, default=lambda: datetime.now(UTC))
     
     requests_per_minute = Column(Float, default=0.0)
     concurrent_requests = Column(Integer, default=0)
@@ -32,7 +32,7 @@ class CommercialCapacitySnapshot(Base):
     fallback_rate = Column(Float, default=0.0)
     block_rate = Column(Float, default=0.0)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialCapacityForecast(Base):
     __tablename__ = "commercial_capacity_forecasts"
@@ -54,7 +54,7 @@ class CommercialCapacityForecast(Base):
     recommended_action = Column(String, nullable=True)
     confidence = Column(Float, default=0.0)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class CommercialAutoscalingRecommendation(Base):
     __tablename__ = "commercial_autoscaling_recommendations"
@@ -76,4 +76,4 @@ class CommercialAutoscalingRecommendation(Base):
     confidence = Column(Float, default=0.0)
     dry_run_only = Column(Boolean, default=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

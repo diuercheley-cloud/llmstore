@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
@@ -13,7 +13,7 @@ class EnterpriseCustomer(Base):
     name = Column(String, index=True)
     contact_email = Column(String)
     tier = Column(String, default="pilot") # pilot, growth, enterprise
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     
     projects = relationship("EnterpriseOnboardingProject", back_populates="customer")
 
@@ -24,7 +24,7 @@ class EnterpriseOnboardingProject(Base):
     customer_id = Column(String, ForeignKey("enterprise_customers.id"))
     name = Column(String)
     status = Column(String, default="draft") # draft, discovery, deployment_ready, deployed, validation_ready, accepted, handed_over, support_active
-    start_date = Column(DateTime, default=datetime.utcnow)
+    start_date = Column(DateTime, default=lambda: datetime.now(UTC))
     target_date = Column(DateTime, nullable=True)
     
     config_snapshot = Column(JSON, default={}) # current environment config
@@ -63,7 +63,7 @@ class EnterpriseHandoverReport(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     project_id = Column(String, ForeignKey("enterprise_onboarding_projects.id"))
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.now(UTC))
     content_json = Column(JSON)
     artifact_path = Column(String, nullable=True)
 

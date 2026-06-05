@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
@@ -16,7 +16,7 @@ class PlatformReleaseBaseline(Base):
     release_hash = Column(String(64), nullable=False, unique=True)
     replay_safe = Column(Boolean, default=True)
     immutable_hash = Column(String(64), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class ValidationSnapshot(Base):
     __tablename__ = "validation_snapshots"
@@ -27,7 +27,7 @@ class ValidationSnapshot(Base):
     validation_result = Column(JSON, nullable=False)
     validation_hash = Column(String(64), nullable=False)
     immutable_hash = Column(String(64), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 class ReleaseReceipt(Base):
     __tablename__ = "release_receipts"
@@ -38,4 +38,4 @@ class ReleaseReceipt(Base):
     payload_hash = Column(String(64), nullable=False)
     immutable_hash = Column(String(64), nullable=False)
     signature = Column(Text, nullable=True)
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.now(UTC))

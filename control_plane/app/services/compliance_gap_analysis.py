@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List
 
 from app.services.compliance_control_mapper import ComplianceControlMapperService
@@ -61,7 +61,7 @@ class ComplianceGapAnalysisService:
         path = os.path.join(self.base_artifact_dir, filename)
         with open(path, "w") as f:
             f.write(f"# {title} - Gap Analysis\n\n")
-            f.write(f"Generated: {datetime.utcnow().isoformat()}\n\n")
+            f.write(f"Generated: {datetime.now(UTC).isoformat()}\n\n")
             f.write("> [!IMPORTANT]\n")
             f.write("> Este relatório foca em **Readiness** e não substitui uma auditoria externa formal.\n\n")
             

@@ -7,7 +7,7 @@ import asyncio
 import os
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -492,7 +492,7 @@ def write_report(steps_results, success: bool):
     
     content = f"""# Agentic Production ON Validation Report
 
-- **Date**: {datetime.utcnow().isoformat()}Z
+- **Date**: {datetime.now(UTC).isoformat()}Z
 - **Profile**: `config/deployment-profiles/agentic-production-on.yaml`
 - **Result**: {status_str}
 

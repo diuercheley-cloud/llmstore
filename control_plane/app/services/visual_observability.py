@@ -1,7 +1,7 @@
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from statistics import mean
 from typing import Any, Dict, List
 
@@ -90,7 +90,7 @@ class VisualObservabilityService:
         if not self.db:
             return {"status": "no_data", "message": "No database session configured."}
 
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
         
         try:
             # Total runs in the last 30 days
