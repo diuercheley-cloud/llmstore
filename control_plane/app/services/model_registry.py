@@ -37,16 +37,16 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
     logger.info(f"Seeding models. LMStudio enabled: {settings.lmstudio_enabled}, backends: {list(backends.keys())}")
 
     if settings.lmstudio_enabled and "lmstudio-local" in backends:
-        logger.info(f"Seeding LMStudio model: {settings.lmstudio_default_model}")
+        logger.info(f"Seeding LMStudio model: {settings.lmstudio_chat_model}")
         lmstudio_model = await _ensure_model_entry(
             session,
-            model_id=settings.lmstudio_default_model,
+            model_id=settings.lmstudio_chat_model,
             model_alias="lmstudio",
             model_file="",
             backend=backends["lmstudio-local"],
             is_default=True,
             is_active=True,
-            provider="openai_compatible",
+            provider="lmstudio",
             metadata=_build_metadata(
                 recommended_quantization="",
                 gpu_profile="",

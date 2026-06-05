@@ -14,7 +14,7 @@ class LMStudioProvider(ProviderAdapter):
         settings = get_settings()
         self._base_url = settings.lmstudio_base_url
         self._api_key = settings.lmstudio_api_key
-        self._timeout = settings.data_plane_timeout_seconds
+        self._timeout = settings.lmstudio_timeout
         enabled = settings.lmstudio_enabled
         super().__init__(
             provider_id="lmstudio",
@@ -27,14 +27,21 @@ class LMStudioProvider(ProviderAdapter):
         headers = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
-        return httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout, headers=headers)
+        return httpx.AsyncClient(base_url=self._base_url, timeout=float(self._timeout), headers=headers)
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
             return {"provider_id": "lmstudio", "healthy": None, "latency_ms": 0, "error": "disabled"}
         try:
             async with await self._client() as client:
-                resp = await client.get("/models")
+                # Common endpoints for LM Studio / Local LLMs
+                try:
+                    resp = await client.get("/models")
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 404:
+                        resp = await client.get("/v1/models")
+                    else:
+                        raise
                 return {"provider_id": "lmstudio", "healthy": resp.is_success, "latency_ms": 0, "error": None}
         except Exception as e:
             return {"provider_id": "lmstudio", "healthy": False, "latency_ms": 0, "error": str(e)}

@@ -76,7 +76,7 @@ class InferenceRouter:
                 return VLLMBackend(backend.name, backend.backend_url)
             elif backend.provider == "tgi":
                 return TGIBackend(backend.name, backend.backend_url)
-            elif backend.provider in {"openai_compatible", "openai", "anthropic", "deepseek", "openrouter"}:
+            elif backend.provider in {"openai_compatible", "openai", "anthropic", "deepseek", "openrouter", "lmstudio"}:
                 return OpenAICompatibleBackend(backend.name, backend.backend_url)
             elif backend.provider == "ollama":
                 return OpenAICompatibleBackend(backend.name, backend.backend_url)
@@ -91,6 +91,7 @@ class InferenceRouter:
         priorities = {
             "vllm": 100,
             "tgi": 90,
+            "lmstudio": 70,
             "ollama": 60,
             "openai_compatible": 50,
             "openai": 50,

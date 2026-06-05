@@ -137,7 +137,7 @@ class InferenceProxy:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="backend unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
-        if backend not in {"llama.cpp", "ollama", "vllm", "tgi", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}:
+        if backend not in {"llama.cpp", "ollama", "vllm", "tgi", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek", "lmstudio"}:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="unsupported model backend")
         return self._get_client(backend_url)
 
@@ -234,8 +234,9 @@ class InferenceProxy:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail={
-                "message": "backend returned chat completion without visible assistant output",
+                "message": f"backend '{backend_name}' returned empty or invalid chat completion. Verify if the model '{payload.get('model')}' is loaded and supports chat.",
                 "backend_name": backend_name,
+                "model_requested": payload.get("model"),
             },
         )
 
@@ -243,7 +244,11 @@ class InferenceProxy:
         logged_payload = dict(payload)
         if "messages" in logged_payload:
             logged_payload["messages"] = [
-                {"role": m.get("role"), "content_len": len(str(m.get("content") or ""))}
+                {
+                    "role": m.get("role"), 
+                    "content_len": len(str(m.get("content") or "")),
+                    "reasoning_len": len(str(m.get("reasoning_content") or m.get("reasoning") or ""))
+                }
                 for m in logged_payload["messages"]
             ]
         if "tools" in logged_payload and isinstance(logged_payload["tools"], list):
@@ -482,7 +487,12 @@ class InferenceProxy:
         started = perf_counter()
         last_error: Exception | None = None
         client = self._client_for_backend(backend, backend_url)
+        
+        # Ensure endpoint starts with /v1/ if it's chat/completions/embeddings and not already there
         target_endpoint = endpoint
+        if not target_endpoint.startswith("/v1/") and any(t in target_endpoint for t in ["chat/completions", "completions", "embeddings"]):
+            target_endpoint = f"/v1/{target_endpoint.lstrip('/')}"
+        
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
             target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
         request_payload = await self._prepare_chat_payload(
@@ -563,8 +573,9 @@ class InferenceProxy:
                 response_payload = response.json()
                 if backend == "ollama":
                     response_payload = self._translate_ollama_response(response_payload, endpoint, payload.get("model", ""))
-                    if endpoint == "/v1/chat/completions":
-                        response_payload = normalize_chat_completion(
+                
+                if endpoint == "/v1/chat/completions":
+                    response_payload = normalize_chat_completion(
                         response_payload,
                         include_reasoning=include_reasoning,
                         prompt_template=prompt_template,
@@ -718,7 +729,12 @@ class InferenceProxy:
     ) -> StreamingResponse:
         started = perf_counter()
         client = self._client_for_backend(backend, backend_url)
+        
+        # Ensure endpoint starts with /v1/ if it's chat/completions/embeddings and not already there
         target_endpoint = endpoint
+        if not target_endpoint.startswith("/v1/") and any(t in target_endpoint for t in ["chat/completions", "completions", "embeddings"]):
+            target_endpoint = f"/v1/{target_endpoint.lstrip('/')}"
+        
         if backend == "openrouter" and target_endpoint.startswith("/v1/"):
             target_endpoint = self._normalize_openrouter_endpoint(backend_url, target_endpoint)
         request_payload = await self._prepare_chat_payload(
@@ -851,12 +867,11 @@ class InferenceProxy:
                     if line.startswith("data: ") and line != "data: [DONE]":
                         try:
                             parsed = json.loads(line.removeprefix("data: "))
-                            delta = (
-                                parsed.get("choices", [{}])[0]
-                                .get("delta", {})
-                                .get("content", "")
-                                or parsed.get("choices", [{}])[0].get("text", "")
-                            )
+                            delta_obj = parsed.get("choices", [{}])[0].get("delta", {})
+                            delta_content = delta_obj.get("content") or ""
+                            delta_reasoning = delta_obj.get("reasoning_content") or delta_obj.get("reasoning") or ""
+                            delta_text = parsed.get("choices", [{}])[0].get("text") or ""
+                            delta = f"{delta_reasoning}{delta_content}{delta_text}"
                             completion_fragments.append(delta)
                             
                             # Anti-loop check on accumulated content
@@ -1057,3 +1072,4 @@ class InferenceProxy:
             "choices": [{"index": 0, "text": payload.get('response', ''), "finish_reason": None}],
         }
         return f"data: {json.dumps(chunk)}"
+

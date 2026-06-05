@@ -56,6 +56,18 @@ Inicializado sob demanda (lazy). Providers são registrados com base em:
 - tools: se habilitado
 - max_context: 4096
 - pricing: free (local)
+- **Configuração:**
+  - `LMSTUDIO_ENABLED=true` (padrão: false)
+  - `LMSTUDIO_BASE_URL=http://192.168.101.1:1234/v1`
+  - `LMSTUDIO_CHAT_MODEL=nvidia/nemotron-3-nano-4b`
+  - `LMSTUDIO_API_KEY=lm-studio` (opcional/mock)
+  - `LMSTUDIO_TIMEOUT=60`
+- **Teste Real Local:**
+  - Para executar um teste real de integração local, use o comando:
+    ```bash
+    LM_STUDIO_BASE_URL=http://192.168.101.1:1234/v1 LM_STUDIO_MODEL=nvidia/nemotron-3-nano-4b pytest -m local_llm tests/integration/test_lmstudio_real.py
+    ```
+  - Este teste será pulado automaticamente no CI ou caso as variáveis de ambiente necessárias não estejam configuradas.
 
 ### OpenAI
 - chat, streaming, responses, embeddings

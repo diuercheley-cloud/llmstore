@@ -45,7 +45,7 @@ else
 fi
 
 # 2. Test backend registration via Control Plane
-log_step "Testing backend registration (openai_compatible type)"
+log_step "Testing backend registration (lmstudio type)"
 # Check if backend already exists to maintain idempotency
 EXISTING_BACKEND_ID=$(curl -s -H "X-Admin-Token: $ADMIN_TOKEN" "$CONTROL_PLANE_URL/admin/backends" | grep -o "\"id\":\"[^\"]*\",\"name\":\"lmstudio-validate-test\"" | cut -d'"' -f4 || echo "")
 
@@ -63,7 +63,7 @@ else
       -H "Content-Type: application/json" \
       -d "{
         \"name\": \"lmstudio-validate-test\",
-        \"provider\": \"openai_compatible\",
+        \"provider\": \"lmstudio\",
         \"backend_url\": \"$LM_STUDIO_ROOT_URL\",
         \"healthcheck_path\": \"/v1/models\",
         \"is_active\": true,
@@ -87,7 +87,7 @@ LIST_RESPONSE=$(curl -s -X POST "$CONTROL_PLANE_URL/admin/backends/list-models" 
   -H "Content-Type: application/json" \
   -d "{
     \"name\": \"test\",
-    \"provider\": \"openai_compatible\",
+    \"provider\": \"lmstudio\",
     \"backend_url\": \"$LM_STUDIO_ROOT_URL\",
     \"healthcheck_path\": \"/v1/models\"
   }")

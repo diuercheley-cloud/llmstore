@@ -68,6 +68,39 @@ def test_normalize_chat_completion_strips_qwen_think_blocks_by_default():
     assert normalized["choices"][0]["message"]["content"] == "Resposta final"
 
 
+def test_normalize_chat_completion_preserves_native_reasoning_content():
+    payload = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "created": 1,
+        "choices": [
+            {
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {
+                    "role": "assistant",
+                    "content": "final answer",
+                    "reasoning_content": "thinking process"
+                },
+            }
+        ],
+    }
+
+    normalized = normalize_chat_completion(payload, include_reasoning=True)
+    assert normalized["choices"][0]["message"]["content"] == "final answer"
+    assert normalized["choices"][0]["message"]["reasoning_content"] == "thinking process"
+
+def test_normalize_chat_stream_line_preserves_native_reasoning_delta():
+    line = (
+        'data: {"id":"chatcmpl-1","object":"chat.completion.chunk","created":1,'
+        '"choices":[{"index":0,"delta":{"reasoning_content":"thinking","content":""}}]}'
+    )
+
+    normalized = normalize_chat_stream_line(line, include_reasoning=True)
+    assert normalized is not None
+    assert "reasoning_content" in normalized
+    assert "thinking" in normalized
+
 def test_normalize_chat_completion_maps_openrouter_reasoning_field():
     payload = {
         "id": "chatcmpl-1",

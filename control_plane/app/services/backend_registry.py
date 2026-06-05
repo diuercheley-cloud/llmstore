@@ -38,14 +38,19 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
         },
         {
             "name": "lmstudio-local",
-            "provider": "openai_compatible",
+            "provider": "lmstudio",
             "backend_url": settings.lmstudio_base_url,
-            "healthcheck_path": "/models",
+            "healthcheck_path": "/v1/models",
             "is_active": settings.lmstudio_enabled,
             "is_default": settings.lmstudio_enabled,
             "status": "configured" if settings.lmstudio_enabled else "optional-disabled",
             "max_parallel_requests": 8,
-            "metadata_json": json.dumps({"service_name": "data-plane-lmstudio", "api_key": settings.lmstudio_api_key}),
+            "metadata_json": json.dumps({
+                "service_name": "data-plane-lmstudio", 
+                "api_key": settings.lmstudio_api_key,
+                "chat_model": settings.lmstudio_chat_model,
+                "timeout": settings.lmstudio_timeout
+            }),
         },
         {
             "name": "vllm-local",
