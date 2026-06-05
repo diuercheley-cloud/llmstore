@@ -40,8 +40,15 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+from .base import GraphProvider
+
+
 class InternalSQLGraphProvider:
-    """SQL-backed graph provider with real BFS/DFS pathfinding."""
+    """
+    SQL-backed graph provider with real BFS/DFS pathfinding.
+    
+    Implements GraphProvider protocol.
+    """
 
     def __init__(self, db: AsyncSession):
         self.db = db

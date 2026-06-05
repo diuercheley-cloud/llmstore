@@ -1,5 +1,8 @@
 import logging
+import uuid
 from typing import Any, Optional
+
+from .base import GraphProvider
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +18,8 @@ class Neo4jGraphProvider:
     Neo4j-backed knowledge graph provider.
     Delegates to InternalSQLGraphProvider for SQL-based operations,
     and uses native Cypher for Neo4j-specific queries when driver is available.
+
+    Implements GraphProvider protocol.
     """
 
     def __init__(self, enabled: bool, db: Optional[Any] = None):
@@ -96,14 +101,52 @@ class Neo4jGraphProvider:
             return await internal.record_query(**kwargs)
         raise RuntimeError("No available provider backend")
 
-    async def shortest_path(self, **kwargs):
+    async def shortest_path(
+        self,
+        tenant_id: str,
+        source_id: uuid.UUID,
+        target_id: uuid.UUID,
+        relation_types: list[str] | None = None,
+        max_depth: int = 6,
+        max_nodes: int = 500,
+        timeout_ms: int = 5000,
+    ):
         internal = await self._get_internal()
         if internal:
-            return await internal.shortest_path(**kwargs)
+            return await internal.shortest_path(
+                tenant_id=tenant_id,
+                source_id=source_id,
+                target_id=target_id,
+                relation_types=relation_types,
+                max_depth=max_depth,
+                max_nodes=max_nodes,
+                timeout_ms=timeout_ms,
+            )
         raise RuntimeError("No available provider backend")
 
-    async def dependency_traversal(self, **kwargs):
+    async def dependency_traversal(
+        self,
+        tenant_id: str,
+        start_id: uuid.UUID,
+        relation_types: list[str] | None = None,
+        max_depth: int = 6,
+        max_nodes: int = 500,
+        timeout_ms: int = 5000,
+    ):
         internal = await self._get_internal()
         if internal:
-            return await internal.dependency_traversal(**kwargs)
+            return await internal.dependency_traversal(
+                tenant_id=tenant_id,
+                start_id=start_id,
+                relation_types=relation_types,
+                max_depth=max_depth,
+                max_nodes=max_nodes,
+                timeout_ms=timeout_ms,
+            )
         raise RuntimeError("No available provider backend")
+
+    def capabilities(self) -> dict[str, Any]:
+        return {
+            "provider": "neo4j",
+            "fallback": "internal_sql",
+        }
