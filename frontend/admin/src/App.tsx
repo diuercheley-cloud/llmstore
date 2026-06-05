@@ -1,5 +1,5 @@
-import { useState, Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from './store/useAuthStore'
 import { ShieldAlert, LogIn, Loader2 } from 'lucide-react'
@@ -27,8 +27,19 @@ function PageLoader() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore(state => state.token)
-  if (!token) return <Navigate to="/login" replace />
+  const location = useLocation()
+  if (!token) {
+    const redirect = `${location.pathname}${location.search}${location.hash}`
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirect)}`} replace />
+  }
   return <>{children}</>
+}
+
+function getSafeRedirectTarget(rawValue: string | null): string {
+  if (!rawValue) return '/'
+  if (!rawValue.startsWith('/')) return '/'
+  if (rawValue.startsWith('//')) return '/'
+  return rawValue
 }
 
 function RouteRenderer({ route }: { route: RouteConfig }) {
@@ -44,18 +55,21 @@ function Login() {
   const [value, setValue] = useState('')
   const [ssoLoading, setSsoLoading] = useState<string | null>(null)
   const setToken = useAuthStore(state => state.setToken)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const redirectTarget = getSafeRedirectTarget(new URLSearchParams(location.search).get('redirect'))
 
   // Capture SSO token from URL on mount
-  useState(() => {
+  useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
     const searchParams = new URLSearchParams(window.location.search)
     const params = hashParams.get('sso_token') ? hashParams : searchParams
     const ssoToken = params.get('sso_token')
     if (ssoToken) {
       setToken(ssoToken)
-      window.history.replaceState({}, '', '/admin-dashboard')
+      navigate(redirectTarget, { replace: true })
     }
-  })
+  }, [navigate, redirectTarget, setToken])
 
   const handleSSOLogin = async (provider: string) => {
     setSsoLoading(provider)
@@ -107,7 +121,16 @@ function Login() {
           <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
           <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Ou token de admin</span></div>
         </div>
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); if (value.trim()) setToken(value.trim()) }}>
+        <form
+          className="space-y-4"
+          onSubmit={e => {
+            e.preventDefault()
+            const token = value.trim()
+            if (!token) return
+            setToken(token)
+            navigate(redirectTarget, { replace: true })
+          }}
+        >
           <div>
             <label htmlFor="admin-token" className="block text-sm font-semibold text-foreground mb-2">Token de Admin</label>
             <input
@@ -133,13 +156,23 @@ function Login() {
   )
 }
 
+function LoginRoute() {
+  const token = useAuthStore(state => state.token)
+  const location = useLocation()
+  const redirectTarget = getSafeRedirectTarget(new URLSearchParams(location.search).get('redirect'))
+
+  if (token) {
+    return <Navigate to={redirectTarget} replace />
+  }
+
+  return <Login />
+}
+
 // ── App ───────────────────────────────────────────────────────────
 
 const queryClient = new QueryClient()
 
 function App() {
-  const token = useAuthStore(state => state.token)
-
   return (
     <ThemeProvider defaultTheme="system" storageKey="admin-theme">
       <QueryClientProvider client={queryClient}>
@@ -149,7 +182,7 @@ function App() {
           <OnboardingWizard />
           <Routes>
             {/* Login */}
-            <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
+            <Route path="/login" element={<LoginRoute />} />
 
             {/* Centralized routes from adminRoutes.tsx */}
             {routes.map(route => (

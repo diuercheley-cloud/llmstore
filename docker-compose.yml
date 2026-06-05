@@ -308,7 +308,6 @@ services:
     command: ["-config.file=/etc/tempo.yaml"]
     ports:
       - "3200:3200"   # Tempo UI
-      - "4317:4317"   # OTLP gRPC
     volumes:
       - ./monitoring/tempo/tempo.yaml:/etc/tempo.yaml:ro
     networks:

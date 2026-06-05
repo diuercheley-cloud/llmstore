@@ -14,9 +14,18 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("agent_service_tiers", sa.Column("price_per_run_brl", sa.Float(), server_default="0.0", nullable=False))
-    op.add_column("agent_service_tiers", sa.Column("price_per_1k_tokens_brl", sa.Float(), server_default="0.0", nullable=False))
-    op.add_column("agent_service_tiers", sa.Column("monthly_fee_brl", sa.Float(), server_default="0.0", nullable=False))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table("agent_service_tiers"):
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("agent_service_tiers")}
+    if "price_per_run_brl" not in existing_columns:
+        op.add_column("agent_service_tiers", sa.Column("price_per_run_brl", sa.Float(), server_default="0.0", nullable=False))
+    if "price_per_1k_tokens_brl" not in existing_columns:
+        op.add_column("agent_service_tiers", sa.Column("price_per_1k_tokens_brl", sa.Float(), server_default="0.0", nullable=False))
+    if "monthly_fee_brl" not in existing_columns:
+        op.add_column("agent_service_tiers", sa.Column("monthly_fee_brl", sa.Float(), server_default="0.0", nullable=False))
 
     # Seed default tiers with pricing
     op.execute(
@@ -32,6 +41,15 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column("agent_service_tiers", "price_per_run_brl")
-    op.drop_column("agent_service_tiers", "price_per_1k_tokens_brl")
-    op.drop_column("agent_service_tiers", "monthly_fee_brl")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table("agent_service_tiers"):
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("agent_service_tiers")}
+    if "price_per_run_brl" in existing_columns:
+        op.drop_column("agent_service_tiers", "price_per_run_brl")
+    if "price_per_1k_tokens_brl" in existing_columns:
+        op.drop_column("agent_service_tiers", "price_per_1k_tokens_brl")
+    if "monthly_fee_brl" in existing_columns:
+        op.drop_column("agent_service_tiers", "monthly_fee_brl")

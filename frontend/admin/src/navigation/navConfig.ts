@@ -254,8 +254,16 @@ export const navConfig: NavRoute[] = [
 
   // ── Operations ────────────────────────────────────
   {
-    label: 'Dashboard',
+    label: 'Hub',
     path: '/',
+    icon: Activity,
+    section: 'operations',
+    status: 'active',
+    description: 'Entrada principal do painel administrativo e catálogo de módulos.',
+  },
+  {
+    label: 'Operations',
+    path: '/operations',
     icon: Activity,
     section: 'operations',
     status: 'active',

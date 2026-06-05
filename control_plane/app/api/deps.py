@@ -5,10 +5,13 @@ from app.services.auth import (
     AdminRole,
     admin_key_scheme,
     get_admin_role,
+    require_admin,
     require_admin_permission,
+    require_admin_role,
     require_client,
     require_superadmin,
 )
+from app.services.embeddings import EmbeddingService
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
 from app.services.inference_proxy import InferenceProxy
@@ -35,6 +38,11 @@ def get_circuit_breaker() -> CircuitBreaker:
 @lru_cache
 def get_inference_proxy() -> InferenceProxy:
     return InferenceProxy(get_queue_manager(), get_circuit_breaker())
+
+
+@lru_cache
+def get_embedding_service() -> EmbeddingService:
+    return EmbeddingService()
 
 
 async def get_db(

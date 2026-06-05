@@ -12,11 +12,15 @@ from app.services.agents.agent_budget import AgentBudgetService
 from app.services.agents.agent_handoffs import AgentHandoffService
 from app.services.agents.agent_llm_provider import (
     AgentLLMProvider,
+    MockAgentLLMProvider,
     MockProviderError,
     ProviderResponse,
     ProviderUnavailableError,
     get_agent_llm_provider,
 )
+
+# Alias for backward compatibility and test consistency
+MockLLMProvider = MockAgentLLMProvider
 from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.agent_observability import AgentObservabilityService
 from app.services.agents.agent_planner import AgentPlanner

@@ -59,6 +59,7 @@ from app.services.billing import (
     estimate_request_cost,
     get_current_usage_snapshot,
     refresh_billing_statuses,
+    resolve_effective_plan_for_session,
     serialize_invoice,
 )
 from app.services.billing.dispute_management import DisputeManagementService

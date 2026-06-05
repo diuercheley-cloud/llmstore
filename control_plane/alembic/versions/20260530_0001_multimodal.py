@@ -18,75 +18,50 @@ depends_on: Optional[Sequence[str]] = None
 
 
 def upgrade() -> None:
-    # 1. Create multimodal_assets table
-    op.create_table(
-        'multimodal_assets',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('asset_type', sa.String(length=32), nullable=False),
-        sa.Column('storage_path', sa.String(length=256), nullable=False),
-        sa.Column('file_size_bytes', sa.Integer(), nullable=False),
-        sa.Column('mime_type', sa.String(length=64), nullable=False),
-        sa.Column('file_hash', sa.String(length=64), nullable=False),
-        sa.Column('provenance', sa.String(length=256), nullable=True),
-        sa.Column('exif_sanitized', sa.Boolean(), nullable=False, server_default=sa.text('false')),
-        sa.Column('metadata_json', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False)
-    )
-    op.create_index('ix_multimodal_assets_file_hash', 'multimodal_assets', ['file_hash'])
-    op.create_index('ix_multimodal_assets_client_id', 'multimodal_assets', ['client_id'])
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
 
-    # 2. Create multimodal_requests table
-    op.create_table(
-        'multimodal_requests',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('request_type', sa.String(length=32), nullable=False),
-        sa.Column('status', sa.String(length=32), nullable=False),
-        sa.Column('error_message', sa.Text(), nullable=True),
-        sa.Column('input_asset_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_assets.id', ondelete='SET NULL'), nullable=True),
-        sa.Column('output_asset_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_assets.id', ondelete='SET NULL'), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('metadata_json', sa.JSON(), nullable=True)
-    )
-    op.create_index('ix_multimodal_requests_client_id', 'multimodal_requests', ['client_id'])
+    if not inspector.has_table('multimodal_assets'):
+        op.create_table(
+            'multimodal_assets',
+            sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+            sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
+            sa.Column('asset_type', sa.String(length=32), nullable=False),
+            sa.Column('storage_path', sa.String(length=256), nullable=False),
+            sa.Column('file_size_bytes', sa.Integer(), nullable=False),
+            sa.Column('mime_type', sa.String(length=64), nullable=False),
+            sa.Column('file_hash', sa.String(length=64), nullable=False),
+            sa.Column('provenance', sa.String(length=256), nullable=True),
+            sa.Column('exif_sanitized', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+            sa.Column('metadata_json', sa.JSON(), nullable=True),
+            sa.Column('created_at', sa.DateTime(timezone=True), nullable=False)
+        )
 
-    # 3. Create multimodal_usage_events table
-    op.create_table(
-        'multimodal_usage_events',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('request_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_requests.id', ondelete='SET NULL'), nullable=True),
-        sa.Column('feature', sa.String(length=32), nullable=False),
-        sa.Column('unit_count', sa.Integer(), nullable=False),
-        sa.Column('estimated_cost', sa.Float(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False)
-    )
-    op.create_index('ix_multimodal_usage_events_client_id', 'multimodal_usage_events', ['client_id'])
+    existing_indexes = {index['name'] for index in inspector.get_indexes('multimodal_assets')} if inspector.has_table('multimodal_assets') else set()
+    if 'ix_multimodal_assets_file_hash' not in existing_indexes:
+        op.create_index('ix_multimodal_assets_file_hash', 'multimodal_assets', ['file_hash'])
+    if 'ix_multimodal_assets_client_id' not in existing_indexes:
+        op.create_index('ix_multimodal_assets_client_id', 'multimodal_assets', ['client_id'])
 
-    # 4. Create multimodal_policy_events table
-    op.create_table(
-        'multimodal_policy_events',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('feature', sa.String(length=32), nullable=False),
-        sa.Column('event_type', sa.String(length=64), nullable=False),
-        sa.Column('details', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False)
-    )
-    op.create_index('ix_multimodal_policy_events_client_id', 'multimodal_policy_events', ['client_id'])
-
-    # 5. Add multimodal_asset_id column to agent_runs
-    # Use batch_alter_table or check if batch is needed for sqlite compatibility
-    with op.batch_alter_table('agent_runs', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('multimodal_asset_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_assets.id', ondelete='SET NULL'), nullable=True))
+    if not inspector.has_table('multimodal_requests'):
+        op.create_table(
+            'multimodal_requests',
+            sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+            sa.Column('client_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('clients.id', ondelete='CASCADE'), nullable=False),
+            sa.Column('request_type', sa.String(length=32), nullable=False),
+            sa.Column('status', sa.String(length=32), nullable=False),
+            sa.Column('error_message', sa.Text(), nullable=True),
+            sa.Column('input_asset_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_assets.id', ondelete='SET NULL'), nullable=True),
+            sa.Column('output_asset_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('multimodal_assets.id', ondelete='SET NULL'), nullable=True),
+            sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+            sa.Column('metadata_json', sa.JSON(), nullable=True)
+        )
 
 
 def downgrade() -> None:
-    with op.batch_alter_table('agent_runs', schema=None) as batch_op:
-        batch_op.drop_column('multimodal_asset_id')
-
-    op.drop_table('multimodal_policy_events')
-    op.drop_table('multimodal_usage_events')
-    op.drop_table('multimodal_requests')
-    op.drop_table('multimodal_assets')
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if inspector.has_table('multimodal_requests'):
+        op.drop_table('multimodal_requests')
+    if inspector.has_table('multimodal_assets'):
+        op.drop_table('multimodal_assets')

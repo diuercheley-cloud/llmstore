@@ -16,7 +16,9 @@ REDIS_KEY = "admin:onboarding:status"
 async def get_onboarding_status(redis: Redis = Depends(get_redis)):
     data = await redis.get(REDIS_KEY)
     if not data:
-        return OnboardingStatusRead(is_finished=False)
+        # Default to finished so the admin UI is usable on fresh stacks.
+        # The wizard can still be re-enabled explicitly from the UI.
+        return OnboardingStatusRead(is_finished=True)
     
     status_dict = json.loads(data)
     return OnboardingStatusRead(**status_dict)

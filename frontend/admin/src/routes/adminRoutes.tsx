@@ -6,7 +6,7 @@ import { LayoutDashboard } from 'lucide-react'
 // ── Lazy Component Map ────────────────────────────────────────────
 
 const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  '/': lazy(() => import('../pages/operations/OperationsOverview')),
+  '/': lazy(() => import('../pages/Hub')),
   '/clients': lazy(() => import('../pages/Clients')),
   '/models': lazy(() => import('../pages/Models')),
   '/backends': lazy(() => import('../pages/Backends')),
@@ -52,8 +52,12 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/agents/kg': lazy(() => import('../pages/agents/kg/KnowledgeGraph')),
   '/agents/optimization': lazy(() => import('../pages/agents/optimization/OptimizationTournaments')),
 
+  '/operations': lazy(() => import('../pages/operations/OperationsOverview')),
   '/operations/gpu': lazy(() => import('../pages/operations/GPUAutoscaling')),
   '/operations/adapters': lazy(() => import('../pages/operations/AdapterRegistry')),
+  '/operations/readiness': lazy(() => import('../pages/operations/Readiness')),
+  '/operations/security': lazy(() => import('../pages/operations/SecurityPosture')),
+
 
   '/ide': lazy(() => import('../pages/ide/WebIDE')),
   '/developers': lazy(() => import('../pages/developers/DeveloperPortal')),

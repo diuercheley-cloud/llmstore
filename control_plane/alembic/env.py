@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
+from alembic.ddl.impl import DefaultImpl
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models import (  # noqa: F401
@@ -49,7 +50,7 @@ from app.models import (  # noqa: F401
     usage_record,
     user_quota_override,
 )
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import Column, MetaData, PrimaryKeyConstraint, String, Table, engine_from_config, pool, text
 
 config = context.config
 settings = get_settings()
@@ -59,6 +60,44 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
+
+
+def _version_table_impl_128(
+    self,
+    *,
+    version_table,
+    version_table_schema,
+    version_table_pk,
+    **kw,
+):
+    table = Table(
+        version_table,
+        MetaData(),
+        Column("version_num", String(128), nullable=False),
+        schema=version_table_schema,
+    )
+    if version_table_pk:
+        table.append_constraint(PrimaryKeyConstraint("version_num", name=f"{version_table}_pkc"))
+    return table
+
+
+DefaultImpl.version_table_impl = _version_table_impl_128
+
+
+def ensure_alembic_version_width(connection) -> None:
+    result = connection.execute(
+        text(
+            """
+            SELECT character_maximum_length
+            FROM information_schema.columns
+            WHERE table_name = 'alembic_version'
+              AND column_name = 'version_num'
+            """
+        )
+    ).scalar_one_or_none()
+    if result is not None and result < 128:
+        connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128)"))
+        connection.commit()
 
 
 def run_migrations_offline() -> None:
@@ -81,6 +120,7 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        ensure_alembic_version_width(connection)
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
