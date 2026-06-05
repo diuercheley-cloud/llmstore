@@ -18,6 +18,7 @@ from app.services.agents.agent_llm_provider import (
     ProviderUnavailableError,
     get_agent_llm_provider,
 )
+from app.services.billing.cost_attribution import CostAttributionService
 
 # Alias for backward compatibility and test consistency
 MockLLMProvider = MockAgentLLMProvider
@@ -416,13 +417,40 @@ class AgentExecutor:
             p_tok = usage.get("prompt_tokens", 0)
             c_tok = usage.get("completion_tokens", 0)
             cost = decision.cost_brl
+            model_id = decision.model_id
+            backend_id = decision.backend_id
+            latency = decision.latency
         else:
             usage = decision.get("usage", {})
             p_tok, c_tok = usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
             cost = decision.get("cost_brl") or ((p_tok + c_tok) * 0.00005)
+            model_id = decision.get("model_id")
+            backend_id = decision.get("backend_id")
+            latency = decision.get("latency_ms")
+
         run.total_tokens += (p_tok + c_tok)
         run.estimated_cost_brl += cost
         await self.obs.record_cost(run.agent_id, run.id, cost, p_tok, c_tok)
+        
+        # New unified cost attribution
+        try:
+            cost_svc = CostAttributionService(self.db)
+            await cost_svc.record_event(
+                tenant_id=run.tenant_id,
+                user_id=run.user_id,
+                agent_id=run.agent_id,
+                workflow_id=str(run.id),
+                model=model_id,
+                backend=backend_id,
+                input_tokens=p_tok,
+                output_tokens=c_tok,
+                latency_ms=latency,
+                estimated_cost=cost,
+                currency="BRL",  # Current internal cost is BRL as seen in other models
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record unified CostEvent for run {run.id}: {e}")
+
         try:
             from app.services.agents.agent_usage_meter import AgentUsageMeter
             meter = AgentUsageMeter(self.db)

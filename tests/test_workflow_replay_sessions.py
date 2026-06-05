@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 
@@ -20,6 +21,7 @@ async def _create_bundle(session, name: str) -> CommercialPolicyBundle:
     return bundle
 
 
+@pytest.mark.asyncio
 async def test_replay_session_deterministic_match(session):
     orchestrator = DeterministicWorkflowOrchestrator()
     bundle = await _create_bundle(session, "replay-match")
@@ -47,6 +49,7 @@ async def test_replay_session_deterministic_match(session):
     assert replay_session.mismatch_detected is False
 
 
+@pytest.mark.asyncio
 async def test_replay_session_detects_mismatch(session):
     orchestrator = DeterministicWorkflowOrchestrator()
     bundle = await _create_bundle(session, "replay-drift")

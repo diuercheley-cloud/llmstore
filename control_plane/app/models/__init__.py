@@ -302,7 +302,14 @@ from app.models.commercial_workflows import (
     CommercialWorkflowReplaySession,
     CommercialWorkflowStage,
 )
+from app.models.cost_event import CostEvent
 from app.models.customer_payment import CustomerPayment
+from app.models.federation_mesh import (
+    ClusterNode,
+    ConflictRecord,
+    FederationPeer,
+    SyncCommit,
+)
 from app.models.generation_job import GenerationJob
 from app.models.governance.data_governance import (
     DataExportGovernanceRecord,
@@ -332,6 +339,7 @@ from app.models.managed_control_plane import (
     ManagedWorkspace,
 )
 from app.models.model_backend_route import ModelBackendRoute
+from app.models.model_provenance import ModelProvenanceRecord
 from app.models.model_registry import ModelRegistry
 from app.models.operations.adapter_sandbox import (
     AdapterManifest,
@@ -516,11 +524,17 @@ __all__ = [
     "BillingInvoice",
     "BillingPlan",
     "Client",
+    "ClusterNode",
+    "ConflictRecord",
+    "CostEvent",
     "CustomerPayment",
+    "FederationPeer",
     "GenerationJob",
     "InferenceBackend",
     "ModelBackendRoute",
+    "ModelProvenanceRecord",
     "ModelRegistry",
+    "SyncCommit",
     "ModelRuntimeInstance",
     "PricingRule",
     "QuotaCounter",

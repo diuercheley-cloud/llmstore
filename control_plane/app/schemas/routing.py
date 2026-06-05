@@ -57,6 +57,7 @@ class SmartRouterInput(BaseModel):
 
 
 class RoutingDecision(BaseModel):
+    id: str | None = None
     selected_provider: str
     selected_model: str
     selected_backend: str | None = None

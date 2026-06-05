@@ -6,11 +6,26 @@ from pathlib import Path
 import app.models  # noqa: F401
 from app.api.abuse_admin import router as abuse_admin_router
 from app.api.admin import router as admin_router
+from app.api.admin_inference import router as admin_inference_router
+from app.api.admin_executions import router as admin_executions_router
+from app.api.admin_evaluation import router as admin_evaluation_router
+from app.api.admin_costs import router as admin_costs_router
+from app.api.admin_federation_mesh import router as admin_federation_mesh_router
+from app.api.admin_backup import router as admin_backup_router
+from app.api.admin_compliance_evidence import router as admin_compliance_evidence_router
+from app.api.admin_marketplace import router as admin_marketplace_router
+from app.api.admin_performance import router as admin_performance_v2_router
+from app.api.admin_model_provenance import router as admin_model_provenance_router
+from app.api.admin_agent_memory import router as admin_agent_memory_router
 from app.api.admin_metrics import router as admin_metrics_router
+from app.api.admin_observability import router as admin_observability_router
 from app.api.admin_model_experiments import router as admin_model_experiments_router
 from app.api.admin_models_runtime import router as admin_models_runtime_router
 from app.api.admin_onboarding import router as admin_onboarding_router
+from app.api.admin_agent_protocols import router as admin_agent_protocols_router
+from app.api.admin_policies import router as admin_policies_router
 from app.api.admin_rbac import router as admin_rbac_router
+from app.api.admin_sandbox import router as admin_sandbox_router
 from app.api.admin_tests import router as admin_tests_router
 from app.api.admin_vectorstores import router as admin_vectorstores_router
 from app.api.auth import router as auth_router
@@ -259,7 +274,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(billing_payments_router)
 
     from app.api.multimodal import router as multimodal_router
+    from app.api.multimodal_v2 import router as multimodal_v2_router
     app.include_router(multimodal_router)
+    app.include_router(multimodal_v2_router)
 
     if settings.agentic_router_v2_enabled:
         from app.api.agent_routing_admin import router as agent_routing_admin_router
@@ -663,6 +680,17 @@ app.add_middleware(
 app.include_router(public_router)
 app.include_router(system_router)
 app.include_router(admin_router)
+app.include_router(admin_inference_router)
+app.include_router(admin_executions_router)
+app.include_router(admin_costs_router)
+app.include_router(admin_federation_mesh_router)
+app.include_router(admin_backup_router)
+app.include_router(admin_compliance_evidence_router)
+app.include_router(admin_marketplace_router)
+app.include_router(admin_performance_v2_router)
+app.include_router(admin_model_provenance_router)
+app.include_router(admin_agent_memory_router)
+app.include_router(admin_evaluation_router)
 app.include_router(auth_router)
 app.include_router(admin_models_runtime_router)
 app.include_router(admin_rbac_router)
@@ -748,11 +776,15 @@ app.include_router(operations_plugin_supply_chain_admin_router, tags=["operation
 app.include_router(operations_reproducible_builds_admin_router, tags=["operations-reproducible-builds"])
 app.include_router(governance_policy_engine_admin_router)
 app.include_router(observability_admin_router)
+app.include_router(admin_observability_router)
 app.include_router(operations_ux_admin_router)
 app.include_router(performance_admin_router)
 app.include_router(enterprise_onboarding_admin_router)
 app.include_router(admin_onboarding_router)
-app.include_router(admin_metrics_router)
+app.include_router(admin_agent_protocols_router)
+app.include_router(admin_policies_router)
+app.include_router(admin_sandbox_router)
+app.include_router(admin_rbac_router)
 app.include_router(multi_cluster_admin_router)
 app.include_router(chaos_admin_router)
 app.include_router(compliance_admin_router)

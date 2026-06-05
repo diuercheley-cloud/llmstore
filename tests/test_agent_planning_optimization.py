@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import AsyncMock
 
 import pytest
+import pytest_asyncio
 from app.models.agents import (
     AgentDefinition,
     AgentPlan,
@@ -18,7 +19,7 @@ from app.services.agents.planning.step_cache import StepCache
 from sqlalchemy import select
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_agent(session):
     agent = AgentDefinition(
         id=uuid.uuid4(),

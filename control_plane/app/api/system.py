@@ -875,6 +875,11 @@ async def admin_tests():
     static_file = Path(__file__).resolve().parents[1] / "static" / "admin-tests" / "index.html"
     return FileResponse(static_file)
 
+@router.get("/hub", include_in_schema=False)
+async def frontend_hub():
+    static_file = Path(__file__).resolve().parents[1] / "static" / "hub" / "index.html"
+    return FileResponse(static_file)
+
 @router.get("/admin-dashboard", include_in_schema=False)
 async def admin_dashboard():
     if settings.public_exposure:

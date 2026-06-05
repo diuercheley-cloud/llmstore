@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.models.agent_uncertainty import AgentUncertaintyEvent
 from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.uncertainty.uncertainty_estimator import UncertaintyEstimator
@@ -15,7 +16,7 @@ def agent_id():
 def run_id():
     return uuid.uuid4()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_compliance_agent(session, agent_id):
     agent = AgentDefinition(
         id=agent_id,

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Exemplos | LLM Inference Stack</title>
+    <script src="/static/www/branding-init.js"></script>
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --panel: rgba(255, 252, 245, 0.88);
+        --ink: #181512;
+        --muted: #6b6257;
+        --line: rgba(24, 21, 18, 0.12);
+        --accent: #c84c2f;
+        --accent-dark: #8f2f1f;
+        --accent-soft: #f5d6c7;
+        --shadow: 0 20px 60px rgba(44, 28, 16, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(200, 76, 47, 0.24), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(68, 110, 95, 0.2), transparent 30%),
+          linear-gradient(180deg, #fbf6ec 0%, var(--bg) 100%);
+        line-height: 1.5;
+      }
+      a { color: inherit; text-decoration: none; }
+      pre, code { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; }
+      .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding-bottom: 56px; }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 24px 0;
+      }
+      .brand { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800; color: var(--accent); }
+      .links { display: flex; gap: 16px; align-items: center; color: var(--muted); font-weight: 500; font-size: 14px; flex-wrap: wrap; }
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+        gap: 24px;
+        align-items: start;
+        padding: 24px 0 40px;
+      }
+      .panel {
+        padding: 28px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .eyebrow {
+        display: inline-flex;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-dark);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 14px 0 12px;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+      }
+      .lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.65;
+        max-width: 58ch;
+      }
+      .stats { display: grid; gap: 14px; }
+      .stat {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .stat strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .stat span {
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .section { margin-top: 28px; }
+      .section h2 {
+        margin: 0 0 14px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      .section p {
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+      }
+      .snippet-card {
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .snippet-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .snippet-head strong { font-size: 16px; }
+      .snippet-head button,
+      .cta {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .snippet-head button:hover,
+      .cta:hover {
+        background: rgba(255, 255, 255, 0.88);
+      }
+      pre {
+        margin: 0;
+        padding: 18px;
+        overflow: auto;
+        background: #1a1714;
+        color: #f7efe5;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      @media (max-width: 860px) {
+        .nav, .footer { flex-direction: column; align-items: flex-start; }
+        .hero { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <nav class="nav">
+        <div class="brand" data-brand="product_name">LLM Stack Local</div>
+        <div class="links">
+          <a href="/">Inicio</a>
+          <a href="/hub">Hub</a>
+          <a href="/docs">Docs</a>
+          <a href="/capabilities">Capabilities</a>
+          <a href="/client-portal">Client Portal</a>
+        </div>
+      </nav>
+
+      <section class="hero">
+        <div class="panel">
+          <span class="eyebrow">Exemplos Públicos</span>
+          <h1>Integração rápida com a API compatível com OpenAI</h1>
+          <p class="lead">
+            Esta página conecta o frontend aos endpoints públicos reais do backend para mostrar URL base,
+            status do sistema e snippets iniciais para chamadas de chat completions.
+          </p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
+            <a class="cta" href="/docs">Ver documentação</a>
+            <a class="cta" href="/signup">Criar conta</a>
+            <a class="cta" href="/client-portal">Abrir portal</a>
+          </div>
+        </div>
+        <aside class="stats">
+          <div class="stat">
+            <strong>Base URL</strong>
+            <span id="baseUrl">carregando...</span>
+          </div>
+          <div class="stat">
+            <strong>Status</strong>
+            <span id="statusText">verificando...</span>
+          </div>
+          <div class="stat">
+            <strong>Planos</strong>
+            <span id="plansCount">-</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section">
+        <h2>Snippets</h2>
+        <p>Substitua <code>__API_KEY__</code> pela sua chave antes de executar. A URL abaixo é carregada dinamicamente do backend.</p>
+        <div id="snippetsGrid" class="grid">
+          <div class="snippet-card">
+            <div class="snippet-head">
+              <strong>Carregando</strong>
+            </div>
+            <pre><code>Aguarde enquanto buscamos os exemplos...</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <div>Exemplos públicos ligados a <code>/status</code> e <code>/public/plans</code>.</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <a href="/docs">Documentação</a>
+          <a href="/capabilities">Capabilities</a>
+          <a href="/hub">Hub</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const snippetCatalog = {
+        curl: {
+          title: "curl",
+          body: (baseUrl) => `curl -X POST ${baseUrl}/chat/completions \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer __API_KEY__" \\\n  -d '{"model":"default","messages":[{"role":"user","content":"Olá!"}]}'`,
+        },
+        python: {
+          title: "Python",
+          body: (baseUrl) => `from openai import OpenAI\n\nclient = OpenAI(api_key="__API_KEY__", base_url="${baseUrl}")\nresp = client.chat.completions.create(\n    model="default",\n    messages=[{"role": "user", "content": "Olá!"}],\n)\nprint(resp.choices[0].message.content)`,
+        },
+        node: {
+          title: "Node.js",
+          body: (baseUrl) => `import OpenAI from "openai";\n\nconst client = new OpenAI({ apiKey: "__API_KEY__", baseURL: "${baseUrl}" });\nconst resp = await client.chat.completions.create({\n  model: "default",\n  messages: [{ role: "user", content: "Olá!" }],\n});\nconsole.log(resp.choices[0].message.content);`,
+        },
+      };
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      async function copySnippet(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (_) {}
+      }
+
+      function renderSnippets(baseUrl) {
+        const host = document.getElementById("snippetsGrid");
+        host.innerHTML = Object.values(snippetCatalog).map((snippet) => {
+          const body = snippet.body(baseUrl);
+          return `
+            <article class="snippet-card">
+              <div class="snippet-head">
+                <strong>${snippet.title}</strong>
+                <button type="button" data-copy="${encodeURIComponent(body)}">Copiar</button>
+              </div>
+              <pre><code>${escapeHtml(body)}</code></pre>
+            </article>
+          `;
+        }).join("");
+
+        host.querySelectorAll("[data-copy]").forEach((button) => {
+          button.addEventListener("click", function () {
+            copySnippet(decodeURIComponent(button.getAttribute("data-copy")));
+          });
+        });
+      }
+
+      async function loadPage() {
+        const [statusResp, plansResp] = await Promise.allSettled([
+          fetch("/status", { cache: "no-cache" }).then((r) => r.json()),
+          fetch("/public/plans", { cache: "no-cache" }).then((r) => r.json()),
+        ]);
+
+        const baseUrl = `${window.location.origin}/v1`;
+        document.getElementById("baseUrl").textContent = baseUrl;
+        renderSnippets(baseUrl);
+
+        const statusText = document.getElementById("statusText");
+        if (statusResp.status === "fulfilled") {
+          const payload = statusResp.value;
+          const components = payload.components || {};
+          statusText.textContent = `${payload.status} · modelos ativos: ${components.models_active ?? 0}`;
+        } else {
+          statusText.textContent = "indisponível";
+        }
+
+        const plansCount = document.getElementById("plansCount");
+        if (plansResp.status === "fulfilled") {
+          plansCount.textContent = String((plansResp.value.plans || []).length);
+        } else {
+          plansCount.textContent = "-";
+        }
+      }
+
+      loadPage().catch(function () {
+        document.getElementById("statusText").textContent = "indisponível";
+        document.getElementById("baseUrl").textContent = `${window.location.origin}/v1`;
+        renderSnippets(`${window.location.origin}/v1`);
+      });
+    </script>
+  </body>
+</html>

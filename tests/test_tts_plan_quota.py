@@ -35,7 +35,7 @@ async def tts_test_env(isolated_db_url, fake_redis):
     app.dependency_overrides.clear()
     await engine.dispose()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def tts_setup(tts_test_env):
     ac, sessionmaker = tts_test_env
     

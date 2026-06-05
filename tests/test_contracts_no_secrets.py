@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 import pytest
 
@@ -69,7 +70,7 @@ def test_no_env_vars_in_templates():
 
 
 def test_artifacts_contracts_not_tracked():
-    result = os.popen("git ls-files artifacts/contracts/ 2>/dev/null").read()
+    result = subprocess.check_output(["git", "ls-files", "artifacts/contracts/"], stderr=subprocess.DEVNULL, text=True)
     assert result.strip() == "", (
         "artifacts/contracts/ should NOT be tracked by Git, but found: "
         + result.strip()

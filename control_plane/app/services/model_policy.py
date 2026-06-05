@@ -16,7 +16,7 @@ from sqlalchemy import inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm"}
+SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm", "tgi", "openai_compatible", "openai", "anthropic", "deepseek", "openrouter"}
 ROUTE_STATE_ORDER = {"healthy": 0, "degraded": 1, "unhealthy": 2, "disabled": 3}
 MODEL_REGISTRY_ROUTING_LOADS = (
     selectinload(ModelRegistry.inference_backend),

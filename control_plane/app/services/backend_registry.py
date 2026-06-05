@@ -59,6 +59,17 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "metadata_json": json.dumps({"service_name": "data-plane-vllm", "api_key": settings.vllm_api_key}),
         },
         {
+            "name": "tgi-local",
+            "provider": "tgi",
+            "backend_url": "http://data-plane-tgi:8080",
+            "healthcheck_path": "/health",
+            "is_active": False,
+            "is_default": False,
+            "status": "optional",
+            "max_parallel_requests": 4,
+            "metadata_json": json.dumps({"service_name": "data-plane-tgi"}),
+        },
+        {
             "name": "fallback-local",
             "provider": "llama.cpp",
             "backend_url": "http://data-plane-mock:8081",

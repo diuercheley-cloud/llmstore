@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
@@ -20,8 +20,8 @@ async def session(isolated_db_url):
 
 @pytest.mark.asyncio
 async def test_create_checkpoint(session: AsyncSession):
-    start = datetime.utcnow() - timedelta(days=1)
-    end = datetime.utcnow()
+    start = datetime.now(timezone.utc) - timedelta(days=1)
+    end = datetime.now(timezone.utc)
     checkpoint = await transparency_gossip.create_consistency_checkpoint(
         session,
         "merkle_timeline",
@@ -35,8 +35,8 @@ async def test_create_checkpoint(session: AsyncSession):
 async def test_checkpoint_ingest_and_export(session: AsyncSession):
     payload = {
         "checkpoint_type": "receipt_chain",
-        "period_start": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
-        "period_end": datetime.utcnow().isoformat(),
+        "period_start": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+        "period_end": datetime.now(timezone.utc).isoformat(),
         "root_hash": "a" * 64,
         "witness_summary": {"count": 5}
     }
@@ -49,8 +49,8 @@ async def test_checkpoint_ingest_and_export(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_split_view_detection(session: AsyncSession):
-    start = datetime.utcnow() - timedelta(hours=1)
-    end = datetime.utcnow()
+    start = datetime.now(timezone.utc) - timedelta(hours=1)
+    end = datetime.now(timezone.utc)
     
     # 1. Create first checkpoint
     cp1 = CommercialConsistencyCheckpoint(

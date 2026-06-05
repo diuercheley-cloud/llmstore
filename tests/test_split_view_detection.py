@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
@@ -22,8 +22,8 @@ async def session(isolated_db_url):
 
 @pytest.mark.asyncio
 async def test_detect_split_view_manual(session: AsyncSession):
-    start = datetime.utcnow() - timedelta(days=2)
-    end = datetime.utcnow() - timedelta(days=1)
+    start = datetime.now(timezone.utc) - timedelta(days=2)
+    end = datetime.now(timezone.utc) - timedelta(days=1)
     
     cp_local = CommercialConsistencyCheckpoint(
         checkpoint_type="merkle_timeline",

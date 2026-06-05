@@ -2,6 +2,7 @@ import asyncio
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.services.agents.connectors.github_connector import GitHubConnector
 from fastapi import FastAPI, Header, Request
@@ -21,7 +22,7 @@ async def create_issue(owner: str, repo: str, request: Request, idempotency_key:
     body = await request.json()
     return {"id": 123, "title": body["title"], "idempotency_key": idempotency_key}
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def fake_server():
     config = Config(app=app, host="127.0.0.1", port=0, log_level="error")
     server = Server(config)

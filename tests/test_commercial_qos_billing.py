@@ -3,6 +3,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+import pytest_asyncio
 from app.core.time import utc_now
 from app.models.ai_wallet import AiWallet
 from app.models.billing_invoice import BillingInvoice
@@ -12,7 +13,7 @@ from app.services.billing.qos_billing import CommercialQoSBillingService
 from sqlalchemy import select
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_client(session):
     client = Client(
         id=uuid.uuid4(),
@@ -25,7 +26,7 @@ async def sample_client(session):
     await session.commit()
     return client
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_chargeback(session, sample_client):
     cb = CommercialQueueChargeback(
         client_id=sample_client.id,

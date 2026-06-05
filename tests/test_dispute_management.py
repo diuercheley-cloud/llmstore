@@ -2,13 +2,14 @@ import uuid
 from decimal import Decimal
 
 import pytest
+import pytest_asyncio
 from app.models.ai_wallet import AiWallet
 from app.models.client import Client
 from app.services.billing.dispute_management import DisputeManagementService
 from sqlalchemy import select
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_client(session):
     client = Client(
         id=uuid.uuid4(),

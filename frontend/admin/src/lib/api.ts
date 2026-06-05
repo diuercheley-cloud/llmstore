@@ -116,7 +116,19 @@ class APIClient {
   // Admin - Usage & Billing
   getUsageSummary = () => this.request<any>('GET', '/admin/usage/summary')
   getRevenueSummary = () => this.request<any>('GET', '/admin/revenue/summary')
+  getCostsSummary = (params?: any) => this.request<any>('GET', '/api/admin/costs/summary', { params })
+  getCostsByAgent = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-agent', { params })
+  getCostsByTool = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-tool', { params })
+  getCostsByTenant = () => this.request<any[]>('GET', '/api/admin/costs/by-tenant')
+  exportCosts = (params: any) => this.request<any>('GET', '/api/admin/costs/export', { params, responseType: 'blob' })
   listInvoices = () => this.request<any[]>('GET', '/admin/billing/invoices')
+  
+  // Admin - Performance V2
+  getPerformanceCapabilities = () => this.request<string[]>('GET', '/api/admin/performance/capabilities')
+  listBackendPerformance = () => this.request<any[]>('GET', '/api/admin/performance/backends')
+  getPerformanceRecommendations = () => this.request<any[]>('GET', '/api/admin/performance/recommendations')
+  simulatePerformance = (payload: any) => this.request<any>('POST', '/api/admin/performance/simulate', { data: payload })
+
   listPayments = () => this.request<any[]>('GET', '/admin/billing/payments')
 
   // Admin - Enterprise Onboarding

@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.digital_twin import DigitalTwinSafetyEvent
 from app.services.agents.digital_twins.twin_registry import TwinRegistry
@@ -12,7 +13,7 @@ from app.services.agents.digital_twins.twin_state import TwinState
 def twin_id():
     return uuid.uuid4()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_twin(session, twin_id):
     registry = TwinRegistry(session)
     twin = await registry.register("t1", {

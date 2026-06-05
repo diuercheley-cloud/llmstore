@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -17,7 +17,7 @@ ARTIFACT_DIR = Path("artifacts/e2e/production-agentic")
 def write_report(filename: str, title: str, content: str):
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     report_path = ARTIFACT_DIR / filename
-    full_content = f"# E2E Test Report - {title}\n\n**Timestamp:** {datetime.utcnow().isoformat()}\n\n{content}"
+    full_content = f"# E2E Test Report - {title}\n\n**Timestamp:** {datetime.now(timezone.utc).isoformat()}\n\n{content}"
     report_path.write_text(full_content, encoding="utf-8")
 
 @pytest.mark.asyncio
@@ -163,7 +163,7 @@ async def test_all_production_agentic_gates():
     summary_content = f"""# E2E Production Agentic Summary
 
 **Tag:** {get_current_tag()}
-**Timestamp:** {datetime.utcnow().isoformat()}
+**Timestamp:** {datetime.now(timezone.utc).isoformat()}
 **Result: PASS**
 
 ## Gates Validated

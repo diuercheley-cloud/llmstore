@@ -1,5 +1,6 @@
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.agent_federated_memory import (
     FederatedMemoryPeer,
@@ -13,7 +14,7 @@ from app.services.agents.federated_memory.remote_memory_reference import (
 from app.services.agents.federated_memory.sovereignty_policy import SovereigntyPolicy
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_peer(session):
     peer = FederatedMemoryPeer(
         cluster_id="cluster-us-1",

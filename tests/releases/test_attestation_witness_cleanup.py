@@ -159,7 +159,7 @@ async def test_witness_signatures_fail_if_placeholders_in_production():
 @pytest.mark.asyncio
 async def test_witness_unsigned_event_fails():
     db = AsyncMock()
-    from datetime import datetime
+    from datetime import datetime, timezone
     
     # Event with fake/invalid hash
     event = CommercialWitnessAuditEvent(
@@ -169,7 +169,7 @@ async def test_witness_unsigned_event_fails():
         timeline_id=uuid.uuid4(),
         summary="Some summary",
         immutable_hash="invalid-hash-value-123",
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     
     db.execute.side_effect = [

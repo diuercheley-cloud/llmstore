@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
@@ -44,8 +44,8 @@ async def test_witness_signature_and_quorum(session: AsyncSession):
     # 2. Create a dummy timeline
     timeline = CommercialMerkleTimeline(
         timeline_type="inference_receipts",
-        period_start=datetime.utcnow() - timedelta(hours=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(timezone.utc) - timedelta(hours=1),
+        period_end=datetime.now(timezone.utc),
         leaf_count=10,
         merkle_root="f" * 64,
         timeline_hash="timeline_hash_1",
@@ -71,8 +71,8 @@ async def test_quorum_not_met(session: AsyncSession):
     # Create timeline without signatures
     timeline = CommercialMerkleTimeline(
         timeline_type="inference_receipts",
-        period_start=datetime.utcnow() - timedelta(hours=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(timezone.utc) - timedelta(hours=1),
+        period_end=datetime.now(timezone.utc),
         leaf_count=5,
         merkle_root="e" * 64,
         timeline_hash="timeline_hash_2",
@@ -92,8 +92,8 @@ async def test_proof_with_witness_data(session: AsyncSession):
     
     timeline = CommercialMerkleTimeline(
         timeline_type="inference_receipts",
-        period_start=datetime.utcnow() - timedelta(hours=1),
-        period_end=datetime.utcnow(),
+        period_start=datetime.now(timezone.utc) - timedelta(hours=1),
+        period_end=datetime.now(timezone.utc),
         leaf_count=1,
         merkle_root="d" * 64,
         timeline_hash="timeline_hash_3",

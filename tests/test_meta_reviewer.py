@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition
 from app.services.agents.meta_reviewer.meta_reviewer import MetaReviewerService
@@ -14,7 +15,7 @@ def agent_id():
 def run_id():
     return uuid.uuid4()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_agent(session, agent_id):
     agent = AgentDefinition(
         id=agent_id,

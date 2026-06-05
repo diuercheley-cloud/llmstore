@@ -241,6 +241,7 @@ class SmartRouter(RoutingContract):
                 fallback_chain.append("local")
 
         decision = RoutingDecision(
+            id=str(uuid4()),
             selected_provider=selected_provider,
             selected_model=selected_model or "local-model",
             selected_backend=selected_backend or selected_provider,
@@ -568,7 +569,7 @@ class SmartRouter(RoutingContract):
         provider_states: dict[str, str],
     ) -> None:
         entry: dict[str, Any] = {
-            "id": str(uuid4()),
+            "id": decision.id or str(uuid4()),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "requested_model": inp.requested_model or "unspecified",
             "resolved_model": decision.selected_model,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_workflows import CommercialWorkflowStage
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
@@ -24,6 +25,7 @@ async def _create_bundle(session: AsyncSession, *, name: str = "wf-policy") -> C
     return bundle
 
 
+@pytest.mark.asyncio
 async def test_enforcement_deny_by_default(session: AsyncSession):
     orchestrator = DeterministicWorkflowOrchestrator()
     definition = await orchestrator.create_definition(
@@ -43,6 +45,7 @@ async def test_enforcement_deny_by_default(session: AsyncSession):
     assert stage.policy_gate_status == "denied"
 
 
+@pytest.mark.asyncio
 async def test_policy_snapshot_drift_and_rollback(session: AsyncSession):
     orchestrator = DeterministicWorkflowOrchestrator()
     bundle = await _create_bundle(session)

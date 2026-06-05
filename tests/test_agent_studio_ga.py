@@ -1,12 +1,13 @@
 
 import pytest
+import pytest_asyncio
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_runtime_adapter import FlowRuntimeAdapter
 from app.services.agents.studio.flow_validator import FlowValidator
 from app.services.agents.studio.flow_versioning import FlowVersioningService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_flow(session):
     service = FlowVersioningService(session)
     flow = await service.create_flow("tenant_a", "Test Flow", "Description")

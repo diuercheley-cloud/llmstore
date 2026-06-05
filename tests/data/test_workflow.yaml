@@ -1,0 +1,9 @@
+name: "Test Workflow"
+description: "A simple workflow for testing agentctl"
+steps:
+  - name: "Step 1"
+    type: "llm"
+    prompt: "Hello, world!"
+  - name: "Step 2"
+    type: "tool"
+    tool: "web_search"

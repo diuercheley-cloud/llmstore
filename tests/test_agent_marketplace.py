@@ -1,65 +1,97 @@
-import json
+import uuid
 
 import pytest
-from app.core.config import get_settings
-from app.services.agents.agent_marketplace import AgentMarketplaceService
+import pytest_asyncio
+from app.schemas.marketplace import AgentManifest
+from app.services.marketplace.service import MarketplaceService
+from app.models.agent_marketplace import MarketplacePublisher
 
+@pytest_asyncio.fixture
+async def mock_publisher(session):
+    pub = MarketplacePublisher(
+        tenant_id="pub-tenant-1",
+        name="Trusted Publisher",
+        is_verified=True
+    )
+    session.add(pub)
+    await session.commit()
+    return pub
 
 @pytest.mark.asyncio
-async def test_bundle_install_valid(session):
-    settings = get_settings()
-    settings.agent_bundle_install_enabled = True
-    settings.agent_bundle_signature_required = False
-    
-    service = AgentMarketplaceService(session)
-    
-    bundle_data = {
-        "name": "test-agent",
-        "version": "1.0.0",
-        "category": "test",
-        "agent_definition": {
-            "instructions": "test instructions",
-            "allowed_tools": ["t1"]
-        }
+async def test_manifest_validation():
+    service = MarketplaceService(None)
+    valid_data = {
+        "name": "Test Agent",
+        "version": "1.2.3",
+        "author": "Kleber AI",
+        "description": "Safe agent",
+        "permissions": ["chat:read"]
     }
-    
-    content = json.dumps(bundle_data).encode("utf-8")
-    install = await service.install_bundle("t1", content, "bundle.json")
-    
-    assert install.status == "installed"
-    assert install.is_enabled is False
-    
-    # Check if agent definition was created
-    from app.services.agents import agent_state
-    agent = await agent_state.get_agent_definition(session, install.agent_id)
-    assert agent.name == "test-agent"
-    assert agent.instructions == "test instructions"
+    manifest = await service.validate_package(valid_data)
+    assert manifest.name == "Test Agent"
+    assert "chat:read" in manifest.permissions
 
 @pytest.mark.asyncio
-async def test_bundle_signature_required_failure(session):
-    settings = get_settings()
-    settings.agent_bundle_install_enabled = True
-    settings.agent_bundle_signature_required = True
+async def test_install_dry_run_dangerous_permissions():
+    service = MarketplaceService(None)
+    manifest = AgentManifest(
+        name="Danger Agent",
+        version="1.0.0",
+        author="Unknown",
+        description="I want your files",
+        permissions=["filesystem:write"]
+    )
     
-    service = AgentMarketplaceService(session)
-    bundle_data = {"name": "unsigned", "version": "1"}
-    content = json.dumps(bundle_data).encode("utf-8")
-    
-    with pytest.raises(ValueError, match="signature is required"):
-        await service.install_bundle("t1", content, "bundle.json")
+    res = await service.install_dry_run(manifest, "https://danger.zone/agent.stack")
+    assert res.policy_evaluation == "needs_review"
+    assert any("Dangerous permission" in w for w in res.warnings)
 
 @pytest.mark.asyncio
-async def test_trust_report_generation(session):
-    settings = get_settings()
-    settings.agent_bundle_install_enabled = True
+async def test_install_dry_run_unsigned_package():
+    service = MarketplaceService(None)
+    manifest = AgentManifest(
+        name="Unsigned Agent",
+        version="1.0.0",
+        author="Dev",
+        description="No signature here",
+        permissions=[],
+        signature=None
+    )
     
-    service = AgentMarketplaceService(session)
-    bundle_data = {"name": "trusted", "version": "1", "agent_definition": {}}
-    content = json.dumps(bundle_data).encode("utf-8")
+    res = await service.install_dry_run(manifest, "local://unsigned.stack")
+    assert res.attestation_verified is False
+    assert any("unsigned" in w for w in res.warnings)
+
+@pytest.mark.asyncio
+async def test_marketplace_api_flow(admin_client, session, mock_publisher):
+    headers = {"X-Admin-Token": "test-admin-token"}
+    service = MarketplaceService(session)
     
-    install = await service.install_bundle("t1", content, "bundle.json")
-    report = await service.get_trust_report(install.version_id)
+    # 1. Register an item
+    manifest = AgentManifest(
+        name="Market API Agent",
+        version="1.0.0",
+        author="Kleber AI",
+        description="Test from API",
+        permissions=["web:search"]
+    )
+    item = await service.register_item(str(mock_publisher.id), manifest)
+    await session.commit()
     
-    assert report is not None
-    assert report.trust_score >= 0.0
-    assert report.is_signed is False
+    # 2. List agents
+    resp = await admin_client.get("/api/admin/marketplace/agents", headers=headers)
+    assert resp.status_code == 200
+    agents = resp.json()
+    assert any(a["name"] == "Market API Agent" for a in agents)
+    
+    # 3. Dry-run install
+    payload = {"package_url": "https://market.stack/agent-api.stack"}
+    resp_dry = await admin_client.post("/api/admin/marketplace/install/dry-run", json=payload, headers=headers)
+    assert resp_dry.status_code == 200
+    assert resp_dry.json()["policy_evaluation"] == "allowed" # Mock default is safe
+    
+    # 4. Dry-run install (dangerous)
+    payload_danger = {"package_url": "https://market.stack/dangerous-agent.stack"}
+    resp_danger = await admin_client.post("/api/admin/marketplace/install/dry-run", json=payload_danger, headers=headers)
+    assert resp_danger.status_code == 200
+    assert resp_danger.json()["policy_evaluation"] == "needs_review"

@@ -5,6 +5,7 @@ import sys
 from ._logging import setup_logging
 from .cli_args import (
     add_agent_args,
+    add_agents_args,
     add_approval_args,
     add_auto_mode_args,
     add_cache_args,
@@ -41,6 +42,7 @@ from .cli_commands import (
     run_security_command,
     run_server_command,
     run_teams_command,
+    run_agents_command,
     run_terminal_command,
 )
 from .config import HarnessConfig, HarnessConfigError
@@ -395,9 +397,12 @@ def main():
     
     pause_auto_parser = auto_subparsers.add_parser("pause", help="Pause an active autonomous run")
     pause_auto_parser.add_argument("run_id", help="ID of the run to pause")
-    
     stop_auto_parser = auto_subparsers.add_parser("stop", help="Stop an active autonomous run")
     stop_auto_parser.add_argument("run_id", help="ID of the run to stop")
+
+    # Agents sub-command (Advanced MAS)
+    agents_parser = subparsers.add_parser("agents", help="Advanced agent orchestration")
+    add_agents_args(agents_parser)
 
     args = parser.parse_args()
 
@@ -459,6 +464,8 @@ def main():
             asyncio.run(run_models_command(args))
         elif args.command == "teams":
             asyncio.run(run_teams_command(args))
+        elif args.command == "agents":
+            asyncio.run(run_agents_command(args))
         elif args.command == "autonomous":
             asyncio.run(run_autonomous_command(args))
         else:

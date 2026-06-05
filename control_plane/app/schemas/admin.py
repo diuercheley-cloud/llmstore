@@ -341,7 +341,7 @@ class ModelRegistryPatch(BaseModel):
 
 class InferenceBackendCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
-    provider: str = Field(pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible|openrouter|openai|anthropic|deepseek)$")
+    provider: str = Field(pattern=r"^(llama\.cpp|ollama|vllm|tgi|openai_compatible|openrouter|openai|anthropic|deepseek)$")
     backend_url: str = Field(min_length=8, max_length=255)
     healthcheck_path: str = Field(default="/health", min_length=1, max_length=64)
     is_active: bool = True
@@ -353,7 +353,7 @@ class InferenceBackendCreate(BaseModel):
 
 class InferenceBackendPatch(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=120)
-    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm|openai_compatible|openrouter|openai|anthropic|deepseek)$")
+    provider: str | None = Field(default=None, pattern=r"^(llama\.cpp|ollama|vllm|tgi|openai_compatible|openrouter|openai|anthropic|deepseek)$")
     backend_url: str | None = Field(default=None, min_length=8, max_length=255)
     healthcheck_path: str | None = Field(default=None, min_length=1, max_length=64)
     is_active: bool | None = None

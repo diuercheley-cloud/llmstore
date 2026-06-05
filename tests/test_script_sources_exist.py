@@ -95,7 +95,7 @@ def test_no_fragile_source():
                     continue
                 rel = sh.relative_to(ROOT_DIR)
                 assert "${BASH_SOURCE[0]}" in content or "${BASH_SOURCE[0]}" in line, (
-                    f"{rel}: uses legacy dirname \$0 without BASH_SOURCE"
+                    f"{rel}: uses legacy dirname $0 without BASH_SOURCE"
                 )
 
 

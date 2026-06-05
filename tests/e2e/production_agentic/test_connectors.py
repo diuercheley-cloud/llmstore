@@ -21,6 +21,7 @@ def local_fake_server():
     thread.start()
     yield "http://localhost:19090"
     server.shutdown()
+    thread.join(timeout=5)
 
 @pytest.mark.asyncio
 async def test_connector_real_mode_contract(local_fake_server):

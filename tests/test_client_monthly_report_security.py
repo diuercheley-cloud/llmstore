@@ -109,7 +109,7 @@ def test_report_contains_no_env_vars():
 
 
 def test_artifacts_not_tracked():
-    result = os.popen("git ls-files artifacts/monthly-reports/ 2>/dev/null").read()
+    result = subprocess.check_output(["git", "ls-files", "artifacts/monthly-reports/"], stderr=subprocess.DEVNULL, text=True)
     assert result.strip() == "", (
         "artifacts/monthly-reports/ should NOT be tracked by Git, but found: "
         + result.strip()

@@ -45,6 +45,7 @@ class ProviderResponse(dict):
         "type", "output", "usage", "cost_brl", "provider_type", "model_id",
         "backend_id", "backend_name", "execution_mode", "tokens", "latency",
         "fallback_used", "validation_status", "tool_name", "tool_input",
+        "route_decision_id",
     ]
 
     def __init__(
@@ -64,6 +65,7 @@ class ProviderResponse(dict):
         validation_status: str = "not_validated",
         tool_name: Optional[str] = None,
         tool_input: Optional[Dict[str, Any]] = None,
+        route_decision_id: Optional[str] = None,
     ):
         _usage = usage or {"prompt_tokens": 0, "completion_tokens": 0}
         _tokens = tokens or {}
@@ -83,6 +85,7 @@ class ProviderResponse(dict):
             validation_status=validation_status,
             tool_name=tool_name,
             tool_input=tool_input,
+            route_decision_id=route_decision_id,
         )
 
     def __setitem__(self, key, value):
@@ -147,6 +150,10 @@ class ProviderResponse(dict):
     @property
     def tool_input(self) -> Optional[Dict[str, Any]]:
         return self.get("tool_input")
+
+    @property
+    def route_decision_id(self) -> Optional[str]:
+        return self.get("route_decision_id")
 
     def to_dict(self) -> Dict[str, Any]:
         return dict(self)

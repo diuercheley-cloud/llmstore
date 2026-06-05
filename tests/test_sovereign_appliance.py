@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
@@ -49,7 +49,7 @@ async def test_stage_offline_model_bundle(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_generate_offline_audit_package(session: AsyncSession):
-    end = datetime.utcnow()
+    end = datetime.now(timezone.utc)
     start = end - timedelta(hours=24)
     package = await sovereign_appliance.generate_offline_audit_package(
         session, start, end

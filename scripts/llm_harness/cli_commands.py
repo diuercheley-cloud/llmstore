@@ -1031,6 +1031,61 @@ async def run_fix_error_command(args):
         print(f"FAILURE: Error correction failed: {result.error}")
 
 
+async def run_agents_command(args):
+    import sys
+    from .mas.registry import AgentRegistry
+    from .mas.teams import TeamManager
+    from .mas.orchestrator import Orchestrator
+    from .coding_loop import CodingLoop
+    from .agent_client import AgentClient
+    from .workspace import Workspace
+    from .config import get_config
+    import inspect
+
+    cli_overrides = build_config_overrides(args)
+    config = get_config(cli_overrides)
+    registry = AgentRegistry.load(config.agent_registry_file)
+    manager = TeamManager(registry)
+
+    if args.agents_command == "run":
+        team = manager.load_team_from_yaml(args.team_file)
+        
+        provider_config = build_provider_config(args)
+        provider = provider_config.pop("provider", _resolve_code_agent(args))
+        
+        sig = inspect.signature(AgentClient.__init__)
+        client_kwargs = {
+            k: v for k, v in provider_config.items() 
+            if k in sig.parameters and k != "self"
+        }
+        client_kwargs = _normalize_client_kwargs(client_kwargs)
+        client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
+
+        async with Workspace(base_path=getattr(args, "workspace", None)) as workspace:
+            loop = CodingLoop(agent_client=client, workspace=workspace)
+            loop.config = config
+            orchestrator = Orchestrator(loop)
+            
+            print(f"Running Team: {team.team_name} from {args.team_file}")
+            result = await orchestrator.run(team, args.task)
+            
+            print("\nResult:")
+            print(f"Success: {result.success}")
+            print(f"Message: {result.message}")
+
+    elif args.agents_command == "validate":
+        try:
+            manager.load_team_from_yaml(args.team_file)
+            print(f"Team {args.team_file} is VALID.")
+        except Exception as e:
+            print(f"Team {args.team_file} is INVALID: {e}")
+            sys.exit(1)
+
+    elif args.agents_command == "explain":
+        team = manager.load_team_from_yaml(args.team_file)
+        print(manager.explain_team(team))
+
+
 async def run_terminal_command(args):
     import os
     import re

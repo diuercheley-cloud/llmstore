@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
+
 from app.core.time import utc_now
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_workflows import (
@@ -51,6 +53,7 @@ async def _setup_execution(session: AsyncSession):
     return execution, stage, snapshot
 
 
+@pytest.mark.asyncio
 async def test_multi_step_approval_and_delegation(session: AsyncSession):
     execution, stage, snapshot = await _setup_execution(session)
     service = WorkflowApprovalChainService()
@@ -86,6 +89,7 @@ async def test_multi_step_approval_and_delegation(session: AsyncSession):
     assert rows[1].delegated_by == "requester"
 
 
+@pytest.mark.asyncio
 async def test_approval_expiration(session: AsyncSession):
     execution, stage, snapshot = await _setup_execution(session)
     service = WorkflowApprovalChainService()

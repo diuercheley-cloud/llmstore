@@ -86,6 +86,8 @@ status: consolidated
 | [Validation Workflows](architecture/platform_validation_workflows.md) | Smoke, full, doc validation workflows |
 | [Platform Architecture Validation](validation/) | Architecture validation suite |
 | [Phase Index](PHASE_INDEX.md) | Historical phase progression |
+| [Sovereign Agent Platform Roadmap](roadmap/SOVEREIGN_AGENT_PLATFORM_ROADMAP.md) | Incremental roadmap for `v2.1.0-sovereign-agent-platform` |
+| [v2.1.0 Sovereign Agent Platform](releases/V2_1_0_SOVEREIGN_AGENT_PLATFORM.md) | Phase-based release plan, flags, risks, and validation gates |
 | [Fresh Machine Validation](FRESH_MACHINE_VALIDATION.md) | Machine readiness check |
 | [Local Production Validation](LOCAL_PRODUCTION_VALIDATION.md) | Production validation guide |
 

@@ -1,12 +1,13 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.models.agents import AgentDefinition
 from app.services.agents.sab.sab_exporter import SABExporter
 from app.services.agents.sab.sab_importer import SABImporter
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_agent(session):
     agent = AgentDefinition(
         id=uuid.uuid4(),

@@ -38,6 +38,26 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
+- name: ADVANCED_INFERENCE_ENABLED
+  default: false
+  owner: platform-ops
+  area: core
+  status: experimental
+  introduced_in: v1.11.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Experimental advanced inference abstraction is opt-in by default.
+- name: ADVANCED_AGENT_MEMORY_ENABLED
+  default: false
+  owner: agent-platform
+  area: Agentic AI Platform
+  status: experimental
+  introduced_in: v1.12.0
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Experimental advanced agent memory with event sourcing is opt-in by default.
 - name: CREATE_TABLES_ON_STARTUP
   default: false
   owner: platform-ops

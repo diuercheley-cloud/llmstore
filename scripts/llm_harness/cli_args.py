@@ -232,6 +232,25 @@ def add_agent_args(parser: argparse.ArgumentParser):
         help="Path to agent registry YAML file",
     )
 
+def add_agents_args(parser: argparse.ArgumentParser):
+    """Arguments for advanced multi-agent orchestration command."""
+    agents_subparsers = parser.add_subparsers(dest="agents_command")
+
+    # Run
+    run_parser = agents_subparsers.add_parser("run", help="Run a team from YAML")
+    run_parser.add_argument("team_file", help="Path to team YAML file")
+    run_parser.add_argument("--task", required=True, help="Task for the team to perform")
+    run_parser.add_argument("--workspace", help="Path to workspace directory")
+    add_provider_args(run_parser)
+
+    # Validate
+    validate_parser = agents_subparsers.add_parser("validate", help="Validate team YAML")
+    validate_parser.add_argument("team_file", help="Path to team YAML file")
+
+    # Explain
+    explain_parser = agents_subparsers.add_parser("explain", help="Explain team structure")
+    explain_parser.add_argument("team_file", help="Path to team YAML file")
+
 def add_approval_args(parser: argparse.ArgumentParser):
     """Arguments related to action approval."""
     parser.add_argument(

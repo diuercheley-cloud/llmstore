@@ -322,6 +322,31 @@
         font-size: 13px;
       }
 
+      .card-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .card-status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(24, 21, 18, 0.24);
+      }
+
+      .card-status.ok::before {
+        background: var(--ok);
+      }
+
+      .card-status.error::before {
+        background: var(--accent);
+      }
+
       .notice {
         padding: 18px 20px;
         border-radius: 18px;
@@ -410,18 +435,18 @@
         <aside class="panel hero-side">
           <div class="stat">
             <strong>Ponto de entrada</strong>
-            <span>14 áreas</span>
+            <span id="hubRouteCount">14 áreas</span>
             <small>Navegação centralizada para páginas públicas, admin e utilitários.</small>
           </div>
           <div class="stat">
             <strong>Compatibilidade</strong>
-            <span>Zero quebra</span>
-            <small>Somente novo arquivo estático. Rotas atuais permanecem intactas.</small>
+            <span id="hubSystemStatus">verificando...</span>
+            <small id="hubSystemStatusText">Mapeando rotas públicas e operacionais do backend.</small>
           </div>
           <div class="stat">
             <strong>Autenticação</strong>
-            <span>Reuso visual</span>
-            <small>Áreas protegidas continuam exigindo token ou API key conforme o fluxo atual.</small>
+            <span id="hubCapabilitiesCount">-</span>
+            <small id="hubPlansCount">Carregando sinais públicos do backend.</small>
           </div>
         </aside>
       </section>
@@ -466,7 +491,7 @@
 
       <footer>
         <div>© <span id="year"></span> <span data-brand="product_name">LLM Stack Local</span></div>
-        <div>Hub estático servido por <code>/static</code> sem bundler</div>
+        <div>Hub disponível em <code>/hub</code> e <code>/static/hub/index.html</code></div>
       </footer>
     </div>
 
@@ -474,9 +499,11 @@
       const groups = {
         public: [
           { title: "Landing pública", href: "/", icon: "LP", access: "public", route: "/" },
+          { title: "Frontend Hub", href: "/hub", icon: "HB", access: "public", route: "/hub" },
           { title: "Pricing", href: "/pricing", icon: "$", access: "public", route: "/pricing" },
           { title: "Signup", href: "/signup", icon: "SU", access: "public", route: "/signup" },
           { title: "Docs", href: "/docs", icon: "DX", access: "public", route: "/docs" },
+          { title: "Exemplos", href: "/examples", icon: "EX", access: "public", route: "/examples" },
           { title: "Capabilities", href: "/capabilities", icon: "CP", access: "public", route: "/capabilities" },
           { title: "Getting Started", href: "/getting-started", icon: "GS", access: "public", route: "/getting-started" }
         ],
@@ -501,9 +528,11 @@
 
       const descriptions = {
         "Landing pública": "Página institucional principal para apresentar a stack local e direcionar novos acessos.",
+        "Frontend Hub": "Hub público para navegação centralizada, agora disponível também por rota dedicada em /hub.",
         "Pricing": "Planos e faixas de contratação com carregamento dinâmico da oferta pública.",
         "Signup": "Fluxo de criação de tenant e emissão inicial de credenciais de acesso.",
         "Docs": "Documentação pública navegável para uso da plataforma e integração.",
+        "Exemplos": "Snippets públicos em curl, Python e Node.js ligados à URL real da API local.",
         "Capabilities": "Resumo funcional do appliance com recursos suportados e limitações atuais.",
         "Getting Started": "Passo a passo inicial para ativação local e primeiro uso da stack.",
         "Admin": "Dashboard administrativo principal com visão operacional e controles centrais.",
@@ -540,7 +569,7 @@
           <p>${descriptions[item.title] || ""}</p>
           <div class="card-meta">
             <span>${item.route}</span>
-            <strong>Acessar →</strong>
+            <strong class="card-status" data-status-for="${item.title}">verificando</strong>
           </div>
         `;
         return card;
@@ -555,6 +584,65 @@
       mount("new", "new-grid");
       mount("ops", "ops-grid");
       document.getElementById("year").textContent = new Date().getFullYear();
+
+      async function probeRoute(item) {
+        try {
+          const response = await fetch(item.href, { method: "GET", cache: "no-cache" });
+          return response.ok;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      async function hydrateHubSignals() {
+        const allItems = [...groups.public, ...groups.new, ...groups.ops];
+        document.getElementById("hubRouteCount").textContent = `${allItems.length} áreas`;
+
+        const [statusResp, plansResp, capabilitiesResp, harnessResp] = await Promise.allSettled([
+          fetch("/status", { cache: "no-cache" }).then((r) => r.json()),
+          fetch("/public/plans", { cache: "no-cache" }).then((r) => r.json()),
+          fetch("/public/capabilities", { cache: "no-cache" }).then((r) => r.json()),
+          fetch("/harness/health", { cache: "no-cache" }).then((r) => r.json()),
+        ]);
+
+        if (statusResp.status === "fulfilled") {
+          const payload = statusResp.value;
+          const components = payload.components || {};
+          document.getElementById("hubSystemStatus").textContent = payload.status;
+          document.getElementById("hubSystemStatusText").textContent = `API ${components.api || "online"} · banco ${components.database || "n/a"} · inferência ${components.inference_plane || "n/a"}`;
+        } else {
+          document.getElementById("hubSystemStatus").textContent = "indisponível";
+          document.getElementById("hubSystemStatusText").textContent = "Não foi possível carregar /status.";
+        }
+
+        if (capabilitiesResp.status === "fulfilled") {
+          const features = capabilitiesResp.value.features || [];
+          const supported = features.filter((feature) => feature.status === "supported");
+          document.getElementById("hubCapabilitiesCount").textContent = `${supported.length} features`;
+        }
+
+        if (plansResp.status === "fulfilled") {
+          const plans = plansResp.value.plans || [];
+          document.getElementById("hubPlansCount").textContent = `${plans.length} planos públicos disponíveis`;
+        }
+
+        if (harnessResp.status === "fulfilled") {
+          const suffix = harnessResp.value.status ? ` · harness ${harnessResp.value.status}` : "";
+          document.getElementById("hubSystemStatusText").textContent += suffix;
+        }
+
+        await Promise.all(allItems.map(async (item) => {
+          const ok = await probeRoute(item);
+          const marker = document.querySelector(`[data-status-for="${item.title}"]`);
+          if (!marker) {
+            return;
+          }
+          marker.textContent = ok ? "online" : "indisponível";
+          marker.classList.add(ok ? "ok" : "error");
+        }));
+      }
+
+      hydrateHubSignals().catch(function () {});
     </script>
   </body>
 </html>

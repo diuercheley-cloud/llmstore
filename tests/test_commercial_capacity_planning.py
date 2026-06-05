@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -72,7 +72,7 @@ async def test_forecast_capacity_growth():
     
     # Create 10 snapshots with increasing RPM
     snapshots = []
-    base_time = datetime.utcnow() - timedelta(hours=1)
+    base_time = datetime.now(timezone.utc) - timedelta(hours=1)
     for i in range(10):
         snapshots.append(CommercialCapacitySnapshot(
             cluster_id="test-cluster",

@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.agents import AgentDefinition, AgentRun
 from app.services.agents.debugger.debug_diff import DebugDiff
@@ -13,7 +14,7 @@ from app.services.agents.debugger.run_snapshot_store import RunSnapshotStore
 def run_id():
     return uuid.uuid4()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_run(session, run_id):
     agent = AgentDefinition(
         id=uuid.uuid4(),

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from app.models.commercial_governance import CommercialPolicyBundle
 from app.models.commercial_workflows import CommercialWorkflowGovernanceEvent
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
@@ -8,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+@pytest.mark.asyncio
 async def test_immutable_governance_ledger_validates(session: AsyncSession):
     bundle = CommercialPolicyBundle(
         bundle_name="ledger-policy",
@@ -35,6 +37,7 @@ async def test_immutable_governance_ledger_validates(session: AsyncSession):
     assert validation["count"] >= 2
 
 
+@pytest.mark.asyncio
 async def test_immutable_governance_ledger_detects_tampering(session: AsyncSession):
     bundle = CommercialPolicyBundle(
         bundle_name="ledger-policy-2",

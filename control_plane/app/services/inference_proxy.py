@@ -137,7 +137,7 @@ class InferenceProxy:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="backend unavailable") from exc
 
     def _client_for_backend(self, backend: str, backend_url: str) -> httpx.AsyncClient:
-        if backend not in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter"}:
+        if backend not in {"llama.cpp", "ollama", "vllm", "tgi", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="unsupported model backend")
         return self._get_client(backend_url)
 
@@ -625,6 +625,20 @@ class InferenceProxy:
                 response_payload["usage"]["total_tokens"] = real_prompt_tokens + real_completion_tokens
                 response_payload["usage"]["tokenizer_used"] = tokenizer_used
                 response_payload["usage"]["fallback_used"] = fallback_used
+
+                # Apply Model Provenance Watermarking (Advisory)
+                try:
+                    from app.services.model_provenance.service import StandardOutputWatermarker
+                    watermarker = StandardOutputWatermarker()
+                    run_id = response_payload.get("id", "unknown")
+                    # We only watermark the content if it's chat completion for now
+                    content_to_watermark = completion_text
+                    if content_to_watermark:
+                        wm_res = await watermarker.apply_watermark(content_to_watermark, model_name, run_id)
+                        response_payload["watermark_info"] = wm_res
+                        logger.info(f"Output watermarked: {wm_res['watermark_id']}")
+                except Exception as wm_exc:
+                    logger.warning(f"Watermarking failed: {wm_exc}")
 
                 if endpoint == "/v1/chat/completions":
                     self._validate_chat_response_payload(

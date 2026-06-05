@@ -52,6 +52,11 @@ async def docs_page(request: Request):
     return HTMLResponse(render_public_page(PUBLIC_PAGES["docs"], request=request, settings=settings))
 
 
+@router.get("/examples", include_in_schema=False)
+async def examples_page(request: Request):
+    return HTMLResponse(render_public_page(PUBLIC_PAGES["examples"], request=request, settings=settings))
+
+
 @router.get("/getting-started", include_in_schema=False)
 async def getting_started_page(request: Request):
     return HTMLResponse(render_public_page(PUBLIC_PAGES["getting_started"], request=request, settings=settings))

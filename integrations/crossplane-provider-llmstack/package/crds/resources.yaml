@@ -1,0 +1,55 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tenants.llmstack.kleber.ai
+spec:
+  group: llmstack.kleber.ai
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                name: {type: string}
+                description: {type: string}
+            status:
+              type: object
+              properties:
+                id: {type: string}
+                state: {type: string}
+  scope: Namespaced
+  names:
+    plural: tenants
+    singular: tenant
+    kind: Tenant
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agents.llmstack.kleber.ai
+spec:
+  group: llmstack.kleber.ai
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                name: {type: string}
+                model: {type: string}
+                systemPrompt: {type: string}
+  scope: Namespaced
+  names:
+    plural: agents
+    singular: agent
+    kind: Agent

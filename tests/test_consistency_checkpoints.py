@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
@@ -19,8 +19,8 @@ async def session(isolated_db_url):
 
 @pytest.mark.asyncio
 async def test_checkpoint_consistency_match(session: AsyncSession):
-    start = datetime.utcnow() - timedelta(hours=5)
-    end = datetime.utcnow()
+    start = datetime.now(timezone.utc) - timedelta(hours=5)
+    end = datetime.now(timezone.utc)
     
     cp1 = await transparency_gossip.create_consistency_checkpoint(session, "merkle_timeline", start, end)
     cp2 = await transparency_gossip.create_consistency_checkpoint(session, "merkle_timeline", start, end)

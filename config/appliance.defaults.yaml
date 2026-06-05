@@ -1,0 +1,21 @@
+appliance:
+  mode_enabled: true
+  deployment_id: "sealed-appliance-001"
+  auto_update: false
+  allow_downgrade: false
+  audit_path: "/var/log/llm-stack-appliance-audit.log"
+  bootstrap_token_expiry_hours: 24
+
+security:
+  enforce_sha256: true
+  signature_required: true
+  min_version_constraint: "1.0.0"
+
+storage:
+  local_mount: "/data/appliance"
+  backup_dir: "/data/backups"
+
+network:
+  airgap: true
+  internal_api_port: 8080
+  web_ui_port: 80

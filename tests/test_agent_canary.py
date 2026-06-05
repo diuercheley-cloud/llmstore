@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.agent_canary import AgentCanaryAssignment, AgentShadowRun
 from app.models.agents import AgentDefinition, AgentRun
@@ -13,7 +14,7 @@ from app.services.agents.canary.shadow_runner import ShadowRunner
 def agent_ids():
     return uuid.uuid4(), uuid.uuid4() # base, canary
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_canary(session, agent_ids):
     base_id, canary_id = agent_ids
     base = AgentDefinition(id=base_id, name="Base", version="1.0", model_id="m1", owner="o1", tenant_id="t1", instructions="i1", status="active")

@@ -62,6 +62,16 @@ PUBLIC_PAGES: dict[str, PublicPageSEO] = {
         priority=0.85,
         schema_types=("Organization", "SoftwareApplication"),
     ),
+    "examples": PublicPageSEO(
+        slug="examples",
+        path="/examples",
+        file_name="examples.html",
+        title="Exemplos de Integração | LLM Inference Stack",
+        description="Exemplos práticos em curl, Python e Node.js para usar a API compatível com OpenAI da stack local.",
+        keywords=("examples llm api", "openai compatible examples", "curl python node llm"),
+        priority=0.7,
+        schema_types=("Organization", "SoftwareApplication"),
+    ),
     "capabilities": PublicPageSEO(
         slug="capabilities",
         path="/capabilities",

@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from app.core.config import get_settings
 from app.models.agent_cognitive_loopback import AgentFewShotExample, AgentLearningCandidate
 from app.models.agents import AgentDefinition, AgentRun
@@ -16,7 +17,7 @@ def agent_id():
 def run_id():
     return uuid.uuid4()
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def setup_agent(session, agent_id):
     agent = AgentDefinition(
         id=agent_id,

@@ -91,6 +91,14 @@ export const navConfig: NavRoute[] = [
     description: 'Integrações de inferência, providers e estado do backend.',
   },
   {
+    label: 'Multimodal',
+    path: '/multimodal',
+    icon: Eye,
+    section: 'core',
+    status: 'active',
+    description: 'Native multimodal support for vision and video analysis.',
+  },
+  {
     label: 'Plugins',
     path: '/plugins',
     icon: Zap,
@@ -122,6 +130,14 @@ export const navConfig: NavRoute[] = [
     section: 'core',
     status: 'active',
     description: 'Planos, pricing e cobrança.',
+  },
+  {
+    label: 'Cost Attribution',
+    path: '/billing/costs',
+    icon: Calculator,
+    section: 'core',
+    status: 'active',
+    description: 'Rastreamento detalhado de custos por agente e ferramenta.',
   },
   {
     label: 'Reconciliation',
@@ -165,6 +181,22 @@ export const navConfig: NavRoute[] = [
     section: 'agents',
     status: 'active',
     description: 'Agentes IA, registry, runs, tools e políticas.',
+  },
+  {
+    label: 'Marketplace',
+    path: '/agents/marketplace',
+    icon: ShoppingBag,
+    section: 'agents',
+    status: 'active',
+    description: 'Galeria de agentes e ferramentas de terceiros.',
+  },
+  {
+    label: 'Agent Protocols',
+    path: '/agents/protocols',
+    icon: ShieldCheck,
+    section: 'agents',
+    status: 'active',
+    description: 'MCP (Model Context Protocol) and A2A (Agent-to-Agent) management.',
   },
   {
     label: 'Agent Studio',
@@ -285,6 +317,15 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Catálogo de adaptadores LoRA e promoção de modelos.',
   },
+  {
+    label: 'Inference Backends',
+    path: '/operations/inference',
+    icon: FastForward,
+    section: 'operations',
+    status: 'active',
+    description: 'Advanced inference abstraction, vLLM/TGI status and routing.',
+    featureFlag: 'ADVANCED_INFERENCE_ENABLED',
+  },
 
   // ── Developers ────────────────────────────────────
   {
@@ -331,6 +372,14 @@ export const navConfig: NavRoute[] = [
     section: 'compliance',
     status: 'active',
     description: 'Preparação para SOC 2 e ISO 27001 com evidências auditáveis.',
+  },
+  {
+    label: 'Policy Engine',
+    path: '/governance/policy',
+    icon: Gavel,
+    section: 'compliance',
+    status: 'active',
+    description: 'Advanced declarative policy engine (OPA/Cedar).',
   },
   {
     label: 'Abuse Monitoring',
@@ -394,6 +443,14 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Observabilidade profunda de execuções de agentes.',
   },
+  {
+    label: 'Advanced Observability',
+    path: '/observability/advanced',
+    icon: Zap,
+    section: 'observability',
+    status: 'active',
+    description: 'Real-time metrics, eBPF telemetry, and anomaly detection.',
+  },
 
   // ── Performance ───────────────────────────────────
   {
@@ -403,6 +460,14 @@ export const navConfig: NavRoute[] = [
     section: 'performance',
     status: 'active',
     description: 'Benchmarks de performance de modelos e backends.',
+  },
+  {
+    label: 'Evaluation Arena',
+    path: '/performance/arena',
+    icon: Trophy,
+    section: 'performance',
+    status: 'active',
+    description: 'Ranking ELO e auditoria contínua de modelos/agentes.',
   },
   {
     label: 'History',

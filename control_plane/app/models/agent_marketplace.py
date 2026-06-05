@@ -1,6 +1,7 @@
 # Owner: agent-platform
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from app.core.time import utc_now
 from app.db.base import Base
@@ -26,9 +27,11 @@ class MarketplaceItem(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     publisher_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("marketplace_publishers.id", ondelete="CASCADE"), nullable=False, index=True)
-    agent_definition_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    agent_definition_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id", ondelete="CASCADE"), nullable=True, index=True)
     
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    version: Mapped[str] = mapped_column(String(64), nullable=False, default="1.0.0")
     category: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     tags: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict) # List of tags
     capabilities: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict) # List of capabilities
@@ -41,8 +44,40 @@ class MarketplaceItem(Base):
     total_ratings: Mapped[int] = mapped_column(Integer, default=0)
     total_downloads: Mapped[int] = mapped_column(Integer, default=0)
     
+    manifest_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+class AgentPackage(Base):
+    __tablename__ = "marketplace_agent_packages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("marketplace_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    version: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    sha256_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    signature: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+class AgentAttestation(Base):
+    __tablename__ = "marketplace_agent_attestations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    package_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("marketplace_agent_packages.id", ondelete="CASCADE"), nullable=False, index=True)
+    verifier: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending") # trusted, untrusted, failed
+    report_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+class AgentRevenueShare(Base):
+    __tablename__ = "marketplace_agent_revenue_share"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("marketplace_items.id"), nullable=False, index=True)
+    publisher_share: Mapped[float] = mapped_column(Float, default=0.7) # 70% to publisher
+    platform_share: Mapped[float] = mapped_column(Float, default=0.3) # 30% to platform
+    currency: Mapped[str] = mapped_column(String(3), default="BRL")
 
 class MarketplaceRating(Base):
     __tablename__ = "marketplace_ratings"

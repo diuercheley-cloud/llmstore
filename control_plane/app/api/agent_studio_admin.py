@@ -22,12 +22,26 @@ class FlowCreate(BaseModel):
     name: str
     description: Optional[str] = None
     graph_json: Dict[str, Any] = Field(default_factory=dict)
+    permissions: List[str] = Field(default_factory=list)
+    required_capabilities: List[str] = Field(default_factory=list)
+    risk_level: str = "low"
 
 class FlowResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: Optional[str] = None
     created_at: Any
+
+class ExplainResponse(BaseModel):
+    summary: str
+    nodes_explained: List[Dict[str, str]]
+    estimated_cost: float
+
+class DryRunResponse(BaseModel):
+    status: str
+    trace: List[Dict[str, Any]]
+    final_output: Any
+    side_effects_prevented: List[str]
 
 # Endpoints
 @router.post("/flows", response_model=FlowResponse)
@@ -44,7 +58,10 @@ async def create_flow(payload: FlowCreate, db: AsyncSession = Depends(get_db_ses
         flow_id=flow.id,
         version_label="v1",
         is_active=True,
-        graph_json=payload.graph_json
+        graph_json=payload.graph_json,
+        permissions=payload.permissions,
+        required_capabilities=payload.required_capabilities,
+        risk_level=payload.risk_level
     )
     db.add(version)
     
@@ -103,7 +120,83 @@ async def compile_flow(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
     
     return {"status": "compiled", "plan": plan_data}
 
-@router.get("/debug/{run_id}")
+@router.post("/flows/{id}/explain", response_model=ExplainResponse)
+async def explain_flow(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+    stmt = select(AgentFlowVersion).where(AgentFlowVersion.flow_id == id, AgentFlowVersion.is_active == True)
+    res = await db.execute(stmt)
+    version = res.scalar_one_or_none()
+    if not version:
+        raise HTTPException(status_code=404, detail="Active flow version not found")
+
+    nodes = version.graph_json.get("nodes", [])
+    nodes_explained = []
+    estimated_cost = 0.0
+
+    for node in nodes:
+        ntype = node.get("node_type", "unknown")
+        nname = node.get("data", {}).get("label", ntype)
+        desc = f"Executes logic for {ntype}."
+        if ntype == "model_call":
+            desc = "Calls LLM model. Estimated cost: ~$0.01 per execution."
+            estimated_cost += 0.01
+        elif ntype == "tool_call":
+             desc = f"Invokes tool: {node.get('config', {}).get('tool_name', 'unknown')}. May have side effects."
+        
+        nodes_explained.append({
+            "node_id": str(node.get("id")),
+            "name": nname,
+            "description": desc
+        })
+
+    return ExplainResponse(
+        summary=f"This workflow contains {len(nodes)} nodes with a risk level of {version.risk_level}.",
+        nodes_explained=nodes_explained,
+        estimated_cost=estimated_cost
+    )
+
+@router.post("/flows/{id}/dry-run", response_model=DryRunResponse)
+async def dry_run_flow(id: uuid.UUID, input_data: Dict[str, Any] = None, db: AsyncSession = Depends(get_db_session)):
+    stmt = select(AgentFlowVersion).where(AgentFlowVersion.flow_id == id, AgentFlowVersion.is_active == True)
+    res = await db.execute(stmt)
+    version = res.scalar_one_or_none()
+    if not version:
+        raise HTTPException(status_code=404, detail="Active flow version not found")
+
+    # Mocking dry-run trace based on graph nodes
+    nodes = version.graph_json.get("nodes", [])
+    trace = []
+    side_effects = []
+    
+    for node in nodes:
+        node_id = str(node.get("id"))
+        ntype = node.get("node_type", "unknown")
+        
+        # Check permissions logic mock
+        if ntype == "memory_write" and "memory:write" not in version.permissions:
+             raise HTTPException(status_code=403, detail=f"Node {node_id} blocked: missing memory:write permission.")
+
+        trace.append({
+            "node_id": node_id,
+            "status": "simulated",
+            "type": ntype,
+            "input": {"mocked_input": "yes"},
+            "output": {"mocked_output": "yes"},
+            "policy_decision": "allowed"
+        })
+        if ntype == "tool_call" or ntype == "memory_write":
+             side_effects.append(node_id)
+             
+    return DryRunResponse(
+        status="completed",
+        trace=trace,
+        final_output={"dry_run": True, "result": "simulated success"},
+        side_effects_prevented=side_effects
+    )
+
+@router.get("/flows/runs/{run_id}/trace")
+async def get_flow_trace(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+    # Redirects to existing debug trace logic
+    return await get_debug_session(run_id, db)
 async def get_debug_session(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     stmt = select(AgentFlowDebugSession).where(AgentFlowDebugSession.run_id == run_id)
     res = await db.execute(stmt)

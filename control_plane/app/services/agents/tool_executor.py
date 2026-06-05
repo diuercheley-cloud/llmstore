@@ -19,6 +19,7 @@ from app.services.agents.tool_rollback import (
     register_side_effect,
     rollback_invocation_side_effects,
 )
+from app.services.billing.cost_attribution import CostAttributionService
 
 # Import security modules
 from app.services.agents.tool_sandbox import execute_in_sandbox
@@ -268,5 +269,21 @@ async def execute_tool(
         invocation_id=invocation.id, agent_id=effective_agent_id,
         agent_tool_id=tool.id, decision="success", details={"output": output}
     )
+
+    # Record cost event for tool execution
+    try:
+        cost_svc = CostAttributionService(db)
+        await cost_svc.record_event(
+            tenant_id=effective_tenant,
+            agent_id=effective_agent_id,
+            workflow_id=str(run_id) if run_id else None,
+            tool_name=tool.name,
+            latency_ms=latency_ms,
+            estimated_cost=0.0,  # Tool cost estimation could be added later
+            currency="BRL"
+        )
+    except Exception as e:
+        logger.warning(f"Failed to record unified CostEvent for tool {tool.name}: {e}")
+
     await db.commit()
     return output

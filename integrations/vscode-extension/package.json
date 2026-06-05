@@ -1,0 +1,66 @@
+{
+  "name": "llm-inference-stack-vscode",
+  "displayName": "LLM Inference Stack",
+  "description": "Integration with local LLM Inference Stack",
+  "version": "0.1.0",
+  "publisher": "kleber",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "llm-stack.connect",
+        "title": "LLM Stack: Connect"
+      },
+      {
+        "command": "llm-stack.runWorkflow",
+        "title": "LLM Stack: Run Workflow"
+      },
+      {
+        "command": "llm-stack.explainSelection",
+        "title": "LLM Stack: Explain Selection"
+      },
+      {
+        "command": "llm-stack.openChat",
+        "title": "LLM Stack: Open Agent Chat"
+      }
+    ],
+    "configuration": {
+      "title": "LLM Stack",
+      "properties": {
+        "llmStack.apiBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Base URL for the Control Plane API"
+        },
+        "llmStack.defaultAgent": {
+          "type": "string",
+          "default": "default",
+          "description": "Default agent ID to use for chat and workflows"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.5",
+    "eslint": "^8.34.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0"
+  }
+}

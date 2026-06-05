@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 import pytest
 
@@ -7,7 +8,7 @@ CONFIG_EXAMPLE = "config/branding.example.json"
 
 
 def test_config_not_tracked():
-    result = os.popen("git ls-files config/branding.local.json 2>/dev/null").read()
+    result = subprocess.check_output(["git", "ls-files", "config/branding.local.json"], stderr=subprocess.DEVNULL, text=True)
     assert result.strip() == "", "config/branding.local.json should NOT be tracked by Git"
 
 

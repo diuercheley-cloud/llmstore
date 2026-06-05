@@ -31,6 +31,9 @@ class AgentFlowVersion(Base):
     # The actual graph can be stored here as JSON for simplicity in prototype, 
     # but we will also create node/edge tables as requested.
     graph_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    permissions: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    required_capabilities: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(32), default="low", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     flow_definition = relationship("AgentFlowDefinition", back_populates="versions")
