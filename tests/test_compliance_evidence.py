@@ -17,7 +17,7 @@ async def test_evidence_collection_mock(session):
 
 def test_evidence_hash_determinism(session):
     service = ComplianceEvidenceService(session)
-    data = {"test": "data", "secret": "sk-1234567890abcdef12345"}
+    data = {"test": "data", "secret": "sk-example1234567890abcdef1234567890"}
     
     ev1 = service._create_evidence(ComplianceFramework.SOC2, "C1", EvidenceType.AUDIT_LOG, "source", data)
     ev2 = service._create_evidence(ComplianceFramework.SOC2, "C1", EvidenceType.AUDIT_LOG, "source", data)
@@ -28,9 +28,9 @@ def test_evidence_hash_determinism(session):
 def test_evidence_redaction():
     service = ComplianceEvidenceService(None)
     raw_data = {
-        "key": "sk-9876543210fedcba87654321",
-        "token": "token:abc-123-def-456-ghi-789",
-        "nested": {"password": "secret-password-123"}
+        "key": "sk-example1234567890abcdef1234567890",
+        "token": "token:test-admin-token-mock-value-123",
+        "nested": {"password": "test-password-mock-value"}
     }
     
     redacted = service._redact_sensitive_data(raw_data)

@@ -44,7 +44,7 @@ def test_validate_team_yaml(mock_registry, tmp_path):
 
 def test_blackboard_redaction_and_hashing():
     bb = Blackboard("Test Task")
-    bb.add_message("agent1", "agent2", "My secret key is sk-12345678901234567890123456789012")
+    bb.add_message("agent1", "agent2", "My secret key is sk-example1234567890abcdef1234567890")
     
     msg = bb.state.messages[0]
     assert "[REDACTED_API_KEY]" in msg.content
