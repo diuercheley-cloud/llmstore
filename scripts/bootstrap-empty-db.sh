@@ -43,7 +43,7 @@ if [[ "${FORCE}" != "true" && "${table_count}" != "0" ]]; then
   exit 20
 fi
 
-head_revision="$(PYTHONPATH=control_plane "${ROOT_DIR}/.venv/bin/python" -m alembic -c alembic.ini heads | awk 'NR==1 {print $1}')"
+head_revision="$(PYTHONPATH=control_plane "${ROOT_DIR}/.venv/bin/python" -m alembic -c control_plane/alembic.ini heads | awk 'NR==1 {print $1}')"
 if [[ -z "${head_revision}" ]]; then
   log "[bootstrap-db] failed to resolve alembic head revision."
   exit 4

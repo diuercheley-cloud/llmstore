@@ -125,6 +125,8 @@ services:
       - ./control_plane/app:/app/app
       - ./control_plane/alembic:/app/alembic
       - ./control_plane/alembic.ini:/app/alembic.ini
+      - ./scripts:/app/scripts
+      - ./examples:/app/examples
       - ./models:/models:ro
       - ./data:/data
       - ./config:/config:ro
@@ -163,6 +165,8 @@ services:
       - ./control_plane/app:/app/app
       - ./control_plane/alembic:/app/alembic
       - ./control_plane/alembic.ini:/app/alembic.ini
+      - ./scripts:/app/scripts
+      - ./examples:/app/examples
       - ./models:/models:ro
       - ./data:/data
       - ./config:/config:ro
@@ -188,6 +192,8 @@ services:
         condition: service_healthy
     volumes:
       - ./control_plane/app:/app/app
+      - ./scripts:/app/scripts
+      - ./examples:/app/examples
       - ./data:/data
     restart: unless-stopped
     networks:
@@ -221,6 +227,8 @@ services:
       retries: 3
     volumes:
       - ./control_plane/app:/app/app
+      - ./scripts:/app/scripts
+      - ./examples:/app/examples
       - ./data:/data
       - ./config:/config:ro
     restart: unless-stopped

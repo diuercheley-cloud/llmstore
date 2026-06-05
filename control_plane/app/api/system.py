@@ -940,6 +940,18 @@ async def client_portal_catch_all(rest: str):
     return FileResponse(static_file)
 
 
+@router.get("/harness", include_in_schema=False)
+async def harness_page():
+    static_file = Path(__file__).resolve().parents[1] / "static" / "harness" / "index.html"
+    return FileResponse(static_file)
+
+
+@router.get("/harness/{rest:path}", include_in_schema=False)
+async def harness_page_catch_all(rest: str):
+    static_file = Path(__file__).resolve().parents[1] / "static" / "harness" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/{page}.html", include_in_schema=False)
 async def portal_html_pages(page: str):
     allowed_pages = {"keys", "usage", "invoices", "wallet", "rag", "playground", "index", "index.legacy"}

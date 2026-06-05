@@ -167,6 +167,8 @@ async def create_run(req: RunRequest, background_tasks: BackgroundTasks):
         "result": None,
         "error": None,
         "task_handle": None,
+        "created_at": time.time(),
+        "finished_at": None,
     }
 
     def progress_callback(event: Dict[str, Any]):
@@ -206,6 +208,7 @@ async def create_run(req: RunRequest, background_tasks: BackgroundTasks):
         finally:
             _run_semaphore.release()
             if run_id in ACTIVE_RUNS:
+                ACTIVE_RUNS[run_id]["finished_at"] = time.time()
                 for q in ACTIVE_RUNS[run_id]["listeners"]:
                     q.put_nowait(None)
 
@@ -230,6 +233,8 @@ def get_run(run_id: str):
         "status": run_data["status"],
         "error": run_data["error"],
         "result": result_dump,
+        "created_at": run_data.get("created_at"),
+        "finished_at": run_data.get("finished_at"),
     }
 
 @app.get("/runs/{run_id}/events", dependencies=[Depends(verify_auth)])
@@ -245,7 +250,9 @@ async def get_run_events(run_id: str):
             yield f"data: {json.dumps(Sanitizer.sanitize_data(event))}\n\n"
 
         if run_data["status"] == "running":
-            q: asyncio.Queue[Any] = asyncio.Queue()
+            if len(run_data["listeners"]) >= 16:
+                raise HTTPException(status_code=429, detail="Too many event listeners")
+            q: asyncio.Queue[Any] = asyncio.Queue(maxsize=1024)
             run_data["listeners"].append(q)
             try:
                 while True:

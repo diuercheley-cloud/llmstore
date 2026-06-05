@@ -92,6 +92,7 @@ from app.api.feature_flags_admin import router as feature_flags_admin_router
 from app.api.financial_admin import router as financial_admin_router
 from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
 from app.api.hybrid_admin import router as hybrid_admin_router
+from app.api.harness import router as harness_router
 from app.api.mobile_v1 import router as mobile_v1_router
 from app.api.multi_cluster_admin import router as multi_cluster_admin_router
 from app.api.observability_admin import router as observability_admin_router
@@ -688,6 +689,7 @@ app.include_router(providers_router)
 app.include_router(routing_admin_router)
 app.include_router(routing_test_router)
 app.include_router(hybrid_admin_router)
+app.include_router(harness_router)
 app.include_router(support_admin_router)
 app.include_router(abuse_admin_router)
 app.include_router(financial_admin_router)

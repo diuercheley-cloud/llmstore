@@ -96,7 +96,7 @@ if [[ "${SKIP_WAIT}" == "false" ]]; then
   wait_for_ready() {
     local max_retries="$1"
     local retry_count=0
-    until curl -fsS "${BASE_URL}/ready" >/dev/null 2>&1; do
+    until http_get_ok "${BASE_URL}/ready"; do
       retry_count=$((retry_count + 1))
       if [[ ${retry_count} -ge ${max_retries} ]]; then
         return 1

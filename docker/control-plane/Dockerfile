@@ -22,6 +22,8 @@ COPY control_plane/requirements.txt /build/requirements.txt
 RUN pip install --no-cache-dir -r /build/requirements.txt
 
 COPY control_plane /build/control_plane
+COPY scripts /build/scripts
+COPY examples /build/examples
 RUN cd /build/control_plane && python -m compileall . -q 2>/dev/null || true
 
 
@@ -52,6 +54,8 @@ WORKDIR /app
 COPY control_plane/app /app/app
 COPY control_plane/alembic /app/alembic
 COPY control_plane/alembic.ini /app/alembic.ini
+COPY scripts /app/scripts
+COPY examples /app/examples
 COPY VERSION /app/VERSION
 
 CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]

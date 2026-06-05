@@ -118,6 +118,24 @@ default_base_url() {
   printf 'http://localhost:%s\n' "${HOST_PORT:-18080}"
 }
 
+http_get_ok() {
+  local url="$1"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsS "${url}" >/dev/null 2>&1
+    return $?
+  fi
+
+  python3 - "${url}" <<'PY' >/dev/null 2>&1
+import sys
+import urllib.request
+
+url = sys.argv[1]
+with urllib.request.urlopen(url, timeout=5) as response:
+    if response.status < 200 or response.status >= 400:
+        raise SystemExit(1)
+PY
+}
+
 curl_base_url() {
   local url="$1"
   shift
