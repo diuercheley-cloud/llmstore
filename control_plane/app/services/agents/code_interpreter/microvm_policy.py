@@ -65,7 +65,7 @@ class MicroVMPolicy:
                     break
 
         if self.settings.agent_code_sandbox_microvm_required and provider not in MICROVM_PROVIDERS:
-            raise RuntimeError(f"Provider '{provider}' is blocked because MicroVM isolation is required")
+            raise RuntimeError(f"{provider.capitalize()} sandbox is blocked because MicroVM isolation is required")
         
         return provider
 
@@ -81,7 +81,7 @@ class MicroVMPolicy:
         if enabled is None:
             raise RuntimeError(f"Unsupported sandbox provider '{provider}'")
         if not enabled:
-            raise RuntimeError(f"{provider} sandbox provider is disabled by feature flag")
+            raise RuntimeError(f"{provider.capitalize()} sandbox provider is disabled by feature flag")
 
     def is_fallback_allowed(self) -> bool:
         return not self.settings.agent_code_sandbox_microvm_required
