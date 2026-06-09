@@ -2,6 +2,7 @@
   "forbid_new_bounded_contexts": false,
   "forbid_new_top_level_dirs": false,
   "forbid_new_api_routers_without_approval": false,
+  "forbid_new_services_without_approval": false,
   "forbid_new_feature_flags_without_owner": false,
   "forbid_new_models_without_migration_and_owner": false,
   "require_supported_surface_classification": false,

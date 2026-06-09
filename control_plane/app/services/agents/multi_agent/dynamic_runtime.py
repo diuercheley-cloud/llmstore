@@ -1,4 +1,5 @@
 # Owner: agent-platform
+import asyncio
 import logging
 import uuid
 from typing import Any
@@ -32,6 +33,8 @@ class DynamicRoutingRuntime(TeamRuntime):
 
         results: list[str] = []
         try:
+            from app.services.agents import agent_runtime
+
             for index, item in enumerate(work_items, start=1):
                 selected = self._select_member(candidates, item)
                 if selected is None:
@@ -57,14 +60,15 @@ class DynamicRoutingRuntime(TeamRuntime):
                 )
 
                 try:
-                    from app.services.agents import agent_runtime
+                    if selected.metadata_json.get("simulate_failure"):
+                        raise RuntimeError(f"simulated failure for agent {selected.agent_id}")
                     sub_run = await agent_runtime.start_run(
                         db=self.db,
                         agent_id=selected.agent_id,
                         tenant_id=team.tenant_id,
                         input_text=item.get("description", goal),
                         parent_run_id=run.id,
-                        correlation_id=run.correlation_id
+                        correlation_id=str(run.id),
                     )
                     while sub_run.status not in ("completed", "failed", "cancelled"):
                         await asyncio.sleep(1)
@@ -91,7 +95,7 @@ class DynamicRoutingRuntime(TeamRuntime):
                         tenant_id=team.tenant_id,
                         input_text=f"RECOVERY: {item.get('description', goal)}",
                         parent_run_id=run.id,
-                        correlation_id=run.correlation_id
+                        correlation_id=str(run.id),
                     )
                     while sub_run_fb.status not in ("completed", "failed", "cancelled"):
                         await asyncio.sleep(1)

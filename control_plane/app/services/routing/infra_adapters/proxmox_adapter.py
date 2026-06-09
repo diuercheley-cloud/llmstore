@@ -143,6 +143,6 @@ class ProxmoxAdapter(BaseInfraAdapter):
                     "memory_used": data.get("memory", {}).get("used"),
                     "uptime": data.get("uptime")
                 }
-        except:
+        except Exception:
             pass
         return {"status": "error"}

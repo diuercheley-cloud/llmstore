@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from dataclasses import dataclass
 
@@ -416,6 +417,7 @@ async def process_generation_job(
         request_hash=cache_key,
         plan_code=effective_plan.code,
     )
+    selected_model = job.model_registry
     if cached.hit and cached.payload is not None:
         now = utc_now()
         await record_usage(
@@ -468,7 +470,6 @@ async def process_generation_job(
         ASYNC_JOB_COUNTER.labels(status="completed").inc()
         return "completed"
 
-    selected_model = job.model_registry
     if selected_model is None:
         now = utc_now()
         job.status = "failed"

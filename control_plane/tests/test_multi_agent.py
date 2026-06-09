@@ -1,7 +1,9 @@
 import uuid
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
+from app.services.agents import agent_runtime
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models.agents import AgentDefinition
@@ -33,6 +35,20 @@ async def setup_db():
 async def db_session():
     async with SessionLocal() as session:
         yield session
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def deterministic_agent_runtime(monkeypatch):
+    async def completed_run(**kwargs):
+        return SimpleNamespace(
+            id=uuid.uuid4(),
+            status="completed",
+            failure_reason=None,
+            estimated_cost_brl=0,
+        )
+
+    monkeypatch.setattr(agent_runtime, "start_run", completed_run)
+
 
 @pytest.mark.asyncio
 async def test_hierarchical_team_execution(db_session: AsyncSession):

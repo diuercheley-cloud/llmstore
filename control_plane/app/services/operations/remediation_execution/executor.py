@@ -12,6 +12,7 @@ from app.services.operations.remediation_execution.audit_events import (
     log_remediation_execution_killed,
     log_remediation_execution_prepared,
     log_remediation_execution_started,
+    log_remediation_execution_step_executed,
     log_remediation_execution_step_simulated,
 )
 from app.services.operations.remediation_execution.execution_gate import RemediationExecutionGate

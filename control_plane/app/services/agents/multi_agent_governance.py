@@ -154,6 +154,6 @@ class MultiAgentGovernanceService:
                     try:
                         child_id = uuid.UUID(link.linked_trace_id)
                         queue.append(child_id)
-                    except:
+                    except (TypeError, ValueError):
                         pass
         return results

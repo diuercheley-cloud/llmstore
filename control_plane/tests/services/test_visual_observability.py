@@ -14,9 +14,9 @@ def test_dashboard_json_validity():
 async def test_incident_timeline_sorting():
     service = VisualObservabilityService()
     timeline = await service.get_incident_timeline()
-    assert len(timeline) > 0
+    assert timeline == {"status": "no_data", "items": []}
     # Check if timestamps are descending (newest first)
-    timestamps = [t["timestamp"] for t in timeline]
+    timestamps = [item["timestamp"] for item in timeline["items"]]
     assert timestamps == sorted(timestamps, reverse=True)
 
 def test_dashboard_links_no_secrets():

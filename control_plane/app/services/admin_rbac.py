@@ -17,6 +17,7 @@ from app.models.admin_rbac import (
 )
 from fastapi import HTTPException, Request, status
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -308,7 +309,12 @@ async def record_admin_audit_event(
         metadata_json=metadata,
     )
     session.add(event)
-    await session.commit()
+    try:
+        await session.commit()
+    except SQLAlchemyError:
+        # Authentication and authorization decisions must not become 500s
+        # when the append-only audit sink is temporarily unavailable.
+        await session.rollback()
 
 
 async def authenticate_admin_request(

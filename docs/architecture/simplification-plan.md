@@ -35,7 +35,27 @@ A plataforma acumulou múltiplas versões de funcionalidades administrativas, mo
 2. Emitir warnings nos logs ao utilizar serviços depreciados.
 3. Atualizar documentação com avisos de depreciação e links para os novos padrões.
 
-## Riscos
-- Quebra de integrações legadas.
-- Perda de funcionalidades específicas não migradas.
-- Confusão durante a transição.
+## Orçamentos de Manutenção
+
+Novas expansões de superfície e dívida crítica são bloqueadas pelos orçamentos em
+`config/maintenance-budgets.json`. Sempre que routers, serviços, flags ou serviços
+P0/P1 sem testes forem removidos, o orçamento correspondente deve ser reduzido.
+
+O freeze legado por allowlist permanece apenas como verificação de governança:
+suas listas históricas não representam toda a superfície atual. Ativá-lo sem
+reconciliação bloquearia componentes existentes. Os budgets são o controle
+obrigatório contra crescimento até essa reconciliação ser concluída.
+
+## Controles de Risco
+
+- Quebra de integrações legadas: preservar rotas públicas e exigir rollback story
+  na classificação de superfície suportada.
+- Perda de funcionalidades específicas: executar coleta integral e suítes de
+  contratos, qualidade e segurança antes de remover uma superfície.
+- Confusão durante a transição: manter versão única em `VERSION`, documentação e
+  artefatos de release.
+- Crescimento arquitetural: bloquear regressões pelos budgets não crescentes.
+- Dívida de testes crítica: impedir aumento de serviços P0/P1 sem cobertura e
+  reduzir seus limites sempre que cobertura for adicionada.
+- Falhas silenciosas de Python: bloquear nomes indefinidos, redefinições e
+  `except` vazio no lint funcional.

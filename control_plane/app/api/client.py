@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
 from app.db.session import get_db_session, get_redis
 from app.models.client import Client
+from app.models.commercial_cluster_registry import CommercialClusterRegistry
 from app.models.model_backend_route import ModelBackendRoute
 from app.schemas.inference import (
     ChatCompletionRequest,
@@ -39,6 +40,7 @@ from app.services.commercial_guardrails import (
     record_enforcement_outcome,
     record_report_only_events,
 )
+from app.services.routing.commercial_cross_cluster_forwarder import CommercialCrossClusterForwarder
 from app.services.context_manager import ContextManager, get_context_manager
 from app.services.embeddings_mock import process_mock_embeddings
 from app.services.generation_jobs import (
@@ -58,6 +60,7 @@ from app.services.model_policy import (
     serialize_model_card,
 )
 from app.services.provider_classification import is_cloud_provider
+from sqlalchemy import select
 from app.services.quota import (
     QuotaExceeded,
     ensure_embeddings_quota,

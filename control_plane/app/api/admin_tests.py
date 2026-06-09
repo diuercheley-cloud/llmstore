@@ -519,7 +519,7 @@ async def get_system_resources():
             if parsed:
                 gpu_info = parsed
                 local_success = True
-    except:
+    except Exception:
         pass
 
     # Se local falhou ou não disponível, tenta via Docker exec no container do data-plane

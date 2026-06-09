@@ -27,6 +27,20 @@ service-coverage-report:
 service-coverage-gate:
 	python3 scripts/check-service-test-coverage.py --gate
 
+test-collect: ## Validate collection of all Python tests
+	PYTHONPATH=.:control_plane .venv/bin/python -m pytest --collect-only -q tests control_plane/tests
+
+lint-functional: ## Run blocking Python lint checks without style-only noise
+	.venv/bin/ruff check control_plane/app --no-cache --select F821,F811,E722
+
+lint-hygiene-report: ## Report non-blocking Python hygiene debt
+	.venv/bin/ruff check control_plane/app --no-cache --select F401,F841,I --statistics
+
+ci-local: lint-functional test-collect check-feature-flags-integrity check-supported-surface platform-freeze-check maintenance-budgets service-coverage-gate ## Reproduce blocking CI quality gates locally
+
+maintenance-budgets: ## Prevent architectural surface and complexity growth
+	.venv/bin/python scripts/check-maintenance-budgets.py
+
 # Official deterministic validation groups. These lists are the source of truth
 # for aggregate targets and for Makefile governance checks.
 CORE_VALIDATION_TARGETS := \

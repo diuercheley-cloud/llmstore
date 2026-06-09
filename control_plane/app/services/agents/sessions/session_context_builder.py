@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger(__name__)
 
 SECRET_PATTERNS = [
-    re.compile(r"sk-[a-zA-Z0-9]{20,}", re.IGNORECASE),
+    re.compile(r"sk-[a-zA-Z0-9]{12,}", re.IGNORECASE),
     re.compile(r"bearer\s+[a-zA-Z0-9_\-\.]+", re.IGNORECASE),
     re.compile(r"token-[a-zA-Z0-9_\-\.]+", re.IGNORECASE),
     re.compile(r"password=[a-zA-Z0-9_\-\.]+", re.IGNORECASE),

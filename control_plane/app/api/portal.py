@@ -53,6 +53,7 @@ from app.schemas.inference import (
 from app.schemas.payments import WalletTopUpCreate
 from app.schemas.public import PortalUpgradeRequest
 from app.services.audit import log_request
+from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.auth import require_client
 from app.services.billing import (
     build_invoice_preview,

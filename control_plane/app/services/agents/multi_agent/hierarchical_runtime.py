@@ -1,4 +1,5 @@
 # Owner: agent-platform
+import asyncio
 import logging
 import uuid
 
@@ -86,7 +87,7 @@ class HierarchicalRuntime(TeamRuntime):
                     tenant_id=team.tenant_id,
                     input_text=assignment,
                     parent_run_id=run.id,
-                    correlation_id=run.correlation_id
+                    correlation_id=str(run.id),
                 )
                 
                 # Wait for sub-run to complete (Simplified: poll or wait if sync)
@@ -104,7 +105,11 @@ class HierarchicalRuntime(TeamRuntime):
                 else:
                     # Fetch real output hash and result
                     # Simplification: we'd ideally fetch the final_response from AgentRun
-                    specialist_result = sub_run.failure_reason if sub_run.status == "failed" else f"Success: Analysis completed by {spec.agent_id}"
+                    specialist_result = (
+                        sub_run.failure_reason
+                        if sub_run.status == "failed"
+                        else f"Success: {assignment} completed by {spec.agent_id}"
+                    )
 
                 output_payload = {
                     "agent_id": str(spec.agent_id),

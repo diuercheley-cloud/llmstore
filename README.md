@@ -2,7 +2,7 @@
 
 **Sovereign, offline-first, deterministic AI platform with governed agentic runtime.**
 
-> Current build: `v2.x-agentic-evolutionary-intelligence`  
+> Current build: `v2.0.9`
 > Previous stable: [`v2.x-agentic-platform-complete-hardening`](docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md)  
 > Release notes: [`docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md`](docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md)  
 > Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  

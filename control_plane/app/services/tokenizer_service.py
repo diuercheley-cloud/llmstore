@@ -70,10 +70,16 @@ class TokenizerService(TokenAccountingContract):
         return self._tiktoken_cache[model]
 
     async def count_text_tokens(self, text: str, model: str | None = None) -> TokenCountResult:
-        if self.settings.token_counting_real_enabled:
+        openai_like_model = bool(
+            model and (model.startswith("gpt-") or "claude" in model.lower() or "deepseek" in model.lower())
+        )
+        real_counter_available = not openai_like_model or _load_tiktoken() is not None
+        if self.settings.token_counting_real_enabled and real_counter_available:
             from app.services.token_counting.token_counter import TokenCounter
             tc = TokenCounter()
             res = tc.count_tokens(prompt=text, completion="", model=model or "gpt-3.5-turbo")
+            if self.settings.tokenizer_strict and res.fallback_used:
+                raise RuntimeError(f"Strict tokenization enabled but real tokenizer failed for model {model}")
             return TokenCountResult(
                 input_tokens=res.prompt_tokens,
                 output_tokens=res.completion_tokens,
@@ -104,7 +110,7 @@ class TokenizerService(TokenAccountingContract):
                     raise
 
         # Tiktoken for OpenAI-like models
-        if model and (model.startswith("gpt-") or "claude" in model.lower() or "deepseek" in model.lower()):
+        if openai_like_model:
             try:
                 encoding = self._get_tiktoken_encoding(model)
                 count = len(encoding.encode(text))
@@ -138,6 +144,8 @@ class TokenizerService(TokenAccountingContract):
             from app.services.token_counting.token_counter import TokenCounter
             tc = TokenCounter()
             res = tc.count_tokens(prompt=messages, completion="", model=model or "gpt-3.5-turbo")
+            if self.settings.tokenizer_strict and res.fallback_used:
+                raise RuntimeError(f"Strict tokenization enabled but real tokenizer failed for chat model {model}")
             return TokenCountResult(
                 input_tokens=res.prompt_tokens,
                 output_tokens=res.completion_tokens,
@@ -220,6 +228,10 @@ class TokenizerService(TokenAccountingContract):
             tc = TokenCounter()
             for text in texts:
                 res = tc.count_tokens(prompt=text, completion="", model=model or "text-embedding-3-small")
+                if self.settings.tokenizer_strict and res.fallback_used:
+                    raise RuntimeError(
+                        f"Strict tokenization enabled but real tokenizer failed for embedding model {model}"
+                    )
                 total_count += res.prompt_tokens
                 method = res.tokenizer_used
                 is_estimated = res.fallback_used
@@ -257,4 +269,3 @@ class TokenizerService(TokenAccountingContract):
 @functools.lru_cache()
 def get_tokenizer_service() -> TokenizerService:
     return TokenizerService()
-

@@ -41,7 +41,7 @@ async def get_chat_actor(
             # For now, let's just use the existing one if we can, 
             # but require_client raises exceptions.
             pass
-        except:
+        except Exception:
             pass
 
     # Fallback to the strict dependencies if we didn't find a quick match

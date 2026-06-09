@@ -8,6 +8,7 @@ from datetime import datetime
 SERVICES_DIR = "control_plane/app/services"
 TEST_ROOTS = ("tests", "control_plane/tests")
 REPORT_PATH = "artifacts/service-test-coverage-report.json"
+MAINTENANCE_BUDGETS_PATH = "config/maintenance-budgets.json"
 
 # Priority classification mapping
 P0_KEYWORDS = ["runtime", "workflows", "agents", "security", "auth", "rbac", "plugins", "rag", "memory", "context", "connector", "iam"]
@@ -206,6 +207,23 @@ def main():
         if gate_untested:
             print("FAILURE: Untested changed core services found!")
             sys.exit(1)
+        if os.path.exists(MAINTENANCE_BUDGETS_PATH):
+            with open(MAINTENANCE_BUDGETS_PATH, encoding="utf-8") as handle:
+                budgets = json.load(handle)
+            historical_limits = {
+                "P0": budgets.get("max_untested_p0_services"),
+                "P1": budgets.get("max_untested_p1_services"),
+            }
+            exceeded = [
+                f"{priority} untested services: {len(results[priority]['untested'])} > {limit}"
+                for priority, limit in historical_limits.items()
+                if limit is not None and len(results[priority]["untested"]) > limit
+            ]
+            if exceeded:
+                print("FAILURE: Historical core-service coverage budget exceeded!")
+                for failure in exceeded:
+                    print(f" - {failure}")
+                sys.exit(1)
         print("SUCCESS: All changed P0/P1 services have tests.")
         sys.exit(0)
 

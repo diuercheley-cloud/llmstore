@@ -1,4 +1,5 @@
 # Owner: agent-platform
+import asyncio
 import logging
 import uuid
 
@@ -50,7 +51,7 @@ class DebateRuntime(TeamRuntime):
                         tenant_id=team.tenant_id,
                         input_text=f"Propose approach for goal: {goal}. Round {round_num}.",
                         parent_run_id=run.id,
-                        correlation_id=run.correlation_id
+                        correlation_id=str(run.id),
                     )
                     # wait for completion
                     while sub_run.status not in ("completed", "failed", "cancelled"):
@@ -69,7 +70,7 @@ class DebateRuntime(TeamRuntime):
                         tenant_id=team.tenant_id,
                         input_text=f"Critique proposals: {proposals}. Goal: {goal}. Round {round_num}.",
                         parent_run_id=run.id,
-                        correlation_id=run.correlation_id
+                        correlation_id=str(run.id),
                     )
                     while sub_run.status not in ("completed", "failed", "cancelled"):
                         await asyncio.sleep(1)
@@ -101,7 +102,8 @@ class DebateRuntime(TeamRuntime):
             for rs in round_summaries:
                 for prop in rs["proposals"]:
                     outputs_for_arbitration.append({
-                        "result": prop,
+                        "agent_id": prop["agent_id"],
+                        "result": prop["content"],
                         "confidence": 0.7 # Base confidence for round proposals
                     })
 

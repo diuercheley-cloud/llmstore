@@ -22,7 +22,8 @@ class AgentRiskEngine:
         """
         Calculates a baseline risk score for an agent definition.
         """
-        base_score = self.RISK_LEVEL_WEIGHTS.get(agent.risk_level.lower(), 1)
+        risk_level = (agent.risk_level or "low").lower()
+        base_score = self.RISK_LEVEL_WEIGHTS.get(risk_level, 1)
         
         # Adjust based on tools
         tool_count = len(agent.allowed_tools or [])

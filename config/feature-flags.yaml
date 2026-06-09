@@ -38,26 +38,6 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
-- name: ADVANCED_INFERENCE_ENABLED
-  default: false
-  owner: platform-ops
-  area: core
-  status: experimental
-  introduced_in: v1.11.0
-  risk_level: medium
-  dependencies: []
-  conflicts: []
-  safe_default_reason: Experimental advanced inference abstraction is opt-in by default.
-- name: ADVANCED_AGENT_MEMORY_ENABLED
-  default: false
-  owner: agent-platform
-  area: Agentic AI Platform
-  status: experimental
-  introduced_in: v1.12.0
-  risk_level: medium
-  dependencies: []
-  conflicts: []
-  safe_default_reason: Experimental advanced agent memory with event sourcing is opt-in by default.
 - name: CREATE_TABLES_ON_STARTUP
   default: false
   owner: platform-ops
@@ -2224,7 +2204,7 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
-- name: COMMERCIAL_RAG_ENABLE_IMMUTABLE_AUDIT
+- name: COMMERCIAL_RAG_VAULT_ENABLE_IMMUTABLE_AUDIT
   default: true
   owner: platform-ops
   area: RAG
@@ -2234,7 +2214,7 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
-- name: COMMERCIAL_RAG_ENABLE_POISON_DETECTION
+- name: COMMERCIAL_RAG_VAULT_ENABLE_POISON_DETECTION
   default: true
   owner: platform-ops
   area: RAG
@@ -2244,7 +2224,7 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Enabled by default because this is a standard feature.
-- name: COMMERCIAL_RAG_REQUIRE_CONFIDENTIAL_RUNTIME
+- name: COMMERCIAL_RAG_VAULT_REQUIRE_CONFIDENTIAL_RUNTIME
   default: false
   owner: platform-ops
   area: RAG
@@ -2254,7 +2234,7 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Default value is safe for standard installations.
-- name: COMMERCIAL_RAG_REQUIRE_SIGNED_DOCUMENTS
+- name: COMMERCIAL_RAG_VAULT_REQUIRE_SIGNED_DOCUMENTS
   default: false
   owner: platform-ops
   area: RAG
@@ -6084,3 +6064,23 @@
   dependencies: []
   conflicts: []
   safe_default_reason: Registered missing flag for governance compliance.
+- name: LMSTUDIO_CHAT_MODEL
+  default: nvidia/nemotron-3-nano-4b
+  owner: platform-ops
+  area: providers
+  status: active
+  introduced_in: v2.0.9
+  risk_level: low
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Selects the local LM Studio model without enabling external access.
+- name: PROVIDER_FAIL_CLOSED
+  default: true
+  owner: platform-ops
+  area: providers
+  status: active
+  introduced_in: v2.0.9
+  risk_level: medium
+  dependencies: []
+  conflicts: []
+  safe_default_reason: Provider failures deny execution instead of silently falling back.

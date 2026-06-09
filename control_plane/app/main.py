@@ -280,9 +280,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     from app.api.billing_payments import router as billing_payments_router
     app.include_router(billing_payments_router)
 
-    from app.api.multimodal import router as multimodal_router
+    from app.api.multimodal import router as optional_multimodal_router
     from app.api.multimodal_v2 import router as multimodal_v2_router
-    app.include_router(multimodal_router)
+    app.include_router(optional_multimodal_router)
     app.include_router(multimodal_v2_router)
 
     if _flag("agentic_router_v2_enabled"):
@@ -692,36 +692,40 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Admin-Token", "X-Correlation-ID"],
     expose_headers=["X-Correlation-ID"],
 )
-app.include_router(public_router)
-app.include_router(system_router)
-app.include_router(admin_router)
-app.include_router(admin_inference_router)
-app.include_router(admin_executions_router)
-app.include_router(admin_costs_router)
-app.include_router(admin_federation_mesh_router)
-app.include_router(admin_backup_router)
-app.include_router(admin_compliance_evidence_router)
-app.include_router(admin_marketplace_router)
-app.include_router(admin_performance_v2_router)
-app.include_router(admin_model_provenance_router)
-app.include_router(admin_agent_memory_router)
-app.include_router(admin_evaluation_router)
-app.include_router(auth_router)
-app.include_router(admin_models_runtime_router)
-app.include_router(admin_rbac_router)
-app.include_router(saas_admin_router)
-app.include_router(sales_router)
-app.include_router(admin_tests_router)
-app.include_router(client_router)
-app.include_router(rag_router)
-app.include_router(client_rag_router)
-app.include_router(rag_enterprise_router)
-app.include_router(collab_chat_router)
-app.include_router(voice_router)
-app.include_router(admin_model_experiments_router)
-app.include_router(web_ide_router)
-app.include_router(mobile_v1_router)
-app.include_router(admin_rag_router)
+from app.router_registry import register_routers
+
+register_routers(app, (
+    public_router,
+    system_router,
+    admin_router,
+    admin_inference_router,
+    admin_executions_router,
+    admin_costs_router,
+    admin_federation_mesh_router,
+    admin_backup_router,
+    admin_compliance_evidence_router,
+    admin_marketplace_router,
+    admin_performance_v2_router,
+    admin_model_provenance_router,
+    admin_agent_memory_router,
+    admin_evaluation_router,
+    auth_router,
+    admin_models_runtime_router,
+    admin_rbac_router,
+    saas_admin_router,
+    sales_router,
+    admin_tests_router,
+    client_router,
+    rag_router,
+    client_rag_router,
+    rag_enterprise_router,
+    collab_chat_router,
+    voice_router,
+    admin_model_experiments_router,
+    web_ide_router,
+    mobile_v1_router,
+    admin_rag_router,
+))
 app.include_router(portal_router, prefix="/portal")
 app.include_router(account_router, prefix="/v1") # Alias for /account
 app.include_router(developer_docs_router)
@@ -799,7 +803,6 @@ app.include_router(admin_onboarding_router)
 app.include_router(admin_agent_protocols_router)
 app.include_router(admin_policies_router)
 app.include_router(admin_sandbox_router)
-app.include_router(admin_rbac_router)
 app.include_router(multi_cluster_admin_router)
 app.include_router(chaos_admin_router)
 app.include_router(compliance_admin_router)
@@ -807,7 +810,6 @@ app.include_router(payments_router)
 app.include_router(pocket_tts_router)
 app.include_router(admin_vectorstores_router)
 app.include_router(pki_attestation_admin_router)
-app.include_router(multimodal_router)
 app.include_router(web_search_admin_router)
 
 include_optional_routers(app, settings)

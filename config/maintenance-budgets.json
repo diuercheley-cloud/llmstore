@@ -1,0 +1,10 @@
+{
+  "max_api_router_files": 203,
+  "max_service_files": 948,
+  "max_feature_flags": 563,
+  "max_main_lines": 829,
+  "max_settings_lines": 1544,
+  "min_collected_tests": 5600,
+  "max_untested_p0_services": 127,
+  "max_untested_p1_services": 0
+}

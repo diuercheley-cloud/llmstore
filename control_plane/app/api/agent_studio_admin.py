@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db_session
 from app.models.agent_studio import (
+    AgentFlowDebugEvent,
     AgentFlowDebugSession,
     AgentFlowDefinition,
     AgentFlowVersion,
@@ -204,7 +205,7 @@ async def get_debug_session(run_id: uuid.UUID, db: AsyncSession = Depends(get_db
     if not session:
          raise HTTPException(status_code=404, detail="Debug session not found")
          
-    stmt_e = select(AgentDebugEvent).where(AgentDebugEvent.session_id == session.id).order_by(AgentDebugEvent.created_at.asc())
+    stmt_e = select(AgentFlowDebugEvent).where(AgentFlowDebugEvent.session_id == session.id).order_by(AgentFlowDebugEvent.created_at.asc())
     res_e = await db.execute(stmt_e)
     events = res_e.scalars().all()
     

@@ -1,5 +1,6 @@
 # Owner: agent-platform
 import hashlib
+import inspect
 import logging
 import uuid
 from typing import Any, Dict, List, Optional
@@ -27,6 +28,7 @@ class ConversationThreadService:
         self, session_id: uuid.UUID, title: Optional[str] = None
     ) -> AgentConversationThread:
         thread = AgentConversationThread(
+            id=uuid.uuid4(),
             session_id=session_id,
             title=title,
             status="active",
@@ -42,7 +44,13 @@ class ConversationThreadService:
             AgentConversationThread.id == thread_id
         )
         res = await self.db.execute(stmt)
-        return res.scalar_one_or_none()
+        thread = res.scalar_one_or_none()
+        if inspect.isawaitable(thread):
+            # SQLAlchemy's scalar result is synchronous. Treat an async-compatible
+            # adapter result as empty after consuming it instead of leaking a coroutine.
+            await thread
+            return None
+        return thread
 
     async def get_default_thread(
         self, session_id: uuid.UUID
@@ -57,7 +65,11 @@ class ConversationThreadService:
             .limit(1)
         )
         res = await self.db.execute(stmt)
-        return res.scalar_one_or_none()
+        thread = res.scalar_one_or_none()
+        if inspect.isawaitable(thread):
+            await thread
+            return None
+        return thread
 
     async def add_message(
         self,

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from app.contracts.provider import (
-    ProviderCapabilities,
     ProviderContract,
 )
 from app.services.providers.schemas import ProviderCapabilities

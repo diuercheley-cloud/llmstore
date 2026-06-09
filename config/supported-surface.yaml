@@ -1652,3 +1652,4 @@ capabilities:
   - agents/streaming/run_event_stream.py
   - agents/streaming/websocket_manager.py
   - agent_a2a.py
+  rollback_story: Disable A2A and streaming feature flags, then revert to the previous deployment profile.

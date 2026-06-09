@@ -52,7 +52,7 @@ async def start_pubsub_listener():
                         if isinstance(event_data, str):
                             try:
                                 event_data = json.loads(event_data)
-                            except:
+                            except Exception:
                                 event_data = {"raw": event_data}
                         
                         await event_bus.publish(db, event_type, event_data, tenant_id)

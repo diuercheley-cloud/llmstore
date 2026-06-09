@@ -114,7 +114,7 @@ async def request_context_middleware(request: Request, call_next):
         status_code = 500
         try:
             status_code = response.status_code
-        except:
+        except Exception:
             pass
         logger.info(
             f"HTTP {request.method} {request.url.path} - {status_code} - {latency_ms}ms - CID:{correlation_id} - IP:{source_ip}"

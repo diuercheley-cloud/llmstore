@@ -18,8 +18,6 @@ Strategy:
 """
 from __future__ import annotations
 
-import os
-import sys
 from unittest.mock import patch
 
 import pytest
@@ -31,9 +29,7 @@ from app.services.agents.mcp.mcp_security import MCPSecurity
 from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_transport import MCPTransportError
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from fake_mcp_server import FakeMCPServer
+from tests.services.fake_mcp_server import FakeMCPServer
 
 # ---------------------------------------------------------------------------
 # Helpers

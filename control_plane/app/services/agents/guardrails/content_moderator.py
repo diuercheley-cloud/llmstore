@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -64,14 +64,14 @@ class ContentModerator:
 
     def check_refusal(self, text: str) -> Tuple[bool, str]:
         for pattern in self.output_patterns[2:4]:
-            if re.search(pattern, text, re.I):
+            if pattern.search(text):
                 return True, "refusal_detected"
         return False, ""
 
     def validate_output(self, text: str) -> List[Dict]:
         issues = []
         for pattern in self.output_patterns[:2]:
-            if re.search(pattern, text, re.I):
+            if pattern.search(text):
                 issues.append({"type": "secret_leak", "pattern": pattern.pattern})
         if self.check_refusal(text)[0]:
             issues.append({"type": "refusal", "detail": "Model refused to answer"})

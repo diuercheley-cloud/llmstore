@@ -48,7 +48,7 @@ class VisualObservabilityService:
             {"name": "GPU Capacity", "url": f"{base_url}/dashboards/gpu-capacity"},
             {"name": "Queue and QoS", "url": f"{base_url}/dashboards/queue-qos"},
             {"name": "Provider Health", "url": f"{base_url}/dashboards/provider-health"},
-            {"name": "Billing & Tokens", "url": f"{base_url}/dashboards/billing-tokens"},
+            {"name": "Billing & Tokens", "url": f"{base_url}/dashboards/billing-usage"},
             {"name": "Security & RBAC", "url": f"{base_url}/dashboards/security-rbac"},
             {"name": "SLO & Error Budget", "url": f"{base_url}/dashboards/slo-error-budget"},
         ]

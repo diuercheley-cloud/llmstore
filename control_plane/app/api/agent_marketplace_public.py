@@ -11,6 +11,7 @@ from app.services.agents.marketplace.marketplace_search import MarketplaceSearch
 from app.services.agents.marketplace.publisher_program import PublisherProgramService
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

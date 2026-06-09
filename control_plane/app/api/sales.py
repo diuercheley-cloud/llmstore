@@ -6,6 +6,7 @@ import uuid
 from typing import List, Optional
 
 from app.db.session import get_db_session
+from app.models.client import Client
 from app.models.sales_lead import SalesLead, SalesLeadNote
 from app.schemas.sales import (
     LeadAdvanceStage,
@@ -18,8 +19,9 @@ from app.schemas.sales import (
 from app.schemas.sales import SalesLead as SalesLeadSchema
 from app.services.auth import AdminRole, require_admin_role
 from app.services.billing.core import resolve_effective_plan_for_session
+from app.core.time import utc_now
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 

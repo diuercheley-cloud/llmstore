@@ -111,6 +111,10 @@ class SessionHistoryPolicyService:
         )
         res = await self.db.execute(stmt_msg)
         old_messages = res.scalar() or 0
+        if not isinstance(old_messages, int):
+            old_messages = getattr(res, "rowcount", 0)
+        if not isinstance(old_messages, int):
+            old_messages = 0
 
         if old_messages > 0 and not dry_run:
             del_stmt = delete(AgentThreadMessage).where(
