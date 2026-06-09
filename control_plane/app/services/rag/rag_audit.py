@@ -41,7 +41,7 @@ async def record_retrieval_audit(
     request_hash = hash_payload(request_payload)
     retrieval_hash = hash_payload(retrieval_payload)
     immutable_hash = None
-    if settings.commercial_rag_vault_enable_immutable_audit and vault.immutable_audit_enabled:
+    if getattr(settings, "commercial_rag_vault_enable_immutable_audit", True) and vault.immutable_audit_enabled:
         immutable_hash = immutable_audit_hash(
             {
                 "vault_id": str(vault.id),

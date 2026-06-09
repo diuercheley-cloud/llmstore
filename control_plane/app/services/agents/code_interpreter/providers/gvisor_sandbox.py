@@ -28,7 +28,7 @@ class GVisorSandboxProvider:
         import shutil
         runsc_binary = shutil.which("runsc")
         if runsc_binary is None:
-             if self.settings.agent_sandbox_production_requires_attestation:
+             if self.settings.agent_sandbox_production_requires_attestation or self.settings.agent_code_sandbox_microvm_required:
                  raise RuntimeError("gVisor provider is required but runsc/docker is not available")
              return {
                 "status": "provider_unavailable",

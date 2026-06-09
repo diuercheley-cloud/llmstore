@@ -190,7 +190,10 @@ class TestCommercialDemoSecurityAPIConstraints:
         response = await admin_client.get("/admin/billing/invoices", headers=admin_token_headers)
         assert response.status_code == 200
         data = response.json()
-        invoices = data.get("invoices", [])
+        if isinstance(data, list):
+            invoices = data
+        else:
+            invoices = data.get("invoices", [])
         for inv in invoices:
             method = inv.get("payment_method", "")
             assert "manual" in method or "pix" in method, f"Unexpected payment method: {method}"

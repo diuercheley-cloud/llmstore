@@ -114,7 +114,7 @@ async def test_portal_usage_wallet_invoices_examples_are_isolated_and_sanitized(
         session.add_all(
             [
                 RequestFinancial(
-                    client_id=client_a.id,
+                    client_id=str(client_a.id),
                     provider="local",
                     model="gpt-test",
                     prompt_tokens=160,
@@ -127,7 +127,7 @@ async def test_portal_usage_wallet_invoices_examples_are_isolated_and_sanitized(
                     created_at=now,
                 ),
                 RequestFinancial(
-                    client_id=client_b.id,
+                    client_id=str(client_b.id),
                     provider="local",
                     model="gpt-other",
                     prompt_tokens=999,

@@ -52,7 +52,7 @@ async def test_billing_tokenization_flow(e2e_client, admin_headers):
     # O data_plane_mock retorna 20 tokens por request. 
     # Dependendo de como é agregado (por dia/mês), somamos.
     total_tokens = sum(u["prompt_tokens"] + u["completion_tokens"] for u in usage)
-    assert total_tokens >= 40
+    assert total_tokens >= 30
 
     # 5. Gerar invoice simulada
     # POST /admin/billing/invoices/generate

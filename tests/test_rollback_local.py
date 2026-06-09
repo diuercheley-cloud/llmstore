@@ -17,4 +17,4 @@ def test_rollback_invalid_backup():
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT_DIR))
     assert result.returncode != 0
-    assert "Erro: Backup ID (diretório) não encontrado" in result.stdout
+    assert "O diretório de backup não foi encontrado" in result.stdout

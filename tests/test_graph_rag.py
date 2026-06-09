@@ -1,6 +1,6 @@
 """Tests for Graph RAG and Agentic RAG — entity extraction, vector search, iterative retrieval."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from app.services.rag.graph_rag import (
@@ -100,9 +100,6 @@ class TestKnowledgeGraphRAGService:
     @pytest.mark.asyncio
     async def test_vector_search_fallback(self, kg_service):
         kg_service.db.execute = AsyncMock(side_effect=Exception("no pgvector"))
-        kg_service.db.execute.return_value = AsyncMock()
-        kg_service.db.execute.return_value.scalars = lambda: AsyncMock()
-        kg_service.db.execute.return_value.scalars().all = lambda: []
         with patch.object(kg_service, '_vector_search', wraps=kg_service._vector_search):
             results = await kg_service._vector_search("test", "tenant-1", limit=5)
             assert isinstance(results, list)
@@ -215,8 +212,9 @@ class TestAgenticRAGService:
 
     @pytest.mark.asyncio
     async def test_basic_retrieve(self, mock_db):
-        mock_db.execute = AsyncMock()
-        mock_db.execute.return_value.scalars.return_value.all.return_value = []
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db.execute = AsyncMock(return_value=mock_result)
         agentic = AgenticRAGService(mock_db)
         results = await agentic._basic_retrieve("test", "tenant-1", limit=5)
         assert isinstance(results, list)

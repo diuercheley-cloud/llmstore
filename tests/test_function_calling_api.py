@@ -1,6 +1,7 @@
 import json
 import uuid
 from decimal import Decimal
+from unittest.mock import AsyncMock
 from types import SimpleNamespace
 
 import pytest
@@ -55,8 +56,8 @@ def tools_enabled_plan(monkeypatch):
         embeddings_requests_per_month=1000,
         embeddings_tokens_per_month=1_000_000,
     )
-    monkeypatch.setattr("app.api.client.resolve_effective_plan", lambda client: plan)
-    monkeypatch.setattr("app.utils.validation.resolve_effective_plan", lambda client: plan)
+    monkeypatch.setattr("app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
+    monkeypatch.setattr("app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
     return plan
 
 
@@ -79,8 +80,8 @@ def tools_disabled_plan(monkeypatch):
         embeddings_requests_per_month=1000,
         embeddings_tokens_per_month=1_000_000,
     )
-    monkeypatch.setattr("app.api.client.resolve_effective_plan", lambda client: plan)
-    monkeypatch.setattr("app.utils.validation.resolve_effective_plan", lambda client: plan)
+    monkeypatch.setattr("app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
+    monkeypatch.setattr("app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
     return plan
 
 

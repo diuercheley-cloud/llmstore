@@ -18,7 +18,11 @@ from app.services.admin_rbac import ensure_admin_rbac_seed
 from app.services.inference_proxy import InferenceProxy
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from data_plane_mock.main import app as mock_data_plane_app
+try:
+    from data_plane_mock.main import app as mock_data_plane_app
+except ImportError:
+    mock_data_plane_app = None
+    pytest.skip("data_plane_mock module not available, skipping e2e tests that depend on it.", allow_module_level=True)
 
 
 @pytest.fixture(scope="session")
@@ -35,6 +39,11 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     monkeypatch.setenv("RAG_ENABLED", "true")
     monkeypatch.setenv("EMBEDDINGS_ENABLED", "true")
     monkeypatch.setenv("EMBEDDINGS_BACKEND", "mock")
+    monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
+    monkeypatch.setenv("AGENT_ASYNC_EXECUTION_ENABLED", "true")
+    monkeypatch.setenv("AGENT_TOOL_EXECUTION_ENABLED", "true")
     monkeypatch.setenv("MODEL_HOT_SWAP_ENABLED", "true")
     monkeypatch.setenv("PKI_ENABLED", "true")
     monkeypatch.setenv("REDIS_URL", "redis://test.invalid:6379")

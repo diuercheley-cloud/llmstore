@@ -37,10 +37,12 @@ async def test_trigger_callback_success(session: AsyncSession):
         id=uuid.uuid4(),
         deployment_id=deployment.id,
         run_id=run.id,
-        client_id="test",
+        tenant_id="test",
+        mode="sync",
+        status="completed",
         tokens_used=10,
-        estimated_cost_brl=0.01,
-        created_at=run.created_at
+        cost_brl=0.01,
+        created_at=run.started_at
     )
     session.add(usage)
     await session.commit()
@@ -72,8 +74,18 @@ async def test_trigger_callback_no_webhook(session: AsyncSession):
     
     run = AgentRun(id=uuid.uuid4(), agent_id=deployment.agent_id, tenant_id="test")
     session.add(run)
+    await session.flush()
     
-    usage = AgentApiUsageEvent(deployment_id=deployment.id, run_id=run.id, client_id="test", tokens_used=0, estimated_cost_brl=0, created_at=run.created_at)
+    usage = AgentApiUsageEvent(
+        deployment_id=deployment.id, 
+        run_id=run.id, 
+        tenant_id="test",
+        mode="sync",
+        status="completed",
+        tokens_used=0, 
+        cost_brl=0, 
+        created_at=run.started_at
+    )
     session.add(usage)
     await session.commit()
     

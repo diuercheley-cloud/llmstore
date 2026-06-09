@@ -150,6 +150,8 @@ make validate-platform-documentation
 | [Glossary](docs/architecture/platform_glossary.md) | Terminology reference |
 | [Phase Timeline](docs/architecture/platform_phase_timeline.md) | Phase 69–82 evolution |
 | [Runbook](docs/operations/platform_runbook.md) | Operations guide |
+| [Local Production Quickstart](docs/LOCAL_PRODUCTION_QUICKSTART.md) | Local install, smoke validation, and operator flow |
+| [Local Demo Script](docs/LOCAL_DEMO_SCRIPT.md) | Demo setup, scripted walkthrough, and client-facing flow |
 
 ### Explicit Limitations
 
@@ -338,6 +340,8 @@ Relatório gerado em `artifacts/customer-demo/<timestamp>/`.
 ### Documentos de apoio para reuniões
 
 - [Guia de Configuração da Demo](docs/LOCAL_DEMO_GUIDE.md)
+- [Roteiro de Demonstração Local](docs/LOCAL_DEMO_SCRIPT.md)
+- [FAQ da Demo Local](docs/LOCAL_DEMO_FAQ.md)
 - [Roteiro de Apresentação (15/30/60 min)](docs/CLIENT_PRESENTATION_SCRIPT.md)
 - [Talk Track — Falas Prontas](docs/CLIENT_DEMO_TALK_TRACK.md)
 - [FAQ da Demo Comercial](docs/CLIENT_DEMO_FAQ.md)

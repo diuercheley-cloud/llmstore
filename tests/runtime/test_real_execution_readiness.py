@@ -33,6 +33,7 @@ async def test_readiness_pilot_ready_with_warnings(session: AsyncSession, settin
     settings.deployment_mode = "pilot"
     settings.agent_execution_plane_enabled = True # Avoid blocking pilot by queue
     settings.agent_execution_enabled = False # Generates warning but not blocker for pilot
+    settings.agent_executor_mock_mode = False # Must disable mock mode so it falls through to exec_enabled check
     
     svc = RealExecutionReadinessService(session)
     results = await svc.check_readiness()

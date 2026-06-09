@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="$ROOT_DIR/artifacts/enterprise-pack/latest"
 mkdir -p "$OUTPUT_DIR"
 
-source "$ROOT_DIR/scripts/common.sh"
+source "${ROOT_DIR}/scripts/common.sh"
 init_stack_env
 
 REPORT_FILE="$OUTPUT_DIR/acceptance-report.md"

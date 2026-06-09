@@ -60,14 +60,12 @@ def test_local_metrics_expose_expected_families():
 
     metrics_text = generate_latest().decode("utf-8")
 
-    assert "requests_total" in metrics_text
-    assert "request_latency_seconds" in metrics_text
-    assert "tokens_prompt_total" in metrics_text
-    assert "tokens_completion_total" in metrics_text
-    assert "tokens_total" in metrics_text
-    assert "inference_latency_seconds" in metrics_text
-    assert "queue_wait_seconds" in metrics_text
-    assert "cache_hits_total" in metrics_text
-    assert "cache_misses_total" in metrics_text
-    assert "backend_errors_total" in metrics_text
-    assert "model_errors_total" in metrics_text
+    assert "llm_requests_total" in metrics_text
+    assert "llm_request_latency_seconds" in metrics_text
+    assert "llm_tokens_input_total" in metrics_text
+    assert "llm_tokens_output_total" in metrics_text
+    assert "llm_queue_wait_seconds" in metrics_text
+    assert "llm_cache_hits_total" in metrics_text
+    assert "llm_cache_misses_total" in metrics_text
+    assert "llm_provider_failures_total" in metrics_text
+    assert "llm_request_errors_total" in metrics_text

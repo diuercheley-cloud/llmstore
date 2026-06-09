@@ -24,7 +24,8 @@ def test_mcp_client_disabled_raises():
     with pytest.raises(PermissionError, match="MCP client is disabled"):
         security.require_client_enabled()
 
-def test_mcp_client_discovers_mock_tools():
+@pytest.mark.asyncio
+async def test_mcp_client_discovers_mock_tools():
     settings = get_settings()
     settings.agent_mcp_enabled = True
     settings.agent_mcp_client_enabled = True
@@ -34,7 +35,7 @@ def test_mcp_client_discovers_mock_tools():
     server = registry.register("tenant-1", "my-server", "streamable_http", "http://local-mcp-server")
     
     client = MCPClient()
-    discovered = client.discover(server.id)
+    discovered = await client.discover(server.id)
     assert len(discovered["tools"]) > 0
     assert discovered["tools"][0]["name"] == "safe_echo"
 

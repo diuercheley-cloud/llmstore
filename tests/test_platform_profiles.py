@@ -3,7 +3,8 @@ import os
 from app.services.platform.profile_resolver import ProfileResolver
 
 
-def test_appliance_profile_resolution():
+def test_appliance_profile_resolution(monkeypatch):
+    monkeypatch.delenv("AGENT_RUNTIME_ENABLED", raising=False)
     resolver = ProfileResolver()
     result = resolver.resolve("appliance")
     assert result["profile"] == "appliance"

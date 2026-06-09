@@ -7,6 +7,7 @@ from app.services.platform.deployment_modes import DeploymentModeService
 
 
 def test_deployment_modes_service_fallback_defaults():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService(config_path="/invalid/path/deployment-modes.yaml")
     assert service.get_governance_posture("appliance") == "Strict Air-gapped / Local Only"
     assert service.get_governance_posture("pilot") == "Governed Testing / Human-in-the-loop"
@@ -14,6 +15,7 @@ def test_deployment_modes_service_fallback_defaults():
     assert service.get_governance_posture("enterprise_managed") == "Enterprise Managed / Federated & Strict Isolation"
 
 def test_deployment_modes_service_load_config():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService()
     appliance_defaults = service.get_mode_defaults("appliance")
     assert appliance_defaults["AGENT_RUNTIME_ENABLED"] is False
@@ -54,6 +56,7 @@ def test_settings_defaults_propagation():
         assert settings.managed_control_plane_enabled is True
 
 def test_coherence_validation_appliance():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService()
     
     settings = Settings(
@@ -79,6 +82,7 @@ def test_coherence_validation_appliance():
     assert any("AGENT_RUNTIME_ENABLED" in b for b in blockers)
 
 def test_coherence_validation_pilot():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService()
     
     settings = Settings(
@@ -120,15 +124,19 @@ def test_coherence_validation_pilot():
     assert any("AGENT_MULTI_AGENT_ENABLED" in w for w in warnings)
 
 def test_coherence_validation_production():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService()
     
     settings = Settings(
         DEPLOYMENT_MODE="production",
         AGENT_RUNTIME_ENABLED=True,
         AGENT_PROMOTION_REQUIRES_EVALS=True,
-        AGENT_EVAL_REGRESSION_GATE_ENABLED=True
+        AGENT_EVAL_REGRESSION_GATE_ENABLED=True,
+        AGENT_LLM_PROVIDER="gateway",
+        AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=False,
+        AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION=True,
     )
-    settings.model_fields_set.update({"deployment_mode", "agent_runtime_enabled", "agent_promotion_requires_evals", "agent_eval_regression_gate_enabled"})
+    settings.model_fields_set.update({"deployment_mode", "agent_runtime_enabled", "agent_promotion_requires_evals", "agent_eval_regression_gate_enabled", "agent_llm_provider", "agent_allow_mock_llm_in_production", "agent_require_real_llm_for_production"})
     is_coherent, blockers, warnings = service.validate_coherence(settings)
     assert is_coherent is True
 
@@ -142,15 +150,19 @@ def test_coherence_validation_production():
     assert any("AGENT_PROMOTION_REQUIRES_EVALS" in b for b in blockers)
 
 def test_coherence_validation_enterprise_managed():
+    DeploymentModeService._modes_config = None
     service = DeploymentModeService()
     
     settings = Settings(
         DEPLOYMENT_MODE="enterprise_managed",
         AGENT_RUNTIME_ENABLED=True,
         AGENT_TENANT_ISOLATION_STRICT=True,
-        MANAGED_CONTROL_PLANE_ENABLED=True
+        MANAGED_CONTROL_PLANE_ENABLED=True,
+        AGENT_LLM_PROVIDER="gateway",
+        AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION=False,
+        AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION=True,
     )
-    settings.model_fields_set.update({"deployment_mode", "agent_runtime_enabled", "agent_tenant_isolation_strict", "managed_control_plane_enabled"})
+    settings.model_fields_set.update({"deployment_mode", "agent_runtime_enabled", "agent_tenant_isolation_strict", "managed_control_plane_enabled", "agent_llm_provider", "agent_allow_mock_llm_in_production", "agent_require_real_llm_for_production"})
     is_coherent, blockers, warnings = service.validate_coherence(settings)
     assert is_coherent is True
 

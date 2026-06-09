@@ -1,10 +1,17 @@
-import pytest
+import os
 import uuid
+
+import pytest
 from typing import Dict, Any
 
 from sqlalchemy import select
 from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
 from app.services.agents.studio.flow_validator import FlowValidator
+
+
+@pytest.fixture(autouse=True)
+def enable_agent_studio(settings):
+    settings.agent_studio_enabled = True
 
 
 @pytest.fixture

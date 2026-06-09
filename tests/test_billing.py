@@ -19,12 +19,12 @@ from app.services.billing import (
 def test_resolve_effective_plan_prefers_billing_plan():
     client = Client(
         name="demo",
-        rate_limit_per_minute=5,
-        daily_token_quota=20000,
-        weekly_token_quota=100000,
-        monthly_token_quota=300000,
-        max_context_tokens=2048,
-        max_output_tokens=1024,
+        rate_limit_per_minute=100,
+        daily_token_quota=1000000,
+        weekly_token_quota=5000000,
+        monthly_token_quota=10000000,
+        max_context_tokens=8192,
+        max_output_tokens=4096,
     )
     client.billing_plan = BillingPlan(
         code="basic",

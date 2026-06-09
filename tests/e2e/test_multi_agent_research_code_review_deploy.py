@@ -18,6 +18,7 @@ async def test_multi_agent_e2e_research_code_review_deploy(session):
     settings.agent_kg_write_enabled = True
     settings.agent_code_interpreter_enabled = True
     settings.agent_code_sandbox_provider = "mock"
+    settings.agent_sandbox_allow_simulated_provider = True
     settings.agent_otel_tracing_enabled = True
     settings.agent_approval_portal_enabled = True
     settings.agent_execution_plane_enabled = True

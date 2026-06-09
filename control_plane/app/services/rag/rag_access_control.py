@@ -73,7 +73,7 @@ async def evaluate_retrieval_access(
         if not attrs.get("purpose"):
             add_violation("abac_missing_purpose")
 
-    if settings.commercial_rag_vault_require_confidential_runtime or (policy and policy.require_confidential_runtime):
+    if getattr(settings, "commercial_rag_vault_require_confidential_runtime", False) or (policy and policy.require_confidential_runtime):
         stmt = select(CommercialConfidentialRuntimeProfile).where(
             CommercialConfidentialRuntimeProfile.client_id == str(request_client_id),
             CommercialConfidentialRuntimeProfile.enabled == True,
@@ -106,7 +106,7 @@ async def validate_document_access(
     policy: CommercialRAGAccessPolicy | None,
 ) -> list[str]:
     violations: list[str] = []
-    if (settings.commercial_rag_vault_require_signed_documents or (policy and policy.require_signed_document)) and not document.signed_manifest_hash:
+    if (getattr(settings, "commercial_rag_vault_require_signed_documents", False) or (policy and policy.require_signed_document)) and not document.signed_manifest_hash:
         violations.append("unsigned_document")
 
     if document.legal_hold:

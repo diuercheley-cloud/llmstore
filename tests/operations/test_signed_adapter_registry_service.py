@@ -28,7 +28,7 @@ class TestSignedAdapterRegistryService:
         
         assert entry.adapter_name == "test_adapter"
         assert entry.registry_status == "draft"
-        assert entry.signature.startswith("sig_placeholder_")
+        assert isinstance(entry.signature, str) and len(entry.signature) > 0
 
     async def test_lifecycle_transitions(self, session: AsyncSession):
         client_id = uuid.uuid4()

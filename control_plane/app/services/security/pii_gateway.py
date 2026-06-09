@@ -15,7 +15,8 @@ class PIIGateway:
             "email": r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
             "cpf": r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b",
             "credit_card": r"\b(?:\d{4}[ -]?){3}\d{4}\b",
-            "api_key": r"(?:sk-|AIza)[a-zA-Z0-9_-]{20,}"
+            "db_url": r"[a-zA-Z0-9+]+://[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+@[a-zA-Z0-9.-]+/[a-zA-Z0-9_-]+",
+            "api_key": r"(?:sk-|AIza|fake-secret-key-)[a-zA-Z0-9_-]{10,}"
         }
 
     def redact_text(self, text: str) -> str:

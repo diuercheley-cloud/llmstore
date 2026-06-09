@@ -16,7 +16,7 @@ def sanitize_logs(log_text: str) -> str:
     # Pattern to match keys indicating secrets/passwords/api keys and their values
     # Also sk-... patterns for openai key
     patterns = [
-        r'(?i)(api[-_]?key|secret|password|token|private[-_]?key|auth_token)\s*[:=]\s*["\']?[a-zA-Z0-9_\-\.\+\/]{10,}["\']?',
+        r'(?i)(api[-_ ]?key|secret|password|token|private[-_ ]?key|auth_token)\s*[:=]\s*["\']?[a-zA-Z0-9_\-\.\+\/]{10,}["\']?',
         r'sk-[a-zA-Z0-9]{32,}',
         r'Bearer\s+[a-zA-Z0-9_\-\.]+'
     ]

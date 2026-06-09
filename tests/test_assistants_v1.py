@@ -14,6 +14,13 @@ async def assistants_client(isolated_db_url, fake_redis):
     from app.db.base import Base
     from app.db.session import get_db, get_redis
     from app.main import app
+    from app.api.assistants_v1 import router as assistants_v1_router
+
+    # Ensure router is included even if app was initialized without the flag
+    route_exists = any(getattr(route, "path", "").startswith("/v1/assistants") for route in app.routes)
+    if not route_exists:
+        app.include_router(assistants_v1_router)
+
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)

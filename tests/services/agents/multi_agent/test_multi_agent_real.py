@@ -21,8 +21,8 @@ async def test_hierarchical_real_delegation(mock_db):
     
     # Setup team and members
     team = AgentTeam(id=team_id, tenant_id=tenant_id, topology="hierarchical")
-    manager = AgentTeamMember(agent_id=uuid.uuid4(), role="manager")
-    specialist = AgentTeamMember(agent_id=uuid.uuid4(), role="specialist")
+    manager = AgentTeamMember(agent_id=uuid.uuid4(), role="manager", metadata_json={})
+    specialist = AgentTeamMember(agent_id=uuid.uuid4(), role="specialist", metadata_json={})
     
     # Mock data retrieval
     runtime.get_team = AsyncMock(return_value=team)
@@ -34,7 +34,13 @@ async def test_hierarchical_real_delegation(mock_db):
     
     # Mock workspace and observability
     runtime.get_workspace = MagicMock()
+    runtime.get_workspace.return_value.put = AsyncMock()
+    runtime.get_workspace.return_value.get_all = AsyncMock(return_value={})
     runtime.obs = MagicMock()
+    runtime.obs.record_message = AsyncMock()
+    runtime.obs.record_trace = AsyncMock()
+    runtime.policy = MagicMock()
+    runtime.policy.validate_delegation = AsyncMock(return_value=(True, ""))
     runtime.arbitrator = MagicMock()
     runtime.arbitrator.arbitrate = AsyncMock(return_value={"final_synthesis": "done", "consensus": True, "confidence_score": 0.9})
     runtime.complete_run = AsyncMock()

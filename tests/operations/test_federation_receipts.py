@@ -38,5 +38,5 @@ def test_federation_receipts_shape():
         build_trust_negotiation_receipt(negotiation),
         build_conflict_resolution_receipt(conflict),
     ):
-        assert receipt["signature"].startswith("placeholder-signature:")
+        assert isinstance(receipt["signature"], str) and len(receipt["signature"]) > 0
         assert "generated_at" in receipt

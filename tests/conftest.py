@@ -32,10 +32,25 @@ def _load_env_file(path: Path) -> None:
 _load_env_file(ENV_FILE)
 _load_env_file(ENV_LOCAL)
 
+# Force stable test defaults regardless of .env/env.local
+os.environ["DEPLOYMENT_MODE"] = "appliance"
+os.environ["PLATFORM_PROFILE"] = "appliance"
+os.environ["AGENT_LLM_PROVIDER"] = "mock"
+os.environ["AGENT_EXECUTOR_MOCK_MODE"] = "true"
+os.environ["AGENT_REAL_LLM_ENABLED"] = "false"
+os.environ["AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION"] = "true"
+os.environ["ALLOW_HIGH_RISK_PROFILE_OVERRIDE"] = "true"
+os.environ["AGENT_SANDBOX_ALLOW_SIMULATED_PROVIDER"] = "false"
+os.environ["AGENT_MCP_REAL_DISCOVERY_ENABLED"] = "true"
+os.environ["AGENT_MCP_MOCK_MODE"] = "true"
+os.environ["AGENT_BATCH_API_ENABLED"] = "true"
+os.environ["COMMERCIAL_GLOBAL_ROUTING_ENABLED"] = "true"
+os.environ["RBAC_ADMIN_ENABLED"] = "false"
+
 # Required fallbacks for tests
 os.environ["ADMIN_TOKEN"] = "test-admin-token"
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}?timeout=30"
-os.environ["REDIS_URL"] = "redis://test.invalid:6379/0"
+os.environ["REDIS_URL"] = "redis://localhost:6379/0" # Use localhost instead of invalid to avoid long DNS timeouts, or we'll mock it
 os.environ["DATA_PLANE_BASE_URL"] = "http://localhost:8081"
 os.environ["RAG_STORAGE_DIR"] = str(TEST_TMP / "rag_uploads")
 os.environ["LMSTUDIO_ENABLED"] = "false"
@@ -43,6 +58,12 @@ os.environ["TTS_ENABLED"] = "false"
 os.environ["EMBEDDINGS_ENABLED"] = "true"
 os.environ["EMBEDDINGS_BACKEND"] = "mock"
 os.environ["AGENT_MCP_ENABLED"] = "true"
+# Note: AGENT_RUNTIME_ENABLED intentionally NOT set globally.
+# Each test that needs it must set it via monkeypatch or os.environ.
+os.environ["AGENT_STUDIO_ENABLED"] = "true"
+os.environ["CLOUD_PROVIDERS_ENABLED"] = "false"
+for _secret_key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY"):
+    os.environ.pop(_secret_key, None)
 
 # Ensure control_plane is on path
 CONTROL_PLANE = ROOT / "control_plane"
@@ -296,6 +317,12 @@ def settings():
 
 
 @pytest.fixture(autouse=True)
+def mock_global_redis(monkeypatch, fake_redis):
+    """Mock the global redis_client to avoid connection errors during tests."""
+    import app.db.session
+    monkeypatch.setattr(app.db.session, "redis_client", fake_redis)
+
+@pytest.fixture(autouse=True)
 def global_reset(monkeypatch: pytest.MonkeyPatch):
     """
     Resets global state between tests to ensure determinism.
@@ -344,7 +371,10 @@ def app_client_factory():
 
 @pytest.fixture
 def admin_token_headers() -> dict[str, str]:
-    return {"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")}
+    from app.core.config import get_settings
+    settings = get_settings()
+    token = settings.admin_super_token or settings.admin_token or "test-admin-token"
+    return {"X-Admin-Token": token}
 
 
 @pytest.fixture
@@ -361,6 +391,7 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
     from app.db.base import Base
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    import app.models
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -380,9 +411,10 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
 async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator[httpx.AsyncClient]:
     from app.db.base import Base
     from app.db.session import get_db_session, get_redis
-    from app.main import app
+    from app.main import app as fastapi_app
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    import app.models
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -398,13 +430,13 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
         async with testing_session_local() as session:
             yield session
 
-    app.dependency_overrides[get_db_session] = override_get_db_session
-    app.dependency_overrides[get_redis] = lambda: fake_redis
+    fastapi_app.dependency_overrides[get_db_session] = override_get_db_session
+    fastapi_app.dependency_overrides[get_redis] = lambda: fake_redis
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://testserver") as client:
         yield client
 
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
     await engine.dispose()
 
 

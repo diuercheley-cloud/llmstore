@@ -107,8 +107,15 @@ class AgentExecutor:
 
     async def execute_step(self) -> bool:
         # PII Protection and OTel Tracing Integration
-        from app.services.agents.telemetry.native_otel import agent_tracer
         from app.services.security.pii_gateway import pii_gateway
+        from contextlib import nullcontext
+
+        try:
+            from app.services.agents.telemetry.native_otel import agent_tracer
+            _tracer_span_ctx = agent_tracer.start_agent_span
+        except ModuleNotFoundError:
+            agent_tracer = None
+            _tracer_span_ctx = lambda name, run_id: nullcontext()
         
         run = await agent_state.get_agent_run(self.db, self.run_id)
         if not run or run.status in ("completed", "failed", "cancelled", "paused", "waiting_approval"):
@@ -124,7 +131,7 @@ class AgentExecutor:
             await self.db.commit()
             return False
 
-        with agent_tracer.start_agent_span(agent_def.name, str(run.id)) as span:
+        with _tracer_span_ctx(agent_def.name, str(run.id)) as span:
             logger.info(f"Executing step for agent {agent_def.name} under PII Gateway protection")
             
             # --- Debugger Integration ---
@@ -401,6 +408,8 @@ class AgentExecutor:
         if provider_value != "mock":
             return
         if self.settings.agent_executor_mock_mode:
+            return
+        if self.settings.agent_allow_mock_llm_in_production:
             return
         if self.deployment_mode in ("pilot", "production", "enterprise_managed"):
             raise MockProviderError(

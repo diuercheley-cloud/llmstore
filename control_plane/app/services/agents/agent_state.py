@@ -38,6 +38,7 @@ async def create_agent_definition(db: AsyncSession, data: dict) -> AgentDefiniti
         allowed_tools = list(allowed_tools)
 
     agent_def = AgentDefinition(
+        id=data.get("id", uuid.uuid4()),
         name=data["name"],
         version=data["version"],
         description=data.get("description"),

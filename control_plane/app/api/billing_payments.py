@@ -60,6 +60,9 @@ async def create_payment_intent(
     settings = get_settings()
     if not settings.payment_processing_enabled:
         raise HTTPException(status_code=403, detail="Payment processing is disabled.")
+    
+    if settings.payment_provider == "stripe" and not settings.stripe_payment_enabled:
+        raise HTTPException(status_code=403, detail="Stripe payment is disabled.")
 
     intent = await PaymentService.create_payment_intent(
         db=db,

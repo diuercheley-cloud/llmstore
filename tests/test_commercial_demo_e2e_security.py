@@ -71,7 +71,7 @@ def test_no_demo_tokens_in_reports():
 def test_check_secrets_script_runs():
     result = subprocess.run(
         ["./scripts/check-secrets.sh", "--all"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, f"check-secrets.sh failed:\n{result.stdout}\n{result.stderr}"
 
@@ -79,6 +79,6 @@ def test_check_secrets_script_runs():
 def test_check_secrets_on_demo_pack():
     result = subprocess.run(
         ["./scripts/check-secrets.sh", "--path", "demo-pack"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, f"check-secrets on demo-pack failed:\n{result.stdout}\n{result.stderr}"

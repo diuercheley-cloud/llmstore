@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 @pytest_asyncio.fixture
 async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
     monkeypatch.setenv("RBAC_ADMIN_ENABLED", "true")
-    monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
+    # monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
 
     from app.core.config import get_settings
     get_settings.cache_clear()
@@ -49,7 +49,7 @@ async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
 @pytest_asyncio.fixture
 async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
     monkeypatch.setenv("RBAC_ADMIN_ENABLED", "false")
-    monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
+    # monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
 
     from app.core.config import get_settings
     get_settings.cache_clear()

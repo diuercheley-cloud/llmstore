@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SYSTEM_CURL="$(command -v curl || true)"
+export SYSTEM_CURL
+
+# Prefer local wrapper scripts and virtualenv binaries before system tooling so tests remain portable.
+# Keep both `venv` and `.venv` to support either local environment layout.
+export PATH="${ROOT_DIR}/venv/bin:${ROOT_DIR}/.venv/bin:${ROOT_DIR}/scripts:${PATH}"
 
 # Ensure scripts directory is in PYTHONPATH for Python utilities
 export PYTHONPATH="${ROOT_DIR}/scripts:${PYTHONPATH:-}"

@@ -15,8 +15,6 @@ from app.services.rag_enterprise.policies import (
     resolve_enterprise_rag_policy,
 )
 
-pytestmark = pytest.mark.asyncio
-
 
 class TestEnterpriseRagPolicy:
     def test_default_policy(self):
@@ -65,7 +63,8 @@ class TestResolvePolicy:
         mock_session.execute.return_value = mock_exec_result
 
         with patch(
-            "app.services.rag_enterprise.policies.resolve_effective_plan",
+            "app.services.rag_enterprise.policies.resolve_effective_plan_for_session",
+            new_callable=AsyncMock,
             return_value=effective_plan,
         ):
             policy = await resolve_enterprise_rag_policy(mock_session, client)
@@ -89,7 +88,8 @@ class TestResolvePolicy:
         mock_session.execute.return_value = mock_exec_result
 
         with patch(
-            "app.services.rag_enterprise.policies.resolve_effective_plan",
+            "app.services.rag_enterprise.policies.resolve_effective_plan_for_session",
+            new_callable=AsyncMock,
             return_value=effective_plan,
         ):
             policy = await resolve_enterprise_rag_policy(mock_session, client)

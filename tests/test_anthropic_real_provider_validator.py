@@ -85,7 +85,8 @@ class MockArgs:
         self.output_dir = output_dir
 
 
-def test_validator_skips_when_no_key():
+def test_validator_skips_when_no_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "ANTHROPIC_PROVIDER_ENABLED": "true"}
     args = MockArgs(dry_run=False, real=True)
     v = AnthropicRealValidator(args, env)

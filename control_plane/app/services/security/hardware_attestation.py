@@ -98,6 +98,11 @@ async def enforce_attestation_policy(
     )
     records = rows.scalars().all()
     if effective_mode == "enforce":
+        statuses = {record.status for record in records}
+        if "untrusted" in statuses:
+            raise ValueError("Attestation enforcement blocked: untrusted node present")
+        if "expired" in statuses:
+            raise ValueError("Attestation enforcement blocked: expired attestation present")
         for record in records:
             if record.attestation_type == "placeholder":
                 raise ValueError("Attestation enforcement blocked: placeholder attestation not allowed in enforce mode")
@@ -108,10 +113,6 @@ async def enforce_attestation_policy(
         return {"allowed": effective_mode != "disabled", "status": "unknown", "records": 0}
 
     statuses = {record.status for record in records}
-    if "untrusted" in statuses and effective_mode == "enforce":
-        raise ValueError("Attestation enforcement blocked: untrusted node present")
-    if "expired" in statuses and effective_mode == "enforce":
-        raise ValueError("Attestation enforcement blocked: expired attestation present")
     return {
         "allowed": True,
         "status": "untrusted" if "untrusted" in statuses else ("expired" if "expired" in statuses else "trusted"),

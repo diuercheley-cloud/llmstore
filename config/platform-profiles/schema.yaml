@@ -4,6 +4,61 @@ valid_flags:
     description: Enables agent runtime execution core
     override_allowed: true
     high_risk: false
+  AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION:
+    type: boolean
+    description: Allows mock LLM usage in production-like environments
+    override_allowed: true
+    high_risk: false
+  AGENT_BATCH_API_ENABLED:
+    type: boolean
+    description: Enables the batch API surface
+    override_allowed: true
+    high_risk: false
+  AGENT_EXECUTOR_MOCK_MODE:
+    type: boolean
+    description: Enables mock executor mode
+    override_allowed: true
+    high_risk: false
+  AGENT_MCP_MOCK_MODE:
+    type: boolean
+    description: Enables mock MCP behavior
+    override_allowed: true
+    high_risk: false
+  AGENT_MCP_REAL_DISCOVERY_ENABLED:
+    type: boolean
+    description: Enables real MCP discovery calls
+    override_allowed: true
+    high_risk: false
+  AGENT_APPROVAL_PORTAL_ENABLED:
+    type: boolean
+    description: Enables the agent approval portal
+    override_allowed: true
+    high_risk: false
+  AGENT_AS_API_ENABLED:
+    type: boolean
+    description: Enables agent-as-API surfaces
+    override_allowed: true
+    high_risk: false
+  AGENT_AUTO_OPTIMIZATION_ENABLED:
+    type: boolean
+    description: Enables automatic optimization workflows
+    override_allowed: true
+    high_risk: false
+  AGENT_OPTIMIZER_TOURNAMENTS_ENABLED:
+    type: boolean
+    description: Enables optimizer tournaments
+    override_allowed: true
+    high_risk: false
+  AGENT_REAL_LLM_ENABLED:
+    type: boolean
+    description: Enables real LLM execution paths
+    override_allowed: true
+    high_risk: false
+  AGENT_ASYNC_EXECUTION_ENABLED:
+    type: boolean
+    description: Enables async agent execution
+    override_allowed: true
+    high_risk: false
   AGENT_WORKER_ENABLED:
     type: boolean
     description: Enables background worker to process agent tasks
@@ -69,6 +124,11 @@ valid_flags:
     description: Enforces agent definition promotion to require evaluation passes
     override_allowed: true
     high_risk: false
+  AGENT_PRODUCTION_REQUIRES_EVAL_BASELINE:
+    type: boolean
+    description: Requires a production evaluation baseline before activation
+    override_allowed: true
+    high_risk: false
   AGENT_LLM_PROVIDER:
     type: string
     description: Configured agent execution LLM provider (mock, gateway, real)
@@ -114,9 +174,19 @@ valid_flags:
     description: Enables cluster federation features for agents
     override_allowed: true
     high_risk: false
+  AGENT_CODE_SANDBOX_MICROVM_REQUIRED:
+    type: boolean
+    description: Requires a microVM-backed sandbox for code execution
+    override_allowed: true
+    high_risk: true
   AGENT_EXECUTION_PLANE_ENABLED:
     type: boolean
     description: Enforces agent execution plane activity
+    override_allowed: true
+    high_risk: false
+  AGENT_STUDIO_ENABLED:
+    type: boolean
+    description: Enables the Agent Studio UI and related services
     override_allowed: true
     high_risk: false
 

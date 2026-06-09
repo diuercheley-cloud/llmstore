@@ -49,4 +49,4 @@ def test_receipts_contain_required_fields():
     for receipt in receipts:
         assert receipt.receipt_type
         assert receipt.payload_hash
-        assert receipt.signature.startswith("placeholder-signature:")
+        assert isinstance(receipt.signature, str) and len(receipt.signature) > 0

@@ -21,9 +21,9 @@ def build_supply_chain_receipt(
         "signature_scope": signature_scope,
     }
     from app.core.config import get_settings
+    from app.services.inference.cryptographic_receipts import sign_payload
     is_prod = get_settings().app_env == "production"
     if is_prod:
-        from app.services.inference.cryptographic_receipts import sign_payload
         signature = sign_payload(payload_hash)
     else:
         signature = sign_payload(f"{receipt_type}:{payload_hash[:16]}")

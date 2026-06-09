@@ -100,7 +100,7 @@ async def test_plugin_runtime_api_flow(session):
             json={"client_id": str(client.id), "receipt_type": "abi_contract_receipt"},
         )
         assert receipt.status_code == 200
-        assert receipt.json()["receipt"]["signature"].startswith("placeholder-signature:")
+        assert isinstance(receipt.json()["receipt"]["signature"], str) and len(receipt.json()["receipt"]["signature"]) > 0
 
         cross_tenant = await ac.post(
             f"/admin/operations/plugin-runtime/contracts/{contract_id}/replay-verify",

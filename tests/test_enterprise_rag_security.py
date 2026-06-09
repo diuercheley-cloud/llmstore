@@ -7,7 +7,7 @@ from app.models.rag_document import RAGDocument
 from app.services.rag_enterprise.embeddings import EnterpriseEmbeddingService
 from app.services.rag_enterprise.retrieval import search_chunks
 
-pytestmark = pytest.mark.asyncio
+# pytestmark = pytest.mark.asyncio
 
 
 class TestSecretsNotInLogs:
@@ -36,6 +36,7 @@ class TestSecretsNotInLogs:
 
 
 class TestTenantFilterAlwaysApplied:
+    @pytest.mark.asyncio
     async def test_search_always_filters_by_client_id(self):
         session = MagicMock()
 
@@ -55,6 +56,7 @@ class TestTenantFilterAlwaysApplied:
         )
         assert results == []
 
+    @pytest.mark.asyncio
     async def test_ingestion_validates_client(self):
         session = MagicMock()
         session.execute = AsyncMock()
@@ -122,6 +124,7 @@ class TestNoCloudByDefault:
 
 
 class TestDeleteRemovesData:
+    @pytest.mark.asyncio
     async def test_delete_removes_chunks(self, tmp_path):
         session = MagicMock()
         session.execute = AsyncMock()

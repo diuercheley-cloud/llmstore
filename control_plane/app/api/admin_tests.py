@@ -864,3 +864,369 @@ async def configure_openrouter_model(
         logger.exception(f"Unexpected error configuring OpenRouter model: {e}")
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to configure model: {str(e)}")
+
+
+# =============================================================================
+# Pytest Runner API — endpoints for the /tests landing page
+# =============================================================================
+
+import asyncio as _asyncio
+import threading
+from pathlib import Path as _Path
+from typing import Optional
+
+# In-memory store for active test runs
+_pytest_runs: dict[str, dict] = {}
+_pytest_runs_lock = threading.Lock()
+
+
+def _get_test_paths() -> tuple[_Path, _Path]:
+    """Get (project_root, tests_dir) robustly for both host and docker environment."""
+    settings = get_settings()
+    current_path = _Path(__file__).resolve()
+    
+    # Try to find project_root by looking for a directory with a 'tests' folder
+    project_root = None
+    for parent in [current_path] + list(current_path.parents):
+        if (parent / "tests").exists() and (parent / "tests").is_dir():
+            project_root = parent
+            break
+            
+    # Fallbacks
+    if not project_root:
+        if current_path.parts[:3] == ("/", "app", "app"):
+            project_root = _Path("/app")
+        else:
+            project_root = _Path(settings.project_root) if hasattr(settings, "project_root") else current_path.parents[3]
+            
+    tests_dir = project_root / "tests"
+    return project_root, tests_dir
+
+
+def _discover_test_files() -> list[str]:
+    """Discover all test_*.py files under the tests/ directory recursively."""
+    project_root, tests_dir = _get_test_paths()
+    if not tests_dir.exists():
+        return []
+    
+    files = []
+    for f in tests_dir.rglob("test_*.py"):
+        if f.is_file():
+            parts = f.relative_to(tests_dir).parts
+            if any(p in {"node_modules", ".venv", "venv", ".pytest_cache", "__pycache__", ".git"} for p in parts):
+                continue
+            files.append(f.relative_to(tests_dir).as_posix())
+            
+    return sorted(files)
+
+
+def _categorize_test(filename: str) -> str:
+    """Extract a category from the test filename."""
+    import os
+    basename = os.path.basename(filename)
+    name = basename.replace("test_", "", 1).replace(".py", "")
+    # Map common prefixes to categories
+    category_prefixes = [
+        ("a2a_", "a2a"), ("abuse_", "abuse"), ("admin_", "admin"),
+        ("agent_", "agent"), ("agentic_", "agent"), ("ai_", "ai"),
+        ("airgap_", "airgap"), ("alembic_", "migrations"), ("alias_", "admin"),
+        ("anomaly_", "monitoring"), ("anthropic_", "providers"), ("anti_loop", "agent"),
+        ("api_key_", "auth"), ("approval_", "governance"), ("artifact_", "security"),
+        ("assistants_", "api"), ("attestation_", "security"), ("auth_", "auth"),
+        ("autonomous_", "agent"), ("backup_", "operations"), ("batches_", "api"),
+        ("billing_", "billing"), ("blast_", "security"), ("branding_", "ui"),
+        ("cache_", "cache"), ("canary_", "deployment"), ("capabilities_", "admin"),
+        ("capability_", "admin"), ("check_secrets", "security"), ("checkpoint_", "agent"),
+        ("circuit_", "resilience"), ("clean_", "operations"), ("cleanup_", "operations"),
+        ("client_", "client"), ("cognitive_", "agent"), ("collection", "misc"),
+        ("commercial_", "commercial"), ("compliance_", "compliance"),
+        ("confidential_", "security"), ("configure_", "operations"),
+        ("connector_", "integrations"), ("connectors_", "integrations"),
+        ("consistency_", "data"), ("constraint_", "agent"), ("context_", "agent"),
+        ("contract_", "commercial"), ("contracts_", "commercial"), ("cors_", "security"),
+        ("cost_", "billing"), ("cryptographic_", "security"), ("customer_", "client"),
+        ("deepseek_", "providers"), ("delete_", "operations"), ("demo_", "demo"),
+        ("deployment_", "deployment"), ("deterministic_", "agent"),
+        ("developer_", "platform"), ("digital_", "agent"), ("dispute_", "billing"),
+        ("distributed_", "platform"), ("dr_", "operations"),
+        ("embeddings_", "embeddings"), ("enterprise_", "enterprise"),
+        ("environment_", "operations"), ("evaluation_", "evals"),
+        ("evidence_", "compliance"), ("examples_", "docs"), ("execution_", "agent"),
+        ("export_", "operations"), ("failure_", "monitoring"),
+        ("fake_demo_", "demo"), ("feature_flag_", "admin"),
+        ("federated_", "federation"), ("federation_", "federation"),
+        ("financial_", "billing"), ("fireworks_", "providers"),
+        ("first_run_", "operations"), ("fresh_machine_", "operations"),
+        ("function_calling_", "api"), ("generate_", "commercial"),
+        ("generation_", "api"), ("gitignore_", "security"),
+        ("governance_", "governance"), ("graph_rag", "rag"),
+        ("groq_", "providers"), ("hardware_", "security"),
+        ("health_", "monitoring"), ("human_", "agent"),
+        ("hybrid_", "platform"), ("inference_", "inference"),
+        ("install_", "operations"), ("integration_", "integrations"),
+        ("integrations_", "integrations"), ("intelligent_cache_", "cache"),
+        ("key_", "security"), ("landing_", "ui"), ("lmstudio_", "providers"),
+        ("local_", "local"), ("makefile_", "platform"),
+        ("margin_", "billing"), ("mcp_", "agent"), ("mcts_", "agent"),
+        ("measure_", "monitoring"), ("meeting_", "commercial"),
+        ("memory_", "agent"), ("merkle_", "security"),
+        ("meta_", "evals"), ("metrics_", "monitoring"),
+        ("migrations_", "migrations"), ("mlops", "mlops"),
+        ("mobile_", "platform"), ("model_", "models"),
+        ("models_", "models"), ("multi_agent_", "agent"),
+        ("multimodal_", "api"), ("multitenant_", "multitenant"),
+        ("observability_", "monitoring"), ("offline_", "security"),
+        ("openai_", "providers"), ("opencode_", "platform"),
+        ("operational_", "operations"), ("operations_", "operations"),
+        ("operator_", "operations"), ("paid_", "commercial"),
+        ("performance_", "performance"), ("perplexity_", "providers"),
+        ("phase56_", "migrations"), ("plan_", "billing"),
+        ("platform_", "platform"), ("policy_", "governance"),
+        ("post_install_", "operations"), ("post_upgrade_", "operations"),
+        ("pre_client_", "commercial"), ("predictive_", "monitoring"),
+        ("pricing_", "billing"), ("production_readiness_", "operations"),
+        ("prompt_", "inference"), ("proof_", "security"),
+        ("proposal_", "commercial"), ("proposals_", "commercial"),
+        ("provider_", "providers"), ("public_", "api"),
+        ("queue_", "platform"), ("rag_", "rag"),
+        ("rate_limit_", "security"), ("readiness_", "operations"),
+        ("readme_", "docs"), ("real_", "providers"),
+        ("receipt_", "security"), ("release_", "releases"),
+        ("replay_", "security"), ("replicate_", "providers"),
+        ("repo_", "platform"), ("request_", "billing"),
+        ("reset_", "operations"), ("response_", "api"),
+        ("responses_", "api"), ("restore_", "operations"),
+        ("retention_", "operations"), ("retrieval_", "security"),
+        ("revenue_", "billing"), ("rollback_", "operations"),
+        ("router_", "routing"), ("routing_", "routing"),
+        ("runtime_", "runtime"), ("saas_", "platform"),
+        ("sales_", "commercial"), ("sandbox_", "security"),
+        ("script_", "platform"), ("security_", "security"),
+        ("semantic_", "agent"), ("shell_", "platform"),
+        ("signed_", "security"), ("simulate", "misc"),
+        ("smart_router_", "routing"), ("sovereign_", "platform"),
+        ("specialist_", "routing"), ("split_", "platform"),
+        ("sse_", "api"), ("status_", "api"),
+        ("stream_", "api"), ("surface_", "platform"),
+        ("system_", "admin"), ("team_", "agent"),
+        ("tenant_", "security"), ("test_", "platform"),
+        ("together_", "providers"), ("token_", "inference"),
+        ("tokenizer_", "inference"), ("tool_", "agent"),
+        ("transparency_", "security"), ("trust_", "security"),
+        ("trusted_", "security"), ("tts_", "tts"),
+        ("uncertainty_", "agent"), ("upgrade_", "operations"),
+        ("usage_", "billing"), ("v1_6_", "releases"),
+        ("v1_7_", "releases"), ("v1_models_", "models"),
+        ("validation_", "operations"), ("vllm", "providers"),
+        ("voice_", "tts"), ("wallet_", "billing"),
+        ("web_search", "search"), ("websocket_", "api"),
+        ("white_label_", "ui"), ("witness_", "federation"),
+        ("workflow_", "agent"), ("xai_", "providers"),
+    ]
+    for prefix, cat in category_prefixes:
+        if name.startswith(prefix):
+            return cat
+    return "misc"
+
+
+class PytestRunRequest(BaseModel):
+    files: list[str]
+    timeout: int = 120
+
+
+@router.get("/pytest/files", dependencies=[Depends(admin_rate_limit)])
+async def list_pytest_files(
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.READ)),
+):
+    """List all test files available for execution."""
+    files = _discover_test_files()
+    result = []
+    for f in files:
+        result.append({
+            "filename": f,
+            "category": _categorize_test(f),
+        })
+    return {"files": result, "total": len(result)}
+
+
+@router.post("/pytest/run", dependencies=[Depends(admin_rate_limit)])
+async def start_pytest_run(
+    payload: PytestRunRequest,
+    request: Request,
+    admin_token: str = Depends(admin_key_scheme),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.WRITE)),
+):
+    """Start a pytest run for one or more test files."""
+    all_files = set(_discover_test_files())
+    invalid = [f for f in payload.files if f not in all_files]
+    if invalid:
+        raise HTTPException(status_code=400, detail=f"Unknown test files: {invalid}")
+
+    if not payload.files:
+        raise HTTPException(status_code=400, detail="No test files specified")
+
+    run_id = str(uuid.uuid4())
+
+    project_root, tests_dir = _get_test_paths()
+
+    # Resolve virtualenv python
+    venv_python = None
+    for venv_dir in [project_root / ".venv", project_root / "venv"]:
+        candidate = venv_dir / "bin" / "python"
+        if candidate.exists():
+            venv_python = str(candidate)
+            break
+    python_cmd = venv_python or "python"
+
+    run_data = {
+        "run_id": run_id,
+        "status": "running",
+        "total": len(payload.files),
+        "completed": 0,
+        "passed": 0,
+        "failed": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "skipped": 0,
+        "started_at": time.time(),
+        "finished_at": None,
+        "timeout": payload.timeout,
+        "cancelled": False,
+        "results": {f: {"status": "queued", "duration": None, "output": ""} for f in payload.files},
+    }
+
+    with _pytest_runs_lock:
+        _pytest_runs[run_id] = run_data
+
+    # Launch background worker
+    async def _run_tests():
+        for test_file in payload.files:
+            if run_data["cancelled"]:
+                # Mark remaining as cancelled
+                for f, r in run_data["results"].items():
+                    if r["status"] == "queued":
+                        r["status"] = "cancelled"
+                break
+
+            run_data["results"][test_file]["status"] = "running"
+            test_path = str(tests_dir / test_file)
+
+            try:
+                env = dict(os.environ)
+                # Ensure project root, control_plane, and data_plane_mock are in PYTHONPATH
+                python_paths = [
+                    str(project_root),
+                    str(project_root / "control_plane"),
+                    str(project_root / "data_plane_mock")
+                ]
+                
+                if "PYTHONPATH" in env:
+                    env["PYTHONPATH"] = f"{os.pathsep.join(python_paths)}{os.pathsep}{env['PYTHONPATH']}"
+                else:
+                    env["PYTHONPATH"] = os.pathsep.join(python_paths)
+
+                proc = await _asyncio.create_subprocess_exec(
+                    python_cmd, "-m", "pytest", test_path,
+                    "--tb=short", "--no-header", "-q",
+                    stdout=_asyncio.subprocess.PIPE,
+                    stderr=_asyncio.subprocess.STDOUT,
+                    cwd=str(project_root),
+                    env=env,
+                )
+
+                try:
+                    stdout, _ = await _asyncio.wait_for(
+                        proc.communicate(), timeout=payload.timeout
+                    )
+                    output = stdout.decode("utf-8", errors="replace") if stdout else ""
+                    exit_code = proc.returncode
+                except _asyncio.TimeoutError:
+                    try:
+                        proc.kill()
+                        await proc.wait()
+                    except Exception:
+                        pass
+                    exit_code = 124
+                    output = "TIMEOUT: Test exceeded time limit"
+
+            except Exception as e:
+                exit_code = 2
+                output = f"Error launching test: {str(e)}"
+
+            file_result = run_data["results"][test_file]
+            file_result["output"] = output[-4000:]  # Limit output size
+            file_result["exit_code"] = exit_code
+
+            if exit_code == 124:
+                file_result["status"] = "timeout"
+                run_data["timeouts"] += 1
+            elif exit_code == 0:
+                file_result["status"] = "passed"
+                run_data["passed"] += 1
+            elif exit_code == 1:
+                file_result["status"] = "failed"
+                run_data["failed"] += 1
+            elif exit_code == 5:
+                file_result["status"] = "skipped"
+                run_data["skipped"] += 1
+            else:
+                file_result["status"] = "error"
+                run_data["errors"] += 1
+
+            run_data["completed"] += 1
+
+        run_data["status"] = "cancelled" if run_data["cancelled"] else "completed"
+        run_data["finished_at"] = time.time()
+
+    _asyncio.get_event_loop().create_task(_run_tests())
+
+    return {"run_id": run_id, "status": "running", "total": len(payload.files)}
+
+
+@router.get("/pytest/run/{run_id}/status", dependencies=[Depends(admin_rate_limit)])
+async def get_pytest_run_status(
+    run_id: str,
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.READ)),
+):
+    """Get the status of a pytest run."""
+    with _pytest_runs_lock:
+        run_data = _pytest_runs.get(run_id)
+
+    if not run_data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    elapsed = (run_data["finished_at"] or time.time()) - run_data["started_at"]
+
+    return {
+        "run_id": run_data["run_id"],
+        "status": run_data["status"],
+        "total": run_data["total"],
+        "completed": run_data["completed"],
+        "passed": run_data["passed"],
+        "failed": run_data["failed"],
+        "errors": run_data["errors"],
+        "timeouts": run_data["timeouts"],
+        "skipped": run_data["skipped"],
+        "elapsed_seconds": round(elapsed, 1),
+        "results": run_data["results"],
+    }
+
+
+@router.post("/pytest/run/{run_id}/cancel", dependencies=[Depends(admin_rate_limit)])
+async def cancel_pytest_run(
+    run_id: str,
+    admin_token: str = Depends(admin_key_scheme),
+    admin_role: AdminRole = Depends(require_admin_role(AdminRole.WRITE)),
+):
+    """Cancel a running pytest session."""
+    with _pytest_runs_lock:
+        run_data = _pytest_runs.get(run_id)
+
+    if not run_data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    if run_data["status"] != "running":
+        raise HTTPException(status_code=400, detail=f"Run is not running (status: {run_data['status']})")
+
+    run_data["cancelled"] = True
+    return {"run_id": run_id, "status": "cancelling"}

@@ -85,7 +85,7 @@ class AdminVaultCreatePayload(BaseModel):
     vault_mode: str = "standard"
     encryption_required: bool = False
     retrieval_mode: str = "hybrid"
-    retention_policy_seconds: int | None = None
+    retention_policy_days: int | None = 30
     immutable_audit_enabled: bool = True
 
 
@@ -622,7 +622,7 @@ async def admin_create_vault(
         vault_mode=payload.vault_mode,
         encryption_required=payload.encryption_required,
         retrieval_mode=payload.retrieval_mode,
-        retention_policy_seconds=payload.retention_policy_seconds,
+        retention_policy_days=payload.retention_policy_days,
         immutable_audit_enabled=payload.immutable_audit_enabled,
     )
     session.add(vault)

@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.fixture
 def mock_db():
-    return MagicMock(spec=AsyncSession)
+    db = AsyncMock(spec=AsyncSession)
+    res = MagicMock()
+    res.scalar_one_or_none.return_value = None
+    db.execute.return_value = res
+    return db
 
 @pytest.mark.asyncio
 async def test_rate_limiting_enforcement():

@@ -20,7 +20,6 @@ from app.models.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialOfflineRevocationList,
 )
-from app.services.models.signed_model_registry import revoke_model
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -93,6 +92,7 @@ async def verify_offline_crl(crl: CommercialOfflineRevocationList) -> bool:
 
 
 async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
+    from app.services.models.signed_model_registry import revoke_model
     crl = await db.get(CommercialOfflineRevocationList, crl_id)
     if not crl:
         raise ValueError("CRL not found")

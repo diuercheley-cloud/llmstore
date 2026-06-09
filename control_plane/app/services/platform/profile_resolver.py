@@ -128,6 +128,8 @@ class ProfileResolver:
 
     def detect_conflicts(self, flags: Dict[str, Any]) -> List[str]:
         conflicts = []
+        if flags.get("AGENT_CODE_SANDBOX_MICROVM_REQUIRED") and flags.get("AGENT_CODE_SANDBOX_PROVIDER") == "docker":
+            conflicts.append("MICROVM_REQUIRED but provider is set to docker")
         schema_conflicts = self.schema.get("conflicts", [])
         for c in schema_conflicts:
             f1, f2 = c.get("flag1"), c.get("flag2")

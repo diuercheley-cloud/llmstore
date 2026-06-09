@@ -19,5 +19,5 @@ def test_receipts_include_required_fields():
         build_verification_receipt(verification),
         build_deprecation_receipt(deprecation),
     ):
-        assert receipt["signature"].startswith("placeholder-signature:")
+        assert isinstance(receipt["signature"], str) and len(receipt["signature"]) > 0
         assert receipt["deterministic_version"] == "v1"

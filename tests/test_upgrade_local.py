@@ -18,9 +18,10 @@ def test_upgrade_dry_run_complex():
         "--to-version", version,
         "--dry-run",
         "--skip-backup",
-        "--no-build"
+        "--no-build",
+        "--yes"
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT_DIR))
     assert result.returncode == 0
-    assert "[upgrade][warn] Backup ignorado" in result.stdout
-    assert "Dry-run concluído com sucesso" in result.stdout
+    assert "Pular backup foi solicitado e confirmado" in result.stdout
+    assert "Simulação de upgrade (dry-run) concluída com sucesso" in result.stdout

@@ -6,8 +6,8 @@ set -euo pipefail
 # Never prints full API keys. Never exposes secrets.
 # Returns non-zero if any check fails.
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 ENV_LOCAL="${PROJECT_ROOT}/.env.local"
 ENV_EXAMPLE="${PROJECT_ROOT}/.env.example"

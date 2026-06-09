@@ -9,13 +9,17 @@ from httpx import AsyncClient
 
 @pytest_asyncio.fixture(autouse=True)
 async def ensure_execution_tables(admin_client: AsyncClient):
+    from app.models.operations.remediation_planning import RemediationPlan, RemediationPlanReceipt
     from app.db.base import Base
+    from app.main import app as fastapi_app
     from app.db.session import get_db_session
-    async for session in get_db_session():
-        engine = session.bind
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        break
+    override = fastapi_app.dependency_overrides.get(get_db_session)
+    if override:
+        async for session in override():
+            engine = session.bind
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            break
 
 @pytest.mark.asyncio
 class TestRemediationExecutionAPI:

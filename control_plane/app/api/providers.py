@@ -55,7 +55,7 @@ def _load_latest_cost_report():
             data = json.load(f)
     except Exception:
         return None
-    return {"timestamp": latest.name, "report": data}
+    return {"run": latest.name, "results": data}
 
 
 def _sanitize_cost_report(report: dict) -> dict:

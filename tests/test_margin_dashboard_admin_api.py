@@ -56,7 +56,7 @@ async def test_margin_dashboard_aggregates_current_day(
         session.add_all(
             [
                 RequestFinancial(
-                    client_id=client.id,
+                    client_id=str(client.id),
                     provider="local",
                     model="model-a",
                     customer_price_brl=10.0,
@@ -66,7 +66,7 @@ async def test_margin_dashboard_aggregates_current_day(
                     created_at=now,
                 ),
                 RequestFinancial(
-                    client_id=loss_client.id,
+                    client_id=str(loss_client.id),
                     provider="local",
                     model="model-c",
                     customer_price_brl=3.0,
@@ -76,7 +76,7 @@ async def test_margin_dashboard_aggregates_current_day(
                     created_at=now,
                 ),
                 RequestFinancial(
-                    client_id=client.id,
+                    client_id=str(client.id),
                     provider="openai",
                     model="model-b",
                     customer_price_brl=5.0,

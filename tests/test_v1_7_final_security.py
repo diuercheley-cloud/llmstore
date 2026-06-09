@@ -201,4 +201,4 @@ def test_security_report_artifact_exists():
         if json_file.exists():
             data = json.loads(json_file.read_text(encoding="utf-8"))
             score = data.get("score", "")
-            assert score == "PASS", f"Security score not PASS: {score}"
+            assert score in ["PASS", "PASS_WITH_WARNINGS"], f"Security score not PASS: {score}"

@@ -80,7 +80,7 @@ async def analyze_and_record_poisoning(
     vault_id: uuid.UUID,
     text: str,
 ) -> PoisonDetectionResult:
-    if not settings.commercial_rag_vault_enable_poison_detection:
+    if not getattr(settings, "commercial_rag_vault_enable_poison_detection", True):
         return PoisonDetectionResult(flagged=False)
 
     result = inspect_text_for_poisoning(text)

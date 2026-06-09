@@ -101,8 +101,13 @@ def _make_detached_signature(receipt_hash: str, algorithm: str = "ed25519") -> s
 
 def _make_timestamp_token(mode: str, receipt_hash: str) -> tuple[str, str]:
     now = utc_now().isoformat()
-    external_enabled = os.getenv("CRYPTO_RECEIPTS_EXTERNAL_TIMESTAMP_ENABLED", "false").lower() == "true"
-    if external_enabled:
+    if mode == "offline_tsa":
+        token = f"offline_tsa:{now}:{_sha256(receipt_hash + now + 'offline-tsa-seed')[:32]}"
+        return "offline_tsa", token
+    elif mode == "external_placeholder":
+        token = f"external_placeholder:{now}:{_sha256(receipt_hash + now + 'external-placeholder-seed')[:32]}"
+        return "external_placeholder", token
+    elif mode == "external_tsa":
         token = f"external_tsa:{now}:{_sha256(receipt_hash + now + 'external-tsa-seed')[:32]}"
         return "external_tsa", token
     else:

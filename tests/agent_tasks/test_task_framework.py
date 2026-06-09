@@ -109,8 +109,15 @@ async def test_retry_logic(session):
     session.add(task)
     await session.commit()
     
+    import unittest.mock
+    from unittest.mock import AsyncMock
+    from app.services.agents.task_engine import TaskExecutionError
+
     engine = TaskEngine(session)
-    await engine.run_task(task.id)
+    with unittest.mock.patch.object(engine, "_execute_with_mode", new_callable=AsyncMock) as mock_execute:
+        mock_execute.side_effect = TaskExecutionError("transient_error", "Transient error", retryable=True)
+        await engine.run_task(task.id)
+
     await session.refresh(task)
 
     assert task.status == "failed"

@@ -99,7 +99,7 @@ class AgentTeamTrace(Base):
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_team_runs.id", ondelete="CASCADE"), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False)
     agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default='{}')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     run = relationship("AgentTeamRun", back_populates="traces")

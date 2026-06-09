@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from app.db.base import Base
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,8 +11,8 @@ class RequestFinancial(Base):
     __tablename__ = "request_financials"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="CASCADE"), index=True, nullable=False)
-    request_log_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    client_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    request_log_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     api_key_prefix: Mapped[str | None] = mapped_column(String(12), nullable=True)
     endpoint_type: Mapped[str] = mapped_column(String(32), default="chat")
     provider: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -35,5 +35,3 @@ class RequestFinancial(Base):
     fx_rate_source: Mapped[str | None] = mapped_column(String(32), default="manual_env")
     pricing_rule_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
-    client = relationship("Client", lazy="joined")

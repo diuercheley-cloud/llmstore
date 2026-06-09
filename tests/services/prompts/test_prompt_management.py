@@ -48,7 +48,7 @@ def test_prompt_security_scan():
     assert safe is True
     
     # Unsafe: Secret
-    unsafe, reasons = scanner.scan("My api_key is 'sk-1234567890abcdef'")
+    unsafe, reasons = scanner.scan("My api_key: 'sk-example1234567890abcdef1234567890'")
     assert unsafe is False
     assert any("secret" in r.lower() for r in reasons)
     
@@ -74,7 +74,7 @@ async def test_promotion_gate_security(mock_db):
     service = PromptVersioningService(mock_db)
     version_id = uuid.uuid4()
     # Version with a secret
-    version = PromptTemplateVersion(id=version_id, content="my secret is '1234567890abcdef'", status="draft")
+    version = PromptTemplateVersion(id=version_id, content="my secret: 'sk-example1234567890abcdef1234567890'", status="draft")
     
     mock_db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=lambda: version))
     

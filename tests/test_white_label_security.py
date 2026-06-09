@@ -69,7 +69,7 @@ def test_branding_service_fails_gracefully():
         branding.BRANDING_CONFIG_PATH = type(original_path)(temp.name)
         importlib.reload(branding)
         b = branding.get_safe_branding()
-        assert b["product_name"] == "LLM Inference Stack"
+        assert b["product_name"] == "Local AI Appliance"
     finally:
         os.unlink(temp.name)
         branding.BRANDING_CONFIG_PATH = original_path
@@ -98,7 +98,7 @@ def test_branding_service_invalid_types():
                 "primary_color": 12345,
             }, f)
         b = load_branding()
-        assert b["product_name"] == "LLM Inference Stack"
+        assert b["product_name"] == "Local AI Appliance"
         assert b["show_powered_by"] is True
         assert b["primary_color"] == "#c84c2f"
     finally:

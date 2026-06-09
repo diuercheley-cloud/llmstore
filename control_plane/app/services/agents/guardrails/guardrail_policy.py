@@ -69,8 +69,9 @@ class GuardrailPolicyOrchestrator:
             await self._record_event(run_id, tenant_id, "pii", "model_output", content, redacted_content, {"pii_count": pii_count})
             await self._record_decision(run_id, tenant_id, "redact", f"Redacted {pii_count} PII items")
             # We don't return block, just redacted
+            return "redact", f"Redacted {pii_count} PII items", sanitized_content
         
-        return "allow" if pii_count == 0 else "redact", "Output guardrails passed", sanitized_content
+        return "allow", "Output guardrails passed", sanitized_content
 
     async def _record_event(self, run_id: uuid.UUID, tenant_id: str, g_type: str, point: str, raw: str, sanitized: str = None, meta: Dict = None):
         event = AgentGuardrailEvent(

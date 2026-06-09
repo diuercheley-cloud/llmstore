@@ -10,7 +10,7 @@ from httpx import AsyncClient
 async def test_provider_settings_page_access(admin_client: AsyncClient):
     response = await admin_client.get("/provider-settings")
     assert response.status_code == 200
-    assert "Atualize APIs dos providers" in response.text
+    assert "Atualize o registry de providers" in response.text
     assert "Salvar em `.env.local`" in response.text
 
 
@@ -210,12 +210,12 @@ async def test_provider_settings_ignores_dummy_placeholder_keys(
             "CLOUD_PROVIDERS_ENABLED=true",
             "REAL_PROVIDER_VALIDATION_ENABLED=false",
             "OPENAI_PROVIDER_ENABLED=true",
-            "OPENAI_API_KEY=TEST_OPENAI_API_KEY",
+            "OPENAI_API_KEY=placeholder-use-real-key",
             "DEEPSEEK_PROVIDER_ENABLED=true",
-            "DEEPSEEK_API_KEY=TEST_DEEPSEEK_API_KEY",
+            "DEEPSEEK_API_KEY=replace-with-real-key",
             "ANTHROPIC_PROVIDER_ENABLED=true",
-            "ANTHROPIC_API_KEY=TEST_ANTHROPIC_API_KEY",
-            "OPENROUTER_API_KEY=TEST_OPENROUTER_API_KEY",
+            "ANTHROPIC_API_KEY=changeme",
+            "OPENROUTER_API_KEY=sk-example-openrouter-key",
             "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1",
             "",
         ]),
@@ -226,12 +226,12 @@ async def test_provider_settings_ignores_dummy_placeholder_keys(
         "CLOUD_PROVIDERS_ENABLED": "true",
         "REAL_PROVIDER_VALIDATION_ENABLED": "false",
         "OPENAI_PROVIDER_ENABLED": "true",
-        "OPENAI_API_KEY": "TEST_OPENAI_API_KEY",
+        "OPENAI_API_KEY": "placeholder-use-real-key",
         "DEEPSEEK_PROVIDER_ENABLED": "true",
-        "DEEPSEEK_API_KEY": "TEST_DEEPSEEK_API_KEY",
+        "DEEPSEEK_API_KEY": "replace-with-real-key",
         "ANTHROPIC_PROVIDER_ENABLED": "true",
-        "ANTHROPIC_API_KEY": "TEST_ANTHROPIC_API_KEY",
-        "OPENROUTER_API_KEY": "TEST_OPENROUTER_API_KEY",
+        "ANTHROPIC_API_KEY": "changeme",
+        "OPENROUTER_API_KEY": "sk-example-openrouter-key",
         "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
     })
 
@@ -245,4 +245,4 @@ async def test_provider_settings_ignores_dummy_placeholder_keys(
     assert providers["anthropic"]["configured"] is False
     assert providers["anthropic"]["masked_api_key"] is None
     assert providers["openrouter"]["configured"] is True
-    assert providers["openrouter"]["masked_api_key"].startswith("TEST")
+    assert providers["openrouter"]["masked_api_key"].startswith("sk-e")

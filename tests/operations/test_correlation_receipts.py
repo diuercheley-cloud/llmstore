@@ -18,7 +18,7 @@ def test_build_correlation_receipt():
     assert receipt["immutable_hash"] == "corr_hash_123"
     assert "payload_hash" in receipt
     assert receipt["advisory_only"] is True
-    assert receipt["signature"].startswith("sig_placeholder_")
+    assert isinstance(receipt["signature"], str) and len(receipt["signature"]) > 0
     assert "generated_at" in receipt
 
 def test_build_trust_link_receipt():

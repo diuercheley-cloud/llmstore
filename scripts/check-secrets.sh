@@ -20,6 +20,7 @@ SAFE_PATTERNS=(
     "admin-token-123"
     "token_admin"
     "sk-local-example"
+    "sk-ant-mock-key-for-testing"
     "sk-image-conic-from-color"
     "sk-image-linear-from-color"
     "sk-image-linear-from-pos"
@@ -177,26 +178,23 @@ is_allowed_fixture() {
     local path="$1"
     local file="$2"
 
-    if [[ "$path" == control_plane/tests/* ]]; then
-        if grep -qF "FAKE TEST KEY - DO NOT USE" "$file" 2>/dev/null || grep -qF "FAKE SECRET FOR TESTS ONLY" "$file" 2>/dev/null; then
+    if [[ "$path" == *"control_plane/tests/"* ]]; then
+        if grep -qE "FAKE (TEST KEY|SECRET)" "$file" 2>/dev/null; then
             return 0
         fi
         return 1
     fi
 
-    if [[ "$path" == releases/* ]] || [[ "$path" == docs/* ]] || [[ "$path" == control_plane/* ]]; then
+    if [[ "$path" == *"releases/"* ]] || [[ "$path" == *"docs/"* ]] || [[ "$path" == *"control_plane/"* ]]; then
         return 1
     fi
-    if [[ "$path" != tests/fixtures/* ]] && [[ "$path" != *scripts/validate-* ]] && [[ "$path" != tests/test_* ]]; then
+    if [[ "$path" != *"tests/fixtures/"* ]] && [[ "$path" != *"scripts/validate-"* ]] && [[ "$path" != *"tests/test_"* ]]; then
         return 1
     fi
-    if [[ "$path" != *fake_* ]] && [[ "$path" != *fixture_* ]] && [[ "$path" != *validate-* ]] && [[ "$path" != *test_* ]]; then
+    if [[ "$path" != *"fake_"* ]] && [[ "$path" != *"fixture_"* ]] && [[ "$path" != *"validate-"* ]] && [[ "$path" != *"test_"* ]]; then
         return 1
     fi
-    if grep -qF "FAKE SECRET FOR TESTS ONLY" "$file" 2>/dev/null; then
-        return 0
-    fi
-    if grep -qF "FAKE TEST KEY - DO NOT USE" "$file" 2>/dev/null; then
+    if grep -qE "FAKE (TEST KEY|SECRET)" "$file" 2>/dev/null; then
         return 0
     fi
     return 1
@@ -208,11 +206,11 @@ classify_path() {
 
     if is_allowed_fixture "$path" "$file"; then
         __RET_CLASSIFICATION='fixture_expected'
-    elif [[ "$path" == releases/* ]]; then
+    elif [[ "$path" == *"releases/"* ]]; then
         __RET_CLASSIFICATION='obsolete_release_file'
-    elif [[ "$path" == artifacts/* ]]; then
+    elif [[ "$path" == *"artifacts/"* ]]; then
         __RET_CLASSIFICATION='generated_artifact'
-    elif [[ "$path" == *.env ]] || [[ "$path" == *.env.* ]] || [[ "$(basename "$path")" == ".env" ]] || [[ "$(basename "$path")" == ".env.local" ]]; then
+    elif [[ "$path" == *".env"* ]]; then
         __RET_CLASSIFICATION='real_secret_suspected'
     else
         __RET_CLASSIFICATION='real_secret_suspected'
@@ -393,7 +391,7 @@ scan_list() {
         return
     fi
 
-    printf '%s\0' "${scan_queue[@]}" | xargs -0 grep -Eon -- "$secret_regex" 2>/dev/null | grep -vE "$safe_regex" > .secrets_found.tmp || true
+    printf '%s\0' "${scan_queue[@]}" | xargs -0 grep -EonH -- "$secret_regex" 2>/dev/null | grep -vE "$safe_regex" > .secrets_found.tmp || true
 
     if [ -s .secrets_found.tmp ]; then
         # If secrets found, we don't cache those files as "clean"

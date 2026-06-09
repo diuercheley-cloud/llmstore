@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONTROL_PLANE_DIR="$PROJECT_ROOT/control_plane"
 PYTHON="${PYTHON:-$PROJECT_ROOT/.venv/bin/python}"
 # shellcheck source=/dev/null
-source "$PROJECT_ROOT/scripts/common.sh"
+source "${PROJECT_ROOT}/scripts/common.sh"
 init_stack_env
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"

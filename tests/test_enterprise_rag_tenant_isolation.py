@@ -54,8 +54,8 @@ class TestTenantIsolationRetrieval:
         plan_b.rag_max_pages_per_month = 100
         plan_b.rag_max_queries_per_month = 50
 
-        with patch("app.services.rag_enterprise.policies.resolve_effective_plan") as mock_resolve:
-            mock_resolve.side_effect = lambda c: plan_a if c.id == client_a.id else plan_b
+        with patch("app.services.rag_enterprise.policies.resolve_effective_plan_for_session", new_callable=AsyncMock) as mock_resolve:
+            mock_resolve.side_effect = lambda s, c: plan_a if c.id == client_a.id else plan_b
 
             policy_a = await resolve_enterprise_rag_policy(session, client_a)
             policy_b = await resolve_enterprise_rag_policy(session, client_b)

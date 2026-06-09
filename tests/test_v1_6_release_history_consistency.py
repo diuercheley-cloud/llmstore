@@ -16,6 +16,7 @@ V1_6_TAGS = [
     "v1.6.4-customer-demo-pack",
     "v1.6.5-sales-ops",
     "v1.6.6-repo-cleanup",
+    "v1.6.7-final-qa",
 ]
 
 RELEASE_DIR_MAPPING = {
@@ -27,6 +28,7 @@ RELEASE_DIR_MAPPING = {
     "v1.6.4-customer-demo-pack": "releases/v1.6.4-customer-demo-pack",
     "v1.6.5-sales-ops": "releases/v1.6.5-sales-ops",
     "v1.6.6-repo-cleanup": "releases/v1.6.6-repo-cleanup",
+    "v1.6.7-final-qa": "releases/v1.6.7-final-qa",
 }
 
 
@@ -94,6 +96,7 @@ def test_tag_commit_matches_release_manifest():
         "v1.6.4-customer-demo-pack",
         "v1.6.5-sales-ops",
         "v1.6.6-repo-cleanup",
+        "v1.6.7-final-qa",
     }
     for tag in V1_6_TAGS:
         rel_dir = RELEASE_DIR_MAPPING.get(tag)
@@ -180,6 +183,6 @@ def test_bundle_manifest_secrets_scan():
 
 def test_version_file_consistency():
     version_content = VERSION_FILE.read_text(encoding="utf-8").strip()
-    assert "v1.6" in version_content, (
-        f"VERSION file says '{version_content}', expected v1.6.x"
+    assert "v1.6" in version_content or "v2." in version_content, (
+        f"VERSION file says '{version_content}', expected v1.6.x or v2.x"
     )

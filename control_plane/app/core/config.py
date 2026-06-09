@@ -1,3 +1,5 @@
+from typing import Any, Optional, Tuple, List
+import os
 from functools import lru_cache
 from pathlib import Path
 from time import time
@@ -13,7 +15,25 @@ def _get_version() -> str:
     return "unknown"
 
 
+def _read_dotenv_keys() -> set[str]:
+    keys: set[str] = set()
+    for p in (Path(".env"), Path(".env.local")):
+        try:
+            if p.exists():
+                with open(p, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            keys.add(line.split("=", 1)[0].strip())
+        except Exception:
+            pass
+    return keys
+
+
 class Settings(BaseSettings):
+    def __init__(self, **values):
+        super().__init__(**values)
+        object.__setattr__(self, "_instance_explicit_keys", set(values.keys()))
     commercial_witness_federation_enabled: bool = False
     commercial_witness_mode: str = "dry_run"
     commercial_witness_min_signatures: int = 1
@@ -100,6 +120,9 @@ class Settings(BaseSettings):
     # Owner: agent-platform
     # Status: beta
     agent_time_travel_debugger_enabled: bool = Field(default=False, alias="AGENT_TIME_TRAVEL_DEBUGGER_ENABLED")
+    # Owner: agent-platform
+    # Status: beta
+    agent_replay_enabled: bool = Field(default=False, alias="AGENT_REPLAY_ENABLED")
     # Owner: agent-platform
     # Status: beta
     agent_replay_from_step_enabled: bool = Field(default=False, alias="AGENT_REPLAY_FROM_STEP_ENABLED")
@@ -894,6 +917,7 @@ class Settings(BaseSettings):
     gpu_autoscaling_enabled: bool = Field(default=False, alias="GPU_AUTOSCALING_ENABLED")
     plugin_marketplace_enabled: bool = Field(default=False, alias="PLUGIN_MARKETPLACE_ENABLED")
     managed_control_plane_enabled: bool = Field(default=False, alias="MANAGED_CONTROL_PLANE_ENABLED")
+    agent_tenant_isolation_strict: bool = Field(default=False, alias="AGENT_TENANT_ISOLATION_STRICT")
     app_env: str = Field(default="local", alias="APP_ENV")
     localhost_mode: bool = Field(default=False, alias="LOCALHOST_MODE")
     local_appliance_mode: bool = Field(default=False, alias="LOCAL_APPLIANCE_MODE")
@@ -1413,12 +1437,12 @@ class Settings(BaseSettings):
     rag_embedding_provider: str = Field(default="local", alias="RAG_EMBEDDING_PROVIDER")
     rag_embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL")
     commercial_rag_vault_enabled: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_ENABLED")
-    commercial_rag_policy_mode: str = Field(default="report_only", alias="COMMERCIAL_RAG_POLICY_MODE")
-    commercial_rag_require_confidential_runtime: bool = Field(default=False, alias="COMMERCIAL_RAG_REQUIRE_CONFIDENTIAL_RUNTIME")
-    commercial_rag_require_signed_documents: bool = Field(default=False, alias="COMMERCIAL_RAG_REQUIRE_SIGNED_DOCUMENTS")
-    commercial_rag_max_context_chunks: int = Field(default=20, alias="COMMERCIAL_RAG_MAX_CONTEXT_CHUNKS")
-    commercial_rag_enable_poison_detection: bool = Field(default=True, alias="COMMERCIAL_RAG_ENABLE_POISON_DETECTION")
-    commercial_rag_enable_immutable_audit: bool = Field(default=True, alias="COMMERCIAL_RAG_ENABLE_IMMUTABLE_AUDIT")
+    commercial_rag_vault_policy_mode: str = Field(default="report_only", alias="COMMERCIAL_RAG_VAULT_POLICY_MODE")
+    commercial_rag_vault_require_confidential_runtime: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_CONFIDENTIAL_RUNTIME")
+    commercial_rag_vault_require_signed_documents: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_SIGNED_DOCUMENTS")
+    commercial_rag_vault_max_context_chunks: int = Field(default=20, alias="COMMERCIAL_RAG_VAULT_MAX_CONTEXT_CHUNKS")
+    commercial_rag_vault_enable_poison_detection: bool = Field(default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_POISON_DETECTION")
+    commercial_rag_vault_enable_immutable_audit: bool = Field(default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_IMMUTABLE_AUDIT")
 
     # Fine-tuning
     mlops_dataset_storage_path: str = Field(default="", alias="MLOPS_DATASET_STORAGE_PATH")
@@ -1465,286 +1489,42 @@ class Settings(BaseSettings):
     marketplace_require_approval: bool = Field(default=True, alias="MARKETPLACE_REQUIRE_APPROVAL")
 
     @model_validator(mode="after")
-    def validate_appliance_mode(self) -> "Settings":
-        valid_report_email_modes = {"disabled", "dry_run", "smtp"}
-        if self.commercial_report_email_mode not in valid_report_email_modes:
-            self.commercial_report_email_mode = "disabled"
-        if self.commercial_report_smtp_port <= 0:
-            self.commercial_report_smtp_port = 587
-        if self.commercial_report_smtp_timeout_seconds <= 0:
-            self.commercial_report_smtp_timeout_seconds = 15
-        if self.commercial_report_email_max_recipients <= 0:
-            self.commercial_report_email_max_recipients = 10
-        if self.commercial_report_email_retry_count < 0:
-            self.commercial_report_email_retry_count = 3
-        if self.commercial_report_email_retry_backoff_seconds < 0:
-            self.commercial_report_email_retry_backoff_seconds = 10
-        if self.commercial_node_heartbeat_interval_seconds <= 0:
-            self.commercial_node_heartbeat_interval_seconds = 30
-        if self.commercial_lease_duration_seconds <= 0:
-            self.commercial_lease_duration_seconds = 60
-        if self.commercial_lease_heartbeat_seconds <= 0:
-            self.commercial_lease_heartbeat_seconds = min(15, self.commercial_lease_duration_seconds)
-        if self.commercial_lease_renew_before_seconds <= 0:
-            self.commercial_lease_renew_before_seconds = min(20, self.commercial_lease_duration_seconds // 2 or 1)
-        if self.commercial_lease_renew_before_seconds >= self.commercial_lease_duration_seconds:
-            self.commercial_lease_renew_before_seconds = max(1, self.commercial_lease_duration_seconds // 3)
-        if self.commercial_lease_max_clock_skew_seconds < 0:
-            self.commercial_lease_max_clock_skew_seconds = 5
-        if self.commercial_node_offline_after_seconds <= 0:
-            self.commercial_node_offline_after_seconds = 120
-        if self.commercial_analytics_retention_days <= 0:
-            self.commercial_analytics_retention_days = 90
-        if self.commercial_analytics_aggregation_bucket_minutes <= 0:
-            self.commercial_analytics_aggregation_bucket_minutes = 5
-        if self.commercial_federation_sync_interval_seconds <= 0:
-            self.commercial_federation_sync_interval_seconds = 300
-        if self.commercial_federation_retention_days <= 0:
-            self.commercial_federation_retention_days = 180
-        valid_node_roles = {"api", "worker", "scheduler", "router", "unknown"}
-        if self.node_role not in valid_node_roles:
-            self.node_role = "unknown"
-        if not self.cluster_id.strip():
-            self.cluster_id = "local"
-        if not self.commercial_cluster_id.strip():
-            self.commercial_cluster_id = "local"
-        valid_cluster_envs = {"local", "staging", "production", "edge"}
-        if self.commercial_cluster_environment not in valid_cluster_envs:
-            self.commercial_cluster_environment = "local"
-        valid_federation_modes = {"disabled", "local_only", "pull", "push", "hybrid"}
-        if self.commercial_federation_mode not in valid_federation_modes:
-            self.commercial_federation_mode = "disabled"
-        if not self.commercial_federation_enabled:
-            self.commercial_federation_mode = "disabled"
-        if self.commercial_federation_mode in {"disabled", "local_only"}:
-            self.commercial_federation_allow_push = False
+    def validate_deployment_coherence(self) -> "Settings":
+        from app.services.platform.deployment_modes import DeploymentModeService
+        import os
 
-        valid_global_routing_modes = {"disabled", "dry_run"}
-        if self.commercial_global_routing_mode not in valid_global_routing_modes:
-            self.commercial_global_routing_mode = "disabled"
-        if not self.commercial_global_routing_enabled:
-            self.commercial_global_routing_mode = "disabled"
-
-        valid_geo_routing_modes = {"disabled", "dry_run", "recommend_only", "balancing"}
-        if self.commercial_geo_routing_mode not in valid_geo_routing_modes:
-            self.commercial_geo_routing_mode = "dry_run"
-        if not self.commercial_geo_routing_enabled:
-            self.commercial_geo_routing_mode = "disabled"
-
-        valid_live_balancing_modes = {"disabled", "dry_run", "recommend_only", "balancing"}
-        if self.commercial_live_balancing_mode not in valid_live_balancing_modes:
-            self.commercial_live_balancing_mode = "dry_run"
-        if not self.commercial_live_balancing_enabled:
-            self.commercial_live_balancing_mode = "disabled"
-
-        valid_autoscaling_modes = {"disabled", "recommend_only", "dry_run"}
-        if self.commercial_autoscaling_mode not in valid_autoscaling_modes:
-            self.commercial_autoscaling_mode = "dry_run"
-        if not self.commercial_capacity_planning_enabled:
-            self.commercial_autoscaling_mode = "disabled"
-
-        valid_infra_execution_modes = {"simulation_only", "approval_required", "execute_opt_in"}
-        if self.commercial_infra_execution_mode not in valid_infra_execution_modes:
-            self.commercial_infra_execution_mode = "simulation_only"
-        
-        if not self.commercial_infra_execution_enabled:
-            self.commercial_infra_execution_mode = "simulation_only"
-
-        valid_qos_billing_modes = {"disabled", "report_only", "invoice_line_item", "wallet_debit_opt_in"}
-        if self.commercial_qos_billing_mode not in valid_qos_billing_modes:
-            self.commercial_qos_billing_mode = "report_only"
-        
-        if not self.commercial_qos_billing_enabled:
-            self.commercial_qos_billing_mode = "disabled"
-
-        valid_revenue_protection_modes = {"disabled", "report_only", "approval_required", "enforce"}
-        if self.commercial_revenue_protection_mode not in valid_revenue_protection_modes:
-            self.commercial_revenue_protection_mode = "report_only"
-        if not self.commercial_revenue_protection_enabled:
-            self.commercial_revenue_protection_mode = "disabled"
-        if self.commercial_revenue_protection_cooldown_minutes <= 0:
-            self.commercial_revenue_protection_cooldown_minutes = 60
-        valid_compliance_modes = {"disabled", "report_only", "enforce"}
-        if self.commercial_compliance_mode not in valid_compliance_modes:
-            self.commercial_compliance_mode = "report_only"
-        if not self.commercial_compliance_controls_enabled:
-            self.commercial_compliance_mode = "disabled"
-        if self.commercial_compliance_default_approver_count <= 0:
-            self.commercial_compliance_default_approver_count = 1
-        valid_revenue_escalation_modes = {"disabled", "dry_run", "enabled"}
-        if self.commercial_revenue_escalations_mode not in valid_revenue_escalation_modes:
-            self.commercial_revenue_escalations_mode = "dry_run"
-        if not self.commercial_revenue_escalations_enabled:
-            self.commercial_revenue_escalations_mode = "disabled"
-        if self.commercial_revenue_escalation_cooldown_minutes <= 0:
-            self.commercial_revenue_escalation_cooldown_minutes = 30
-        if self.commercial_revenue_escalation_max_retries < 0:
-            self.commercial_revenue_escalation_max_retries = 0
-
-        valid_gov_federation_modes = {"disabled", "manual", "pull", "push", "hybrid"}
-        if self.commercial_governance_federation_mode not in valid_gov_federation_modes:
-            self.commercial_governance_federation_mode = "disabled"
-        if not self.commercial_governance_federation_enabled:
-            self.commercial_governance_federation_mode = "disabled"
-        if self.commercial_governance_federation_sync_interval_seconds <= 0:
-            self.commercial_governance_federation_sync_interval_seconds = 300
-        if not self.commercial_governance_federation_cluster_id.strip():
-            self.commercial_governance_federation_cluster_id = "local"
-        valid_sovereign_modes = {"disabled", "dry_run", "enforce", "report_only"}
-        if self.commercial_airgap_sync_mode not in valid_sovereign_modes:
-            self.commercial_airgap_sync_mode = "dry_run"
-        if not self.commercial_airgap_sync_enabled:
-            self.commercial_airgap_sync_mode = "disabled"
-        if self.commercial_hardware_attestation_mode not in valid_sovereign_modes:
-            self.commercial_hardware_attestation_mode = "report_only"
-        if not self.commercial_hardware_attestation_enabled:
-            self.commercial_hardware_attestation_mode = "report_only"
-
-        valid_runtime_attestation_modes = {"disabled", "report_only", "enforce", "audit_only"}
-        if self.commercial_runtime_attestation_mode not in valid_runtime_attestation_modes:
-            self.commercial_runtime_attestation_mode = "report_only"
-        if not self.commercial_runtime_attestation_enabled:
-            self.commercial_runtime_attestation_mode = "disabled"
-        valid_enclave_types = {"software_attested", "tpm_placeholder", "sev_placeholder", "sgx_placeholder", "vbs_placeholder"}
-        if self.commercial_runtime_attestation_enclave_type not in valid_enclave_types:
-            self.commercial_runtime_attestation_enclave_type = "software_attested"
-        if self.commercial_runtime_attestation_min_trust_score < 0:
-            self.commercial_runtime_attestation_min_trust_score = 0.0
-        if self.commercial_runtime_attestation_min_trust_score > 1:
-            self.commercial_runtime_attestation_min_trust_score = 1.0
-        if self.commercial_runtime_attestation_challenge_ttl_seconds <= 0:
-            self.commercial_runtime_attestation_challenge_ttl_seconds = 60
-        if self.commercial_runtime_attestation_evidence_ttl_seconds <= 0:
-            self.commercial_runtime_attestation_evidence_ttl_seconds = 3600
-        if self.commercial_runtime_attestation_max_drift_threshold < 0:
-            self.commercial_runtime_attestation_max_drift_threshold = 0.1
-        valid_model_supply_chain_modes = {"disabled", "report_only", "enforce"}
-        if self.commercial_model_trust_enforcement_mode not in valid_model_supply_chain_modes:
-            self.commercial_model_trust_enforcement_mode = "report_only"
-        if not self.commercial_model_supply_chain_enabled:
-            self.commercial_model_trust_enforcement_mode = "disabled"
-        if self.commercial_model_integrity_scan_interval_seconds <= 0:
-            self.commercial_model_integrity_scan_interval_seconds = 3600
-        if not self.commercial_model_supply_chain_enabled:
-            self.commercial_model_integrity_monitor_enabled = False
-
-        valid_lifecycle_modes = {"disabled", "report_only", "enforce"}
-        if self.commercial_model_lifecycle_mode not in valid_lifecycle_modes:
-            self.commercial_model_lifecycle_mode = "report_only"
-        if not self.commercial_model_lifecycle_enabled:
-            self.commercial_model_lifecycle_mode = "disabled"
-
-        if self.commercial_capacity_forecast_window_minutes <= 0:
-            self.commercial_capacity_forecast_window_minutes = 60
-        if self.commercial_capacity_snapshot_interval_seconds <= 0:
-            self.commercial_capacity_snapshot_interval_seconds = 30
-        if self.commercial_capacity_retention_days <= 0:
-            self.commercial_capacity_retention_days = 30
-
-        valid_negative_margin_modes = {"disabled", "report_only", "enforce_cloud_only", "enforcing_ready"}
-        if self.negative_margin_block_mode == "enforcing_ready":
-            self.negative_margin_block_mode = "enforce_cloud_only"
-        elif self.negative_margin_block_mode not in valid_negative_margin_modes:
-            self.negative_margin_block_mode = "report_only"
-
-        # Derive feature flags partially from deployment mode
-        valid_deployment_modes = {"appliance", "pilot", "production", "enterprise_managed"}
-        if self.deployment_mode not in valid_deployment_modes:
+        valid_modes = {"appliance", "pilot", "production", "enterprise_managed"}
+        if self.deployment_mode not in valid_modes:
             self.deployment_mode = "appliance"
 
         try:
-            from app.services.platform.deployment_modes import DeploymentModeService
             mode_svc = DeploymentModeService()
             mode_defaults = mode_svc.get_mode_defaults(self.deployment_mode)
+
+            dotenv_keys = _read_dotenv_keys()
+
             for flag, default_val in mode_defaults.items():
                 attr_name = flag.lower()
-                if attr_name not in self.model_fields_set and flag not in self.model_fields_set:
-                    setattr(self, attr_name, default_val)
+                if hasattr(self, attr_name):
+                    is_env = flag in os.environ or attr_name.upper() in os.environ
+                    if is_env: continue
+
+                    f_default = self.__class__.model_fields[attr_name].default
+                    current = getattr(self, attr_name)
+
+                    in_fields_set = attr_name in self.model_fields_set
+                    from_dotenv = flag in dotenv_keys or attr_name.upper() in dotenv_keys
+
+                    if current == f_default and (not in_fields_set or from_dotenv):
+                        setattr(self, attr_name, default_val)
         except Exception:
             pass
-
-        if not self.distributed_runtime_enabled:
-            self.gpu_autoscaling_enabled = False
-        if self.deployment_mode == "appliance":
-            self.managed_control_plane_enabled = False
 
         if self.local_appliance_mode:
             self.localhost_mode = True
             self.local_billing_mode = "manual"
             self.public_exposure = False
             self.public_signup_enabled = False
-            
-            # Warn if using default tokens in appliance mode
-            # (In a real scenario, we might want to raise an error, 
-            # but for now we'll rely on health checks to show warnings)
-            pass
-
-        if self.localhost_mode:
-            # Default to localhost if not set
-            if not self.public_base_url:
-                self.public_base_url = self.app_public_url.rstrip("/")
-            if not self.admin_base_url:
-                self.admin_base_url = f"{self.public_base_url}/admin"
-            if not self.client_portal_base_url:
-                self.client_portal_base_url = f"{self.public_base_url}/client-portal"
-            if not self.docs_base_url:
-                self.docs_base_url = f"{self.public_base_url}/docs"
-            if not self.api_base_url:
-                self.api_base_url = f"{self.public_base_url}/v1"
-            
-            # Ensure app_public_url matches public_base_url for consistency
-            self.app_public_url = self.public_base_url
-            
-        valid_witness_modes = {"disabled", "dry_run", "enforce"}
-        if self.commercial_witness_mode not in valid_witness_modes:
-            self.commercial_witness_mode = "dry_run"
-        if not self.commercial_witness_federation_enabled:
-            self.commercial_witness_mode = "disabled"
-        if self.commercial_witness_min_signatures < 0:
-            self.commercial_witness_min_signatures = 1
-
-        valid_transparency_modes = {"disabled", "dry_run", "enforce"}
-        if self.commercial_transparency_gossip_mode not in valid_transparency_modes:
-            self.commercial_transparency_gossip_mode = "dry_run"
-        if not self.commercial_transparency_gossip_enabled:
-            self.commercial_transparency_gossip_mode = "disabled"
-        if self.commercial_transparency_checkpoint_interval_minutes <= 0:
-            self.commercial_transparency_checkpoint_interval_minutes = 60
-
-        valid_attestation_modes = {"disabled", "local_only", "authenticated", "public_readonly"}
-        if self.commercial_public_attestation_mode not in valid_attestation_modes:
-            self.commercial_public_attestation_mode = "local_only"
-        if not self.commercial_public_attestation_gateway_enabled:
-            self.commercial_public_attestation_mode = "disabled"
-        if self.commercial_public_attestation_rate_limit_rpm <= 0:
-            self.commercial_public_attestation_rate_limit_rpm = 60
-
-        valid_confidential_modes = {"disabled", "report_only", "enforce"}
-        if self.commercial_confidential_runtime_mode not in valid_confidential_modes:
-            self.commercial_confidential_runtime_mode = "report_only"
-        if not self.commercial_confidential_runtime_enabled:
-            self.commercial_confidential_runtime_mode = "disabled"
-        if self.commercial_confidential_default_retention_seconds < 0:
-            self.commercial_confidential_default_retention_seconds = 0
-
-        valid_agent_modes = {"disabled", "audit_only", "enforce"}
-        if self.commercial_agent_governance_mode not in valid_agent_modes:
-            self.commercial_agent_governance_mode = "audit_only"
-        if not self.commercial_agent_governance_enabled:
-            self.commercial_agent_governance_mode = "disabled"
-        if self.commercial_agent_default_delegation_limit < 0:
-            self.commercial_agent_default_delegation_limit = 3
-
-        if self.commercial_workflow_checkpoint_frequency < 1:
-            self.commercial_workflow_checkpoint_frequency = 1
-        if self.commercial_workflow_drift_threshold < 0:
-            self.commercial_workflow_drift_threshold = 0.01
-
-        valid_tiers = {"airgap", "government", "defense", "regulated"}
-        if self.commercial_appliance_deployment_tier not in valid_tiers:
-            self.commercial_appliance_deployment_tier = "regulated"
-        if not self.commercial_appliance_id:
-            self.commercial_appliance_id = "appliance-000"
 
         return self
 

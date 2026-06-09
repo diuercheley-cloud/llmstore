@@ -9,6 +9,8 @@ from httpx import AsyncClient
 
 @pytest_asyncio.fixture(autouse=True)
 async def ensure_correlation_tables(admin_client: AsyncClient):
+    # Importar modelos aqui para evitar importações circulares globais
+    from app.models.operations.correlation import OperationalCorrelation
     from app.db.base import Base
     from app.db.session import get_db_session
     async for session in get_db_session():

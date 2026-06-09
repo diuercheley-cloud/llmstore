@@ -63,6 +63,14 @@ async def test_ready_endpoint_all_ok(async_client: AsyncClient):
         mock_config.rag_enabled = True
         mock_config.tts_enabled = True
         mock_config.lmstudio_enabled = True
+        # Explicitly disable agent runtime and set appliance mode to avoid coherence blockers
+        mock_config.agent_runtime_enabled = False
+        mock_config.deployment_mode = "appliance"
+        mock_config.agent_saas_connectors_enabled = False
+        mock_config.agent_multi_agent_enabled = False
+        mock_config.agent_stateful_workflows_enabled = False
+        mock_config.agent_executor_mock_mode = False
+        
         mock_settings.return_value = mock_config
 
         response = await async_client.get("/ready")
@@ -85,6 +93,14 @@ async def test_ready_endpoint_degraded_when_opt_in_disabled(async_client: AsyncC
         mock_config.rag_enabled = False
         mock_config.tts_enabled = False
         mock_config.lmstudio_enabled = False
+        # Explicitly disable agent runtime and set appliance mode to avoid coherence blockers
+        mock_config.agent_runtime_enabled = False
+        mock_config.deployment_mode = "appliance"
+        mock_config.agent_saas_connectors_enabled = False
+        mock_config.agent_multi_agent_enabled = False
+        mock_config.agent_stateful_workflows_enabled = False
+        mock_config.agent_executor_mock_mode = False
+        
         mock_settings.return_value = mock_config
 
         response = await async_client.get("/ready")

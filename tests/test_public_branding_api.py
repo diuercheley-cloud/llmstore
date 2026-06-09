@@ -37,7 +37,7 @@ async def test_branding_response_fields():
 async def test_branding_default_values():
     from app.services.branding import get_safe_branding
     b = get_safe_branding()
-    assert b["product_name"] == "LLM Inference Stack"
+    assert b["product_name"] == "Local AI Appliance"
     assert b["primary_color"] == "#c84c2f"
     assert b["secondary_color"] == "#0f766e"
     assert b["show_powered_by"] is True

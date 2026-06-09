@@ -11,9 +11,6 @@ from app.services.rag_enterprise.retrieval import (
 )
 from app.services.rag_enterprise.schemas import EnterpriseSource
 
-pytestmark = pytest.mark.asyncio
-
-
 class TestCosineSimilarity:
     def test_identical_vectors(self):
         a = [1.0, 0.0, 0.0]

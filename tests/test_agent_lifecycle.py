@@ -18,6 +18,11 @@ def disable_baseline_by_default(settings):
     settings.agent_production_requires_eval_baseline = original
 
 
+@pytest.fixture(autouse=True)
+def enable_agent_runtime(settings):
+    settings.agent_runtime_enabled = True
+
+
 
 @pytest.mark.asyncio
 async def test_agent_registry_destructive_tool_default_approval(admin_client: AsyncClient, admin_token_headers):

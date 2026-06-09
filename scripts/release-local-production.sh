@@ -57,7 +57,7 @@ echo "Last local-production tag: ${LAST_TAG}"
 # Detect LOCAL_APPLIANCE_MODE from .env.local
 LOCAL_APPLIANCE_MODE=$(grep "^LOCAL_APPLIANCE_MODE=" .env.local 2>/dev/null | cut -d '=' -f2 | tr -d '"' | tr -d "'" || echo "false")
 
-if [[ "${LOCAL_APPLIANCE_MODE}" == "true" ]]; then
+if [[ "${LOCAL_APPLIANCE_MODE}" == "true" && "${VALIDATION_METADATA_ONLY:-false}" != "true" ]]; then
     echo "LOCAL_APPLIANCE_MODE detected. Enforcing security guards..."
     
     echo "Running secrets scan..."

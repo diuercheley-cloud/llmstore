@@ -274,7 +274,7 @@ async def test_memory_write_respeita_consent_e_policy(session, task_engine_setti
     )
 
     # Mock the indexing service to prevent PGVector syntax errors on SQLite
-    with unittest.mock.patch("app.services.agents.agent_memory.SemanticMemoryRetriever.index_item", return_value=None):
+    with unittest.mock.patch("app.services.agents.memory_indexing.MemoryIndexingService.index_item", return_value=None):
         engine = TaskEngine(session)
         await engine.run_task(task.id)
 

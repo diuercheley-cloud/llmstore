@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.core.time import utc_now
 from app.db.base import Base
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,13 +13,17 @@ class PaymentCustomer(Base):
     __tablename__ = "payment_customers"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, unique=True)
+    client_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
     provider: Mapped[str] = mapped_column(String(32), nullable=False) # mock|stripe
-    provider_customer_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    provider_customer_id: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     client = relationship("Client")
+
+    __table_args__ = (
+        UniqueConstraint("client_id", "provider", name="uq_payment_customer_client_provider"),
+    )
 
 
 class PaymentMethod(Base):

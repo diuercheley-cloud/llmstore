@@ -75,6 +75,14 @@ O método recomendado para configurar o ambiente de produção local é através
 make install-local
 \`\`\`
 
+## Referências Rápidas
+
+- Endpoint padrão: `localhost:18080`
+- Validação principal: `./scripts/validate-local-production-full.sh`
+- Fora de Escopo: integração com gateway de pagamento real (PSP)
+- Gateway de pagamento real (PSP): permanece desativado nesta edição
+- Sem PIX real nesta versão: o fluxo de cobrança continua local e determinístico
+
 ## Pre-Deployment Validation
 Antes de finalizar a instalação no cliente, rode o checklist de produção:
 

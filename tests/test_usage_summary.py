@@ -90,6 +90,12 @@ class FakeSession:
             id=client_id,
             created_at=0,
             billing_plan=billing_plan,
+            rate_limit_per_minute=None,
+            daily_token_quota=None,
+            weekly_token_quota=None,
+            monthly_token_quota=None,
+            max_output_tokens=None,
+            max_context_tokens=None,
         )
 
     async def execute(self, *args, **kwargs):

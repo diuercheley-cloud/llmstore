@@ -20,6 +20,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
+    prefix="/admin/billing/revenue-escalations",
     tags=["admin", "billing", "revenue-escalations"],
     dependencies=[Depends(require_admin)],
 )

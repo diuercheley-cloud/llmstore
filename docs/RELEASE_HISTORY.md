@@ -1,13 +1,8 @@
----
-owner: platform-ops
-status: consolidated
----
-
 # Release History
 
 Historico consolidado das versoes estaveis do LLM Inference Stack.
 
-**Gerado em:** 2026-05-24 06:03:46
+**Gerado em:** 2026-06-09 13:37:24
 
 ## Visao Geral
 
@@ -87,6 +82,8 @@ timeline
     2026-05-16 : 1.10.0-v1-rc1 : Legacy
     2026-05-22 : 2.0.0-agentic-ai-platform : Legacy
     2026-05-23 : 2.0.1-api-key-management : Legacy
+    2026-06-03 : 2.0.5-llm-harness-enhanced : Legacy
+    2026-06-04 : 2.0.7-multi-agent : Legacy
 ```
 
 ## Releases
@@ -159,6 +156,8 @@ timeline
 | 1.10.0-v1-rc1 | `v1.10.0-v1-rc1` | — | `4fe31f7` | 2026-05-16 | Legacy | archived | — |
 | 2.0.0-agentic-ai-platform | `v2.0.0-agentic-ai-platform` | — | `1460aca` | 2026-05-22 | Legacy | archived | 2026-05-22; **Gateway LLM Provider**: `AgentExecutor` can us |
 | 2.0.1-api-key-management | `v2.0.1-api-key-management` | — | `19c8eeb` | 2026-05-23 | Legacy | archived | — |
+| 2.0.5-llm-harness-enhanced | `v2.0.5-llm-harness-enhanced` | — | `2e8e661` | 2026-06-03 | Legacy | archived | — |
+| 2.0.7-multi-agent | `v2.0.7-multi-agent` | — | `191e577` | 2026-06-04 | Legacy | archived | — |
 
 ## Releases Recomendadas
 

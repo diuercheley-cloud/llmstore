@@ -1,7 +1,7 @@
 import { Client } from "../../sdk/node/dist/index.js";
 
 async function main() {
-  const apiKey = process.env.KLEBERAI_API_KEY || "test-key";
+  const apiKey = process.env.CLIENT_API_KEY || process.env.KLEBERAI_API_KEY || "test-key";
   const baseUrl = process.env.KLEBERAI_BASE_URL || "http://localhost:18080";
 
   const client = new Client({ apiKey, baseUrl });

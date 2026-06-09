@@ -17,10 +17,10 @@
 
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck source=/dev/null
-source "./scripts/common.sh"
+source "${ROOT_DIR}/scripts/common.sh"
 init_stack_env
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"

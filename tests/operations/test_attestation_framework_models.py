@@ -90,7 +90,7 @@ async def test_attestation_framework_models_persist(session: AsyncSession):
     stored = (await session.execute(select(SovereignExecutionAttestation))).scalars().all()
     assert stored[0].replay_verifiable is True
     assert stored[0].offline_verifiable is True
-    assert stored[0].signature.startswith("placeholder-signature:")
+    assert isinstance(stored[0].signature, str) and len(stored[0].signature) > 0
     assert bundle.bundle_status == "draft"
     assert policy.require_chain_integrity is True
 

@@ -21,7 +21,7 @@ def _admin_headers():
 @pytest.mark.asyncio
 async def test_admin_timelines_list_requires_auth(admin_client: AsyncClient):
     res = await admin_client.get("/admin/inference/proofs/timelines")
-    assert res.status_code in (200, 403)
+    assert res.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
@@ -30,43 +30,43 @@ async def test_admin_timelines_build_requires_auth(admin_client: AsyncClient):
         "timeline_type": "inference_receipts",
         "window_minutes": 60,
     })
-    assert res.status_code in (200, 403)
+    assert res.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_seal_timeline_requires_auth(admin_client: AsyncClient):
     res = await admin_client.post(f"/admin/inference/proofs/timelines/{uuid4()}/seal")
-    assert res.status_code in (200, 404, 403)
+    assert res.status_code in (401, 404, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_verify_timeline_requires_auth(admin_client: AsyncClient):
     res = await admin_client.post(f"/admin/inference/proofs/timelines/{uuid4()}/verify")
-    assert res.status_code in (200, 404, 403)
+    assert res.status_code in (401, 404, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_list_proofs_requires_auth(admin_client: AsyncClient):
     res = await admin_client.get("/admin/inference/proofs/proofs")
-    assert res.status_code in (200, 403)
+    assert res.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_generate_proof_requires_auth(admin_client: AsyncClient):
     res = await admin_client.post(f"/admin/inference/proofs/proofs/generate/{uuid4()}")
-    assert res.status_code in (200, 404, 403)
+    assert res.status_code in (401, 404, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_verify_proof_requires_auth(admin_client: AsyncClient):
     res = await admin_client.post(f"/admin/inference/proofs/proofs/{uuid4()}/verify")
-    assert res.status_code in (200, 404, 403)
+    assert res.status_code in (401, 404, 403)
 
 
 @pytest.mark.asyncio
 async def test_admin_export_proof_requires_auth(admin_client: AsyncClient):
     res = await admin_client.get(f"/admin/inference/proofs/proofs/{uuid4()}/export")
-    assert res.status_code in (200, 404, 403)
+    assert res.status_code in (401, 404, 403)
 
 
 @pytest.mark.asyncio

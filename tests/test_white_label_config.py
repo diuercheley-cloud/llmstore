@@ -54,7 +54,7 @@ def test_branding_service_defaults():
     sys.path.insert(0, "control_plane")
     from app.services.branding import get_safe_branding
     b = get_safe_branding()
-    assert b["product_name"] == "LLM Inference Stack"
+    assert b["product_name"] == "Local AI Appliance"
     assert b["primary_color"] == "#c84c2f"
     assert b["show_powered_by"] is True
 

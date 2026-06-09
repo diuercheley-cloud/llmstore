@@ -63,6 +63,9 @@ async def test_chat_with_fallback_moves_to_next_backend_without_losing_error_con
 
 @pytest.mark.asyncio
 async def test_chat_with_fallback_propagates_backend_auth_and_plan_context():
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from app.services.billing.core import EffectivePlan
+    
     model = ModelRegistry(model_id="gemma", provider="llama.cpp", model_file="gemma.gguf", context_length=2048, is_active=True, is_default=True, status="configured")
     backend = InferenceBackend(
         name="propagation",
@@ -76,31 +79,27 @@ async def test_chat_with_fallback_propagates_backend_auth_and_plan_context():
     model.backend_routes = [
         ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend),
     ]
-    pricing_rule = type("PricingRuleStub", (), {"is_active": True, "monthly_price": 0, "overage_price_per_1k_tokens": 0, "currency": "USD"})()
-    billing_plan = type(
-        "PlanStub",
-        (),
-        {
-            "code": "pro",
-            "name": "Pro",
-            "rate_limit_per_minute": 10,
-            "daily_token_quota": 1000,
-            "weekly_token_quota": 5000,
-            "monthly_token_quota": 10000,
-            "max_output_tokens": 512,
-            "allow_streaming": True,
-            "rag_max_documents": 5,
-            "rag_max_storage_mb": 50,
-            "rag_max_pages_per_month": 100,
-            "rag_max_queries_per_month": 50,
-            "pricing_rules": [pricing_rule],
-            "routing_policy_json": None,
-        },
-    )()
-    client = type("ClientStub", (), {"billing_plan": billing_plan, "metadata_json": '{"is_admin": true}'})()
+    
+    client = MagicMock()
+    client.metadata_json = '{"is_admin": true}'
+    client.billing_plan.routing_policy_json = None
+    
+    effective_plan = EffectivePlan(
+        code="pro",
+        name="Pro",
+        rate_limit_per_minute=10,
+        daily_token_quota=1000,
+        weekly_token_quota=5000,
+        monthly_token_quota=10000,
+        max_output_tokens=512,
+        allow_streaming=True
+    )
+    
     proxy = FakeProxy()
 
-    result = await _chat_with_fallback(proxy, model, {"model": "gemma"}, False, True, client=client)
+    with patch("app.api.client.resolve_effective_plan_for_session", new_callable=AsyncMock) as mock_resolve:
+        mock_resolve.return_value = effective_plan
+        result = await _chat_with_fallback(proxy, model, {"model": "gemma"}, False, True, client=client)
 
     assert result.backend_name == "propagation"
     assert proxy.last_kwargs["api_key"] == "backend-secret"

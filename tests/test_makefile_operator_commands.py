@@ -70,7 +70,7 @@ def test_targets_call_scripts():
         "up:": "./scripts/up.sh",
         "down:": "./scripts/down.sh",
         "health:": "./scripts/test-health.sh",
-        "validate:": "./scripts/validate-local-production-full.sh",
+        "validate-full:": "./scripts/validate-local-production-full.sh",
         "demo:": "./scripts/demo-full-local.sh --no-build",
         "security:": "./scripts/security-report-local.sh",
         "readiness:": "./scripts/production-readiness-local.sh",

@@ -41,7 +41,7 @@ async def test_breakpoint_hit_pauses(mock_db):
     # 2. Simulate hitting a breakpoint
     # We use a task to run check_and_pause because it loop/waits
     task = asyncio.create_task(stepper.check_and_pause(
-        run_id, tenant_id, 1, "tool_name", {"data": "secret_password"}, target="search_web"
+        run_id, tenant_id, 1, "tool_name", {"password": "secret_password"}, target="search_web"
     ))
     
     # Allow some time for the task to reach the pause loop
@@ -54,7 +54,7 @@ async def test_breakpoint_hit_pauses(mock_db):
     # Verify sanitization in recorded event
     args, _ = session_manager.record_step_event.call_args
     recorded_state = args[3]
-    assert recorded_state["data"] == "[REDACTED]"
+    assert recorded_state["password"] == "[REDACTED]"
     
     # 3. Simulate resume from another "process"
     session.status = "active"

@@ -187,7 +187,7 @@ async def ready(
     import logging
     status = "ready"
     dependencies = {"postgres": "ok", "redis": "ok", "migrations": "ok"}
-    
+
     try:
         await session.execute(text("SELECT 1"))
     except Exception as e:
@@ -198,3 +198,100 @@ async def ready(
     try:
         await redis.ping()
     except Exception as e:
+        logging.error(f"Readiness check failed: redis dependency not ready. Error: {e}")
+        dependencies["redis"] = "error"
+        status = "not_ready"
+
+    try:
+        res = await session.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
+        if not res.scalar():
+            logging.error("Readiness check failed: migrations dependency not ready (missing version)")
+            dependencies["migrations"] = "missing"
+            status = "not_ready"
+    except Exception as e:
+        logging.error(f"Readiness check failed: migrations dependency not ready. Error: {e}")
+        dependencies["migrations"] = "error"
+        status = "not_ready"
+
+    settings = get_settings()
+    if settings.attestation_mode == "enforcing":
+        from app.services.security.attestation_service import NodeAttestationService
+        try:
+            att_svc = NodeAttestationService(session)
+            report = await att_svc.generate_report()
+            if not await att_svc.verify_report(report):
+                dependencies["attestation"] = "failed"
+                status = "not_ready"
+            else:
+                dependencies["attestation"] = "ok"
+        except Exception as e:
+            logging.error(f"Readiness attestation failed: {e}")
+            dependencies["attestation"] = "error"
+            status = "not_ready"
+
+    if not settings.rag_enabled:
+        dependencies["rag"] = "disabled"
+        logging.warning("Readiness degraded reason: RAG component is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["rag"] = "ok"
+
+    if not settings.tts_enabled:
+        dependencies["tts"] = "disabled"
+        logging.warning("Readiness degraded reason: TTS component is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["tts"] = "ok"
+
+    if not settings.lmstudio_enabled:
+        dependencies["lmstudio"] = "disabled"
+        logging.warning("Readiness degraded reason: LM Studio provider is disabled (opt-in provider disabled)")
+        if status != "not_ready":
+            status = "degraded"
+    else:
+        dependencies["lmstudio"] = "ok"
+
+    if not settings.agent_runtime_enabled:
+        dependencies["agentic"] = "disabled"
+    else:
+        try:
+            from app.services.agents.agent_readiness import AgentReadinessService
+            agent_svc = AgentReadinessService(session)
+            agent_report = await agent_svc.check_readiness()
+            dependencies["agentic"] = agent_report["status"]
+            if agent_report["status"] == "blocked":
+                status = "not_ready"
+            elif agent_report["status"] == "degraded" and status != "not_ready":
+                status = "degraded"
+        except Exception as e:
+            logging.error(f"Readiness agentic check failed: {e}")
+            dependencies["agentic"] = "error"
+            status = "not_ready"
+
+    try:
+        from app.services.platform.deployment_modes import DeploymentModeService
+        mode_svc = DeploymentModeService()
+        is_coherent, blockers, warnings = mode_svc.validate_coherence(settings)
+        dependencies["deployment_mode"] = "ok" if is_coherent else "degraded"
+        if blockers:
+            dependencies["deployment_mode"] = "blocked"
+            logging.error(f"Readiness check warning: deployment mode configuration incoherence. Blockers: {blockers}")
+        elif warnings:
+            if status != "not_ready":
+                status = "degraded"
+            logging.warning(f"Readiness check warning: deployment mode configuration warning. Warnings: {warnings}")
+    except Exception as e:
+        logging.error(f"Readiness check failed: deployment mode check failed. Error: {e}")
+        dependencies["deployment_mode"] = "error"
+        status = "not_ready"
+
+    if status == "not_ready":
+        return Response(
+            content=f'{{"status":"{status}","dependencies":{json.dumps(dependencies)}}}',
+            media_type="application/json",
+            status_code=503
+        )
+
+    return {"status": status, "dependencies": dependencies}

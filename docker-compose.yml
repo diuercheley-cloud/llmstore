@@ -123,6 +123,7 @@ services:
       - "${HOST_PORT:-8080}:8080"
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/app:/app/control_plane/app
       - ./control_plane/alembic:/app/alembic
       - ./control_plane/alembic.ini:/app/alembic.ini
       - ./scripts:/app/scripts
@@ -131,6 +132,7 @@ services:
       - ./data:/data
       - ./config:/config:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./tests:/app/tests
     deploy:
       resources:
         reservations:
@@ -163,6 +165,7 @@ services:
         condition: service_started
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/app:/app/control_plane/app
       - ./control_plane/alembic:/app/alembic
       - ./control_plane/alembic.ini:/app/alembic.ini
       - ./scripts:/app/scripts
@@ -192,6 +195,7 @@ services:
         condition: service_healthy
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/app:/app/control_plane/app
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./data:/data
@@ -227,6 +231,7 @@ services:
       retries: 3
     volumes:
       - ./control_plane/app:/app/app
+      - ./control_plane/app:/app/control_plane/app
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./data:/data

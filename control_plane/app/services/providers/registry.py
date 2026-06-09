@@ -97,10 +97,22 @@ def _init_registry() -> None:
         if provider_id not in providers_enabled and not is_cloud:
             continue
 
+        # Provider adapters expose `enabled` as a read-only property.
+        # Keep them registered for observability/admin views, but leave their
+        # own constructor-derived enabled state intact.
         if is_cloud and not cloud_enabled and not p.configured:
-            logger.info("Cloud provider '%s' disabled (no key, cloud disabled)", provider_id)
+            logger.debug(
+                "Cloud provider '%s' disabled (cloud_enabled=%s, configured=%s)",
+                provider_id,
+                cloud_enabled,
+                p.configured,
+            )
         elif is_cloud and cloud_enabled and not p.configured:
-            logger.warning("Cloud provider '%s' enabled=true but API key missing", provider_id)
+            logger.debug(
+                "Cloud provider '%s' enabled but API key missing (configured=%s)",
+                provider_id,
+                p.configured,
+            )
 
         _providers[provider_id] = p
 

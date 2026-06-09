@@ -20,9 +20,12 @@ async def test_handoff_policy_required(session):
     settings = get_settings()
     settings.agent_handoffs_enabled = True
     
-    # Create agents and run
+    # Create agents first so policy engine can find them
     agent_a = uuid.uuid4()
     agent_b = uuid.uuid4()
+    await agent_state.create_agent_definition(session, {"id": agent_a, "name": "A", "version": "1", "instructions": "i", "model_id": "m", "owner": "o"})
+    await agent_state.create_agent_definition(session, {"id": agent_b, "name": "B", "version": "1", "instructions": "i", "model_id": "m", "owner": "o"})
+    
     run_a = await agent_state.create_agent_run(session, agent_a, "t1", "input")
     
     service = AgentHandoffService(session)
@@ -38,11 +41,6 @@ async def test_handoff_policy_required(session):
         "target_agent_id": agent_b,
         "max_handoffs_per_run": 2
     })
-    
-    # Now it should work (will fail on create_agent_run if agent doesn't exist in DB)
-    # So let's create real agents in DB
-    await agent_state.create_agent_definition(session, {"id": agent_a, "name": "A", "version": "1", "instructions": "i", "model_id": "m", "owner": "o"})
-    await agent_state.create_agent_definition(session, {"id": agent_b, "name": "B", "version": "1", "instructions": "i", "model_id": "m", "owner": "o"})
     
     target_run_id = await service.initiate_handoff(run_a.id, agent_b, "need help", {})
     assert target_run_id is not None

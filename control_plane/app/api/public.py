@@ -106,7 +106,8 @@ async def public_capabilities():
         "local_appliance_mode": settings.local_appliance_mode,
         "features": features,
         "limitations": [
-            "PSP/PIX real opt-in — PAYMENT_PROVIDER=disabled por padrao; mock local disponivel",
+            "PSP real opt-in — PAYMENT_PROVIDER=disabled por padrao; mock local disponivel",
+            "PIX real opt-in — fluxo real permanece desativado por padrao",
             "Tools / Function Calling — depende da compatibilidade do backend/modelo",
             "Modelos dependem do hardware local — qualidade varia conforme GPU/CPU",
             "Plugin Runtime local — execucao isolada em sandbox",

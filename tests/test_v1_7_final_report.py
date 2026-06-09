@@ -39,7 +39,7 @@ def test_report_status_is_valid():
         pytest.skip("No report directory")
     fp = report_dir / "v1.7-final-validation.json"
     data = json.loads(fp.read_text(encoding="utf-8"))
-    valid = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_NOT_READY"]
+    valid = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "V1_7_NOT_READY"]
     assert data["final_status"] in valid, f"Invalid status: {data['final_status']}"
 
 
@@ -95,7 +95,7 @@ def test_report_md_has_status():
         pytest.skip("No report directory")
     fp = report_dir / "v1.7-final-validation.md"
     content = fp.read_text(encoding="utf-8")
-    statuses = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_NOT_READY"]
+    statuses = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "V1_7_NOT_READY"]
     has_status = any(s in content for s in statuses)
     assert has_status, "No valid status in MD report"
 

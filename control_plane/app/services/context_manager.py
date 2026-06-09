@@ -93,6 +93,9 @@ class ContextManager:
         
         if system_messages:
             system_content = "\n\n".join([str(m["content"]) for m in system_messages])
+            if len(system_content) > self.max_system_chars:
+                system_content = system_content[:self.max_system_chars]
+                metrics["truncated"] = True
             processed_messages = [{"role": "system", "content": system_content}] + other_messages
         else:
             processed_messages = other_messages
@@ -124,6 +127,10 @@ class ContextManager:
         final_max_tokens = requested_max_tokens
         if final_max_tokens is None or final_max_tokens <= 0:
             final_max_tokens = 256
+        
+        if final_max_tokens > 512:
+            final_max_tokens = 512
+            metrics["truncated"] = True
         
         return processed_messages, final_max_tokens, metrics
 

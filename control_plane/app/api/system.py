@@ -951,6 +951,14 @@ async def harness_page():
     return FileResponse(static_file)
 
 
+@router.get("/tests", include_in_schema=False)
+async def tests_landing_page():
+    if settings.public_exposure:
+        return Response(content='{"detail":"disabled"}', status_code=404)
+    static_file = Path(__file__).resolve().parents[1] / "static" / "tests" / "index.html"
+    return FileResponse(static_file)
+
+
 @router.get("/harness/{rest:path}", include_in_schema=False)
 async def harness_page_catch_all(rest: str):
     static_file = Path(__file__).resolve().parents[1] / "static" / "harness" / "index.html"

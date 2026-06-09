@@ -52,6 +52,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 COPY control_plane/app /app/app
+COPY control_plane/app /app/control_plane/app
 COPY control_plane/alembic /app/alembic
 COPY control_plane/alembic.ini /app/alembic.ini
 COPY scripts /app/scripts

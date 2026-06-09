@@ -38,7 +38,7 @@ async def test_rate_limit_probe_logs_sanitization():
     # Verify that the production-readiness script has the sanitization patterns.
     from pathlib import Path
     
-    script_path = Path("scripts/production-readiness-local.sh")
+    script_path = Path(__file__).parent.parent / "scripts" / "production-readiness-local.sh"
     content = script_path.read_text()
     
     # Check for SECRET_PATTERNS definition

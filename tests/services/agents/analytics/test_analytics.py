@@ -38,7 +38,10 @@ async def test_analytics_no_data(mock_db):
     
     with MagicMock() as mock_queries:
         mock_queries.get_run_success_rate = AsyncMock(return_value={"total": 0, "success_rate": 0, "distribution": {}})
-        # ... other mocks not needed as we stop if total_runs == 0 in API (or check here)
+        mock_queries.get_cost_and_tokens = AsyncMock(return_value={"total_cost_brl": 0.0, "total_tokens": 0})
+        mock_queries.get_tool_metrics = AsyncMock(return_value={"total_tool_calls": 0, "tool_failure_rate": 0.0})
+        mock_queries.get_policy_denials = AsyncMock(return_value=0)
+        mock_queries.get_eval_pass_rate = AsyncMock(return_value=0.0)
         
         aggregator.queries = mock_queries
         data = await aggregator.get_dashboard_data("tenant_empty")

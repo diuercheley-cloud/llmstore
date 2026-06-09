@@ -24,7 +24,7 @@ async def test_agent_studio_compile_and_validate_flow(session):
         "nodes": [
             {"id": "node-1", "node_type": "agent", "label": "Start reasoning"},
             {"id": "node-2", "node_type": "tool_call", "config": {"tool_name": "vector_search", "requires_approval": False}},
-            {"id": "node-3", "node_type": "final", "label": "End"}
+            {"id": "node-3", "node_type": "final_response", "label": "End"}
         ],
         "edges": [
             {"source": "node-1", "target": "node-2"},
@@ -50,9 +50,12 @@ async def test_agent_studio_compile_and_validate_flow(session):
     # 2. Flow Validation (Failure case - missing approval for high risk tool)
     graph_data_fail = {
         "nodes": [
-            {"id": "node-1", "node_type": "tool_call", "config": {"tool_name": "delete_database", "requires_approval": False}}
+            {"id": "node-1", "node_type": "tool_call", "config": {"tool_name": "delete_database", "requires_approval": False}},
+            {"id": "node-2", "node_type": "final_response", "label": "End"}
         ],
-        "edges": []
+        "edges": [
+            {"source": "node-1", "target": "node-2"}
+        ]
     }
     version.graph_json = graph_data_fail
     errors_fail = validator.validate(version)

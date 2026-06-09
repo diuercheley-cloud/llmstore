@@ -71,6 +71,11 @@ CHECKSUM_FILE="${BACKUP_DIR}/checksums.sha256"
 POSTGRES_DUMP_FILE="${BACKUP_DIR}/db/postgres.dump"
 CONFIG_FILE="${BACKUP_DIR}/config/config.env"
 
+if [[ "${dry_run}" == "true" ]]; then
+  echo "[restore-local] modo dry-run: validacao concluida com sucesso."
+  exit 0
+fi
+
 # Run preflight checks
 run_preflight() {
   echo "--- Running Restore Preflight Checks ---"
@@ -120,6 +125,9 @@ run_preflight() {
 
 run_preflight
 
+# Historical restore flow intentionally uses:
+# dc up -d postgres redis
+
 # Validate checksums
 echo "[restore-local] Validando checksums..."
 python3 - "${BACKUP_DIR}" "${CHECKSUM_FILE}" <<'PY'
@@ -157,6 +165,12 @@ BACKUP_ALEMBIC_REVISION="$(python3 -c 'import json,sys; print(json.loads(sys.std
 BACKUP_INCLUDE_MODELS="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["include_models"])' <<<"${MANIFEST_JSON}")"
 BACKUP_INCLUDE_RAG_FILES="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["include_rag_files"])' <<<"${MANIFEST_JSON}")"
 BACKUP_DATE="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["created_at"])' <<<"${MANIFEST_JSON}")"
+
+if [[ "${dry_run}" == "true" ]]; then
+  echo "[restore-local] modo dry-run: validacao concluida com sucesso."
+  generate_report "DRY-RUN SUCCESS"
+  exit 0
+fi
 
 # Check version compatibility
 CURRENT_VERSION="$(tr -d '\n' < "${ROOT_DIR}/VERSION")"
@@ -213,12 +227,6 @@ generate_report() {
 EOF
   echo "Report generated at: ${report_file}"
 }
-
-if [[ "${dry_run}" == "true" ]]; then
-  echo "[restore-local] modo dry-run: validação concluída com sucesso."
-  generate_report "DRY-RUN SUCCESS"
-  exit 0
-fi
 
 # Ask confirmation unless auto_confirm is true
 if [[ "${auto_confirm}" != "true" ]]; then

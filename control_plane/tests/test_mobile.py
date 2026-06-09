@@ -2,9 +2,9 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.services.mobile.device_registry import DeviceRegistry
+from app.services.mobile.device_registry import DeviceRegistryService
 from app.services.mobile.mobile_session import MobileSessionService
-from app.services.mobile.push_notifications import PushNotificationsService
+from app.services.mobile.push_notifications import PushNotificationService
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_device_registration():
     mock_res.scalar_one_or_none.return_value = None
     session.execute.return_value = mock_res
     
-    svc = DeviceRegistry(session)
+    svc = DeviceRegistryService(session)
     device = await svc.register_device(
         tenant_id="tenant-1",
         user_id="user-1",
@@ -41,7 +41,7 @@ async def test_mobile_session_token():
 @pytest.mark.asyncio
 async def test_push_disabled_by_default():
     session = AsyncMock()
-    svc = PushNotificationsService(session)
+    svc = PushNotificationService(session)
     
     with patch("app.services.mobile.push_notifications.settings.push_notifications_enabled", False):
         with patch("sqlalchemy.select") as mock_select:

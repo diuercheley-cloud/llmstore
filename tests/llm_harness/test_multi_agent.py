@@ -58,14 +58,22 @@ class TestSafeParseJson:
 
 def _make_mock_registry():
     registry = MagicMock()
-    registry.agents = {
-        "supervisor": MagicMock(role="Supervisor", prompt="You are the supervisor", model_profile=None),
-        "developer": MagicMock(role="Developer", prompt="You are the developer", model_profile=None),
-        "tester": MagicMock(role="Tester", prompt="You are the tester", model_profile=None),
-    }
-    for name, agent in registry.agents.items():
-        agent.description = f"Role: {agent.role}"
+    
+    def create_agent(role, prompt):
+        agent = MagicMock()
+        agent.role = role
+        agent.prompt = prompt
+        agent.model_profile = None
+        agent.description = f"Role: {role}"
         agent.tools = ["read_file", "write_file", "run_shell"]
+        return agent
+
+    registry.agents = {
+        "supervisor": create_agent("Supervisor", "You are the supervisor"),
+        "developer": create_agent("Developer", "You are the developer"),
+        "tester": create_agent("Tester", "You are the tester"),
+    }
+    registry.get_agent.side_effect = lambda name: registry.agents.get(name)
     return registry
 
 

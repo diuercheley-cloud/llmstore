@@ -14,7 +14,7 @@ def detect_sensitive_data(content: str) -> bool:
     if not content:
         return False
     patterns = [
-        r'(?i)(api[-_]?key|secret|password|private[-_]?key|auth_token)\s*[:=]',
+        r'(?i)(api[-_ ]?key|secret|password|private[-_ ]?key|auth_token)\s*[:=]',
         r'sk-[a-zA-Z0-9]{32,}',
         r'Bearer\s+[a-zA-Z0-9_\-\.]+'
     ]

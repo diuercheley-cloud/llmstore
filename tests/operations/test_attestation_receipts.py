@@ -45,4 +45,4 @@ def test_receipts_include_required_fields():
         assert receipt["immutable_hash"]
         assert receipt["payload_hash"]
         assert receipt["deterministic_version"] == "v1"
-        assert receipt["signature"].startswith("placeholder-signature:")
+        assert len(receipt["signature"]) >= 64  # Hex signature length

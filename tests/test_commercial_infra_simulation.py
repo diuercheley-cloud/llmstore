@@ -19,6 +19,7 @@ from app.services.routing.commercial_safety_gates import (
 @pytest.mark.asyncio
 async def test_simulate_scale_up():
     db = AsyncMock()
+    db.add = MagicMock()
     sim = await simulate_scale_up(db, "cluster", "cluster-east", {"nodes": 2})
     
     assert sim.simulation_type == "scale_up"
@@ -29,6 +30,7 @@ async def test_simulate_scale_up():
 @pytest.mark.asyncio
 async def test_simulate_scale_down():
     db = AsyncMock()
+    db.add = MagicMock()
     sim = await simulate_scale_down(db, "cluster", "cluster-east", {"nodes": 3})
     
     assert sim.simulation_type == "scale_down"

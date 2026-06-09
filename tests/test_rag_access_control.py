@@ -37,7 +37,14 @@ async def test_cross_tenant_blocked(session: AsyncSession):
     session.add_all([owner, other])
     await session.flush()
 
-    vault = CommercialRAGVault(client_id=owner.id, vault_name="tenant-vault", vault_mode="confidential", encryption_required=True, retrieval_mode="hybrid")
+    vault = CommercialRAGVault(
+        client_id=owner.id,
+        tenant_id=str(owner.id),
+        vault_name="tenant-vault",
+        vault_mode="confidential",
+        encryption_required=True,
+        retrieval_mode="hybrid"
+    )
     session.add(vault)
     await session.flush()
     session.add(
@@ -124,3 +131,4 @@ def test_acl_enforcement():
     assert "acl_client_mismatch" in violations
     assert "acl_role_mismatch" in violations
     assert "acl_user_mismatch" in violations
+

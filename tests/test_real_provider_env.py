@@ -35,8 +35,7 @@ def test_provider_config_no_leak_in_logs(capsys):
         val = os.environ.get(var, "")
         if not val:
             continue
-        with pytest.raises(AssertionError):
-            assert val not in capsys.readouterr().out
+        assert val not in capsys.readouterr().out
 
 
 OPENAI_REQUIRED = [

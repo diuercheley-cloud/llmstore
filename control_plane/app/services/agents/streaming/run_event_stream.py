@@ -2,7 +2,7 @@
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from app.services.agents.streaming.websocket_manager import ws_manager
 
@@ -39,7 +39,8 @@ def sanitize_payload(payload: Any) -> Any:
 class RunEventStreamService:
     @staticmethod
     async def publish_run_event(run_id: str, event_type: str, data: Dict[str, Any], session_id: Optional[str] = None):
-        sanitized_data = sanitize_payload(data)
+        from app.services.security.pii_gateway import pii_gateway
+        sanitized_data = pii_gateway.redact_payload(data)
         event = {
             "event": event_type,
             "run_id": run_id,

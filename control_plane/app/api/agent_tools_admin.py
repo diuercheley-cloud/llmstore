@@ -36,6 +36,7 @@ class AgentToolCreate(BaseModel):
     owner: Optional[str] = Field(None, max_length=128)
     enabled: Optional[bool] = None
     requires_approval: Optional[bool] = None
+    approval_policy: Optional[dict] = None
     dry_run_supported: Optional[bool] = False
     rollback_supported: Optional[bool] = False
     docs_url: Optional[str] = Field(None, max_length=256)
@@ -55,6 +56,7 @@ class AgentToolUpdate(BaseModel):
     owner: Optional[str] = Field(None, max_length=128)
     enabled: Optional[bool] = None
     requires_approval: Optional[bool] = None
+    approval_policy: Optional[dict] = None
     dry_run_supported: Optional[bool] = None
     rollback_supported: Optional[bool] = None
     docs_url: Optional[str] = Field(None, max_length=256)

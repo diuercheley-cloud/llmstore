@@ -50,7 +50,7 @@ async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> t
         session.add_all(
             [
                 RequestFinancial(
-                    client_id=client_a.id,
+                    client_id=str(client_a.id),
                     provider="openai",
                     model="gpt-4o-mini",
                     customer_price_brl=18.0,
@@ -60,7 +60,7 @@ async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> t
                     created_at=now,
                 ),
                 RequestFinancial(
-                    client_id=client_b.id,
+                    client_id=str(client_b.id),
                     provider="openai",
                     model="gpt-4o-mini",
                     customer_price_brl=4.0,
@@ -70,7 +70,7 @@ async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> t
                     created_at=now,
                 ),
                 RequestFinancial(
-                    client_id=client_b.id,
+                    client_id=str(client_b.id),
                     provider="local",
                     model="gemma-local",
                     customer_price_brl=3.0,

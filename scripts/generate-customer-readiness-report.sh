@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="$ROOT_DIR/artifacts/enterprise-pack/latest"
 mkdir -p "$OUTPUT_DIR"
 
-source "$ROOT_DIR/scripts/common.sh"
+source "${ROOT_DIR}/scripts/common.sh"
 init_stack_env
 
 REPORT_FILE="$OUTPUT_DIR/customer-readiness.md"
@@ -57,11 +57,11 @@ $(cat "$ROOT_DIR/artifacts/operational-readiness/latest/summary.md" | sed '1,4d'
 ## 3. Model Inventory
 EOF
 
-if [[ -f "$ROOT_DIR/list_models.py" ]]; then
+if [[ -f "$ROOT_DIR/scripts/list_models.py" ]]; then
   echo "\`\`\`" >> "$REPORT_FILE"
   # Run with DATABASE_URL if available
   if [[ -n "$DATABASE_URL" ]]; then
-    $PYTHON_BIN "$ROOT_DIR/list_models.py" >> "$REPORT_FILE" 2>&1
+    $PYTHON_BIN "$ROOT_DIR/scripts/list_models.py" >> "$REPORT_FILE" 2>&1
   else
     echo "DATABASE_URL not set. Skipping inventory." >> "$REPORT_FILE"
   fi
@@ -75,10 +75,10 @@ cat <<EOF >> "$REPORT_FILE"
 ## 4. Backend Inventory
 EOF
 
-if [[ -f "$ROOT_DIR/list_backends.py" ]]; then
+if [[ -f "$ROOT_DIR/scripts/list_backends.py" ]]; then
   echo "\`\`\`" >> "$REPORT_FILE"
   if [[ -n "$DATABASE_URL" ]]; then
-    $PYTHON_BIN "$ROOT_DIR/list_backends.py" >> "$REPORT_FILE" 2>&1
+    $PYTHON_BIN "$ROOT_DIR/scripts/list_backends.py" >> "$REPORT_FILE" 2>&1
   else
     echo "DATABASE_URL not set. Skipping inventory." >> "$REPORT_FILE"
   fi

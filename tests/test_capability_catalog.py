@@ -36,8 +36,27 @@ def test_supply_chain_verifier():
     assert SupplyChainVerifier.verify_checksum(content, "wrong") is False
 
 def test_signature_verifier():
-    assert SignatureVerifier.verify_signature("data", "sig", "pubkey") is True
-    assert SignatureVerifier.verify_signature("data", "", "pubkey") is False
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import serialization
+    
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode()
+    
+    public_key = private_key.public_key()
+    public_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+    
+    data = "test data"
+    signature_hex = SignatureVerifier.sign_data(data, private_pem)
+    assert signature_hex is not None
+    assert SignatureVerifier.verify_signature(data, signature_hex, public_pem) is True
+    assert SignatureVerifier.verify_signature(data, "00" * 64, public_pem) is False
 
 def test_plugin_manifest_validation():
     manifest_data = {

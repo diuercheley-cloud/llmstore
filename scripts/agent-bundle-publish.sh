@@ -15,7 +15,7 @@ echo "Publishing bundle: $BUNDLE_DIR"
 echo "==============================="
 
 # 1. Validate
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -x "$SCRIPT_DIR/agent-bundle-validate.sh" ]; then
   info "Running pre-publish validation..."
   if ! "$SCRIPT_DIR/agent-bundle-validate.sh" "$BUNDLE_DIR"; then

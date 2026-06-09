@@ -88,6 +88,7 @@ from app.services.providers.registry import get_provider
 from app.services.public_onboarding import list_public_plans
 from app.services.quota import QuotaExceeded, ensure_quota, month_start, record_usage
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
+from app.services.tokenizer_service import get_tokenizer_service
 from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
 from app.services.tts_usage import get_tts_usage_and_limits
 from app.utils.request_summary import summarize_chat_request
@@ -310,11 +311,11 @@ async def _portal_usage_customer_pricing(
     today_start = _start_of_day_utc()
     month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
     today_stmt = select(func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0)).where(
-        RequestFinancial.client_id == client_id,
+        RequestFinancial.client_id == str(client_id),
         RequestFinancial.created_at >= today_start,
     )
     month_stmt = select(func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0)).where(
-        RequestFinancial.client_id == client_id,
+        RequestFinancial.client_id == str(client_id),
         RequestFinancial.created_at >= month_start_dt,
     )
     today_total = float((await session.execute(today_stmt)).scalar() or 0.0)
@@ -447,6 +448,7 @@ async def portal_simulate_payment(
 async def portal_me(
     request: Request,
     client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
 ):
     from app.core.config import get_settings
     settings = get_settings()
@@ -1341,6 +1343,7 @@ async def portal_test_chat(
         client=client,
         requested_model=chat_payload.model,
     )
+    tokenizer = get_tokenizer_service()
     token_res = await tokenizer.count_chat_tokens([item.model_dump() for item in chat_payload.messages], model=selected_model.model_id)
     prompt_tokens = token_res.input_tokens
     token_count_method = token_res.method

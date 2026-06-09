@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Runner — LLM Inference Stack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050510;
+            --bg-base: #0a0a1a;
+            --bg-surface: rgba(15, 23, 42, 0.6);
+            --bg-surface-hover: rgba(20, 30, 55, 0.7);
+            --bg-card: rgba(15, 23, 42, 0.45);
+            --border: rgba(56, 189, 248, 0.08);
+            --border-hover: rgba(56, 189, 248, 0.18);
+            --accent: #14b8a6;
+            --accent-light: #2dd4bf;
+            --accent-glow: rgba(20, 184, 166, 0.15);
+            --cyan: #06b6d4;
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+            --text-dim: #475569;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --info: #3b82f6;
+            --info-bg: rgba(59, 130, 246, 0.1);
+            --timeout-color: #a855f7;
+            --timeout-bg: rgba(168, 85, 247, 0.1);
+            --skip-color: #94a3b8;
+            --skip-bg: rgba(148, 163, 184, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-base) 50%, #0c1222 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── Ambient Background ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(20, 184, 166, 0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5, 5, 16, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.025em;
+        }
+
+        .header-title .icon { font-size: 1.5rem; }
+
+        .header-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .api-key-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            width: 220px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .api-key-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .api-key-input::placeholder { color: var(--text-dim); }
+
+        /* ─── Buttons ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #0d9488);
+            color: white;
+            box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border-color: var(--border-hover);
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .btn-icon {
+            padding: 0.4rem;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ─── Progress Bar ─── */
+        .progress-container {
+            max-width: 1600px;
+            margin: 0.75rem auto 0;
+            display: none;
+        }
+
+        .progress-container.active { display: block; }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent));
+            background-size: 200% 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            animation: shimmer 2s linear infinite;
+            width: 0%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.4rem;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* ─── Main Layout ─── */
+        .main {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.15rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-icon { font-size: 1.2rem; margin-bottom: 0.4rem; }
+
+        .stat-card .stat-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card.total .stat-value { color: var(--cyan); }
+        .stat-card.passed .stat-value { color: var(--success); }
+        .stat-card.failed .stat-value { color: var(--error); }
+        .stat-card.errors .stat-value { color: var(--warning); }
+        .stat-card.running .stat-value { color: var(--accent-light); }
+        .stat-card.duration .stat-value { color: var(--info); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.2s; }
+        .stat-card:nth-child(5) { animation-delay: 0.25s; }
+        .stat-card:nth-child(6) { animation-delay: 0.3s; }
+
+        /* ─── Filters ─── */
+        .filters-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-group {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 280px;
+            align-items: stretch;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 0.85rem center;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-input::placeholder { color: var(--text-dim); }
+
+        .filter-select {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.6rem 2rem 0.6rem 0.85rem;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 01.753 1.659l-4.796 5.48a1 1 0 01-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 0.7rem) center;
+        }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .filter-select option { background: #0f172a; color: var(--text); }
+
+        .filter-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* ─── Test List ─── */
+        .test-list-container {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .test-list-header {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 80px 60px;
+            padding: 0.7rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .test-list {
+            max-height: calc(100vh - 380px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .test-list::-webkit-scrollbar { width: 6px; }
+        .test-list::-webkit-scrollbar-track { background: transparent; }
+        .test-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .test-item {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 80px 60px;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .test-item:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .test-item:last-child { border-bottom: none; }
+
+        .test-name {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: 0;
+        }
+
+        .test-name-text {
+            font-size: 0.82rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .test-name-text .prefix {
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        /* ─── Category Badge ─── */
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .cat-agent { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .cat-admin { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .cat-security { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+        .cat-billing { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+        .cat-providers { background: rgba(6, 182, 212, 0.12); color: #22d3ee; }
+        .cat-commercial { background: rgba(236, 72, 153, 0.12); color: #f472b6; }
+        .cat-operations { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+        .cat-api { background: rgba(168, 85, 247, 0.12); color: #c084fc; }
+        .cat-rag { background: rgba(20, 184, 166, 0.12); color: #2dd4bf; }
+        .cat-models { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+        .cat-governance { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+        .cat-releases { background: rgba(14, 165, 233, 0.12); color: #38bdf8; }
+        .cat-routing { background: rgba(132, 204, 22, 0.12); color: #a3e635; }
+        .cat-default { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+
+        /* ─── Status Badge ─── */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+        }
+
+        .status-idle { color: var(--text-dim); }
+        .status-queued { color: var(--text-muted); background: rgba(148, 163, 184, 0.08); }
+        .status-running { color: var(--accent-light); background: var(--accent-glow); }
+        .status-passed { color: var(--success); background: var(--success-bg); }
+        .status-failed { color: var(--error); background: var(--error-bg); }
+        .status-error { color: var(--warning); background: var(--warning-bg); }
+        .status-timeout { color: var(--timeout-color); background: var(--timeout-bg); }
+        .status-skipped { color: var(--skip-color); background: var(--skip-bg); }
+        .status-cancelled { color: var(--text-dim); background: rgba(100, 116, 139, 0.08); }
+
+        /* Pulse animation for running */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-running { animation: pulse-glow 1.5s ease-in-out infinite; }
+
+        .test-duration {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .test-actions {
+            display: flex;
+            gap: 0.3rem;
+            justify-content: flex-end;
+        }
+
+        .btn-play {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+        }
+
+        .btn-play:hover:not(:disabled) {
+            background: var(--accent-glow);
+            border-color: var(--accent);
+        }
+
+        .btn-play:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ─── Expandable Output ─── */
+        .test-item-wrapper { }
+
+        .test-output {
+            display: none;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .test-output.open { display: block; }
+
+        .test-output pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        /* ─── Loading Skeleton ─── */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.03) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 80px 60px;
+            padding: 0.6rem 1rem;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .skeleton-bar {
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* ─── Toast ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1.15rem;
+            font-size: 0.82rem;
+            color: var(--text);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 380px;
+        }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--error); }
+        .toast.info { border-left: 3px solid var(--info); }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--text); }
+        .empty-state p { font-size: 0.85rem; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .header-top { flex-direction: column; align-items: stretch; }
+            .header-actions { justify-content: center; }
+            .api-key-input { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .test-list-header,
+            .test-item {
+                grid-template-columns: 1fr 80px 70px 50px;
+            }
+            .test-list-header > :nth-child(2),
+            .test-item > :nth-child(2) { display: none; }
+            .main { padding: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filters-bar { flex-direction: column; }
+            .search-group { width: 100%; }
+        }
+
+        /* ─── Failure Report ─── */
+        .failure-report-card {
+            background: rgba(239, 68, 68, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .report-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--error);
+        }
+
+        .report-title h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .report-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        /* Customize scrollbar for report-body */
+        .report-body::-webkit-scrollbar { width: 6px; }
+        .report-body::-webkit-scrollbar-track { background: transparent; }
+        .report-body::-webkit-scrollbar-thumb { background: rgba(239, 68, 68, 0.2); border-radius: 3px; }
+        .report-body::-webkit-scrollbar-thumb:hover { background: rgba(239, 68, 68, 0.4); }
+
+        .report-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(239, 68, 68, 0.12);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .report-item:hover {
+            border-color: rgba(239, 68, 68, 0.25);
+            background: rgba(20, 30, 55, 0.7);
+        }
+
+        .report-item-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .report-item-name {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text);
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .report-item-name:hover {
+            color: var(--accent-light);
+        }
+
+        .report-item-preview {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #fca5a5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- ─── Header ─── -->
+    <header class="header">
+        <div class="header-top">
+            <div class="header-title">
+                <span class="icon">🧪</span>
+                <div>
+                    <h1>Test Runner — LLM Inference Stack</h1>
+                    <span class="header-subtitle" id="headerSubtitle">Carregando testes...</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <input type="password" class="api-key-input" id="apiKeyInput"
+                       placeholder="Admin API Key" autocomplete="off">
+                <button class="btn btn-primary" id="btnRunAll" disabled>
+                    ▶ Executar Todos
+                </button>
+                <button class="btn btn-danger" id="btnStop" disabled>
+                    ⏹ Parar
+                </button>
+            </div>
+        </div>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-label">
+                <span id="progressText">0 / 0 concluídos</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ─── Main Content ─── -->
+    <main class="main">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card passed">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="statPassed">0</div>
+                <div class="stat-label">Passaram</div>
+            </div>
+            <div class="stat-card failed">
+                <div class="stat-icon">❌</div>
+                <div class="stat-value" id="statFailed">0</div>
+                <div class="stat-label">Falharam</div>
+            </div>
+            <div class="stat-card errors">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-value" id="statErrors">0</div>
+                <div class="stat-label">Erros</div>
+            </div>
+            <div class="stat-card running">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-value" id="statRunning">0</div>
+                <div class="stat-label">Executando</div>
+            </div>
+            <div class="stat-card duration">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value" id="statDuration">—</div>
+                <div class="stat-label">Duração</div>
+            </div>
+        </div>
+
+        <!-- Failure Report -->
+        <div class="failure-report-card" id="failureReportCard" style="display: none;">
+            <div class="report-header">
+                <div class="report-title">
+                    <span class="icon">⚠️</span>
+                    <h3>Relatório de Falhas</h3>
+                </div>
+                <div class="report-actions">
+                    <button class="btn btn-ghost btn-sm" id="btnCopyReport">📋 Copiar Resumo</button>
+                    <button class="btn btn-ghost btn-sm" id="btnDownloadReport">📥 Baixar MD</button>
+                    <button class="btn btn-ghost btn-sm" id="btnCloseReport">✕ Fechar</button>
+                </div>
+            </div>
+            <div class="report-body" id="failureReportList">
+                <!-- List of failures will be injected here -->
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="search-group">
+                <input type="text" class="search-input" id="searchInput"
+                       placeholder="Buscar testes por nome...">
+                <button class="btn btn-ghost" id="btnSearch" style="padding: 0.6rem 1rem;">
+                    🔍 Buscar
+                </button>
+            </div>
+            <select class="filter-select" id="categoryFilter">
+                <option value="">Todas categorias</option>
+            </select>
+            <select class="filter-select" id="statusFilter">
+                <option value="">Todos status</option>
+                <option value="idle">⚪ Idle</option>
+                <option value="queued">🔵 Na Fila</option>
+                <option value="running">🟡 Executando</option>
+                <option value="passed">🟢 Passou</option>
+                <option value="failed">🔴 Falhou</option>
+                <option value="error">🟠 Erro</option>
+                <option value="timeout">🟣 Timeout</option>
+                <option value="skipped">⚪ Sem testes</option>
+            </select>
+            <span class="filter-count" id="filterCount"></span>
+        </div>
+
+        <!-- Test List -->
+        <div class="test-list-container">
+            <div class="test-list-header">
+                <span>Arquivo de Teste</span>
+                <span>Categoria</span>
+                <span>Status</span>
+                <span>Duração</span>
+                <span></span>
+            </div>
+            <div class="test-list" id="testList">
+                <!-- Skeleton Loading -->
+                <div id="skeletonLoading">
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                    <div class="skeleton-row"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ─── State ───
+        let allTests = [];
+        let currentRunId = null;
+        let pollInterval = null;
+        let isRunning = false;
+
+        // ─── DOM refs ───
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const btnRunAll = document.getElementById('btnRunAll');
+        const btnStop = document.getElementById('btnStop');
+        const searchInput = document.getElementById('searchInput');
+        const btnSearch = document.getElementById('btnSearch');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const testList = document.getElementById('testList');
+        const skeletonLoading = document.getElementById('skeletonLoading');
+        const headerSubtitle = document.getElementById('headerSubtitle');
+        const filterCount = document.getElementById('filterCount');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+
+        // Report
+        const failureReportCard = document.getElementById('failureReportCard');
+        const failureReportList = document.getElementById('failureReportList');
+        const btnCopyReport = document.getElementById('btnCopyReport');
+        const btnDownloadReport = document.getElementById('btnDownloadReport');
+        const btnCloseReport = document.getElementById('btnCloseReport');
+
+        // Stats
+        const statTotal = document.getElementById('statTotal');
+        const statPassed = document.getElementById('statPassed');
+        const statFailed = document.getElementById('statFailed');
+        const statErrors = document.getElementById('statErrors');
+        const statRunning = document.getElementById('statRunning');
+        const statDuration = document.getElementById('statDuration');
+
+        // ─── API helpers ───
+        function getApiKey() {
+            return apiKeyInput.value.trim() || localStorage.getItem('test_runner_api_key') || '';
+        }
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key) localStorage.setItem('test_runner_api_key', key);
+        }
+
+        function apiHeaders() {
+            return {
+                'X-Admin-Token': getApiKey(),
+                'Content-Type': 'application/json',
+            };
+        }
+
+        async function apiFetch(url, options = {}) {
+            const resp = await fetch(url, { ...options, headers: { ...apiHeaders(), ...(options.headers || {}) } });
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`API Error ${resp.status}: ${text}`);
+            }
+            return resp.json();
+        }
+
+        // ─── Toast ───
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s, transform 0.3s';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ─── Category CSS class ───
+        const CAT_CSS = {
+            agent: 'cat-agent', admin: 'cat-admin', security: 'cat-security',
+            billing: 'cat-billing', providers: 'cat-providers', commercial: 'cat-commercial',
+            operations: 'cat-operations', api: 'cat-api', rag: 'cat-rag',
+            models: 'cat-models', governance: 'cat-governance', releases: 'cat-releases',
+            routing: 'cat-routing',
+        };
+
+        function getCatClass(cat) {
+            return CAT_CSS[cat] || 'cat-default';
+        }
+
+        // ─── Status display ───
+        const STATUS_DISPLAY = {
+            idle: { icon: '⚪', label: 'Idle', css: 'status-idle' },
+            queued: { icon: '🔵', label: 'Na Fila', css: 'status-queued' },
+            running: { icon: '🔄', label: 'Executando', css: 'status-running' },
+            passed: { icon: '✅', label: 'Passou', css: 'status-passed' },
+            failed: { icon: '❌', label: 'Falhou', css: 'status-failed' },
+            error: { icon: '⚠️', label: 'Erro', css: 'status-error' },
+            timeout: { icon: '⏱️', label: 'Timeout', css: 'status-timeout' },
+            skipped: { icon: '⏭️', label: 'Sem testes', css: 'status-skipped' },
+            cancelled: { icon: '🚫', label: 'Cancelado', css: 'status-cancelled' },
+        };
+
+        function getStatusDisplay(status) {
+            return STATUS_DISPLAY[status] || STATUS_DISPLAY.idle;
+        }
+
+        function formatTestName(filename) {
+            const parts = filename.split('/');
+            const basename = parts[parts.length - 1];
+            const name = basename.replace(/^test_/, '').replace(/\.py$/, '');
+            const formattedName = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            if (parts.length > 1) {
+                const folder = parts.slice(0, -1).join('/');
+                return `[${folder}] ${formattedName}`;
+            }
+            return formattedName;
+        }
+
+        function formatDuration(seconds) {
+            if (seconds == null) return '—';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            const m = Math.floor(seconds / 60);
+            const s = Math.round(seconds % 60);
+            return `${m}m ${s}s`;
+        }
+
+        // ─── Render test list ───
+        function renderTests() {
+            const query = searchInput.value.toLowerCase().trim();
+            const catFilter = categoryFilter.value;
+            const statFilter = statusFilter.value;
+
+            let filtered = allTests;
+
+            if (query) {
+                filtered = filtered.filter(t => t.filename.toLowerCase().includes(query) || t.displayName.toLowerCase().includes(query));
+            }
+            if (catFilter) {
+                filtered = filtered.filter(t => t.category === catFilter);
+            }
+            if (statFilter) {
+                filtered = filtered.filter(t => t.status === statFilter);
+            }
+
+            filterCount.textContent = `${filtered.length} de ${allTests.length}`;
+
+            // Batch render for performance
+            const fragment = document.createDocumentFragment();
+
+            filtered.forEach(test => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'test-item-wrapper';
+                wrapper.dataset.filename = test.filename;
+
+                const sd = getStatusDisplay(test.status);
+                const catClass = getCatClass(test.category);
+
+                const row = document.createElement('div');
+                row.className = 'test-item';
+                row.innerHTML = `
+                    <div class="test-name">
+                        <span class="test-name-text" title="${test.filename}">${test.displayName}</span>
+                    </div>
+                    <div>
+                        <span class="category-badge ${catClass}">${test.category}</span>
+                    </div>
+                    <div>
+                        <span class="status-badge ${sd.css}">${sd.icon} ${sd.label}</span>
+                    </div>
+                    <div class="test-duration">${formatDuration(test.duration)}</div>
+                    <div class="test-actions">
+                        <button class="btn-play" title="Executar teste" data-file="${test.filename}"
+                                ${test.status === 'running' || test.status === 'queued' ? 'disabled' : ''}>▶</button>
+                    </div>
+                `;
+
+                // Click to expand output
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-play')) return;
+                    const output = wrapper.querySelector('.test-output');
+                    if (output) output.classList.toggle('open');
+                });
+
+                wrapper.appendChild(row);
+
+                // Output area
+                const output = document.createElement('div');
+                output.className = 'test-output' + (test._outputOpen ? ' open' : '');
+                output.innerHTML = `<pre>${escapeHtml(test.output || 'Nenhum output disponível.')}</pre>`;
+                wrapper.appendChild(output);
+
+                fragment.appendChild(wrapper);
+            });
+
+            // Clear and append
+            testList.innerHTML = '';
+            if (filtered.length === 0) {
+                testList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>Nenhum teste encontrado</h3>
+                        <p>Tente ajustar os filtros de busca.</p>
+                    </div>
+                `;
+            } else {
+                testList.appendChild(fragment);
+            }
+
+            // Attach play handlers
+            testList.querySelectorAll('.btn-play').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    runSingleTest(btn.dataset.file);
+                });
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ─── Update stats ───
+        function updateStats() {
+            const passed = allTests.filter(t => t.status === 'passed').length;
+            const failed = allTests.filter(t => t.status === 'failed').length;
+            const errors = allTests.filter(t => ['error', 'timeout'].includes(t.status)).length;
+            const running = allTests.filter(t => ['running', 'queued'].includes(t.status)).length;
+
+            statTotal.textContent = allTests.length;
+            statPassed.textContent = passed;
+            statFailed.textContent = failed;
+            statErrors.textContent = errors;
+            statRunning.textContent = running;
+        }
+
+        // ─── Load test files ───
+        async function loadTestFiles() {
+            try {
+                saveApiKey();
+                const data = await apiFetch('/admin/tests/pytest/files');
+                allTests = data.files.map(f => ({
+                    filename: f.filename,
+                    category: f.category,
+                    displayName: formatTestName(f.filename),
+                    status: 'idle',
+                    duration: null,
+                    output: '',
+                    _outputOpen: false,
+                }));
+
+                // Populate category filter
+                const categories = [...new Set(allTests.map(t => t.category))].sort();
+                categoryFilter.innerHTML = '<option value="">Todas categorias</option>';
+                categories.forEach(cat => {
+                    const count = allTests.filter(t => t.category === cat).length;
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = `${cat} (${count})`;
+                    categoryFilter.appendChild(opt);
+                });
+
+                headerSubtitle.textContent = `${allTests.length} arquivos de teste disponíveis`;
+                btnRunAll.disabled = false;
+
+                skeletonLoading.style.display = 'none';
+                updateStats();
+                renderTests();
+            } catch (err) {
+                console.error('Failed to load tests:', err);
+                skeletonLoading.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔑</div>
+                        <h3>Erro ao carregar testes</h3>
+                        <p>Verifique sua Admin API Key e tente novamente.<br><small>${escapeHtml(err.message)}</small></p>
+                    </div>
+                `;
+            }
+        }
+
+        // ─── Run all tests ───
+        async function runAllTests() {
+            if (isRunning) return;
+            saveApiKey();
+
+            const files = allTests.map(t => t.filename);
+            await startRun(files);
+        }
+
+        // ─── Run single test ───
+        async function runSingleTest(filename) {
+            saveApiKey();
+            await startRun([filename]);
+        }
+
+        // ─── Start a run ───
+        async function startRun(files) {
+            try {
+                // Mark as queued
+                files.forEach(f => {
+                    const test = allTests.find(t => t.filename === f);
+                    if (test) {
+                        test.status = 'queued';
+                        test.duration = null;
+                        test.output = '';
+                    }
+                });
+                renderTests();
+                updateStats();
+
+                const data = await apiFetch('/admin/tests/pytest/run', {
+                    method: 'POST',
+                    body: JSON.stringify({ files: files, timeout: 120 }),
+                });
+
+                currentRunId = data.run_id;
+                isRunning = true;
+                setRunningUI(true);
+
+                showToast(`Execução iniciada: ${files.length} teste(s)`, 'info');
+
+                // Start polling
+                startPolling();
+            } catch (err) {
+                showToast(`Erro ao iniciar testes: ${err.message}`, 'error');
+                // Reset status
+                files.forEach(f => {
+                    const test = allTests.find(t => t.filename === f);
+                    if (test) test.status = 'idle';
+                });
+                renderTests();
+                updateStats();
+            }
+        }
+
+        // ─── Polling ───
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(pollStatus, 2000);
+            pollStatus(); // immediate first call
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function pollStatus() {
+            if (!currentRunId) return;
+
+            try {
+                const data = await apiFetch(`/admin/tests/pytest/run/${currentRunId}/status`);
+
+                // Update test states
+                for (const [filename, result] of Object.entries(data.results)) {
+                    const test = allTests.find(t => t.filename === filename);
+                    if (test) {
+                        // Preserve open state
+                        const wrapper = testList.querySelector(`[data-filename="${filename}"]`);
+                        if (wrapper) {
+                            const outputEl = wrapper.querySelector('.test-output');
+                            test._outputOpen = outputEl && outputEl.classList.contains('open');
+                        }
+
+                        test.status = result.status;
+                        test.output = result.output || '';
+                        test.duration = result.duration;
+                    }
+                }
+
+                // Update progress
+                const pct = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
+                progressFill.style.width = `${pct}%`;
+                progressText.textContent = `${data.completed} / ${data.total} concluídos`;
+                progressPercent.textContent = `${pct}%`;
+
+                // Update duration
+                statDuration.textContent = formatDuration(data.elapsed_seconds);
+
+                updateStats();
+                renderTests();
+
+                // Check if done
+                if (data.status === 'completed' || data.status === 'cancelled') {
+                    stopPolling();
+                    isRunning = false;
+                    currentRunId = null;
+                    setRunningUI(false);
+
+                    const msg = data.status === 'cancelled'
+                        ? '🚫 Execução cancelada'
+                        : data.failed > 0 || data.errors > 0
+                            ? `⚠️ Concluído: ${data.passed} passou, ${data.failed} falhou, ${data.errors} erros`
+                            : `🎉 Todos os ${data.passed} testes passaram!`;
+                    showToast(msg, data.failed > 0 || data.errors > 0 ? 'error' : 'success');
+                    
+                    if (data.failed > 0 || data.errors > 0 || data.timeouts > 0) {
+                        generateFailureReport(data.results);
+                    } else {
+                        failureReportCard.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Poll error:', err);
+            }
+        }
+
+        // ─── Cancel run ───
+        async function cancelRun() {
+            if (!currentRunId) return;
+            try {
+                await apiFetch(`/admin/tests/pytest/run/${currentRunId}/cancel`, { method: 'POST' });
+                showToast('Cancelamento solicitado...', 'info');
+            } catch (err) {
+                showToast(`Erro ao cancelar: ${err.message}`, 'error');
+            }
+        }
+
+        // ─── Failure Report logic ───
+        let lastFailureReportMarkdown = '';
+
+        function extractErrorSummary(output) {
+            if (!output) return 'Nenhum output disponível.';
+            const lines = output.split('\n');
+            
+            const failIndex = lines.findIndex(l => l.includes('FAILURES') || l.includes('ERRORS'));
+            if (failIndex !== -1) {
+                return lines.slice(failIndex, failIndex + 25).join('\n');
+            }
+            
+            const assertLines = lines.filter(l => l.includes('AssertionError') || l.includes('assert ') || l.includes('ModuleNotFoundError') || l.includes('ImportError') || l.includes('SyntaxError') || l.includes('Error:'));
+            if (assertLines.length > 0) {
+                return assertLines.join('\n');
+            }
+            
+            return lines.slice(-12).join('\n');
+        }
+
+        function generateFailureReport(results) {
+            failureReportList.innerHTML = '';
+            
+            const failures = Object.entries(results).filter(([f, r]) => ['failed', 'error', 'timeout'].includes(r.status));
+            
+            if (failures.length === 0) {
+                failureReportCard.style.display = 'none';
+                return;
+            }
+            
+            let markdown = `# 📊 Relatório de Falhas — LLM Inference Stack\n\n`;
+            markdown += `**Data:** ${new Date().toLocaleString('pt-BR')}\n`;
+            markdown += `**Total de falhas:** ${failures.length}\n\n`;
+            markdown += `| Arquivo | Status | Detalhe |\n`;
+            markdown += `|---------|--------|---------|\n`;
+            
+            failures.forEach(([filename, res]) => {
+                const item = document.createElement('div');
+                item.className = 'report-item';
+                
+                const test = allTests.find(t => t.filename === filename);
+                const displayName = test ? test.displayName : filename;
+                
+                const sd = getStatusDisplay(res.status);
+                const errorSnippet = res.output ? extractErrorSummary(res.output) : 'Nenhum log de erro disponível.';
+                
+                markdown += `| \`${filename}\` | ${res.status.toUpperCase()} | ${errorSnippet.replace(/\n/g, ' ').slice(0, 100)}... |\n`;
+                
+                item.innerHTML = `
+                    <div class="report-item-meta">
+                        <span class="report-item-name" title="Clique para rolar até o teste" data-filename="${filename}">
+                            ${displayName}
+                        </span>
+                        <span class="status-badge ${sd.css}">${sd.icon} ${sd.label}</span>
+                    </div>
+                    <div class="report-item-preview">${escapeHtml(errorSnippet)}</div>
+                `;
+                
+                item.querySelector('.report-item-name').addEventListener('click', () => {
+                    const el = testList.querySelector(`[data-filename="${filename}"]`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const outputEl = el.querySelector('.test-output');
+                        if (outputEl) outputEl.classList.add('open');
+                        
+                        el.style.boxShadow = '0 0 0 3px var(--accent)';
+                        setTimeout(() => el.style.boxShadow = '', 2000);
+                    }
+                });
+                
+                failureReportList.appendChild(item);
+            });
+            
+            lastFailureReportMarkdown = markdown;
+            failureReportCard.style.display = 'block';
+            failureReportCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function copyFailureReport() {
+            if (!lastFailureReportMarkdown) return;
+            navigator.clipboard.writeText(lastFailureReportMarkdown)
+                .then(() => showToast('Relatório copiado!', 'success'))
+                .catch(err => showToast(`Erro ao copiar: ${err}`, 'error'));
+        }
+
+        function downloadFailureReport() {
+            if (!lastFailureReportMarkdown) return;
+            const blob = new Blob([lastFailureReportMarkdown], { type: 'text/markdown;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio_falhas_testes_${new Date().toISOString().slice(0,10)}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Relatório baixado!', 'success');
+        }
+
+        // ─── UI state ───
+        function setRunningUI(running) {
+            btnRunAll.disabled = running;
+            btnStop.disabled = !running;
+            progressContainer.classList.toggle('active', running);
+        }
+
+        // ─── Events ───
+        apiKeyInput.addEventListener('change', () => {
+            saveApiKey();
+            loadTestFiles();
+        });
+
+        apiKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveApiKey();
+                loadTestFiles();
+            }
+        });
+
+        btnRunAll.addEventListener('click', runAllTests);
+        btnStop.addEventListener('click', cancelRun);
+
+        btnSearch.addEventListener('click', renderTests);
+        searchInput.addEventListener('input', renderTests);
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                renderTests();
+            }
+        });
+        categoryFilter.addEventListener('change', renderTests);
+        statusFilter.addEventListener('change', renderTests);
+
+        btnCopyReport.addEventListener('click', copyFailureReport);
+        btnDownloadReport.addEventListener('click', downloadFailureReport);
+        btnCloseReport.addEventListener('click', () => {
+            failureReportCard.style.display = 'none';
+        });
+
+        // ─── Init ───
+        const savedKey = localStorage.getItem('test_runner_api_key');
+        if (savedKey) {
+            apiKeyInput.value = savedKey;
+            loadTestFiles();
+        } else {
+            skeletonLoading.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🔑</div>
+                    <h3>Insira sua Admin API Key</h3>
+                    <p>Digite sua chave de API no campo acima e pressione Enter para carregar os testes.</p>
+                </div>
+            `;
+        }
+    })();
+    </script>
+</body>
+</html>

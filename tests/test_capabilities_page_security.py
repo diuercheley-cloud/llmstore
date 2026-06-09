@@ -53,7 +53,8 @@ def test_psp_pix_not_promised_as_real():
     content = HTML_FILE.read_text()
     lines_with_psp = [l for l in content.split("\n") if "PSP" in l.upper() or "PIX" in l.upper()]
     for line in lines_with_psp:
-        assert "nao" in line.lower() or "não" in line.lower() or "not" in line.lower() or "sem" in line.lower(), \
+        line_lower = line.lower()
+        assert any(word in line_lower for word in ["nao", "não", "not", "sem", "desabilitado", "mock", "offline", "future"]), \
             f"PSP/PIX may be falsely promised: {line.strip()}"
 
 

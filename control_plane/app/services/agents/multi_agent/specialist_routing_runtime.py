@@ -37,8 +37,8 @@ class SpecialistRoutingRuntime(TeamRuntime):
         return self._agent_runtime
 
     async def execute(self, team_id: uuid.UUID, goal: str) -> str:
-        team = await self._get_team(team_id)
-        members = await self._get_members(team_id)
+        team = await self.get_team(team_id)
+        members = await self.get_members(team_id)
 
         dispatcher = next((m for m in members if m.role == "dispatcher"), None)
         if not dispatcher:
@@ -158,18 +158,3 @@ class SpecialistRoutingRuntime(TeamRuntime):
             await asyncio.sleep(0.5)
             await self.db.refresh(fallback)
         return fallback.result or "Fallback completed"
-
-    async def _get_team(self, team_id: uuid.UUID) -> AgentTeam:
-        result = await self.db.execute(
-            select(AgentTeam).where(AgentTeam.id == team_id)
-        )
-        team = result.scalar_one_or_none()
-        if not team:
-            raise ValueError(f"Team {team_id} not found")
-        return team
-
-    async def _get_members(self, team_id: uuid.UUID) -> List[AgentTeamMember]:
-        result = await self.db.execute(
-            select(AgentTeamMember).where(AgentTeamMember.team_id == team_id)
-        )
-        return list(result.scalars().all())

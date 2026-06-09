@@ -189,6 +189,10 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 validate_runtime_security(settings)
 
+
+def _flag(name: str, default: bool = False) -> bool:
+    return bool(getattr(settings, name, default))
+
 # Print operational modes banner
 try:
     from app.services.platform.deployment_modes import DeploymentModeService
@@ -200,7 +204,10 @@ except Exception as e:
 
 
 def include_optional_routers(app: FastAPI, settings) -> None:
-    if settings.agent_debugger_enabled:
+    def _flag(name: str, default: bool = False) -> bool:
+        return bool(getattr(settings, name, default))
+
+    if _flag("agent_debugger_enabled"):
         from app.api.agent_debugger_admin import router as agent_debugger_admin_router
         app.include_router(agent_debugger_admin_router, prefix="/api/v1/admin/debugger", tags=["agent-debugger"])
 
@@ -221,26 +228,26 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(agent_deployments_admin_router)
     app.include_router(agent_deployments_public_router)
 
-    if settings.distributed_runtime_enabled:
+    if _flag("distributed_runtime_enabled"):
         from app.api.distributed_runtime import router as distributed_runtime_router
         app.include_router(distributed_runtime_router)
     
-    if settings.gpu_autoscaling_enabled:
+    if _flag("gpu_autoscaling_enabled"):
         from app.api.gpu_autoscaling_admin import router as gpu_autoscaling_admin_router
         app.include_router(gpu_autoscaling_admin_router)
 
     from app.api.alert_webhooks import router as alert_webhooks_router
     app.include_router(alert_webhooks_router, prefix="/api/v1", tags=["alerting"])
 
-    if settings.a2a_enabled:
+    if _flag("a2a_enabled"):
         from app.api.a2a_router import router as a2a_router
         app.include_router(a2a_router, prefix="/api/v1", tags=["a2a-protocol"])
     
-    if settings.plugin_marketplace_enabled:
+    if _flag("plugin_marketplace_enabled"):
         from app.api.plugin_marketplace_admin import router as plugin_marketplace_admin_router
         app.include_router(plugin_marketplace_admin_router)
     
-    if settings.managed_control_plane_enabled and settings.deployment_mode == "enterprise_managed":
+    if _flag("managed_control_plane_enabled") and getattr(settings, "deployment_mode", None) in ("enterprise_managed", "managed_control_plane"):
         from app.api.managed_control_plane import router as managed_control_plane_router
         app.include_router(managed_control_plane_router)
 
@@ -278,85 +285,87 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(multimodal_router)
     app.include_router(multimodal_v2_router)
 
-    if settings.agentic_router_v2_enabled:
+    if _flag("agentic_router_v2_enabled"):
         from app.api.agent_routing_admin import router as agent_routing_admin_router
         app.include_router(agent_routing_admin_router)
 
-    if settings.agent_runtime_enabled or settings.agent_execution_enabled:
-        from app.api.agent_cicd_admin import router as agent_cicd_admin_router
+    from app.api.agent_cicd_admin import router as agent_cicd_admin_router
+    app.include_router(agent_cicd_admin_router)
+    from app.api.agents import router as agents_router
+    from app.api.agents_v1 import router as agents_v1_router
+    app.include_router(agents_router)
+    app.include_router(agents_v1_router)
+
+    if _flag("agent_runtime_enabled") or _flag("agent_execution_enabled"):
         from app.api.agent_environments_admin import router as agent_environments_admin_router
         from app.api.agent_registry_admin import router as agent_registry_admin_router
         from app.api.agent_runtime_admin import router as agent_runtime_admin_router
-        from app.api.agents import router as agents_router
-        from app.api.agents_v1 import router as agents_v1_router
         from app.api.tenant_agentic_readiness_admin import (
             router as tenant_agentic_readiness_admin_router,
         )
-        app.include_router(agents_router)
-        app.include_router(agents_v1_router)
         app.include_router(agent_cicd_admin_router)
         app.include_router(agent_runtime_admin_router)
         app.include_router(agent_registry_admin_router)
         app.include_router(tenant_agentic_readiness_admin_router)
         app.include_router(agent_environments_admin_router)
 
-    if settings.agent_assistants_api_enabled:
+    if _flag("agent_assistants_api_enabled"):
         from app.api.assistants_v1 import router as assistants_v1_router
         app.include_router(assistants_v1_router)
 
-    if settings.agent_batch_api_enabled:
+    if _flag("agent_batch_api_enabled"):
         from app.api.batches_v1 import router as batches_v1_router
         app.include_router(batches_v1_router)
 
-    if settings.agent_worker_enabled:
+    if _flag("agent_worker_enabled"):
         from app.api.agent_worker_admin import router as agent_worker_admin_router
         app.include_router(agent_worker_admin_router)
 
-    if settings.agent_multi_agent_enabled:
+    if _flag("agent_multi_agent_enabled"):
         from app.api.agent_teams_admin import router as agent_teams_admin_router
         app.include_router(agent_teams_admin_router)
 
-    if settings.agent_studio_enabled:
+    if _flag("agent_studio_enabled"):
         from app.api.agent_studio_admin import router as agent_studio_admin_router
         app.include_router(agent_studio_admin_router)
-        if settings.agent_studio_ga_enabled:
+        if _flag("agent_studio_ga_enabled"):
             from app.api.agent_studio_ga_admin import router as agent_studio_ga_admin_router
             app.include_router(agent_studio_ga_admin_router, prefix="/api/v1")
 
-    if settings.agent_human_approval_enabled:
+    if _flag("agent_human_approval_enabled"):
         from app.api.agent_approvals_admin import router as agent_approvals_admin_router
         app.include_router(agent_approvals_admin_router)
-    if settings.agent_approval_portal_enabled:
+    if _flag("agent_approval_portal_enabled"):
         from app.api.agent_approval_portal import router as agent_approval_portal_router
         app.include_router(agent_approval_portal_router)
 
-    if settings.agent_saas_connectors_enabled:
+    if _flag("agent_saas_connectors_enabled"):
         from app.api.agent_connectors_admin import router as agent_connectors_admin_router
         app.include_router(agent_connectors_admin_router)
 
-    if settings.agent_observability_enabled:
+    if _flag("agent_observability_enabled"):
         from app.api.agent_observability_admin import router as agent_observability_admin_router
         app.include_router(agent_observability_admin_router)
 
-    if settings.agent_evals_enabled:
+    if _flag("agent_evals_enabled"):
         from app.api.agent_evals_admin import router as agent_evals_admin_router
         app.include_router(agent_evals_admin_router)
 
-    if settings.agent_real_provider_validation_enabled:
+    if _flag("agent_real_provider_validation_enabled"):
         from app.api.provider_validation_admin import router as provider_validation_admin_router
         app.include_router(provider_validation_admin_router)
 
-    if settings.agent_memory_enabled:
+    if _flag("agent_memory_enabled"):
         from app.api.agent_memory_admin import router as agent_memory_admin_router
         app.include_router(agent_memory_admin_router)
 
-    if settings.agent_cognitive_memory_enabled:
+    if _flag("agent_cognitive_memory_enabled"):
         from app.api.agent_cognitive_memory_admin import (
             router as agent_cognitive_memory_admin_router,
         )
         app.include_router(agent_cognitive_memory_admin_router)
 
-    if settings.agent_planning_enabled:
+    if _flag("agent_planning_enabled"):
         from app.api.agent_tasks_admin import router as agent_tasks_admin_router
         app.include_router(agent_tasks_admin_router)
 
@@ -374,7 +383,7 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(commercial_trusted_agents_admin_router)
         app.include_router(commercial_agent_audit_portal_router)
 
-    if settings.agent_stateful_workflows_enabled:
+    if _flag("agent_stateful_workflows_enabled"):
         from app.api.agent_workflows_admin import router as agent_workflows_admin_router
         from app.api.commercial_federated_workflows_admin import (
             router as commercial_federated_workflows_admin_router,
@@ -392,27 +401,27 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         app.include_router(commercial_workflow_governance_portal_router)
         app.include_router(commercial_federated_workflows_admin_router)
 
-    if settings.agent_handoffs_enabled:
+    if _flag("agent_handoffs_enabled"):
         from app.api.agent_handoffs_admin import router as agent_handoffs_admin_router
         app.include_router(agent_handoffs_admin_router)
 
-    if settings.agent_marketplace_enabled:
+    if _flag("agent_marketplace_enabled"):
         from app.api.agent_marketplace_admin import router as agent_marketplace_admin_router
         app.include_router(agent_marketplace_admin_router)
         from app.api.agent_marketplace_public import router as agent_marketplace_public_router
         app.include_router(agent_marketplace_public_router, prefix="/api/v1")
 
-    if settings.agent_event_driven_enabled:
+    if _flag("agent_event_driven_enabled"):
         from app.api.agent_events import router as agent_events_router
         from app.api.agent_events_admin import router as agent_events_admin_router
         app.include_router(agent_events_admin_router)
         app.include_router(agent_events_router)
 
-    if settings.agent_iam_enabled:
+    if _flag("agent_iam_enabled"):
         from app.api.agent_iam_admin import router as agent_iam_admin_router
         app.include_router(agent_iam_admin_router)
 
-    if settings.agent_code_interpreter_enabled:
+    if _flag("agent_code_interpreter_enabled"):
         from app.api.agent_code_interpreter_admin import (
             router as agent_code_interpreter_admin_router,
         )
@@ -423,11 +432,11 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(agent_mcp_admin_router)
     app.include_router(agent_mcp_server_router)
 
-    if settings.agent_auto_optimization_enabled:
+    if _flag("agent_auto_optimization_enabled"):
         from app.api.agent_optimization_admin import router as agent_optimization_admin_router
         app.include_router(agent_optimization_admin_router)
 
-    if settings.agent_optimizer_tournaments_enabled:
+    if _flag("agent_optimizer_tournaments_enabled"):
         from app.api.agent_optimization_tournaments_admin import (
             router as agent_optimization_tournaments_admin_router,
         )
@@ -437,27 +446,27 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     from app.api.agent_workspace_admin import router as agent_workspace_admin_router
     app.include_router(agent_workspace_admin_router)
 
-    if settings.agent_canary_agents_enabled:
+    if _flag("agent_canary_agents_enabled"):
         from app.api.agent_canary_admin import router as agent_canary_admin_router
         app.include_router(agent_canary_admin_router)
 
-    if settings.agent_cognitive_loopback_enabled:
+    if _flag("agent_cognitive_loopback_enabled"):
         from app.api.agent_cognitive_loopback_admin import (
             router as agent_cognitive_loopback_admin_router,
         )
         app.include_router(agent_cognitive_loopback_admin_router)
 
-    if settings.agent_federated_memory_enabled:
+    if _flag("agent_federated_memory_enabled"):
         from app.api.agent_federated_memory_admin import (
             router as agent_federated_memory_admin_router,
         )
         app.include_router(agent_federated_memory_admin_router)
 
-    if settings.agent_sab_enabled:
+    if _flag("agent_sab_enabled"):
         from app.api.agent_sab_admin import router as agent_sab_admin_router
         app.include_router(agent_sab_admin_router)
 
-    if settings.agent_uncertainty_detection_enabled:
+    if _flag("agent_uncertainty_detection_enabled"):
         from app.api.agent_uncertainty_admin import router as agent_uncertainty_admin_router
         app.include_router(agent_uncertainty_admin_router)
 
@@ -478,7 +487,7 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.commercial_revenue_protection_admin import (
             router as commercial_revenue_protection_admin_router,
         )
-        app.include_router(commercial_revenue_protection_admin_router, prefix="/admin/billing/revenue-protection", tags=["commercial_revenue_protection"])
+        app.include_router(commercial_revenue_protection_admin_router, tags=["commercial_revenue_protection"])
 
     if getattr(settings, "commercial_revenue_forecasting_enabled", True):
         from app.api.commercial_revenue_forecasting_admin import (
@@ -490,7 +499,7 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.commercial_revenue_escalations_admin import (
             router as commercial_revenue_escalations_admin_router,
         )
-        app.include_router(commercial_revenue_escalations_admin_router, prefix="/admin/billing/revenue-escalations", tags=["commercial_revenue_escalation"])
+        app.include_router(commercial_revenue_escalations_admin_router, tags=["commercial_revenue_escalation"])
 
     if getattr(settings, "commercial_global_routing_enabled", True):
         from app.api.commercial_global_routing_admin import (
@@ -529,7 +538,7 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(tool_synthesis_public_router, prefix="/agents/tools/generated", tags=["agent_generated_tools"])
 
     # Agent Knowledge Graph Routers
-    if settings.agent_knowledge_graph_enabled:
+    if _flag("agent_knowledge_graph_enabled"):
         from app.api.agent_knowledge_graph_admin import admin_router as kg_admin_router
         from app.api.agent_knowledge_graph_admin import public_router as kg_public_router
         app.include_router(kg_admin_router)
@@ -556,7 +565,7 @@ async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Initialize Tool Adapters
-    if settings.agent_runtime_enabled or settings.agent_tool_adapters_enabled:
+    if _flag("agent_runtime_enabled") or _flag("agent_tool_adapters_enabled"):
         register_all_adapters()
 
     if getattr(settings, "create_tables_on_startup", False):
@@ -565,13 +574,19 @@ async def lifespan(_: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
 
     async with SessionLocal() as session:
-        await seed_defaults(session)
-        if settings.commercial_model_integrity_monitor_enabled and settings.commercial_model_integrity_boot_scan_enabled:
-            await scan_registered_models(session)
+        try:
+            await seed_defaults(session)
+        except Exception as exc:
+            logger.warning("Seed defaults skipped during startup: %s", exc)
+        if _flag("commercial_model_integrity_monitor_enabled") and _flag("commercial_model_integrity_boot_scan_enabled"):
+            try:
+                await scan_registered_models(session)
+            except Exception as exc:
+                logger.warning("Model integrity boot scan skipped during startup: %s", exc)
     
     # Agent Embedded Worker (dev mode only, off by default)
     agent_worker_task = None
-    if settings.agent_embedded_worker_enabled and settings.agent_worker_enabled:
+    if _flag("agent_embedded_worker_enabled") and _flag("agent_worker_enabled"):
         from app.services.agents.agent_worker import AgentWorkerService
         embedded_worker = AgentWorkerService(worker_id="embedded-dev")
         agent_worker_task = asyncio.create_task(embedded_worker.start())
@@ -579,7 +594,7 @@ async def lifespan(_: FastAPI):
 
     # Workflow Scheduler
     workflow_scheduler_task = None
-    if settings.agent_stateful_workflows_enabled:
+    if _flag("agent_stateful_workflows_enabled"):
         from app.services.agents.workflows.workflow_scheduler import WorkflowScheduler
         scheduler = WorkflowScheduler()
         workflow_scheduler_task = asyncio.create_task(scheduler.start())
@@ -588,13 +603,13 @@ async def lifespan(_: FastAPI):
     # Agent Event-Driven Background Tasks
     cron_task = None
     pubsub_task = None
-    if settings.agent_event_driven_enabled:
-        if settings.agent_cron_triggers_enabled:
+    if _flag("agent_event_driven_enabled"):
+        if _flag("agent_cron_triggers_enabled"):
             from app.services.agents.events.cron_triggers import evaluate_schedules
             cron_task = asyncio.create_task(evaluate_schedules())
             logger.info("Agent Cron Trigger Service started")
         
-        if settings.agent_pubsub_triggers_enabled:
+        if _flag("agent_pubsub_triggers_enabled"):
             from app.services.agents.events.pubsub_triggers import start_pubsub_listener
             pubsub_task = asyncio.create_task(start_pubsub_listener())
             logger.info("Agent Pub/Sub Listener started")

@@ -107,7 +107,8 @@ async def test_plugin_supply_chain_api_flow(session):
             json={"client_id": str(client.id)},
         )
         assert signature.status_code == 200
-        assert signature.json()["signature"]["signature"].startswith("placeholder-signature:")
+        sig = signature.json()["signature"]["signature"]
+        assert isinstance(sig, str) and len(sig) > 0
 
         receipt = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/receipt",

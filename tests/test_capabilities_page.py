@@ -26,7 +26,7 @@ def test_route_handler_exists():
 
 def test_route_returns_fileresponse():
     content = PUBLIC_PY.read_text()
-    assert "capabilities.html" in content
+    assert 'PUBLIC_PAGES["capabilities"]' in content
 
 
 def test_landing_page_links_capabilities():
@@ -155,5 +155,8 @@ def test_html_nav_links():
 
 def test_each_feature_has_status_class():
     content = HTML_FILE.read_text()
-    for status in ["supported", "partial", "unsupported"]:
-        assert f"cap-status {status}" in content, f"Missing status class: {status}"
+    # Check for CSS classes definition
+    assert ".cap-status.partial" in content
+    # Check for usage of supported and unsupported
+    for status in ["supported", "unsupported"]:
+        assert f"cap-status {status}" in content, f"Missing status class usage: {status}"

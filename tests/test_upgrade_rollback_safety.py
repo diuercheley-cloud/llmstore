@@ -20,12 +20,12 @@ def run_script(script_name, args=None, input_text=None):
 def test_upgrade_requires_to_version():
     result = run_script("upgrade-local.sh", [])
     assert result.returncode != 0
-    assert "Erro: --to-version é obrigatório" in result.stdout
+    assert "O parâmetro --to-version é obrigatório" in result.stdout
 
 def test_rollback_requires_to_version_and_backup():
     result = run_script("rollback-local.sh", [])
     assert result.returncode != 0
-    assert "Erro: --to-version e --backup-id são obrigatórios" in result.stdout
+    assert "Os parâmetros --to-version e --backup-id são obrigatórios" in result.stdout
 
 def test_upgrade_dry_run():
     # Detect current version from file
@@ -34,24 +34,19 @@ def test_upgrade_dry_run():
     
     result = run_script("upgrade-local.sh", ["--to-version", version, "--dry-run"])
     assert result.returncode == 0
-    assert "[upgrade] Dry-run concluído com sucesso" in result.stdout
+    assert "Simulação de upgrade (dry-run) concluída com sucesso" in result.stdout
     assert "Upgrade Workflow" in result.stdout
 
 def test_rollback_dry_run():
-    mock_backup = ROOT_DIR / "artifacts" / "backups-local" / "mock-test"
-    mock_backup.mkdir(parents=True, exist_ok=True)
-    
     result = run_script("rollback-local.sh", [
         "--to-version", "v1.0.0", 
-        "--backup-id", str(mock_backup), 
+        "--backup-id", str(ROOT_DIR / "artifacts" / "backups-local" / "mock-test"), 
         "--dry-run", 
         "--yes"
     ])
     
     assert result.returncode == 0
-    assert "[rollback] Dry-run concluído com sucesso" in result.stdout
-    
-    shutil.rmtree(mock_backup)
+    assert "Simulação de rollback (dry-run) concluída com sucesso" in result.stdout
 
 def test_rollback_strong_confirmation():
     mock_backup = ROOT_DIR / "artifacts" / "backups-local" / "mock-test-confirm"

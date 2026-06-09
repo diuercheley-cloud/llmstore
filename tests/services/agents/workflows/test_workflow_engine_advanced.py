@@ -66,14 +66,15 @@ async def test_branching_if_else(workflow_engine, mock_db):
     
     run = AgentWorkflowRun(
         workflow_definition_id=definition.id,
-        current_state="start",
+        current_state="processing",
         context={"memory": {"score": 15}},
-        state_data={"active_nodes": ["check"]}
+        state_data={"active_nodes": ["check"], "completed_nodes": []}
     )
     
     mock_db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=lambda: definition))
     sm = MagicMock()
     sm.get_context.return_value = run.context
+    sm.transition_to = AsyncMock()
     
     await workflow_engine._execute_dag_logic(run, sm)
     
@@ -88,10 +89,10 @@ async def test_branching_if_else(workflow_engine, mock_db):
 async def test_parallel_fanout_fanin(workflow_engine, mock_db):
     # Setup fan-out/fan-in
     nodes = [
-        AgentWorkflowNode(node_key="fanout", node_type="parallel_fanout"),
-        AgentWorkflowNode(node_key="branch_1", node_type="task"),
-        AgentWorkflowNode(node_key="branch_2", node_type="task"),
-        AgentWorkflowNode(node_key="join", node_type="fanin_join")
+        AgentWorkflowNode(node_key="fanout", node_type="parallel_fanout", config={}),
+        AgentWorkflowNode(node_key="branch_1", node_type="task", config={}),
+        AgentWorkflowNode(node_key="branch_2", node_type="task", config={}),
+        AgentWorkflowNode(node_key="join", node_type="fanin_join", config={})
     ]
     edges = [
         AgentWorkflowEdge(from_node_key="fanout", to_node_key="branch_1"),
@@ -110,6 +111,7 @@ async def test_parallel_fanout_fanin(workflow_engine, mock_db):
     mock_db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=lambda: definition))
     sm = MagicMock()
     sm.get_context.return_value = {}
+    sm.transition_to = AsyncMock()
 
     # 1. Execute Fan-out
     await workflow_engine._execute_dag_logic(run, sm)
@@ -145,6 +147,7 @@ async def test_subworkflow_execution(workflow_engine, mock_db):
     mock_db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=lambda: definition))
     sm = MagicMock()
     sm.get_context.return_value = {}
+    sm.transition_to = AsyncMock()
 
     # Mock SubworkflowRuntime to return not complete first, then complete
     with MagicMock() as mock_runtime:

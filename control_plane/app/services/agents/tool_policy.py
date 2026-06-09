@@ -30,6 +30,9 @@ async def evaluate_tool_policy(
     run_id: Optional[uuid.UUID] = None
 ) -> PolicyDecision:
     """Evaluates tool execution using the unified Policy Engine v2."""
+    if not tool.enabled:
+        return PolicyDecision(allowed=False, reason="tool_disabled")
+
     if not agent and not agent_id:
         requires_approval = False if is_dry_run else bool(getattr(tool, "requires_approval", False))
         if not is_dry_run and getattr(tool, "side_effect_level", "none") == "destructive":

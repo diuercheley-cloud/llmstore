@@ -1265,11 +1265,13 @@ async def _process_chat_completion(
             await session.commit()
             return _apply_compat_headers(result.response, compat_headers)
         response_payload = json.loads(result.response.body.decode("utf-8"))
-        proxy._validate_chat_response_payload(
-            response_payload,
-            include_reasoning=getattr(payload, "include_reasoning", False),
-            backend_name=result.backend_name,
-        )
+        validator = getattr(proxy, "_validate_chat_response_payload", None)
+        if callable(validator):
+            validator(
+                response_payload,
+                include_reasoning=getattr(payload, "include_reasoning", False),
+                backend_name=result.backend_name,
+            )
         tool_calls = extract_tool_calls_from_chat_payload(response_payload)
         sanitized_tool_calls = enforce_tool_argument_limits(tool_calls)
         if tokenizer.settings.token_counting_real_enabled:

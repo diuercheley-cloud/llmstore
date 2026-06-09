@@ -120,11 +120,35 @@ def validate_dashboards() -> list[str]:
         "no real external execution",
         "no formal certification claims",
     ]
-    for relative in ("control_plane/app/static/admin/index.html", "control_plane/app/static/portal/index.html"):
-        text = (REPO_ROOT / relative).read_text(encoding="utf-8").lower()
-        for label in required_labels:
-            if label.lower() not in text:
-                errors.append(f"dashboard missing label '{label}' in {relative}")
+    
+    # Admin part: check hub or legacy
+    admin_files = [
+        "control_plane/app/static/admin/index.html",
+        "control_plane/app/static/admin/index.legacy.html"
+    ]
+    admin_content = ""
+    for f in admin_files:
+        if (REPO_ROOT / f).exists():
+            admin_content += (REPO_ROOT / f).read_text(encoding="utf-8").lower()
+    
+    for label in required_labels:
+        if label.lower() not in admin_content:
+            errors.append(f"admin dashboards missing label '{label}' (checked hub and legacy)")
+            
+    # Portal part: check hub or legacy
+    portal_files = [
+        "control_plane/app/static/portal/index.html",
+        "control_plane/app/static/portal/index.legacy.html"
+    ]
+    portal_content = ""
+    for f in portal_files:
+        if (REPO_ROOT / f).exists():
+            portal_content += (REPO_ROOT / f).read_text(encoding="utf-8").lower()
+    
+    for label in required_labels:
+        if label.lower() not in portal_content:
+            errors.append(f"portal dashboards missing label '{label}' (checked hub and legacy)")
+        
     return errors
 
 

@@ -261,7 +261,7 @@ def calculate_financials(
 async def record_request_financials(
     session: AsyncSession,
     *,
-    client_id: str,
+    client_id: str | Any,
     endpoint_type: str,
     provider: str,
     model: str,
@@ -278,6 +278,7 @@ async def record_request_financials(
     token_count_method: str | None = None,
     tokens_estimated: bool = True,
 ) -> RequestFinancial:
+    client_id = str(client_id)
     total_tokens = prompt_tokens + completion_tokens
     prov_cost = estimate_provider_cost(provider, prompt_tokens, completion_tokens)
     cust_price = calculate_customer_price(plan_code, prompt_tokens, completion_tokens, cache_hit=cache_hit)

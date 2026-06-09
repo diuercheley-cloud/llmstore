@@ -26,7 +26,8 @@ class CallbackWebhookService:
             agent_id=agent_id,
             tenant_id=tenant_id,
             url=url,
-            secret_key=secret
+            secret_key=secret,
+            is_active=True
         )
         self.db.add(webhook)
         await self.db.flush()

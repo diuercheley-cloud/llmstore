@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+export PATH := $(CURDIR)/venv/bin:$(CURDIR)/.venv/bin:$(PATH)
 
 # Default target
 .DEFAULT_GOAL := help

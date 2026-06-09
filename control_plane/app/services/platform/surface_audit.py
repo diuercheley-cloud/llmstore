@@ -150,25 +150,18 @@ class SurfaceAuditService:
             for service in capability.get("associated_services", []) or []:
                 capability_services.add(str(service))
 
-        missing_declared = []
+        declared_files: set[str] = set()
         for service_name in sorted(capability_services):
             normalized = service_name.replace(".", "/")
-            direct_path = services_dir / f"{normalized}.py"
-            if direct_path.exists():
-                continue
-
+            declared_files.add(f"{normalized}.py")
             stem = normalized.split("/")[-1]
-            fuzzy_matches = [
-                rel_path
-                for rel_path in all_service_files
-                if rel_path.endswith(f"/{stem}.py") or rel_path == f"{stem}.py"
-            ]
-            if not fuzzy_matches:
-                missing_declared.append(service_name)
+            for rel_path in all_service_files:
+                if rel_path.endswith(f"/{stem}.py") or rel_path == f"{stem}.py":
+                    declared_files.add(rel_path)
 
         return {
             "all_services": all_service_files,
-            "orphaned_services": missing_declared,
+            "orphaned_services": sorted([rel_path for rel_path in all_service_files if rel_path not in declared_files]),
         }
 
     def audit_scripts(self) -> Dict[str, Any]:

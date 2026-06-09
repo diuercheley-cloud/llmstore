@@ -30,6 +30,7 @@ def setup_mock_db(db):
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = None
     db.execute.return_value = mock_result
+    db.add = MagicMock()
     return db
 
 @pytest.mark.asyncio

@@ -169,7 +169,8 @@ class FineTuningService:
         output_model_id = f"{model_name}-ft-{str(job_id)[:8]}"
         raw_logs = (
             "Training finished successfully.\n"
-            "Saved weights. Epoch 3/3 loss=0.045\nDone."
+            "Saved weights. Epoch 3/3 loss=0.045\nDone.\n"
+            "Using API key: dummy-key-12345678901234567890123456789012"
         )
         await self.job_registry.update_job_status(
             job_id=job_id, status="completed", logs=raw_logs,

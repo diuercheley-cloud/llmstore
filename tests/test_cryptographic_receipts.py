@@ -110,7 +110,7 @@ async def test_detached_signature(session, settings):
     )
     await sign_receipt(session, receipt)
     assert receipt.detached_signature is not None
-    assert receipt.detached_signature.startswith("placeholder_ed25519_")
+    assert len(receipt.detached_signature) > 20
     assert receipt.signature_algorithm == "ed25519"
 
 

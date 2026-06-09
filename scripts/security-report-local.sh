@@ -366,6 +366,19 @@ if not SKIP_ARTIFACTS:
     # 6. Artifacts (recent - last 24h)
     _, out_art_r, _ = run_cmd("find artifacts/ -type f -mmin -1440 | xargs ./scripts/check-secrets.sh --verbose --path")
     add_secret_scan_results("sec-secrets-artifacts-recent", "recent artifacts", out_art_r, "artifacts_recent")
+
+    # 7. Dedicated scan for the temporary secrets integration fixture used in tests.
+    temp_secrets_dir = Path("artifacts/test-secrets-temp")
+    if temp_secrets_dir.exists():
+        _, out_temp_secrets, _ = run_cmd(
+            "find artifacts/test-secrets-temp -type f | xargs ./scripts/check-secrets.sh --verbose --path"
+        )
+        add_secret_scan_results(
+            "sec-secrets-test-secrets-temp",
+            "test-secrets-temp artifacts",
+            out_temp_secrets,
+            "test_secrets_temp",
+        )
     
     # Legacy artifacts scan for compatibility (includes all releases and artifacts)
     add_secret_scan_results("sec-secrets-artifacts", "artifacts/releases (legacy)", "\n".join([out_art_i, out_art_r, out_rel_u, out_rel_t]), "artifacts_and_releases")

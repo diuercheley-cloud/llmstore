@@ -18,7 +18,7 @@ class PromptSecurityScanner:
         reasons = []
         
         # 1. Secret detection (simplistic)
-        if re.search(r"(api_key|secret|password|token)[\s:=]+[\"'][a-zA-Z0-9]{16,}[\"']", content, re.I):
+        if re.search(r"(api_key|secret|password|token)[\s:=]+[\"'][a-zA-Z0-9_\-]{16,}[\"']", content, re.I):
             reasons.append("Potential secret/API key detected in prompt content")
 
         # 2. Unsafe instructions (simplistic)

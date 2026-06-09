@@ -62,7 +62,7 @@ async def request_context_middleware(request: Request, call_next):
             return JSONResponse({"detail": "endpoint disabled in SaaS mode"}, status_code=403)
 
     elif settings.public_exposure and (
-        request.url.path in {"/admin-dashboard", "/admin-lab", "/provider-settings"}
+        request.url.path in {"/admin-dashboard", "/admin-lab", "/provider-settings", "/tests"}
         or request.url.path.startswith("/static/admin/")
         or request.url.path.startswith("/static/admin-lab/")
         or request.url.path.startswith("/static/provider-settings/")

@@ -10,8 +10,11 @@ def latest_report_dir():
     base = ROOT / "artifacts" / "final-qa" / "commercial-demo-e2e"
     if not base.exists():
         return None
-    subdirs = sorted([d for d in base.iterdir() if d.is_dir()])
-    return subdirs[-1] if subdirs else None
+    subdirs = sorted([d for d in base.iterdir() if d.is_dir()], reverse=True)
+    for d in subdirs:
+        if (d / "demo-e2e-report.json").exists():
+            return d
+    return None
 
 
 def test_report_json_exists():
