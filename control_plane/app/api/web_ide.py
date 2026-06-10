@@ -1,7 +1,7 @@
 import logging
 
 from app.core.config import get_settings
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.web_ide.file_service import FileService
 from app.services.web_ide.sandbox_terminal import SandboxTerminal

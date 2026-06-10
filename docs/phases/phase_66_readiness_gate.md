@@ -43,7 +43,7 @@ make validate-phase-66-readiness
 Ou diretamente:
 
 ```bash
-python3 scripts/validate_phase_66_readiness.py
+python3 scripts/validators/validate_phase_66_readiness.py
 ```
 
 ## Escopo

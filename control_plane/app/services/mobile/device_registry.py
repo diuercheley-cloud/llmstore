@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 
 from app.core.time import utc_now
-from app.models.mobile import MobileDevice
+from app.models.core.mobile import MobileDevice
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

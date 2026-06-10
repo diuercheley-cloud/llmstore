@@ -5,10 +5,10 @@ import uuid
 import fitz  # PyMuPDF
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing_plan import BillingPlan
-from app.models.client import Client
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.client import Client
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.embeddings import get_embedding_service
 from app.services.rag_usage import get_rag_usage_and_limits, record_rag_event
 from app.utils.token_estimator import estimate_tokens_from_text

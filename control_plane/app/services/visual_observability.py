@@ -6,8 +6,8 @@ from statistics import mean
 from typing import Any, Dict, List
 
 from app.core.config import get_settings
-from app.models.agent_workflows import AgentWorkflowEvent
-from app.models.agents import (
+from app.models.agents.agent_workflows import AgentWorkflowEvent
+from app.models.agents.agents import (
     AgentIncident,
     AgentRun,
     AgentRunEvent,

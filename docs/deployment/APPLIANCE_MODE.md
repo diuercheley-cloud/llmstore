@@ -14,7 +14,7 @@ O modo Appliance transforma o `llm-inference-stack` em uma solução selada e au
 O script de bootstrap realiza a validação do hardware, gera tokens de administração iniciais e configura o ambiente Docker/Kubernetes local.
 
 ```bash
-./scripts/appliance/bootstrap.sh
+./scripts/dev/appliance/bootstrap.sh
 ```
 
 ## Atualizações Air-Gapped
@@ -23,18 +23,18 @@ As atualizações são distribuídas como bundles assinados contendo manifestos,
 
 1. **Criação do Bundle** (em máquina com internet):
    ```bash
-   python3 scripts/airgap/create_bundle.py --version 1.2.0 --out bundle_1.2.0.stack
+   python3 scripts/dev/airgap/create_bundle.py --version 1.2.0 --out bundle_1.2.0.stack
    ```
 
 2. **Verificação do Bundle**:
    ```bash
-   python3 scripts/airgap/verify_bundle.py --bundle bundle_1.2.0.stack
+   python3 scripts/dev/airgap/verify_bundle.py --bundle bundle_1.2.0.stack
    ```
 
 3. **Aplicação da Atualização**:
    ```bash
-   python3 scripts/airgap/apply_bundle.py --bundle bundle_1.2.0.stack --dry-run
-   python3 scripts/airgap/apply_bundle.py --bundle bundle_1.2.0.stack
+   python3 scripts/dev/airgap/apply_bundle.py --bundle bundle_1.2.0.stack --dry-run
+   python3 scripts/dev/airgap/apply_bundle.py --bundle bundle_1.2.0.stack
    ```
 
 ## Segurança

@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.federation_mesh import ClusterNode, ConflictRecord, FederationPeer, MeshMergePolicy, SyncCommit
+from app.models.core.federation_mesh import ClusterNode, ConflictRecord, FederationPeer, MeshMergePolicy, SyncCommit
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 

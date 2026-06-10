@@ -1,7 +1,7 @@
 import abc
 from typing import Any, Dict
 
-from app.models.commercial_crypto_trust import CryptoProviderType
+from app.models.commercial.commercial_crypto_trust import CryptoProviderType
 
 
 class CryptoProviderInterface(abc.ABC):

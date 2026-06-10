@@ -12,8 +12,7 @@ export const ChatPlayground = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -84,11 +83,11 @@ export const ChatPlayground = () => {
       }
 
       const run = await response.json();
-      setCurrentRunId(run.id);
       connectWebSocket(run.id);
       
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'An error occurred';
+      toast.error(errMsg);
       setIsLoading(false);
     }
   };

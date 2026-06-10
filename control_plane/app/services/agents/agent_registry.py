@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 import yaml
-from app.models.agents import AgentLifecycleEvent, AgentRegistryEntry, AgentVersion
+from app.models.agents.agents import AgentLifecycleEvent, AgentRegistryEntry, AgentVersion
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -193,7 +193,7 @@ async def update_registry_entry(
     memory_changed = ("memory_enabled" in update_data and update_data["memory_enabled"] != entry.memory_enabled)
 
     if inst_changed or tools_changed or memory_changed:
-        from app.models.agents import AgentEvalBaseline
+        from app.models.agents.agents import AgentEvalBaseline
         res_baseline = await db.execute(
             select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == entry.id)
         )

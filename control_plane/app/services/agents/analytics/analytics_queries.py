@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict
 
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentEvalResult,
     AgentPolicyDecision,
     AgentRun,

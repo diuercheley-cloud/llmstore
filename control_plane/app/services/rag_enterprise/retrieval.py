@@ -5,14 +5,14 @@ from typing import Any, List, Optional, Tuple
 
 import numpy as np
 from app.core.config import get_settings
-from app.models.commercial_encryption import CommercialEncryptedArtifact
-from app.models.commercial_rag_vault import (
+from app.models.commercial.commercial_encryption import CommercialEncryptedArtifact
+from app.models.commercial.commercial_rag_vault import (
     CommercialRAGChunk,
     CommercialRAGDocument,
     CommercialRAGVault,
 )
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.rag.rag_access_control import (
     evaluate_chunk_acl,
     evaluate_retrieval_access,

@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.billing_plan import BillingPlan
+from app.models.agents.agents import AgentDefinition, AgentRun
+from app.models.billing.billing_plan import BillingPlan
 from app.services.billing import estimate_request_cost, resolve_effective_plan
 from app.services.inference_proxy import ForwardResult, InferenceProxy
 from app.services.model_policy import (
@@ -256,7 +256,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
         return self._provider_type
 
     async def _resolve_client(self, run: AgentRun):
-        from app.models.client import Client
+        from app.models.core.client import Client
         from sqlalchemy import select
 
         try:
@@ -361,7 +361,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
         }
 
         if allowed_tools:
-            from app.models.agents import AgentTool
+            from app.models.agents.agents import AgentTool
             from sqlalchemy import select as sa_select
             stmt_tools = sa_select(AgentTool).where(
                 AgentTool.name.in_(allowed_tools),

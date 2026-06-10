@@ -4,12 +4,12 @@ import uuid
 from typing import Any, Dict, Tuple
 
 from app.core.config import get_settings
-from app.models.agent_uncertainty import (
+from app.models.agents.agent_uncertainty import (
     AgentConfidenceScore,
     AgentUncertaintyEvent,
     AgentUncertaintyPolicy,
 )
-from app.models.agents import AgentDefinition
+from app.models.agents.agents import AgentDefinition
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

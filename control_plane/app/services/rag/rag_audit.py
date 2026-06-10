@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
+from app.models.commercial.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
 from app.services.governance.federated_audit import FederatedAuditService
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy.ext.asyncio import AsyncSession

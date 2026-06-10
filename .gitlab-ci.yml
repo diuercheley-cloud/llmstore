@@ -32,8 +32,8 @@ preflight:check:
   image: alpine:latest
   script:
     - apk add --no-cache bash
-    - bash scripts/check-alembic-integrity.sh
-    - if [ -f scripts/check-working-tree-clean.sh ]; then bash scripts/check-working-tree-clean.sh; fi
+    - bash scripts/validators/check-alembic-integrity.sh
+    - if [ -f scripts/validators/check-working-tree-clean.sh ]; then bash scripts/validators/check-working-tree-clean.sh; fi
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"

@@ -4,8 +4,8 @@ import uuid
 from typing import Optional
 
 from app.core.config import get_settings
-from app.models.agent_canary import AgentCanaryAssignment, AgentShadowRun
-from app.models.agents import AgentRun
+from app.models.agents.agent_canary import AgentCanaryAssignment, AgentShadowRun
+from app.models.agents.agents import AgentRun
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

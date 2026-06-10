@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.time import utc_now
-from app.models.agents import AgentIncident
+from app.models.agents.agents import AgentIncident
 from app.services.admin_rbac import record_admin_audit_event
 from app.services.agents import agent_state
 from sqlalchemy.ext.asyncio import AsyncSession

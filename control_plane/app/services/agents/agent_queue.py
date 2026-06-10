@@ -16,13 +16,13 @@ from app.core.metrics import (
     LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL,
 )
 from app.core.time import utc_now
-from app.models.agent_execution import (
+from app.models.agents.agent_execution import (
     AgentExecutionDeadLetter,
     AgentExecutionJob,
     AgentExecutionLease,
     AgentExecutionRetry,
 )
-from app.models.agents import AgentDefinition
+from app.models.agents.agents import AgentDefinition
 from app.services.agents import agent_state
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession

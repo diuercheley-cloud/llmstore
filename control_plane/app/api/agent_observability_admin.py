@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session, require_admin
 from app.core.config import Settings, get_settings
-from app.models.agents import AgentRun, AgentRunEvent, AgentRunStep
+from app.models.agents.agents import AgentRun, AgentRunEvent, AgentRunStep
 from app.services.agents.agent_observability import AgentObservabilityService
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, func, select

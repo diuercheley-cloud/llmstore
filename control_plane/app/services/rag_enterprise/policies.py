@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
-from app.models.client import Client
-from app.models.client_feature_block import ClientFeatureBlock
-from app.models.rag_document import RAGDocument
-from app.models.rag_usage_event import RagUsageEvent
+from app.models.core.client import Client
+from app.models.core.client_feature_block import ClientFeatureBlock
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_usage_event import RagUsageEvent
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
 from sqlalchemy import func, select

@@ -56,7 +56,7 @@ O validador escaneia:
 ## Validacao
 
 ```bash
-python3 scripts/validate_claims.py
+python3 scripts/validators/validate_claims.py
 make validate-claims
 ```
 

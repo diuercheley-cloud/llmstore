@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import List, Optional
 
-from app.models.agent_debugger import AgentBreakpoint
+from app.models.agents.agent_debugger import AgentBreakpoint
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

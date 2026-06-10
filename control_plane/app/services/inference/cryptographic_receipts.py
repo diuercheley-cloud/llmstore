@@ -10,7 +10,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_cryptographic_receipts import (
+from app.models.commercial.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,
     CommercialInferenceReceiptVerificationReport,

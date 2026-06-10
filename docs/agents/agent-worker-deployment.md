@@ -68,10 +68,10 @@ The Helm template creates a `Deployment` named `{release}-agent-worker` that:
 
 | Script | Description |
 |--------|-------------|
-| `scripts/run-agent-worker.sh` | Starts the agent worker process |
-| `scripts/agent-worker-status.sh` | Shows worker heartbeats, queue, readiness |
-| `scripts/agent-worker-drain.sh` | Cancels all queued jobs (drain) |
-| `scripts/agent-queue-inspect.sh` | Inspects queue depth, DLQ, retries, workers |
+| `scripts/dev/run-agent-worker.sh` | Starts the agent worker process |
+| `scripts/dev/agent-worker-status.sh` | Shows worker heartbeats, queue, readiness |
+| `scripts/dev/agent-worker-drain.sh` | Cancels all queued jobs (drain) |
+| `scripts/dev/agent-queue-inspect.sh` | Inspects queue depth, DLQ, retries, workers |
 
 ## Makefile Targets
 

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, UTC
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ...models.commercial_rag_vault import (
+from ...models.commercial.commercial_rag_vault import (
     CommercialRAGChunk,
     CommercialRAGDocument,
     CommercialRAGVault,

@@ -2,7 +2,7 @@
 import logging
 import uuid
 
-from app.models.knowledge_base import (
+from app.models.rag.knowledge_base import (
     KBIngestionJob,
     KnowledgeBase,
 )

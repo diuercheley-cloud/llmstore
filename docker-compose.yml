@@ -91,6 +91,9 @@ services:
       context: .
       dockerfile: docker/data-plane-mock/Dockerfile
     profiles: ["fallback-test"]
+    labels:
+      - "com.product.surface=simulated"
+      - "com.product.mock=true"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health').read()"]
       interval: 5s
@@ -131,7 +134,6 @@ services:
       - ./models:/models:ro
       - ./data:/data
       - ./config:/config:ro
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./tests:/app/tests
     deploy:
       resources:
@@ -173,7 +175,6 @@ services:
       - ./models:/models:ro
       - ./data:/data
       - ./config:/config:ro
-      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
       - control_net

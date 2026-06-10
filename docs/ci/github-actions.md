@@ -11,11 +11,25 @@ O `llm-inference-stack` utiliza GitHub Actions para garantir a qualidade, segura
 
 | Workflow | Frequência | Objetivo |
 | :--- | :--- | :--- |
-| `ci.yml` | PR / Push | Lint, Testes Backend/Frontend, Integridade Alembic. |
-| `security.yml` | Diário / PR | Scan de segredos, Auditoria de Dependências (Pip/Npm). |
-| `release-validation.yml` | Tags `v*` | Smoke tests, Chaos tests, Operational Readiness. |
-| `docker-build.yml` | Push `main` | Validação de build das imagens Docker. |
+| `ci.yml` | PR / Push | Workflow principal com matrix para API, Frontends, SDK, E2E, Chaos, Security, LLM-Harness, Agent-Evals e Compliance. |
+| `release.yml` | Tags `v*` | Publicação de SDK (PyPI), Imagens Docker e criação de Release no GitHub. |
+| `security-scheduled.yml` | Diário | Scan de segurança e vulnerabilidades agendado. |
 | `docs-validation.yml` | PR | Links quebrados, Changelog, Release Notes. |
+
+## Estrutura Matrix (ci.yml)
+
+O workflow principal (`ci.yml`) utiliza uma matrix para paralelizar os testes por domínio:
+
+- **api**: Backend lint, unit tests, integration tests e integridade do banco.
+- **frontend-admin**: Build e testes do Admin UI.
+- **frontend-client**: Build e testes do Client UI.
+- **sdk**: Testes e build do SDK Python.
+- **e2e**: Testes de ponta-a-ponta com Playwright.
+- **chaos**: Experimentos de engenharia de caos.
+- **security**: Scans de segurança síncronos.
+- **llm-harness**: Validação do harness de LLM.
+- **agent-evals**: Avaliação automática de agentes.
+- **compliance**: Auditoria de conformidade contínua.
 
 ## Hardening de Segurança
 

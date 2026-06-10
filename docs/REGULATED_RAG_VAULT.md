@@ -67,6 +67,6 @@ pytest -q \
   tests/test_rag_poison_detection.py \
   tests/test_rag_retrieval_audit.py
 
-bash -n scripts/validate-rag-vault.sh
+bash -n scripts/validators/validate-rag-vault.sh
 make validate-rag-vault
 ```

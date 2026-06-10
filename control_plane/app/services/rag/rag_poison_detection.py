@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass
 
 from app.core.config import get_settings
-from app.models.commercial_rag_vault import CommercialRAGPoisoningAlert
+from app.models.commercial.commercial_rag_vault import CommercialRAGPoisoningAlert
 from app.services.rag.rag_vault import sanitize_text
 from sqlalchemy.ext.asyncio import AsyncSession
 

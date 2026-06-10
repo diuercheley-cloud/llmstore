@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import AgentPlan
+from app.models.agents.agents import AgentPlan
 from app.services.agents import agent_state
 from app.services.agents.agent_budget import AgentBudgetService
 from app.services.agents.agent_handoffs import AgentHandoffService
@@ -280,7 +280,7 @@ class AgentExecutor:
         return False
 
     async def _get_approved_request(self, run):
-        from app.models.agents import AgentApprovalRequest
+        from app.models.agents.agents import AgentApprovalRequest
         stmt = select(AgentApprovalRequest).where(AgentApprovalRequest.agent_run_id == self.run_id, AgentApprovalRequest.status == "approved")
         res = await self.db.execute(stmt)
         for r in res.scalars().all():
@@ -519,7 +519,7 @@ class AgentExecutor:
         await self.obs.record_tool_call_start(self.run_id, tool_name)
         start_time = time.time()
         try:
-            from app.models.agents import AgentTool
+            from app.models.agents.agents import AgentTool
             from app.services.agents.tool_executor import execute_tool
             stmt = select(AgentTool).where(AgentTool.name == tool_name, AgentTool.enabled == True)
             res = await self.db.execute(stmt)
@@ -701,7 +701,7 @@ class AgentExecutor:
         except ValueError:
             return agent_def
 
-        from app.models.agents import AgentEvalRun
+        from app.models.agents.agents import AgentEvalRun
         res_eval = await self.db.execute(select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id))
         eval_run = res_eval.scalar_one_or_none()
         if not eval_run or not eval_run.metadata_json:
@@ -716,7 +716,7 @@ class AgentExecutor:
         except ValueError:
             return agent_def
 
-        from app.models.agent_optimization import (
+        from app.models.agents.agent_optimization import (
             AgentOptimizationCandidate,
             AgentPolicyCandidate,
             AgentPromptCandidate,
@@ -751,13 +751,13 @@ class AgentExecutor:
 
     async def _resolve_prompt_template(self, agent_def, run) -> Any:
         try:
-            from app.models.prompts import PromptTemplateVersion
+            from app.models.agents.prompts import PromptTemplateVersion
             from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
             from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 
             version_id = agent_def.prompt_template_version_id
             if not version_id:
-                from app.models.prompts import PromptTemplate
+                from app.models.agents.prompts import PromptTemplate
                 tmpl_stmt = select(PromptTemplate).where(
                     PromptTemplate.id == agent_def.prompt_template_id
                 )

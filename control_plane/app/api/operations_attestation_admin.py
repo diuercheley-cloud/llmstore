@@ -34,7 +34,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/admin/operations", tags=["operations-attestation"])
 
 ATTESTATION_SERVICE = SovereignExecutionAttestationService()
 BUNDLE_SERVICE = AttestationFederationBundleService()

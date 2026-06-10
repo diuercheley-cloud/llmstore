@@ -94,6 +94,6 @@ pronta para promocao. Warnings auditados e documentados no v1.7.1.
 | Cloud/internet not required | OK |
 
 ---
-*Documento versionavel gerado por: scripts/generate-client-ready-report.sh e scripts/run-v1.7-release-checklist.sh*
+*Documento versionavel gerado por: scripts/validators/generate-client-ready-report.sh e scripts/run-v1.7-release-checklist.sh*
 *Timestamp: 2026-05-12*
 *Decisao: GO (ACCEPTED WARNINGS)*

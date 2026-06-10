@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agents import AgentDefinition
+from app.models.agents.agents import AgentDefinition
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

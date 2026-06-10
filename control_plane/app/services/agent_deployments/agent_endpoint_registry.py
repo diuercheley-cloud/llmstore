@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_deployments import AgentApiDeployment
+from app.models.agents.agent_deployments import AgentApiDeployment
 from app.services.agent_deployments.agent_api_deployment import (
     AgentApiDeploymentService,
 )
@@ -137,7 +137,7 @@ class AgentEndpointRegistry:
         severity: str,
         details: Optional[Dict[str, Any]] = None,
     ):
-        from app.models.agent_deployments import AgentApiSlaEvent
+        from app.models.agents.agent_deployments import AgentApiSlaEvent
         event = AgentApiSlaEvent(
             deployment_id=deployment.id,
             tenant_id=deployment.tenant_id,

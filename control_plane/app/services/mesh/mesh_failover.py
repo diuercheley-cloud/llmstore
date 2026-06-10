@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from app.core.time import utc_now
-from app.models.commercial_control_plane_mesh import (
+from app.models.commercial.commercial_control_plane_mesh import (
     CommercialMeshNode,
     CommercialMeshPartitionEvent,
 )

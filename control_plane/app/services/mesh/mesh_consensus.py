@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from app.models.commercial_control_plane_mesh import (
+from app.models.commercial.commercial_control_plane_mesh import (
     CommercialMeshConsensusEvent,
     CommercialMeshNode,
 )

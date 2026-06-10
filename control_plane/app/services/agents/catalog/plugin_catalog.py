@@ -1,6 +1,6 @@
 import uuid
 
-from app.models.agent_catalog import PluginCatalogEntry
+from app.models.agents.agent_catalog import PluginCatalogEntry
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

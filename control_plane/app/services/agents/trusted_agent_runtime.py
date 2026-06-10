@@ -7,7 +7,7 @@ from typing import Any, Callable
 from uuid import UUID
 
 from app.core.time import utc_now
-from app.models.commercial_agents import (
+from app.models.commercial.commercial_agents import (
     CommercialAgentAction,
     CommercialAgentExecution,
     CommercialAgentMemoryBoundary,

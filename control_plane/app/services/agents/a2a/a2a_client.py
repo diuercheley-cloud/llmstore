@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 import httpx
-from app.models.agents import AgentA2ARegistration, AgentDelegationPolicy
+from app.models.agents.agents import AgentA2ARegistration, AgentDelegationPolicy
 from app.services.admin_rbac import record_admin_audit_event
 from app.services.agents.a2a.a2a_messages import A2ADelegationPayload, A2AMessagePayload
 from app.services.agents.a2a.a2a_security import A2ASecurityService

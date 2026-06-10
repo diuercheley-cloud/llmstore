@@ -63,8 +63,8 @@ Todos os resultados atuais usam `severity="advisory"`.
 ## Validacao
 
 ```bash
-python3 scripts/validate_invariants.py
+python3 scripts/validators/validate_invariants.py
 make validate-invariants
-pytest tests/services/invariants/test_invariants.py
+pytest tests/unit/services/invariants/test_invariants.py
 ```
 

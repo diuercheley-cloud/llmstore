@@ -14,7 +14,7 @@ status: consolidated
 - [x] **API:** Administrative API endpoints in `control_plane/app/api/operations_remediation_admin.py`.
 - [x] **Dashboard:** Integrated UI sections in `control_plane/app/static/admin/index.html` and `control_plane/app/static/portal/index.html`.
 - [x] **Documentation:** Comprehensive guides in `docs/phases/` and `docs/operations/`.
-- [x] **Validation:** Validation script `scripts/validate_phase_71_remediation_planning.py` and Makefile target.
+- [x] **Validation:** Validation script `scripts/validators/validate_phase_71_remediation_planning.py` and Makefile target.
 
 ### Key Features
 - **Deterministic Planning:** Guaranteed consistent output for the same operational inputs using SHA-256 hashing.
@@ -24,8 +24,8 @@ status: consolidated
 - **Verifiable Receipts:** Deterministic receipts with immutable hashes and signature placeholders.
 
 ### Validation Results
-- **Scripts executed:** `scripts/validate_phase_71_remediation_planning.py` (PASSED)
-- **Tests executed:** 28 tests in `tests/operations/` (PASSED)
+- **Scripts executed:** `scripts/validators/validate_phase_71_remediation_planning.py` (PASSED)
+- **Tests executed:** 28 tests in `tests/integration/operations/` (PASSED)
 - **Architectural compliance:** Verified. No `random`, no `uuid4` in logic paths, no external network/ML calls.
 
 ### Files Created/Modified
@@ -45,17 +45,17 @@ status: consolidated
 - `docs/phases/phase_71_deterministic_remediation_planning.md` (New)
 - `docs/operations/remediation_planning.md` (New)
 - `docs/operations/phase_71_remediation_planning_summary.md` (New/Updated)
-- `scripts/validate_phase_71_remediation_planning.py` (New)
+- `scripts/validators/validate_phase_71_remediation_planning.py` (New)
 - `Makefile` (Modified)
-- `tests/operations/test_remediation_planning_models.py` (New)
-- `tests/operations/test_deterministic_remediation_planner.py` (New)
-- `tests/operations/test_remediation_blast_radius.py` (New)
-- `tests/operations/test_remediation_approval_requirements.py` (New)
-- `tests/operations/test_remediation_receipts.py` (New)
-- `tests/operations/test_remediation_audit_events.py` (New)
-- `tests/operations/test_remediation_planning_api.py` (New)
-- `tests/operations/test_remediation_planning_dashboard.py` (New)
-- `tests/operations/test_phase_71_validation.py` (New)
+- `tests/integration/operations/test_remediation_planning_models.py` (New)
+- `tests/integration/operations/test_deterministic_remediation_planner.py` (New)
+- `tests/integration/operations/test_remediation_blast_radius.py` (New)
+- `tests/integration/operations/test_remediation_approval_requirements.py` (New)
+- `tests/integration/operations/test_remediation_receipts.py` (New)
+- `tests/integration/operations/test_remediation_audit_events.py` (New)
+- `tests/integration/operations/test_remediation_planning_api.py` (New)
+- `tests/integration/operations/test_remediation_planning_dashboard.py` (New)
+- `tests/integration/operations/test_phase_71_validation.py` (New)
 
 ### Confirmation
 - **Advisory-only:** Confirmed.

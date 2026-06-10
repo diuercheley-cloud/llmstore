@@ -58,7 +58,7 @@ status: consolidated
 
 ## Tests Executed
 
-- `tests/build/test_makefile_governance.py`
+- `tests/integration/build/test_makefile_governance.py`
 
 ## Known Limitations
 

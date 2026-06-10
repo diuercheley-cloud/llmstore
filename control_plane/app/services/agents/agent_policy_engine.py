@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentDefinition,
     AgentEvalBaseline,
     AgentMemoryPolicy,
@@ -98,7 +98,7 @@ class AgentPolicyEngine:
         if agent.policy_id and agent.policy_id.startswith("policy-opt-"):
             try:
                 candidate_id = uuid.UUID(agent.policy_id.replace("policy-opt-", ""))
-                from app.models.agent_optimization import AgentPolicyCandidate
+                from app.models.agents.agent_optimization import AgentPolicyCandidate
                 res_pol = await self.db.execute(select(AgentPolicyCandidate).where(AgentPolicyCandidate.candidate_id == candidate_id))
                 pol_detail = res_pol.scalar_one_or_none()
                 if pol_detail:

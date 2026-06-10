@@ -13,7 +13,7 @@ This document defines the organization of files and directories in the `llm-infe
 |-----------|---------------------|
 | `/` (Root) | Configuration files, main entry points (if any), and core project metadata. |
 | `scripts/` | Shell scripts and Python executable utilities used for management, deployment, and validation. |
-| `scripts/lib/` | Shared shell libraries (sourced by scripts via SCRIPT_DIR or PROJECT_ROOT). |
+| `scripts/dev/lib/` | Shared shell libraries (sourced by scripts via SCRIPT_DIR or PROJECT_ROOT). |
 | `control_plane/` | Source code for the control plane application. |
 | `data_plane_mock/` | Mock implementation of the data plane for development/testing. |
 | `docs/` | Project documentation, runbooks, and architectural guides. |
@@ -45,7 +45,7 @@ Python files that are strictly for testing purposes and are not part of the prod
 
 ## Shell Library Import Policy
 
-Shell libraries live in `scripts/lib/` and MUST be sourced using one of these patterns:
+Shell libraries live in `scripts/dev/lib/` and MUST be sourced using one of these patterns:
 
 **From scripts/ directly:**
 ```bash
@@ -55,17 +55,17 @@ source "${SCRIPT_DIR}/lib/redaction.sh"
 
 **From scripts/ using PROJECT_ROOT (via common.sh):**
 ```bash
-source "${ROOT_DIR}/scripts/lib/operator-errors.sh"
+source "${ROOT_DIR}/scripts/dev/lib/operator-errors.sh"
 ```
 
 The following are PROHIBITED:
 - `source` with `$(dirname "$0")` (fragile when script is called from other directories)
-- `source` with `../lib/` relative paths
-- Direct `lib/` root imports after migration to `scripts/lib/`
+- `source` with `../dev/lib/` relative paths
+- Direct `lib/` root imports after migration to `scripts/dev/lib/`
 
 ## Repo Path Validation
 
-Run `scripts/validate-repo-paths-local.sh` to check for broken references:
+Run `scripts/validators/validate-repo-paths-local.sh` to check for broken references:
 - Invalid shell script shebangs
 - Missing file targets in `source` statements
 - Python scripts referenced from shell that do not exist
@@ -75,8 +75,8 @@ Run `scripts/validate-repo-paths-local.sh` to check for broken references:
 
 To suggest or apply fixes for path issues:
 ```bash
-scripts/fix-repo-paths-local.sh          # dry-run
-scripts/fix-repo-paths-local.sh --apply  # apply safe substitutions
+scripts/dev/fix-repo-paths-local.sh          # dry-run
+scripts/dev/fix-repo-paths-local.sh --apply  # apply safe substitutions
 ```
 
 Reports are generated in `artifacts/repo-cleanup/<timestamp>/`.

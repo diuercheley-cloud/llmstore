@@ -289,7 +289,7 @@ Consulte [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.md) para detalhe
 
 ### Medição de Custos Reais (v1.8.1)
 
-O script `scripts/measure-real-provider-costs.sh` integra-se ao billing:
+O script `scripts/dev/measure-real-provider-costs.sh` integra-se ao billing:
 
 1. Carrega `provider-pricing.example.json` para custos USD por provider
 2. Carrega `customer-pricing.example.json` para preços do plano Pro

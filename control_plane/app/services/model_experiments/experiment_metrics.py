@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict
 
-from app.models.model_experiments import ModelExperimentMetric
+from app.models.core.model_experiments import ModelExperimentMetric
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

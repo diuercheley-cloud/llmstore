@@ -4,8 +4,8 @@ import logging
 import uuid
 from typing import Any
 
-from app.models.client import Client
-from app.models.commercial_qos_tier import CommercialQoSTier
+from app.models.core.client import Client
+from app.models.commercial.commercial_qos_tier import CommercialQoSTier
 from app.schemas.routing import (
     CommercialScoreExplained,
 )

@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowRun, AgentWorkflowSignal
+from app.models.agents.agent_workflows import AgentWorkflowRun, AgentWorkflowSignal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

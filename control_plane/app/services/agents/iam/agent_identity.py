@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Optional
 
-from app.models.agent_iam import AgentIdentityBinding
+from app.models.agents.agent_iam import AgentIdentityBinding
 from app.services.agents.iam.iam_audit import IAMAuditService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

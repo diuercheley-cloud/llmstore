@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.digital_twin import DigitalTwinCommand
+from app.models.agents.digital_twin import DigitalTwinCommand
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .safety_interlock import SafetyInterlock

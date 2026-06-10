@@ -4,7 +4,7 @@ import uuid
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowLock
+from app.models.agents.agent_workflows import AgentWorkflowLock
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

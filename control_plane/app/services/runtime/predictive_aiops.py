@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, UTC
 from typing import Any, List
 
-from app.models.commercial_predictive_aiops import (
+from app.models.commercial.commercial_predictive_aiops import (
     CommercialAIOpsRecommendation,
     CommercialAnomalySignal,
     CommercialFailurePrediction,

@@ -4,8 +4,8 @@ from datetime import date, datetime, timezone
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.request_financial import RequestFinancial
+from app.models.core.client import Client
+from app.models.billing.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select

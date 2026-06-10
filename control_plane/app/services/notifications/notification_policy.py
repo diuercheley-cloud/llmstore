@@ -3,8 +3,8 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from app.models.agent_notifications import NotificationEvent
-from app.models.agents import AgentApprovalRequest
+from app.models.agents.agent_notifications import NotificationEvent
+from app.models.agents.agents import AgentApprovalRequest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

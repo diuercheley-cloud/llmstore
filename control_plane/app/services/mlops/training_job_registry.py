@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.time import utc_now
-from app.models.mlops import MLDatasetVersion, MLTrainingJob
+from app.models.core.mlops import MLDatasetVersion, MLTrainingJob
 from app.services.mlops.dataset_registry import log_mlops_audit
 from fastapi import HTTPException
 from sqlalchemy import select

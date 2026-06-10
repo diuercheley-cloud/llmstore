@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
 from app.services.agents.memory.advanced_memory_service import AdvancedMemoryService
-from app.models.advanced_memory import MemoryScope, MemoryEventType
+from app.models.agents.advanced_memory import MemoryScope, MemoryEventType
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 

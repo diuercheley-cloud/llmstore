@@ -9,9 +9,9 @@ from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.admin_action_log import AdminActionLog
-from app.models.client import Client
-from app.models.commercial_model_supply_chain import (
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.core.client import Client
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialModelRevocationRecord,
     CommercialSignedModelRegistryEntry,

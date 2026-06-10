@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, List
 
-from app.models.agents import AgentMemoryIndex
+from app.models.agents.agents import AgentMemoryIndex
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.inference_backend import InferenceBackend
+from app.models.core.inference_backend import InferenceBackend
 from app.services.inference.backends.base import Capability, InferenceBackendBase
 from app.services.inference.backends.openai_compatible_backend import OpenAICompatibleBackend
 from app.services.inference.backends.tgi_backend import TGIBackend

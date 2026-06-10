@@ -6,9 +6,9 @@ from typing import List, Optional
 import numpy as np
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_revenue_forecast import CommercialRevenueForecast
-from app.models.request_financial import RequestFinancial
+from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial.commercial_revenue_forecast import CommercialRevenueForecast
+from app.models.billing.request_financial import RequestFinancial
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

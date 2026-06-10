@@ -5,7 +5,7 @@ from typing import List
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
-from app.models.agent_workspace import (
+from app.models.agents.agent_workspace import (
     AgentArtifactEvent,
     AgentArtifactVersion,
 )

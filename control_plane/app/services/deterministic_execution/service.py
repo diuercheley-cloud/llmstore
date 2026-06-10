@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.deterministic_execution import ExecutionRun, ExecutionStep, ToolCallRecord
+from app.models.core.deterministic_execution import ExecutionRun, ExecutionStep, ToolCallRecord
 from app.core.time import utc_now
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

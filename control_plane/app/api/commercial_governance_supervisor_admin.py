@@ -2,7 +2,7 @@
 from typing import Any, Dict, List
 
 from app.api.dependencies import get_current_admin, get_db
-from app.models.commercial_governance_supervisor import (
+from app.models.commercial.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorAction,
     CommercialGovernanceSupervisorDecision,
     CommercialGovernanceSupervisorIncident,

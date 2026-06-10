@@ -7,16 +7,16 @@ def test_security_report_flow():
     # Garantir que o diretório de artifacts existe para não falhar por isso
     os.makedirs("artifacts/security-reports", exist_ok=True)
 
-    # 1. Executar scripts/check-secrets.sh --all
+    # 1. Executar scripts/validators/check-secrets.sh --all
     # Este script deve rodar e encontrar apenas segredos fake autorizados
-    result = subprocess.run(["./scripts/check-secrets.sh", "--all"], capture_output=True, text=True)
+    result = subprocess.run(["./scripts/validators/check-secrets.sh", "--all"], capture_output=True, text=True)
     assert result.returncode == 0, f"check-secrets failed: {result.stdout}"
     
-    # 2. Executar scripts/security-report-local.sh
+    # 2. Executar scripts/validators/security-report-local.sh
     # Rodamos apontando para uma URL dummy para focar nos checks de arquivos locais
     # e validamos que as fixtures fake não causam falha crítica (FAIL)
     result = subprocess.run(
-        ["./scripts/security-report-local.sh", "--base-url", "http://localhost:invalid", "--skip-artifacts-scan"], 
+        ["./scripts/validators/security-report-local.sh", "--base-url", "http://localhost:invalid", "--skip-artifacts-scan"], 
         capture_output=True, 
         text=True
     )

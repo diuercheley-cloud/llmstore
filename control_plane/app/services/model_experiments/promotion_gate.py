@@ -1,7 +1,7 @@
 import uuid
 
 from app.core.time import utc_now
-from app.models.model_experiments import ModelExperiment
+from app.models.core.model_experiments import ModelExperiment
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

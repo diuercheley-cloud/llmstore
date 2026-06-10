@@ -1,7 +1,7 @@
 # Owner: agent-platform
 from typing import Any, Dict
 
-from app.models.agent_federated_memory import RemoteMemoryReference
+from app.models.agents.agent_federated_memory import RemoteMemoryReference
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

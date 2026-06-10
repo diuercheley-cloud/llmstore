@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
-from app.models.client import Client
-from app.models.request_financial import RequestFinancial
+from app.models.agents.agents import AgentDefinition, AgentRun
+from app.models.core.client import Client
+from app.models.billing.request_financial import RequestFinancial
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.billing.pricing_engine import record_request_financials
 from app.services.token_counting.token_counter import TokenCounter

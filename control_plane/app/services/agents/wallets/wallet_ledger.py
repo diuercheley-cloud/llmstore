@@ -3,7 +3,7 @@ import hashlib
 import uuid
 from typing import List
 
-from app.models.agent_wallet import AgentWallet, AgentWalletLedgerEntry
+from app.models.agents.agent_wallet import AgentWallet, AgentWalletLedgerEntry
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

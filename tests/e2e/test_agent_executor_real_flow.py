@@ -68,7 +68,7 @@ async def test_agent_executor_real_flow(e2e_client, monkeypatch):
     # Import SessionLocal, and models
     from app.db.base import Base
     from app.db.session import SessionLocal
-    from app.models.agents import (
+    from app.models.agents.agents import (
         AgentApprovalPolicy,
         AgentApprovalRequest,
         AgentDefinition,

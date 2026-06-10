@@ -1,0 +1,25 @@
+from fastapi import FastAPI
+from app.bootstrap.middleware import configure_middleware
+from app.bootstrap.routers import register_routers
+from app.bootstrap.lifecycle import lifespan
+from app.core.config import get_settings
+
+def create_app() -> FastAPI:
+    settings = get_settings()
+    app = FastAPI(
+        title=settings.project_name,
+        description="""
+Stack local e portátil para servir modelos de linguagem com separação explícita entre Control Plane e Data Plane.
+Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteamento com fallback.
+""",
+        version="1.0.0",
+        debug=settings.debug,
+        lifespan=lifespan,
+        docs_url="/api-docs",
+        redoc_url="/api-redoc",
+    )
+    
+    configure_middleware(app, settings)
+    register_routers(app, settings)
+    
+    return app

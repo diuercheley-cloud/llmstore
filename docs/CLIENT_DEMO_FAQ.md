@@ -64,13 +64,13 @@ A stack é **100% local**. Não há envio de prompts, respostas, documentos ou m
 ### Como faz backup?
 
 ```bash
-./scripts/backup.sh
+./scripts/backup/backup.sh
 ```
 
 O script realiza dump do banco PostgreSQL (clientes, consumo, faturas, configurações) e preserva a estrutura. Para restore:
 
 ```bash
-./scripts/restore.sh /caminho/para/postgres.dump
+./scripts/backup/restore.sh /caminho/para/postgres.dump
 ```
 
 Consulte `docs/DISASTER_RECOVERY_LOCAL.md` e `docs/RETENTION_LOCAL.md` para política de retenção e recuperação.
@@ -79,10 +79,10 @@ Consulte `docs/DISASTER_RECOVERY_LOCAL.md` e `docs/RETENTION_LOCAL.md` para pol�
 
 O processo de upgrade é documentado em `docs/UPGRADE_ROLLBACK_LOCAL.md`. O fluxo resumido:
 
-1. Faça backup (`./scripts/backup.sh`)
+1. Faça backup (`./scripts/backup/backup.sh`)
 2. Baixe a nova versão do repositório
-3. Execute `./scripts/upgrade-local.sh`
-4. Valide com `./scripts/validate-e2e.sh`
+3. Execute `./scripts/deploy/upgrade-local.sh`
+4. Valide com `./scripts/validators/validate-e2e.sh`
 
 Rollback também é suportado via restore do backup e versão anterior.
 
@@ -91,7 +91,7 @@ Rollback também é suportado via restore do backup e versão anterior.
 Via Admin API ou script:
 
 ```bash
-./scripts/create-client.sh nome-cliente "descrição do cliente"
+./scripts/dev/create-client.sh nome-cliente "descrição do cliente"
 ```
 
 Ou via Admin Lab (UI). Cada cliente recebe:
@@ -112,7 +112,7 @@ O billing é **local/manual** — sem integração com PSP/PIX real.
 4. O pagamento é recebido por fora (boleto, TED, contrato)
 5. O administrador marca a fatura como paga manualmente:
    ```bash
-   ./scripts/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
+   ./scripts/dev/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
    ```
 6. Clientes com faturas vencidas são suspensos automaticamente após tolerância configurável
 

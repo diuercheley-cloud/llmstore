@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.agents.sessions.agent_session_service import (
     AgentSessionService,
 )

@@ -24,7 +24,7 @@ make validate-platform-architecture
 The Makefile target runs:
 
 ```bash
-./scripts/validate-local-production-full.sh
+./scripts/validators/validate-local-production-full.sh
 ```
 
 ## Scope

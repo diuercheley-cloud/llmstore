@@ -6,18 +6,18 @@ from typing import Dict, List, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_optimization import (
+from app.models.agents.agent_optimization import (
     AgentOptimizationCandidate,
     AgentPolicyCandidate,
     AgentPromptCandidate,
     AgentToolSelectionCandidate,
 )
-from app.models.agent_optimization_tournament import (
+from app.models.agents.agent_optimization_tournament import (
     AgentOptimizationTournament,
     AgentOptimizationTournamentCandidate,
     AgentOptimizationTournamentResult,
 )
-from app.models.agents import AgentDefinition, AgentEvalRun, AgentEvalSuite
+from app.models.agents.agents import AgentDefinition, AgentEvalRun, AgentEvalSuite
 from app.services.agents.agent_evals import AgentEvalService
 from app.services.agents.optimization.ab_testing import ABTestingService
 from app.services.agents.optimization.candidate_ranker import CandidateRanker

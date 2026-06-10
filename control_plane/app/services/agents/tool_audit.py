@@ -5,7 +5,7 @@ Status: beta
 import logging
 from typing import Any, Dict, Optional
 
-from app.models.agent_tool_execution import AgentToolExecutionAudit
+from app.models.agents.agent_tool_execution import AgentToolExecutionAudit
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_phase_82_platform_sustainability.py"
+SCRIPT_PATH = ROOT_DIR / "scripts" / "validators" / "validate_phase_82_platform_sustainability.py"
 
 
 def _load_validator():

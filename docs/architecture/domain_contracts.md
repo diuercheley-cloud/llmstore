@@ -74,8 +74,8 @@ Responsavel por observabilidade, onboarding, operacao administrativa e exportaca
 Use:
 
 ```bash
-python3 scripts/validate_domain_contracts.py
+python3 scripts/validators/validate_domain_contracts.py
 make validate-domain-contracts
-pytest tests/domains/test_domain_contracts.py
+pytest tests/integration/domains/test_domain_contracts.py
 ```
 

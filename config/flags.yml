@@ -1,0 +1,26 @@
+# Hierarchical Feature Flags
+# Product Flags
+product:
+  ABUSE_DETECTION_ENABLED: true
+  AGENT_MARKETPLACE_ENABLED: true
+
+# Rollout Flags
+rollout:
+  AGENT_RUNTIME_ENABLED: false
+
+# Environment Flags
+environment:
+  local:
+    CREATE_TABLES_ON_STARTUP: true
+  production:
+    CREATE_TABLES_ON_STARTUP: false
+
+# Experiment Flags
+experiment:
+  AGENT_REASONING_LOOP_ENABLED: false
+
+# Legacy Flags (Pending Removal)
+legacy:
+  CI_DEPLOY_ENABLED: # Scheduled for removal v2.2.0
+    default: false
+    remove_after: v2.2.0

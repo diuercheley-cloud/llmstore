@@ -23,18 +23,18 @@ make validate-platform-architecture
 Ou diretamente:
 
 ```bash
-python3 scripts/validate_platform_architecture.py
+python3 scripts/validators/validate_platform_architecture.py
 ```
 
 ## Validacoes Executadas
 
 Quando disponiveis, a suite executa:
 
-- `scripts/validate_architecture_boundaries.py`
-- `scripts/validate_runtime_contracts.py`
-- `scripts/validate_domain_contracts.py`
-- `scripts/validate_adrs.py`
-- `scripts/validate_invariants.py`
+- `scripts/validators/validate_architecture_boundaries.py`
+- `scripts/validators/validate_runtime_contracts.py`
+- `scripts/validators/validate_domain_contracts.py`
+- `scripts/validators/validate_adrs.py`
+- `scripts/validators/validate_invariants.py`
 
 ## Comportamento
 

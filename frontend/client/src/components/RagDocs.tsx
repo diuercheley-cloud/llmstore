@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Upload, FileText, Trash2, Eye, Database, Loader2 } from 'lucide-react';
 import { Progress } from './ui-feedback';
 import { toast } from 'sonner';

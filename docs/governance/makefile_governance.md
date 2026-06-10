@@ -92,4 +92,4 @@ Policy:
 - Validation targets must remain offline-first.
 - Avoid dynamic discovery, network downloads, or host-specific branching in aggregate targets.
 - Aggregate recipes must avoid `eval`, `bash -c`, `sh -c`, and similar indirect execution patterns.
-- Validation membership must be statically auditable by `scripts/validate_makefile_governance.py`.
+- Validation membership must be statically auditable by `scripts/validators/validate_makefile_governance.py`.

@@ -11,9 +11,9 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     # Import app models and configurations inside test to respect monkeypatched DB/Session
     from app.core.config import get_settings
     from app.db.session import SessionLocal
-    from app.models.billing_invoice import BillingInvoice
-    from app.models.client import Client as DBClient
-    from app.models.payments import (
+    from app.models.billing.billing_invoice import BillingInvoice
+    from app.models.core.client import Client as DBClient
+    from app.models.billing.payments import (
         PaymentAuditEvent,
         PaymentIntent,
     )

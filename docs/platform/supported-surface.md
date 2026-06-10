@@ -3,9 +3,9 @@ owner: platform-ops
 status: consolidated
 ---
 
-# Supported Surface Areas & Lifecycle Policies
+# Supported Surface Lifecycle Policy
 
-This document defines the platform capabilities, surface area boundaries, and lifecycle classifications.
+This document defines lifecycle semantics for supported surfaces. It is policy, not inventory.
 
 ## Lifecycle Classifications
 
@@ -22,14 +22,11 @@ All APIs, UI pages, services, scripts, feature flags, adapters, dashboards, and 
 | **removed_candidate** | Dead endpoints removed from active registry. | None (Scheduled for deletion) |
 | **orphaned** | Dead code, unreferenced endpoints, unrouted pages, or unused scripts. | None (Scheduled for deletion) |
 
----
+## Source Of Truth
 
-## Core Capabilities Mapping
-
-For a structured view of all official platform capabilities, refer to the configuration file:
-- [supported-surface.yaml](file:///home/kleber/llm-inference-stack/config/supported-surface.yaml)
-
----
+- Human-readable capability status lives in [../PRODUCT_SURFACE.md](../PRODUCT_SURFACE.md).
+- Machine-readable capability status lives in `config/supported-surface.yaml`.
+- Generated API status lives in [../API_REFERENCE.md](../API_REFERENCE.md).
 
 ## Orphaned Code Remediation
 

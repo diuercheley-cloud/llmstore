@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_meta_reviewer import (
+from app.models.agents.agent_meta_reviewer import (
     AgentMetaReview,
     AgentMetaReviewDecision,
     AgentMetaReviewFinding,

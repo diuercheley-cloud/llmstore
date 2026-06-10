@@ -6,8 +6,8 @@ from typing import Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.security_pki import AttestationReport as AttestationReportDB
-from app.models.security_pki import PluginRegistry
+from app.models.core.security_pki import AttestationReport as AttestationReportDB
+from app.models.core.security_pki import PluginRegistry
 from app.services.security.hardware_trust import get_hardware_trust_provider
 from app.services.security.pki_service import PKIService
 from cryptography.hazmat.primitives import hashes

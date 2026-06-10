@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, List
 
-from app.models.agent_uncertainty import AgentEvidenceGap
+from app.models.agents.agent_uncertainty import AgentEvidenceGap
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

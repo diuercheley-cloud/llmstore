@@ -8,7 +8,7 @@ from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db_session
-from app.models.commercial_governance_federation import (
+from app.models.commercial.commercial_governance_federation import (
     CommercialGovernanceFederationPeer,
 )
 from app.services.auth import require_admin

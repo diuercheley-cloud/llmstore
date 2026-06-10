@@ -19,5 +19,5 @@ status: consolidated
 - `operations`
 
 ## Enforcement
-- `scripts/validate_dependency_graph.py`: Checks for illegal cross-domain imports.
+- `scripts/validators/validate_dependency_graph.py`: Checks for illegal cross-domain imports.
 - `tests/architecture/test_dependency_graph_hardening.py`: Validates architecture invariants.

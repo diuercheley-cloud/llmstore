@@ -46,7 +46,7 @@ This document provides a chronological index of the development phases that buil
 ### Phase 43: Public Verifier CLI
 - **Objective**: Standalone tool for offline proof verification.
 - **Key Files**: `tools/public_verifier/verifier_cli.py`.
-- **Validation**: `scripts/validate-public-verifier.sh`.
+- **Validation**: `scripts/validators/validate-public-verifier.sh`.
 
 ## Advanced Operations Phases (60-70)
 ### Phase 69: Predictive Failure Signals + Deterministic Forecasting

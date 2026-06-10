@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.core.security import hash_secret
 from app.core.time import utc_now
-from app.models.agent_mcp_oauth import (
+from app.models.agents.agent_mcp_oauth import (
     AgentMCPDelegatedGrant,
     AgentMCPOAuthClient,
     AgentMCPScopePolicy,

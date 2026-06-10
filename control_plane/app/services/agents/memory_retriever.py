@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import AgentMemoryItem
+from app.models.agents.agents import AgentMemoryItem
 from app.services.agents.memory_consent import MemoryConsentService
 from app.services.agents.memory_indexing import MemoryIndexingService
 from app.services.agents.memory_policy import MemoryPolicyService
@@ -104,7 +104,7 @@ class MemoryRetriever:
 
             score = 1.0
             if semantic and item.id:
-                from app.models.agents import AgentMemoryIndex
+                from app.models.agents.agents import AgentMemoryIndex
                 from sqlalchemy.future import select
                 stmt = select(AgentMemoryIndex).where(
                     AgentMemoryIndex.memory_item_id == item.id,

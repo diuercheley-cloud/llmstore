@@ -5,7 +5,7 @@ from typing import Optional
 from app.api.deps import get_db as get_async_db
 from app.api.deps import require_admin
 from app.core.config import Settings, get_settings
-from app.models.agent_tool_synthesis import (
+from app.models.agents.agent_tool_synthesis import (
     AgentCodeInterpreterRun,
     AgentSandboxArtifact,
 )

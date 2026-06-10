@@ -62,4 +62,4 @@ Defines the interface for model runtime management (hot-swap, loading/unloading)
 
 ## Testing
 
-Contract implementations are verified in `tests/contracts/`. Any new implementation of a contract must pass these tests.
+Contract implementations are verified in `tests/integration/contracts/`. Any new implementation of a contract must pass these tests.

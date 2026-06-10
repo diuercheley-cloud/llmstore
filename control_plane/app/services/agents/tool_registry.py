@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentTool,
     AgentToolPermission,
     AgentToolSafetyReview,

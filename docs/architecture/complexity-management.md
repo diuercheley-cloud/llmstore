@@ -24,7 +24,7 @@ The platform complexity analyzer gathers static metrics across the following vec
 
 2. **Core Logic**:
    - **Services**: Classes and methods containing domain logic.
-   - **Test Gaps**: Services lacking corresponding test modules under `control_plane/tests/`.
+   - **Test Gaps**: Services lacking corresponding test modules under `tests/control_plane/`.
 
 3. **Data Schemas**:
    - **Database Models**: SQLAlchemy classes subclassing `Base`.

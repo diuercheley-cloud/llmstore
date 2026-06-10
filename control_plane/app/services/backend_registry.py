@@ -1,7 +1,7 @@
 import json
 
 from app.core.config import get_settings
-from app.models.inference_backend import InferenceBackend
+from app.models.core.inference_backend import InferenceBackend
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

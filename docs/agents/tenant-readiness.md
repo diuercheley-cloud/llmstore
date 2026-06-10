@@ -62,5 +62,5 @@ O relatório completo pode ser obtido via:
 Administradores podem rodar o diagnóstico via terminal:
 
 ```bash
-./scripts/tenant-agentic-readiness.sh <tenant_id>
+./scripts/dev/tenant-agentic-readiness.sh <tenant_id>
 ```

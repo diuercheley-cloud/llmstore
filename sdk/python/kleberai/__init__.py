@@ -1,3 +1,5 @@
+__version__ = "0.2.1"
+
 from .admin import AdminAPI
 from .agents import AdminAgentsAPI, AgentEvalsAPI, AgentsAPI
 from .client import Client, KleberAIError

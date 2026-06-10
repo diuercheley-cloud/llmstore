@@ -2,12 +2,12 @@
 import uuid
 from typing import List
 
-from app.models.agent_cognitive_loopback import (
+from app.models.agents.agent_cognitive_loopback import (
     AgentFeedbackEvent,
     AgentLearningCandidate,
     AgentSuccessPattern,
 )
-from app.models.agents import AgentRun
+from app.models.agents.agents import AgentRun
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

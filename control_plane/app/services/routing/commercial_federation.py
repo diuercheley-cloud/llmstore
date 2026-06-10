@@ -11,10 +11,10 @@ from typing import Any
 import httpx
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
-from app.models.commercial_cluster_aggregate import CommercialClusterAggregate
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
-from app.models.commercial_cluster_sync_log import CommercialClusterSyncLog
-from app.models.commercial_federated_aggregate import CommercialFederatedAggregate
+from app.models.commercial.commercial_cluster_aggregate import CommercialClusterAggregate
+from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.commercial.commercial_cluster_sync_log import CommercialClusterSyncLog
+from app.models.commercial.commercial_federated_aggregate import CommercialFederatedAggregate
 from app.services.routing.commercial_cluster_registry import (
     ensure_local_cluster_registered,
     list_clusters,

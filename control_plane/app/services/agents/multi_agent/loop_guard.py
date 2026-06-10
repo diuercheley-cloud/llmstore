@@ -2,7 +2,7 @@
 import logging
 import uuid
 
-from app.models.multi_agent import AgentTeamDelegation
+from app.models.agents.multi_agent import AgentTeamDelegation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

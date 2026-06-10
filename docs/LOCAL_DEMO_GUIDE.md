@@ -15,7 +15,7 @@ Demonstrar a soberania de dados, facilidade de implantação, portal do cliente,
 Para validar o fluxo completo da demonstracao comercial (seed, validacao, meeting-ready, APIs, propostas, orcamentos, relatorios):
 
 ```bash
-./scripts/validate-commercial-demo-e2e-local.sh --seed-demo
+./scripts/validators/validate-commercial-demo-e2e-local.sh --seed-demo
 ```
 
 Flags disponiveis: `--skip-tts`, `--skip-rag`, `--reset-first`, `--base-url`.
@@ -39,11 +39,11 @@ Isso gerará um relatório em `artifacts/pre-client-checklists/` validando saúd
 ## Como subir o sistema
 1. Inicie a stack em modo de produção local:
    ```bash
-   ./scripts/local-production-up.sh
+   ./scripts/dev/local-production-up.sh
    ```
 2. Verifique se as interfaces estão acessíveis:
    ```bash
-   ./scripts/ui-health.sh
+   ./scripts/dev/ui-health.sh
    ```
 
 ## Matriz de Planos Comerciais
@@ -55,13 +55,13 @@ O sistema agora suporta 4 planos padrão com limites automatizados:
 
 Para carregar os planos comerciais:
 ```bash
-./scripts/seed-commercial-plans-local.sh
+./scripts/dev/seed-commercial-plans-local.sh
 ```
 
 ## Como carregar dados demo
 O projeto inclui um script que provisiona automaticamente um cliente, plano, chaves de API, uso sintético e documentos RAG:
 ```bash
-./scripts/seed-demo-local.sh
+./scripts/dev/seed-demo-local.sh
 ```
 Este script salva as credenciais do cliente demo em `.local/demo-client.env`.
 
@@ -128,19 +128,19 @@ Demonstre como o sistema lida com faturamento sem precisar de um PSP (Stripe/Asa
 2. Veja a fatura `pending`.
 3. Simule o registro de pagamento manual:
    ```bash
-   ./scripts/mark-invoice-paid.sh <UUID_DA_FATURA> local-manual-ref-001
+   ./scripts/dev/mark-invoice-paid.sh <UUID_DA_FATURA> local-manual-ref-001
    ```
 4. Observe o status mudar para `paid` no portal do cliente.
 
 ## Observabilidade
 Mostre o Grafana (se habilitado) ou as métricas brutas:
 - **Métricas**: `http://localhost:18080/metrics`
-- **Grafana**: `http://localhost:3001` (requer `./scripts/up.sh` com profile observability)
+- **Grafana**: `http://localhost:3001` (requer `./scripts/deploy/up.sh` com profile observability)
 
 ## Como resetar a demo
 Para limpar todos os dados criados e voltar ao estado inicial:
 ```bash
-./scripts/reset-demo-local.sh --yes
+./scripts/dev/reset-demo-local.sh --yes
 ```
 
 ## Demo Pack Comercial
@@ -188,13 +188,13 @@ O reset agora possui protecoes para evitar perda de dados reais:
 make reset-demo-pack
 
 # Ver o que seria apagado (seguro)
-./scripts/reset-commercial-demo-pack.sh --dry-run
+./scripts/dev/reset-commercial-demo-pack.sh --dry-run
 
 # Reset real (exige confirmacao)
-./scripts/reset-commercial-demo-pack.sh --yes
+./scripts/dev/reset-commercial-demo-pack.sh --yes
 
 # Reset com limpeza completa (RAG, TTS, faturas, uso)
-./scripts/reset-commercial-demo-pack.sh --yes --include-rag --include-tts --include-invoices --include-usage
+./scripts/dev/reset-commercial-demo-pack.sh --yes --include-rag --include-tts --include-invoices --include-usage
 
 # Validar seguranca do reset
 make validate-reset-demo-pack

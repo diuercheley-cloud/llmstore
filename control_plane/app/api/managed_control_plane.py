@@ -43,7 +43,7 @@ async def create_organization(
 async def list_organizations(
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.managed_control_plane import ManagedOrganization
+    from app.models.core.managed_control_plane import ManagedOrganization
     from sqlalchemy import select
     
     stmt = select(ManagedOrganization)
@@ -65,7 +65,7 @@ async def list_workspaces(
     organization_id: Optional[uuid.UUID] = None,
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.managed_control_plane import ManagedWorkspace
+    from app.models.core.managed_control_plane import ManagedWorkspace
     from sqlalchemy import select
     
     stmt = select(ManagedWorkspace)

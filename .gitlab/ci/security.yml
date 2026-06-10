@@ -2,7 +2,7 @@ security:scan:
   stage: security
   image: python:3.10
   script:
-    - bash scripts/check-secrets.sh --all
+    - bash scripts/validators/check-secrets.sh --all
     - pip install safety
     - safety check -r control_plane/requirements.txt
     - make security

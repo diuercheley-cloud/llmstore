@@ -6,8 +6,8 @@ import uuid
 from typing import List, Optional
 
 from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.sales_lead import SalesLead, SalesLeadNote
+from app.models.core.client import Client
+from app.models.commercial.sales_lead import SalesLead, SalesLeadNote
 from app.schemas.sales import (
     LeadAdvanceStage,
     QuotePreviewRequest,
@@ -211,11 +211,11 @@ async def monthly_report_preview(
 ):
     from datetime import date
 
-    from app.models.billing_invoice import BillingInvoice
-    from app.models.billing_plan import BillingPlan
-    from app.models.quota_counter import QuotaCounter
-    from app.models.request_log import RequestLog
-    from app.models.usage_record import UsageRecord
+    from app.models.billing.billing_invoice import BillingInvoice
+    from app.models.billing.billing_plan import BillingPlan
+    from app.models.core.quota_counter import QuotaCounter
+    from app.models.core.request_log import RequestLog
+    from app.models.core.usage_record import UsageRecord
     from app.services.rag_usage import get_rag_usage_and_limits
 
     # Parse month

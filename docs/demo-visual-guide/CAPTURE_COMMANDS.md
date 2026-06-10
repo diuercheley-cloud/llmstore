@@ -8,7 +8,7 @@ status: consolidated
 ## Captura Automática (Recomendado)
 
 ```bash
-./scripts/prepare-demo-screenshots-local.sh
+./scripts/dev/prepare-demo-screenshots-local.sh
 ```
 
 O script detecta automaticamente se Playwright/Chromium está disponível e captura todas as telas.
@@ -69,8 +69,8 @@ curl -s -X POST "http://localhost:18080/pocket-tts/tts" \
 ### Relatórios (Saída em Arquivo)
 
 ```bash
-./scripts/security-report-local.sh 2>&1 | tee artifacts/demo-screenshots/security-report.txt
-./scripts/production-readiness-local.sh 2>&1 | tee artifacts/demo-screenshots/production-readiness.txt
+./scripts/validators/security-report-local.sh 2>&1 | tee artifacts/demo-screenshots/security-report.txt
+./scripts/dev/production-readiness-local.sh 2>&1 | tee artifacts/demo-screenshots/production-readiness.txt
 make meeting-ready 2>&1 | tee artifacts/demo-screenshots/meeting-ready.txt
 make generate-proposal COMPANY_NAME="Cliente Demo" 2>&1 | tee artifacts/demo-screenshots/proposal-generation.txt
 ```

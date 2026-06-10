@@ -57,7 +57,7 @@ VALIDATION_MODE=full  make validate-architecture-full
 
 1. Tests taking >30s are candidates for `@pytest.mark.slow`.
 2. Slow tests must be excluded from smoke runs.
-3. Use `scripts/list_slow_tests.py` to identify candidates.
+3. Use `scripts/dev/list_slow_tests.py` to identify candidates.
 4. Do not delete slow tests — segregate them behind the smoke/full boundary.
 
 ## Policy for Not Masking Failures

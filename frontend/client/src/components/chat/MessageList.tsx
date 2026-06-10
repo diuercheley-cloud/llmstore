@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { User, Bot, Terminal, Database } from 'lucide-react';
+import { User, Bot, Terminal } from 'lucide-react';
 import type { SessionMessage, ToolActivityItem } from '../../lib/types';
 import { StreamingMessage } from './StreamingMessage';
 
@@ -61,7 +61,7 @@ export function MessageList({ messages, streamingContent, streamActivity, isStre
               </div>
               
               {/* If it's a message from tool or has specific metadata, we could show it here */}
-              {msg.metadata?.tool_calls && (
+              {!!msg.metadata?.tool_calls && (
                 <div className="mt-4 p-3 rounded-lg bg-indigo-50/50 border border-indigo-100 flex items-center gap-3">
                   <Terminal size={14} className="text-indigo-500" />
                   <span className="text-xs font-medium text-indigo-700">Tool execution completed</span>

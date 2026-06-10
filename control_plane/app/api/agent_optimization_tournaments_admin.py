@@ -4,7 +4,7 @@ from typing import List
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
-from app.models.agent_optimization_tournament import (
+from app.models.agents.agent_optimization_tournament import (
     AgentOptimizationPairwiseResult,
     AgentOptimizationTournament,
     AgentOptimizationTournamentCandidate,

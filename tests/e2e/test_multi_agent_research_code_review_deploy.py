@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
+from app.models.agents.agents import AgentDefinition, AgentRun
 from app.services.agents.code_interpreter.code_interpreter import CodeInterpreter
 from app.services.agents.code_interpreter.sandbox_artifacts import SandboxArtifactService
 from app.services.agents.human_approval import approve_approval_request, create_approval_request

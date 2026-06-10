@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from app.models.agent_routing import (
+from app.models.agents.agent_routing import (
     AgentCostQualityProfile,
     AgentModelCapability,
     AgentRoutingPolicy,

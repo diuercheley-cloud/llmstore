@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session, require_admin
-from app.models.agents import AgentMemoryAccessEvent, AgentMemoryItem
+from app.models.agents.agents import AgentMemoryAccessEvent, AgentMemoryItem
 from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.memory_consent import MemoryConsentService
 from app.services.agents.memory_policy import MemoryPolicyService

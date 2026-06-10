@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.models.commercial_federated_workflows import (
+from app.models.commercial.commercial_federated_workflows import (
     CommercialFederatedWorkflowExecution,
     CommercialWorkflowReplayFederationReport,
 )
-from app.models.commercial_sovereign_governance import CommercialOfflineRevocationList
-from app.models.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
+from app.models.commercial.commercial_sovereign_governance import CommercialOfflineRevocationList
+from app.models.commercial.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
 from app.services.workflows.federated_execution import sign_federated_payload
 from app.services.workflows.workflow_provenance import (
     canonical_json,

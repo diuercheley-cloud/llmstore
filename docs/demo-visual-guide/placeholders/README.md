@@ -33,14 +33,14 @@ placeholders/
 
 ## Geração de Placeholders SVG
 
-Use o script `scripts/prepare-demo-screenshots-local.sh` com a flag `--placeholders-only` para gerar SVGs simples que representam cada tela.
+Use o script `scripts/dev/prepare-demo-screenshots-local.sh` com a flag `--placeholders-only` para gerar SVGs simples que representam cada tela.
 
 ## Validação
 
 ```bash
 # Verificar se placeholders não contêm secrets
-./scripts/validate-demo-visual-guide.sh
+./scripts/validators/validate-demo-visual-guide.sh
 
 # Verificar secrets em todo o repositório
-./scripts/check-secrets.sh --all
+./scripts/validators/check-secrets.sh --all
 ```

@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_capacity import (
+from app.models.commercial.commercial_capacity import (
     CommercialAutoscalingRecommendation,
     CommercialCapacityForecast,
 )

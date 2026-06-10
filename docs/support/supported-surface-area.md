@@ -1,22 +1,35 @@
-# Supported Surface Area - Agentic AI Platform
+# Supported Surface Area
 
-## Graduate Capabilities (v2.2.0-GA-Hardening)
+This document defines how support claims are made. It does not enumerate capability status manually.
 
-The following capabilities have been hardened and promoted to higher support tiers.
+## Source Of Truth
 
-| Capability | Status | Support Level | Readiness |
-|------------|--------|---------------|-----------|
-| Agent Code Sandbox | production_optional | production | GA Hardening |
-| Agent Memory (RTBF) | production_core | production | Production |
-| Agent Marketplace | production_core | production | Supply Chain GA |
-| MCP client/server | beta | pilot | Policy Enforcement |
-| Multi-Agent Topologies| beta | pilot | Governance GA |
+- Capability status and support level live in [../PRODUCT_SURFACE.md](../PRODUCT_SURFACE.md).
+- The underlying machine-readable source is `config/supported-surface.yaml`.
+- `README.md`, this page, and `docs/platform/supported-surface.md` must not restate per-capability status lists manually.
 
-## Readiness Criteria for production_core
+## Readiness Criteria
+
+### `production_core`
+
 1. **No Mocking**: Simulated success paths are blocked in production environments.
 2. **Policy Enforcement**: Comprehensive tenant isolation and RBAC.
 3. **Audit Trail**: Every critical action generates a persistent audit event.
-4. **Verified Logic**: Automated test suites (`make *-ga-test`) covering compliance and security.
+4. **Verified Logic**: Automated test suites cover compliance and security.
 5. **Documentation**: Clear operational and security guides.
 
-Refer to `config/supported-surface.yaml` for the complete list of capabilities and their current status.
+### `production_optional`
+
+Production-quality capability, but still opt-in and expected to ship behind explicit flags or profiles.
+
+### `beta`
+
+Feature-complete but still evolving. Suitable for pilot evaluation, not an unconditional production claim.
+
+### `experimental`
+
+Early-stage surface. No production claim.
+
+### `deprecated`
+
+Supported only for migration or historical compatibility until removal.

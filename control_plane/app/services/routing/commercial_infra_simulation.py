@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+from app.models.commercial.commercial_infra_simulation import CommercialInfrastructureSimulation
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

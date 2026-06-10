@@ -3,8 +3,8 @@ import logging
 from datetime import datetime, timedelta, UTC
 from typing import List
 
-from app.models.commercial_predictive_aiops import CommercialAnomalySignal
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricEvent
+from app.models.commercial.commercial_predictive_aiops import CommercialAnomalySignal
+from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

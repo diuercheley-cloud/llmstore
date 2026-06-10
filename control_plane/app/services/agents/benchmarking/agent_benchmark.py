@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 from app.core.time import utc_now
-from app.models.agent_benchmarks import AgentBenchmarkResult, AgentBenchmarkRun
+from app.models.agents.agent_benchmarks import AgentBenchmarkResult, AgentBenchmarkRun
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

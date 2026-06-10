@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Dict, List, Optional
 
-from app.models.prompts import PromptTemplate, PromptTemplateVersion
+from app.models.agents.prompts import PromptTemplate, PromptTemplateVersion
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

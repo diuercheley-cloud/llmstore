@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing_invoice import BillingInvoice
-from app.models.payments import PaymentAuditEvent, PaymentIntent, PaymentProcessingWebhookEvent
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.billing.payments import PaymentAuditEvent, PaymentIntent, PaymentProcessingWebhookEvent
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

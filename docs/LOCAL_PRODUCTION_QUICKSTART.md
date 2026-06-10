@@ -18,7 +18,7 @@ Versão curta para subir e testar o ambiente rapidamente.
 
 ## 1. Subir a Stack
 ```bash
-./scripts/local-production-up.sh
+./scripts/dev/local-production-up.sh
 ```
 Aguarde até ver a mensagem `--- LOCAL PRODUCTION READY ---`.
 
@@ -31,7 +31,7 @@ make validate-local-production
 Use a API Key gerada no passo 1 (veja no console):
 ```bash
 export API_KEY=sk-local-...
-./scripts/test-chat.sh
+./scripts/dev/test-chat.sh
 ```
 
 ## 4. Acessar UIs

@@ -2,7 +2,7 @@
 import uuid
 from typing import Tuple
 
-from app.models.agent_federated_memory import FederatedMemoryPeer
+from app.models.agents.agent_federated_memory import FederatedMemoryPeer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

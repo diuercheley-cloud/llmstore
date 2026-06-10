@@ -6,8 +6,8 @@ from typing import Any, AsyncGenerator, Dict, Optional
 import httpx
 import jwt
 from app.core.config import get_settings
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
-from app.models.commercial_cross_cluster_forwarding_event import (
+from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.commercial.commercial_cross_cluster_forwarding_event import (
     CommercialCrossClusterForwardingEvent,
 )
 from fastapi import Request, Response

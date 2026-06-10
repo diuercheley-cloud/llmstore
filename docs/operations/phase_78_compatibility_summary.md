@@ -15,11 +15,11 @@ status: consolidated
 - Added Phase 78 docs, validation script, tests, and `Makefile` target.
 
 ## Validations Executed
-- `python3 scripts/validate_phase_78_compatibility_contracts.py`
+- `python3 scripts/validators/validate_phase_78_compatibility_contracts.py`
 - `make validate-phase-78-compatibility-contracts`
 
 ## Tests Executed
-- `./.venv/bin/python -m pytest tests/operations/test_compatibility_models.py tests/operations/test_compatibility_hash_utils.py tests/operations/test_semantic_versioning.py tests/operations/test_compatibility_matrix.py tests/operations/test_version_negotiation.py tests/operations/test_capability_negotiation.py tests/operations/test_deprecation_lifecycle.py tests/operations/test_compatibility_verification.py tests/operations/test_compatibility_receipts.py tests/operations/test_compatibility_audit_events.py tests/operations/test_compatibility_api.py tests/operations/test_compatibility_dashboard.py tests/operations/test_phase_78_validation.py -q --tb=short`
+- `./.venv/bin/python -m pytest tests/integration/operations/test_compatibility_models.py tests/integration/operations/test_compatibility_hash_utils.py tests/integration/operations/test_semantic_versioning.py tests/integration/operations/test_compatibility_matrix.py tests/integration/operations/test_version_negotiation.py tests/integration/operations/test_capability_negotiation.py tests/integration/operations/test_deprecation_lifecycle.py tests/integration/operations/test_compatibility_verification.py tests/integration/operations/test_compatibility_receipts.py tests/integration/operations/test_compatibility_audit_events.py tests/integration/operations/test_compatibility_api.py tests/integration/operations/test_compatibility_dashboard.py tests/integration/operations/test_phase_78_validation.py -q --tb=short`
 - Result: `17 passed`
 
 ## Problems Found And Corrected

@@ -14,14 +14,14 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing_invoice import BillingInvoice
-from app.models.client import Client
-from app.models.commercial_audit_portal import (
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.core.client import Client
+from app.models.commercial.commercial_audit_portal import (
     CommercialPortalAuditAccessLog,
     CommercialPortalSavedReport,
 )
-from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial_compliance import (
+from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
+from app.models.commercial.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlAttestation,
     CommercialControlException,
@@ -32,9 +32,9 @@ from app.models.commercial_compliance import (
     CommercialOperationalExceptionLink,
     CommercialOperationalReview,
 )
-from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
-from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial.commercial_financial_audit_event import CommercialFinancialAuditEvent
+from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
 from app.services.routing.commercial_report_export import (
     SECRET_VALUE_PATTERNS,
     sanitize_report_payload,

@@ -4,7 +4,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityEvent,
     CommercialModelIntegrityScan,
     CommercialModelPromotionBundle,
@@ -13,7 +13,7 @@ from app.models.commercial_model_supply_chain import (
     CommercialRuntimeModelAttestation,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.model_registry import ModelRegistry
+from app.models.core.model_registry import ModelRegistry
 from app.services.auth import require_admin
 from app.services.models.model_promotion_bundles import (
     create_model_promotion_bundle,

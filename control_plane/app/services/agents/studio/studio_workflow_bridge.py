@@ -2,8 +2,8 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
-from app.models.agent_workflows import AgentWorkflowRun
+from app.models.agents.agent_studio import AgentFlowDefinition, AgentFlowVersion
+from app.models.agents.agent_workflows import AgentWorkflowRun
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_validator import FlowValidator
 from app.services.agents.workflows.workflow_dag import WorkflowDAG
@@ -35,7 +35,7 @@ class StudioWorkflowBridge:
             raise ValueError("Flow not found or access denied")
 
         # Get active version
-        from app.models.agent_studio import AgentFlowVersion
+        from app.models.agents.agent_studio import AgentFlowVersion
         from sqlalchemy import select
         stmt = select(AgentFlowVersion).where(
             AgentFlowVersion.flow_id == flow_id,
@@ -55,7 +55,7 @@ class StudioWorkflowBridge:
         plan = self.compiler.compile(version)
 
         # Create workflow definition from flow
-        from app.models.agent_workflows import AgentWorkflowDefinition
+        from app.models.agents.agent_workflows import AgentWorkflowDefinition
         wf_def = AgentWorkflowDefinition(
             name=flow.name,
             tenant_id=tenant_id,

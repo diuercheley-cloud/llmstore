@@ -102,7 +102,7 @@ async def list_approval_requests(
     """List all approval requests, filtering by status with limit and offset."""
     await check_all_expired_requests(db)
 
-    from app.models.agents import AgentApprovalRequest
+    from app.models.agents.agents import AgentApprovalRequest
     from sqlalchemy import select
 
     stmt = select(AgentApprovalRequest)
@@ -123,7 +123,7 @@ async def get_approval_request(
     caller_role: AdminRole = Depends(require_admin_role(AdminRole.READ)),
 ):
     """Retrieve details of a specific approval request, checking for expiration on the fly."""
-    from app.models.agents import AgentApprovalRequest
+    from app.models.agents.agents import AgentApprovalRequest
     from sqlalchemy import select
 
     stmt = select(AgentApprovalRequest).where(AgentApprovalRequest.id == id)

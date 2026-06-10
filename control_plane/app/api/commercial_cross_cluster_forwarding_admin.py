@@ -38,7 +38,7 @@ async def reset_circuit_breaker(cluster_id: str, admin=Depends(get_admin_user)):
 
 @router.post("/test")
 async def test_forwarding(cluster_id: str, request: Request, admin=Depends(get_admin_user), session: AsyncSession=Depends(get_db)):
-    from app.models.commercial_cluster_registry import CommercialClusterRegistry
+    from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
     from sqlalchemy import select
     res = await session.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == cluster_id))
     cluster = res.scalar_one_or_none()

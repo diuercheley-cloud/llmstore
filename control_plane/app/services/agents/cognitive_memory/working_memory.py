@@ -2,7 +2,7 @@
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.agents import AgentMemoryItem
+from app.models.agents.agents import AgentMemoryItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

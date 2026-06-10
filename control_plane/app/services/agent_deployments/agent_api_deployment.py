@@ -6,8 +6,8 @@ from typing import Optional
 
 from app.core.security import hash_secret
 from app.core.time import utc_now
-from app.models.agent_deployments import AgentApiDeployment, AgentApiEndpointKey
-from app.models.agents import AgentDefinition
+from app.models.agents.agent_deployments import AgentApiDeployment, AgentApiEndpointKey
+from app.models.agents.agents import AgentDefinition
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

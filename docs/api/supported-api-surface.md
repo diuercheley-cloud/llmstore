@@ -3,9 +3,9 @@ owner: platform-ops
 status: consolidated
 ---
 
-# Supported API Surface Document
+# Supported API Surface
 
-This document outlines the API surface classifications for the `llm-inference-stack` platform, establishing clear support levels for all client and administrative endpoints.
+This document defines API lifecycle semantics. The endpoint inventory itself is generated in [../API_REFERENCE.md](../API_REFERENCE.md), while capability-level production claims remain governed by [../PRODUCT_SURFACE.md](../PRODUCT_SURFACE.md).
 
 ## API Classifications
 
@@ -34,8 +34,6 @@ The platform divides its routes into governance categories:
 6. **`removed_candidate`**:
    - Dead endpoints that have been removed from the active registry and no longer exist in the codebase.
    - Example: Unreferenced legacy beta endpoints.
-
----
 
 ## Response Headers
 

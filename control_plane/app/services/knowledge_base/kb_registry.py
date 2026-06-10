@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Dict, List, Optional
 
-from app.models.knowledge_base import KBDocument, KBDocumentVersion, KnowledgeBase
+from app.models.rag.knowledge_base import KBDocument, KBDocumentVersion, KnowledgeBase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

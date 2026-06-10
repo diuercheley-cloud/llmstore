@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List
 
-from app.models.agent_studio import AgentFlowVersion
+from app.models.agents.agent_studio import AgentFlowVersion
 
 logger = logging.getLogger(__name__)
 

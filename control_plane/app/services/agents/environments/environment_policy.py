@@ -1,8 +1,8 @@
 import logging
 from typing import Optional
 
-from app.models.agent_environments import AgentPromotionRequest
-from app.models.agents import AgentDefinition, AgentEvalBaseline, AgentEvalGateResult
+from app.models.agents.agent_environments import AgentPromotionRequest
+from app.models.agents.agents import AgentDefinition, AgentEvalBaseline, AgentEvalGateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,7 +39,7 @@ class EnvironmentPolicyService:
             return False, "Agent definition version not found."
 
         # Resolve registry entry first
-        from app.models.agents import AgentRegistryEntry
+        from app.models.agents.agents import AgentRegistryEntry
         stmt_reg = select(AgentRegistryEntry).where(
             (AgentRegistryEntry.id == agent_uuid) | (AgentRegistryEntry.agent_id == agent_uuid)
         )

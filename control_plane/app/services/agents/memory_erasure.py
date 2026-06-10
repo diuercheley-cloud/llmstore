@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Optional
 
-from app.models.agents import AgentMemoryItem
+from app.models.agents.agents import AgentMemoryItem
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

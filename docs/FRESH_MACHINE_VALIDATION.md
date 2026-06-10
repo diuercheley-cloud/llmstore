@@ -94,13 +94,13 @@ grep MODEL_FILE .env.local
 
 ```bash
 # Dry-run primeiro
-./scripts/install-local-appliance.sh --dry-run
+./scripts/deploy/install-local-appliance.sh --dry-run
 
 # Instalação completa (com demo data)
-./scripts/install-local-appliance.sh --with-demo
+./scripts/deploy/install-local-appliance.sh --with-demo
 
 # Ou em modo headless
-./scripts/install-local-appliance.sh --yes --with-demo --gpu
+./scripts/deploy/install-local-appliance.sh --yes --with-demo --gpu
 ```
 
 ## Como rodar make customer-demo
@@ -126,7 +126,7 @@ make security
 make readiness
 
 # Fresh machine readiness check
-./scripts/fresh-machine-readiness-check.sh
+./scripts/validators/fresh-machine-readiness-check.sh
 ```
 
 ## Como coletar logs
@@ -140,7 +140,7 @@ docker compose logs control-plane
 docker compose logs data-plane-gemma
 
 # Fresh machine check report
-./scripts/fresh-machine-readiness-check.sh --dry-run --output-dir artifacts/fresh-machine-check
+./scripts/validators/fresh-machine-readiness-check.sh --dry-run --output-dir artifacts/fresh-machine-check
 ```
 
 ## Troubleshooting

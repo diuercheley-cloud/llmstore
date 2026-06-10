@@ -3,7 +3,7 @@ from datetime import date
 from uuid import UUID
 
 from app.core.config import get_settings
-from app.models.request_financial import RequestFinancial
+from app.models.billing.request_financial import RequestFinancial
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

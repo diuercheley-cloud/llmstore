@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agents import AgentA2ARegistration, AgentDefinition
+from app.models.agents.agents import AgentA2ARegistration, AgentDefinition
 from app.services.agents.a2a.a2a_security import A2ASecurityService
 from fastapi import HTTPException
 from sqlalchemy import func as sa_func

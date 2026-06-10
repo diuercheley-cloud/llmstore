@@ -28,7 +28,7 @@ Consulte o catálogo completo em [docs/OPERATOR_ERROR_CODES.md](OPERATOR_ERROR_C
 
 ## 2. Porta 18080 Ocupada
 - **Sintoma:** O proxy (Caddy/Nginx) falha ao inicializar informando "bind: address already in use".
-- **Solução:** Outro serviço na sua máquina está utilizando a porta 18080. Você pode parar o serviço concorrente ou alterar a porta no assistente de instalação (`./scripts/configure-local-wizard.sh`).
+- **Solução:** Outro serviço na sua máquina está utilizando a porta 18080. Você pode parar o serviço concorrente ou alterar a porta no assistente de instalação (`./scripts/dev/configure-local-wizard.sh`).
 
 ## 3. Modelo não encontrado
 - **Sintoma:** As requisições de chat falham com erro de que o modelo especificado não pôde ser carregado.
@@ -60,7 +60,7 @@ Consulte o catálogo completo em [docs/OPERATOR_ERROR_CODES.md](OPERATOR_ERROR_C
 
 ## 10. Security Report Warning
 - **Sintoma:** O comando `make security` aponta falhas ou alertas.
-- **Solução:** Analise o log do reporte (ex. `scripts/parse-security-report-local.sh`). Alertas de arquivos soltos ou permissões excessivas (ex: `chmod 777`) devem ser corrigidos na máquina host.
+- **Solução:** Analise o log do reporte (ex. `scripts/validators/parse-security-report-local.sh`). Alertas de arquivos soltos ou permissões excessivas (ex: `chmod 777`) devem ser corrigidos na máquina host.
 
 ## 11. Fresh Machine Validation Failed
 

@@ -287,7 +287,7 @@ async def get_agent_lineage(
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin)
 ) -> Dict[str, Any]:
-    from app.models.agents import AgentLifecycleEvent, AgentVersion
+    from app.models.agents.agents import AgentLifecycleEvent, AgentVersion
     
     # 1. Fetch lifecycle events
     stmt_events = select(AgentLifecycleEvent).where(

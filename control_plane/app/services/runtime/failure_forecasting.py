@@ -3,10 +3,10 @@ import logging
 from datetime import datetime, UTC
 from typing import Any, List, Optional
 
-from app.models.commercial_predictive_aiops import (
+from app.models.commercial.commercial_predictive_aiops import (
     CommercialFailurePrediction,
 )
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
+from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricHealth
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

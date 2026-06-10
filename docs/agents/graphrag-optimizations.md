@@ -225,7 +225,7 @@ No API changes. Existing callers of `GraphStore` automatically get:
 Benchmark results are written to `artifacts/benchmarks/graphrag-dense-graph-benchmark.md` when the performance test suite runs.
 
 ```bash
-pytest tests/services/test_graphrag_optimizations.py -m performance -v
+pytest tests/unit/services/test_graphrag_optimizations.py -m performance -v
 ```
 
 Expected (SQLite in CI, depth=2, fan_out=20):

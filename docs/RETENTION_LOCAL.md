@@ -52,37 +52,37 @@ No fluxo de readiness:
 
 - O probe autenticado de TTS remove o `.wav` temporário após a validação.
 - Áudio temporário deve continuar em `artifacts/` ou outra área ignorada pelo Git.
-- O check dedicado `./scripts/validate-tts-readiness-local.sh` confirma que não sobra `.wav` versionável.
+- O check dedicado `./scripts/validators/validate-tts-readiness-local.sh` confirma que não sobra `.wav` versionável.
 
 ## 3. Como Executar
 
 ### Dry Run (Simulação)
 Sempre recomendado antes de executar a limpeza real:
 ```bash
-./scripts/retention-local.sh --dry-run --section all
+./scripts/backup/retention-local.sh --dry-run --section all
 ```
 
 ### Execução Real
 ```bash
-./scripts/retention-local.sh --yes --section all
+./scripts/backup/retention-local.sh --yes --section all
 ```
 
 ### Limpeza Seletiva
 Você pode limpar apenas seções específicas:
 ```bash
-./scripts/retention-local.sh --section logs
-./scripts/retention-local.sh --section tts --older-than-days 1
+./scripts/backup/retention-local.sh --section logs
+./scripts/backup/retention-local.sh --section tts --older-than-days 1
 ```
 
 Para uma limpeza focada em segurança (redação de dados sensíveis ou limpeza de relatórios de segurança), utilize:
 ```bash
-./scripts/clean-sensitive-artifacts-local.sh --help
+./scripts/backup/clean-sensitive-artifacts-local.sh --help
 ```
 
 ### Limpeza de Cliente Específico
 Útil para RAG e TTS:
 ```bash
-./scripts/retention-local.sh --section rag --client-id <UUID> --yes
+./scripts/backup/retention-local.sh --section rag --client-id <UUID> --yes
 ```
 
 ## 4. Relatórios

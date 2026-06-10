@@ -47,6 +47,14 @@ export function CardTitle({ className, children, ...props }: HTMLAttributes<HTML
   );
 }
 
+export function CardDescription({ className, children, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p className={cn("text-sm leading-relaxed text-muted-foreground", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
 export function CardContent({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn("", className)} {...props}>

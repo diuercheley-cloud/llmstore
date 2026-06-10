@@ -2,8 +2,8 @@
 import uuid
 from typing import Any, Dict
 
-from app.models.agent_debugger import AgentDebugReplay, AgentRunSnapshot
-from app.models.agents import AgentRun
+from app.models.agents.agent_debugger import AgentDebugReplay, AgentRunSnapshot
+from app.models.agents.agents import AgentRun
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

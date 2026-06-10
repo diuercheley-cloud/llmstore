@@ -10,7 +10,7 @@ import uuid
 from typing import List
 
 from app.core.config import get_settings
-from app.models.agents import AgentMemoryIndex, AgentMemoryItem, AgentMemorySearchEvent
+from app.models.agents.agents import AgentMemoryIndex, AgentMemoryItem, AgentMemorySearchEvent
 from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select

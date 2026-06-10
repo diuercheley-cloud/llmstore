@@ -4,7 +4,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.knowledge_base import KBChunk, KBIngestionJob
+from app.models.rag.knowledge_base import KBChunk, KBIngestionJob
 from app.services.knowledge_base.chunker import KBChunker
 from app.services.knowledge_base.kb_registry import KBRegistry
 from app.services.knowledge_base.pdf_ingestor import PDFIngestor

@@ -29,7 +29,7 @@ import uuid
 from collections import deque
 from typing import Any
 
-from app.models.agent_knowledge_graph import (
+from app.models.agents.agent_knowledge_graph import (
     AgentKGEntity,
     AgentKGExtractionRun,
     AgentKGQueryEvent,

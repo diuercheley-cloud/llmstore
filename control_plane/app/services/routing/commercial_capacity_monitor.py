@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_capacity import CommercialCapacitySnapshot
-from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
-from app.models.commercial_routing_event import CommercialRoutingEvent
+from app.models.commercial.commercial_capacity import CommercialCapacitySnapshot
+from app.models.commercial.commercial_node_heartbeat import CommercialNodeHeartbeat
+from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
 from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

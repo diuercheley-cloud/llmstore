@@ -78,7 +78,7 @@ make install-local
 ## Referências Rápidas
 
 - Endpoint padrão: `localhost:18080`
-- Validação principal: `./scripts/validate-local-production-full.sh`
+- Validação principal: `./scripts/validators/validate-local-production-full.sh`
 - Fora de Escopo: integração com gateway de pagamento real (PSP)
 - Gateway de pagamento real (PSP): permanece desativado nesta edição
 - Sem PIX real nesta versão: o fluxo de cobrança continua local e determinístico
@@ -96,7 +96,7 @@ Verifique o relatório em `artifacts/pre-client-checklists/` e garanta o status 
 >
 > Para validar uma instalação limpa do zero em ambiente isolado (sandbox), use:
 > ```bash
-> ./scripts/validate-clean-install-local.sh --dry-run
+> ./scripts/validators/validate-clean-install-local.sh --dry-run
 > ```
 
 Este script realiza:
@@ -114,10 +114,10 @@ Antes de implantar em uma máquina nova, valide os pré-requisitos:
 
 ```bash
 # Validacao de readiness de maquina limpa
-./scripts/fresh-machine-readiness-check.sh --dry-run
+./scripts/validators/fresh-machine-readiness-check.sh --dry-run
 
 # Validacao completa dos docs e scripts
-./scripts/validate-fresh-machine-docs.sh
+./scripts/validators/validate-fresh-machine-docs.sh
 
 # Testes automaticos
 python -m pytest tests/test_fresh_machine_validation_docs.py tests/test_fresh_machine_readiness_check.py tests/test_fresh_machine_security.py -q
@@ -151,8 +151,8 @@ make security
 ### 4. Commercial Plans Validation
 Initialize and verify the plan matrix:
 ```bash
-./scripts/seed-commercial-plans-local.sh
-./scripts/validate-commercial-plans-local.sh
+./scripts/dev/seed-commercial-plans-local.sh
+./scripts/validators/validate-commercial-plans-local.sh
 ```
 
 ### 5. System Control Center Validation
@@ -163,7 +163,7 @@ make validate-control-center
 ### 6. Capability Matrix Validation
 Verify the feature matrix and backend readiness:
 ```bash
-./scripts/validate-capability-matrix-local.sh
+./scripts/validators/validate-capability-matrix-local.sh
 ```
 
 ### 7. Validate Abuse Protection
@@ -199,11 +199,11 @@ Reports are generated in `artifacts/monthly-reports/` and include: chat tokens, 
 
 Realize upgrades utilizando o script de automação, que força a criação de backups para garantir pontos de restauração e aborta caso o backup falhe:
 ```bash
-./scripts/upgrade-local.sh --to-version <nova-versao>
+./scripts/deploy/upgrade-local.sh --to-version <nova-versao>
 ```
 Em caso de falhas documentadas nos smoke tests gerados após o upgrade, restaure o estado usando:
 ```bash
-./scripts/rollback-local.sh --to-version <versao-anterior> --backup-id <path-do-backup>
+./scripts/dev/rollback-local.sh --to-version <versao-anterior> --backup-id <path-do-backup>
 ```
 
 ### Validacao de Restore e Rollback
@@ -211,10 +211,10 @@ Em caso de falhas documentadas nos smoke tests gerados após o upgrade, restaure
 Para validar o fluxo completo de backup, upgrade, restore e rollback em ambiente controlado:
 ```bash
 # Modo dry-run (seguro)
-./scripts/validate-real-restore-rollback-local.sh --dry-run
+./scripts/validators/validate-real-restore-rollback-local.sh --dry-run
 
 # Modo real (exige --yes, executa backup, upgrade, rollback)
-./scripts/validate-real-restore-rollback-local.sh --yes
+./scripts/validators/validate-real-restore-rollback-local.sh --yes
 ```
 
 ## Hybrid Admin Dashboard (v1.8.0)

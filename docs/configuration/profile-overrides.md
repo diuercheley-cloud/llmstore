@@ -13,8 +13,8 @@ export AGENT_RUNTIME_ENABLED=true
 The `ProfileResolver` automatically detects invalid combinations of flags. For example, requiring a MicroVM (`AGENT_CODE_SANDBOX_MICROVM_REQUIRED=true`) while setting the provider to `docker` will trigger a conflict warning.
 
 ## Auditing
-Use the `scripts/validate-platform-profile.sh` script to audit the current configuration:
+Use the `scripts/validators/validate-platform-profile.sh` script to audit the current configuration:
 ```bash
-./scripts/validate-platform-profile.sh agentic-production
+./scripts/validators/validate-platform-profile.sh agentic-production
 ```
 This will list the resolved flags, active overrides, and any detected conflicts.

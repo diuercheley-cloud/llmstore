@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Protocol, runtime_checkable
 
-from app.models.agent_knowledge_graph import AgentKGEntity, AgentKGExtractionRun, AgentKGRelation, AgentKGSource, AgentKGQueryEvent
+from app.models.agents.agent_knowledge_graph import AgentKGEntity, AgentKGExtractionRun, AgentKGRelation, AgentKGSource, AgentKGQueryEvent
 
 @runtime_checkable
 class GraphProvider(Protocol):

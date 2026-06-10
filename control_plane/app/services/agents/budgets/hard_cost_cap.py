@@ -1,7 +1,7 @@
 import logging
 
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
+from app.models.agents.agents import AgentDefinition, AgentRun
 from app.services.agents.agent_state import log_run_event, update_run
 from sqlalchemy.ext.asyncio import AsyncSession
 

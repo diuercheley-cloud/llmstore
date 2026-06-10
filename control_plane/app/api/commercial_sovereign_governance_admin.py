@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.commercial_sovereign_governance import (
+from app.models.commercial.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialOfflineRevocationList,
 )

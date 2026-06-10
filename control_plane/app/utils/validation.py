@@ -1,7 +1,7 @@
 import json
 
 from app.core.config import get_settings
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.billing import resolve_effective_plan
 from app.services.billing.core import resolve_effective_plan_for_session
 from fastapi import HTTPException
@@ -23,7 +23,7 @@ def validate_params(client: Client, payload):
     
     limit = min(
         effective_plan.max_output_tokens,
-        settings.max_completion_tokens
+        settings.inference_max_completion_tokens
     )
     if requested_max_tokens > limit:
         # Cap instead of raising, as requested for optimization
@@ -68,7 +68,7 @@ async def validate_params_for_session(session, client: Client, payload):
             pass
 
     requested_max_tokens = payload.max_tokens or client_defaults.get("max_tokens") or settings.default_max_tokens
-    limit = min(effective_plan.max_output_tokens, settings.max_completion_tokens)
+    limit = min(effective_plan.max_output_tokens, settings.inference_max_completion_tokens)
     max_tokens = limit if requested_max_tokens > limit else requested_max_tokens
 
     temperature = payload.temperature

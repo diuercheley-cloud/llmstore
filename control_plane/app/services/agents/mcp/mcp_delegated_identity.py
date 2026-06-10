@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_mcp_oauth import (
+from app.models.agents.agent_mcp_oauth import (
     AgentMCPDelegatedGrant,
     AgentMCPScopePolicy,
 )

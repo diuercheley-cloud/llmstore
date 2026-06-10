@@ -50,7 +50,7 @@ The platform is only `GA_READY` when all 12 criteria pass:
 Run:
 
 ```bash
-scripts/ga-readiness.sh
+scripts/dev/ga-readiness.sh
 ```
 
 The script writes:

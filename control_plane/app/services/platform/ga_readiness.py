@@ -131,7 +131,7 @@ class GAReadinessService:
         try:
             from app.core.time import utc_now
             from app.db.session import SessionLocal
-            from app.models.agent_execution import AgentWorkerHeartbeat
+            from app.models.agents.agent_execution import AgentWorkerHeartbeat
             from sqlalchemy import func
             from sqlalchemy.future import select
             

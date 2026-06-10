@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.commercial_governance_supervisor import (
+from app.models.commercial.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorDecision,
     CommercialGovernanceSupervisorIncident,
     CommercialGovernanceSupervisorPolicy,

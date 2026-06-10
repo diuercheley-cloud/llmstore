@@ -7,8 +7,8 @@ import uuid
 
 from app.core.metrics import LLM_AGENT_JOBS_CANCELLED_TOTAL
 from app.core.time import utc_now
-from app.models.agent_execution import AgentExecutionJob, AgentExecutionLease
-from app.models.agents import AgentRun
+from app.models.agents.agent_execution import AgentExecutionJob, AgentExecutionLease
+from app.models.agents.agents import AgentRun
 from app.services.agents import agent_state
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession

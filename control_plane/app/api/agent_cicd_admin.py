@@ -3,7 +3,7 @@ import uuid
 from typing import Any
 
 from app.api.deps import get_db_session, require_admin
-from app.models.agent_cicd import AgentDeployment, AgentPipeline, AgentRollback
+from app.models.agents.agent_cicd import AgentDeployment, AgentPipeline, AgentRollback
 from app.services.agents.cicd.agent_pipeline import AgentPipelineService
 from app.services.agents.cicd.rollback_executor import RollbackExecutor
 from fastapi import APIRouter, Depends, HTTPException

@@ -25,7 +25,7 @@ This document defines the policies and procedures for maintaining a clean and au
 
 - **Mandatory Checks**:
     - Before any release, `make stabilization-check` must be executed.
-    - This target invokes `scripts/check-working-tree-clean.sh`, which fails if there are uncommitted changes or untracked files that are not ignored.
+    - This target invokes `scripts/validators/check-working-tree-clean.sh`, which fails if there are uncommitted changes or untracked files that are not ignored.
 
 - **Artifact Management**:
     - Legitimate non-code artifacts (e.g., screenshots for documentation) should be stored in `artifacts/` and managed according to the project's documentation policy.

@@ -3,7 +3,7 @@ import hmac
 import os
 from datetime import datetime, UTC
 
-from app.models.commercial_runtime_fabric import CommercialRuntimeHealingAction
+from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeHealingAction
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

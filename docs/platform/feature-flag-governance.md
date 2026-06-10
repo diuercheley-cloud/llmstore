@@ -39,7 +39,7 @@ Operators can run the governance auditor manually:
 make feature-flag-audit
 ```
 
-This task invokes the audit script `scripts/audit-feature-flags.py` which:
+This task invokes the audit script `scripts/validators/audit-feature-flags.py` which:
 - Scans files and builds a metadata matrix.
 - Generates the markdown report at `artifacts/platform/feature-flag-audit.md`.
 - Returns an exit code of `1` if structural violations (duplicates, missing owners, or missing reasons) are found.
@@ -47,12 +47,12 @@ This task invokes the audit script `scripts/audit-feature-flags.py` which:
 ### Automating Cleanups
 To automatically clean up orphaned flags by marking them as `deprecated` (which appends a deprecation schema):
 ```bash
-python3 scripts/audit-feature-flags.py --fix deprecate
+python3 scripts/validators/audit-feature-flags.py --fix deprecate
 ```
 
 To remove them from the YAML configuration entirely:
 ```bash
-python3 scripts/audit-feature-flags.py --fix remove
+python3 scripts/validators/audit-feature-flags.py --fix remove
 ```
 
 ---

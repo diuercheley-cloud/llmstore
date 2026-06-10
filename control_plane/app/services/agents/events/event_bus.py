@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict
 
-from app.models.agent_events import AgentEventSubscription, AgentEventTrigger
+from app.models.agents.agent_events import AgentEventSubscription, AgentEventTrigger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

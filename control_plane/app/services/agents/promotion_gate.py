@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentDefinition,
     AgentEvalBaseline,
     AgentIncident,
@@ -66,7 +66,7 @@ class AgentPromotionService:
             )
 
         # 1. Eval Baseline Check
-        from app.models.agents import AgentEvalRun, AgentEvalSuite
+        from app.models.agents.agents import AgentEvalRun, AgentEvalSuite
         from app.services.agents.evals.eval_scoring import EvalScoringManager
         
         scoring_manager = EvalScoringManager(self.db)

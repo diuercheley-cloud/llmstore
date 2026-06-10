@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.advanced_memory import MemoryEvent, MemoryEventType, MemoryScope, MemorySnapshot
+from app.models.agents.advanced_memory import MemoryEvent, MemoryEventType, MemoryScope, MemorySnapshot
 from app.core.time import utc_now
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession

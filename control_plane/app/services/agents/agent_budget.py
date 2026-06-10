@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
+from app.models.agents.agents import AgentDefinition, AgentRun
 
 logger = logging.getLogger(__name__)
 

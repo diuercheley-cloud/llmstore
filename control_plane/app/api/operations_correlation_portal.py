@@ -1,7 +1,7 @@
 # Owner: platform-ops
 
 from app.api.dependencies import get_db
-from app.models.client import Client
+from app.models.core.client import Client
 from app.models.operations.correlation import OperationalCorrelation
 from app.services.auth import require_client
 from app.services.operations.correlation.trust_graph import OperationalTrustGraphService

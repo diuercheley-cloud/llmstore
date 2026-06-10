@@ -56,9 +56,9 @@ Todos os endpoints requerem autenticação via API Key (`Authorization: Bearer s
 
 ## Validação
 
-Use o script `scripts/validate-rag.sh` para testar o fluxo completo:
+Use o script `scripts/validators/validate-rag.sh` para testar o fluxo completo:
 
 ```bash
 export CLIENT_API_KEY=sk-your-key
-./scripts/validate-rag.sh
+./scripts/validators/validate-rag.sh
 ```

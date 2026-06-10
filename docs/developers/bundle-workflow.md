@@ -123,16 +123,16 @@ my-agent/
 agentctl bundle init my-agent
 
 # Validate
-./scripts/agent-bundle-validate.sh ./my-agent
+./scripts/validators/agent-bundle-validate.sh ./my-agent
 
 # Test
-./scripts/agent-bundle-test.sh ./my-agent
+./scripts/dev/agent-bundle-test.sh ./my-agent
 
 # Sign
-./scripts/agent-bundle-sign.sh ./my-agent
+./scripts/release/agent-bundle-sign.sh ./my-agent
 
 # Publish
-./scripts/agent-bundle-publish.sh ./my-agent
+./scripts/dev/agent-bundle-publish.sh ./my-agent
 ```
 
 ## Tests

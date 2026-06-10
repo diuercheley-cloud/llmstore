@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.collab_chat import ChatMessage
+from app.models.agents.collab_chat import ChatMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

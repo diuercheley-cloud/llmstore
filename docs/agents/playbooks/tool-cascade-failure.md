@@ -15,7 +15,7 @@ Ocorre quando uma ferramenta externa ou serviço dependente começa a falhar sis
 
 ## Procedimento de Resposta
 1. **Identificação**: Identifique a ferramenta problemática via dashboard "Agentic Tools".
-2. **Mitigação**: Execute `scripts/agent-disable-tool.sh` para desabilitar a ferramenta globalmente ou para o agente específico.
+2. **Mitigação**: Execute `scripts/dev/agent-disable-tool.sh` para desabilitar a ferramenta globalmente ou para o agente específico.
 3. **Comunicação**: Notifique os donos dos agentes sobre a indisponibilidade da ferramenta.
 4. **Recuperação**: Após a normalização do serviço externo, habilite a ferramenta novamente.
 

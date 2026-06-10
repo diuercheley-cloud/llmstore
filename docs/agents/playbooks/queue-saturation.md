@@ -14,7 +14,7 @@ A saturação da fila ocorre quando o volume de novas runs excede a capacidade d
 - Latência de início de run (`queue_wait_seconds`) degradada.
 
 ## Procedimento de Resposta
-1. **Contenção**: Ative o throttle na fila usando `scripts/agent-queue-throttle.sh`.
+1. **Contenção**: Ative o throttle na fila usando `scripts/dev/agent-queue-throttle.sh`.
 2. **Escalonamento**: Aumente o número de réplicas de workers agentic.
 3. **Priorização**: Priorize runs de classes críticas (`security`, `billing`) em detrimento de `rag_research`.
 4. **Limpeza**: Cancele runs de baixa prioridade que estão na fila há muito tempo.

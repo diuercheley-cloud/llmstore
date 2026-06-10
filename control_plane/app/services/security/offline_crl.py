@@ -9,14 +9,14 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_encryption import CommercialTenantEncryptionKey
-from app.models.commercial_governance import CommercialPolicyBundle
-from app.models.commercial_governance_federation import CommercialGovernanceFederationPeer
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_encryption import CommercialTenantEncryptionKey
+from app.models.commercial.commercial_governance import CommercialPolicyBundle
+from app.models.commercial.commercial_governance_federation import CommercialGovernanceFederationPeer
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.commercial_sovereign_governance import (
+from app.models.commercial.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialOfflineRevocationList,
 )

@@ -56,4 +56,4 @@ This document lists the primary API endpoints categorized by module and access l
 
 ---
 
-**Next Steps**: See [MIGRATION_INDEX.md](MIGRATION_INDEX.md) for database schema history.
+**Next Steps**: See [archive/deprecated/MIGRATION_INDEX.md](archive/deprecated/MIGRATION_INDEX.md) for historical schema notes.

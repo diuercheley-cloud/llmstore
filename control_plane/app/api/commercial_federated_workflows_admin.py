@@ -5,8 +5,8 @@ import uuid
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.commercial_federated_workflows import CommercialWorkflowReplayFederationReport
+from app.models.core.client import Client
+from app.models.commercial.commercial_federated_workflows import CommercialWorkflowReplayFederationReport
 from app.services.auth import require_admin, require_client
 from app.services.workflows.federated_consensus import FederatedWorkflowConsensusService
 from app.services.workflows.federated_execution import FederatedWorkflowExecutionService

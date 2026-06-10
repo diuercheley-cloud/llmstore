@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.multimodal import (
+from app.models.core.multimodal import (
     MultimodalAsset,
     MultimodalPolicyEvent,
     MultimodalUsageEvent,

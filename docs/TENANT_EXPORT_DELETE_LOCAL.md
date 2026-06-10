@@ -12,17 +12,17 @@ Este guia descreve como realizar a exportação segura de dados de um cliente (t
 A exportação serve para suporte, auditoria, migração ou backup seletivo.
 
 ### Script de Exportação
-Utilize o script `scripts/export-client-local.sh`.
+Utilize o script `scripts/dev/export-client-local.sh`.
 
 ```bash
 # Exportar por ID
-./scripts/export-client-local.sh --client-id UUID
+./scripts/dev/export-client-local.sh --client-id UUID
 
 # Exportar por Email
-./scripts/export-client-local.sh --email user@example.com
+./scripts/dev/export-client-local.sh --email user@example.com
 
 # Exportar incluindo arquivos RAG e TTS
-./scripts/export-client-local.sh --client-id UUID --include-rag-files --include-tts-files
+./scripts/dev/export-client-local.sh --client-id UUID --include-rag-files --include-tts-files
 ```
 
 ### O que é exportado por padrão:
@@ -46,24 +46,24 @@ Utilize o script `scripts/export-client-local.sh`.
 
 ## 2. Deleção e Anonimização Segura
 
-Para realizar o offboarding completo e seguro de um cliente, utilize o script `scripts/delete-client-local.sh`.
+Para realizar o offboarding completo e seguro de um cliente, utilize o script `scripts/dev/delete-client-local.sh`.
 
 ### Deleção Segura (Purge)
 Remove os dados do banco de dados e, opcionalmente, os arquivos físicos.
 
 ```bash
 # Deleção completa com confirmação interativa
-./scripts/delete-client-local.sh --client-id UUID --delete-rag-files --delete-tts-files --delete-invoices
+./scripts/dev/delete-client-local.sh --client-id UUID --delete-rag-files --delete-tts-files --delete-invoices
 
 # Deleção automática (CI/CD) com export obrigatório prévio
-./scripts/delete-client-local.sh --client-id UUID --yes --require-export --delete-rag-files
+./scripts/dev/delete-client-local.sh --client-id UUID --yes --require-export --delete-rag-files
 ```
 
 ### Anonimização
 Mantém os registros (como faturas para contabilidade) mas remove todas as informações de identificação pessoal (PII).
 
 ```bash
-./scripts/delete-client-local.sh --client-id UUID --anonymize-instead --yes
+./scripts/dev/delete-client-local.sh --client-id UUID --anonymize-instead --yes
 ```
 
 ### Opções do Script:
@@ -89,7 +89,7 @@ Mantém os registros (como faturas para contabilidade) mas remove todas as infor
 Antes do offboarding, gere um relatório mensal final de uso do cliente para registro:
 
 ```bash
-./scripts/generate-client-monthly-report.sh --client-id UUID --month YYYY-MM
+./scripts/validators/generate-client-monthly-report.sh --client-id UUID --month YYYY-MM
 ```
 
 O relatório inclui consumo de tokens, requests, embeddings, RAG, TTS, faturamento local/manual, status de pagamento e recomendações.
@@ -97,7 +97,7 @@ O relatório inclui consumo de tokens, requests, embeddings, RAG, TTS, faturamen
 ## 4. Fluxo Recomendado de Offboarding
 1. Execute o script de deleção com export obrigatório:
    ```bash
-   ./scripts/delete-client-local.sh --client-id UUID --require-export --delete-rag-files --delete-tts-files
+   ./scripts/dev/delete-client-local.sh --client-id UUID --require-export --delete-rag-files --delete-tts-files
    ```
 2. O script irá:
    - Gerar o export em `exports/clients/UUID/`.

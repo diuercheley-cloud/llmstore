@@ -16,14 +16,14 @@ status: consolidated
 - `docs/phases/phase_76_sovereign_execution_attestation_framework.md`
 - `docs/operations/sovereign_execution_attestation_framework.md`
 - `docs/operations/phase_76_attestation_framework_summary.md`
-- `scripts/validate_phase_76_attestation_framework.py`
-- `tests/operations/test_attestation_*.py`
+- `scripts/validators/validate_phase_76_attestation_framework.py`
+- `tests/integration/operations/test_attestation_*.py`
 - `Makefile`
 
 ## Validations Executed
 
-- `./.venv/bin/python scripts/validate_phase_76_attestation_framework.py`
-- `./.venv/bin/python -m pytest tests/operations/test_attestation_framework_models.py tests/operations/test_attestation_hash_utils.py tests/operations/test_attestation_service.py tests/operations/test_attestation_federation_bundle.py tests/operations/test_attestation_trust_policy_engine.py tests/operations/test_attestation_replay_verifier.py tests/operations/test_attestation_receipts.py tests/operations/test_attestation_audit_events.py tests/operations/test_attestation_api.py tests/operations/test_attestation_dashboard.py tests/operations/test_phase_76_validation.py -q --tb=short`
+- `./.venv/bin/python scripts/validators/validate_phase_76_attestation_framework.py`
+- `./.venv/bin/python -m pytest tests/integration/operations/test_attestation_framework_models.py tests/integration/operations/test_attestation_hash_utils.py tests/integration/operations/test_attestation_service.py tests/integration/operations/test_attestation_federation_bundle.py tests/integration/operations/test_attestation_trust_policy_engine.py tests/integration/operations/test_attestation_replay_verifier.py tests/integration/operations/test_attestation_receipts.py tests/integration/operations/test_attestation_audit_events.py tests/integration/operations/test_attestation_api.py tests/integration/operations/test_attestation_dashboard.py tests/integration/operations/test_phase_76_validation.py -q --tb=short`
 - `make validate-phase-76-attestation-framework`
 
 ## Tests Executed

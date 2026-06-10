@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Dict, Optional
 
 from app.core.time import utc_now
-from app.models.agent_sessions import (
+from app.models.agents.agent_sessions import (
     AgentSession,
     AgentSessionSummary,
     AgentThreadMessage,

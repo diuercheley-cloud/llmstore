@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.agents import AgentMemoryItem
+from app.models.agents.agents import AgentMemoryItem
 from app.services.agents.memory_indexing import MemoryIndexingService
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select

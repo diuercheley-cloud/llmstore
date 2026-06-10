@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1", tags=["a2a-protocol"])
 
 _a2a_servers: Dict[str, A2AServer] = {}
 

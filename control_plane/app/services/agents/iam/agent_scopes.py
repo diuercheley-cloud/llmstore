@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from app.models.agent_iam import AgentDelegatedToken
+from app.models.agents.agent_iam import AgentDelegatedToken
 
 logger = logging.getLogger(__name__)
 

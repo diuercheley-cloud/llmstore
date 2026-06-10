@@ -19,35 +19,35 @@ status: consolidated
 - `docs/phases/phase_81_reproducible_build_artifact_verification.md`
 - `docs/operations/reproducible_build_artifact_verification.md`
 - `docs/operations/phase_81_reproducible_build_summary.md`
-- `scripts/validate_phase_81_reproducible_builds.py`
+- `scripts/validators/validate_phase_81_reproducible_builds.py`
 - `Makefile`
-- `tests/operations/test_reproducible_build_*.py`
-- `tests/operations/test_artifact_verification.py`
-- `tests/operations/test_source_artifact_lineage.py`
-- `tests/operations/test_build_environment_policy.py`
-- `tests/operations/test_artifact_replay_verifier.py`
-- `tests/operations/test_phase_81_validation.py`
+- `tests/integration/operations/test_reproducible_build_*.py`
+- `tests/integration/operations/test_artifact_verification.py`
+- `tests/integration/operations/test_source_artifact_lineage.py`
+- `tests/integration/operations/test_build_environment_policy.py`
+- `tests/integration/operations/test_artifact_replay_verifier.py`
+- `tests/integration/operations/test_phase_81_validation.py`
 
 ## Validações executadas
 
-- `python3 scripts/validate_phase_81_reproducible_builds.py`
+- `python3 scripts/validators/validate_phase_81_reproducible_builds.py`
 - `make validate-phase-81-reproducible-builds`
 
 ## Testes executados
 
-- `tests/operations/test_reproducible_build_models.py`
-- `tests/operations/test_reproducible_build_hash_utils.py`
-- `tests/operations/test_reproducible_build_service.py`
-- `tests/operations/test_artifact_verification.py`
-- `tests/operations/test_source_artifact_lineage.py`
-- `tests/operations/test_build_environment_policy.py`
-- `tests/operations/test_artifact_replay_verifier.py`
-- `tests/operations/test_reproducible_build_provenance_integration.py`
-- `tests/operations/test_reproducible_build_receipts.py`
-- `tests/operations/test_reproducible_build_audit_events.py`
-- `tests/operations/test_reproducible_build_api.py`
-- `tests/operations/test_reproducible_build_dashboard.py`
-- `tests/operations/test_phase_81_validation.py`
+- `tests/integration/operations/test_reproducible_build_models.py`
+- `tests/integration/operations/test_reproducible_build_hash_utils.py`
+- `tests/integration/operations/test_reproducible_build_service.py`
+- `tests/integration/operations/test_artifact_verification.py`
+- `tests/integration/operations/test_source_artifact_lineage.py`
+- `tests/integration/operations/test_build_environment_policy.py`
+- `tests/integration/operations/test_artifact_replay_verifier.py`
+- `tests/integration/operations/test_reproducible_build_provenance_integration.py`
+- `tests/integration/operations/test_reproducible_build_receipts.py`
+- `tests/integration/operations/test_reproducible_build_audit_events.py`
+- `tests/integration/operations/test_reproducible_build_api.py`
+- `tests/integration/operations/test_reproducible_build_dashboard.py`
+- `tests/integration/operations/test_phase_81_validation.py`
 - resultado final: `23 passed`
 
 ## Problemas encontrados e corrigidos

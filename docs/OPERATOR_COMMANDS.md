@@ -61,7 +61,7 @@ O `Makefile` serve como a interface oficial de entrada, abstraindo a complexidad
 ## Relação Makefile -> Scripts
 
 O `Makefile` é apenas um wrapper. Se precisar de opções avançadas, você pode consultar e executar os scripts diretamente em `scripts/`.
-Exemplo: `make up` chama `./scripts/up.sh`.
+Exemplo: `make up` chama `./scripts/deploy/up.sh`.
 
 ### Padrão de Erros Amigáveis
 Todos os scripts principais agora utilizam o padrão de erros amigáveis. Caso um comando do `Makefile` falhe, a saída indicará um **Código de Erro** (ex: `DOCKER_NOT_RUNNING`).

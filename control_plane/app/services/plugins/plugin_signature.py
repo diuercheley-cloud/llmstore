@@ -6,7 +6,7 @@
 # Owner: platform-ops
 import uuid
 
-from app.models.agent_catalog import PluginSignature
+from app.models.agents.agent_catalog import PluginSignature
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

@@ -2,7 +2,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.db.session import get_db_session
-from app.models.federation_mesh import FederationPeer
+from app.models.core.federation_mesh import FederationPeer
 from app.services.federation.mesh.mesh_sync import MeshSyncService
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select

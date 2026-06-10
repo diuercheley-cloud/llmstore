@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.security import hash_secret, verify_secret
-from app.models.agent_iam import AgentServicePrincipal
+from app.models.agents.agent_iam import AgentServicePrincipal
 from app.services.agents.iam.iam_audit import IAMAuditService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

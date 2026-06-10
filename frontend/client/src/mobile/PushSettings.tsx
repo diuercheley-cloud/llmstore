@@ -37,7 +37,9 @@ export function PushSettings() {
   }, []);
 
   useEffect(() => {
-    loadState();
+    setTimeout(() => {
+      loadState();
+    }, 0);
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
@@ -59,8 +61,9 @@ export function PushSettings() {
         setPermission('granted');
         toast.success('Push notifications enabled');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to enable push');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Failed to enable push';
+      toast.error(errMsg);
     }
     setActionLoading(false);
   };
@@ -78,7 +81,7 @@ export function PushSettings() {
         setIsSubscribed(false);
         toast.success('Push notifications disabled');
       }
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to disable push');
     }
     setActionLoading(false);

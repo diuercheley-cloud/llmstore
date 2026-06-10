@@ -5,7 +5,7 @@ from time import monotonic
 
 from app.core.time import utc_now
 from app.db.session import SessionLocal
-from app.models.inference_backend import InferenceBackend
+from app.models.core.inference_backend import InferenceBackend
 from app.services.queue_manager import QueueTimeout
 from sqlalchemy import select
 

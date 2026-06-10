@@ -1,122 +1,91 @@
-# Env / secrets
-# Local runtime
-validation.db
-.env
-.env.*
-!.env.example
-!.env.local.example
+# OS & Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .venv/
-.venv-*/
-.cache/
+venv/
+.env
+.env.*
+!.env.example
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.ruff_cache_llm_harness/
+.coverage
+htmlcov/
+coverage.xml
 
-# Node (se houver)
+# Node
 node_modules/
-sdk/node/dist/
+dist/
+build/
+.npm/
 
-# Docker volumes / data
+# Data & Databases
+*.sqlite
+*.sqlite3
+*.db
 postgres-data/
 redis-data/
+data/rag_uploads/
+data/pki/
+data/plugins/
 
 # Artifacts & Backups
-artifacts/*
+artifacts/
 !artifacts/.gitkeep
-exports/
-artifacts/demo-screenshots/
 backups/
+exports/
+logs/
+downloads/
 *.log
 *.wav
 *.docx
-tts_audio/
-control_plane/*.db
-control_plane/*.sqlite
 control_plane/*.backup
-tmp_client.txt
-tmp_key.txt
-down_revisions.txt
-revisions.txt
-els_props.txt
-els_usages.txt
+tmp_*.txt
+*.txt
 
-# Release artifacts
+# Models
+/models/
+*.gguf
+*.safetensors
+*.bin
+*.so
+
+# Releases
 llm-inference-stack-*.tgz
 tmp_release_bundle_*/
 releases/v-test-*/
 releases/v-security-*/
+releases/**/*.tar.gz
+releases/**/logs/
+releases/**/raw-results*
 
-# Coverage
-.coverage
-htmlcov/
-coverage.xml
-.pytest_cache/
+# Security
+*.pem
+*.key
+*_ed25519_key
+!tests/fixtures/fake_*.pem
+!tests/fixtures/fake_*.key
 
-# Generated proposals
-proposals/generated/
-*.proposal.generated.pdf
-
-# Branding (local config, never commit real client branding)
-config/branding.local.json
-
-# Models (IMPORTANT)
-/bin
-/models/
-*.gguf
-*.safetensors
-*.so*
-*.bin
-*.bin*
-
-# OS
-.DS_Store
-Thumbs.db
+# Internal Cache / Meta
 .agents/
 .openclaude/
 .codex/
 .cache/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.venv/
-venv/
-data/rag_uploads/
-data/rag_uploads-drtest-*/
-data/pki/
-data/plugins/test-*/
-control_plane/data/
+.llm_harness_memory/
 .local/
-logs/
-downloads/
 model_cache/
-
-# Releases
-releases/**/*.tar.gz
-releases/**/logs/
-releases/**/raw-results*
-!releases/**/release-manifest.json
-!releases/**/summary.json
-!releases/**/summary.md
-!releases/**/bundle-manifest.json
-!releases/**/bundle-checksums.sha256
-
-# Keys and Certificates
-*.pem
-*.key
-!tests/fixtures/fake_*.pem
-!tests/fixtures/fake_*.key
-venv/
-__pycache__/
-*.pyc
-*.pem
-
+proposals/generated/
+*.proposal.generated.pdf
+config/branding.local.json
 test_env.sh
 chat
 frontend/admin/stats.html
-.llm_harness_memory/
 *.egg-info/

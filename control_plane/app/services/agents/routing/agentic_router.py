@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_routing import AgentStepRoutingDecision
+from app.models.agents.agent_routing import AgentStepRoutingDecision
 from app.services.agents.routing.cost_quality_policy import CostQualityPolicy, PolicyType
 from app.services.agents.routing.model_capability_registry import ModelCapabilityRegistry
 from app.services.agents.routing.routing_explainer import RoutingExplainer

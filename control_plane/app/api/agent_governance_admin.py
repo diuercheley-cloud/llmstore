@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session, require_admin
-from app.models.agents import AgentPromotionGate
+from app.models.agents.agents import AgentPromotionGate
 from app.services.agents.agent_policy_engine import AgentPolicyEngine
 from app.services.agents.promotion_gate import AgentPromotionService
 from fastapi import APIRouter, Body, Depends, HTTPException

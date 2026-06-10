@@ -5,7 +5,7 @@ from datetime import datetime, UTC
 from decimal import Decimal
 from typing import Optional
 
-from app.models.commercial_financial_audit_event import CommercialFinancialAuditEvent
+from app.models.commercial.commercial_financial_audit_event import CommercialFinancialAuditEvent
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

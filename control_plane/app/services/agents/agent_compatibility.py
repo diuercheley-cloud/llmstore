@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agents import AgentBundleCompatibility
+from app.models.agents.agents import AgentBundleCompatibility
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

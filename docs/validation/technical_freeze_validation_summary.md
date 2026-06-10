@@ -14,11 +14,11 @@ status: consolidated
 | `docs/validation/validation_target_timings.json` | generated |
 | `docs/validation/validation_target_timings.md` | generated |
 | `docs/validation/slow_tests_report.md` | generated |
-| `scripts/measure_validation_targets.py` | created |
-| `scripts/list_slow_tests.py` | created |
+| `scripts/validators/measure_validation_targets.py` | created |
+| `scripts/dev/list_slow_tests.py` | created |
 | `Makefile` | updated |
-| `tests/validation/test_validation_strategy.py` | created |
-| `tests/validation/test_validation_timing_tools.py` | created |
+| `tests/integration/validation/test_validation_strategy.py` | created |
+| `tests/integration/validation/test_validation_timing_tools.py` | created |
 
 ## Targets adicionados
 
@@ -59,16 +59,16 @@ Nota: fases com teste de integração (69–81) não foram incluídas neste subs
 
 ## Testes lentos identificados
 
-Nenhum teste em `tests/build` excede 1.0s. O report completo está em `docs/validation/slow_tests_report.md`.
+Nenhum teste em `tests/integration/build` excede 1.0s. O report completo está em `docs/validation/slow_tests_report.md`.
 
-Testes das fases 69–81 (em `tests/operations/`) são candidatos conhecidos a lentidão (integração com banco de dados/API). A segregação smoke/full já os trata: smoke executa apenas validadores estáticos, full executa os testes completos.
+Testes das fases 69–81 (em `tests/integration/operations/`) são candidatos conhecidos a lentidão (integração com banco de dados/API). A segregação smoke/full já os trata: smoke executa apenas validadores estáticos, full executa os testes completos.
 
 ## Validações executadas
 
 - `make validate-makefile-governance` — PASS (0.13s tests + governance script)
 - `make validate-architecture-smoke` — PASS (todos os validadores estáticos + scripts de fase 69–81 + phase 82)
 - `make measure-validation-targets` — PASS (10 targets smoke subset, 10.7s total)
-- `python3 scripts/list_slow_tests.py --test-dir tests/build` — PASS (nenhum teste > 1.0s)
+- `python3 scripts/dev/list_slow_tests.py --test-dir tests/integration/build` — PASS (nenhum teste > 1.0s)
 
 ## Limitações conhecidas
 

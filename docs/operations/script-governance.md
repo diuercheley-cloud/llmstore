@@ -9,28 +9,31 @@ This document establishes the official governance policy for operational and man
 
 ## Script Classifications
 
-Every script under the `scripts/` directory is registered in `scripts/manifest.yaml` and classified into one of the following categories:
+Scripts are classified by support intent. The canonical reference is [docs/SCRIPTS_INVENTORY.md](../SCRIPTS_INVENTORY.md).
 
-1. **`supported`**:
-   - Production-ready scripts used for official administration tasks.
-   - Must have a designated `owner` and `docs_url`.
-   - Examples: `./scripts/up.sh`, `./scripts/down.sh`.
-   
-2. **`deprecated`**:
-   - Outdated scripts scheduled for archive or removal. Replacement pointers are provided where available.
+1. **`operational`**
+   - Supported operator commands for install, deploy, lifecycle, backup, restore, and diagnostics.
+   - These are the only scripts that should appear as recommended execution paths in canonical docs.
 
-3. **`internal`**:
-   - Helper scripts, CI/CD validation tasks, and utility automation.
-   - Example: test runner execution files.
+2. **`validation`**
+   - Deterministic checks used by CI or local validation for supported surfaces.
+   - Validation scripts must fail closed when their required inputs or docs are missing.
 
-4. **`experimental`**:
-   - Unstable research or trial scripts. Experimental scripts must NOT be referenced as primary recommended setup paths in the main `README.md`.
+3. **`release`**
+   - Current release engineering automation for active release lines only.
+   - Version-specific release scripts become `legacy` once the line is retired.
+
+4. **`legacy`**
+   - Historical or unsupported flows moved to `scripts/archive/`.
+   - Legacy scripts are not part of supported CI and must not be linked from the main `README.md` as recommended workflows.
 
 ---
 
 ## Safety and Environmental Requirements
 
-Manifest attributes determine safety rules:
-- **`is_destructive`**: If `true`, the script must check for explicit user confirmation (e.g., interactive prompt `read -p` or environment flag confirmation) unless running in an automated testing environment.
-- **`writes_files`**: Must declare the `outputs` paths to trace log or artifact generation.
-- **`requires_network`**: Informs operators if the script accesses internet/remote repositories.
+Scripts in the supported set must follow these rules:
+
+- Destructive operational scripts require explicit confirmation or an environment-gated non-interactive override.
+- Validation scripts must be deterministic and scoped to supported surfaces, not every experiment still present in the repository.
+- Release scripts must point at active release artifacts only; retired release notes and release history belong in `docs/archive/`.
+- Legacy scripts stay callable only by explicit path and are excluded from canonical docs and the main CI workflow.

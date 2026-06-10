@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Any, Dict
 
-from app.models.agents import AgentRun, AgentRunEvent, AgentRunReceipt
+from app.models.agents.agents import AgentRun, AgentRunEvent, AgentRunReceipt
 from app.services.agents.deterministic_state_graph import DeterministicStateGraph
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

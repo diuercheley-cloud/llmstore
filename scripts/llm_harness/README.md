@@ -81,9 +81,9 @@ Language-aware behavior currently covers Python, JavaScript, TypeScript, Java, a
 
 ### `legacy agent run`
 
-Legacy flow triggered by `scripts/agent-test.sh run` or `scripts/agent_harness.py`.
+Legacy flow triggered by `scripts/dev/agent-test.sh run` or `scripts/llm_harness/agent_harness.py`.
 
-- Talks directly to the orchestrator in `scripts/agent_harness.py`.
+- Talks directly to the orchestrator in `scripts/llm_harness/agent_harness.py`.
 - Accepts an explicit `--workspace`.
 - Does not use the new CLI subcommands.
 - Exists for compatibility and legacy-entrypoint troubleshooting.
@@ -91,7 +91,7 @@ Legacy flow triggered by `scripts/agent-test.sh run` or `scripts/agent_harness.p
 Example:
 
 ```bash
-./scripts/agent-test.sh run \
+./scripts/dev/agent-test.sh run \
   --agent-id default-coder \
   --task "Fix bug in parser.py" \
   --timeout 300
@@ -387,7 +387,7 @@ The Docker sandbox mounts the workspace at `/workspace` and runs with `--network
 ### Run the Validation Script
 
 ```bash
-./scripts/validate-llm-harness.sh
+./scripts/validators/validate-llm-harness.sh
 ```
 
 This script performs:
@@ -398,8 +398,8 @@ This script performs:
 - `py_compile`
 - `ruff`, when available
 - `mypy`, when available
-- `scripts/fix_imports.py`
-- `pytest tests/llm_harness/`
+- `scripts/dev/fix_imports.py`
+- `pytest tests/integration/llm_harness/`
 - `llm-harness health --local-only`
 - `llm-harness security --check-only`
 
@@ -457,7 +457,7 @@ cat .env
 
 The current operational gate for the harness is:
 
-- `scripts/validate-llm-harness.sh`
+- `scripts/validators/validate-llm-harness.sh`
 - `commercial/checklists/VALIDATION.md`
 - `docs/releases/LLM_HARNESS_RELEASE_GATE.md`
 
@@ -467,7 +467,7 @@ Recommended CI usage:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-./scripts/validate-llm-harness.sh
+./scripts/validators/validate-llm-harness.sh
 ```
 
 For releases, treat the validation script as the minimum gate before promoting harness changes.
@@ -579,7 +579,7 @@ The `openai-compatible` provider now supports real execution. When configured wi
 ### Tests
 
 ```bash
-PYTHONPATH=.:scripts .venv/bin/pytest tests/llm_harness/ -v --tb=short
+PYTHONPATH=.:scripts .venv/bin/pytest tests/integration/llm_harness/ -v --tb=short
 ```
 
 ### Lint
@@ -611,8 +611,8 @@ pre-commit run --all-files
 ## Key Files
 
 - `scripts/llm_harness/cli.py`: main CLI.
-- `scripts/agent_harness.py`: legacy entrypoint/orchestrator.
+- `scripts/llm_harness/agent_harness.py`: legacy entrypoint/orchestrator.
 - `scripts/llm_harness/config.py`: config from file, env, and CLI.
 - `scripts/llm_harness/policy.py`: security rules.
 - `scripts/llm_harness/sandbox.py`: local or Docker execution.
-- `scripts/validate-llm-harness.sh`: local/CI validation gate.
+- `scripts/validators/validate-llm-harness.sh`: local/CI validation gate.

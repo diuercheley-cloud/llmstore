@@ -49,7 +49,7 @@ make agent-optimization-check
 
 This target runs:
 ```bash
-PYTHONPATH=control_plane .venv/bin/pytest control_plane/tests/test_agent_optimization.py -v
+PYTHONPATH=control_plane .venv/bin/pytest tests/control_plane/test_agent_optimization.py -v
 ```
 
 ## GitHub / GitLab CI Integration

@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Dict, Tuple
 
-from app.models.agents import AgentGuardrailDecision, AgentGuardrailEvent
+from app.models.agents.agents import AgentGuardrailDecision, AgentGuardrailEvent
 from app.services.agents.guardrails.content_filter import ContentFilter
 from app.services.agents.guardrails.jailbreak_detector import JailbreakDetector
 from app.services.agents.guardrails.output_jailbreak_detector import OutputJailbreakDetector

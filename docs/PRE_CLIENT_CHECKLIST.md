@@ -15,7 +15,7 @@ Garantir que todos os componentes críticos estejam operacionais, seguros e segu
 Para uma validacao completa do fluxo de demonstracao comercial (seed, meeting-ready, APIs, propostas, orcamentos, SOW, relatorios):
 
 ```bash
-./scripts/validate-commercial-demo-e2e-local.sh --seed-demo
+./scripts/validators/validate-commercial-demo-e2e-local.sh --seed-demo
 ```
 
 Relatorio gerado em `artifacts/final-qa/commercial-demo-e2e/<timestamp>/` com status `DEMO_READY`, `DEMO_READY_WITH_WARNINGS` ou `DEMO_FAILED`.
@@ -27,7 +27,7 @@ Gera um checklist focado em cenários de demo, incluindo validação de dados de
 ```bash
 make pre-demo-check
 # Ou diretamente:
-./scripts/pre-client-checklist-local.sh --demo
+./scripts/validators/pre-client-checklist-local.sh --demo
 ```
 
 ### Para Instalação em Cliente
@@ -35,7 +35,7 @@ Gera um checklist focado em prontidão de produção e segurança.
 ```bash
 make pre-client-check
 # Ou diretamente:
-./scripts/pre-client-checklist-local.sh --client-install
+./scripts/validators/pre-client-checklist-local.sh --client-install
 ```
 
 ## Opções Disponíveis
@@ -77,10 +77,10 @@ make validate-reset-demo-pack
 make reset-demo-pack
 
 # Reset real apos confirmacao
-./scripts/reset-commercial-demo-pack.sh --yes
+./scripts/dev/reset-commercial-demo-pack.sh --yes
 
 # Reset completo com todos os dados demo
-./scripts/reset-commercial-demo-pack.sh --yes --include-rag --include-tts --include-invoices --include-usage
+./scripts/dev/reset-commercial-demo-pack.sh --yes --include-rag --include-tts --include-invoices --include-usage
 ```
 
 **Segurança:** O reset usa `metadata demo=true` para identificar dados demo, nunca afetando dados reais de clientes.
@@ -92,7 +92,7 @@ Para uma verificação focada especificamente em apresentações ao cliente, inc
 ```bash
 make meeting-ready
 # Ou diretamente:
-./scripts/meeting-ready-check-local.sh
+./scripts/validators/meeting-ready-check-local.sh
 ```
 
 Gera relatório em `artifacts/meeting-ready/<timestamp>/` com:

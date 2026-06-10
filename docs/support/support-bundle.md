@@ -25,7 +25,7 @@ Provide a comprehensive "snapshot" of the system state, including:
 Run the following script:
 
 ```bash
-./scripts/generate-support-bundle.sh
+./scripts/dev/generate-support-bundle.sh
 ```
 
 The bundle will be saved to `artifacts/support-bundles/support-bundle-YYYYMMDD_HHMMSS.tar.gz`.

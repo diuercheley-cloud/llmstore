@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.mlops import MLModelLineage
+from app.models.core.mlops import MLModelLineage
 from app.services.mlops.dataset_registry import log_mlops_audit
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

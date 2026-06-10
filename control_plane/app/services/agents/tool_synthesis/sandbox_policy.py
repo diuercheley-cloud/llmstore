@@ -1,4 +1,4 @@
-from app.models.agent_tool_synthesis import AgentSandboxPolicyEvent, AgentSandboxSession
+from app.models.agents.agent_tool_synthesis import AgentSandboxPolicyEvent, AgentSandboxSession
 from sqlalchemy.orm import Session
 
 

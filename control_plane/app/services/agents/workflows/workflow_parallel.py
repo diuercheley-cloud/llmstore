@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.agent_workflows import (
+from app.models.agents.agent_workflows import (
     AgentWorkflowNode,
     AgentWorkflowParallelGroup,
     AgentWorkflowRun,

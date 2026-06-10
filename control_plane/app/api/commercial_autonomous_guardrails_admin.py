@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.api.dependencies import get_current_admin, get_db
-from app.models.commercial_autonomous_guardrails import (
+from app.models.commercial.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionReceipt,
     CommercialExecutionBlastRadius,
     CommercialExecutionGuardrailEvent,

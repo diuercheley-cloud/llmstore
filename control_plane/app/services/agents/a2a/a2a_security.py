@@ -5,7 +5,7 @@ import json
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agents import AgentA2ARegistration
+from app.models.agents.agents import AgentA2ARegistration
 from fastapi import HTTPException
 from fastapi.security import APIKeyHeader
 from sqlalchemy import select

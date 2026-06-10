@@ -4,7 +4,7 @@ import subprocess
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+from app.models.commercial.commercial_infra_simulation import CommercialInfrastructureSimulation
 from app.services.routing.infra_adapters.base import BaseInfraAdapter
 
 logger = logging.getLogger(__name__)

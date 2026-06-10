@@ -5,8 +5,8 @@ from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_governance import CommercialPolicyBundle
-from app.models.commercial_governance_federation import (
+from app.models.commercial.commercial_governance import CommercialPolicyBundle
+from app.models.commercial.commercial_governance_federation import (
     CommercialFederatedPolicySync,
     CommercialGovernanceFederationPeer,
 )

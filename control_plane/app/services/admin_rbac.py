@@ -7,7 +7,7 @@ from uuid import UUID
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix, verify_secret
 from app.core.time import utc_now
-from app.models.admin_rbac import (
+from app.models.core.admin_rbac import (
     AdminAuditEvent,
     AdminPermission,
     AdminRoleModel,

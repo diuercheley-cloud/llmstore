@@ -128,7 +128,7 @@ async def list_runs(
     tenant_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db_session)
 ):
-    from app.models.agents import AgentRun
+    from app.models.agents.agents import AgentRun
     from sqlalchemy.future import select
     
     stmt = select(AgentRun)

@@ -131,7 +131,7 @@ A CONTRATANTE é responsável por:
 
 - A CONTRATADA realizará backup da configuração inicial ao final da implantação.
 - A CONTRATANTE é responsável por estabelecer e manter uma política de backups recorrentes dos dados e configurações do sistema.
-- O script `scripts/backup-local.sh` é fornecido como ferramenta auxiliar, sem garantia de adequação a políticas específicas de retenção ou recuperação de desastres.
+- O script `scripts/backup/backup-local.sh` é fornecido como ferramenta auxiliar, sem garantia de adequação a políticas específicas de retenção ou recuperação de desastres.
 
 ## 13. Confidencialidade
 

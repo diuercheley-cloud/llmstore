@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_studio import (
+from app.models.agents.agent_studio import (
     AgentFlowDefinition,
     AgentFlowEdge,
     AgentFlowNode,

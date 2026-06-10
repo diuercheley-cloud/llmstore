@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
 from app.services.evaluation.service import EvaluationService
-from app.models.evaluation import EvalRun, EvalResult, RedTeamFinding, EloRating
+from app.models.agents.evaluation import EvalRun, EvalResult, RedTeamFinding, EloRating
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

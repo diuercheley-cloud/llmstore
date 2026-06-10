@@ -130,7 +130,7 @@ def check_typecheck():
 
 def check_config_invalid():
     try:
-        with open("tests/llm_harness/test_llm_harness_config.py") as f:
+        with open("tests/integration/llm_harness/test_llm_harness_config.py") as f:
             content = f.read()
         if "HarnessConfigParseError" in content and "HarnessConfigSchemaError" in content:
             return True, "Config schema/syntax failures are verified in tests."
@@ -141,9 +141,9 @@ def check_config_invalid():
 
 def check_secrets_redaction():
     try:
-        with open("tests/llm_harness/test_llm_harness_cli.py") as f:
+        with open("tests/integration/llm_harness/test_llm_harness_cli.py") as f:
             content = f.read()
-        with open("tests/llm_harness/test_llm_harness_coding_loop.py") as f:
+        with open("tests/integration/llm_harness/test_llm_harness_coding_loop.py") as f:
             loop_content = f.read()
         if "[REDACTED]" in loop_content or "redact" in content or "sanitize" in loop_content:
             return True, "Secrets redaction logic is verified in test suite."
@@ -154,7 +154,7 @@ def check_secrets_redaction():
 
 def check_mock_integration():
     try:
-        with open("tests/llm_harness/test_llm_harness_providers.py") as f:
+        with open("tests/integration/llm_harness/test_llm_harness_providers.py") as f:
             content = f.read()
         if "mock" in content or "responses" in content or "httpx" in content:
             return True, "Integration tests with mock provider are configured."

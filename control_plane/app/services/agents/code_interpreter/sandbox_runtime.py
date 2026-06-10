@@ -3,7 +3,7 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.agent_tool_synthesis import AgentCodeInterpreterRun, AgentSandboxSession
+from app.models.agents.agent_tool_synthesis import AgentCodeInterpreterRun, AgentSandboxSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .microvm_policy import MicroVMPolicy

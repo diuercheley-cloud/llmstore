@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 from ..api.dependencies import get_admin_user
 from ..db.session import get_db
-from ..models.commercial_appliance import (
+from ..models.commercial.commercial_appliance import (
     CommercialOfflineAuditPackage,
     CommercialOfflineModelBundle,
     CommercialOfflineSyncManifest,

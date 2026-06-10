@@ -38,7 +38,7 @@ export function SessionList({ agentId, activeSessionId, onSelect, onNew }: Sessi
       await api.deleteSession(id);
       setSessions(prev => prev.filter(s => s.id !== id));
       toast.success('Session deleted');
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to delete session');
     }
   };

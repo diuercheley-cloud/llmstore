@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_iam import AgentCredentialAuditEvent
+from app.models.agents.agent_iam import AgentCredentialAuditEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("agent_iam_audit")

@@ -58,6 +58,6 @@ Admin endpoints are available under `/admin/crypto/`:
 ## Validation
 Validation checks can be run via:
 ```bash
-./scripts/validate-crypto-trust.sh
+./scripts/validators/validate-crypto-trust.sh
 ```
 This ensures models, services, compilation, and unit tests are functioning correctly.

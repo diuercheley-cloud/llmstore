@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.agent_cognitive_loopback import (
+from app.models.agents.agent_cognitive_loopback import (
     AgentFewShotExample,
     AgentLearningCandidate,
     AgentLearningPromotionReview,

@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentEvalDataset, AgentEvalDatasetVersion
+from app.models.agents.agents import AgentEvalDataset, AgentEvalDatasetVersion
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

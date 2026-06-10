@@ -60,8 +60,8 @@ Para testar uma instalação do zero sem risco ao sistema atual:
 
 ```bash
 # Simular instalação limpa (modo dry-run)
-./scripts/validate-clean-install-local.sh --dry-run
+./scripts/validators/validate-clean-install-local.sh --dry-run
 
 # Validar o resultado
-./scripts/validate-clean-install-validator.sh
+./scripts/validators/validate-clean-install-validator.sh
 ```

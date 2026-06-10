@@ -7,13 +7,15 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
-  Connection,
-  Edge,
-  Node,
   Panel,
   MarkerType,
   Handle,
   Position,
+} from '@xyflow/react';
+import type {
+  Connection,
+  Edge,
+  Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { CheckCircle2, Clock, Circle } from 'lucide-react';
@@ -61,8 +63,8 @@ interface FlowBuilderProps {
 }
 
 export default function FlowBuilder({ nodes: initialNodes, onSelectNode }: FlowBuilderProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // Sync initialNodes to React Flow nodes when it changes from parent
   useEffect(() => {
@@ -90,11 +92,10 @@ export default function FlowBuilder({ nodes: initialNodes, onSelectNode }: FlowB
   }, [initialNodes, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge({ 
+    (params: Connection) => setEdges((eds) => addEdge({ 
       ...params, 
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' },
-      style: { stroke: '#64748b', strokeWidth: 2 }
-    }, eds)),
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' as const },
+    } as Edge, eds)),
     [setEdges]
   );
 

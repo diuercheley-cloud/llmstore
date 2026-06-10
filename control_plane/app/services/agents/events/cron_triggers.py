@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, UTC
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
-from app.models.agent_events import AgentEventTrigger, AgentScheduledTrigger
+from app.models.agents.agent_events import AgentEventTrigger, AgentScheduledTrigger
 from app.services.agents.events.event_triggers import fire_trigger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

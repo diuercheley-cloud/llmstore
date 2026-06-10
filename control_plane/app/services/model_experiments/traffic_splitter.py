@@ -3,7 +3,7 @@ import random
 import uuid
 from typing import Optional
 
-from app.models.model_experiments import (
+from app.models.core.model_experiments import (
     ModelExperiment,
     ModelExperimentAssignment,
     ModelExperimentVariant,

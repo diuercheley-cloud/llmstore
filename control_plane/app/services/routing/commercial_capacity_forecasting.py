@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_capacity import CommercialCapacityForecast, CommercialCapacitySnapshot
+from app.models.commercial.commercial_capacity import CommercialCapacityForecast, CommercialCapacitySnapshot
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -126,5 +126,5 @@ pytest tests/test_runtime_attestation.py -v
 pytest tests/test_attestation_measurements.py -v
 pytest tests/test_attestation_integrity.py -v
 pytest tests/test_attestation_governance.py -v
-bash scripts/validate-runtime-attestation.sh
+bash scripts/validators/validate-runtime-attestation.sh
 ```

@@ -3,14 +3,14 @@ import uuid
 from typing import List, Tuple
 
 from app.core.config import get_settings
-from app.models.agent_optimization import (
+from app.models.agents.agent_optimization import (
     AgentOptimizationCandidate,
     AgentOptimizationExperiment,
     AgentPolicyCandidate,
     AgentPromptCandidate,
     AgentToolSelectionCandidate,
 )
-from app.models.agents import AgentDefinition, AgentEvalFailure, AgentRun
+from app.models.agents.agents import AgentDefinition, AgentEvalFailure, AgentRun
 from app.services.agents.optimization.policy_optimizer import PolicyOptimizer
 from app.services.agents.optimization.prompt_optimizer import PromptOptimizer
 from app.services.agents.optimization.tool_selection_optimizer import ToolSelectionOptimizer

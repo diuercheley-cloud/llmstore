@@ -2,7 +2,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.batches import BatchJob, BatchJobItem
+from app.models.core.batches import BatchJob, BatchJobItem
 from app.services.agents.agent_runtime import start_run
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select

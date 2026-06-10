@@ -4,23 +4,23 @@ from datetime import datetime, timezone
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.ai_wallet import AiWallet
-from app.models.commercial_rag_vault import (
+from app.models.billing.ai_wallet import AiWallet
+from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
     CommercialRAGPoisoningAlert,
     CommercialRAGRetrievalAudit,
     CommercialRAGVault,
 )
-from app.models.commercial_retrieval_proofs import (
+from app.models.commercial.commercial_retrieval_proofs import (
     CommercialContextLineage,
     CommercialRetrievalProof,
     CommercialRetrievalReplayRecord,
 )
-from app.models.rag_collection import RAGCollection
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
-from app.models.request_financial import RequestFinancial
+from app.models.rag.rag_collection import RAGCollection
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
+from app.models.billing.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import get_provider_pricing_config
 from app.services.providers.registry import (
@@ -315,8 +315,8 @@ async def hybrid_financials(
 async def hybrid_cache(
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.response_cache import ResponseCache
-    from app.models.semantic_cache_entry import SemanticCacheEntry
+    from app.models.core.response_cache import ResponseCache
+    from app.models.core.semantic_cache_entry import SemanticCacheEntry
 
     exact_entries = 0
     semantic_entries = 0
@@ -331,7 +331,7 @@ async def hybrid_cache(
     except Exception:
         pass
 
-    from app.models.request_log import RequestLog
+    from app.models.core.request_log import RequestLog
     exact_hits = 0
     exact_misses = 0
     try:

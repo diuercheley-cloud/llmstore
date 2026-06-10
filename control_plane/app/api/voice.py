@@ -6,7 +6,7 @@ from typing import Optional
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal, get_db_session
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.voice.stt_stream_service import STTStreamService
 from app.services.voice.tts_stream_service import TTSStreamService

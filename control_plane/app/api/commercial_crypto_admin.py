@@ -3,7 +3,7 @@ import uuid
 from typing import Any, List
 
 from app.api import deps
-from app.models.commercial_crypto_trust import (
+from app.models.commercial.commercial_crypto_trust import (
     CommercialKeyMaterial,
     CommercialKMSProvider,
     CryptoProviderType,

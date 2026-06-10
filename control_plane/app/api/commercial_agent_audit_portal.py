@@ -5,8 +5,8 @@ from typing import Any
 from uuid import UUID
 
 from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.commercial_agents import (
+from app.models.core.client import Client
+from app.models.commercial.commercial_agents import (
     CommercialAgentAction,
     CommercialAgentExecution,
     CommercialAgentReplayRecord,

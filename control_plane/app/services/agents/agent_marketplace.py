@@ -6,7 +6,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.config import get_settings
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentBundleInstall,
     AgentBundleTrustReport,
     AgentBundleVersion,

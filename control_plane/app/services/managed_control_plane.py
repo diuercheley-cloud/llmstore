@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import List, Optional
 
 from app.core.time import utc_now
-from app.models.managed_control_plane import (
+from app.models.core.managed_control_plane import (
     ApplianceEnrollment,
     ApplianceHeartbeat,
     ManagedAppliance,

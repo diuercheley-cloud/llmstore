@@ -9,18 +9,18 @@ from app.api.client import _chat_with_fallback
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.client import Client
-from app.models.commercial_rag_vault import (
+from app.models.core.client import Client
+from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
     CommercialRAGPoisoningAlert,
     CommercialRAGRetrievalAudit,
     CommercialRAGVault,
 )
-from app.models.commercial_retrieval_proofs import CommercialRetrievalProof
-from app.models.rag_collection import RAGCollection
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.commercial.commercial_retrieval_proofs import CommercialRetrievalProof
+from app.models.rag.rag_collection import RAGCollection
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.auth import AdminRole, require_admin_role, require_client
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.model_policy import resolve_requested_model

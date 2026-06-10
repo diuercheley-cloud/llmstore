@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, UTC
 
-from app.models.commercial_runtime_fabric import (
+from app.models.commercial.commercial_runtime_fabric import (
     CommercialRuntimeFabricEvent,
     CommercialRuntimeHealingAction,
     CommercialRuntimeRecoveryPlan,

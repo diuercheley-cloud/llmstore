@@ -32,7 +32,7 @@ make validate-demo-pack
 make reset-demo-pack
 
 # Reset real (requer --yes)
-./scripts/reset-commercial-demo-pack.sh --yes
+./scripts/dev/reset-commercial-demo-pack.sh --yes
 
 # Validar segurança do reset
 make validate-reset-demo-pack

@@ -8,9 +8,9 @@ status: consolidated
 O benchmarking no llm-inference-stack pode ser feito via UI ou CLI.
 
 ## Via CLI
-Use o script `scripts/benchmark-runtime.sh`:
+Use o script `scripts/dev/benchmark-runtime.sh`:
 ```bash
-./scripts/benchmark-runtime.sh <model_id>
+./scripts/dev/benchmark-runtime.sh <model_id>
 ```
 
 ## Métricas Detalhadas

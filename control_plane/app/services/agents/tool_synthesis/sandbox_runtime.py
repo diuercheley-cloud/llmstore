@@ -1,7 +1,7 @@
 import time
 import uuid
 
-from app.models.agent_tool_synthesis import AgentCodeInterpreterRun
+from app.models.agents.agent_tool_synthesis import AgentCodeInterpreterRun
 from app.services.agents.code_interpreter.providers.mock_sandbox import MockSandboxProvider
 from app.services.agents.code_interpreter.sandbox_limits import SandboxLimits
 from app.services.agents.code_interpreter.sandbox_policy import SandboxPolicyEngine

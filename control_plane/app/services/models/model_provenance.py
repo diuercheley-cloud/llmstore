@@ -5,7 +5,7 @@ import json
 from typing import Any
 from uuid import UUID
 
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialSignedModelRegistryEntry,
 )

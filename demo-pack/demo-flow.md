@@ -9,7 +9,7 @@ Tempo estimado: **30-45 minutos**
 make health
 
 # 2. Resetar dados demo anteriores (se necessário)
-./scripts/seed-commercial-demo-pack.sh --reset
+./scripts/dev/seed-commercial-demo-pack.sh --reset
 
 # 3. Carregar demo pack
 make demo-pack

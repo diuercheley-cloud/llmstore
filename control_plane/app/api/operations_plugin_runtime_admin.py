@@ -52,7 +52,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(tags=["operations-plugin-runtime"])
 
 CONTRACT_SERVICE = PluginABIContractService()
 BOUNDARY_SERVICE = PluginCapabilityBoundaryService()

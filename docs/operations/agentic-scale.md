@@ -35,7 +35,7 @@ Verify your cluster's capacity using the included load test suite.
 1. Register a test agent.
 2. Run the load test script:
 ```bash
-./scripts/load-test-agentic.sh <AGENT_ID> 1000
+./scripts/dev/load-test-agentic.sh <AGENT_ID> 1000
 ```
 
 ### Key Metrics

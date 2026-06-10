@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ...core.config import get_settings
-from ...models.commercial_agents import (
+from ...models.commercial.commercial_agents import (
     CommercialAgentDelegationPolicy,
     CommercialAgentExecution,
     CommercialAgentMemoryBoundary,

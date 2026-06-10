@@ -7,7 +7,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.agents import AgentBundleSignature
+from app.models.agents.agents import AgentBundleSignature
 
 logger = logging.getLogger(__name__)
 

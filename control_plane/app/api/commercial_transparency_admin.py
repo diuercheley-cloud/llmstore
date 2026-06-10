@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 
 from ..api.dependencies import get_admin_user
 from ..db.session import get_db
-from ..models.commercial_transparency import (
+from ..models.commercial.commercial_transparency import (
     CommercialConsistencyCheckpoint,
     CommercialTransparencyGossipPeer,
     CommercialTransparencySplitViewAlert,

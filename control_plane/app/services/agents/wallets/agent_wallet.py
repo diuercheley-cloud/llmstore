@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.agent_wallet import AgentWallet, AgentWalletLimit
+from app.models.agents.agent_wallet import AgentWallet, AgentWalletLimit
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .spend_authorization import SpendAuthorization

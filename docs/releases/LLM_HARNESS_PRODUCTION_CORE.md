@@ -14,7 +14,7 @@ Promotion of the LLM Harness proceeds through four distinct levels of maturity:
 2. **Validated**
    - **Scope**: Integrated local automation, developer-ready.
    - **Characteristics**: Passing unit tests, syntax validation, and local CLI tests.
-   - **Gate**: Successful execution of `scripts/validate-llm-harness.sh`.
+   - **Gate**: Successful execution of `scripts/validators/validate-llm-harness.sh`.
 
 3. **Production Candidate**
    - **Scope**: Feature-flagged staging and pilot production runs.
@@ -24,7 +24,7 @@ Promotion of the LLM Harness proceeds through four distinct levels of maturity:
 4. **Production Core**
    - **Scope**: Default-enabled, mandatory runtime module for all agentic workflows.
    - **Characteristics**: Zero network bypass, real AgentClient execution, strict sandboxing with guaranteed Docker cleanup, no hardcoded paths or short-circuit logic.
-    - **Gate**: Formal promotion check (`make production-core-check-llm-harness` executing `scripts/check-llm-harness-production-core.py`) validating all core criteria.
+    - **Gate**: Formal promotion check (`make production-core-check-llm-harness` executing `scripts/validators/check-llm-harness-production-core.py`) validating all core criteria.
 
 ---
 
@@ -34,7 +34,7 @@ To be promoted to **Production Core**, the LLM Harness must meet the following c
 
 ### 1. Robust Architecture & Real Execution
 - **AgentClient Real**: No mock or stub client fallbacks are used in production. Real API calls are dispatched to registered providers.
-- **Mock Provider Integration Tests**: The test suite must include at least one functional integration test verifying provider API payloads and responses (e.g., in `tests/llm_harness/test_llm_harness_providers.py`).
+- **Mock Provider Integration Tests**: The test suite must include at least one functional integration test verifying provider API payloads and responses (e.g., in `tests/integration/llm_harness/test_llm_harness_providers.py`).
 - **No Versioned Compiled Files**: Absolutely no `.pyc` files or compiled cache files are tracked in the repository.
 
 ### 2. Sandbox Security & Lifecycle Governance
@@ -48,8 +48,8 @@ To be promoted to **Production Core**, the LLM Harness must meet the following c
 - **Validation Clean**: Linter (`ruff`), type checker (`mypy`), and test suite (`pytest`) must be fully green.
 
 ### 4. Continuous Verification & Providers
-- **Providers Matrix Tested**: The test suite must contain provider matrix test coverage (`tests/llm_harness/test_provider_matrix.py`) validating registered providers, minimum configuration, repr safety, and response formatting.
-- **Check Script Validation**: Validation must be run through the automated script `scripts/check-llm-harness-production-core.py` outputting compliance reports in JSON and Markdown format.
+- **Providers Matrix Tested**: The test suite must contain provider matrix test coverage (`tests/integration/llm_harness/test_provider_matrix.py`) validating registered providers, minimum configuration, repr safety, and response formatting.
+- **Check Script Validation**: Validation must be run through the automated script `scripts/validators/check-llm-harness-production-core.py` outputting compliance reports in JSON and Markdown format.
 
 ### 5. Advanced Runtime Capabilities (P0/P1 Roadmap)
 - **Context Window Management**: Mandatory management of LLM context window to prevent overflow and ensure critical task context preservation.
@@ -59,7 +59,7 @@ To be promoted to **Production Core**, the LLM Harness must meet the following c
 - **Memory Storage Lifecycle**: Managed rotation and compression of execution history.
 
 ### 6. Production Quality, CI/CD, and Observability Gates
-- **Coverage Gate**: Strict coverage enforcement on the harness module (minimum threshold of 75% coverage validated via `./scripts/validate-llm-harness.sh`).
+- **Coverage Gate**: Strict coverage enforcement on the harness module (minimum threshold of 75% coverage validated via `./scripts/validators/validate-llm-harness.sh`).
 - **GitLab CI dedicated pipeline**: GitLab CI pipeline configured with dedicated linting, testing, typechecking, and regression benchmarking jobs.
 - **Pre-commit integration**: Mandatory pre-commit configuration (`.pre-commit-config.yaml`) running checks for ruff (lint/format), mypy, and configuration schema sanitizers.
 - **Ruff & Mypy Strictness**: Strict Mypy type-checking without global `ignore_missing_imports`, and expanded Ruff checks covering W, UP, B, SIM, ARG, and N rules.

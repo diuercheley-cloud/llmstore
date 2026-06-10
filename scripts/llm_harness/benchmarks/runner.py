@@ -1,4 +1,4 @@
-# scripts/llm_harness/benchmarks/runner.py
+# scripts/llm_harness/evals/runner.py
 import json
 import os
 import time

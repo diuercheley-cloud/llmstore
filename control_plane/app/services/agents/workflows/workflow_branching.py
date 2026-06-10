@@ -2,7 +2,7 @@
 import logging
 from typing import Any, Dict, Optional
 
-from app.models.agent_workflows import AgentWorkflowRun
+from app.models.agents.agent_workflows import AgentWorkflowRun
 
 logger = logging.getLogger(__name__)
 

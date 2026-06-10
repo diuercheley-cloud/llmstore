@@ -6,9 +6,9 @@ from typing import List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.client import Client
-from app.models.rag_document import RAGDocument
-from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.core.client import Client
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.rag.rag_poison_detection import analyze_and_record_poisoning
 from app.services.rag.rag_vault import (
     get_or_create_default_vault,

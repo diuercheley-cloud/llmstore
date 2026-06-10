@@ -22,8 +22,8 @@ status: consolidated
 | `docs/architecture/platform_phase_timeline.md` | Phase 69–82 timeline with objectives, dependencies, and evolution |
 | `docs/operations/platform_runbook.md` | Operations runbook with validation workflows and troubleshooting |
 | `docs/architecture/platform_documentation_consolidation_summary.md` | This file |
-| `scripts/validate_platform_documentation.py` | Validation script for documentation completeness and consistency |
-| `tests/docs/test_platform_documentation.py` | 76 pytest tests covering docs existence, content, and invariants |
+| `scripts/validators/validate_platform_documentation.py` | Validation script for documentation completeness and consistency |
+| `tests/integration/docs/test_platform_documentation.py` | 76 pytest tests covering docs existence, content, and invariants |
 
 ## Files Modified
 
@@ -64,9 +64,9 @@ All diagrams are pure Markdown/Mermaid — no external images.
 
 | Test Suite | Tests | Status |
 |-----------|-------|--------|
-| `tests/docs/test_platform_documentation.py` | 76 | PASS |
-| `tests/docs/test_governance_documentation_foundation.py` | 2 | PASS |
-| `tests/build/test_makefile_governance.py` | 6 | PASS |
+| `tests/integration/docs/test_platform_documentation.py` | 76 | PASS |
+| `tests/integration/docs/test_governance_documentation_foundation.py` | 2 | PASS |
+| `tests/integration/build/test_makefile_governance.py` | 6 | PASS |
 
 ## Limitations Explicitated
 
@@ -81,8 +81,8 @@ The following limitations are now documented in both `README.md` and `docs/archi
 ## Offline-First Confirmation
 
 All created documentation, validators, and tests run fully offline:
-- `scripts/validate_platform_documentation.py` — pure Python, no network calls
-- `tests/docs/test_platform_documentation.py` — file system only
+- `scripts/validators/validate_platform_documentation.py` — pure Python, no network calls
+- `tests/integration/docs/test_platform_documentation.py` — file system only
 - All Mermaid diagrams are text-only, no external rendering service
 - No mandatory SaaS, cloud, or internet dependency introduced
 

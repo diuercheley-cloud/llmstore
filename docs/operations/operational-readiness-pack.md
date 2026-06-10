@@ -14,7 +14,7 @@ make operational-readiness
 ```
 Ou diretamente o script:
 ```bash
-bash scripts/operational-readiness-pack.sh
+bash scripts/dev/operational-readiness-pack.sh
 ```
 
 ## Artefatos Gerados

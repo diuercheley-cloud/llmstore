@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List
 
 import networkx as nx
-from app.models.agent_workflows import AgentWorkflowDefinition
+from app.models.agents.agent_workflows import AgentWorkflowDefinition
 
 logger = logging.getLogger(__name__)
 

@@ -21,7 +21,8 @@ def test_agents_list(client):
         assert agents[0]["id"] == "agent-1"
         mock_request.assert_called_once()
         args, kwargs = mock_request.call_args
-        assert args[1] == "http://localhost:18080/client/agents"
+        # Updated to check for /v1/ prefix
+        assert args[1] == "http://localhost:18080/v1/agents"
 
 def test_agents_run(client):
     with patch("httpx.Client.request") as mock_request:
@@ -35,4 +36,5 @@ def test_agents_run(client):
         assert run["run_id"] == "run-1"
         mock_request.assert_called_once()
         args, kwargs = mock_request.call_args
-        assert f"/client/agents/{agent_id}/run" in args[1]
+        # Updated to check for /v1/ and /runs (plural)
+        assert f"/v1/agents/{agent_id}/runs" in args[1]

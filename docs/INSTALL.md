@@ -15,13 +15,13 @@ status: consolidated
 ## Instalação rápida
 
 ```bash
-chmod +x scripts/install.sh scripts/first-run.sh scripts/reset-dev.sh
-./scripts/install.sh
+chmod +x scripts/deploy/install.sh scripts/deploy/first-run.sh scripts/dev/reset-dev.sh
+./scripts/deploy/install.sh
 ```
 
 O script:
 
-- instala dependências base via `scripts/install-wsl-deps.sh`
+- instala dependências base via `scripts/deploy/install-wsl-deps.sh`
 - verifica `docker` e `docker compose`
 - cria `.env.local` a partir de `.env.example` se necessário
 - aplica permissão `chmod 600` no arquivo de ambiente local
@@ -29,10 +29,10 @@ O script:
 ## Primeira execução
 
 ```bash
-HF_TOKEN=seu_token ./scripts/first-run.sh
+HF_TOKEN=seu_token ./scripts/deploy/first-run.sh
 ```
 
-O `scripts/first-run.sh` faz:
+O `scripts/deploy/first-run.sh` faz:
 
 1. gera ou ajusta o arquivo `.env`
 2. cria `ADMIN_TOKEN` e `POSTGRES_PASSWORD` locais se ainda estiverem nos valores padrão
@@ -51,7 +51,7 @@ Por padrão:
 
 ## Resultado esperado
 
-Ao final do `scripts/first-run.sh`, você deve receber:
+Ao final do `scripts/deploy/first-run.sh`, você deve receber:
 
 - URL base da stack
 - URL do admin dashboard
@@ -66,7 +66,7 @@ Use um dominio publico apontando para a VPS e rode:
 ```bash
 export SERVER_NAME=api.seudominio.com
 export LETSENCRYPT_EMAIL=ops@seudominio.com
-sudo ./scripts/deploy-vps.sh
+sudo ./scripts/deploy/deploy-vps.sh
 ```
 
 O script:
@@ -88,7 +88,7 @@ Rotas publicas esperadas:
 
 ```bash
 cp .env.example .env.local
-./scripts/download-model.sh
-./scripts/up.sh
-./scripts/validate-e2e.sh
+./scripts/deploy/download-model.sh
+./scripts/deploy/up.sh
+./scripts/validators/validate-e2e.sh
 ```

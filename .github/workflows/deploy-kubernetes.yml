@@ -23,19 +23,19 @@ jobs:
         uses: azure/setup-helm@v3
       
       - name: Helm Template & Lint
-        run: helm lint deploy/kubernetes/helm/llm-inference-stack
+        run: helm lint deploy/helm/llm-inference-stack
 
-      - name: Deploy to K8s
+      - name: Deploy to K8s (Dry-run)
         run: |
           # No CI real, aqui usaria kubeconfig de secrets ou OIDC
-          echo "Simulando helm upgrade --install..."
-          make deploy-k8s
+          echo "[DRY-RUN] Simulando helm upgrade --install..."
+          make deploy-k8s DRY_RUN=true
         env:
           KUBE_NAMESPACE: ${{ github.event.inputs.target_env }}
 
-      - name: Wait for Rollout
+      - name: Wait for Rollout (Simulated)
         run: |
-          echo "Simulando kubectl rollout status..."
+          echo "[SIMULATED] Simulando kubectl rollout status..."
           sleep 5
 
       - name: Post-Deploy Validation

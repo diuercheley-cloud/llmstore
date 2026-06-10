@@ -17,7 +17,7 @@ To enable full-scale, automated agent operations with strict guardrails, autosca
 ## Execution
 Run the production activation script:
 ```bash
-./scripts/activate-agentic-production.sh
+./scripts/deploy/activate-agentic-production.sh
 ```
 
 ## State Changes

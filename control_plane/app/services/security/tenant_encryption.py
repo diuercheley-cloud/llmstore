@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from app.core.config import Settings
 from app.core.time import utc_now
-from app.models.commercial_encryption import (
+from app.models.commercial.commercial_encryption import (
     CommercialEncryptedArtifact,
     CommercialEncryptionAuditEvent,
     CommercialTenantEncryptionKey,

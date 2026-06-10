@@ -4,8 +4,8 @@ from decimal import Decimal
 from typing import Optional
 
 from app.db.session import get_db_session
-from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
+from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
 from app.services.auth import require_admin
 from app.services.billing.dispute_management import DisputeManagementService
 from app.services.billing.financial_audit_trail import FinancialAuditTrailService

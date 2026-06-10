@@ -18,13 +18,13 @@ make production-readiness
 Via script:
 
 ```bash
-./scripts/production-readiness-local.sh --base-url http://localhost:18080
+./scripts/dev/production-readiness-local.sh --base-url http://localhost:18080
 ```
 
 ## Opções
 
 ```bash
-./scripts/production-readiness-local.sh --help
+./scripts/dev/production-readiness-local.sh --help
 ```
 
 Parâmetros suportados:
@@ -80,7 +80,7 @@ Campos principais do `report.json`:
 
 O readiness local utiliza uma prova segura de rate limit que não estressa o ambiente:
 
-- O probe usa o script dedicado: `./scripts/validate-rate-limit-readiness-local.sh`.
+- O probe usa o script dedicado: `./scripts/validators/validate-rate-limit-readiness-local.sh`.
 - Cria um plano temporário `readiness-rate-limit-test` com limite estrito de **2 RPM**.
 - Cria um cliente temporário associado a este plano e uma API key.
 - Executa 4 requisições leves (ex: `/portal/me`).
@@ -92,7 +92,7 @@ O readiness local utiliza uma prova segura de rate limit que não estressa o amb
 Validação dedicada:
 
 ```bash
-./scripts/validate-rate-limit-readiness-local.sh
+./scripts/validators/validate-rate-limit-readiness-local.sh
 ```
 
 ## Probe TTS
@@ -109,12 +109,12 @@ O readiness local agora trata TTS como capacidade opcional:
 Validação dedicada:
 
 ```bash
-./scripts/validate-tts-readiness-local.sh
+./scripts/validators/validate-tts-readiness-local.sh
 ```
 
 ## Validação de Modelos
 
-O relatório de prontidão utiliza o endpoint `/v1/models` para identificar modelos utilizáveis e executa probes dedicados via `scripts/validate-chat-sse-readiness-local.sh`.
+O relatório de prontidão utiliza o endpoint `/v1/models` para identificar modelos utilizáveis e executa probes dedicados via `scripts/validators/validate-chat-sse-readiness-local.sh`.
 
 - **Modelo de Chat**: Exige `capabilities.chat == true`.
 - **Status de Prontidão**: Considera `local_ready` (ambiente local) ou `production_ready` (produção).

@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
+from app.models.agents.agent_studio import AgentFlowDefinition, AgentFlowVersion
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_validator import FlowValidator
 

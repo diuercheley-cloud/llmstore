@@ -28,7 +28,9 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Setup Node
-        uses: ./.github/actions/setup-node-admin
+        uses: ./.github/actions/setup-node-project
+        with:
+          project-dir: frontend/admin
       - name: Build Storybook
         env:
           STORYBOOK_DOCS_DOMAIN: ${{ vars.STORYBOOK_DOCS_DOMAIN }}

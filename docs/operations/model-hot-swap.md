@@ -30,10 +30,10 @@ When `MODEL_HOT_SWAP_ENABLED=true`, the control plane acts as a supervisor for m
 
 Use the provided scripts in `scripts/`:
 
-- `./scripts/model-runtime-list.sh`: List all loaded runtimes.
-- `./scripts/model-runtime-load.sh <model_id> <backend_id> <model_path>`: Load a new model.
-- `./scripts/model-runtime-activate.sh <instance_id>`: Activate a loaded instance.
-- `./scripts/model-runtime-rollback.sh <model_id> <backend_id>`: Rollback to the previous instance.
+- `./scripts/dev/model-runtime-list.sh`: List all loaded runtimes.
+- `./scripts/dev/model-runtime-load.sh <model_id> <backend_id> <model_path>`: Load a new model.
+- `./scripts/deploy/model-runtime-activate.sh <instance_id>`: Activate a loaded instance.
+- `./scripts/dev/model-runtime-rollback.sh <model_id> <backend_id>`: Rollback to the previous instance.
 
 ## Management via Admin API
 

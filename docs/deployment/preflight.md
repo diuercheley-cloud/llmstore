@@ -18,7 +18,7 @@ make preflight
 Ou execute o script diretamente:
 
 ```bash
-./scripts/preflight-check.sh
+./scripts/validators/preflight-check.sh
 ```
 
 ## Validações Realizadas

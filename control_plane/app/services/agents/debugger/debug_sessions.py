@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict
 
-from app.models.agent_debugger import AgentDebugSession, AgentDebugStepEvent
+from app.models.agents.agent_debugger import AgentDebugSession, AgentDebugStepEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

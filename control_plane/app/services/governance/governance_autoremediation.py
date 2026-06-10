@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.commercial_governance_supervisor import (
+from app.models.commercial.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorAction,
     CommercialGovernanceSupervisorDecision,
 )

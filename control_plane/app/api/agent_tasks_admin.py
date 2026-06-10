@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.api.deps import get_db_session, require_admin
-from app.models.agents import AgentTask
+from app.models.agents.agents import AgentTask
 from app.services.agents.agent_planner import AgentPlanner
 from app.services.agents.task_engine import TaskEngine
 from fastapi import APIRouter, Body, Depends, HTTPException

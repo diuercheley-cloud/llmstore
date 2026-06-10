@@ -423,14 +423,14 @@ doc.add_heading('10. Testes Automatizados', level=1)
 doc.add_paragraph(
     'Total de 847 arquivos de teste distribuídos em:\n\n'
     '• tests/: testes de integração/sistema (diversos subdiretórios)\n'
-    '• control_plane/tests/: 53 testes unitários/integração do backend\n'
+    '• tests/control_plane/: 53 testes unitários/integração do backend\n'
     '• tests/e2e-playwright/: testes E2E com Playwright\n'
-    '• tests/agent_evals/: avaliação de agentes\n'
+    '• tests/integration/agent_evals/: avaliação de agentes\n'
     '• tests/chaos/: engenharia de caos\n'
-    '• tests/compliance/: conformidade (SOC 2, ISO 27001)\n'
-    '• tests/performance/: baseline de performance\n'
-    '• tests/security/: segurança\n'
-    '• tests/kubernetes/: deploy K8s\n\n'
+    '• tests/integration/compliance/: conformidade (SOC 2, ISO 27001)\n'
+    '• tests/integration/performance/: baseline de performance\n'
+    '• tests/integration/security/: segurança\n'
+    '• tests/integration/kubernetes/: deploy K8s\n\n'
     'Markers pytest: quick, slow, release, chaos, k8s\n'
     'Framework: pytest com asyncio_mode = auto'
 )
@@ -456,8 +456,8 @@ doc.add_heading('12. Scripts Operacionais', level=1)
 doc.add_paragraph(
     '• 491 scripts (Bash e Python) em scripts/\n'
     '• Automatizam: deploy, backup, restore, validação, testes, release, manutenção\n'
-    '• Organizados com scripts/lib/ para bibliotecas compartilhadas\n'
-    '• Manifesto em scripts/manifest.yaml'
+    '• Organizados com scripts/dev/lib/ para bibliotecas compartilhadas\n'
+    '• Manifesto em scripts/dev/manifest.yaml'
 )
 
 # ════════════════════════════════════════════════════

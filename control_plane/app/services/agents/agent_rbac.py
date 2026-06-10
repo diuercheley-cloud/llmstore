@@ -6,7 +6,7 @@ import logging
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentRBACEvent
+from app.models.agents.agents import AgentRBACEvent
 from app.services.admin_rbac import AuthenticatedAdmin
 from fastapi import HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession

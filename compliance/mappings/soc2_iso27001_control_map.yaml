@@ -42,7 +42,7 @@ controls:
     title: "Automated Release Gates"
     description: "Ensures all changes meet quality and security criteria before deployment."
     implementation_status: "implemented"
-    evidence_sources: ["scripts/release-gate.sh", "github_actions_logs"]
+    evidence_sources: ["scripts/release/release-gate.sh", "github_actions_logs"]
     owner_role: "DevOps Engineer"
     review_frequency: "per_release"
     automated_test: "release-validation.yml"
@@ -55,7 +55,7 @@ controls:
     title: "Change Management Process"
     description: "Formal process for tracking and approving changes."
     implementation_status: "implemented"
-    evidence_sources: ["CHANGELOG.md", "scripts/verify-release-artifacts.sh"]
+    evidence_sources: ["CHANGELOG.md", "scripts/validators/verify-release-artifacts.sh"]
     owner_role: "Release Manager"
     review_frequency: "per_release"
     automated_test: ""
@@ -97,7 +97,7 @@ controls:
     title: "Supplier Security Policy"
     description: "Security requirements for mitigating risks associated with suppliers."
     implementation_status: "implemented"
-    evidence_sources: ["scripts/generate-sbom.sh", "docs/security/supply-chain-ci.md"]
+    evidence_sources: ["scripts/release/generate-sbom.sh", "docs/security/supply-chain-ci.md"]
     owner_role: "Procurement Officer"
     review_frequency: "annually"
     automated_test: "supply-chain-ci.yml"
@@ -111,7 +111,7 @@ controls:
     title: "Information Security Continuity"
     description: "Availability of information processing facilities under stress."
     implementation_status: "implemented"
-    evidence_sources: ["scripts/chaos-run.sh", "docs/chaos/chaos-engineering.md"]
+    evidence_sources: ["scripts/dev/chaos-run.sh", "docs/chaos/chaos-engineering.md"]
     owner_role: "SRE"
     review_frequency: "quarterly"
     automated_test: "chaos.yml"

@@ -9,7 +9,7 @@ from app.services.knowledge_base.kb_reindex import KBReindexService
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin/kb", tags=["knowledge-base"])
 
 @router.post("/")
 async def create_kb(
@@ -65,7 +65,7 @@ async def list_documents(
     db: AsyncSession = Depends(deps.get_db),
     current_user = Depends(deps.get_current_admin_user)
 ):
-    from app.models.knowledge_base import KBDocument
+    from app.models.rag.knowledge_base import KBDocument
     from sqlalchemy import select
     stmt = select(KBDocument).where(KBDocument.kb_id == kb_id)
     res = await db.execute(stmt)

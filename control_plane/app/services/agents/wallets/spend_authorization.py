@@ -2,7 +2,7 @@
 import uuid
 from typing import Optional, Tuple
 
-from app.models.agent_wallet import AgentSpendAuthorization, AgentWalletLimit
+from app.models.agents.agent_wallet import AgentSpendAuthorization, AgentWalletLimit
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

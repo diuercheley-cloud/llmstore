@@ -7,8 +7,8 @@ import logging
 from app.core.metrics import BILLING_STATUS_GAUGE, SECURITY_EVENT_COUNTER
 from app.core.request_context import get_correlation_id, get_source_ip
 from app.core.time import utc_now
-from app.models.client import Client
-from app.models.security_event import SecurityEvent
+from app.models.core.client import Client
+from app.models.core.security_event import SecurityEvent
 from fastapi import HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy import desc, func, select

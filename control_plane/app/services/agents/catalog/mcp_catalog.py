@@ -1,6 +1,6 @@
 import uuid
 
-from app.models.agent_catalog import MCPCatalogEntry
+from app.models.agents.agent_catalog import MCPCatalogEntry
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

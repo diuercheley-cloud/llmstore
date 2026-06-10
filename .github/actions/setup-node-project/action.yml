@@ -1,0 +1,24 @@
+name: 'Setup Node Project'
+description: 'Sets up Node.js, dependencies, and caching for a specific project directory'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  project-dir:
+    description: 'Project directory (e.g. frontend/admin)'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ inputs.project-dir }}/package-lock.json
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd ${{ inputs.project-dir }}
+        npm ci

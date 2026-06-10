@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentCollaborationSession,
     AgentDefinition,
     AgentDelegationPolicy,

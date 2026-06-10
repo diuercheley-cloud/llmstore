@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_events import AgentEventDelivery, AgentEventTrigger
+from app.models.agents.agent_events import AgentEventDelivery, AgentEventTrigger
 from app.services.agents.agent_runtime import start_run
 from app.services.agents.events.event_deduplication import sanitize_payload
 from app.services.agents.events.event_policy import check_policy
@@ -78,7 +78,7 @@ async def fire_trigger(db: AsyncSession, trigger_id: uuid.UUID, payload: Dict[st
 
 async def _run_agent_in_background(agent_id: uuid.UUID, tenant_id: str, input_text: str, delivery_id: uuid.UUID):
     from app.db.session import SessionLocal
-    from app.models.agent_events import AgentEventDelivery
+    from app.models.agents.agent_events import AgentEventDelivery
     
     logger.info(f"Starting background AgentRun for agent={agent_id} delivery={delivery_id}")
     

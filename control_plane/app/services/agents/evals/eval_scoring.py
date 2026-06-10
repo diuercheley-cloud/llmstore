@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import List, Tuple
 
-from app.models.agents import AgentEvalResult, AgentLLMJudgeRun
+from app.models.agents.agents import AgentEvalResult, AgentLLMJudgeRun
 from app.services.agents.evals.red_team import RedTeamScanner
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

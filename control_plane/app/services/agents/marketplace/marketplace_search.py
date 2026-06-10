@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_marketplace import MarketplaceItem
+from app.models.agents.agent_marketplace import MarketplaceItem
 from sqlalchemy import asc, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

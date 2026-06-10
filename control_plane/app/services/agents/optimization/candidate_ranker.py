@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Dict, List, Optional, Tuple
 
-from app.models.agent_optimization_tournament import (
+from app.models.agents.agent_optimization_tournament import (
     AgentOptimizationTournament,
     AgentOptimizationTournamentCandidate,
     AgentOptimizationTournamentResult,

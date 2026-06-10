@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from app.models.commercial_governance_supervisor import CommercialGovernanceSupervisorRiskScore
+from app.models.commercial.commercial_governance_supervisor import CommercialGovernanceSupervisorRiskScore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

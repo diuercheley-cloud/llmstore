@@ -26,15 +26,15 @@ In `LOCAL_APPLIANCE_MODE`, CORS is configured to be "secure-by-default":
 - **Explicit Origins**: Use `CORS_ALLOW_ORIGINS` in `.env.local` to list permitted origins (e.g., `http://localhost:3000`).
 - **Secure Defaults**: If `CORS_ALLOW_ORIGINS` is empty, the system automatically allows `http://localhost`, `http://127.0.0.1`, and variants with the configured `HOST_PORT`.
 - **Wildcard Forbidden**: Setting `CORS_ALLOW_ORIGINS=*` is strictly forbidden in appliance mode and will be ignored (falling back to secure defaults).
-- **Validation**: Use `./scripts/validate-cors-local-appliance.sh` to verify your CORS setup.
+- **Validation**: Use `./scripts/validators/validate-cors-local-appliance.sh` to verify your CORS setup.
 
 ## Security Guards
 
 The appliance mode introduces several guards, especially during the release process:
 
 -   **Admin Token Validation**: The system issues warnings if a default or weak `ADMIN_TOKEN` is detected.
--   **Secrets Scanning**: `scripts/release-local-production.sh` enforces a full secrets scan using `scripts/check-secrets.sh` before allowing a release.
--   **Data Protection**: Local data directories like `models/` and `data/rag_uploads/` are strictly excluded from release bundles created via `scripts/create-release-bundle.sh`.
+-   **Secrets Scanning**: `scripts/release/release-local-production.sh` enforces a full secrets scan using `scripts/validators/check-secrets.sh` before allowing a release.
+-   **Data Protection**: Local data directories like `models/` and `data/rag_uploads/` are strictly excluded from release bundles created via `scripts/release/create-release-bundle.sh`.
 -   **Production Readiness**: Releases require (or strongly recommend) a `production-readiness-local.sh` check.
 
 ## How to Enable
@@ -59,7 +59,7 @@ LOCAL_APPLIANCE_MODE=true
 You can validate your appliance mode configuration using the provided script:
 
 ```bash
-./scripts/validate-local-appliance-mode.sh
+./scripts/validators/validate-local-appliance-mode.sh
 ```
 
 This script verifies that the mode is active, billing is manual, CORS is restricted, and all security guards are in place.

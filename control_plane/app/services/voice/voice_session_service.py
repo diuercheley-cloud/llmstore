@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.realtime_voice import VoiceSession
+from app.models.core.realtime_voice import VoiceSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

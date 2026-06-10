@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
-from app.models.agent_iam import AgentCredentialAuditEvent
+from app.models.agents.agent_iam import AgentCredentialAuditEvent
 from app.services.agents.iam.service_principal import ServicePrincipalService
 from app.services.agents.iam.token_exchange import TokenExchangeService
 from fastapi import APIRouter, Depends, HTTPException, Query

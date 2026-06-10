@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
 from app.services.deterministic_execution.service import DeterministicExecutionService
-from app.models.deterministic_execution import ExecutionRun, ExecutionStep
+from app.models.core.deterministic_execution import ExecutionRun, ExecutionStep
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

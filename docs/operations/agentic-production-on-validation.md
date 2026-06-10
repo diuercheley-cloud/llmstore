@@ -48,7 +48,7 @@ Key flags:
 make agentic-production-on-readiness
 
 # Or directly:
-bash scripts/validate-agentic-production-on.sh
+bash scripts/validators/validate-agentic-production-on.sh
 ```
 
 ## What Is Validated

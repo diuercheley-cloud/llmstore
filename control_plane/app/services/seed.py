@@ -3,8 +3,8 @@ import os
 
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
-from app.models.api_key import ApiKey
-from app.models.client import Client
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
 from app.services.admin_rbac import ensure_admin_rbac_seed
 from app.services.agents.tool_adapter_seeding import seed_tool_adapters
 from app.services.billing import ensure_default_billing_plans, ensure_default_pricing_rules
@@ -73,8 +73,8 @@ async def seed_defaults(session: AsyncSession) -> None:
             rate_limit_per_minute=settings.demo_rate_limit_per_minute,
             daily_token_quota=settings.demo_daily_token_quota,
             monthly_token_quota=settings.demo_monthly_token_quota,
-            max_context_tokens=settings.max_context_tokens,
-            max_output_tokens=settings.max_completion_tokens,
+            max_context_tokens=settings.inference_max_context_tokens,
+            max_output_tokens=settings.inference_max_completion_tokens,
             billing_plan_id=demo_plan.id,
         )
         session.add(client)
@@ -85,8 +85,8 @@ async def seed_defaults(session: AsyncSession) -> None:
         client.rate_limit_per_minute = settings.demo_rate_limit_per_minute
         client.daily_token_quota = settings.demo_daily_token_quota
         client.monthly_token_quota = settings.demo_monthly_token_quota
-        client.max_context_tokens = settings.max_context_tokens
-        client.max_output_tokens = settings.max_completion_tokens
+        client.max_context_tokens = settings.inference_max_context_tokens
+        client.max_output_tokens = settings.inference_max_completion_tokens
         client.billing_plan_id=demo_plan.id
 
     key_result = await session.execute(select(ApiKey).where(ApiKey.client_id == client.id, ApiKey.name == "demo-default"))

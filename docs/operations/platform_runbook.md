@@ -72,7 +72,7 @@ The claims validator found prohibited language in documentation or scripts:
 
 ```bash
 # Run claims validator directly to see details
-python3 scripts/validate_claims.py
+python3 scripts/validators/validate_claims.py
 ```
 
 Common prohibited claim issues:
@@ -86,7 +86,7 @@ One or more bounded context rules are violated:
 
 ```bash
 # Run boundaries validator directly
-python3 scripts/validate_architecture_boundaries.py
+python3 scripts/validators/validate_architecture_boundaries.py
 ```
 
 Check:
@@ -99,8 +99,8 @@ Check:
 Run the documentation validator directly:
 
 ```bash
-python3 scripts/validate_platform_documentation.py
-pytest tests/docs/test_platform_documentation.py -v
+python3 scripts/validators/validate_platform_documentation.py
+pytest tests/integration/docs/test_platform_documentation.py -v
 ```
 
 ## Reading Reports

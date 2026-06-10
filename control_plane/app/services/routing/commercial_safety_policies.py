@@ -1,6 +1,6 @@
 import uuid
 
-from app.models.commercial_infra_simulation import CommercialSafetyPolicy
+from app.models.commercial.commercial_infra_simulation import CommercialSafetyPolicy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

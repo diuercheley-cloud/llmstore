@@ -1,4 +1,4 @@
-source scripts/common.sh
+source scripts/dev/common.sh
 init_stack_env
 
 BASIC_JSON="$(curl -fsS -H "X-Admin-Token: ${ADMIN_TOKEN}" "${BASE_URL}/admin/billing/plans")"

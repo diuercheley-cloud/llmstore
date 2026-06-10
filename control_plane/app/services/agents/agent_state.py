@@ -6,7 +6,7 @@ import uuid
 from typing import Any, List, Optional
 
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentDefinition,
     AgentRun,
     AgentRunCheckpoint,

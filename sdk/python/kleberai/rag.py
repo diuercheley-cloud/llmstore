@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+import httpx
+from typing import Any, Dict, List, Optional
 
 
 class RAGAPI:
@@ -9,8 +10,32 @@ class RAGAPI:
         payload = {"question": question, **kwargs}
         return self.client._request("POST", "/v1/rag/query", json=payload)
 
-    def upload_file(self, file_params: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", "/v1/rag/files", json=file_params)
+    def search(self, query: str, collection_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Alias for query to match intuitive naming."""
+        payload = {"question": query, "collection_id": collection_id, **kwargs}
+        return self.client._request("POST", "/v1/rag/query", json=payload)
+
+    def upload_file(self, file_path: str, collection_id: Optional[str] = None) -> Dict[str, Any]:
+        """Upload a file using multipart/form-data."""
+        url = f"{self.client.base_url}/v1/rag/files"
+        data = {}
+        if collection_id:
+            data["collection_id"] = collection_id
+            
+        try:
+            with open(file_path, "rb") as f:
+                files = {"file": (file_path.split("/")[-1], f)}
+                with httpx.Client(timeout=self.client.timeout) as client:
+                    response = client.post(url, headers=self.client.headers, data=data, files=files)
+                    response.raise_for_status()
+                    return response.json()
+        except Exception as e:
+            from .client import KleberAIError
+            raise KleberAIError(f"Upload failed: {str(e)}")
+
+    def upload_document(self, file_path: str, collection_id: Optional[str] = None) -> Dict[str, Any]:
+        """Alias for upload_file to match documentation."""
+        return self.upload_file(file_path, collection_id)
 
     def list_files(self) -> List[Dict[str, Any]]:
         return self.client._request("GET", "/v1/rag/files")

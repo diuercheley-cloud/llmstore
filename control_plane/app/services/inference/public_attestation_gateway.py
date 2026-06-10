@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ...core.config import get_settings
-from ...models.commercial_attestation import (
+from ...models.commercial.commercial_attestation import (
     CommercialPublicAttestationRequest,
     CommercialPublicAttestationResult,
 )
-from ...models.commercial_cryptographic_receipts import CommercialInferenceReceipt
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
-from ...models.commercial_retrieval_proofs import (
+from ...models.commercial.commercial_cryptographic_receipts import CommercialInferenceReceipt
+from ...models.commercial.commercial_merkle_timelines import CommercialMerkleTimeline
+from ...models.commercial.commercial_retrieval_proofs import (
     CommercialRetrievalProof,
     CommercialRetrievalReplayRecord,
 )

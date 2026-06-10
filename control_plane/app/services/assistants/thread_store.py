@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.assistants import AssistantThread
+from app.models.agents.assistants import AssistantThread
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

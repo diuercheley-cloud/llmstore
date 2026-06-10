@@ -6,8 +6,8 @@ from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
-from app.models.commercial_routing_event import CommercialRoutingEvent
-from app.models.commercial_routing_event_ingest import CommercialRoutingEventIngest
+from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
+from app.models.commercial.commercial_routing_event_ingest import CommercialRoutingEventIngest
 from app.schemas.routing import TaskType
 from app.services.routing.commercial_report_export import (
     REDACTION,

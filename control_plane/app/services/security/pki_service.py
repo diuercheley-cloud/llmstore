@@ -4,7 +4,7 @@ from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.security_pki import CertificateInventory
+from app.models.core.security_pki import CertificateInventory
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa

@@ -16,7 +16,7 @@ The LLM Harness is considered ready for promotion to `Production Core` only when
 - [ ] **Control Plane Connectivity**: Successful communication with `agent-registry` and `governance` services.
 - [ ] **Coding Loop Stability**: Successful completion of the "Standard Fix" benchmark (reproducing and fixing a known bug).
 - [ ] **Tool Coverage**: All core tools (files, git, shell, tests) must have 100% unit test coverage.
-- [ ] **Comprehensive Testing**: All consolidated tests in `tests/llm_harness/` must pass.
+- [ ] **Comprehensive Testing**: All consolidated tests in `tests/integration/llm_harness/` must pass.
 - [ ] **CLI Completeness**: All documented commands must be functional and return correct exit codes.
 
 ### 3. Observability & Audit Gate

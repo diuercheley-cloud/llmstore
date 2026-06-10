@@ -6,9 +6,9 @@ from typing import Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing_invoice import BillingInvoice
-from app.models.client import Client
-from app.models.payments import PaymentAuditEvent, PaymentCustomer, PaymentIntent
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.core.client import Client
+from app.models.billing.payments import PaymentAuditEvent, PaymentCustomer, PaymentIntent
 from app.services.billing.payments.mock_payment_provider import MockPaymentProvider
 from app.services.billing.payments.payment_provider import PaymentProvider
 from app.services.billing.payments.stripe_provider import StripePaymentProvider

@@ -140,7 +140,7 @@ async def create_deployment(
         await session.commit()
 
         # Get the default key
-        from app.models.agent_deployments import AgentApiEndpointKey
+        from app.models.agents.agent_deployments import AgentApiEndpointKey
         from sqlalchemy import select
         stmt = select(AgentApiEndpointKey).where(
             AgentApiEndpointKey.deployment_id == deployment.id

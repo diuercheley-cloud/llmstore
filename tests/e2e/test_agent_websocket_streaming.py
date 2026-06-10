@@ -13,9 +13,9 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
     from app.core.security import hash_secret
     from app.db.session import SessionLocal
     from app.main import app as fastapi_app
-    from app.models.agents import AgentDefinition, AgentRun
-    from app.models.api_key import ApiKey
-    from app.models.client import Client as DBClient
+    from app.models.agents.agents import AgentDefinition, AgentRun
+    from app.models.core.api_key import ApiKey
+    from app.models.core.client import Client as DBClient
     from app.services.agents.streaming.run_event_stream import RunEventStreamService
 
     settings = get_settings()

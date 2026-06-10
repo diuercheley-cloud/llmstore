@@ -9,7 +9,7 @@ status: consolidated
 >
 > Para validacao E2E automatica da demo antes da apresentacao:
 > ```bash
-> ./scripts/validate-commercial-demo-e2e-local.sh --seed-demo --skip-tts --skip-rag
+> ./scripts/validators/validate-commercial-demo-e2e-local.sh --seed-demo --skip-tts --skip-rag
 > ```
 
 ---
@@ -278,7 +278,7 @@ curl -fsS http://localhost:18080/v1/rag/query \
 "O motor RAG busca os documentos mais relevantes, monta o contexto e o modelo gera a resposta — tudo localmente."
 
 #### Validação (2 min)
-"Para garantir que o RAG está funcionando: `./scripts/validate-rag-local-multiclient.sh`. Testa isolamento entre clientes — cliente A não acessa documentos do cliente B."
+"Para garantir que o RAG está funcionando: `./scripts/validators/validate-rag-local-multiclient.sh`. Testa isolamento entre clientes — cliente A não acessa documentos do cliente B."
 
 ### Demo: TTS — Text-to-Speech (5 min)
 
@@ -332,7 +332,7 @@ curl http://localhost:18080/v1/responses \
 #### Geração de Faturas (2 min)
 "A cada ciclo mensal, ou sob demanda, o administrador gera invoices:"
 ```bash
-./scripts/generate-invoices.sh
+./scripts/dev/generate-invoices.sh
 ```
 "O sistema calcula o consumo de cada cliente, aplica a precificação do plano e gera invoices em `pending`."
 
@@ -340,7 +340,7 @@ curl http://localhost:18080/v1/responses \
 *Ação: Mostre no Admin Lab*
 "As invoices aparecem no Admin Lab e no portal do cliente. O pagamento é feito fora do sistema (boleto, TED, contrato). O administrador confirma manualmente:"
 ```bash
-./scripts/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
+./scripts/dev/mark-invoice-paid.sh UUID_DA_FATURA local-ref-001
 ```
 
 #### Suspensão por Inadimplência (1 min)
@@ -350,19 +350,19 @@ curl http://localhost:18080/v1/responses \
 
 #### Relatório de Readiness (2 min)
 ```bash
-./scripts/production-readiness-local.sh
+./scripts/dev/production-readiness-local.sh
 ```
 "Gera relatório detalhado: conectividade, GPU, modelos, CORS, rate limiting, isolamento multi-tenant, backup. Cada item é verde/amarelo/vermelho com recomendações."
 
 #### Security Report (2 min)
 ```bash
-./scripts/security-report-local.sh
+./scripts/validators/security-report-local.sh
 ```
 "Relatório de segurança: verifica secrets em arquivos, permissões, exposição de portas, artefatos sensíveis. Tudo documentado em `artifacts/security-report-<data>/`."
 
 #### Diagnóstico de Advertências (1 min)
 ```bash
-./scripts/diagnose-readiness-warnings-local.sh
+./scripts/dev/diagnose-readiness-warnings-local.sh
 ```
 "Explica cada warning e sugere ação corretiva."
 
@@ -462,17 +462,17 @@ make validate-meeting-ready
 
 | Operação | Comando |
 |----------|---------|
-| Validar demo completa | `./scripts/validate-e2e.sh` |
-| Validar billing | `./scripts/validate-local-billing.sh` |
-| Validar RAG | `./scripts/validate-rag-local-multiclient.sh` |
-| Validar portal | `./scripts/validate-client-portal-local.sh` |
-| Validar dashboard | `./scripts/validate-demo-admin-dashboard.sh` |
-| Gerar faturas | `./scripts/generate-invoices.sh` |
-| Marcar paga | `./scripts/mark-invoice-paid.sh` |
-| Relatório readiness | `./scripts/production-readiness-local.sh` |
-| Relatório segurança | `./scripts/security-report-local.sh` |
-| Backup | `./scripts/backup.sh` |
-| Criar cliente | `./scripts/create-client.sh` |
+| Validar demo completa | `./scripts/validators/validate-e2e.sh` |
+| Validar billing | `./scripts/validators/validate-local-billing.sh` |
+| Validar RAG | `./scripts/validators/validate-rag-local-multiclient.sh` |
+| Validar portal | `./scripts/validators/validate-client-portal-local.sh` |
+| Validar dashboard | `./scripts/validators/validate-demo-admin-dashboard.sh` |
+| Gerar faturas | `./scripts/dev/generate-invoices.sh` |
+| Marcar paga | `./scripts/dev/mark-invoice-paid.sh` |
+| Relatório readiness | `./scripts/dev/production-readiness-local.sh` |
+| Relatório segurança | `./scripts/validators/security-report-local.sh` |
+| Backup | `./scripts/backup/backup.sh` |
+| Criar cliente | `./scripts/dev/create-client.sh` |
 | Validar dados fictícios | `make validate-fake-data` |
 
 ## 8. Gestão Comercial (CRM Local)

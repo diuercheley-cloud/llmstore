@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.commercial_compliance import (
+from app.models.commercial.commercial_compliance import (
     CommercialControlAttestation,
     CommercialOperationalEvidence,
 )

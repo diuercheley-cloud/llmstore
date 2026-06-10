@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.time import utc_now
-from app.models.batches import BatchJob, BatchJobItem
+from app.models.core.batches import BatchJob, BatchJobItem
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

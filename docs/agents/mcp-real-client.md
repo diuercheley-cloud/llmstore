@@ -150,7 +150,7 @@ Audit fields: `event_type`, `timestamp`, `tenant_id`, `server_id`, `tool_name`, 
 ## Testing
 
 ```bash
-pytest tests/services/test_mcp_client.py -v
+pytest tests/unit/services/test_mcp_client.py -v
 ```
 
 Key test cases:

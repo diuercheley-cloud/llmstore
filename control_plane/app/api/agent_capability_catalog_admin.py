@@ -42,7 +42,7 @@ async def disable_capability(entry_id: uuid.UUID, db: AsyncSession = Depends(get
 
 @router.get("/{entry_id}/trust-report")
 async def get_trust_report(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)):
-    from app.models.agent_catalog import PluginTrustReportGov
+    from app.models.agents.agent_catalog import PluginTrustReportGov
     from sqlalchemy import select
     result = await db.execute(select(PluginTrustReportGov).where(PluginTrustReportGov.catalog_entry_id == entry_id))
     report = result.scalars().first()

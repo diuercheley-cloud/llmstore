@@ -42,22 +42,22 @@ No versioned file in `releases/` may contain:
 
 ## How to Generate a Secure Release
 
-1.  Use `scripts/release-local-production.sh`.
-2.  The script automatically calls `scripts/redact-local-sensitive-artifacts.sh` to clean up artifacts before moving them to the `releases/` directory.
-3.  The script also runs `scripts/validate-release-artifacts-security.sh` to ensure no secrets leaked.
+1.  Use `scripts/release/release-local-production.sh`.
+2.  The script automatically calls `scripts/backup/redact-local-sensitive-artifacts.sh` to clean up artifacts before moving them to the `releases/` directory.
+3.  The script also runs `scripts/validators/validate-release-artifacts-security.sh` to ensure no secrets leaked.
 
 ## How to Validate
 
 Run the validation script manually at any time:
 
 ```bash
-./scripts/validate-release-artifacts-security.sh
+./scripts/validators/validate-release-artifacts-security.sh
 ```
 
 To validate a specific release directory:
 
 ```bash
-./scripts/validate-release-artifacts-security.sh --release-dir releases/v1.5.5-example
+./scripts/validators/validate-release-artifacts-security.sh --release-dir releases/v1.5.5-example
 ```
 
 ## Remediation
@@ -67,4 +67,4 @@ If a secret is inadvertently committed to `releases/`:
 1.  **Rotate the secret immediately.** This is the most important step.
 2.  Remove the file or fix the content.
 3.  Use `git filter-repo` or `BFG Repo-Cleaner` to remove the sensitive data from git history if necessary (follow company security protocols).
-4.  Update the redaction rules in `scripts/redact-local-sensitive-artifacts.sh` if the secret was missed by the automatic process.
+4.  Update the redaction rules in `scripts/backup/redact-local-sensitive-artifacts.sh` if the secret was missed by the automatic process.

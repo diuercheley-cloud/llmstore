@@ -2,7 +2,7 @@
 import logging
 from typing import Any, Dict
 
-from app.models.agents import AgentDefinition
+from app.models.agents.agents import AgentDefinition
 
 logger = logging.getLogger(__name__)
 

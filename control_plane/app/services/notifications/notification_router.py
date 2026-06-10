@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_notifications import NotificationEvent
+from app.models.agents.agent_notifications import NotificationEvent
 from app.services.notifications.email_provider import EmailProviderService
 from app.services.notifications.notification_audit import NotificationAuditService
 from app.services.notifications.notification_policy import NotificationPolicyService

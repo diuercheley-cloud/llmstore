@@ -11,16 +11,16 @@ from typing import Any
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
-from app.models.commercial_governance_federation import CommercialGovernanceFederationPeer
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_governance_federation import CommercialGovernanceFederationPeer
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityEvent,
     CommercialModelIntegrityScan,
     CommercialModelRevocationRecord,
     CommercialRuntimeModelAttestation,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.model_backend_route import ModelBackendRoute
-from app.models.model_registry import ModelRegistry
+from app.models.core.model_backend_route import ModelBackendRoute
+from app.models.core.model_registry import ModelRegistry
 from app.services.models.runtime_attestation import (
     collect_runtime_attestation,
     generate_boot_attestation,

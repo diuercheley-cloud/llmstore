@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agent_workflows_external import (
+from app.models.agents.agent_workflows_external import (
     AgentWorkflowExternalEvent,
     AgentWorkflowWebhookSubscription,
 )

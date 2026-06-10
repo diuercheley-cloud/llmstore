@@ -13,11 +13,11 @@ The release bundle is a compressed `.tar.gz` archive containing only the necessa
 - Sensitive data (`.env`, `.local/`, backups, exports)
 - Large assets (GGUF models)
 - Development artifacts (`.git/`, `.venv/`, `node_modules/`, caches)
-- Secrets (verified via `scripts/check-secrets.sh`)
+- Secrets (verified via `scripts/validators/check-secrets.sh`)
 
 ## Generating a Bundle
 
-Use the `scripts/create-release-bundle.sh` script or the Makefile target.
+Use the `scripts/release/create-release-bundle.sh` script or the Makefile target.
 
 ### Using Makefile (Recommended)
 
@@ -30,7 +30,7 @@ This will use the version defined in the `VERSION` file and include docs, exampl
 ### Using the Script Directly
 
 ```bash
-./scripts/create-release-bundle.sh --version v1.5.2 --include-docs --include-examples --include-demo
+./scripts/release/create-release-bundle.sh --version v1.5.2 --include-docs --include-examples --include-demo
 ```
 
 #### Options:
@@ -53,7 +53,7 @@ The script generates the following files in `releases/<version>/`:
 To ensure the bundle is correct and secure, run:
 
 ```bash
-./scripts/validate-release-bundle.sh
+./scripts/validators/validate-release-bundle.sh
 ```
 
 This script will:

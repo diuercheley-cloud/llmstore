@@ -15,20 +15,20 @@ Created and updated artifacts:
 - targeted tests and Makefile target
 
 Validations executed:
-- `scripts/validate_platform_boundaries.py`
-- `scripts/validate_phase_82_platform_sustainability.py`
+- `scripts/validators/validate_platform_boundaries.py`
+- `scripts/validators/validate_phase_82_platform_sustainability.py`
 - `make validate-phase-82-platform-sustainability`
 - `make validate-phase-69-failure-forecasting` (180 passed in 234.76s)
 - `make validate-architecture`
-  Note: Phase 69 was refactored from a broad `tests/operations/` sweep to a targeted
+  Note: Phase 69 was refactored from a broad `tests/integration/operations/` sweep to a targeted
   test list (6 files, 180 tests), following the same pattern as Phases 70–82. This
   prevents the aggregate from executing every test in the operations directory and
   eliminates the perceived hang during validate-architecture / validate-platform.
 
 Tests executed:
 - targeted Phase 82 architecture, governance and operations tests
-- `tests/build/test_makefile_governance.py`
-- `tests/docs/test_governance_documentation_foundation.py`
+- `tests/integration/build/test_makefile_governance.py`
+- `tests/integration/docs/test_governance_documentation_foundation.py`
 
 Problems found and corrected:
 - missing formal bounded context registry

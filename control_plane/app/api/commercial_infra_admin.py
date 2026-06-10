@@ -4,7 +4,7 @@ from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_admin_db, get_super_admin_db
-from app.models.commercial_infra_simulation import (
+from app.models.commercial.commercial_infra_simulation import (
     CommercialApprovalRecord,
     CommercialInfrastructureSimulation,
     CommercialSafetyPolicy,
@@ -61,7 +61,7 @@ async def list_executions(
     limit: int = 50,
     db: AsyncSession = Depends(get_admin_db)
 ):
-    from app.models.commercial_infra_simulation import CommercialExecutionRecord
+    from app.models.commercial.commercial_infra_simulation import CommercialExecutionRecord
     stmt = select(CommercialExecutionRecord).order_by(CommercialExecutionRecord.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     executions = result.scalars().all()
@@ -131,7 +131,7 @@ async def get_execution_status(
     execution_id: uuid.UUID,
     db: AsyncSession = Depends(get_admin_db)
 ):
-    from app.models.commercial_infra_simulation import CommercialExecutionRecord
+    from app.models.commercial.commercial_infra_simulation import CommercialExecutionRecord
     record = await db.get(CommercialExecutionRecord, execution_id)
     if not record:
         raise HTTPException(status_code=404, detail="Execution record not found")

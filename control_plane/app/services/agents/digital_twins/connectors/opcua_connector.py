@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict
 
-from app.models.digital_twin import DigitalTwin
+from app.models.agents.digital_twin import DigitalTwin
 from app.services.agents.digital_twins.twin_connector import TwinConnector
 
 logger = logging.getLogger(__name__)

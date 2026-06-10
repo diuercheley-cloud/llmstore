@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.api import deps
 from app.core.config import get_settings
-from app.models.commercial_encryption import (
+from app.models.commercial.commercial_encryption import (
     CommercialEncryptedArtifact,
     CommercialEncryptionAuditEvent,
     CommercialTenantEncryptionKey,
@@ -26,7 +26,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/admin/security/encryption", tags=["commercial_encryption"])
 settings = get_settings()
 
 def get_encryption_service():

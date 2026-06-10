@@ -3,19 +3,19 @@ from __future__ import annotations
 from datetime import datetime, UTC
 from typing import Any
 
-from app.models.commercial_attestation_runtime import CommercialRuntimeAttestation
-from app.models.commercial_autonomous_guardrails import (
+from app.models.commercial.commercial_attestation_runtime import CommercialRuntimeAttestation
+from app.models.commercial.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
     CommercialExecutionBlastRadius,
 )
-from app.models.commercial_confidential_runtime import CommercialConfidentialInferenceSession
-from app.models.commercial_governance import CommercialPolicyBundle
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_confidential_runtime import CommercialConfidentialInferenceSession
+from app.models.commercial.commercial_governance import CommercialPolicyBundle
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelPromotionBundle,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.commercial_runtime_fabric import CommercialRuntimeFabricHealth
-from app.models.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricHealth
+from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession

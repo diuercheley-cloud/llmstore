@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List
 
-from app.models.agents import AgentRedTeamCase
+from app.models.agents.agents import AgentRedTeamCase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

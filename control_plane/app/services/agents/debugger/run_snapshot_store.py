@@ -4,7 +4,7 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_debugger import AgentRunSnapshot
+from app.models.agents.agent_debugger import AgentRunSnapshot
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

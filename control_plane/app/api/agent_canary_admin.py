@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.db.session import get_db
-from app.models.agent_canary import AgentCanaryAssignment, AgentCanaryComparison, AgentShadowRun
+from app.models.agents.agent_canary import AgentCanaryAssignment, AgentCanaryComparison, AgentShadowRun
 from app.services.agents.canary.canary_promotion_gate import CanaryPromotionGate
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession

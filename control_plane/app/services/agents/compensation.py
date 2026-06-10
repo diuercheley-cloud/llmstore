@@ -3,7 +3,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.agents import AgentCompensationAction
+from app.models.agents.agents import AgentCompensationAction
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

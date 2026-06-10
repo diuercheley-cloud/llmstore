@@ -146,7 +146,7 @@ make validate-hybrid-admin
 make validate-hybrid-abuse
 
 # Report validation
-./scripts/validate-hybrid-platform-report.sh
+./scripts/validators/validate-hybrid-platform-report.sh
 
 # Testes específicos
 .venv/bin/python -m pytest \

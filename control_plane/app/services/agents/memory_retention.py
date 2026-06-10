@@ -6,7 +6,7 @@ import uuid
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentMemoryDeleteRequest, AgentMemoryItem
+from app.models.agents.agents import AgentMemoryDeleteRequest, AgentMemoryItem
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

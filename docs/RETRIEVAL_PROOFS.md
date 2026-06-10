@@ -32,6 +32,6 @@ Public verifier and public attestation gateway support:
 
 ```bash
 pytest -q tests/test_retrieval_proofs.py
-bash -n scripts/validate-retrieval-proofs.sh
+bash -n scripts/validators/validate-retrieval-proofs.sh
 make validate-retrieval-proofs
 ```

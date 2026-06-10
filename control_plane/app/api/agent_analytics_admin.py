@@ -7,7 +7,7 @@ from app.services.agents.analytics.agent_analytics import AgentAnalyticsService
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin/agents/analytics", tags=["agent-analytics"])
 
 
 def _get_time_range(

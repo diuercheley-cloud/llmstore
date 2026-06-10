@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1", tags=["alerting"])
 
 
 @router.post("/alerts/grafana-webhook")

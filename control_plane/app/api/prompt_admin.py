@@ -16,7 +16,7 @@ from app.services.prompts.prompt_versioning import PromptVersioningService
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin/prompts", tags=["prompt-management"])
 
 
 def _require_templates_enabled():

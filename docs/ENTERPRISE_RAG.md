@@ -94,5 +94,5 @@ Upload -> Parse -> Chunk -> Embed -> Store -> Retrieve -> Rerank -> Generate
 ```bash
 make validate-enterprise-rag
 # ou
-./scripts/validate-enterprise-rag-local.sh
+./scripts/validators/validate-enterprise-rag-local.sh
 ```

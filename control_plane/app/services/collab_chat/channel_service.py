@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from app.models.collab_chat import ChatChannel, ChatChannelMember
+from app.models.agents.collab_chat import ChatChannel, ChatChannelMember
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

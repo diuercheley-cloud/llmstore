@@ -61,8 +61,8 @@ make agent-real-provider-validation
 make agent-real-provider-validation-real
 
 # Or via script directly
-./scripts/run-agent-real-provider-validation.sh --dry-run
-./scripts/run-agent-real-provider-validation.sh --real --budget 0.50 --timeout 30
+./scripts/dev/run-agent-real-provider-validation.sh --dry-run
+./scripts/dev/run-agent-real-provider-validation.sh --real --budget 0.50 --timeout 30
 ```
 
 ### Admin API

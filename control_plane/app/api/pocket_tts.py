@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.tts_usage import check_tts_feature_blocked, ensure_tts_quota, record_tts_event

@@ -1,6 +1,6 @@
 import uuid
 
-from app.models.agent_tool_synthesis import AgentGeneratedTool, AgentGeneratedToolVersion
+from app.models.agents.agent_tool_synthesis import AgentGeneratedTool, AgentGeneratedToolVersion
 from sqlalchemy.orm import Session
 
 

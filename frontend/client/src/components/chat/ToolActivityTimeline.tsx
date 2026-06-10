@@ -1,4 +1,4 @@
-import { Bot, User, Terminal, Database, ShieldAlert, Cpu } from 'lucide-react';
+import { Terminal, Database, ShieldAlert, Cpu } from 'lucide-react';
 import type { ToolActivityItem } from '../../lib/types';
 
 interface ToolActivityTimelineProps {

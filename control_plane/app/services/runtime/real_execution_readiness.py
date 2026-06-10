@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_execution import AgentWorkerHeartbeat
+from app.models.agents.agent_execution import AgentWorkerHeartbeat
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

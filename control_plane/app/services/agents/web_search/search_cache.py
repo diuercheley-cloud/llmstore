@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from app.core.time import utc_now
-from app.models.web_search import AgentWebSearchCache
+from app.models.agents.web_search import AgentWebSearchCache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

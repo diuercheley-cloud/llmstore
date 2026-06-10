@@ -219,7 +219,7 @@ The result schema is identical to the Python BFS path — callers do not need to
 Run pathfinding tests with:
 
 ```shell
-pytest tests/services/test_knowledge_graph.py -v -k "path"
+pytest tests/unit/services/test_knowledge_graph.py -v -k "path"
 ```
 
 Key test cases:

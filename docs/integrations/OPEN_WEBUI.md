@@ -40,5 +40,5 @@ Utilize qualquer API Key válida gerada pelo sistema (ex: `demo-default`).
 - Multimodalidade não suportada nesta versão.
 
 ## Troubleshooting
-- **Conexão recusada**: Verifique se a stack está rodando (`scripts/up.sh`) e se a porta `18080` está acessível.
+- **Conexão recusada**: Verifique se a stack está rodando (`scripts/deploy/up.sh`) e se a porta `18080` está acessível.
 - **Modelos não aparecem**: Verifique se a API Key tem permissão de acesso aos modelos no control plane.

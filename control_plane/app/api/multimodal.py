@@ -1,7 +1,7 @@
 import uuid
 
 from app.api.dependencies import get_current_client, get_db
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.multimodal.asset_store import AssetStore
 from app.services.multimodal.speech_to_text_service import SpeechToTextService
 from app.services.multimodal.vision_service import VisionService

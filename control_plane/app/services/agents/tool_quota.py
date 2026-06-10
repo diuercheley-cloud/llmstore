@@ -7,7 +7,7 @@ from datetime import timedelta, UTC
 from typing import Any, Optional
 
 from app.core.time import utc_now
-from app.models.agent_tool_execution import AgentToolQuotaCounter
+from app.models.agents.agent_tool_execution import AgentToolQuotaCounter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

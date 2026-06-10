@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from app.db.session import get_db_session
-from app.models.cost_event import CostEvent
+from app.models.billing.cost_event import CostEvent
 from app.schemas.costs import CostByAgent, CostByTenant, CostByTool, CostEventRead, CostSummary
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select

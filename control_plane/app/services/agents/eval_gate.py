@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentEvalBaseline,
     AgentEvalCase,
     AgentEvalFailure,

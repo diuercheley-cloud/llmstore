@@ -2,7 +2,7 @@ import os
 import sys
 
 # Add scripts to path to reuse logic
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "validators"))
 from validate_dependency_graph import validate_dependency_graph
 
 

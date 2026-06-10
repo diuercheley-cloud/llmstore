@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
-from app.models.agents import AgentApprovalRequest, AgentDefinition, AgentRun
+from app.models.agents.agents import AgentApprovalRequest, AgentDefinition, AgentRun
 from app.services.admin_rbac import authenticate_admin_request, is_rbac_admin_enabled
 from app.services.agents.human_approval import (
     approve_approval_request,

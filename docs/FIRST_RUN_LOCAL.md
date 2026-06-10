@@ -10,7 +10,7 @@ O script `first-run-local.sh` é desenhado para ajudar operadores técnicos a in
 ## Uso
 
 ```bash
-./scripts/first-run-local.sh [opções]
+./scripts/deploy/first-run-local.sh [opções]
 ```
 
 ### Opções:

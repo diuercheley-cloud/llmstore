@@ -46,5 +46,5 @@ The Control Plane Mesh feature provides a sovereign multi-region and multi-clust
 ## Verification
 You can validate the implementation locally using:
 ```bash
-./scripts/validate-control-plane-mesh.sh
+./scripts/validators/validate-control-plane-mesh.sh
 ```

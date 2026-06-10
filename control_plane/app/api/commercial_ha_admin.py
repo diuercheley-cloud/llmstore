@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.admin_action_log import AdminActionLog
-from app.models.commercial_leader_lease import CommercialLeaderLease
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.commercial.commercial_leader_lease import CommercialLeaderLease
 from app.services.auth import require_admin
 from app.services.routing.commercial_leader_election import (
     force_expire_stale_leases,

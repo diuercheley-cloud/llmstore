@@ -6,8 +6,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.admin_action_log import AdminActionLog
-from app.models.commercial_routing_event import CommercialRoutingEvent
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
 from app.services.routing.commercial_canary_promotion import CommercialCanaryPromotionService
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -108,7 +108,7 @@ class CommercialExecutiveDashboardService:
         return await summarize_protection_status(self.db)
 
     async def get_revenue_forecast_summary(self) -> Dict[str, Any]:
-        from app.models.commercial_revenue_forecast import CommercialRevenueForecast
+        from app.models.commercial.commercial_revenue_forecast import CommercialRevenueForecast
         
         stmt = select(CommercialRevenueForecast).order_by(CommercialRevenueForecast.created_at.desc())
         result = await self.db.execute(stmt)
@@ -138,7 +138,7 @@ class CommercialExecutiveDashboardService:
         return summary
 
     async def get_financial_anomalies_summary(self) -> Dict[str, Any]:
-        from app.models.commercial_financial_anomaly import CommercialFinancialAnomaly
+        from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
         
         stmt = select(CommercialFinancialAnomaly).order_by(CommercialFinancialAnomaly.detected_at.desc()).limit(10)
         result = await self.db.execute(stmt)
@@ -165,7 +165,7 @@ class CommercialExecutiveDashboardService:
         }
 
     async def get_infra_simulation_summary(self) -> Dict[str, Any]:
-        from app.models.commercial_infra_simulation import CommercialInfrastructureSimulation
+        from app.models.commercial.commercial_infra_simulation import CommercialInfrastructureSimulation
         
         stmt = select(CommercialInfrastructureSimulation).order_by(CommercialInfrastructureSimulation.created_at.desc()).limit(10)
         result = await self.db.execute(stmt)
@@ -194,7 +194,7 @@ class CommercialExecutiveDashboardService:
         }
 
     async def get_qos_sla_summary(self, since: datetime) -> Dict[str, Any]:
-        from app.models.commercial_qos_tier import CommercialQoSTier
+        from app.models.commercial.commercial_qos_tier import CommercialQoSTier
         
         res_tiers = await self.db.execute(select(CommercialQoSTier))
         tiers = list(res_tiers.scalars().all())
@@ -236,7 +236,7 @@ class CommercialExecutiveDashboardService:
         }
 
     async def get_geo_routing_summary(self) -> Dict[str, Any]:
-        from app.models.commercial_cluster_registry import CommercialClusterRegistry
+        from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
         res = await self.db.execute(select(CommercialClusterRegistry))
         all_clusters = list(res.scalars().all())
         

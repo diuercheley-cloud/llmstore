@@ -14,7 +14,7 @@ status: consolidated
 - [x] **API:** Administrative API endpoints in `control_plane/app/api/operations_adapter_sandbox_admin.py`.
 - [x] **Dashboard:** Integrated sandbox monitoring in `control_plane/app/static/admin/index.html` and `control_plane/app/static/portal/index.html`.
 - [x] **Documentation:** Detailed guides in `docs/phases/` and `docs/operations/`.
-- [x] **Validation:** Validation script `scripts/validate_phase_73_adapter_sandbox.py` and Makefile target.
+- [x] **Validation:** Validation script `scripts/validators/validate_phase_73_adapter_sandbox.py` and Makefile target.
 
 ### Key Features
 - **Formal Adapter Manifests:** Standardized definition of permissions, ensuring zero-trust capabilities by default.
@@ -24,8 +24,8 @@ status: consolidated
 - **Verifiable Audit Chain:** Manifest registration and sandbox run receipts with SHA-256 hashes.
 
 ### Validation Results
-- **Scripts executed:** `scripts/validate_phase_73_adapter_sandbox.py` (PASSED)
-- **Tests executed:** 22 tests in `tests/operations/` (PASSED)
+- **Scripts executed:** `scripts/validators/validate_phase_73_adapter_sandbox.py` (PASSED)
+- **Tests executed:** 22 tests in `tests/integration/operations/` (PASSED)
 - **Architectural compliance:** Verified. No `random`, no `uuid4` in logical paths, no network/subprocess usage, simulation-only mode enforced.
 
 ### Files Created/Modified
@@ -40,9 +40,9 @@ status: consolidated
 - `docs/phases/phase_73_controlled_adapter_sandbox.md` (New)
 - `docs/operations/adapter_sandbox.md` (New)
 - `docs/operations/phase_73_adapter_sandbox_summary.md` (New/Updated)
-- `scripts/validate_phase_73_adapter_sandbox.py` (New)
+- `scripts/validators/validate_phase_73_adapter_sandbox.py` (New)
 - `Makefile` (Modified)
-- `tests/operations/test_adapter_sandbox_*.py` (Multiple new files)
+- `tests/integration/operations/test_adapter_sandbox_*.py` (Multiple new files)
 
 ### Confirmation
 - **Dry-run default:** Confirmed.

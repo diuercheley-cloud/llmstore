@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Optional
 
-from app.models.agent_marketplace import MarketplacePublisher
+from app.models.agents.agent_marketplace import MarketplacePublisher
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

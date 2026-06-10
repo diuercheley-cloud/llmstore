@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.time import utc_now
-from app.models.web_search import AgentWebSearchQuery, AgentWebSearchResult
+from app.models.agents.web_search import AgentWebSearchQuery, AgentWebSearchResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload

@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.commercial_confidential_runtime import CommercialConfidentialRuntimeProfile
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
-from app.models.commercial_rag_vault import (
+from app.models.commercial.commercial_confidential_runtime import CommercialConfidentialRuntimeProfile
+from app.models.commercial.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
+from app.models.commercial.commercial_rag_vault import (
     CommercialRAGAccessPolicy,
     CommercialRAGDocument,
     CommercialRAGLegalHold,

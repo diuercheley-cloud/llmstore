@@ -9,13 +9,13 @@ from io import StringIO
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing_invoice import BillingInvoice
-from app.models.billing_plan import BillingPlan
-from app.models.client import Client
-from app.models.customer_payment import CustomerPayment
-from app.models.request_log import RequestLog
-from app.models.security_event import SecurityEvent
-from app.models.usage_record import UsageRecord
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.client import Client
+from app.models.billing.customer_payment import CustomerPayment
+from app.models.core.request_log import RequestLog
+from app.models.core.security_event import SecurityEvent
+from app.models.core.usage_record import UsageRecord
 from app.services.billing import (
     list_client_billing_snapshots,
     refresh_billing_statuses,

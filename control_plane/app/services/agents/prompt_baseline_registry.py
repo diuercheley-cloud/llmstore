@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentPromptBaseline
+from app.models.agents.agents import AgentPromptBaseline
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

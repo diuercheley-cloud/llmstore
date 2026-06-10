@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List
 
-from app.models.multimodal import MultimodalRequest, MultimodalUsageEvent
+from app.models.core.multimodal import MultimodalRequest, MultimodalUsageEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

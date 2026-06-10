@@ -9,11 +9,11 @@ from app.core.config import get_settings
 from app.core.metrics import ASYNC_JOB_COUNTER, ASYNC_QUEUE_DEPTH
 from app.core.time import utc_now
 from app.db.session import redis_client
-from app.models.billing_plan import BillingPlan
-from app.models.client import Client
-from app.models.generation_job import GenerationJob
-from app.models.model_backend_route import ModelBackendRoute
-from app.models.model_registry import ModelRegistry
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.client import Client
+from app.models.core.generation_job import GenerationJob
+from app.models.core.model_backend_route import ModelBackendRoute
+from app.models.core.model_registry import ModelRegistry
 from app.schemas.inference import ChatCompletionRequest
 from app.services.audit import log_request
 from app.services.backend_slot_manager import BackendSlotManager

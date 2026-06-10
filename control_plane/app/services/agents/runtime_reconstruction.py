@@ -4,8 +4,8 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.agent_execution import AgentExecutionJob
-from app.models.agents import AgentRun, AgentRunReceipt
+from app.models.agents.agent_execution import AgentExecutionJob
+from app.models.agents.agents import AgentRun, AgentRunReceipt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

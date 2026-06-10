@@ -28,7 +28,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/admin/operations/correlations", tags=["operations-correlation"])
 
 CORRELATION_ENGINE = DeterministicOperationsCorrelationEngine()
 RISK_SERVICE = OperationalCorrelationRiskAnalysisService()

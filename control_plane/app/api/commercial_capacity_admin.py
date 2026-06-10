@@ -3,7 +3,7 @@ from typing import Optional
 
 from app.api.deps import get_admin_user, get_db
 from app.core.config import get_settings
-from app.models.commercial_capacity import (
+from app.models.commercial.commercial_capacity import (
     CommercialAutoscalingRecommendation,
     CommercialCapacityForecast,
     CommercialCapacitySnapshot,

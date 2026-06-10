@@ -2,8 +2,8 @@
 import logging
 import uuid
 
-from app.models.agent_cicd import AgentDeployment, AgentDeploymentEvent, AgentRollback
-from app.models.agents import AgentRegistryEntry
+from app.models.agents.agent_cicd import AgentDeployment, AgentDeploymentEvent, AgentRollback
+from app.models.agents.agents import AgentRegistryEntry
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

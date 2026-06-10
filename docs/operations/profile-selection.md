@@ -37,18 +37,18 @@ Operations can be executed using the integrated scripts:
 
 ### List available profiles
 ```bash
-./scripts/runtime-profile-list.sh
+./scripts/dev/runtime-profile-list.sh
 ```
 
 ### Validate configuration keys
 ```bash
-./scripts/runtime-profile-validate.sh compliance-mode
+./scripts/validators/runtime-profile-validate.sh compliance-mode
 ```
 
 ### Dry-run Profile Application
 This will output the configuration diff without modifying the server environment:
 ```bash
-./scripts/runtime-profile-apply.sh compliance-mode
+./scripts/deploy/runtime-profile-apply.sh compliance-mode
 ```
 
 ### Live Profile Application
@@ -56,11 +56,11 @@ To actually persist the changes to the server:
 1. Ensure the environment variable `RUNTIME_PROFILE_APPLY_ENABLED=true` is set on the server process.
 2. Run the apply script with the `--live` flag:
    ```bash
-   ./scripts/runtime-profile-apply.sh --live compliance-mode
+   ./scripts/deploy/runtime-profile-apply.sh --live compliance-mode
    ```
 
 ### Rollback
 To undo the last profile application and restore the previous configuration:
 ```bash
-./scripts/runtime-profile-apply.sh --live --rollback
+./scripts/deploy/runtime-profile-apply.sh --live --rollback
 ```

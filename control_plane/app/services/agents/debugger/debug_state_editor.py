@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agent_debugger import AgentDebugReplay, AgentDebugStateEdit
+from app.models.agents.agent_debugger import AgentDebugReplay, AgentDebugStateEdit
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

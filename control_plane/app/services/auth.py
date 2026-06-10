@@ -6,9 +6,9 @@ from app.core.config import get_settings
 from app.core.security import verify_secret
 from app.core.time import utc_now
 from app.db.session import get_db_session, get_redis
-from app.models.api_key import ApiKey
-from app.models.billing_plan import BillingPlan
-from app.models.client import Client
+from app.models.core.api_key import ApiKey
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.client import Client
 from app.services.admin_rbac import (
     RBAC_ADMIN_PERMISSIONS,
     authenticate_admin_request,

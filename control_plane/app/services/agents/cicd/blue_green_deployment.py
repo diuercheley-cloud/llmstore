@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Iterable, Optional
 
 from app.core.time import utc_now
-from app.models.agent_cicd import AgentDeployment, AgentDeploymentEvent
+from app.models.agents.agent_cicd import AgentDeployment, AgentDeploymentEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

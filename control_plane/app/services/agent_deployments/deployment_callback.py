@@ -5,8 +5,8 @@ import logging
 import uuid
 
 import httpx
-from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
-from app.models.agents import AgentRun
+from app.models.agents.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
+from app.models.agents.agents import AgentRun
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -87,7 +87,7 @@ Esse desenho evita regressao antes das fases 66-68 e prepara a base para endurec
 
 - [domain_boundaries.md](/home/kleber/llm-inference-stack/docs/architecture/domain_boundaries.md)
 - [failure_domains.md](/home/kleber/llm-inference-stack/docs/architecture/failure_domains.md)
-- [validate_architecture_boundaries.py](/home/kleber/llm-inference-stack/scripts/validate_architecture_boundaries.py)
+- [validate_architecture_boundaries.py](/home/kleber/llm-inference-stack/scripts/validators/validate_architecture_boundaries.py)
 - [test_domain_boundaries.py](/home/kleber/llm-inference-stack/tests/architecture/test_domain_boundaries.py)
 
 ## Exit Criteria

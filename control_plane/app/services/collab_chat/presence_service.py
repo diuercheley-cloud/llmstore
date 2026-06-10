@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from app.core.time import utc_now
-from app.models.collab_chat import ChatPresenceEvent
+from app.models.agents.collab_chat import ChatPresenceEvent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

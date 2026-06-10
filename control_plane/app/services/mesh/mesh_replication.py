@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from app.models.commercial_control_plane_mesh import CommercialMeshReplicationLog
+from app.models.commercial.commercial_control_plane_mesh import CommercialMeshReplicationLog
 from sqlalchemy.orm import Session
 
 

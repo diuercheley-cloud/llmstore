@@ -38,7 +38,7 @@ Este documento fornece um guia passo a passo para realizar uma apresentação co
 **Fala:** "Mesmo em ambientes locais, o controle de custos é vital. O sistema gera faturas baseadas no consumo real. Podemos gerenciar o faturamento de forma manual ou integrada, permitindo um modelo de 'chargeback' interno ou venda de serviços."
 
 ## 8. Confiabilidade e Validação
-**Ação:** Execute `./scripts/validate-demo-local.sh`.
+**Ação:** Execute `./scripts/validators/validate-demo-local.sh`.
 **Fala:** "Para garantir que tudo está operando como esperado, temos ferramentas de validação automatizada que testam desde a conectividade do banco de dados até a qualidade da resposta do modelo."
 
 ## 9. Encerramento

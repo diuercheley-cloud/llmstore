@@ -8,7 +8,7 @@ from app.services.agents.debugger.debug_sessions import DebugSessionManager
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin/debugger", tags=["agent-debugger"])
 
 @router.post("/sessions/{run_id}/pause")
 async def pause_session(
@@ -50,7 +50,7 @@ async def get_session_state(
     db: AsyncSession = Depends(deps.get_db),
     current_user = Depends(deps.get_current_admin_user)
 ):
-    from app.models.agent_debugger import AgentDebugStepEvent
+    from app.models.agents.agent_debugger import AgentDebugStepEvent
     from sqlalchemy import select
     
     manager = DebugSessionManager(db)

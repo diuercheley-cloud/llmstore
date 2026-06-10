@@ -3,7 +3,7 @@ import hashlib
 import uuid
 from typing import Any
 
-from app.models.agent_tool_synthesis import AgentSandboxPolicyEvent
+from app.models.agents.agent_tool_synthesis import AgentSandboxPolicyEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

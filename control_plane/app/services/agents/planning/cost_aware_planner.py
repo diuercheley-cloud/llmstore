@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import List
 
-from app.models.agents import AgentPlan, AgentPlanCostEstimate, AgentTask, AgentTool
+from app.models.agents.agents import AgentPlan, AgentPlanCostEstimate, AgentTask, AgentTool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

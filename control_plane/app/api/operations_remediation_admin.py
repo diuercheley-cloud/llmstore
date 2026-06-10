@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/admin/operations/remediation-plans", tags=["operations-remediation"])
 
 PLANNER = DeterministicRemediationPlanner()
 BLAST_RADIUS_SERVICE = RemediationBlastRadiusService()

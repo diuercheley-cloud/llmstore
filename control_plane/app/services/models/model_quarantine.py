@@ -5,11 +5,11 @@ from typing import Any
 from uuid import UUID
 
 from app.core.time import utc_now
-from app.models.commercial_model_lifecycle import (
+from app.models.commercial.commercial_model_lifecycle import (
     CommercialModelLifecycleRecord,
     CommercialModelRollbackRecord,
 )
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
+from app.models.commercial.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.services.models.model_lifecycle_manager import (
     _canonical_json,
     _log_audit,

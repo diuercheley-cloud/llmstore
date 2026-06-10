@@ -8,7 +8,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_compliance import (
+from app.models.commercial.commercial_compliance import (
     CommercialControlAttestation,
     CommercialControlException,
     CommercialOperationalControl,
@@ -16,7 +16,7 @@ from app.models.commercial_compliance import (
     CommercialOperationalExceptionLink,
     CommercialOperationalReview,
 )
-from app.models.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
 from app.services.compliance.financial_controls import create_evidence_package, record_control_event
 from app.services.notifications.revenue_escalations import evaluate_escalation_policies
 from app.services.routing.commercial_report_export import sanitize_report_payload

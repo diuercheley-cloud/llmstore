@@ -3,7 +3,7 @@ import uuid
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.mobile import MobileSession
+from app.models.core.mobile import MobileSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

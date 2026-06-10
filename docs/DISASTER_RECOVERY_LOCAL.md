@@ -24,9 +24,9 @@ Este fluxo cobre backup, restore e teste de desastre para o `llm-inference-stack
 
 ## Scripts
 
-- `./scripts/backup-local.sh`
-- `./scripts/restore-local.sh [OPÇÕES] <backup_dir>`
-- `./scripts/dr-test-local.sh [--strict-rag]`
+- `./scripts/backup/backup-local.sh`
+- `./scripts/backup/restore-local.sh [OPÇÕES] <backup_dir>`
+- `./scripts/dev/dr-test-local.sh [--strict-rag]`
 
 ### Opções do Restore Local
 
@@ -45,13 +45,13 @@ artifacts/backups-local/<timestamp>
 Exemplo com uploads RAG incluídos:
 
 ```bash
-./scripts/backup-local.sh --include-rag-files
+./scripts/backup/backup-local.sh --include-rag-files
 ```
 
 Exemplo incluindo também os blobs de modelo:
 
 ```bash
-./scripts/backup-local.sh --include-rag-files --include-models
+./scripts/backup/backup-local.sh --include-rag-files --include-models
 ```
 
 O backup gera:
@@ -66,7 +66,7 @@ O backup gera:
 O restore foi desenhado para funcionar em ambiente limpo:
 
 ```bash
-./scripts/restore-local.sh artifacts/backups-local/20260507T120000
+./scripts/backup/restore-local.sh artifacts/backups-local/20260507T120000
 ```
 
 O script:
@@ -81,13 +81,13 @@ O script:
 Dica: Use `--dry-run` primeiro para validar a integridade do backup sem riscos:
 
 ```bash
-./scripts/restore-local.sh --dry-run artifacts/backups-local/20260507T120000
+./scripts/backup/restore-local.sh --dry-run artifacts/backups-local/20260507T120000
 ```
 
 Se o diretório RAG de destino já estiver populado, o restore agora exige:
 
 ```bash
-./scripts/restore-local.sh --force-rag-overwrite artifacts/backups-local/20260507T120000
+./scripts/backup/restore-local.sh --force-rag-overwrite artifacts/backups-local/20260507T120000
 ```
 
 Sem a flag, o script apenas registra um aviso e preserva o conteúdo existente.
@@ -112,13 +112,13 @@ O teste local executa o fluxo completo:
 Executar:
 
 ```bash
-./scripts/dr-test-local.sh
+./scripts/dev/dr-test-local.sh
 ```
 
 Para validação estrita de RAG:
 
 ```bash
-RAG_INDEX_TIMEOUT_SECONDS=180 ./scripts/dr-test-local.sh --strict-rag
+RAG_INDEX_TIMEOUT_SECONDS=180 ./scripts/dev/dr-test-local.sh --strict-rag
 ```
 
 No modo padrão, se o documento RAG não indexar a tempo, o summary reporta:

@@ -6,11 +6,11 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
-from app.models.commercial_inference_reproducibility import (
+from app.models.commercial.commercial_inference_reproducibility import (
     CommercialInferenceReproducibilityRecord,
     CommercialInferenceRuntimeSnapshot,
 )
-from app.models.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
+from app.models.commercial.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.services.admin_model_management import detect_quantization
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.utils.model_prompting import detect_architecture

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.evaluation import (
+from app.models.agents.evaluation import (
     EvalDataset, EvalCase, EvalRun, EvalResult, 
     ArenaMatch, EloRating, RedTeamFinding
 )

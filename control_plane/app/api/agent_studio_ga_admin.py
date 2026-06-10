@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.api.deps import get_current_user, get_db
-from app.models.agent_studio import AgentFlowDefinition, AgentFlowVersion
+from app.models.agents.agent_studio import AgentFlowDefinition, AgentFlowVersion
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_runtime_adapter import FlowRuntimeAdapter
 from app.services.agents.studio.flow_validator import FlowValidator

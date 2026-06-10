@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_iam import AgentDelegatedToken
+from app.models.agents.agent_iam import AgentDelegatedToken
 from app.services.agents.iam.iam_audit import IAMAuditService
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession

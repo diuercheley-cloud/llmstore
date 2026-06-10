@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_sessions import (
+from app.models.agents.agent_sessions import (
     AgentConversationThread,
     AgentThreadMessage,
 )

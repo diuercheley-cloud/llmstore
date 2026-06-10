@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.agent_cicd import AgentPipeline
+from app.models.agents.agent_cicd import AgentPipeline
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,7 +65,7 @@ class AgentPipelineService:
 
     async def _step_validate(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Validating agent definition")
-        from app.models.agents import AgentDefinition
+        from app.models.agents.agents import AgentDefinition
         stmt = select(AgentDefinition).where(AgentDefinition.id == pipeline.agent_id)
         res = await self.db.execute(stmt)
         agent = res.scalar_one_or_none()
@@ -124,7 +124,7 @@ class AgentPipelineService:
 
     async def _step_security_scan(self, pipeline: AgentPipeline):
         logger.info(f"Pipeline {pipeline.id}: Running security scans")
-        from app.models.agents import AgentDefinition
+        from app.models.agents.agents import AgentDefinition
         stmt = select(AgentDefinition).where(AgentDefinition.id == pipeline.agent_id)
         res = await self.db.execute(stmt)
         agent = res.scalar_one_or_none()

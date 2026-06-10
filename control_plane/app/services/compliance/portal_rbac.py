@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.client import Client
+from app.models.core.client import Client
 from fastapi import HTTPException, Request, status
 
 PORTAL_ROLES = {

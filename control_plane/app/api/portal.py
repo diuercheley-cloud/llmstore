@@ -11,37 +11,37 @@ from app.api.deps import get_inference_proxy
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
 from app.db.session import get_db_session, get_redis
-from app.models.ai_wallet import AiWalletTransaction
-from app.models.api_key import ApiKey
-from app.models.billing_invoice import BillingInvoice
-from app.models.billing_plan import BillingPlan
-from app.models.client import Client
-from app.models.commercial_audit_portal import CommercialPortalSavedReport
-from app.models.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial_cryptographic_receipts import (
+from app.models.billing.ai_wallet import AiWalletTransaction
+from app.models.core.api_key import ApiKey
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.client import Client
+from app.models.commercial.commercial_audit_portal import CommercialPortalSavedReport
+from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
+from app.models.commercial.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
 )
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityScan,
     CommercialRuntimeModelAttestation,
 )
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_rag_vault import (
+from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
     CommercialRAGRetrievalAudit,
     CommercialRAGVault,
 )
-from app.models.commercial_sovereign_governance import (
+from app.models.commercial.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialHardwareAttestationRecord,
     CommercialOfflineRevocationList,
 )
-from app.models.customer_payment import CustomerPayment
-from app.models.model_registry import ModelRegistry
-from app.models.request_financial import RequestFinancial
-from app.models.request_log import RequestLog
-from app.models.sales_lead import SalesLead
+from app.models.billing.customer_payment import CustomerPayment
+from app.models.core.model_registry import ModelRegistry
+from app.models.billing.request_financial import RequestFinancial
+from app.models.core.request_log import RequestLog
+from app.models.commercial.sales_lead import SalesLead
 from app.schemas.admin import ApiKeyCreate, ApiKeyCreated
 from app.schemas.billing import BillingDisputeOpen
 from app.schemas.inference import (
@@ -721,7 +721,7 @@ async def portal_account(
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-    from app.models.commercial_inference_reproducibility import (
+    from app.models.commercial.commercial_inference_reproducibility import (
         CommercialInferenceReproducibilityRecord,
     )
 
@@ -782,7 +782,7 @@ async def portal_inference_reproducibility(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.commercial_inference_reproducibility import (
+    from app.models.commercial.commercial_inference_reproducibility import (
         CommercialInferenceReproducibilityRecord,
     )
 
@@ -2035,7 +2035,7 @@ async def portal_governance_federation_summary(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.commercial_governance_federation import (
+    from app.models.commercial.commercial_governance_federation import (
         CommercialFederatedAuditTrail,
         CommercialFederatedPolicySync,
         CommercialGovernanceFederationPeer,

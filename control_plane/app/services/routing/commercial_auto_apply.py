@@ -7,8 +7,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.admin_action_log import AdminActionLog
-from app.models.commercial_routing_config import CommercialRoutingConfig
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.commercial.commercial_routing_config import CommercialRoutingConfig
 from app.services.routing.commercial_config_store import CommercialConfigStore
 from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,7 +84,7 @@ class CommercialAutoApplyService:
         """
         Check if there are any routing events in the last X hours.
         """
-        from app.models.commercial_routing_event import CommercialRoutingEvent
+        from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         stmt = select(func.count()).select_from(CommercialRoutingEvent).where(

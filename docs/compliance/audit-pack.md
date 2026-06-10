@@ -35,7 +35,7 @@ POST /admin/compliance/audit-pack/generate?standard=soc2
 ### Via CLI Script
 
 ```bash
-./scripts/generate-audit-pack.sh iso27001
+./scripts/validators/generate-audit-pack.sh iso27001
 ```
 
 Os pacotes gerados são armazenados em `compliance/audit-packs/{standard}/{uuid}/`.

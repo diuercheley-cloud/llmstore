@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_cognitive_loopback import AgentFeedbackEvent
+from app.models.agents.agent_cognitive_loopback import AgentFeedbackEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

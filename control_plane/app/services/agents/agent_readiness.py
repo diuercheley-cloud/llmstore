@@ -6,13 +6,13 @@ from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_execution import (
+from app.models.agents.agent_execution import (
     AgentExecutionDeadLetter,
     AgentExecutionJob,
     AgentExecutionLease,
     AgentWorkerHeartbeat,
 )
-from app.models.agents import AgentApprovalRequest, AgentIncident, AgentMemoryPolicy, AgentRun
+from app.models.agents.agents import AgentApprovalRequest, AgentIncident, AgentMemoryPolicy, AgentRun
 from app.services.agents.agent_llm_provider import LLMProviderType
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession

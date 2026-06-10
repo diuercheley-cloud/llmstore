@@ -3,9 +3,9 @@ import random
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.client import Client
-from app.models.model_backend_route import ModelBackendRoute
-from app.models.model_registry import ModelRegistry
+from app.models.core.client import Client
+from app.models.core.model_backend_route import ModelBackendRoute
+from app.models.core.model_registry import ModelRegistry
 from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.commercial_guardrails import filter_routes_by_commercial_guardrails
 from app.services.models.signed_model_registry import enforce_model_trust_or_warn

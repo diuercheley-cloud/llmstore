@@ -17,7 +17,7 @@ To safely introduce agentic workflows with strict read-only constraints, mandato
 ## Execution
 Run the pilot activation script:
 ```bash
-./scripts/activate-agentic-pilot.sh
+./scripts/deploy/activate-agentic-pilot.sh
 ```
 
 ## State Changes

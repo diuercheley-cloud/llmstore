@@ -5,7 +5,7 @@ import urllib.request
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agent_notifications import NotificationPreference, PushDevice
+from app.models.agents.agent_notifications import NotificationPreference, PushDevice
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

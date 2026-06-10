@@ -80,7 +80,7 @@ Resposta:
 ## Como Validar
 
 ```bash
-./scripts/validate-commercial-guardrails.sh
+./scripts/validators/validate-commercial-guardrails.sh
 make validate-commercial-guardrails
 ./venv/bin/pytest -q tests/test_commercial_guardrails_admin_api.py
 ```

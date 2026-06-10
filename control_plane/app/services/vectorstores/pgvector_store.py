@@ -3,8 +3,8 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agents import AgentMemoryIndex
-from app.models.rag_document_chunk import RAGDocumentChunk
+from app.models.agents.agents import AgentMemoryIndex
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 

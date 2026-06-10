@@ -2,7 +2,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.services.agents.memory.advanced_memory_service import AdvancedMemoryService
-from app.models.advanced_memory import MemoryScope, MemoryEventType
+from app.models.agents.advanced_memory import MemoryScope, MemoryEventType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

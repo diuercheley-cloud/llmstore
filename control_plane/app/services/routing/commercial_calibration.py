@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.commercial_routing_event import CommercialRoutingEvent
+from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

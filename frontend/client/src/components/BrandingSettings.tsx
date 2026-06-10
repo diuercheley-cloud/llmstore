@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Image as ImageIcon, CheckCircle2, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const BrandingSettings = () => {
@@ -38,7 +38,11 @@ export const BrandingSettings = () => {
 
   useEffect(() => {
     const currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-    if (currentPrimary) setPrimaryColor(currentPrimary);
+    if (currentPrimary) {
+      setTimeout(() => {
+        setPrimaryColor(currentPrimary);
+      }, 0);
+    }
   }, []);
 
   return (

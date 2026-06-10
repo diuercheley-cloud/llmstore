@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.mobile import MobileDevice, PushNotificationEvent, PushSubscription
+from app.models.core.mobile import MobileDevice, PushNotificationEvent, PushSubscription
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

@@ -1,7 +1,7 @@
 # Owner: agent-platform
 from app.api.deps import get_db, require_admin
 from app.core.config import Settings, get_settings
-from app.models.agents import AgentMemoryItem
+from app.models.agents.agents import AgentMemoryItem
 from app.services.agents.cognitive_memory.episodic_memory import EpisodicMemoryService
 from app.services.agents.cognitive_memory.memory_explainability import MemoryExplainabilityService
 from app.services.agents.cognitive_memory.memory_summarizer import MemorySummarizer

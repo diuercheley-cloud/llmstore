@@ -3,10 +3,10 @@
 **Sovereign, offline-first, deterministic AI platform with governed agentic runtime.**
 
 > Current build: `v2.0.9`
-> Previous stable: [`v2.x-agentic-platform-complete-hardening`](docs/releases/V2_X_AGENTIC_PLATFORM_COMPLETE_HARDENING.md)  
-> Release notes: [`docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md`](docs/releases/V2_X_AGENTIC_EVOLUTIONARY_INTELLIGENCE.md)  
-> Governance: [`docs/releases/working-tree-governance.md`](docs/releases/working-tree-governance.md)  
-> Documentation Index: [`docs/index.md`](docs/index.md)
+> Supported docs: [`docs/CANONICAL_INDEX.md`](docs/CANONICAL_INDEX.md)  
+> Supported surfaces: [`docs/support/supported-surface-area.md`](docs/support/supported-surface-area.md)  
+> API classification: [`docs/api/supported-api-surface.md`](docs/api/supported-api-surface.md)  
+> Generated references: [`docs/PRODUCT_SURFACE.md`](docs/PRODUCT_SURFACE.md), [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md), [`docs/CONFIGURATION_REFERENCE.md`](docs/CONFIGURATION_REFERENCE.md), [`docs/FLAGS_INVENTORY.md`](docs/FLAGS_INVENTORY.md)
 
 ---
 
@@ -102,7 +102,6 @@ See [Platform Domain Map](docs/architecture/platform_domain_map.md) for full con
 - [Metrics Catalog](docs/observability/metrics-catalog.md)
 - [Simplification Plan](docs/architecture/simplification-plan.md)
 - [Deprecation Policy](docs/architecture/deprecation-policy.md)
-- [Architecture Duplication Report](artifacts/architecture-duplication-report/summary.md)
 
 ### Phases 69-82 Flow
 
@@ -141,17 +140,13 @@ make validate-platform-documentation
 | Document | Description |
 |----------|-------------|
 | [Documentation Index](docs/index.md) | Full index of all documentation |
-| [Platform Overview](docs/architecture/platform_overview.md) | Architecture, principles, bounded contexts |
-| [Platform Domain Map](docs/architecture/platform_domain_map.md) | Bounded context map with diagrams |
-| [Guarantees & Limitations](docs/architecture/platform_guarantees_and_limitations.md) | Formal guarantees, explicit limitations |
-| [Operational Model](docs/architecture/platform_operational_model.md) | Offline-first operations |
-| [Validation Workflows](docs/architecture/platform_validation_workflows.md) | Smoke, full, doc validation |
-| [Module Relationships](docs/architecture/platform_module_relationships.md) | Module dependency graph |
-| [Glossary](docs/architecture/platform_glossary.md) | Terminology reference |
-| [Phase Timeline](docs/architecture/platform_phase_timeline.md) | Phase 69–82 evolution |
+| [Canonical Index](docs/CANONICAL_INDEX.md) | Source-of-truth list of supported docs |
+| [Product Surface](docs/PRODUCT_SURFACE.md) | Generated capability status matrix |
+| [Supported Surface Area](docs/support/supported-surface-area.md) | Official support policy |
+| [API Reference](docs/API_REFERENCE.md) | Generated endpoint inventory |
+| [Configuration Reference](docs/CONFIGURATION_REFERENCE.md) | Generated runtime configuration inventory |
+| [Flags Inventory](docs/FLAGS_INVENTORY.md) | Generated feature flag inventory |
 | [Runbook](docs/operations/platform_runbook.md) | Operations guide |
-| [Local Production Quickstart](docs/LOCAL_PRODUCTION_QUICKSTART.md) | Local install, smoke validation, and operator flow |
-| [Local Demo Script](docs/LOCAL_DEMO_SCRIPT.md) | Demo setup, scripted walkthrough, and client-facing flow |
 
 ### Explicit Limitations
 
@@ -185,23 +180,17 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 
 | Tier | Label | Description |
 | :--- | :--- | :--- |
-| 🟢 | **Production Core** | No mock in critical path. Readiness-gated. Defensible. |
-| 🟢 | **Production Optional** | Production-quality but opt-in. Mock-safe defaults. Flag-gated. |
-| 🟡 | **Beta** | Feature-complete but evolving. Evaluate before production. |
-| 🟠 | **Experimental** | Early stage. Heavy mock. May change without notice. |
-| 🔵 | **Internal** | Internal tools only. |
-| ⚫ | **Deprecated** | No longer maintained. Will be removed. |
+| `production_core` | **Production Core** | Produção. Sem mocks no caminho crítico. Readiness-gated. Defensível. |
+| `production_optional` | **Production Optional** | Produção opt-in. Qualidade de produção, mas exige ativação explícita. |
+| `beta` | **Beta** | Feature-complete mas evoluindo. Avaliar antes de usar em produção. |
+| `experimental` | **Experimental** | Early stage. Pode mudar sem aviso. |
+| `deprecated` | **Deprecated** | Compatibilidade temporária até remoção. |
+| `internal` | **Internal** | Superfície interna de operador, fora do escopo público. |
 
-**Production Core:** OpenAI API, Admin RBAC, Billing, RAG, TTS, multi-provider routing, hot-swap GGUF, agent observability, agent human approval, agent readiness, agent worker operations, agentic runtime, and agent tool governance.
-
-**Production Optional:** Agent stateful workflows, agent IAM, event-driven agents, Router V2, planning, reasoning loop, OTel tracing, SaaS connectors, plugin runtime, and platform profiles.
-
-**Beta / Enterprise Opt-In:** Distributed runtime, multi-cluster operations, managed control plane, capability catalog, signed plugin supply chain, and production sandbox hardening.
-
-> See [Supported Surface Matrix](artifacts/platform/supported-surface-matrix.md) for the complete breakdown including all 74 capabilities across 6 tiers.
+> See [Product Surface Matrix](docs/PRODUCT_SURFACE.md) for the complete breakdown including all capabilities, owners, and promotion criteria.
 
 > [!WARNING]
-> **Production claims are narrower than code presence.** Features such as distributed runtime, multi-cluster, managed control plane, capability catalog, Firecracker/gVisor, and MCP/plugin supply-chain controls are implemented behind explicit flags and profiles, but only count as production-safe when non-mock gates and environment prerequisites pass. Do not represent code presence or unit coverage alone as production evidence. See the [Supported Surface Area](docs/support/supported-surface-area.md) policy for details.
+> **Production claims are narrower than code presence.** Features such as distributed runtime, multi-cluster, managed control plane, capability catalog, Firecracker/gVisor, and MCP/plugin supply-chain controls are implemented behind explicit flags and profiles, but only count as production-safe when non-mock gates and environment prerequisites pass. Do not represent code presence or unit coverage alone as production evidence. See the [Product Surface Matrix](docs/PRODUCT_SURFACE.md) and [Supported Surface Area](docs/support/supported-surface-area.md) policy for details.
 
 ### Release v2.x scope
 
@@ -400,8 +389,8 @@ Integrações (Open WebUI, n8n, LangChain): [`docs/integrations/`](docs/integrat
 
 ```bash
 # Subir/descer a stack
-./scripts/up.sh
-./scripts/down.sh
+./scripts/deploy/up.sh
+./scripts/deploy/down.sh
 
 # Validar saúde
 make health
@@ -444,7 +433,7 @@ make health
 make fresh-machine-check
 
 # Escanear secrets no código
-./scripts/check-secrets.sh --all
+./scripts/validators/check-secrets.sh --all
 
 # Fase de Estabilização (Checks formais)
 make stabilization-check
@@ -456,7 +445,8 @@ make release-risk-report
 make validate-real-provider-env
 ```
 
-- [Stabilization Phase](docs/releases/STABILIZATION_PHASE.md)
+- [Canonical Documentation Index](docs/CANONICAL_INDEX.md)
+- [Documentation Archive](docs/archive/README.md)
 - [Security Report](docs/SECURITY_LOCAL.md)
 - [Production Readiness](docs/PRODUCTION_READINESS_LOCAL.md)
 - [Disaster Recovery](docs/DISASTER_RECOVERY_LOCAL.md)
@@ -489,9 +479,9 @@ O LLM Inference Stack está pronto para pilotos enterprise e implantações em p
 
 ### Ferramentas Enterprise
 Scripts automatizados para gerar artefatos de entrega:
-- `./scripts/generate-enterprise-pack.sh`: Script mestre para gerar todos os relatórios.
-- `./scripts/generate-customer-readiness-report.sh`: Valida ambiente e inventário.
-- `./scripts/generate-acceptance-report.sh`: Cria template para aceite formal (sign-off).
+- `./scripts/deploy/up.sh`: sobe a stack suportada.
+- `./scripts/deploy/down.sh`: desce a stack suportada.
+- `./scripts/dev/generate-support-bundle.sh`: gera pacote de diagnóstico suportado.
 
 ### Documentação e Compliance
 Recursos abrangentes disponíveis em:
@@ -503,29 +493,21 @@ Recursos abrangentes disponíveis em:
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [Release Notes v1.8.1](docs/V1_8_1_RELEASE_NOTES.md) | Novidades, política de custo e validação real opcional |
-| [Release Notes v1.7.0](docs/V1_7_RELEASE_NOTES.md) | Histórico da release de appliance local |
-| [Client Ready Final Report](docs/CLIENT_READY_FINAL_REPORT.md) | Status consolidado de prontidão |
-| [Go/No-Go Summary](docs/V1_7_GO_NO_GO_SUMMARY.md) | Resumo da decisão de release |
-| [Fresh Machine Validation](docs/FRESH_MACHINE_VALIDATION.md) | Roteiro para máquina nova/WSL limpo |
-| [Customer Install Guide](docs/CUSTOMER_INSTALL_GUIDE.md) | Instalação para cliente final |
-| [Customer Troubleshooting](docs/CUSTOMER_TROUBLESHOOTING.md) | Solução de problemas |
-| [Local Demo Guide](docs/LOCAL_DEMO_GUIDE.md) | Preparação de demonstração |
-| [Local Production Runbook](docs/LOCAL_PRODUCTION_RUNBOOK.md) | Operação diária |
-| [Capability Matrix](docs/CAPABILITY_MATRIX.md) | Matriz de capacidades |
-| [Security Local](docs/SECURITY_LOCAL.md) | Segurança e hardening |
-| [Commercial Analytics](docs/COMMERCIAL_ROUTING_ANALYTICS.md) | Persistência de ranking e lucro |
-| [Production Readiness](docs/PRODUCTION_READINESS_LOCAL.md) | Readiness de produção |
+| [Canonical Index](docs/CANONICAL_INDEX.md) | Classificação oficial da documentação |
+| [Documentation Index](docs/index.md) | Navegação da documentação suportada |
+| [Product Surface](docs/PRODUCT_SURFACE.md) | Matriz gerada de capacidades e status |
+| [Supported Surface Area](docs/support/supported-surface-area.md) | Política oficial de superfícies suportadas |
+| [Supported API Surface](docs/api/supported-api-surface.md) | Classificação dos endpoints suportados |
+| [API Reference](docs/API_REFERENCE.md) | Inventário gerado de endpoints |
+| [Configuration Reference](docs/CONFIGURATION_REFERENCE.md) | Referência gerada de configuração |
+| [Flags Inventory](docs/FLAGS_INVENTORY.md) | Inventário gerado de flags |
+| [Documentation Archive](docs/archive/README.md) | Histórico e material descontinuado |
 | [OpenAI Compatibility](docs/OPENAI_COMPATIBILITY.md) | Detalhes da API compatível |
-| [Release History](docs/RELEASE_HISTORY.md) | Histórico consolidado de versões |
-| [API Sales](docs/API_SALES.md) | Fluxo comercial e onboarding |
+| [Platform Runbook](docs/operations/platform_runbook.md) | Operação diária suportada |
 
 ## Release History
 
-Consulte [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md) para o histórico consolidado de versões.
-
-- [v1.7.0 Release Checklist](docs/V1_7_RELEASE_CHECKLIST.md) — Checklist formal de promoção
-- [v1.6 Audit Summary](docs/V1_6_AUDIT_SUMMARY.md) — Auditoria da linha anterior
+O material histórico de release foi movido para [docs/archive/releases/](docs/archive/releases/).
 
 ## Roadmap
 
@@ -556,4 +538,4 @@ Ambos os portais (**Admin Dashboard** e **Client Portal**) foram refatorados par
 
 ---
 
-*Local AI Appliance — v1.7.1-post-release-polish — [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md)*
+*Local AI Appliance — consulte [docs/CANONICAL_INDEX.md](docs/CANONICAL_INDEX.md) para a documentação suportada e [docs/archive/releases/](docs/archive/releases/) para histórico.*

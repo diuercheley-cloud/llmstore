@@ -3,7 +3,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.agents import AgentApprovalRequest
+from app.models.agents.agents import AgentApprovalRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

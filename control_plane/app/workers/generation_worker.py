@@ -58,7 +58,7 @@ async def _run_once() -> None:
                 # We need to fetch the job to get its priority, but process_generation_job 
                 # might have already fetched it. For simplicity, we'll use default or fetch.
                 # In active mode, we should ideally put it back in the sorted set.
-                from app.models.generation_job import GenerationJob
+                from app.models.core.generation_job import GenerationJob
                 job = await session.get(GenerationJob, job_id)
                 if job:
                     await redis_client.zadd("generation_jobs:priority", {str(job_id): float(job.effective_priority or 0)})

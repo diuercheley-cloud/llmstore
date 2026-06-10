@@ -13,27 +13,27 @@ status: consolidated
 - `control_plane/alembic/versions/phase80_plugin_supply_chain_provenance_sbom.py`
 - `docs/phases/phase_80_plugin_supply_chain_provenance_sbom.md`
 - `docs/operations/plugin_supply_chain_provenance_sbom.md`
-- `scripts/validate_phase_80_plugin_supply_chain.py`
-- `tests/operations/test_plugin_supply_chain_models.py`
-- `tests/operations/test_plugin_supply_chain_hash_utils.py`
-- `tests/operations/test_plugin_supply_chain_services.py`
-- `tests/operations/test_plugin_supply_chain_api.py`
-- `tests/operations/test_plugin_supply_chain_dashboard.py`
-- `tests/operations/test_phase_80_validation.py`
+- `scripts/validators/validate_phase_80_plugin_supply_chain.py`
+- `tests/integration/operations/test_plugin_supply_chain_models.py`
+- `tests/integration/operations/test_plugin_supply_chain_hash_utils.py`
+- `tests/integration/operations/test_plugin_supply_chain_services.py`
+- `tests/integration/operations/test_plugin_supply_chain_api.py`
+- `tests/integration/operations/test_plugin_supply_chain_dashboard.py`
+- `tests/integration/operations/test_phase_80_validation.py`
 
 ## Validations Executed
 
-- `python3 ./scripts/validate_phase_80_plugin_supply_chain.py`
+- `python3 ./scripts/validators/validate_phase_80_plugin_supply_chain.py`
 - `make validate-phase-80-plugin-supply-chain`
 
 ## Tests Executed
 
-- `tests/operations/test_plugin_supply_chain_models.py`
-- `tests/operations/test_plugin_supply_chain_hash_utils.py`
-- `tests/operations/test_plugin_supply_chain_services.py`
-- `tests/operations/test_plugin_supply_chain_api.py`
-- `tests/operations/test_plugin_supply_chain_dashboard.py`
-- `tests/operations/test_phase_80_validation.py`
+- `tests/integration/operations/test_plugin_supply_chain_models.py`
+- `tests/integration/operations/test_plugin_supply_chain_hash_utils.py`
+- `tests/integration/operations/test_plugin_supply_chain_services.py`
+- `tests/integration/operations/test_plugin_supply_chain_api.py`
+- `tests/integration/operations/test_plugin_supply_chain_dashboard.py`
+- `tests/integration/operations/test_phase_80_validation.py`
 - Result: `12 passed`
 
 ## Known Limitations

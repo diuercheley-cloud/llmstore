@@ -4,7 +4,7 @@ import re
 import uuid
 from typing import List, Tuple
 
-from app.models.prompts import PromptTemplateVersion
+from app.models.agents.prompts import PromptTemplateVersion
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

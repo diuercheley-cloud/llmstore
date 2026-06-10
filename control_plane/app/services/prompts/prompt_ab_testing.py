@@ -3,7 +3,7 @@ import random
 import uuid
 from typing import Optional
 
-from app.models.prompts import PromptExperiment
+from app.models.agents.prompts import PromptExperiment
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

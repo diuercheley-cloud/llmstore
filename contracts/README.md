@@ -33,10 +33,10 @@ Este diretório contém **templates de contratos e SOW (Statement of Work)** par
 
 ```bash
 # Gerar SOW personalizado para um cliente
-./scripts/generate-sow-local.sh --company-name "Cliente" --project-name "Projeto" --plan "Pro"
+./scripts/dev/generate-sow-local.sh --company-name "Cliente" --project-name "Projeto" --plan "Pro"
 
 # Validar integridade dos templates
-./scripts/validate-contract-templates-local.sh
+./scripts/validators/validate-contract-templates-local.sh
 ```
 
 ## Geração

@@ -56,7 +56,7 @@ Ela apresenta cards superiores com os totais consolidados e o alerta de margem n
 Para atestar o correto funcionamento da funcionalidade, basta executar o script de validação E2E desenvolvido:
 
 ```bash
-./scripts/validate-margin-dashboard.sh
+./scripts/validators/validate-margin-dashboard.sh
 ```
 
 Ou pelo atalho do operador:

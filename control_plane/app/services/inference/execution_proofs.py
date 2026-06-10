@@ -12,17 +12,17 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from app.models.commercial_cryptographic_receipts import CommercialInferenceReceipt
-from app.models.commercial_inference_reproducibility import (
+from app.models.commercial.commercial_cryptographic_receipts import CommercialInferenceReceipt
+from app.models.commercial.commercial_inference_reproducibility import (
     CommercialInferenceReplayEvent,
     CommercialInferenceRuntimeSnapshot,
 )
-from app.models.commercial_merkle_timelines import (
+from app.models.commercial.commercial_merkle_timelines import (
     CommercialExecutionProof,
     CommercialMerkleLeaf,
     CommercialMerkleTimeline,
 )
-from app.models.commercial_witness import (
+from app.models.commercial.commercial_witness import (
     CommercialWitness,
     CommercialWitnessSignature,
 )

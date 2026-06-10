@@ -21,6 +21,6 @@ repos:
         entry: .venv/bin/mypy
         language: system
         types: [python]
-        files: ^(scripts/llm_harness/|tests/llm_harness/)
+        files: ^(scripts/llm_harness/|tests/integration/llm_harness/)
         pass_filenames: false
-        args: ["scripts/llm_harness", "tests/llm_harness"]
+        args: ["scripts/llm_harness", "tests/integration/llm_harness"]

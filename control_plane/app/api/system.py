@@ -13,9 +13,9 @@ import httpx
 from app.api.deps import get_inference_proxy
 from app.core.config import Settings, get_settings
 from app.db.session import get_db, get_db_session, get_redis
-from app.models.client import Client
-from app.models.inference_backend import InferenceBackend
-from app.models.model_registry import ModelRegistry
+from app.models.core.client import Client
+from app.models.core.inference_backend import InferenceBackend
+from app.models.core.model_registry import ModelRegistry
 from app.services.auth import require_admin
 from app.services.generation_jobs import get_admin_job_snapshot
 from app.services.inference_proxy import InferenceProxy

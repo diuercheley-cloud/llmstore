@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app.models.agent_routing import AgentModelCapability
+from app.models.agents.agent_routing import AgentModelCapability
 
 
 class RoutingExplainer:

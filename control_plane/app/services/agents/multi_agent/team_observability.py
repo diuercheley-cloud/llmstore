@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.multi_agent import AgentTeamMessage, AgentTeamTrace
+from app.models.agents.multi_agent import AgentTeamMessage, AgentTeamTrace
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,7 +63,7 @@ class TeamObservability:
         }
 
     async def get_delegation_graph(self, run_id: uuid.UUID) -> List[Dict[str, Any]]:
-        from app.models.multi_agent import AgentTeamDelegation
+        from app.models.agents.multi_agent import AgentTeamDelegation
         stmt = select(AgentTeamDelegation).where(AgentTeamDelegation.run_id == run_id)
         res = await self.db.execute(stmt)
         delegations = res.scalars().all()

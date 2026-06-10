@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
+from app.models.core.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
 from app.services.agents.connectors.connector_secret_store import connector_secret_store
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

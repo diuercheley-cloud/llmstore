@@ -148,7 +148,7 @@ class AgentBackupService:
         return backups
 
     async def _backup_agent_config(self, agent_id: str, agent_dir: Path):
-        from app.models.agents import AgentDefinition
+        from app.models.agents.agents import AgentDefinition
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )
@@ -171,7 +171,7 @@ class AgentBackupService:
             logger.debug("Backed up config for agent %s", agent_id)
 
     async def _backup_agent_memory(self, agent_id: str, agent_dir: Path):
-        from app.models.agents import AgentMemoryItem
+        from app.models.agents.agents import AgentMemoryItem
         result = await self.db.execute(
             select(AgentMemoryItem).where(AgentMemoryItem.agent_id == agent_id).limit(1000)
         )
@@ -189,7 +189,7 @@ class AgentBackupService:
             (agent_dir / "memory.json").write_text(json.dumps(memory_data, indent=2, default=str))
 
     async def _backup_agent_runs(self, agent_id: str, agent_dir: Path):
-        from app.models.agents import AgentRun
+        from app.models.agents.agents import AgentRun
         result = await self.db.execute(
             select(AgentRun).where(AgentRun.agent_id == agent_id)
             .order_by(AgentRun.created_at.desc()).limit(500)
@@ -214,7 +214,7 @@ class AgentBackupService:
         if not config_file.exists():
             return
         config = json.loads(config_file.read_text())
-        from app.models.agents import AgentDefinition
+        from app.models.agents.agents import AgentDefinition
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )
@@ -233,7 +233,7 @@ class AgentBackupService:
         if not memory_file.exists():
             return
         memory_data = json.loads(memory_file.read_text())
-        from app.models.agents import AgentMemoryItem
+        from app.models.agents.agents import AgentMemoryItem
         for item_data in memory_data:
             existing = await self.db.get(AgentMemoryItem, item_data["id"])
             if not existing:
@@ -265,7 +265,7 @@ class BackupScheduler:
         async def _loop():
             while True:
                 try:
-                    from app.models.agents import AgentDefinition
+                    from app.models.agents.agents import AgentDefinition
                     result = await self.db.execute(
                         select(AgentDefinition.id).where(AgentDefinition.status.in_(["active", "production"]))
                     )

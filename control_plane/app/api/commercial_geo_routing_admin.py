@@ -2,7 +2,7 @@
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
 from app.services.routing.commercial_geo_router import CommercialGeoRouter
 from fastapi import APIRouter, Depends
 from sqlalchemy import select

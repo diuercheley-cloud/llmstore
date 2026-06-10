@@ -1,8 +1,8 @@
 import logging
 import uuid
 
-from app.models.agents import AgentDefinition
-from app.models.collab_chat import ChatAgentParticipant
+from app.models.agents.agents import AgentDefinition
+from app.models.agents.collab_chat import ChatAgentParticipant
 from app.services.agents.agent_runtime import start_run
 from sqlalchemy.ext.asyncio import AsyncSession
 

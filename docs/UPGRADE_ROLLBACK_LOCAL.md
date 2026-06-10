@@ -9,7 +9,7 @@ Este documento descreve os procedimentos para atualizar e reverter versões da s
 
 ## Upgrade Local
 
-O script `scripts/upgrade-local.sh` automatiza o processo de atualização.
+O script `scripts/deploy/upgrade-local.sh` automatiza o processo de atualização.
 
 ### Pré-requisitos
 - Working tree limpa (sem alterações não commitadas).
@@ -17,7 +17,7 @@ O script `scripts/upgrade-local.sh` automatiza o processo de atualização.
 
 ### Como executar
 ```bash
-./scripts/upgrade-local.sh --to-version v1.5.6
+./scripts/deploy/upgrade-local.sh --to-version v1.5.6
 ```
 
 ### O que o script faz:
@@ -40,19 +40,19 @@ Para garantir que as migrations não quebrem o banco de dados, existem dois scri
 ### Validação Estática e Local
 ```bash
 # Verifica heads duplicadas, conflitos e imports
-./scripts/validate-migrations-local.sh
+./scripts/validators/validate-migrations-local.sh
 ```
 
 ### Validação com Banco Temporário (Isolado)
 Este modo sobe um container Postgres limpo, aplica todas as migrations do zero e valida o schema final.
 ```bash
-./scripts/validate-migrations-local.sh --temp-db
+./scripts/validators/validate-migrations-local.sh --temp-db
 ```
 
 ### Simulação Completa de Upgrade
 Valida o fluxo completo: backup -> validação -> upgrade -> health check -> smoke test.
 ```bash
-./scripts/validate-upgrade-migrations-local.sh
+./scripts/validators/validate-upgrade-migrations-local.sh
 ```
 
 ### Opções úteis
@@ -64,7 +64,7 @@ Valida o fluxo completo: backup -> validação -> upgrade -> health check -> smo
 
 ## Smoke Test Pós-Upgrade
 
-Após qualquer operação de alteração de versão (upgrade ou rollback), a stack é validada automaticamente pelo script `scripts/post-upgrade-smoke-local.sh`.
+Após qualquer operação de alteração de versão (upgrade ou rollback), a stack é validada automaticamente pelo script `scripts/validators/post-upgrade-smoke-local.sh`.
 
 Este teste valida:
 - Saúde básica de todos os endpoints (`/health`, `/ready`).
@@ -86,10 +86,10 @@ Para validar o fluxo completo de restore/rollback sem risco ao ambiente real:
 
 ```bash
 # Dry-run (seguro, apenas verifica scripts existentes e requisitos)
-./scripts/validate-real-restore-rollback-local.sh --dry-run
+./scripts/validators/validate-real-restore-rollback-local.sh --dry-run
 
 # Validacao completa com backup, upgrade simulado e rollback
-./scripts/validate-real-restore-rollback-local.sh --yes
+./scripts/validators/validate-real-restore-rollback-local.sh --yes
 
 # Executar testes
 .venv/bin/python -m pytest tests/test_real_restore_rollback_validator.py tests/test_real_restore_rollback_safety.py tests/test_real_restore_rollback_report.py -q
@@ -101,11 +101,11 @@ Relatorio gerado em `artifacts/restore-rollback-test/<timestamp>/`.
 
 ## Rollback Local
 
-Caso ocorra um erro após o upgrade, use o script `scripts/rollback-local.sh`.
+Caso ocorra um erro após o upgrade, use o script `scripts/dev/rollback-local.sh`.
 
 ### Como executar
 ```bash
-./scripts/rollback-local.sh --to-version v1.5.5 --backup-id artifacts/backups-local/20260509T120000
+./scripts/dev/rollback-local.sh --to-version v1.5.5 --backup-id artifacts/backups-local/20260509T120000
 ```
 
 ### O que o script faz:
@@ -132,9 +132,9 @@ Caso ocorra um erro após o upgrade, use o script `scripts/rollback-local.sh`.
 
 Para validar que os scripts de upgrade/rollback estão funcionando corretamente (sem realizar uma troca real):
 ```bash
-./scripts/validate-upgrade-rollback-local.sh
+./scripts/validators/validate-upgrade-rollback-local.sh
 ```
 a troca real):
 ```bash
-./scripts/validate-upgrade-rollback-local.sh
+./scripts/validators/validate-upgrade-rollback-local.sh
 ```

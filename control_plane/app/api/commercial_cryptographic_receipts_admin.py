@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.commercial_cryptographic_receipts import (
+from app.models.commercial.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,
     CommercialInferenceReceiptVerificationReport,

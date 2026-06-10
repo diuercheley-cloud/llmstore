@@ -207,7 +207,7 @@
 ## [v2.0.2-agentic-ga-readiness] - 2026-05-23
 
 ### Added
-- **GA readiness release gate**: `scripts/ga-readiness.sh` and `make ga-readiness` now generate platform and release artifacts and fail unless all 12 GA criteria pass.
+- **GA readiness release gate**: `scripts/dev/ga-readiness.sh` and `make ga-readiness` now generate platform and release artifacts and fail unless all 12 GA criteria pass.
 - **Surface-area audit target**: `make surface-area-audit` now produces release-governed surface artifacts from declarative inventories.
 - **Release evidence line**: `docs/releases/V2_0_2_AGENTIC_GA_READINESS.md` documents the GA criteria, artifacts, and final blocking conditions.
 
@@ -296,7 +296,7 @@
 ### Added
 - **Supportability Pack**: Sanitized diagnostic bundles (`support-bundle-*.tar.gz`) and operator tooling for platform troubleshooting inside the existing admin/operations surface.
 - **Support API**: `POST /admin/support/bundle` and `GET /admin/support/bundle/latest` for operator-gated diagnostics.
-- **Performance Baseline**: `scripts/performance-baseline.sh` for measuring startup, imports, and latency during freeze validation.
+- **Performance Baseline**: `scripts/legacy/performance-baseline.sh` for measuring startup, imports, and latency during freeze validation.
 - **Release Artifacts**: Platform freeze, complexity, supported-surface, and validation reporting promoted into the release checklist.
 
 ### Changed
@@ -514,7 +514,7 @@
 - Script `customer-demo-local.sh` para preparação e validação de demonstração para cliente (modos `--quick` e `--full`).
 - Validação de fresh machine / WSL limpo com checklist e script dedicados (`FRESH_MACHINE_VALIDATION.md`, `fresh-machine-readiness-check.sh`).
 - README.md reorganizado como porta de entrada profissional/comercial (seções: O que é, Para quem serve, Quick start, Customer demo, Limitações, etc.).
-- README_CLIENT.md atualizado com exemplos de embeddings, responses API e referência ao SDK Python `scripts/llm_stack_client.py`.
+- README_CLIENT.md atualizado com exemplos de embeddings, responses API e referência ao SDK Python `scripts/legacy/llm_stack_client.py`.
 - Script de validação `validate-readme-product-local.sh` com 24 checagens (título, comandos, limitações, links, secrets, scripts).
 - Três suítes de teste: `test_readme_product_positioning.py`, `test_readme_links.py`, `test_readme_no_secrets.py`.
 - Scripts de validação: `validate-demo-visual-guide.sh`, `validate-customer-demo-local.sh`, `validate-fresh-machine-docs.sh`, `validate-v1.7-warning-cleanup.sh`.
@@ -592,7 +592,7 @@
 
 ### Added
 - Consolidacao do layout do repositorio com arquivos operacionais movidos para a raiz.
-- Padronizacao das bibliotecas shell compartilhadas em `scripts/lib/`.
+- Padronizacao das bibliotecas shell compartilhadas em `scripts/dev/lib/`.
 - Validacoes automatizadas para imports, paths de scripts, Makefile e layout do repositorio.
 - Script seguro para limpeza de branches locais com suporte a `--dry-run` e protecoes para branches estaveis.
 - Historico consolidado de releases em `docs/RELEASE_HISTORY.md` com geracao e validacao dedicadas.
@@ -623,10 +623,10 @@
 ### Added
 - Demo pack comercial com 5 cenarios (clinica, juridico, suporte, educacao, provedor-api), planos e dados ficticios.
 - Roteiro de apresentacao para cliente com scripts de 15/30/60 minutos e talk tracks prontos.
-- Proposta tecnica Markdown/PDF geravel com `scripts/generate-proposal-pdf.sh`.
+- Proposta tecnica Markdown/PDF geravel com `scripts/legacy/generate-proposal-pdf.sh`.
 - Reset demo seguro com dry-run padrao, --yes obrigatorio e metadata demo=true.
 - Dados ficticios realistas em `demo-pack/fake-data/` com validacao dedicada.
-- Meeting Ready Check (`scripts/meeting-ready-check-local.sh`) com status MEETING_READY, READY_WITH_WARNINGS, NOT_READY.
+- Meeting Ready Check (`scripts/validators/meeting-ready-check-local.sh`) com status MEETING_READY, READY_WITH_WARNINGS, NOT_READY.
 - Pagina local /capabilities com recursos, status (GA/Beta/Future) e limitacoes explicitas (PSP, PIX, Tools/FC).
 - Endpoint JSON `GET /public/capabilities` com versao, features, limitations, local_appliance_mode, sem secrets.
 - Landing page atualizada com link para /capabilities.
@@ -704,13 +704,13 @@
 - Compatibility headers for model routing and fallback: `X-Requested-Model`, `X-Resolved-Model`, `X-Backend-Name`, `X-Fallback-Used`.
 - Explicit `501` responses for unsupported `tools`, `tool_choice`, and `stream` in `/v1/responses`.
 - Automated tests and examples for the new endpoint.
-- Validation script `scripts/validate-responses-api-local.sh`.
+- Validation script `scripts/legacy/validate-responses-api-local.sh`.
 - OpenAI-compatible `/v1/embeddings` endpoint.
 - Deterministic mock embeddings backend for local testing and integration.
 - Embeddings quota management and usage tracking (requests and tokens).
 - New embedding fields in `BillingPlan`, `QuotaCounter`, and `UsageRecord`.
 - Example scripts for embeddings in CURL, Python, and Node.js.
-- Validation script `scripts/validate-embeddings-local.sh`.
+- Validation script `scripts/validators/validate-embeddings-local.sh`.
 - Comprehensive test suite for embeddings.
 - New documentation: `docs/OPENAI_COMPATIBILITY.md`.
 

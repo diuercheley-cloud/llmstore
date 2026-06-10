@@ -49,7 +49,7 @@ Feature flag integrity is validated via a shell script integrated into `make val
 
 To run validation:
 ```bash
-./scripts/check-feature-flags.sh
+./scripts/validators/check-feature-flags.sh
 ```
 
 Or via Makefile:

@@ -21,7 +21,7 @@ import uuid
 from typing import Any, Sequence
 
 from app.core.config import get_settings
-from app.models.agent_knowledge_graph import (
+from app.models.agents.agent_knowledge_graph import (
     AgentKGEntity,
     AgentKGRelation,
 )

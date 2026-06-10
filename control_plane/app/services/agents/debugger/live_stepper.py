@@ -4,7 +4,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agent_debugger import AgentDebugSession
+from app.models.agents.agent_debugger import AgentDebugSession
 from app.services.agents.debugger.breakpoints import BreakpointManager
 from app.services.agents.debugger.debug_sessions import DebugSessionManager
 from sqlalchemy.ext.asyncio import AsyncSession

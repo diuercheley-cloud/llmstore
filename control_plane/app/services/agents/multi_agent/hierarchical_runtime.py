@@ -3,7 +3,7 @@ import asyncio
 import logging
 import uuid
 
-from app.models.multi_agent import AgentTeamDelegation
+from app.models.agents.multi_agent import AgentTeamDelegation
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 from app.services.agents.multi_agent.team_runtime import TeamRuntime

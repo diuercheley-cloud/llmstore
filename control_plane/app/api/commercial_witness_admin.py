@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 from ..api.deps import get_admin_user
 from ..db.session import get_db
-from ..models.commercial_witness import (
+from ..models.commercial.commercial_witness import (
     CommercialWitness,
     CommercialWitnessSignature,
 )

@@ -3,8 +3,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from app.models.agent_environments import AgentEnvironmentVersion
-from app.models.agents import AgentDefinition, AgentRegistryEntry
+from app.models.agents.agent_environments import AgentEnvironmentVersion
+from app.models.agents.agents import AgentDefinition, AgentRegistryEntry
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

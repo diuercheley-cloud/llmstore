@@ -2,9 +2,9 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Dict
 
-from app.models.client import Client
-from app.models.quota_counter import QuotaCounter
-from app.models.tts_usage_event import TtsUsageEvent
+from app.models.core.client import Client
+from app.models.core.quota_counter import QuotaCounter
+from app.models.core.tts_usage_event import TtsUsageEvent
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
 from sqlalchemy import func, select

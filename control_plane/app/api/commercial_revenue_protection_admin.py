@@ -3,8 +3,8 @@ import uuid
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
+from app.models.commercial.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
 from app.services.auth import require_admin
 from app.services.billing.revenue_protection import (
     apply_action,

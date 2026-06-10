@@ -2,7 +2,7 @@
 import uuid
 from typing import Optional
 
-from app.models.agents import AgentRegistryEntry, AgentTool
+from app.models.agents.agents import AgentRegistryEntry, AgentTool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

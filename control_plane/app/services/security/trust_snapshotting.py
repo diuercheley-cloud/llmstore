@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, UTC
 from typing import Any
 
-from app.models.commercial_operations_center import (
+from app.models.commercial.commercial_operations_center import (
     CommercialCryptographicTrustSnapshot,
     CommercialOperationsCenterEvent,
 )

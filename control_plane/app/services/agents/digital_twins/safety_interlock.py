@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, Tuple
 
-from app.models.digital_twin import DigitalTwinSafetyEvent
+from app.models.agents.digital_twin import DigitalTwinSafetyEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

@@ -18,7 +18,7 @@ from app.contracts.agents.task_execution_contract import (
 from app.contracts.base import ContractValidationError
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import AgentPlan, AgentTask, AgentTaskAttempt, AgentTaskDependency, AgentTool
+from app.models.agents.agents import AgentPlan, AgentTask, AgentTaskAttempt, AgentTaskDependency, AgentTool
 from app.services.agents import agent_state
 from app.services.agents.agent_budget import AgentBudgetService
 from app.services.agents.agent_handoffs import AgentHandoffService

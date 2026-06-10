@@ -52,7 +52,7 @@ Implante IA generativa **dentro da sua infraestrutura** com API 100% compatível
 ```bash
 make install-local        # Instala com dados demo fictícios
 make demo-pack            # Carrega cenários de demonstração
-./scripts/validate-e2e.sh # Valida funcionamento
+./scripts/validators/validate-e2e.sh # Valida funcionamento
 ```
 
 Acesse as interfaces:

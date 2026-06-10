@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.config import get_settings
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentCollaborationSession,
     AgentHandoffEvent,
     AgentHandoffPolicy,

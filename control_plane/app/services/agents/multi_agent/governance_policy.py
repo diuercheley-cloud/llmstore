@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import uuid
 
-from app.models.multi_agent import AgentTeamDelegation, AgentTeamRun
+from app.models.agents.multi_agent import AgentTeamDelegation, AgentTeamRun
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

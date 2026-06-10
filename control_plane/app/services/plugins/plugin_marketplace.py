@@ -19,8 +19,8 @@ from app.models.plugins.marketplace import (
     PluginTrustReport,
     PluginVersion,
 )
-from app.models.security_event import SecurityEvent
-from app.models.security_pki import PluginRegistry
+from app.models.core.security_event import SecurityEvent
+from app.models.core.security_pki import PluginRegistry
 from app.services.security.pki_service import PKIService
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession

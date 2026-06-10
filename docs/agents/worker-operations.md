@@ -28,13 +28,13 @@ Para visualizar a saúde global dos workers e da fila:
 ```bash
 make agentic-readiness
 # ou
-./scripts/agent-worker-status.sh
+./scripts/dev/agent-worker-status.sh
 ```
 
 ### Graceful Shutdown (Drain)
 Para remover um worker de operação sem interromper a tarefa atual (ex: antes de um restart ou escala negativa):
 ```bash
-./scripts/agent-worker-drain.sh <worker_id_ou_pod_name>
+./scripts/dev/agent-worker-drain.sh <worker_id_ou_pod_name>
 ```
 O worker enviará um sinal `SIGUSR1` para si mesmo, entrará em modo `draining`, concluirá o job ativo e parará de buscar novos.
 

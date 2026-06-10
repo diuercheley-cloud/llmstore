@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.multimodal import MultimodalAnalysisEvent, MultimodalRequest, MultimodalUsageEvent
+from app.models.core.multimodal import MultimodalAnalysisEvent, MultimodalRequest, MultimodalUsageEvent
 from app.services.multimodal.asset_store import AssetStore
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession

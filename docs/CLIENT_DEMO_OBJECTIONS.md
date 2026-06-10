@@ -78,7 +78,7 @@ status: consolidated
 - **Não substituímos análise de compliance** — recomendamos que seu time de segurança avalie o appliance
 - **Não substituímos firewalls, WAF ou outras camadas de rede** — o appliance é um componente dentro da sua arquitetura de segurança
 
-**Nossa sugestão:** Baixe o security report (`./scripts/security-report-local.sh`), compartilhe com seu time de segurança e agende uma call técnica para esclarecer dúvidas específicas do seu ambiente."
+**Nossa sugestão:** Baixe o security report (`./scripts/validators/security-report-local.sh`), compartilhe com seu time de segurança e agende uma call técnica para esclarecer dúvidas específicas do seu ambiente."
 
 ---
 
@@ -99,7 +99,7 @@ status: consolidated
 
 Além disso:
 - Documentação completa em `docs/` (instalação, troubleshooting, runbook)
-- Scripts de diagnóstico (`./scripts/diagnose-readiness-warnings-local.sh`)
+- Scripts de diagnóstico (`./scripts/dev/diagnose-readiness-warnings-local.sh`)
 - Relatórios de health e readiness
 - Backup e restore documentados
 - Upgrade e rollback com script validado

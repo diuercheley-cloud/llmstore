@@ -5,7 +5,7 @@ import uuid
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.commercial_agents import (
+from app.models.commercial.commercial_agents import (
     CommercialAgentAction,
     CommercialAgentExecution,
     CommercialAgentProfile,

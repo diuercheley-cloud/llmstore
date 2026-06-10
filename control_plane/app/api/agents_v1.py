@@ -8,8 +8,8 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from app.api.deps import get_db
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRunEvent
-from app.models.client import Client
+from app.models.agents.agents import AgentDefinition, AgentRunEvent
+from app.models.core.client import Client
 from app.services.agents import agent_api_facade, agent_state
 from app.services.agents.sessions.agent_session_service import AgentSessionService
 from app.services.agents.sessions.conversation_thread_service import ConversationThreadService

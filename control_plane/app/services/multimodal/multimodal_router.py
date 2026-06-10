@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from app.db.session import get_db_session
-from app.models.client import Client
+from app.models.core.client import Client
 from app.services.auth import require_admin, require_client
 from app.services.multimodal.image_generation_service import ImageGenerationService
 from app.services.multimodal.multimodal_policy import MultimodalPolicyService

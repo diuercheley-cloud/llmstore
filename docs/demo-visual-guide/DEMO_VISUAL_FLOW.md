@@ -77,12 +77,12 @@ graph LR
 - **Objetivo:** Planos e preços
 
 ### 11. Security Report
-- **Comando:** `./scripts/security-report-local.sh`
+- **Comando:** `./scripts/validators/security-report-local.sh`
 - **Duração:** 2 min
 - **Objetivo:** Relatório de segurança automatizado
 
 ### 12. Production Readiness
-- **Comando:** `./scripts/production-readiness-local.sh`
+- **Comando:** `./scripts/dev/production-readiness-local.sh`
 - **Duração:** 2 min
 - **Objetivo:** Verificação de prontidão para produção
 

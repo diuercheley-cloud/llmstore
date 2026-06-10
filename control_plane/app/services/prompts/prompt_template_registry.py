@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.prompts import (
+from app.models.agents.prompts import (
     PromptTemplate,
     PromptTemplateRenderEvent,
     PromptTemplateVariable,

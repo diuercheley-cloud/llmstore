@@ -12,7 +12,7 @@ This guide provides steps to diagnose and resolve common issues with the LLM Inf
 Always start by generating a **Support Bundle**. This will give you a comprehensive overview of the system state without exposing sensitive data.
 
 ```bash
-./scripts/generate-support-bundle.sh
+./scripts/dev/generate-support-bundle.sh
 ```
 
 Review the `health.txt` and `readiness_report.json` inside the bundle.
@@ -41,6 +41,6 @@ If you cannot resolve the issue yourself, please share the latest **Support Bund
 
 ## 4. Maintenance Commands
 
-- **Check Health**: `./scripts/test-health.sh`
-- **Full Validation**: `./scripts/validate-e2e.sh`
-- **Clear Cache**: `./scripts/cache-clear.sh`
+- **Check Health**: `./scripts/dev/test-health.sh`
+- **Full Validation**: `./scripts/validators/validate-e2e.sh`
+- **Clear Cache**: `./scripts/dev/cache-clear.sh`

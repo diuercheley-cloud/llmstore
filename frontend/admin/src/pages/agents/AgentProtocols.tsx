@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '../../lib/api'
-import { Server, Tool, Users, ShieldCheck, Activity, Terminal, Play, CheckCircle2, AlertCircle, Info, Tabs, TabsList, TabsTrigger, TabsContent } from 'lucide-react'
+import { Server, Users, ShieldCheck, Activity, Terminal, Play, CheckCircle2, AlertCircle, Info } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 

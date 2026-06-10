@@ -7,11 +7,11 @@ from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
-from app.models.commercial_model_supply_chain import (
+from app.models.commercial.commercial_model_supply_chain import (
     CommercialRuntimeModelAttestation,
     CommercialSignedModelRegistryEntry,
 )
-from app.models.model_registry import ModelRegistry
+from app.models.core.model_registry import ModelRegistry
 from app.services.models.signed_model_registry import calculate_model_checksum
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy.ext.asyncio import AsyncSession

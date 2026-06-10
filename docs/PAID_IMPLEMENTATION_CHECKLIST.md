@@ -101,7 +101,7 @@ status: consolidated
 |---|-----------|-------------|--------|-------------|
 | 6.1 | Backup dos dados existentes do cliente realizado antes da instalação | Cliente | | |
 | 6.2 | Backup da configuração inicial ao final da implantação | Fornecedor | | |
-| 6.3 | Script `scripts/backup-local.sh` testado e funcional | Fornecedor | | |
+| 6.3 | Script `scripts/backup/backup-local.sh` testado e funcional | Fornecedor | | |
 | 6.4 | Backup armazenado em local seguro e fora do ambiente principal | Cliente | | |
 | 6.5 | Procedimento de restore verificado | Fornecedor | | |
 
@@ -111,7 +111,7 @@ status: consolidated
 |---|-----------|-------------|--------|-------------|
 | 7.1 | Repositório clonado / pacote extraído no servidor | Fornecedor | | |
 | 7.2 | Arquivo `.env.local` configurado com credenciais seguras | Fornecedor | | |
-| 7.3 | Stack inicializada (`./scripts/install-local-appliance.sh`) | Fornecedor | | |
+| 7.3 | Stack inicializada (`./scripts/deploy/install-local-appliance.sh`) | Fornecedor | | |
 | 7.4 | Todos os containers healthy (`docker compose ps`) | Fornecedor | | |
 | 7.5 | Migrações de banco de dados executadas sem erros | Fornecedor | | |
 | 7.6 | Logs verificados sem erros críticos | Fornecedor | | |
@@ -120,7 +120,7 @@ status: consolidated
 
 | # | Atividade | Responsável | Status | Observações |
 |---|-----------|-------------|--------|-------------|
-| 8.1 | Wizard de configuração executado (`./scripts/configure-local-wizard.sh`) | Fornecedor | | |
+| 8.1 | Wizard de configuração executado (`./scripts/dev/configure-local-wizard.sh`) | Fornecedor | | |
 | 8.2 | Planos comerciais seedados e validados | Fornecedor | | |
 | 8.3 | Clientes/tenants criados conforme necessidade do cliente | Fornecedor | | |
 | 8.4 | Tokens de API gerados e entregues de forma segura | Fornecedor | | |

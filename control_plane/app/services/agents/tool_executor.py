@@ -8,7 +8,7 @@ import uuid
 from typing import Any, Callable, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.agents import AgentRegistryEntry, AgentTool, AgentToolInvocation
+from app.models.agents.agents import AgentRegistryEntry, AgentTool, AgentToolInvocation
 from app.services.agents.tool_adapter_registry import adapter_registry
 from app.services.agents.tool_audit import log_audit_event, sanitize_payload
 from app.services.agents.tool_credentials import resolve_credential
@@ -139,7 +139,7 @@ async def execute_tool(
                 if executed_by in ("human", "admin"):
                     has_approval = True
                 elif run_id:
-                    from app.models.agents import AgentApprovalRequest
+                    from app.models.agents.agents import AgentApprovalRequest
                     stmt_approval = select(AgentApprovalRequest).where(
                         AgentApprovalRequest.agent_run_id == run_id,
                         AgentApprovalRequest.status == "approved"

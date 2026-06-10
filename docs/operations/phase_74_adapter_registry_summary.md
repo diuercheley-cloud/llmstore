@@ -49,8 +49,8 @@ During the critical review of Phase 74, the following improvements were applied:
 - ✅ Deterministic hashing (no timestamps or random values in logical paths).
 
 ## Validation
-- **Validation Script:** `scripts/validate_phase_74_adapter_registry.py` passed (hardened with transition and determinism checks).
-- **Tests:** 17 tests passed in `tests/operations/`.
+- **Validation Script:** `scripts/validators/validate_phase_74_adapter_registry.py` passed (hardened with transition and determinism checks).
+- **Tests:** 17 tests passed in `tests/integration/operations/`.
 - **Architecture:** Verified tenant isolation and absence of real execution or external calls.
 
 ## Known Limitations

@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from app.api.deps import get_db_session, require_admin
 from app.core.time import utc_now
-from app.models.agent_execution import AgentExecutionDeadLetter, AgentExecutionJob
+from app.models.agents.agent_execution import AgentExecutionDeadLetter, AgentExecutionJob
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -3,8 +3,8 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.models.commercial_governance import CommercialPolicyBundle
-from app.models.commercial_workflows import (
+from app.models.commercial.commercial_governance import CommercialPolicyBundle
+from app.models.commercial.commercial_workflows import (
     CommercialWorkflowExecution,
     CommercialWorkflowPolicyBinding,
     CommercialWorkflowPolicySnapshot,

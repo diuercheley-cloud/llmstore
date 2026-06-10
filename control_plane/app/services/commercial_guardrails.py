@@ -8,8 +8,8 @@ from typing import Any
 from uuid import UUID
 
 from app.core.config import get_settings
-from app.models.client import Client
-from app.models.request_financial import RequestFinancial
+from app.models.core.client import Client
+from app.models.billing.request_financial import RequestFinancial
 from app.services.billing.pricing_engine import calculate_customer_price, estimate_provider_cost
 from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.provider_classification import (

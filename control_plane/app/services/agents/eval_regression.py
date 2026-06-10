@@ -6,7 +6,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentEvalBaseline,
     AgentEvalRegressionResult,
     AgentEvalResult,

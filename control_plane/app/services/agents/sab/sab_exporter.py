@@ -3,7 +3,7 @@ import hashlib
 import json
 import uuid
 
-from app.models.agents import AgentDefinition
+from app.models.agents.agents import AgentDefinition
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .sab_manifest import AgentSABManifest

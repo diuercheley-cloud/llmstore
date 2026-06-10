@@ -26,14 +26,14 @@ Crie e organize seus modelos (em formato GGUF) no diretório `models/` na raiz d
 ## 4. Rodar o Instalador
 Inicie o processo de instalação base usando o script automatizado:
 ```bash
-./scripts/install-local-appliance.sh
+./scripts/deploy/install-local-appliance.sh
 ```
 *(Nota: não execute comandos ou edite arquivos críticos sem orientação de nosso suporte técnico. Nunca compartilhe ou coloque senhas/secrets em fóruns ou chats de suporte não autenticados).*
 
 ## 5. Rodar o Assistente de Configuração
 Se desejar personalizar portas, caminhos ou configurações iniciais, você pode rodar o assistente interativo (wizard):
 ```bash
-./scripts/configure-local-wizard.sh
+./scripts/dev/configure-local-wizard.sh
 ```
 
 ## 6. Acessar as URLs do Sistema
@@ -44,7 +44,7 @@ Assim que a inicialização concluir, acesse as seguintes interfaces pelo seu na
 ## 7. Criar um Cliente de Demonstração
 Para verificar se tudo está funcionando, crie seu primeiro cliente para testar os serviços:
 ```bash
-./scripts/create-customer-demo.sh
+./scripts/dev/create-customer-demo.sh
 ```
 
 ## 8. Validar o Sistema
@@ -59,13 +59,13 @@ make validate-post-install
 Para simular uma instalacao do zero em ambiente isolado (sandbox), sem afetar o repositorio real:
 ```bash
 # Dry-run (seguro, nao altera nada)
-./scripts/validate-clean-install-local.sh --dry-run
+./scripts/validators/validate-clean-install-local.sh --dry-run
 
 # Validacao completa (cria sandbox, executa instalador e validacoes)
-./scripts/validate-clean-install-local.sh --yes
+./scripts/validators/validate-clean-install-local.sh --yes
 
 # Validar os resultados
-./scripts/validate-clean-install-validator.sh
+./scripts/validators/validate-clean-install-validator.sh
 ```
 
 ## 9. Fresh Machine Validation (para operadores)
@@ -74,10 +74,10 @@ Antes de instalar em uma máquina nova, utilize o validador de readiness:
 
 ```bash
 # Verificar pré-requisitos da máquina
-./scripts/fresh-machine-readiness-check.sh --dry-run
+./scripts/validators/fresh-machine-readiness-check.sh --dry-run
 
 # Com relatório JSON
-./scripts/fresh-machine-readiness-check.sh --dry-run --json
+./scripts/validators/fresh-machine-readiness-check.sh --dry-run --json
 ```
 
 Consulte o roteiro completo em [docs/FRESH_MACHINE_VALIDATION.md](FRESH_MACHINE_VALIDATION.md).
@@ -85,7 +85,7 @@ Consulte o roteiro completo em [docs/FRESH_MACHINE_VALIDATION.md](FRESH_MACHINE_
 ## 10. Backup Inicial
 Logo após a instalação e validação, crie o seu primeiro ponto de restauração seguro:
 ```bash
-./scripts/backup-local.sh
+./scripts/backup/backup-local.sh
 ```
 
 ## 11. Atualização Futura
@@ -118,7 +118,7 @@ Para implantações comerciais com prestação de serviços, utilize o **Paid Im
 
 ```bash
 # Gerar checklist personalizado para o cliente
-./scripts/paid-implementation-checklist-local.sh --company-name "Cliente" --operator-name "Fornecedor"
+./scripts/validators/paid-implementation-checklist-local.sh --company-name "Cliente" --operator-name "Fornecedor"
 ```
 
 ## 14. Desinstalação Segura

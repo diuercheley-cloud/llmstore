@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import List
 
 from app.core.time import utc_now
-from app.models.commercial_crypto_trust import (
+from app.models.commercial.commercial_crypto_trust import (
     CommercialKeyMaterial,
     CommercialKeyRotationSchedule,
     KeyUsageStatus,

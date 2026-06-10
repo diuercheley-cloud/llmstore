@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.deps import require_admin
 from app.db.session import get_db_session
-from app.models.agent_routing import (
+from app.models.agents.agent_routing import (
     AgentModelCapability,
     AgentRoutingPolicy,
     AgentStepRoutingDecision,

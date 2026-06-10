@@ -6,7 +6,7 @@ import logging
 import uuid
 
 from app.core.time import utc_now
-from app.models.agents import AgentBundleProvenance, AgentPublicationReview
+from app.models.agents.agents import AgentBundleProvenance, AgentPublicationReview
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

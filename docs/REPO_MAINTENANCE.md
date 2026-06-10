@@ -7,17 +7,17 @@ status: consolidated
 
 ## Release History
 
-The consolidated release history is maintained in [docs/RELEASE_HISTORY.md](RELEASE_HISTORY.md).
+The consolidated release history is archived in [docs/archive/releases/RELEASE_HISTORY.md](archive/releases/RELEASE_HISTORY.md).
 Generate or update it with:
 
 ```bash
-./scripts/generate-release-history.sh
+./scripts/archive/release/generate-release-history.sh
 ```
 
 Validate the generated document with:
 
 ```bash
-./scripts/validate-release-history.sh
+./scripts/validators/validate-release-history.sh
 ```
 
 ## Local Branch Cleanup
@@ -30,7 +30,7 @@ Old feature branches accumulate locally after they have been stabilized. Use the
 make cleanup-branches
 
 # Or directly
-./scripts/cleanup-local-branches.sh --dry-run --merged-only
+./scripts/backup/cleanup-local-branches.sh --dry-run --merged-only
 ```
 
 ### Options
@@ -74,7 +74,7 @@ release manifests, docs and scripts for a given release line.
 
 ```bash
 # Run the full v1.6.x audit
-./scripts/audit-v1.6-release-line.sh
+./scripts/validators/audit-v1.6-release-line.sh
 ```
 
 Output is written to `artifacts/final-qa/v1.6-audit/<timestamp>/`.
@@ -83,7 +83,7 @@ Output is written to `artifacts/final-qa/v1.6-audit/<timestamp>/`.
 
 ```bash
 # Validate audit artifacts
-./scripts/validate-v1.6-release-line-audit.sh
+./scripts/validators/validate-v1.6-release-line-audit.sh
 ```
 
 ### Running audit tests
@@ -96,5 +96,5 @@ Output is written to `artifacts/final-qa/v1.6-audit/<timestamp>/`.
 
 ### Audit summary
 
-The consolidated audit summary for the v1.6.x line is maintained at
-[docs/V1_6_AUDIT_SUMMARY.md](V1_6_AUDIT_SUMMARY.md).
+The consolidated audit summary for the v1.6.x line is archived at
+[docs/archive/releases/V1_6_AUDIT_SUMMARY.md](archive/releases/V1_6_AUDIT_SUMMARY.md).

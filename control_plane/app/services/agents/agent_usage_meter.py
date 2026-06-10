@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Optional
 
-from app.models.agent_service import AgentServiceTier, AgentServiceUsage
+from app.models.agents.agent_service import AgentServiceTier, AgentServiceUsage
 from app.services.agents.wallets.agent_wallet import AgentWalletService
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession

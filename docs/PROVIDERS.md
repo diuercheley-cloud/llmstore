@@ -138,8 +138,8 @@ Para validar providers reais com segurança:
 
 - Chaves vão **APENAS** em `.env.local` (nunca em `.env.example`)
 - Provider precisa de `*_PROVIDER_ENABLED=true` + `REAL_PROVIDER_VALIDATION_ENABLED=true`
-- O helper `scripts/lib/real-provider-env.sh` provê funções seguras de validação
-- O script `scripts/validate-real-provider-env-local.sh` verifica ambiente completo
+- O helper `scripts/dev/lib/real-provider-env.sh` provê funções seguras de validação
+- O script `scripts/validators/validate-real-provider-env-local.sh` verifica ambiente completo
 - Testes em `tests/test_real_provider_env*.py` (sem dependência de internet)
 
 ### OpenAI Real Provider
@@ -208,7 +208,7 @@ Documentação completa: [REAL_PROVIDER_VALIDATION.md](REAL_PROVIDER_VALIDATION.
 
 ### Real Provider Cost Validation (v1.8.1)
 
-O script `scripts/measure-real-provider-costs.sh` mede custo real/estimado:
+O script `scripts/dev/measure-real-provider-costs.sh` mede custo real/estimado:
 
 ```bash
 # Dry-run (sem custo)

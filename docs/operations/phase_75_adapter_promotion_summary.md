@@ -31,8 +31,8 @@ Phase 75 successfully implemented a deterministic and gated workflow for promoti
 - Updated `admin/index.html` and `portal/index.html` with promotion metrics and safety disclaimers.
 
 ## Validation Results
-- **Validation Script**: `scripts/validate_phase_75_adapter_promotion.py` passed.
-- **Tests**: Comprehensive tests implemented in `tests/operations/` (models, gates, service, API, etc.).
+- **Validation Script**: `scripts/validators/validate_phase_75_adapter_promotion.py` passed.
+- **Tests**: Comprehensive tests implemented in `tests/integration/operations/` (models, gates, service, API, etc.).
 - **Security**: Verified absence of real execution, network calls, or dangerous imports.
 - **Tenant Isolation**: Strictly enforced in all API and service layers.
 

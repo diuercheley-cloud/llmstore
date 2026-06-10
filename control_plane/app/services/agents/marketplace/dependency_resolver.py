@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, List
 
-from app.models.agent_marketplace import (
+from app.models.agents.agent_marketplace import (
     MarketplaceDependency,
     MarketplaceDependencyLock,
 )

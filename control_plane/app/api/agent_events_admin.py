@@ -4,7 +4,7 @@ from typing import Optional
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
-from app.models.agent_events import (
+from app.models.agents.agent_events import (
     AgentEventDelivery,
     AgentEventSource,
     AgentEventSubscription,

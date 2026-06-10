@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.digital_twin import DigitalTwin
+from app.models.agents.digital_twin import DigitalTwin
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

@@ -12,10 +12,10 @@ status: consolidated
 - `docs/releases/release_baseline_example.md`: Examples of manifest, snapshot, and receipt.
 - `control_plane/app/models/governance/release_baseline.py`: SQLAlchemy models for release tracking.
 - `control_plane/app/services/governance/release_engineering/`: Core services for manifest, notes, and verification.
-- `scripts/generate_release_baseline.py`: Script to generate release artifacts.
-- `scripts/validate_release_engineering.py`: Script to validate the release engineering baseline.
-- `tests/releases/test_release_engineering.py`: Tests for services.
-- `tests/releases/test_release_baseline_models.py`: Tests for models.
+- `scripts/release/generate_release_baseline.py`: Script to generate release artifacts.
+- `scripts/validators/validate_release_engineering.py`: Script to validate the release engineering baseline.
+- `tests/integration/releases/test_release_engineering.py`: Tests for services.
+- `tests/integration/releases/test_release_baseline_models.py`: Tests for models.
 
 ## Validations Executed
 - `make validate-release-engineering`:

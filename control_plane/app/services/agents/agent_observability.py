@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from app.core import metrics
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import AgentTimelineEvent
+from app.models.agents.agents import AgentTimelineEvent
 from app.services.agents import agent_state
 from sqlalchemy.ext.asyncio import AsyncSession
 

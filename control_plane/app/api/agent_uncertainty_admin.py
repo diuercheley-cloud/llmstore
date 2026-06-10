@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.db.session import get_db
-from app.models.agent_uncertainty import AgentUncertaintyEvent, AgentUncertaintyPolicy
+from app.models.agents.agent_uncertainty import AgentUncertaintyEvent, AgentUncertaintyPolicy
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select

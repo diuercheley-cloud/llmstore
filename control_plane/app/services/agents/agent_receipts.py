@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentRunReceipt
+from app.models.agents.agents import AgentRunReceipt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  actions: read
+
+jobs:
+  validate-release:
+    name: Validate Release Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      - name: Start Stack
+        run: EXTRA_COMPOSE_FILES=.github/compose.release-validation.override.yml make up
+      - name: Wait For Stack Readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if ./scripts/dev/test-health.sh >/tmp/release-health.log 2>&1; then
+              cat /tmp/release-health.log
+              exit 0
+            fi
+            echo "Stack not ready yet (attempt ${attempt}/30). Retrying in 10s..."
+            sleep 10
+          done
+          echo "Stack did not become ready in time."
+          cat /tmp/release-health.log
+          exit 1
+      - name: Full Quality Suite
+        run: |
+          make stabilization-check
+          make test-smoke-resilience
+          make test-chaos-resilience
+          make operational-readiness
+          make release-gate TAG=${{ github.ref_name }}
+      - name: Verify Artifacts & SBOM
+        run: |
+          make verify-release-artifacts TAG=${{ github.ref_name }}
+          bash scripts/release/generate-sbom.sh ${{ github.ref_name }}
+      - name: Stop Stack
+        if: always()
+        run: EXTRA_COMPOSE_FILES=.github/compose.release-validation.override.yml make down
+
+  publish-sdk:
+    name: Publish Python SDK
+    needs: validate-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      - name: Build and Publish to PyPI (Dry-run)
+        run: |
+          pip install build twine
+          cd sdk/python
+          python -m build
+          # twine upload dist/* --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
+          echo "[DRY-RUN] Simulating PyPI publish for v${{ github.ref_name }}"
+
+  publish-docker:
+    name: Publish Docker Images
+    needs: validate-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Docker
+        uses: ./.github/actions/setup-docker
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Control Plane
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: control_plane/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/control-plane:${{ github.ref_name }},ghcr.io/${{ github.repository }}/control-plane:latest
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: [publish-sdk, publish-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+      
+      - name: Upload Release Artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/release/upload_release_artifacts.sh
+          # Assume que o release-gate gerou artefatos em releases/${{ github.ref_name }}
+          if [ -d "releases/${{ github.ref_name }}" ]; then
+            ./scripts/release/upload_release_artifacts.sh ${{ github.ref_name }} releases/${{ github.ref_name }}
+          else
+            echo "Aviso: Diretorio releases/${{ github.ref_name }} nao encontrado. Pulando upload."
+          fi

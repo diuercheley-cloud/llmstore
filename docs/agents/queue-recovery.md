@@ -27,19 +27,19 @@ Runs que permanecem no status `running` por mais de 2 horas sem nenhuma atualiza
 
 ### Inspecionar DLQ
 ```bash
-./scripts/agent-dlq-inspect.sh
+./scripts/dev/agent-dlq-inspect.sh
 ```
 
 ### Reprocessar Job da DLQ
 Caso a falha tenha sido causada por um problema temporário de infraestrutura já resolvido:
 ```bash
-./scripts/agent-dlq-retry.sh <dlq_item_id>
+./scripts/dev/agent-dlq-retry.sh <dlq_item_id>
 ```
 Isso resetará o contador de tentativas e colocará o job de volta na fila principal.
 
 ### Teste de Recuperação
 Para validar se o seu ambiente está recuperando jobs corretamente:
 ```bash
-./scripts/agent-queue-recovery-test.sh
+./scripts/dev/agent-queue-recovery-test.sh
 ```
 Siga as instruções do script para simular falhas controladas.

@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Dict
 
-from app.models.agent_deployments import AgentApiDeployment
+from app.models.agents.agent_deployments import AgentApiDeployment
 
 logger = logging.getLogger(__name__)
 

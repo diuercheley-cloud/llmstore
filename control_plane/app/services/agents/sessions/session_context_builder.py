@@ -4,7 +4,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_sessions import AgentSessionSummary
+from app.models.agents.agent_sessions import AgentSessionSummary
 from app.services.agents.sessions.conversation_thread_service import (
     ConversationThreadService,
 )

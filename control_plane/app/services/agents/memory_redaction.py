@@ -4,7 +4,7 @@ Status: beta
 """
 import uuid
 
-from app.models.agents import AgentMemoryRedactionEvent
+from app.models.agents.agents import AgentMemoryRedactionEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

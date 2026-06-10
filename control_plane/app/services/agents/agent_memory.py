@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents import (
+from app.models.agents.agents import (
     AgentMemoryAccessEvent,
     AgentMemoryItem,
 )
@@ -286,7 +286,7 @@ class AgentMemoryService:
         )
 
     async def get_chat_history(self, run_id: uuid.UUID) -> List[Dict[str, str]]:
-        from app.models.agents import AgentRun
+        from app.models.agents.agents import AgentRun
 
         stmt = select(AgentRun).where(AgentRun.id == run_id)
         res = await self.db.execute(stmt)

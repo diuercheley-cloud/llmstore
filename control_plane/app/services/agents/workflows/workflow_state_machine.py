@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowEvent, AgentWorkflowRun
+from app.models.agents.agent_workflows import AgentWorkflowEvent, AgentWorkflowRun
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 import logging
 from typing import List
 
-from app.models.connector_auth import ConnectorScopePolicy
+from app.models.core.connector_auth import ConnectorScopePolicy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

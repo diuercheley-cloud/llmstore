@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from app.models.commercial_control_plane_mesh import CommercialMeshHealthState, CommercialMeshNode
+from app.models.commercial.commercial_control_plane_mesh import CommercialMeshHealthState, CommercialMeshNode
 from sqlalchemy.orm import Session
 
 

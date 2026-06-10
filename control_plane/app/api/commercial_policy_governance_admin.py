@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.db.session import get_db_session
-from app.models.commercial_governance import (
+from app.models.commercial.commercial_governance import (
     CommercialPolicyArtifact,
     CommercialPolicyBundle,
     CommercialPolicyDriftEvent,

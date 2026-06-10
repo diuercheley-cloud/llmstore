@@ -13,7 +13,7 @@ chaos:test:
       else
         SCENARIO_GROUP="chaos/scenarios/safe-ci"
       fi
-    - bash scripts/chaos-ci-runner.sh $SCENARIO_GROUP
+    - bash scripts/ci/chaos-ci-runner.sh $SCENARIO_GROUP
   artifacts:
     when: always
     paths:

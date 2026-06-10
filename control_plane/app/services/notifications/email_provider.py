@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.models.agent_notifications import NotificationPreference
+from app.models.agents.agent_notifications import NotificationPreference
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.agents import AgentABEvalRun, AgentEvalPairwiseResult
+from app.models.agents.agents import AgentABEvalRun, AgentEvalPairwiseResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

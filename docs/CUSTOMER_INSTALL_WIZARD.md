@@ -9,7 +9,7 @@ Este guia descreve como utilizar o instalador profissional para implantação do
 
 ## Visão Geral
 
-O `scripts/install-customer.sh` é um assistente interativo que configura a stack de acordo com perfis de produto específicos, garantindo uma instalação padronizada e segura.
+O `scripts/deploy/install-customer.sh` é um assistente interativo que configura a stack de acordo com perfis de produto específicos, garantindo uma instalação padronizada e segura.
 
 ## Perfis de Produto
 

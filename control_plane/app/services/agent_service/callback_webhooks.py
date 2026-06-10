@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict
 
 import requests
-from app.models.agent_service import AgentCallbackWebhook
+from app.models.agents.agent_service import AgentCallbackWebhook
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

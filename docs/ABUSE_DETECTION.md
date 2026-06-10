@@ -72,7 +72,7 @@ ABUSE_DRY_RUN=true
 ```bash
 make validate-hybrid-abuse
 # ou
-./scripts/validate-hybrid-abuse-detection-local.sh
+./scripts/validators/validate-hybrid-abuse-detection-local.sh
 ```
 
 ## Abuse Detection in Artifacts

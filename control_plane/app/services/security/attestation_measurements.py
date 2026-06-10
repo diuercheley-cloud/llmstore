@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 
 from app.core.time import utc_now
-from app.models.commercial_attestation_runtime import (
+from app.models.commercial.commercial_attestation_runtime import (
     CommercialRuntimeMeasurement,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload

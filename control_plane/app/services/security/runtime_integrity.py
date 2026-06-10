@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.commercial_attestation_runtime import (
+from app.models.commercial.commercial_attestation_runtime import (
     CommercialAttestationPolicy,
     CommercialRuntimeAttestation,
 )

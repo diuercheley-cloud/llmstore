@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ...core.config import get_settings
-from ...models.commercial_confidential_runtime import (
+from ...models.commercial.commercial_confidential_runtime import (
     CommercialConfidentialInferenceSession,
     CommercialConfidentialRuntimeAuditEvent,
     CommercialConfidentialRuntimeProfile,

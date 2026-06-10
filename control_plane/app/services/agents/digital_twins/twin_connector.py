@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict
 
-from app.models.digital_twin import DigitalTwin
+from app.models.agents.digital_twin import DigitalTwin
 
 from .twin_state import TwinState
 

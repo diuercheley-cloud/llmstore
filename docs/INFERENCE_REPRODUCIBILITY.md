@@ -70,6 +70,6 @@ pytest -q \
   tests/test_runtime_snapshot_drift.py \
   tests/test_runtime_model_integrity.py
 
-bash -n scripts/validate-inference-reproducibility.sh
-bash -n scripts/validate-model-integrity-monitor.sh
+bash -n scripts/validators/validate-inference-reproducibility.sh
+bash -n scripts/validators/validate-model-integrity-monitor.sh
 ```

@@ -153,7 +153,7 @@ status: consolidated
 | Campo | Detalhe |
 |-------|---------|
 | **Ordem** | 12ª tela |
-| **Comando** | `./scripts/security-report-local.sh` |
+| **Comando** | `./scripts/validators/security-report-local.sh` |
 | **Screenshot esperado** | Output do relatório de segurança com itens verificados |
 | **Fala sugerida** | "Relatório automatizado de segurança: varre secrets, permissões, portas. Use como insumo para compliance — não substitui auditoria formal." |
 | **Objetivo** | Demonstrar compromisso com segurança |
@@ -166,7 +166,7 @@ status: consolidated
 | Campo | Detalhe |
 |-------|---------|
 | **Ordem** | 13ª tela |
-| **Comando** | `./scripts/production-readiness-local.sh` |
+| **Comando** | `./scripts/dev/production-readiness-local.sh` |
 | **Screenshot esperado** | Output do readiness check com status por item |
 | **Fala sugerida** | "Checklist de prontidão: conectividade, GPU, modelos, CORS, backup, isolamento multi-tenant. Cada item com status claro." |
 | **Objetivo** | Demonstrar prontidão para produção |
@@ -215,8 +215,8 @@ status: consolidated
 | 9 | TTS Demo | Terminal | `/pocket-tts/tts` | 2 min |
 | 10 | Sales/Leads | Web | `/admin-dashboard#sales` | 2 min |
 | 11 | Pricing/Plans | Web | `/pricing` | 2 min |
-| 12 | Security Report | Terminal | `scripts/security-report-local.sh` | 2 min |
-| 13 | Production Readiness | Terminal | `scripts/production-readiness-local.sh` | 2 min |
+| 12 | Security Report | Terminal | `scripts/validators/security-report-local.sh` | 2 min |
+| 13 | Production Readiness | Terminal | `scripts/dev/production-readiness-local.sh` | 2 min |
 | 14 | Meeting Ready | Terminal | `make meeting-ready` | 1 min |
 | 15 | Proposal/Quote/SOW | Terminal | `make generate-proposal` | 2 min |
 

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.commercial_crypto_trust import (
+from app.models.commercial.commercial_crypto_trust import (
     CommercialCryptoOperation,
     CommercialKeyMaterial,
     CommercialKMSProvider,

@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
+from app.models.core.connector_auth import ConnectorOAuthClient, ConnectorOAuthToken
 from app.services.agents.connectors.connector_secret_store import connector_secret_store
 from fastapi import HTTPException
 from sqlalchemy import select

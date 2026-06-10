@@ -4,7 +4,7 @@ import uuid
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.agents import AgentRun
+from app.models.agents.agents import AgentRun
 from app.services.agents import agent_runtime
 from app.services.agents.agent_cancellation import AgentCancellationService
 from app.services.agents.streaming.stream_auth import StreamAuthService

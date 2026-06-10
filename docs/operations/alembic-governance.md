@@ -27,19 +27,19 @@ Every migration (except the base initial schema migration) must point to a valid
 Integrity checks are fully automated and run at multiple stages of the development cycle.
 
 ### 2.1 Automated Script: `check-alembic-integrity.sh`
-The `scripts/check-alembic-integrity.sh` validator performs a graph-theoretic validation of the migrations:
+The `scripts/validators/check-alembic-integrity.sh` validator performs a graph-theoretic validation of the migrations:
 1. **Walks the graph**: Walks all revisions to detect loops/cycles.
 2. **Checks heads**: Asserts that `len(heads) == 1`.
 3. **Validates uniqueness**: Ensures no duplicate revision IDs are defined across files.
 4. **Verifies continuity**: Confirms that all `down_revision` references point to known nodes.
 
 ### 2.2 Makefile Integration
-- **`make validate`**: Runs `scripts/validate-local-production-full.sh` which executes the integrity script.
+- **`make validate`**: Runs `scripts/validators/validate-local-production-full.sh` which executes the integrity script.
 - **`make stabilization-check`**: Runs the formal release stabilization suite including Alembic checks.
-- **`make validate-migrations`**: Runs `scripts/validate-migrations-local.sh`.
+- **`make validate-migrations`**: Runs `scripts/validators/validate-migrations-local.sh`.
 
 ### 2.3 Pytest Verification
-- **Test File**: `tests/build/test_alembic_integrity.py`
+- **Test File**: `tests/integration/build/test_alembic_integrity.py`
 - Runs in CI to assert that the integrity validation exits with code `0`.
 
 ---

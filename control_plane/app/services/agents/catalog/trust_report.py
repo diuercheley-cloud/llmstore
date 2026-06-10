@@ -1,7 +1,7 @@
 import uuid
 
 from app.core.time import utc_now
-from app.models.agent_catalog import PluginTrustReportGov
+from app.models.agents.agent_catalog import PluginTrustReportGov
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

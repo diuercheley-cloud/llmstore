@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 
 from ..api.dependencies import get_admin_user
 from ..db.session import get_db
-from ..models.commercial_confidential_runtime import (
+from ..models.commercial.commercial_confidential_runtime import (
     CommercialConfidentialInferenceSession,
     CommercialConfidentialRuntimeAuditEvent,
     CommercialConfidentialRuntimeProfile,

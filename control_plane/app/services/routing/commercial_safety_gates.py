@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from app.core.config import get_settings
-from app.models.commercial_infra_simulation import (
+from app.models.commercial.commercial_infra_simulation import (
     CommercialInfrastructureSimulation,
     CommercialSafetyPolicy,
 )

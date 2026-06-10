@@ -55,7 +55,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(tags=["operations-compatibility"])
 
 MATRIX_SERVICE = CompatibilityMatrixService()
 NEGOTIATION_SERVICE = VersionNegotiationService()

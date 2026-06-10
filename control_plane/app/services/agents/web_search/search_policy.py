@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.web_search import AgentWebSearchPolicyEvent, AgentWebSearchQuery
+from app.models.agents.web_search import AgentWebSearchPolicyEvent, AgentWebSearchQuery
 from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession

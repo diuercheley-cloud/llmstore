@@ -7,7 +7,7 @@ from app.services.agent_service.callback_webhooks import CallbackWebhookService
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/agent-service", tags=["agent-as-a-service"])
 
 @router.post("/{agent_id}/invoke")
 async def invoke_agent(

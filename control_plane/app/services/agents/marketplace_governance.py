@@ -157,7 +157,7 @@ class MarketplaceGovernanceService:
     async def _scan_agent(self, agent_id: str) -> List[ReviewFinding]:
         findings = []
 
-        from app.models.agents import AgentDefinition
+        from app.models.agents.agents import AgentDefinition
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )

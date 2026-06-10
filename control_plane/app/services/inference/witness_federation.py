@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ...core.config import get_settings
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
-from ...models.commercial_witness import (
+from ...models.commercial.commercial_merkle_timelines import CommercialMerkleTimeline
+from ...models.commercial.commercial_witness import (
     CommercialWitness,
     CommercialWitnessAuditEvent,
     CommercialWitnessQuorumPolicy,

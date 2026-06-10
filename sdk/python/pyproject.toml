@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kleberai"
+version = "0.2.1"
+description = "Python SDK for the Kleber AI Agentic Platform"
+readme = "README.md"
+authors = [
+    { name = "Kleber AI Team", email = "oss@kleber.ai" }
+]
+license = "Apache-2.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "httpx>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "build",
+    "twine",
+]
+
+[project.urls]
+Homepage = "https://github.com/kleber/llm-inference-stack"
+Documentation = "https://docs.kleber.ai"
+Repository = "https://github.com/kleber/llm-inference-stack/tree/main/sdk/python"
+
+[project.scripts]
+agentctl = "kleberai.cli:main"
+
+[tool.setuptools]
+packages = ["kleberai"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

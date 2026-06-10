@@ -22,14 +22,14 @@ from app.core.metrics import (
 )
 from app.core.time import utc_now
 from app.db import session
-from app.models.agent_execution import (
+from app.models.agents.agent_execution import (
     AgentExecutionDeadLetter,
     AgentExecutionJob,
     AgentExecutionLease,
     AgentExecutionRetry,
     AgentWorkerHeartbeat,
 )
-from app.models.agents import AgentRun
+from app.models.agents.agents import AgentRun
 from app.services.agents import agent_state
 from app.services.agents.agent_cancellation import AgentCancellationService
 from app.services.agents.agent_executor import AgentExecutor

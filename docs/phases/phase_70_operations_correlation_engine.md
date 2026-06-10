@@ -56,7 +56,7 @@ Este documento define o escopo e as garantias da Phase 70.
 control_plane/app/models/operations/           # Modelos de dados de operações e grafos
 control_plane/app/services/operations/correlation/ # Motor de correlação determinístico
 control_plane/app/api/admin/operations/        # Endpoints administrativos para correlação
-tests/operations/                              # Testes de unidade e integração
+tests/integration/operations/                              # Testes de unidade e integração
 scripts/                                       # Scripts de suporte e validação
 ```
 

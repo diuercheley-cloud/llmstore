@@ -38,7 +38,7 @@ Confirme `HF_TOKEN` e o nome do arquivo:
 
 ```bash
 export HF_TOKEN=seu_token
-./scripts/download-model.sh
+./scripts/deploy/download-model.sh
 ```
 
 ## Stack não fica ready
@@ -46,7 +46,7 @@ export HF_TOKEN=seu_token
 Inspecione:
 
 ```bash
-./scripts/test-health.sh
+./scripts/dev/test-health.sh
 docker compose logs control-plane
 docker compose logs data-plane-gemma
 docker compose logs postgres
@@ -58,7 +58,7 @@ docker compose logs redis
 Rode:
 
 ```bash
-./scripts/validate-e2e.sh
+./scripts/validators/validate-e2e.sh
 ```
 
 Os artefatos ficam em:
@@ -77,7 +77,7 @@ Se o container `data-plane-gemma` crashar ou reiniciar com erro de CUDA Out of M
 
 Para encontrar o limite da sua placa, use o script de benchmark:
 ```bash
-./scripts/benchmark.sh
+./scripts/dev/benchmark.sh
 ```
 
 ## Tuning de Performance (RTX 4050/60)
@@ -93,7 +93,7 @@ Para GPUs com VRAM limitada (6GB):
 Se o ambiente estiver inconsistente:
 
 ```bash
-./scripts/reset-dev.sh
+./scripts/dev/reset-dev.sh
 ```
 
 Use com cuidado. O script pode remover volumes e opcionalmente `.env` e modelos.

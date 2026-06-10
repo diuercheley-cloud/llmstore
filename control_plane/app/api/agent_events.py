@@ -3,7 +3,7 @@ import uuid
 
 from app.api.deps import get_db
 from app.core.config import get_settings
-from app.models.agent_events import AgentWebhookTrigger
+from app.models.agents.agent_events import AgentWebhookTrigger
 from app.services.agents.events.webhook_triggers import process_webhook
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select

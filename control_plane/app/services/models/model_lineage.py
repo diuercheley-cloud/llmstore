@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.models.commercial_model_lifecycle import CommercialModelLineage
+from app.models.commercial.commercial_model_lifecycle import CommercialModelLineage
 from app.services.models.model_lifecycle_manager import _log_audit, _sanitize_text
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import desc, select
@@ -174,7 +174,7 @@ async def verify_provenance_chain(
     dag = await get_lineage_dag(db, lifecycle_record_id)
     if not dag["nodes"]:
         return {"valid": False, "reason": "no_lineage", "chain_length": 0}
-    from app.models.commercial_model_lifecycle import CommercialModelLifecycleRecord
+    from app.models.commercial.commercial_model_lifecycle import CommercialModelLifecycleRecord
     record = await db.get(CommercialModelLifecycleRecord, lifecycle_record_id)
     if not record:
         return {"valid": False, "reason": "lifecycle_record_not_found", "chain_length": dag["total_entries"]}

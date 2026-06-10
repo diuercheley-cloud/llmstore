@@ -77,7 +77,7 @@ control_plane/app/models/operations/        # Modelos de dados da fase
 control_plane/app/services/operations/      # Lógica de forecasting e análise
 control_plane/app/services/operations/forecasting/  # Pipeline determinístico
 control_plane/app/api/operations_admin.py   # Endpoints admin da fase
-tests/operations/                           # Testes da fase
+tests/integration/operations/                           # Testes da fase
 scripts/                                    # Scripts de validação
 ```
 
@@ -90,5 +90,5 @@ make validate-phase-69-failure-forecasting
 Ou diretamente:
 
 ```bash
-python3 scripts/validate_phase_69_failure_forecasting.py
+python3 scripts/validators/validate_phase_69_failure_forecasting.py
 ```

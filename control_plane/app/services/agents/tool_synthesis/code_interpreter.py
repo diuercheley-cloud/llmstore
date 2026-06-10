@@ -2,7 +2,7 @@ import uuid
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.agent_tool_synthesis import AgentSandboxSession
+from app.models.agents.agent_tool_synthesis import AgentSandboxSession
 from app.services.agents.tool_synthesis.sandbox_runtime import SandboxRuntime
 from sqlalchemy.orm import Session
 

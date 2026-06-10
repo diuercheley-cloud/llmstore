@@ -3,8 +3,8 @@ import uuid
 from datetime import datetime, UTC
 
 from app.core.config import get_settings
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
-from app.models.commercial_global_traffic import (
+from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.commercial.commercial_global_traffic import (
     CommercialGlobalTrafficDecision,
     CommercialGlobalTrafficPolicy,
 )

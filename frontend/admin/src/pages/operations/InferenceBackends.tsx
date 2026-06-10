@@ -124,6 +124,7 @@ export default function InferenceBackends() {
               </h2>
             </div>
             <AdvancedTable 
+              id="inference-backends"
               columns={columns} 
               data={backends || []} 
               isLoading={isLoading}

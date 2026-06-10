@@ -16,12 +16,11 @@ Autenticação: `Authorization: Bearer <API_KEY>`
 
 ## Client SDK
 
-Um SDK Python completo está disponível em [`scripts/llm_stack_client.py`](scripts/llm_stack_client.py):
+O SDK Python suportado está em [`sdk/python`](sdk/python):
 
 ```python
-from scripts.llm_stack_client import LLMStackClient
-
-client = LLMStackClient(api_key="sk-local-...", base_url="http://localhost:18080")
+from kleberai import Client
+client = Client(api_key="sk-local-...", base_url="http://localhost:18080/v1")
 
 # Listar modelos
 models = client.list_models()
@@ -33,7 +32,7 @@ response = client.chat_completions(
 )
 ```
 
-O SDK cobre chat, listagem de modelos, gerenciamento de portal, RAG e streaming.
+O caminho canônico do cliente é o SDK em `sdk/python` e a API OpenAI-compatible documentada em `docs/OPENAI_COMPATIBILITY.md`.
 
 ## Exemplos
 

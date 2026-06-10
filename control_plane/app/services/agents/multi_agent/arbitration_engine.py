@@ -6,7 +6,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.agents import AgentDefinition, AgentRun
+from app.models.agents.agents import AgentDefinition, AgentRun
 from app.services.agents.agent_llm_provider import get_agent_llm_provider
 from pydantic import BaseModel, Field
 

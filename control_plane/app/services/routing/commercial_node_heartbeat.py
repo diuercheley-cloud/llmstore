@@ -10,7 +10,7 @@ from typing import Any
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
-from app.models.commercial_node_heartbeat import CommercialNodeHeartbeat
+from app.models.commercial.commercial_node_heartbeat import CommercialNodeHeartbeat
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

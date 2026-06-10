@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Optional
 
-from app.models.realtime_voice import VoiceStreamEvent, VoiceTranscript
+from app.models.core.realtime_voice import VoiceStreamEvent, VoiceTranscript
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .stt_stream import STTStreamService

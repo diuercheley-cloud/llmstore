@@ -16,28 +16,28 @@ status: consolidated
 - `control_plane/app/services/operations/forecasting/audit_events.py`
 - `control_plane/app/static/admin/index.html`
 - `control_plane/app/static/portal/index.html`
-- `scripts/validate_phase_69_failure_forecasting.py`
+- `scripts/validators/validate_phase_69_failure_forecasting.py`
 - `Makefile`
-- `tests/operations/test_failure_signal_models.py`
-- `tests/operations/test_deterministic_forecasting_engine.py`
-- `tests/operations/test_failure_risk_scoring.py`
-- `tests/operations/test_failure_forecasting_receipts.py`
-- `tests/operations/test_failure_forecasting_audit_events.py`
-- `tests/operations/test_failure_forecasting_api.py`
+- `tests/integration/operations/test_failure_signal_models.py`
+- `tests/integration/operations/test_deterministic_forecasting_engine.py`
+- `tests/integration/operations/test_failure_risk_scoring.py`
+- `tests/integration/operations/test_failure_forecasting_receipts.py`
+- `tests/integration/operations/test_failure_forecasting_audit_events.py`
+- `tests/integration/operations/test_failure_forecasting_api.py`
 - `docs/phases/phase_69_predictive_failure_signals.md`
 - `docs/operations/phase_69_failure_forecasting_summary.md`
 
 ## Validações executadas
 
 - `make validate-phase-69-failure-forecasting`
-- `./.venv/bin/python scripts/validate_phase_69_failure_forecasting.py`
+- `./.venv/bin/python scripts/validators/validate_phase_69_failure_forecasting.py`
 - Revisão manual do checklist obrigatório no código, migration, API admin, admin UI, portal UI, docs e testes
 
 ## Testes executados
 
-- `./.venv/bin/python -m pytest tests/operations/test_failure_signal_models.py tests/operations/test_deterministic_forecasting_engine.py tests/operations/test_failure_risk_scoring.py tests/operations/test_failure_forecasting_receipts.py tests/operations/test_failure_forecasting_audit_events.py tests/operations/test_failure_forecasting_api.py -q`
-- `./.venv/bin/python -m pytest tests/operations/test_failure_forecasting_api.py -vv -x --tb=short`
-- `./.venv/bin/python -m pytest tests/operations/ -q --tb=short`
+- `./.venv/bin/python -m pytest tests/integration/operations/test_failure_signal_models.py tests/integration/operations/test_deterministic_forecasting_engine.py tests/integration/operations/test_failure_risk_scoring.py tests/integration/operations/test_failure_forecasting_receipts.py tests/integration/operations/test_failure_forecasting_audit_events.py tests/integration/operations/test_failure_forecasting_api.py -q`
+- `./.venv/bin/python -m pytest tests/integration/operations/test_failure_forecasting_api.py -vv -x --tb=short`
+- `./.venv/bin/python -m pytest tests/integration/operations/ -q --tb=short`
 
 ## Checklist revisado
 
@@ -49,7 +49,7 @@ status: consolidated
 - API admin com tenant isolation: confirmado para listagem e reforçado na criação de risk assessment para impedir referência cruzada de `forecast_id`
 - Dashboard/portal sem payload sensível: confirmado; portal/admin exibem métricas, hashes e estados, não `payload_json`
 - Receipts e audit events existem: confirmado nos serviços e testes dedicados
-- Validation script existe: confirmado em `scripts/validate_phase_69_failure_forecasting.py`
+- Validation script existe: confirmado em `scripts/validators/validate_phase_69_failure_forecasting.py`
 - Makefile target existe: confirmado em `Makefile`
 - Docs completas existem: confirmado, com correção dos comandos/paths da fase para refletir a implementação real
 - Sem SaaS/cloud obrigatório: confirmado por revisão estática; fase opera com artefatos locais

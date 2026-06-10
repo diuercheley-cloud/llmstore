@@ -7,9 +7,9 @@ from datetime import timedelta
 from typing import Any
 
 from app.core.time import utc_now
-from app.models.commercial_merkle_timelines import CommercialMerkleLeaf, CommercialMerkleTimeline
-from app.models.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
-from app.models.commercial_retrieval_proofs import (
+from app.models.commercial.commercial_merkle_timelines import CommercialMerkleLeaf, CommercialMerkleTimeline
+from app.models.commercial.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
+from app.models.commercial.commercial_retrieval_proofs import (
     CommercialContextLineage,
     CommercialRetrievalMerkleLeaf,
     CommercialRetrievalProof,

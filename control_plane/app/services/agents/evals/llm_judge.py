@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Tuple
 
-from app.models.agents import AgentLLMJudgeRun
+from app.models.agents.agents import AgentLLMJudgeRun
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

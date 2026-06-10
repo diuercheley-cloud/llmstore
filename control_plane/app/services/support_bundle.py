@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from app.core.config import get_settings
-from app.models.inference_backend import InferenceBackend
-from app.models.request_log import RequestLog
+from app.models.core.inference_backend import InferenceBackend
+from app.models.core.request_log import RequestLog
 from app.services.compliance_readiness import ComplianceReadinessService
 from app.services.feature_flag_registry import FeatureFlagRegistryService
 from sqlalchemy import func, select

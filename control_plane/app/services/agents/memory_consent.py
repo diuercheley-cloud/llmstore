@@ -6,7 +6,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentMemoryConsent
+from app.models.agents.agents import AgentMemoryConsent
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

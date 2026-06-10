@@ -6,7 +6,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_agent_cicd_multienvironment_rollout_and_rollback(e2e_client, admin_headers):
     from app.db.session import SessionLocal
-    from app.models.agents import AgentDefinition
+    from app.models.agents.agents import AgentDefinition
 
     tenant_id = str(uuid.uuid4())
     agent_id = uuid.uuid4()

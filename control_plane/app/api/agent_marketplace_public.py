@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional
 
 from app.api.deps import get_current_user, get_db
-from app.models.agent_marketplace import MarketplaceItem, MarketplacePublisher
+from app.models.agents.agent_marketplace import MarketplaceItem, MarketplacePublisher
 from app.services.agents.agent_state import get_agent_definition
 from app.services.agents.marketplace.marketplace_analytics import MarketplaceAnalyticsService
 from app.services.agents.marketplace.marketplace_ratings import MarketplaceRatingService
@@ -243,7 +243,7 @@ async def get_item_reviews(
     item_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    from app.models.agent_marketplace import MarketplaceRating
+    from app.models.agents.agent_marketplace import MarketplaceRating
     from sqlalchemy import select
     stmt = select(MarketplaceRating).where(
         MarketplaceRating.item_id == item_id

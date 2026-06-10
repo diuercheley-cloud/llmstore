@@ -2,7 +2,7 @@
 import logging
 from typing import Optional
 
-from app.models.agent_service import AgentServiceTier
+from app.models.agents.agent_service import AgentServiceTier
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

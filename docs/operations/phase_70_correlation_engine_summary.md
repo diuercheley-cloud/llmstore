@@ -19,33 +19,33 @@ status: consolidated
 - `control_plane/app/services/operations/correlation/trust_graph.py`
 - `docs/operations/operations_correlation_engine.md`
 - `docs/phases/phase_70_operations_correlation_engine.md`
-- `scripts/validate_phase_70_correlation_engine.py`
-- `tests/operations/test_correlation_api.py`
-- `tests/operations/test_correlation_audit_events.py`
-- `tests/operations/test_correlation_dashboard.py`
-- `tests/operations/test_correlation_models.py`
-- `tests/operations/test_correlation_receipts.py`
-- `tests/operations/test_correlation_risk_analysis.py`
-- `tests/operations/test_deterministic_correlation_engine.py`
-- `tests/operations/test_operational_trust_graph.py`
-- `tests/operations/test_phase_70_validation.py`
+- `scripts/validators/validate_phase_70_correlation_engine.py`
+- `tests/integration/operations/test_correlation_api.py`
+- `tests/integration/operations/test_correlation_audit_events.py`
+- `tests/integration/operations/test_correlation_dashboard.py`
+- `tests/integration/operations/test_correlation_models.py`
+- `tests/integration/operations/test_correlation_receipts.py`
+- `tests/integration/operations/test_correlation_risk_analysis.py`
+- `tests/integration/operations/test_deterministic_correlation_engine.py`
+- `tests/integration/operations/test_operational_trust_graph.py`
+- `tests/integration/operations/test_phase_70_validation.py`
 
 ## Validações executadas
 
-- `python3 scripts/validate_phase_70_correlation_engine.py` -> `SUCCESS`
+- `python3 scripts/validators/validate_phase_70_correlation_engine.py` -> `SUCCESS`
 - `make validate-phase-70-correlation-engine` -> `SUCCESS`
 
 ## Testes executados
 
-- `tests/operations/test_correlation_models.py`
-- `tests/operations/test_deterministic_correlation_engine.py`
-- `tests/operations/test_operational_trust_graph.py`
-- `tests/operations/test_correlation_api.py`
-- `tests/operations/test_correlation_receipts.py`
-- `tests/operations/test_correlation_audit_events.py`
-- `tests/operations/test_correlation_risk_analysis.py`
-- `tests/operations/test_correlation_dashboard.py`
-- `tests/operations/test_phase_70_validation.py`
+- `tests/integration/operations/test_correlation_models.py`
+- `tests/integration/operations/test_deterministic_correlation_engine.py`
+- `tests/integration/operations/test_operational_trust_graph.py`
+- `tests/integration/operations/test_correlation_api.py`
+- `tests/integration/operations/test_correlation_receipts.py`
+- `tests/integration/operations/test_correlation_audit_events.py`
+- `tests/integration/operations/test_correlation_risk_analysis.py`
+- `tests/integration/operations/test_correlation_dashboard.py`
+- `tests/integration/operations/test_phase_70_validation.py`
 - Resultado agregado: `38 passed`
 
 ## Limitações conhecidas

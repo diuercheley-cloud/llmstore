@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Awaitable, Callable
 
 from app.core.time import utc_now
-from app.models.commercial_inference_reproducibility import (
+from app.models.commercial.commercial_inference_reproducibility import (
     CommercialInferenceReplayEvent,
     CommercialInferenceReproducibilityRecord,
     CommercialInferenceRuntimeSnapshot,

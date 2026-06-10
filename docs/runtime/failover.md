@@ -26,5 +26,5 @@ When a node failure is detected during a request, the `InferenceProxy` or `clien
 For maintenance, a node can be placed in `draining` mode. In this mode, the node will finish existing requests but will not receive new ones.
 
 ```bash
-./scripts/runtime-node-drain.sh <node_id> <admin_token>
+./scripts/dev/runtime-node-drain.sh <node_id> <admin_token>
 ```

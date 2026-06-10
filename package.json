@@ -1,0 +1,15 @@
+{
+  "name": "llm-inference-stack-root",
+  "private": true,
+  "workspaces": [
+    "frontend/admin",
+    "frontend/client",
+    "sdk/node"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

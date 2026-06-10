@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict
 
-from app.models.prompts import PromptPlaygroundRun, PromptTemplateVersion
+from app.models.agents.prompts import PromptPlaygroundRun, PromptTemplateVersion
 from app.services.prompts.prompt_template_engine import PromptTemplateEngine
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

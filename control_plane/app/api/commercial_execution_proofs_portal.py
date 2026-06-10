@@ -10,7 +10,7 @@ from typing import Any
 from uuid import UUID
 
 from app.db.session import get_db
-from app.models.commercial_merkle_timelines import CommercialExecutionProof
+from app.models.commercial.commercial_merkle_timelines import CommercialExecutionProof
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

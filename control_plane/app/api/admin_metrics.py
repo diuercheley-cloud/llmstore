@@ -8,8 +8,8 @@ from typing import AsyncGenerator
 
 import psutil
 from app.api.deps import get_db_session, get_inference_proxy
-from app.models.inference_backend import InferenceBackend
-from app.models.request_log import RequestLog
+from app.models.core.inference_backend import InferenceBackend
+from app.models.core.request_log import RequestLog
 from app.services.inference_proxy import InferenceProxy
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -94,7 +94,7 @@ async def get_latency_stats(session: AsyncSession):
         logger.error(f"Error calculating latency stats: {e}")
         return {"p50": 0, "p95": 0, "p99": 0}
 
-from app.models.security_event import SecurityEvent
+from app.models.core.security_event import SecurityEvent
 
 # ... (previous functions remain the same)
 

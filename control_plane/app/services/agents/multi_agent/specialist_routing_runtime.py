@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Dict, List
 
-from app.models.multi_agent import AgentTeam, AgentTeamMember
+from app.models.agents.multi_agent import AgentTeam, AgentTeamMember
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.delegation_policy import DelegationPolicy
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService

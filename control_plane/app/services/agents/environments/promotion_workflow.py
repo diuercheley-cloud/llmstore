@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-from app.models.agent_environments import AgentPromotionRequest
+from app.models.agents.agent_environments import AgentPromotionRequest
 from app.services.agents.environments.agent_environments import AgentEnvironmentsService
 from app.services.agents.environments.environment_policy import EnvironmentPolicyService
 from sqlalchemy import select
@@ -39,7 +39,7 @@ class PromotionWorkflowService:
             approved_at = datetime.now(timezone.utc)
 
         # Resolve registry entry first
-        from app.models.agents import AgentRegistryEntry
+        from app.models.agents.agents import AgentRegistryEntry
         stmt_reg = select(AgentRegistryEntry).where(
             (AgentRegistryEntry.id == agent_uuid) | (AgentRegistryEntry.agent_id == agent_uuid)
         )

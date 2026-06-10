@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.config import get_settings
-from app.models.agent_federated_memory import FederatedMemorySummary, FederatedSyncEvent
+from app.models.agents.agent_federated_memory import FederatedMemorySummary, FederatedSyncEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .sovereignty_policy import SovereigntyPolicy

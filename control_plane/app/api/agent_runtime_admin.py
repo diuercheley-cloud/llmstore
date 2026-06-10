@@ -302,7 +302,7 @@ async def create_delegation_policy(
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session)
 ):
-    from app.models.agents import AgentDelegationPolicy
+    from app.models.agents.agents import AgentDelegationPolicy
     policy = AgentDelegationPolicy(
         tenant_id=tenant_id,
         source_agent_id=payload.source_agent_id,
@@ -321,7 +321,7 @@ async def list_collaboration_sessions(
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session)
 ):
-    from app.models.agents import AgentCollaborationSession
+    from app.models.agents.agents import AgentCollaborationSession
     res = await db.execute(select(AgentCollaborationSession).where(AgentCollaborationSession.tenant_id == tenant_id))
     return list(res.scalars().all())
 

@@ -1,7 +1,7 @@
 import difflib
 from typing import Any, Dict
 
-from app.models.agent_workspace import AgentArtifactVersion
+from app.models.agents.agent_workspace import AgentArtifactVersion
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

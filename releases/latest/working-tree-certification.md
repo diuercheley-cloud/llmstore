@@ -1,0 +1,82 @@
+# Working Tree Certification
+
+**Status:** FAIL
+
+## Findings
+```
+M  config/feature-flags.yaml
+M  control_plane/alembic/versions/20260530_0005_prompt_template_engine.py
+M  control_plane/app/api/agent_analytics_admin.py
+M  control_plane/app/api/agent_environments_admin.py
+M  control_plane/app/api/agent_marketplace_public.py
+M  control_plane/app/api/agent_sessions.py
+M  control_plane/app/api/mobile_v1.py
+M  control_plane/app/core/config.py
+ M control_plane/app/models/agent_sessions.py
+ M control_plane/app/services/agent_deployments/agent_api_deployment.py
+ M control_plane/app/services/agent_deployments/deployment_router.py
+ M control_plane/app/services/agents/agent_executor.py
+ M control_plane/app/services/agents/agent_runtime.py
+M  control_plane/app/services/agents/code_interpreter/providers/gvisor_sandbox.py
+ M control_plane/app/services/agents/sessions/agent_session_service.py
+ M control_plane/app/services/agents/streaming/run_event_stream.py
+ M control_plane/app/services/agents/studio/flow_runtime_adapter.py
+ M control_plane/app/services/mobile/device_registry.py
+ M control_plane/app/services/mobile/push_notifications.py
+M  control_plane/app/services/observability/jaeger_exporter.py
+M  control_plane/app/services/observability/zipkin_exporter.py
+M  control_plane/app/services/operations/forecasting/receipts.py
+ M control_plane/app/services/prompts/prompt_template_renderer.py
+M  control_plane/requirements.txt
+M  docker/control-plane/Dockerfile
+ M docs/agents/sessions-and-threads.md
+ M docs/api/agent-as-api.md
+ M docs/cli/agentctl.md
+ M docs/frontend/admin-navigation.md
+ M docs/frontend/agent-chat.md
+ M docs/frontend/navigation-system.md
+ M docs/mobile/pwa.md
+ M docs/prompts/template-engine.md
+ M docs/voice/voice-agent.md
+ M frontend/admin/src/App.tsx
+ M frontend/admin/src/components/command-palette.tsx
+ M frontend/admin/src/components/layout/Breadcrumbs.tsx
+ M frontend/admin/src/components/layout/Sidebar.tsx
+ M frontend/admin/src/navigation/navConfig.ts
+ M frontend/admin/src/pages/Hub.tsx
+ M frontend/admin/src/pages/developers/DeveloperPortal.tsx
+ M frontend/admin/src/routes/adminRoutes.tsx
+ M frontend/client/src/App.tsx
+ M frontend/client/src/components/chat/AgentSelector.tsx
+ M frontend/client/src/components/chat/Composer.tsx
+ M frontend/client/src/components/chat/MessageList.tsx
+ M frontend/client/src/components/chat/SessionList.tsx
+ M frontend/client/src/components/chat/StreamingMessage.tsx
+ M frontend/client/src/components/chat/ToolActivityTimeline.tsx
+ M frontend/client/src/lib/api.ts
+ M frontend/client/src/mobile/PushSettings.tsx
+ M frontend/client/src/pages/AgentChat.tsx
+ M scripts/legacy/agent-bundle-init.sh
+ M scripts/dev/agent-bundle-publish.sh
+ M scripts/dev/agent-bundle-test.sh
+ M scripts/dev/agentctl.py
+M  tests/conftest.py
+ M tests/integration/operations/test_attestation_framework_models.py
+ M tests/integration/operations/test_attestation_receipts.py
+ M tests/integration/operations/test_compatibility_receipts.py
+ M tests/integration/operations/test_correlation_receipts.py
+ M tests/integration/operations/test_federation_sync_models.py
+ M tests/integration/operations/test_plugin_runtime_receipts.py
+A  tests/test_agent_deployments.py
+A  tests/test_agent_deployments_callback.py
+A  tests/test_agent_sessions.py
+M  tests/test_cryptographic_receipts.py
+ M tests/test_mcp_ga.py
+A  tests/test_mobile_foundation.py
+A  tests/test_observability_exporters.py
+A  tests/test_prompt_templates.py
+M  tests/test_tokenizer_service.py
+A  tests/test_voice_agent.py
+?? control_plane/app/services/agent_deployments/deployment_callback.py
+?? test-bundle-dir/
+```

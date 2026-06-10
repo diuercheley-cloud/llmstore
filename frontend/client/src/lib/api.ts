@@ -78,7 +78,7 @@ export const api = {
       body: JSON.stringify({ endpoint }),
     }),
 
-  getMobileConfig: () => request<any>(`/v1/mobile/config`),
+  getMobileConfig: () => request<Record<string, unknown>>(`/v1/mobile/config`),
 
   listSessions: (agentId?: string, limit = 50) => {
     const params = new URLSearchParams({ limit: String(limit) });

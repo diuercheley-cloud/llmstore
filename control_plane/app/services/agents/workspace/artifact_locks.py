@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from app.core.time import utc_now
-from app.models.agent_workspace import AgentArtifactLock, AgentSharedArtifact
+from app.models.agents.agent_workspace import AgentArtifactLock, AgentSharedArtifact
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

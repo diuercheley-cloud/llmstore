@@ -9,8 +9,8 @@ from decimal import Decimal
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.client import Client
-from app.models.payment_topup import PaymentWebhookEvent, WalletTopUpIntent
+from app.models.core.client import Client
+from app.models.billing.payment_topup import PaymentWebhookEvent, WalletTopUpIntent
 from app.services.billing.wallet_service import credit_wallet_topup
 from app.services.payment_adapters import PaymentAdapterError, get_payment_adapter
 from fastapi import HTTPException, Request

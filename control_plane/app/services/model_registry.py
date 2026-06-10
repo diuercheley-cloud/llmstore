@@ -1,9 +1,9 @@
 import json
 
 from app.core.config import get_settings
-from app.models.inference_backend import InferenceBackend
-from app.models.model_backend_route import ModelBackendRoute
-from app.models.model_registry import ModelRegistry
+from app.models.core.inference_backend import InferenceBackend
+from app.models.core.model_backend_route import ModelBackendRoute
+from app.models.core.model_registry import ModelRegistry
 from app.services.backend_registry import ensure_default_backends
 from app.utils.model_prompting import detect_architecture, detect_prompt_template
 from sqlalchemy import or_, select

@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import httpx
 from app.core.config import get_settings
-from app.models.multimodal import MultimodalAsset
+from app.models.core.multimodal import MultimodalAsset
 from app.services.multimodal.multimodal_policy import MultimodalPolicyService
 from app.services.multimodal.multimodal_usage import MultimodalUsageService
 from fastapi import HTTPException, UploadFile

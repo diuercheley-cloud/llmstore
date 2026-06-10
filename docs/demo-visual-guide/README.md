@@ -26,7 +26,7 @@ Fornecer um roteiro visual padronizado para apresentações a clientes, com plac
 
 Screenshots **nunca devem ser commitados** com dados reais. Use placeholders sanitizados em `placeholders/`.
 
-O script `scripts/prepare-demo-screenshots-local.sh` gera screenshots automaticamente se Playwright/Chromium estiver disponível, ou cria um plano de captura manual.
+O script `scripts/dev/prepare-demo-screenshots-local.sh` gera screenshots automaticamente se Playwright/Chromium estiver disponível, ou cria um plano de captura manual.
 
 ## Comando Unico de Demo
 
@@ -63,4 +63,4 @@ Prepara e valida a demo comercial completa. Relatório em `artifacts/customer-de
 
 - Nunca expor `ADMIN_TOKEN`, `API_KEY` ou dados reais em screenshots
 - Usar placeholders sanitizados para versionamento
-- Rodar `scripts/validate-demo-visual-guide.sh` antes de qualquer commit
+- Rodar `scripts/validators/validate-demo-visual-guide.sh` antes de qualquer commit

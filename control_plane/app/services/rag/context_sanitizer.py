@@ -4,7 +4,7 @@ from typing import List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ...models.commercial_rag_vault import CommercialRAGDocument, CommercialRAGVault
+from ...models.commercial.commercial_rag_vault import CommercialRAGDocument, CommercialRAGVault
 from .confidential_rag_vault import log_policy_violation
 
 

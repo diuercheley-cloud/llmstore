@@ -16,7 +16,7 @@ from app.core.metrics import (
     record_inference_latency,
     record_model_error,
 )
-from app.models.inference_backend import InferenceBackend
+from app.models.core.inference_backend import InferenceBackend
 from app.services.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from app.services.context_manager import get_context_manager
 from app.services.queue_manager import QueueOverloaded, QueueTimeout
@@ -952,8 +952,8 @@ class InferenceProxy:
                 if corr_id:
                     try:
                         from app.db.session import SessionLocal
-                        from app.models.request_financial import RequestFinancial
-                        from app.models.request_log import RequestLog
+                        from app.models.billing.request_financial import RequestFinancial
+                        from app.models.core.request_log import RequestLog
                         from app.services.quota import update_usage_with_real_tokens
                         from sqlalchemy import select
 

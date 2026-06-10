@@ -2,7 +2,7 @@
 import logging
 import uuid
 
-from app.models.agent_marketplace import MarketplaceDownloadEvent, MarketplaceItem
+from app.models.agents.agent_marketplace import MarketplaceDownloadEvent, MarketplaceItem
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

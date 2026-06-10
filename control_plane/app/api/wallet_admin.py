@@ -65,7 +65,7 @@ async def admin_list_wallets(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
-    from app.models.ai_wallet import AiWallet
+    from app.models.billing.ai_wallet import AiWallet
     from sqlalchemy import select
     result = await session.execute(
         select(AiWallet).order_by(AiWallet.created_at.desc()).offset(offset).limit(limit)
@@ -100,7 +100,7 @@ async def admin_manual_credit(
     payload: ManualCreditRequest,
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.client import Client
+    from app.models.core.client import Client
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
@@ -122,7 +122,7 @@ async def admin_adjustment(
     payload: AdjustmentRequest,
     session: AsyncSession = Depends(get_db_session),
 ):
-    from app.models.client import Client
+    from app.models.core.client import Client
     from app.services.billing.wallet_service import InsufficientBalance
     client = await session.get(Client, client_id)
     if client is None:

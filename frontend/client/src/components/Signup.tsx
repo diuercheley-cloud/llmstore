@@ -41,8 +41,9 @@ export function Signup({ onComplete }: { onComplete: (result: SignupResult) => v
       });
       setStep('result');
       toast.success('Account created successfully!');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create account');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Failed to create account';
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

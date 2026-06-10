@@ -11,7 +11,7 @@ O `llm-inference-stack` implementa rotinas operacionais para garantir a eficáci
 
 ### 1. Revisão de Acesso (Trimestral)
 - **Objetivo**: Garantir que apenas usuários autorizados possuam acesso aos sistemas críticos.
-- **Evidência**: Relatório gerado por `scripts/soc2-access-review.sh` e aprovado no portal Admin.
+- **Evidência**: Relatório gerado por `scripts/dev/soc2-access-review.sh` e aprovado no portal Admin.
 
 ### 2. Revisão de Mudanças (Por Release)
 - **Objetivo**: Validar que todas as mudanças em produção passaram pelos gates de segurança e qualidade.

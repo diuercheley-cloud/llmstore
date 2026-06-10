@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentEphemeralCredential
+from app.models.agents.agents import AgentEphemeralCredential
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 

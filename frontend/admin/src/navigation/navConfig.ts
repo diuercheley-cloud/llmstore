@@ -19,7 +19,6 @@ import {
   TrendingUp,
   FileText,
   BookOpen,
-  Shield,
   ShieldAlert,
   Rocket,
   GitBranch,
@@ -34,12 +33,14 @@ import {
   Layers,
   Database,
   FastForward,
-  Construction,
   ShieldEllipsis,
   Gavel,
   Scale,
   Trophy,
   UserCheck,
+  Eye,
+  Calculator,
+  ShoppingBag,
 } from 'lucide-react'
 
 export type RouteStatus = 'active' | 'beta' | 'coming_soon' | 'disabled'

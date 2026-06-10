@@ -5,8 +5,8 @@ from uuid import UUID
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.db.session import get_db_session
-from app.models.billing_invoice import BillingInvoice
-from app.models.customer_payment import CustomerPayment
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.billing.customer_payment import CustomerPayment
 from app.schemas.public import PublicSignupRequest, PublicSignupResponse, WebhookPayload
 from app.services.billing import refresh_billing_statuses
 from app.services.public_onboarding import create_public_signup, list_public_plans

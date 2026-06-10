@@ -139,7 +139,7 @@ Prover capacidade de IA generativa com controle total sobre dados, custos previs
 - **Bloqueio automático.** Cliente suspenso por inadimplência ou violação de cota.
 - **Sem telemetria externa.** Nenhum dado é enviado para servidores externos por padrão.
 - **CORS configurável.** Restrito ao domínio do appliance em modo produção.
-- **Relatórios de segurança.** Script `scripts/security-report-local.sh` varre secrets, permissões e exposição.
+- **Relatórios de segurança.** Script `scripts/validators/security-report-local.sh` varre secrets, permissões e exposição.
 
 ### Observações Importantes
 
@@ -164,10 +164,10 @@ O sistema inclui scripts de backup e restore:
 
 ```bash
 # Realizar backup
-./scripts/backup.sh
+./scripts/backup/backup.sh
 
 # Restaurar
-./scripts/restore.sh /caminho/para/postgres.dump
+./scripts/backup/restore.sh /caminho/para/postgres.dump
 ```
 
 O backup inclui:
@@ -189,12 +189,12 @@ Documentação detalhada em `docs/UPGRADE_ROLLBACK_LOCAL.md`.
 
 1. Realizar backup completo
 2. Baixar nova versão do repositório
-3. Executar `./scripts/upgrade-local.sh`
-4. Validar com `./scripts/validate-e2e.sh`
+3. Executar `./scripts/deploy/upgrade-local.sh`
+4. Validar com `./scripts/validators/validate-e2e.sh`
 
 ### Rollback
 
-- Restaurar backup anterior via `./scripts/restore.sh`
+- Restaurar backup anterior via `./scripts/backup/restore.sh`
 - Reverter versão do repositório
 - Subir stack novamente
 
@@ -224,8 +224,8 @@ Content-Type: application/json
 
 ### Scripts de Validação
 
-- `./scripts/validate-rag-local-multiclient.sh` — valida isolamento entre clientes
-- `./scripts/clean-rag-local-data.sh` — limpa dados de RAG
+- `./scripts/validators/validate-rag-local-multiclient.sh` — valida isolamento entre clientes
+- `./scripts/legacy/clean-rag-local-data.sh` — limpa dados de RAG
 
 ---
 

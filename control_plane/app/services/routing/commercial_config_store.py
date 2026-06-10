@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.admin_action_log import AdminActionLog
-from app.models.commercial_routing_config import CommercialRoutingConfig
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.commercial.commercial_routing_config import CommercialRoutingConfig
 from sqlalchemy import and_, desc, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 

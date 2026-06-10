@@ -120,7 +120,7 @@ Testes nunca chamam internet. Providers não configurados geram
 ### 3. Validar secrets
 
 ```bash
-./scripts/check-secrets.sh --all
+./scripts/validators/check-secrets.sh --all
 ```
 
 Garante que nenhuma chave real vazou para arquivos versionados.
@@ -223,7 +223,7 @@ Gera relatório em `artifacts/real-provider-validation/openai/<timestamp>/`.
 ### Limitar custo
 
 ```bash
-./scripts/validate-openai-real-provider.sh --real --max-cost-brl 1.00 --model gpt-4o-mini
+./scripts/validators/validate-openai-real-provider.sh --real --max-cost-brl 1.00 --model gpt-4o-mini
 ```
 
 ### Segurança
@@ -269,7 +269,7 @@ Gera relatório em `artifacts/real-provider-validation/deepseek/<timestamp>/`.
 ### Limitar custo
 
 ```bash
-./scripts/validate-deepseek-real-provider.sh --real --max-cost-brl 1.00 --model deepseek-chat
+./scripts/validators/validate-deepseek-real-provider.sh --real --max-cost-brl 1.00 --model deepseek-chat
 ```
 
 ### Segurança
@@ -339,7 +339,7 @@ make validate-real-fallback
 ou customizado:
 
 ```bash
-./scripts/validate-real-fallback-local-to-cloud.sh --real --provider openai
+./scripts/validators/validate-real-fallback-local-to-cloud.sh --real --provider openai
 ```
 
 Fluxo:
@@ -397,7 +397,7 @@ Gera relatório em `artifacts/real-provider-validation/anthropic/<timestamp>/`.
 ### Limitar custo
 
 ```bash
-./scripts/validate-anthropic-real-provider.sh --real --max-cost-brl 1.00 --model claude-3-haiku-20240307
+./scripts/validators/validate-anthropic-real-provider.sh --real --max-cost-brl 1.00 --model claude-3-haiku-20240307
 ```
 
 ### Segurança
@@ -483,7 +483,7 @@ make validate-real-fallback-dry
 
 ### Visão Geral
 
-O script `scripts/measure-real-provider-costs.sh` mede custo real/estimado por provider
+O script `scripts/dev/measure-real-provider-costs.sh` mede custo real/estimado por provider
 usando requests reais mínimos. Resultados são registrados em BRL.
 
 ### Como Rodar
@@ -496,7 +496,7 @@ make measure-provider-costs-dry
 make measure-provider-costs
 
 # Com parâmetros customizados
-./scripts/measure-real-provider-costs.sh \
+./scripts/dev/measure-real-provider-costs.sh \
   --real \
   --providers openai,deepseek,anthropic \
   --max-cost-brl 2.00 \
@@ -504,7 +504,7 @@ make measure-provider-costs
   --output-dir artifacts/real-provider-validation/costs
 
 # Ajuda
-./scripts/measure-real-provider-costs.sh --help
+./scripts/dev/measure-real-provider-costs.sh --help
 ```
 
 ### Opções
@@ -589,7 +589,7 @@ For accurate billing and cost margin calculations in BRL, run `make measure-prov
 Margins are validated using real configurations but minimal requests to avoid cost. Check `make validate-real-billing-margin`.
 
 ## Artifact Sanitization
-We run `scripts/scan-real-provider-artifacts.sh` after validations to ensure no secrets or prompts are exposed in artifacts.
+We run `scripts/dev/scan-real-provider-artifacts.sh` after validations to ensure no secrets or prompts are exposed in artifacts.
 
 ## Real Providers E2E Validation
 For a full, safe run across all configured providers including billing, margin, cost, and sanitization, run `make validate-real-providers-e2e`.

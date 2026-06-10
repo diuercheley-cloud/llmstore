@@ -3,8 +3,8 @@ import json
 import logging
 
 from app.core.config import get_settings
-from app.models.security_event import SecurityEvent
-from app.models.security_pki import PluginRegistry
+from app.models.core.security_event import SecurityEvent
+from app.models.core.security_pki import PluginRegistry
 from app.services.security.pki_service import PKIService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 
 from app.core.time import utc_now
-from app.models.admin_action_log import AdminActionLog
+from app.models.core.admin_action_log import AdminActionLog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.models.agent_marketplace import AgentAttestation, AgentPackage, AgentRevenueShare, MarketplaceItem
+from app.models.agents.agent_marketplace import AgentAttestation, AgentPackage, AgentRevenueShare, MarketplaceItem
 from app.schemas.marketplace import AgentManifest, InstallDryRunResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -46,9 +46,10 @@ os.environ["AGENT_MCP_MOCK_MODE"] = "true"
 os.environ["AGENT_BATCH_API_ENABLED"] = "true"
 os.environ["COMMERCIAL_GLOBAL_ROUTING_ENABLED"] = "true"
 os.environ["RBAC_ADMIN_ENABLED"] = "false"
+os.environ["JWT_SECRET"] = "a-long-enough-and-very-secure-secret-key-32-chars-plus"
+os.environ["ADMIN_TOKEN"] = "a-long-enough-and-very-secure-admin-token-32-chars-plus"
 
 # Required fallbacks for tests
-os.environ["ADMIN_TOKEN"] = "test-admin-token"
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}?timeout=30"
 os.environ["REDIS_URL"] = "redis://localhost:6379/0" # Use localhost instead of invalid to avoid long DNS timeouts, or we'll mock it
 os.environ["DATA_PLANE_BASE_URL"] = "http://localhost:8081"
@@ -343,7 +344,7 @@ def isolated_db_url(tmp_path: Path) -> str:
 
 @pytest_asyncio.fixture
 async def fastapi_app() -> AsyncIterator[FastAPI]:
-    app = FastAPI()
+    from app.main import app
     yield app
 
 

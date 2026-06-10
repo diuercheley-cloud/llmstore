@@ -15,11 +15,11 @@ status: consolidated
 - Added Phase 77 docs, validation script, Makefile target, and targeted tests.
 
 ## Validations Executed
-- `scripts/validate_phase_77_federation_sync.py`
+- `scripts/validators/validate_phase_77_federation_sync.py`
 - `make validate-phase-77-federation-sync`
 
 ## Tests Executed
-- `./.venv/bin/python -m pytest tests/operations/test_federation_sync_models.py tests/operations/test_federation_hash_utils.py tests/operations/test_federation_environment_registry.py tests/operations/test_federation_synchronization_protocol.py tests/operations/test_federation_trust_negotiation.py tests/operations/test_federation_conflict_resolution.py tests/operations/test_federation_replay_verifier.py tests/operations/test_federation_receipts.py tests/operations/test_federation_audit_events.py tests/operations/test_federation_api.py tests/operations/test_federation_dashboard.py tests/operations/test_phase_77_validation.py -q --tb=short`
+- `./.venv/bin/python -m pytest tests/integration/operations/test_federation_sync_models.py tests/integration/operations/test_federation_hash_utils.py tests/integration/operations/test_federation_environment_registry.py tests/integration/operations/test_federation_synchronization_protocol.py tests/integration/operations/test_federation_trust_negotiation.py tests/integration/operations/test_federation_conflict_resolution.py tests/integration/operations/test_federation_replay_verifier.py tests/integration/operations/test_federation_receipts.py tests/integration/operations/test_federation_audit_events.py tests/integration/operations/test_federation_api.py tests/integration/operations/test_federation_dashboard.py tests/integration/operations/test_phase_77_validation.py -q --tb=short`
 - Result: `14 passed`.
 
 ## Problems Found and Corrected

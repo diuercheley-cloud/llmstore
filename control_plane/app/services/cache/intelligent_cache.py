@@ -9,10 +9,10 @@ from datetime import timedelta
 from app.core.config import get_settings
 from app.core.metrics import record_cache_result
 from app.core.time import utc_now
-from app.models.cache_policy import CachePolicy
-from app.models.request_log import RequestLog
-from app.models.response_cache import ResponseCache
-from app.models.semantic_cache_entry import SemanticCacheEntry
+from app.models.core.cache_policy import CachePolicy
+from app.models.core.request_log import RequestLog
+from app.models.core.response_cache import ResponseCache
+from app.models.core.semantic_cache_entry import SemanticCacheEntry
 from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

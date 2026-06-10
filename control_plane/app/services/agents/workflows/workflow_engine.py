@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_workflows import AgentWorkflowDefinition, AgentWorkflowRun
+from app.models.agents.agent_workflows import AgentWorkflowDefinition, AgentWorkflowRun
 from app.services.agents.workflows.subworkflow_runtime import SubworkflowRuntime
 from app.services.agents.workflows.workflow_branching import WorkflowBranchingManager
 from app.services.agents.workflows.workflow_dag import WorkflowDAG
@@ -243,7 +243,7 @@ class WorkflowEngine:
         """
         Executes logic for a DAG-based workflow.
         """
-        from app.models.agent_workflows import (
+        from app.models.agents.agent_workflows import (
             AgentWorkflowNode,  # local import to avoid circular dependency if any
         )
         # Load definition

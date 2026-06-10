@@ -8,9 +8,9 @@ from app.api.deps import EmbeddingService, get_embedding_service, get_inference_
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id
 from app.db.session import get_db_session, get_redis
-from app.models.client import Client
-from app.models.commercial_cluster_registry import CommercialClusterRegistry
-from app.models.model_backend_route import ModelBackendRoute
+from app.models.core.client import Client
+from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.core.model_backend_route import ModelBackendRoute
 from app.schemas.inference import (
     ChatCompletionRequest,
     ChatCompletionResponse,

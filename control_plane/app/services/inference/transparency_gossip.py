@@ -5,8 +5,8 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ...models.commercial_merkle_timelines import CommercialMerkleTimeline
-from ...models.commercial_transparency import (
+from ...models.commercial.commercial_merkle_timelines import CommercialMerkleTimeline
+from ...models.commercial.commercial_transparency import (
     CommercialConsistencyCheckpoint,
     CommercialTransparencyGossipPeer,
     CommercialTransparencyGossipRecord,

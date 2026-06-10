@@ -5,7 +5,7 @@ import uuid
 
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session
-from app.models.admin_rbac import (
+from app.models.core.admin_rbac import (
     AdminAuditEvent,
     AdminPermission,
     AdminRoleModel,

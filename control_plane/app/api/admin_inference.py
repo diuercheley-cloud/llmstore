@@ -6,7 +6,7 @@ from app.services.inference.router import InferenceRouter
 from app.services.inference.backends.vllm_backend import VLLMBackend
 from app.services.inference.backends.tgi_backend import TGIBackend
 from app.services.inference.backends.openai_compatible_backend import OpenAICompatibleBackend
-from app.models.inference_backend import InferenceBackend
+from app.models.core.inference_backend import InferenceBackend
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

@@ -19,5 +19,5 @@ Nodes can register themselves with the control plane using the registration endp
 You can manually register a node using the provided script:
 
 ```bash
-./scripts/runtime-node-register.sh "worker-node-1" "http://192.168.1.10:8081"
+./scripts/deploy/runtime-node-register.sh "worker-node-1" "http://192.168.1.10:8081"
 ```

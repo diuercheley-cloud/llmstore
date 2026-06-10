@@ -4,7 +4,7 @@
 from app.api.dependencies.auth import get_current_admin
 from app.core.time import utc_now
 from app.db.session import get_db_session
-from app.models.managed_control_plane import ManagedControlPlaneLink
+from app.models.core.managed_control_plane import ManagedControlPlaneLink
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 

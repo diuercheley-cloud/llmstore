@@ -3,8 +3,8 @@ import uuid
 from typing import Any, Dict
 
 from app.db.session import get_db_session
-from app.models.agent_workflows import AgentWorkflow, AgentWorkflowRun
-from app.models.agent_workflows_external import AgentWorkflowExternalEvent
+from app.models.agents.agent_workflows import AgentWorkflow, AgentWorkflowRun
+from app.models.agents.agent_workflows_external import AgentWorkflowExternalEvent
 from app.services.agents.workflows.workflow_engine import WorkflowEngine
 from app.services.agents.workflows.workflow_polling import WorkflowPollingService
 from app.services.agents.workflows.workflow_webhooks import WorkflowWebhookService

@@ -4,7 +4,7 @@ import logging
 import uuid
 from typing import Any
 
-from app.models.multi_agent import AgentTeamDelegation
+from app.models.agents.multi_agent import AgentTeamDelegation
 from app.services.agents.multi_agent.loop_guard import LoopGuard
 from app.services.agents.multi_agent.team_runtime import TeamRuntime
 

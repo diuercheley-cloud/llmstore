@@ -36,7 +36,7 @@ The Real Provider Validation suite is a controlled environment designed to test 
 Execute the shell script:
 
 ```bash
-./scripts/run-real-provider-validation.sh
+./scripts/dev/run-real-provider-validation.sh
 ```
 
 Results are stored in `artifacts/evals/real-provider-validation.md`.

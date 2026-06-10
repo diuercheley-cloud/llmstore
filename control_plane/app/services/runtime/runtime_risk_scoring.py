@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, UTC
 from typing import Any, List
 
-from app.models.commercial_predictive_aiops import CommercialRuntimeRiskTrend
+from app.models.commercial.commercial_predictive_aiops import CommercialRuntimeRiskTrend
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

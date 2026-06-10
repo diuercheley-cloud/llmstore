@@ -26,7 +26,7 @@ The `configure-local-wizard.sh` script provides a guided, interactive way to con
 ```bash
 make configure-local
 # OR
-./scripts/configure-local-wizard.sh
+./scripts/dev/configure-local-wizard.sh
 ```
 
 ### Non-Interactive (Automated)
@@ -34,7 +34,7 @@ make configure-local
 ```bash
 make configure-local-noninteractive
 # OR
-./scripts/configure-local-wizard.sh --non-interactive --yes --base-url http://my-app.local --gpu
+./scripts/dev/configure-local-wizard.sh --non-interactive --yes --base-url http://my-app.local --gpu
 ```
 
 ## Available Options

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_tool_execution import AgentToolRollbackAction, AgentToolSideEffect
+from app.models.agents.agent_tool_execution import AgentToolRollbackAction, AgentToolSideEffect
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

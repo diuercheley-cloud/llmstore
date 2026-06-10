@@ -58,9 +58,9 @@ Auto-suspensão é **desligada por padrão** e **dry-run** é ativado.
 ### Validação de Segurança
 
 ```bash
-./scripts/check-secrets.sh --all
-./scripts/validate-enterprise-rag-local.sh
-./scripts/validate-hybrid-abuse-detection-local.sh
+./scripts/validators/check-secrets.sh --all
+./scripts/validators/validate-enterprise-rag-local.sh
+./scripts/validators/validate-hybrid-abuse-detection-local.sh
 ```
 
 ### Dependências Críticas

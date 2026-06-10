@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Any
 
 from app.core.time import utc_now
-from app.models.agent_events import AgentEventDedupKey
+from app.models.agents.agent_events import AgentEventDedupKey
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

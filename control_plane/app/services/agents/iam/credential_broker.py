@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 
 from app.core.config import get_settings
-from app.models.agent_iam import AgentIdentityBinding, AgentServicePrincipal
+from app.models.agents.agent_iam import AgentIdentityBinding, AgentServicePrincipal
 from app.services.agents.iam.agent_scopes import AgentScopeManager
 from app.services.agents.iam.delegated_tokens import DelegatedTokenService
 from app.services.agents.iam.iam_audit import IAMAuditService

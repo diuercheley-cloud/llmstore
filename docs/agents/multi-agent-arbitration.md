@@ -69,5 +69,5 @@ Every arbitration decision generates a rich, cryptographically traceable receipt
 
 Verify the arbitration functionality with:
 ```bash
-pytest control_plane/tests/test_arbitration_engine.py -v
+pytest tests/control_plane/test_arbitration_engine.py -v
 ```

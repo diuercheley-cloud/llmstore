@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.ai_wallet import AiWalletTransaction
-from app.models.billing_invoice import BillingInvoice
-from app.models.commercial_qos_billing_record import CommercialQoSBillingRecord
-from app.models.commercial_queue_chargeback import CommercialQueueChargeback
+from app.models.billing.ai_wallet import AiWalletTransaction
+from app.models.billing.billing_invoice import BillingInvoice
+from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.commercial.commercial_queue_chargeback import CommercialQueueChargeback
 from app.services.billing import wallet_service
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession

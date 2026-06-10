@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from app.db.session import get_db_session
-from app.models.model_provenance import ModelProvenanceRecord
+from app.models.core.model_provenance import ModelProvenanceRecord
 from app.schemas.model_provenance import (
     ModelProvenanceRead, WatermarkVerificationRequest, WatermarkVerificationResponse
 )

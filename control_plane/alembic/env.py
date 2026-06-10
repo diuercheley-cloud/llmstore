@@ -4,52 +4,7 @@ from alembic import context
 from alembic.ddl.impl import DefaultImpl
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models import (  # noqa: F401
-    admin_action_log,
-    agent_optimization_tournament,  # noqa: F401
-    ai_wallet,
-    api_key,
-    billing_invoice,
-    billing_plan,
-    client,
-    client_feature_block,
-    commercial_capacity,
-    commercial_cluster_aggregate,
-    commercial_compliance,
-    commercial_cryptographic_receipts,
-    commercial_encryption,
-    commercial_governance,
-    commercial_governance_federation,
-    commercial_infra_simulation,
-    commercial_model_supply_chain,
-    commercial_node_heartbeat,
-    commercial_report_delivery_log,
-    commercial_report_schedule,
-    commercial_revenue_alert_delivery,
-    commercial_revenue_escalation_policy,
-    commercial_routing_config,
-    commercial_routing_event,
-    commercial_routing_event_ingest,
-    commercial_sovereign_governance,
-    customer_payment,
-    generation_job,
-    inference_backend,
-    model_backend_route,
-    model_registry,
-    operations,  # noqa: F401
-    pricing_rule,
-    prompts,  # noqa: F401
-    quota_counter,
-    rag_document,
-    rag_document_chunk,
-    rag_usage_event,
-    request_log,
-    response_cache,
-    security_event,
-    tts_usage_event,
-    usage_record,
-    user_quota_override,
-)
+import app.models  # noqa
 from sqlalchemy import Column, MetaData, PrimaryKeyConstraint, String, Table, engine_from_config, pool, text
 
 config = context.config

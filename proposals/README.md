@@ -15,10 +15,10 @@ Este diretório contém templates de propostas para apresentação do **llm-infe
 
 ```bash
 # Usar script de geração automática
-./scripts/generate-proposal-pdf.sh --input proposals/TECHNICAL_PROPOSAL_TEMPLATE.md --output proposals/generated/proposta-tecnica.pdf
+./scripts/legacy/generate-proposal-pdf.sh --input proposals/TECHNICAL_PROPOSAL_TEMPLATE.md --output proposals/generated/proposta-tecnica.pdf
 
 # Ver ajuda
-./scripts/generate-proposal-pdf.sh --help
+./scripts/legacy/generate-proposal-pdf.sh --help
 ```
 
 Ferramentas suportadas (detectadas automaticamente): `pandoc`, `wkhtmltopdf`, `google-chrome` (headless).
@@ -26,7 +26,7 @@ Ferramentas suportadas (detectadas automaticamente): `pandoc`, `wkhtmltopdf`, `g
 ## Validação
 
 ```bash
-./scripts/validate-proposals-local.sh
+./scripts/legacy/validate-proposals-local.sh
 ```
 
 ## Regras
@@ -42,7 +42,7 @@ Ferramentas suportadas (detectadas automaticamente): `pandoc`, `wkhtmltopdf`, `g
 Para automatizar a criação de propostas preenchidas para clientes específicos, utilize o script de geração:
 
 ```bash
-./scripts/generate-client-proposal.sh --company-name "Nome da Empresa" --segment "Saúde" --plan "Pro"
+./scripts/dev/generate-client-proposal.sh --company-name "Nome da Empresa" --segment "Saúde" --plan "Pro"
 ```
 
 ### Funcionalidades:
@@ -59,10 +59,10 @@ Templates de contrato e SOW para implantação local estão disponíveis em `con
 
 ```bash
 # Gerar SOW personalizado
-./scripts/generate-sow-local.sh --company-name "Cliente" --project-name "Local AI Appliance" --plan Pro
+./scripts/dev/generate-sow-local.sh --company-name "Cliente" --project-name "Local AI Appliance" --plan Pro
 
 # Validar templates
-./scripts/validate-contract-templates-local.sh
+./scripts/validators/validate-contract-templates-local.sh
 ```
 
 **AVISO:** Todos os templates exigem revisão jurídica obrigatória. Não versionar contratos preenchidos no repositório.

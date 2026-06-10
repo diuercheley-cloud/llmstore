@@ -19,17 +19,17 @@ status: consolidated
 - `docs/governance/supply_chain_governance.md`
 - `docs/security/threat_model_template.md`
 - `docs/security/supply_chain_risk_register.md`
-- `scripts/validate_governance_documentation_foundation.py`
-- `tests/docs/test_governance_documentation_foundation.py`
+- `scripts/validators/validate_governance_documentation_foundation.py`
+- `tests/integration/docs/test_governance_documentation_foundation.py`
 
 ## Validations Executed
 
-- `python3 scripts/validate_governance_documentation_foundation.py`
-- `pytest tests/docs/test_governance_documentation_foundation.py`
+- `python3 scripts/validators/validate_governance_documentation_foundation.py`
+- `pytest tests/integration/docs/test_governance_documentation_foundation.py`
 
 ## Tests Executed
 
-- `tests/docs/test_governance_documentation_foundation.py`
+- `tests/integration/docs/test_governance_documentation_foundation.py`
 
 ## Known Limitations
 

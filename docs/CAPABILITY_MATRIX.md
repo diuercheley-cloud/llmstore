@@ -9,35 +9,35 @@ Esta matriz detalha as capacidades do sistema `llm-inference-stack` por ambiente
 
 | Feature | Mock | Local Real | Production Local | Cloud (OpenAI) | Cloud (Anthropic) | Cloud (DeepSeek) | Status | Limitações | Validador |
 |---------|------|------------|------------------|----------------|-------------------|------------------|--------|------------|-----------|
-| `/v1/chat/completions` | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA | - | `scripts/test-chat.sh` |
-| streaming | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/test-stream.sh` |
+| `/v1/chat/completions` | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA | - | `scripts/dev/test-chat.sh` |
+| streaming | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/dev/test-stream.sh` |
 | `/v1/models` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui provider_info | `curl /v1/models` |
-| `/v1/embeddings` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | GA | Local transformer model ou OpenAI backends | `scripts/validate-embeddings-local.sh` |
+| `/v1/embeddings` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | GA | Local transformer model ou OpenAI backends | `scripts/validators/validate-embeddings-local.sh` |
 | `/v1/responses` | ✅ | ✅ | ✅ | ✅ | ⚠️ (via chat) | ✅ | Beta | Sem streaming; tools seguem capability do provider/modelo | `scripts/test-responses.sh` |
 | tools/function calling | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Suporte nativo para a maioria dos provedores cloud e locais | - |
-| Smart Routing | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-smart-routing-local.sh` |
-| Multi-Provider | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
-| Provider Registry | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validate-providers-local.sh` |
-| Billing BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | FX rate via env, sem chamada externa | `scripts/validate-billing-brl-local.sh` |
-| Prepaid Wallet BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | Topup mock local; PSP real opt-in | `scripts/validate-prepaid-wallet-local.sh` |
-| Enterprise RAG | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | PDF/DOCX/XLSX opcionais | `scripts/validate-enterprise-rag-local.sh` |
-| Intelligent Cache (exact) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | - | `scripts/validate-intelligent-cache-local.sh` |
-| Intelligent Cache (semantic) | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | Beta (v1.8) | Requer sentence-transformers | `scripts/validate-intelligent-cache-local.sh` |
-| Admin Hybrid Dashboard | ✅ | ✅ | ✅ | ⚠️ (cloud disabled) | ⚠️ (cloud disabled) | ⚠️ (cloud disabled) | GA (v1.8) | API keys mascaradas | `scripts/validate-hybrid-admin-dashboard-local.sh` |
-| Abuse Detection | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA (v1.8) | Dry-run por padrão | `scripts/validate-abuse-protection-local.sh` |
-| Hybrid E2E Validation | ✅ | ✅ | ✅ | ⚠️ (no real calls) | ⚠️ (no real calls) | ⚠️ (no real calls) | GA (v1.8) | Sem cloud real | `scripts/validate-hybrid-platform-e2e-local.sh` |
+| Smart Routing | ✅ | ✅ | ✅ | ✅ (adapter) | ✅ (adapter) | ✅ (adapter) | GA (v1.8) | Cloud disabled por padrão | `scripts/validators/validate-smart-routing-local.sh` |
+| Multi-Provider | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validators/validate-providers-local.sh` |
+| Provider Registry | ✅ | ✅ | ✅ | ⚠️ (disabled default) | ⚠️ (disabled default) | ⚠️ (disabled default) | GA (v1.8) | Cloud disabled por padrão | `scripts/validators/validate-providers-local.sh` |
+| Billing BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | FX rate via env, sem chamada externa | `scripts/validators/validate-billing-brl-local.sh` |
+| Prepaid Wallet BRL | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | Topup mock local; PSP real opt-in | `scripts/validators/validate-prepaid-wallet-local.sh` |
+| Enterprise RAG | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | PDF/DOCX/XLSX opcionais | `scripts/validators/validate-enterprise-rag-local.sh` |
+| Intelligent Cache (exact) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA (v1.8) | - | `scripts/validators/validate-intelligent-cache-local.sh` |
+| Intelligent Cache (semantic) | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ | ❌ | Beta (v1.8) | Requer sentence-transformers | `scripts/validators/validate-intelligent-cache-local.sh` |
+| Admin Hybrid Dashboard | ✅ | ✅ | ✅ | ⚠️ (cloud disabled) | ⚠️ (cloud disabled) | ⚠️ (cloud disabled) | GA (v1.8) | API keys mascaradas | `scripts/validators/validate-hybrid-admin-dashboard-local.sh` |
+| Abuse Detection | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA (v1.8) | Dry-run por padrão | `scripts/validators/validate-abuse-protection-local.sh` |
+| Hybrid E2E Validation | ✅ | ✅ | ✅ | ⚠️ (no real calls) | ⚠️ (no real calls) | ⚠️ (no real calls) | GA (v1.8) | Sem cloud real | `scripts/validators/validate-hybrid-platform-e2e-local.sh` |
 | RAG | ⚠️ (Partial) | ✅ | ✅ | ❌ | ❌ | ❌ | GA | Requer embeddings | `scripts/test-rag.sh` |
-| TTS | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | Via pocket-tts | `scripts/pocket-tts.sh` |
-| billing manual/local | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/run-billing-cycle.sh` |
+| TTS | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | Via pocket-tts | `scripts/dev/pocket-tts.sh` |
+| billing manual/local | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/dev/run-billing-cycle.sh` |
 | PSP/PIX real | ✅ (mock) | ⚠️ (opt-in) | ⚠️ (opt-in) | ❌ | ❌ | ❌ | Partial | `PAYMENT_REAL_ENABLED=false` por padrão; adapter real placeholder | - |
-| Client Portal | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/ui-health.sh` |
-| Admin Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui providers view | `scripts/ui-health.sh` |
-| Admin Lab | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/ui-health.sh` |
-| DR/backup/restore | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/dr-test-local.sh` |
+| Client Portal | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/dev/ui-health.sh` |
+| Admin Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Inclui providers view | `scripts/dev/ui-health.sh` |
+| Admin Lab | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/dev/ui-health.sh` |
+| DR/backup/restore | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/dev/dr-test-local.sh` |
 | upgrade/rollback | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | GA | - | `scripts/upgrade-test.sh` |
-| tenant export/delete | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/export-client-local.sh` |
-| security report | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Não vaza secrets | `scripts/security-report-local.sh` |
-| readiness report | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/production-readiness-local.sh` |
+| tenant export/delete | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/dev/export-client-local.sh` |
+| security report | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | Não vaza secrets | `scripts/validators/security-report-local.sh` |
+| readiness report | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | GA | - | `scripts/dev/production-readiness-local.sh` |
 
 ## Pagina de Capacidades (/capabilities)
 

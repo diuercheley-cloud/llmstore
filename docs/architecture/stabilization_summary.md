@@ -48,14 +48,14 @@ Status: OK
 
 Validadores executados localmente com `python3`:
 
-- `scripts/validate_architecture_boundaries.py`
-- `scripts/validate_runtime_contracts.py`
-- `scripts/validate_domain_contracts.py`
-- `scripts/validate_adrs.py`
-- `scripts/validate_invariants.py`
-- `scripts/validate_claims.py`
-- `scripts/validate_platform_architecture.py`
-- `scripts/validate_phase_66_readiness.py`
+- `scripts/validators/validate_architecture_boundaries.py`
+- `scripts/validators/validate_runtime_contracts.py`
+- `scripts/validators/validate_domain_contracts.py`
+- `scripts/validators/validate_adrs.py`
+- `scripts/validators/validate_invariants.py`
+- `scripts/validators/validate_claims.py`
+- `scripts/validators/validate_platform_architecture.py`
+- `scripts/validators/validate_phase_66_readiness.py`
 
 Nenhum deles depende de SaaS ou servicos externos.
 
@@ -68,13 +68,13 @@ Foi executada a suite direcionada de estabilizacao:
 ```bash
 ./venv/bin/python -m pytest -q \
   tests/architecture/test_domain_boundaries.py \
-  tests/runtime/test_runtime_contract_docs_exist.py \
-  tests/domains/test_domain_contracts.py \
-  tests/docs/test_adrs.py \
-  tests/services/invariants/test_invariants.py \
-  tests/validation/test_platform_architecture_validation.py \
-  tests/compliance/test_claims_policy.py \
-  tests/phases/test_phase_66_readiness.py
+  tests/integration/runtime/test_runtime_contract_docs_exist.py \
+  tests/integration/domains/test_domain_contracts.py \
+  tests/integration/docs/test_adrs.py \
+  tests/unit/services/invariants/test_invariants.py \
+  tests/integration/validation/test_platform_architecture_validation.py \
+  tests/integration/compliance/test_claims_policy.py \
+  tests/integration/phases/test_phase_66_readiness.py
 ```
 
 Resultado:
@@ -126,7 +126,7 @@ Status: OK
 Executado:
 
 ```bash
-python3 scripts/validate_claims.py
+python3 scripts/validators/validate_claims.py
 ```
 
 Resultado:
@@ -163,8 +163,8 @@ Status: OK
 Foi criado apenas o gate:
 
 - `docs/phases/phase_66_readiness_gate.md`
-- `scripts/validate_phase_66_readiness.py`
-- `tests/phases/test_phase_66_readiness.py`
+- `scripts/validators/validate_phase_66_readiness.py`
+- `tests/integration/phases/test_phase_66_readiness.py`
 
 Nenhuma implementacao funcional da Phase 66 foi introduzida.
 

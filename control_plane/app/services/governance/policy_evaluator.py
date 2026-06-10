@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from app.models.commercial_policy_runtime import (
+from app.models.commercial.commercial_policy_runtime import (
     CommercialPolicyEvaluation,
     CommercialPolicyRuntimeBundle,
     CommercialPolicySimulation,

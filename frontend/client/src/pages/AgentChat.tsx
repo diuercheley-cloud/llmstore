@@ -6,7 +6,7 @@ import { AgentSelector } from '../components/chat/AgentSelector';
 import { SessionList } from '../components/chat/SessionList';
 import { MessageList } from '../components/chat/MessageList';
 import { Composer } from '../components/chat/Composer';
-import type { Agent, Session, SessionMessage, ToolActivityItem, ChatAttachment } from '../lib/types';
+import type { Agent, Session, SessionMessage, ToolActivityItem } from '../lib/types';
 
 let activityCounter = 0;
 function nextActivityId(): string {
@@ -30,6 +30,7 @@ export function AgentChat() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runIdRef = useRef<string | null>(null);
+  const connectWebSocketRef = useRef<((runId: string, attempt?: number) => void) | null>(null);
 
   const handleSaveToken = () => {
     const t = token.trim();
@@ -47,7 +48,7 @@ export function AgentChat() {
     try {
       const msgs = await api.getMessages(sessionId);
       setMessages(msgs);
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to load messages');
     }
   }, []);
@@ -74,8 +75,9 @@ export function AgentChat() {
       setStreamActivity([]);
       setRunError(null);
       setMobileSidebarOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create session');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Failed to create session';
+      toast.error(errMsg);
     }
   }, [selectedAgent]);
 
@@ -189,7 +191,7 @@ export function AgentChat() {
         const delay = Math.min(1000 * 2 ** attempt, 10000);
         reconnectTimerRef.current = setTimeout(() => {
           setReconnectCount(c => c + 1);
-          connectWebSocket(runId, attempt + 1);
+          connectWebSocketRef.current?.(runId, attempt + 1);
         }, delay);
       } else if (attempt >= 3) {
         setIsStreaming(false);
@@ -198,7 +200,11 @@ export function AgentChat() {
     };
   }, [processStreamEvent, isStreaming]);
 
-  const handleSend = useCallback(async (text: string, _attachments?: ChatAttachment[]) => {
+  useEffect(() => {
+    connectWebSocketRef.current = connectWebSocket;
+  }, [connectWebSocket]);
+
+  const handleSend = useCallback(async (text: string) => {
     if (!selectedAgent) {
       toast.error('Please select an agent first');
       return;
@@ -225,10 +231,11 @@ export function AgentChat() {
 
       const run = await api.startSessionRun(sessionId, text);
       connectWebSocket(run.run_id);
-    } catch (err: any) {
+    } catch (err) {
       setIsStreaming(false);
-      setRunError(err.message || 'Failed to start run');
-      toast.error(err.message || 'Failed to start run');
+      const errMsg = err instanceof Error ? err.message : 'Failed to start run';
+      setRunError(errMsg);
+      toast.error(errMsg);
     }
   }, [selectedAgent, activeSession, tokenSaved, connectWebSocket]);
 

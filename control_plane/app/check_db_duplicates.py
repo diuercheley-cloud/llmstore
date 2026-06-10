@@ -1,7 +1,7 @@
 import asyncio
 
 from app.db.session import SessionLocal
-from app.models.model_registry import ModelRegistry
+from app.models.core.model_registry import ModelRegistry
 from sqlalchemy import func, select
 
 

@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
-from app.models.quota_counter import QuotaCounter
-from app.models.usage_record import UsageRecord
+from app.models.core.quota_counter import QuotaCounter
+from app.models.core.usage_record import UsageRecord
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

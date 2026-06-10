@@ -18,8 +18,8 @@ The following terms are standardized across the platform to ensure clarity and c
 | `signature_placeholder` | Standard marker for pending signatures. | `app.models.security` |
 | `advisory_only` | Indicates non-blocking mode for guardrails/policies. | `app.services.policy` |
 | `dry_run` | Indicates simulation mode for operations. | `app.services.operations` |
-| `client_id` | Unified identifier for tenants/clients. | `app.models.client` |
+| `client_id` | Unified identifier for tenants/clients. | `app.models.core.client` |
 
 ## Enforcement
-- `scripts/validate_naming_consistency.py`: Checks for legacy or non-standard naming patterns.
+- `scripts/validators/validate_naming_consistency.py`: Checks for legacy or non-standard naming patterns.
 - `tests/architecture/test_naming_consistency.py`: Validates consistency across critical models.

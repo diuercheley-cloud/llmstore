@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 from ..api.dependencies import get_current_client
 from ..db.session import get_db
-from ..models.commercial_witness import CommercialWitness, CommercialWitnessSignature
+from ..models.commercial.commercial_witness import CommercialWitness, CommercialWitnessSignature
 from ..services.inference import witness_federation
 
 router = APIRouter(prefix="/portal/inference", tags=["Witness Federation Portal"])

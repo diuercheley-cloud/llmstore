@@ -10,7 +10,7 @@ from app.services.agents.protocols.base import (
     A2AAgentEndpoint, 
     ProtocolTrustPolicy
 )
-from app.models.agent_mcp_registry import AgentMCPServer
+from app.models.agents.agent_mcp_registry import AgentMCPServer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 

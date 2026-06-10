@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Any, Dict, Optional
 
 from app.core.time import utc_now
-from app.models.agents import AgentStepCacheEntry, AgentTool
+from app.models.agents.agents import AgentStepCacheEntry, AgentTool
 from app.services.agents import agent_state
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select

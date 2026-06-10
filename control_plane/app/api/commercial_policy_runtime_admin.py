@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.db.session import get_db
-from app.models.commercial_policy_runtime import (
+from app.models.commercial.commercial_policy_runtime import (
     CommercialPolicyEvaluation,
     CommercialPolicyViolation,
 )

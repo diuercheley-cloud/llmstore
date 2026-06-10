@@ -21,19 +21,19 @@ make logs
 Subir a stack:
 
 ```bash
-./scripts/up.sh
+./scripts/deploy/up.sh
 ```
 
 Validar saúde:
 
 ```bash
-./scripts/test-health.sh
+./scripts/dev/test-health.sh
 ```
 
 Executar validação completa:
 
 ```bash
-./scripts/validate-e2e.sh
+./scripts/validators/validate-e2e.sh
 ```
 
 ## Backup e restore
@@ -41,7 +41,7 @@ Executar validação completa:
 Backup:
 
 ```bash
-./scripts/backup.sh
+./scripts/backup/backup.sh
 ```
 
 O backup completo inclui:
@@ -56,7 +56,7 @@ O backup completo inclui:
 Restore:
 
 ```bash
-./scripts/restore.sh /caminho/para/backup-dir
+./scripts/backup/restore.sh /caminho/para/backup-dir
 ```
 
 O restore valida `VERSION`, revisão de schema (`alembic`), checksums e exige confirmação explícita. O `.env.local` só é sobrescrito se você confirmar.
@@ -64,7 +64,7 @@ O restore valida `VERSION`, revisão de schema (`alembic`), checksums e exige co
 Teste de disaster recovery:
 
 ```bash
-./scripts/dr-test.sh /caminho/para/backup-dir
+./scripts/dev/dr-test.sh /caminho/para/backup-dir
 ```
 
 O script sobe uma stack temporária isolada, restaura o backup, valida `health` e `ready`, roda um chat de teste e grava um relatório em `artifacts/dr-tests/`.
@@ -74,19 +74,19 @@ O script sobe uma stack temporária isolada, restaura o backup, valida `health` 
 Para testar o stack como se estivesse em um ambiente de produção real (com landing page, pricing e portal amigável):
 
 ```bash
-./scripts/local-production-up.sh
+./scripts/dev/local-production-up.sh
 ```
 
 Este script configura a stack, garante que o cliente `demo-client` exista e gera um resumo em `artifacts/local-production/`.
 
 ### Saúde da UI
 ```bash
-./scripts/ui-health.sh
+./scripts/dev/ui-health.sh
 ```
 
 ### Smoke Test Completo
 ```bash
-./scripts/local-production-smoke.sh [SUA_API_KEY]
+./scripts/validators/local-production-smoke.sh [SUA_API_KEY]
 ```
 
 ### Circuit Breaker
@@ -94,7 +94,7 @@ Este script configura a stack, garante que o cliente `demo-client` exista e gera
 Reset explícito do circuit breaker do data plane:
 
 ```bash
-./scripts/reset-circuit-breaker.sh
+./scripts/dev/reset-circuit-breaker.sh
 ```
 
 O circuit breaker fica em memória dentro do processo `control-plane`. Reiniciar o container `control-plane` também limpa esse estado.
@@ -127,19 +127,19 @@ git config core.hooksPath .githooks
 Criar plano:
 
 ```bash
-./scripts/create-plan.sh business-local "Business Local"
+./scripts/dev/create-plan.sh business-local "Business Local"
 ```
 
 Criar cliente:
 
 ```bash
-./scripts/create-client.sh cliente-acme "tenant comercial"
+./scripts/dev/create-client.sh cliente-acme "tenant comercial"
 ```
 
 Criar cliente demo com portal:
 
 ```bash
-./scripts/create-customer-demo.sh cliente-demo "cliente piloto" basic
+./scripts/dev/create-customer-demo.sh cliente-demo "cliente piloto" basic
 ```
 
 ## Portais
@@ -188,7 +188,7 @@ Para expor o `llm-inference-stack` para a internet com segurança:
 
 Você pode usar o script auxiliar:
 ```bash
-./scripts/expose-local.sh
+./scripts/dev/expose-local.sh
 ```
 
 ### Riscos
@@ -244,7 +244,7 @@ Rotacionar `ADMIN_TOKEN`:
 ## Limpeza de ambiente local
 
 ```bash
-./scripts/reset-dev.sh
+./scripts/dev/reset-dev.sh
 ```
 
 O script pede confirmação antes de remover volumes, artefatos e opcionalmente `.env` e modelos.

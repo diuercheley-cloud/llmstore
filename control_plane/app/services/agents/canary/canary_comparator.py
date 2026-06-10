@@ -1,8 +1,8 @@
 # Owner: agent-platform
 import uuid
 
-from app.models.agent_canary import AgentCanaryComparison, AgentShadowRun
-from app.models.agents import AgentRun
+from app.models.agents.agent_canary import AgentCanaryComparison, AgentShadowRun
+from app.models.agents.agents import AgentRun
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

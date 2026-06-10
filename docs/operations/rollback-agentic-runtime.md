@@ -13,7 +13,7 @@ To provide a fast and secure method to halt agentic operations without data loss
 ## Execution
 Run the rollback script:
 ```bash
-./scripts/rollback-agentic-runtime.sh
+./scripts/dev/rollback-agentic-runtime.sh
 ```
 
 ## State Changes

@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.models.commercial_enterprise_onboarding import (
+from app.models.commercial.commercial_enterprise_onboarding import (
     EnterpriseCustomer,
     EnterpriseHandoverReport,
     EnterpriseOnboardingProject,

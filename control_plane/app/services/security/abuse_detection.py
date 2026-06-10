@@ -7,9 +7,9 @@ import uuid
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.abuse_action import AbuseAction
-from app.models.abuse_event import AbuseEvent
-from app.models.client import Client
+from app.models.core.abuse_action import AbuseAction
+from app.models.core.abuse_event import AbuseEvent
+from app.models.core.client import Client
 from redis.asyncio import Redis
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession

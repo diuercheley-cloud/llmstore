@@ -5,7 +5,7 @@ import uuid
 from decimal import Decimal
 
 from app.core.time import utc_now
-from app.models.ai_wallet import AiWallet, AiWalletTransaction
+from app.models.billing.ai_wallet import AiWallet, AiWalletTransaction
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

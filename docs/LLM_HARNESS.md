@@ -580,7 +580,7 @@ The `Sanitizer` automatically redacts sensitive information from logs and report
 ## Release Gate
 
 The release gate ensures the harness meets production core standards. It checks for:
-- Successful validation (`scripts/validate-llm-harness.sh`).
+- Successful validation (`scripts/validators/validate-llm-harness.sh`).
 - Type check completeness.
 - Secrets redaction verification.
 - Documentation presence.
@@ -628,7 +628,7 @@ export LLM_HARNESS_LOCAL_BASE_URL="http://localhost:11434/v1"
 export LLM_HARNESS_LOCAL_MODEL="llama3"
 export LLM_HARNESS_LOCAL_API_KEY="optional-key"
 
-./scripts/validate-local-llm-harness-env.sh
+./scripts/validators/validate-local-llm-harness-env.sh
 make integration-local-llm-harness
 ```
 
@@ -644,8 +644,8 @@ When using LM Studio interactively, prefer `local-openai-compatible` instead of 
 ### Path Filtering
 To optimize CI resources, the harness workflow only runs when changes are detected in:
 - `scripts/llm_harness/**`
-- `tests/llm_harness/**`
-- `scripts/validate-llm-harness.sh`
+- `tests/integration/llm_harness/**`
+- `scripts/validators/validate-llm-harness.sh`
 - `pyproject.toml`
 - `docs/LLM_HARNESS.md`
 - `examples/llm_harness/**`

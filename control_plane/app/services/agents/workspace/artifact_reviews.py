@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from app.core.time import utc_now
-from app.models.agent_workspace import (
+from app.models.agents.agent_workspace import (
     AgentArtifactComment,
     AgentArtifactEvent,
     AgentArtifactReview,

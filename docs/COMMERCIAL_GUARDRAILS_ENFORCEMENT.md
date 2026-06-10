@@ -127,9 +127,9 @@ A integração real acontece antes da seleção final da rota em `model_policy.p
   tests/test_commercial_guardrails_enforcement.py \
   tests/test_margin_dashboard_admin_api.py
 
-bash -n scripts/validate-commercial-enforcement.sh
-bash -n scripts/validate-commercial-guardrails.sh
-bash -n scripts/validate-margin-dashboard.sh
+bash -n scripts/validators/validate-commercial-enforcement.sh
+bash -n scripts/validators/validate-commercial-guardrails.sh
+bash -n scripts/validators/validate-margin-dashboard.sh
 make validate-commercial-enforcement
 ```
 

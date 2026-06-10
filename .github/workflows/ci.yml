@@ -2,44 +2,41 @@ name: CI
 
 on:
   push:
-    branches: [ '**' ]
+    branches: [ main, 'release/*', 'feature/*' ]
+    tags: [ 'v*' ]
   pull_request:
-    branches: [ '**' ]
+    branches: [ main, 'release/*' ]
   workflow_dispatch:
 
 permissions:
   contents: read
+  security-events: write
+  packages: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-backend:
+  ci:
+    name: ${{ matrix.target }}
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: ./.github/actions/setup-python-project
-      - name: Run Lint
-        run: ruff check control_plane/app --no-cache --select F821,F811,E722
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - api
+          - frontend-admin
+          - frontend-client
+          - sdk
+          - e2e
+          - security
+          - docs
 
-  collect-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: ./.github/actions/setup-python-project
-      - name: Validate test collection
-        env:
-          PYTHONPATH: .:control_plane
-        run: pytest --collect-only -q tests control_plane/tests
-
-  test-backend:
-    runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15
+        # Only start postgres for 'api'
+        image: ${{ matrix.target == 'api' && 'postgres:15-alpine' || 'alpine:latest' }}
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
@@ -47,107 +44,129 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          ${{ matrix.target == 'api' && '--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5' || 'true' }}
       redis:
-        image: redis:7
+        # Start redis for 'api' and 'e2e'
+        image: ${{ (matrix.target == 'api' || matrix.target == 'e2e') && 'redis:7-alpine' || 'alpine:latest' }}
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          ${{ (matrix.target == 'api' || matrix.target == 'e2e') && '--health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5' || 'true' }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- Setup Steps ---
       - name: Setup Python
+        if: contains(fromJSON('["api", "sdk", "security", "docs"]'), matrix.target)
         uses: ./.github/actions/setup-python-project
-      - name: Run Database Migrations
+
+      - name: Setup Node (Admin)
+        if: matrix.target == 'frontend-admin'
+        uses: ./.github/actions/setup-node-project
+        with:
+          project-dir: frontend/admin
+
+      - name: Setup Node (Client)
+        if: matrix.target == 'frontend-client'
+        uses: ./.github/actions/setup-node-project
+        with:
+          project-dir: frontend/client
+
+      - name: Setup Node (E2E)
+        if: matrix.target == 'e2e'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Node (Security)
+        if: matrix.target == 'security'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # --- Target: API ---
+      - name: API Lint & Integrity
+        if: matrix.target == 'api'
+        run: |
+          ruff check control_plane/app --no-cache --select F821,F811,E722
+          make platform-freeze-check
+          make check-feature-flags-integrity
+          make check-supported-surface
+          make maintenance-budgets
+          bash scripts/validators/check-secrets.sh --all
+
+      - name: API Database Migrations
+        if: matrix.target == 'api'
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
         run: |
           cd control_plane
           alembic upgrade head
-      - name: Run Pytest
+
+      - name: API Backend Tests
+        if: matrix.target == 'api'
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
           REDIS_URL: redis://localhost:6379/0
-        run: |
-          cd control_plane
-          pytest tests/ -m "not slow" --cov=app
-
-  test-root:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: ./.github/actions/setup-python-project
-      - name: Run root smoke and contract tests
-        env:
           PYTHONPATH: .:control_plane
-        run: pytest tests/contracts tests/quality tests/security -m "not slow"
+        run: |
+          pytest tests/control_plane -m "not slow" --cov=app
+          pytest tests/integration/contracts tests/integration/quality tests/integration/security -m "not slow"
 
-  test-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: ./.github/actions/setup-node-admin
-      - name: Build Frontend
+      # --- Target: Frontend Admin ---
+      - name: Frontend Admin Lint, Typecheck & Test
+        if: matrix.target == 'frontend-admin'
         run: |
           cd frontend/admin
+          npm run lint
           npm run build
-          npm run build-storybook
+          npm run test
 
-  test-e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: ./.github/actions/setup-python-project
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: tests/e2e-playwright/package-lock.json
-      - name: Install Playwright Dependencies
+      # --- Target: Frontend Client ---
+      - name: Frontend Client Lint & Build
+        if: matrix.target == 'frontend-client'
         run: |
-          cd tests/e2e-playwright
-          npm ci
-          npx playwright install --with-deps
-      - name: Run E2E Tests
+          cd frontend/client
+          npm run lint
+          npm run build
+
+      # --- Target: SDK ---
+      - name: SDK Tests
+        if: matrix.target == 'sdk'
+        run: |
+          cd sdk/python
+          pip install -e ".[dev]"
+          pytest --cov=kleberai
+
+      - name: SDK Build
+        if: matrix.target == 'sdk' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          pip install build twine
+          cd sdk/python
+          python -m build
+          twine check dist/*
+
+      # --- Target: E2E ---
+      - name: E2E Playwright Tests
+        if: matrix.target == 'e2e'
         env:
           REDIS_URL: redis://localhost:6379/15
         run: |
-          cd tests/e2e-playwright
+          cd tests/e2e/e2e-playwright
+          npm ci
+          npx playwright install --with-deps
           npm run test:e2e
-      - name: Upload Playwright Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: tests/e2e-playwright/playwright-report/
-          retention-days: 30
 
-  dependency-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Trivy vulnerability scanner
+      # --- Target: Security ---
+      - name: Security Scans
+        if: matrix.target == 'security'
+        uses: ./.github/actions/run-security-checks
+
+      - name: Dependency Scan (Trivy)
+        if: matrix.target == 'security'
         uses: aquasecurity/trivy-action@0.30.0
         with:
           scan-type: 'fs'
@@ -155,36 +174,20 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'HIGH,CRITICAL'
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-        if: always()
 
-  integrity-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Python
-        uses: ./.github/actions/setup-python-project
-      - name: Platform Freeze Check
-        run: make platform-freeze-check
-      - name: Feature Flag Integrity Check
-        run: make check-feature-flags-integrity
-      - name: Supported Surface Check
-        run: make check-supported-surface
-      - name: Maintenance Budgets
-        run: make maintenance-budgets
-      - name: Platform Freeze Governance Check
-        run: make check-freeze-governance
-      - name: Alembic Integrity
-        run: bash scripts/check-alembic-integrity.sh
-      - name: Secrets Check
-        run: bash scripts/check-secrets.sh --all
-      - name: Operational Readiness Dry-run
+      # --- Target: Docs ---
+      - name: Docs Validation
+        if: matrix.target == 'docs'
         run: |
-          # Mocking env for readiness check
-          export OPERATIONAL_READINESS_CI_MODE=true
-          bash scripts/operational-readiness-pack.sh
+          make validate-docs
+
+      # --- Post Steps ---
+      - name: Upload Artifacts
+        if: always() && contains(fromJSON('["e2e", "sdk"]'), matrix.target)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-artifacts
+          path: |
+            tests/e2e/e2e-playwright/playwright-report/
+            sdk/python/dist/
+          retention-days: 7

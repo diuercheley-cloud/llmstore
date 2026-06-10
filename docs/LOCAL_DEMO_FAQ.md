@@ -30,7 +30,7 @@ O sistema contabiliza o uso de tokens por cliente e gera faturas mensalmente (ou
 O isolamento é feito através de API Keys vinculadas a Client IDs. Cada cliente possui suas próprias cotas de tokens, limites de taxa (rate limiting) e base de documentos RAG isolada.
 
 ### Como faço backup dos dados?
-O projeto inclui scripts de backup (`./scripts/backup-local.sh`) que realizam o dump do banco de dados PostgreSQL e preservam as configurações da stack.
+O projeto inclui scripts de backup (`./scripts/backup/backup-local.sh`) que realizam o dump do banco de dados PostgreSQL e preservam as configurações da stack.
 
 ### Como posso escalar o sistema no futuro?
 Embora esta demo seja local, a arquitetura foi desenhada para ser escalável. Você pode mover o Control Plane para uma VM e ter múltiplos Data Planes (nós de inferência) distribuídos, gerenciados pelo mesmo painel central.

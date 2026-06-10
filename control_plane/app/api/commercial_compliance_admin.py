@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.db.session import get_db_session
-from app.models.commercial_compliance import (
+from app.models.commercial.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlAttestation,
     CommercialControlException,

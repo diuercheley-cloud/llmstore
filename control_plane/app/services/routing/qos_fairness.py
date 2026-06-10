@@ -5,9 +5,9 @@ from typing import Any, Dict, List
 import numpy as np
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial_qos_tier import CommercialQoSTier
-from app.models.commercial_queue_metric import CommercialQueueMetric
-from app.models.generation_job import GenerationJob
+from app.models.commercial.commercial_qos_tier import CommercialQoSTier
+from app.models.commercial.commercial_queue_metric import CommercialQueueMetric
+from app.models.core.generation_job import GenerationJob
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

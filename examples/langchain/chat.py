@@ -30,7 +30,7 @@ def main():
         print(response.content)
     except Exception as e:
         print(f"\nErro ao conectar: {e}")
-        print("Certifique-se de que a stack está rodando (scripts/up.sh).")
+        print("Certifique-se de que a stack está rodando (scripts/deploy/up.sh).")
 
 if __name__ == "__main__":
     main()

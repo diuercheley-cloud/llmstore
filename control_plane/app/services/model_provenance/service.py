@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from app.models.model_provenance import ModelProvenanceRecord
+from app.models.core.model_provenance import ModelProvenanceRecord
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

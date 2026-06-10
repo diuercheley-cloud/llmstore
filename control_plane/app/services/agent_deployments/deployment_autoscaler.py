@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
+from app.models.agents.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

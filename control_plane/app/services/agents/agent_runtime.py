@@ -173,7 +173,7 @@ async def resume_run(
         raise ValueError(f"Cannot resume a run that is not paused or waiting approval. Status: {run.status}")
 
     if run.status == "waiting_approval":
-        from app.models.agents import AgentApprovalRequest
+        from app.models.agents.agents import AgentApprovalRequest
         from sqlalchemy import select
         stmt = select(AgentApprovalRequest).where(
             AgentApprovalRequest.agent_run_id == run_id,
@@ -198,7 +198,7 @@ async def resume_run_internal(
 
     settings = get_settings()
     if settings.agent_async_execution_enabled:
-        from app.models.agent_execution import AgentExecutionJob
+        from app.models.agents.agent_execution import AgentExecutionJob
         from sqlalchemy import select
         stmt = select(AgentExecutionJob).where(AgentExecutionJob.agent_run_id == run_id)
         res = await db.execute(stmt)

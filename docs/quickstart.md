@@ -128,8 +128,8 @@ print(f"Deployment active: {deployment['status']}")
 
 ## Next Steps
 
-- [Agent Studio Guide](agents/studio.md) - Visual flow builder
-- [Tool Development](agents/tools.md) - Custom tool creation
+- [Agent Studio Guide](agents/agent-studio.md) - Visual flow builder
+- [Tool Development](agents/tool-adapters.md) - Custom tool creation
 - [Agent Memory](agents/memory.md) - Memory configuration
-- [Production Deployment](agents/deployment.md) - Scaling and monitoring
-- [API Reference](api/) - Full API documentation
+- [Production Deployment](agents/agentic-deployment.md) - Scaling and monitoring
+- [API Reference](API_REFERENCE.md) - Full API documentation

@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.agent_events import AgentEventDelivery, AgentEventTrigger
+from app.models.agents.agent_events import AgentEventDelivery, AgentEventTrigger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +31,7 @@ async def check_policy(db: AsyncSession, trigger: AgentEventTrigger) -> bool:
 
     # Check budget: aggregate cost of runs initiated by this trigger
     if trigger.budget:
-        from app.models.agents import AgentRun
+        from app.models.agents.agents import AgentRun
         stmt = (
             select(func.sum(AgentRun.estimated_cost_brl))
             .join(AgentEventDelivery, AgentEventDelivery.agent_run_id == AgentRun.id)

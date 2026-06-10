@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.agents import AgentToolInvocation
+from app.models.agents.agents import AgentToolInvocation
 from app.services.agents import tool_registry as tool_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -380,7 +380,7 @@ async def list_side_effects(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Retrieves captured side effects."""
-    from app.models.agent_tool_execution import AgentToolSideEffect
+    from app.models.agents.agent_tool_execution import AgentToolSideEffect
     stmt = (
         select(AgentToolSideEffect)
         .where(AgentToolSideEffect.tenant_id == tenant_id)
@@ -414,7 +414,7 @@ async def list_credentials(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Lists registered credentials in masked format."""
-    from app.models.agent_tool_execution import AgentToolCredential
+    from app.models.agents.agent_tool_execution import AgentToolCredential
     stmt = (
         select(AgentToolCredential)
         .where(AgentToolCredential.tenant_id == tenant_id)
@@ -524,7 +524,7 @@ async def list_quotas(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Retrieves daily quota usage counters."""
-    from app.models.agent_tool_execution import AgentToolQuotaCounter
+    from app.models.agents.agent_tool_execution import AgentToolQuotaCounter
     stmt = (
         select(AgentToolQuotaCounter)
         .where(AgentToolQuotaCounter.tenant_id == tenant_id)

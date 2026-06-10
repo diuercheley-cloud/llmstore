@@ -7,7 +7,7 @@ status: consolidated
 
 ## Instruções
 
-Para cada tela abaixo, capture uma imagem demonstrando a funcionalidade descrita. Use o script `scripts/prepare-demo-screenshots-local.sh` para captura automatizada, ou capture manualmente com ferramenta de sua escolha.
+Para cada tela abaixo, capture uma imagem demonstrando a funcionalidade descrita. Use o script `scripts/dev/prepare-demo-screenshots-local.sh` para captura automatizada, ou capture manualmente com ferramenta de sua escolha.
 
 Coloque os screenshots em `artifacts/demo-screenshots/<timestamp>/`.
 
@@ -76,7 +76,7 @@ Coloque os screenshots em `artifacts/demo-screenshots/<timestamp>/`.
 
 ## Pós-captura
 
-- [ ] Rodar `scripts/validate-demo-visual-guide.sh`
+- [ ] Rodar `scripts/validators/validate-demo-visual-guide.sh`
 - [ ] Verificar se nenhuma imagem contém secrets reais
 - [ ] Verificar se placeholders não contêm dados sensíveis
 - [ ] Confirmar que `artifacts/demo-screenshots/` está no `.gitignore`

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.mlops import MLExperiment, MLExperimentRun
+from app.models.core.mlops import MLExperiment, MLExperimentRun
 from app.services.mlops.dataset_registry import log_mlops_audit
 from fastapi import HTTPException
 from sqlalchemy import select

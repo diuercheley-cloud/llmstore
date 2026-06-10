@@ -8,8 +8,8 @@ from datetime import timedelta
 from app.core.config import get_settings
 from app.core.metrics import record_cache_result
 from app.core.time import utc_now
-from app.models.request_log import RequestLog
-from app.models.response_cache import ResponseCache
+from app.models.core.request_log import RequestLog
+from app.models.core.response_cache import ResponseCache
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
