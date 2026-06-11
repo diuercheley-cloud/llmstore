@@ -16,7 +16,9 @@ from app.db.session import get_db, get_db_session, get_redis
 from app.models.core.client import Client
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_registry import ModelRegistry
+from app.services.inference.backend_router import UniversalInferenceRouter
 from app.services.auth import require_admin
+from app.services.config_service import ConfigService
 from app.services.generation_jobs import get_admin_job_snapshot
 from app.services.inference_proxy import InferenceProxy
 from app.services.security_monitor import observe_billing_status_metrics
@@ -29,6 +31,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 settings = get_settings()
+
+
+@router.get("/api/system/profile", tags=["system"])
+async def get_system_profile() -> Dict[str, Any]:
+    """Return the active operational profile and its capability posture."""
+    return ConfigService.get_instance().get_profile_summary()
+
+
+@router.get("/api/backends/capabilities", tags=["system"])
+async def get_backend_capabilities(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    proxy: Annotated[InferenceProxy, Depends(get_inference_proxy)],
+) -> dict[str, Any]:
+    backends = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
+    router = UniversalInferenceRouter(proxy)
+    reports = [await router.report_for(backend) for backend in backends]
+    return {
+        "backends": [report.model_dump() for report in reports],
+        "summary": {
+            "total": len(reports),
+            "healthy": sum(1 for report in reports if report.health.get("ok") is True or report.health.get("status") in {"healthy", "degraded"}),
+            "streaming": sum(1 for report in reports if report.capabilities.streaming),
+            "embeddings": sum(1 for report in reports if report.capabilities.embeddings),
+            "tool_calling": sum(1 for report in reports if report.capabilities.tool_calling),
+            "vision": sum(1 for report in reports if report.capabilities.vision),
+            "batching": sum(1 for report in reports if report.capabilities.batching),
+        },
+    }
 
 
 def get_git_commit():
@@ -860,6 +890,11 @@ async def metrics():
     if not getattr(current_settings, "observability_enabled", True):
         logging.warning("Metrics unavailable: observability is disabled in settings")
         return Response(content="metrics unavailable", status_code=503)
+    try:
+        from app.core.metrics import update_dynamic_backup_metrics
+        update_dynamic_backup_metrics()
+    except Exception as e:
+        logging.error(f"Failed to update dynamic backup metrics: {e}")
     try:
         data = generate_latest()
         return Response(data, media_type=CONTENT_TYPE_LATEST)

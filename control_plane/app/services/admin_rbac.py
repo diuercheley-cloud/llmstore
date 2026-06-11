@@ -8,16 +8,15 @@ from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix, verify_secret
 from app.core.time import utc_now
 from app.models.core.admin_rbac import (
-    AdminAuditEvent,
     AdminPermission,
     AdminRoleModel,
     AdminRolePermission,
     AdminUser,
     AdminUserRole,
 )
+from app.storage import AdminAuditRecord, resolve_storage_backend
 from fastapi import HTTPException, Request, status
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -99,9 +98,12 @@ READ_METHODS = {"GET", "HEAD", "OPTIONS"}
 DELETE_PERMISSIONS = {"clients", "rag"}
 
 
+from app.domains.auth.contracts import UserData
+from app.domains.auth.repositories import SqlAlchemyAuthRepository
+
 @dataclass
 class AuthenticatedAdmin:
-    user: AdminUser
+    user: UserData
     role_names: list[str]
     permission_codes: set[str]
     token_prefix: str
@@ -254,30 +256,17 @@ async def authenticate_admin_token(
 ) -> AuthenticatedAdmin | None:
     if not token:
         return None
-    result = await session.execute(
-        select(AdminUser)
-        .options(
-            selectinload(AdminUser.roles)
-            .selectinload(AdminUserRole.role)
-            .selectinload(AdminRoleModel.permissions)
-            .selectinload(AdminRolePermission.permission)
-        )
-        .where(AdminUser.token_prefix == short_prefix(token), AdminUser.is_active == True)
-        .order_by(AdminUser.created_at.desc())
-    )
-    for user in result.scalars().all():
-        if verify_secret(token, user.token_hash):
-            permissions = set()
-            role_names = []
-            for user_role in user.roles:
-                role_names.append(user_role.role.name)
-                for role_permission in user_role.role.permissions:
-                    permissions.add(role_permission.permission.code)
+    
+    repo = SqlAlchemyAuthRepository(session)
+    users = await repo.get_user_by_token_prefix(short_prefix(token))
+    
+    for user in users:
+        if user.token_hash and verify_secret(token, user.token_hash):
             return AuthenticatedAdmin(
                 user=user,
-                role_names=sorted(set(role_names)),
-                permission_codes=permissions,
-                token_prefix=user.token_prefix,
+                role_names=sorted(set(user.roles)),
+                permission_codes=set(user.permissions),
+                token_prefix=user.token_prefix or "",
             )
     return None
 
@@ -295,7 +284,8 @@ async def record_admin_audit_event(
     metadata: dict[str, Any] | list[Any] | None = None,
 ) -> None:
     source_ip = getattr(request.state, "source_ip", None) if request is not None else None
-    event = AdminAuditEvent(
+    backend = resolve_storage_backend(session)
+    event = AdminAuditRecord(
         admin_user_id=admin.user.id if admin is not None else None,
         event_type=event_type,
         status=status,
@@ -308,13 +298,7 @@ async def record_admin_audit_event(
         actor_identifier=actor_identifier or (admin.user.username if admin is not None else None),
         metadata_json=metadata,
     )
-    session.add(event)
-    try:
-        await session.commit()
-    except SQLAlchemyError:
-        # Authentication and authorization decisions must not become 500s
-        # when the append-only audit sink is temporarily unavailable.
-        await session.rollback()
+    await backend.audit_store.record_admin_event(event, auto_commit=True)
 
 
 async def authenticate_admin_request(
@@ -336,7 +320,8 @@ async def authenticate_admin_request(
         )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
 
-    admin.user.last_login_at = utc_now()
+    repo = SqlAlchemyAuthRepository(session)
+    await repo.update_last_login(admin.user.id)
     await session.commit()
     if log_success and not getattr(request.state, "admin_auth_audit_logged", False):
         await record_admin_audit_event(

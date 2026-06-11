@@ -1,0 +1,196 @@
+name: Backup & Disaster Recovery (DR)
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # 4 AM daily
+  workflow_dispatch:
+    inputs:
+      engine:
+        description: 'Database engine to verify (sqlite, postgres, or all)'
+        required: true
+        default: 'all'
+
+permissions:
+  contents: read
+  packages: write
+  actions: write
+
+jobs:
+  dr-scenarios:
+    name: DR Scenarios (SQLite + Postgres)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: llm_inference_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+
+      - name: Database Migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+        run: |
+          cd control_plane
+          alembic upgrade head
+
+      - name: Run DR Scenarios (SQLite)
+        env:
+          PYTHONPATH: .:control_plane
+          BACKUP_RESTORE_ENABLED: "true"
+          PYTEST_ADDOPTS: "-m backup_dr"
+        run: |
+          mkdir -p artifacts/dr-reports
+          uv run pytest tests/backup_dr/ -v --durations=0 \
+            -k "sqlite" \
+            --junitxml=artifacts/dr-reports/dr-sqlite-results.xml
+
+      - name: Run DR Scenarios (Postgres)
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+          BACKUP_TEST_POSTGRES_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+          PYTHONPATH: .:control_plane
+          BACKUP_RESTORE_ENABLED: "true"
+          PYTEST_ADDOPTS: "-m backup_dr"
+        run: |
+          uv run pytest tests/backup_dr/test_dr_scenarios.py -v --durations=0 \
+            -k "postgres" \
+            --junitxml=artifacts/dr-reports/dr-postgres-results.xml
+
+      - name: Run Controlled Failure Scenarios
+        env:
+          PYTHONPATH: .:control_plane
+          BACKUP_RESTORE_ENABLED: "true"
+          PYTEST_ADDOPTS: "-m backup_dr"
+        run: |
+          uv run pytest tests/backup_dr/ -v --durations=0 \
+            -k "corruption or path_traversal or key_loss or concurrency" \
+            --junitxml=artifacts/dr-reports/dr-failure-results.xml
+
+      - name: Run Rollback Verification
+        env:
+          PYTHONPATH: .:control_plane
+          BACKUP_RESTORE_ENABLED: "true"
+          PYTEST_ADDOPTS: "-m backup_dr"
+        run: |
+          uv run pytest tests/backup_dr/test_dr_scenarios.py::test_dr_rollback_on_failure -v \
+            --junitxml=artifacts/dr-reports/dr-rollback-results.xml
+
+      - name: Generate Consolidated DR Report
+        run: |
+          python3 -c "
+          import json, os, xml.etree.ElementTree as ET
+          from datetime import datetime
+          from pathlib import Path
+
+          report_dir = Path('artifacts/dr-reports')
+          report_dir.mkdir(parents=True, exist_ok=True)
+
+          scenarios = []
+          for f in sorted(report_dir.glob('*.xml')):
+              try:
+                  tree = ET.parse(f)
+                  root = tree.getroot()
+                  for ts in root.findall('.//testsuite'):
+                      name = ts.get('name', f.stem)
+                      tests = int(ts.get('tests', 0))
+                      failures = int(ts.get('failures', 0))
+                      errors = int(ts.get('errors', 0))
+                      scenarios.append({
+                          'suite': name,
+                          'tests': tests,
+                          'failures': failures,
+                          'errors': errors,
+                          'passed': tests - failures - errors,
+                          'status': 'failed' if failures + errors > 0 else 'passed',
+                      })
+              except Exception as e:
+                  scenarios.append({
+                      'suite': f.name,
+                      'error': str(e),
+                      'status': 'error',
+                  })
+
+          yaml_reports = list(report_dir.glob('dr_report_*.yaml'))
+          for f in yaml_reports:
+              import yaml
+              with open(f) as yf:
+                  data = yaml.safe_load(yf)
+                  if data and data.get('status') == 'failed':
+                      for s in scenarios:
+                          if data.get('scenario') in s.get('suite', ''):
+                              s['status'] = 'failed'
+                              s['details'] = data.get('details', {})
+                              break
+
+          report = {
+              'generated_at': datetime.utcnow().isoformat(),
+              'workflow': os.environ.get('GITHUB_WORKFLOW', 'manual'),
+              'run_id': os.environ.get('GITHUB_RUN_ID', 'local'),
+              'summary': {
+                  'total_scenarios': len(scenarios),
+                  'passed': sum(1 for s in scenarios if s['status'] == 'passed'),
+                  'failed': sum(1 for s in scenarios if s['status'] == 'failed'),
+                  'errors': sum(1 for s in scenarios if s['status'] == 'error'),
+              },
+              'scenarios': scenarios,
+          }
+
+          report_path = report_dir / 'backup_dr_report.json'
+          report_path.write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          "
+
+      - name: Upload DR Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr-recovery-reports
+          path: |
+            artifacts/dr-reports/
+          retention-days: 90
+
+      - name: Generate DR Summary
+        if: always()
+        run: |
+          echo "## Disaster Recovery Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          report_file="artifacts/dr-reports/backup_dr_report.json"
+          if [ -f "$report_file" ]; then
+            python3 -c "
+            import json
+            with open('$report_file') as f:
+                r = json.load(f)
+            s = r['summary']
+            print(f'**Total scenarios:** {s[\"total_scenarios\"]}  ')
+            print(f'**Passed:** {s[\"passed\"]}  ')
+            print(f'**Failed:** {s[\"failed\"]}  ')
+            print(f'**Errors:** {s[\"errors\"]}  ')
+            print()
+            print('| Suite | Tests | Status |')
+            print('| --- | --- | --- |')
+            for sc in r['scenarios']:
+                icon = '✅' if sc['status'] == 'passed' else '❌'
+                tests = sc.get('tests', '?')
+                print(f'| {sc[\"suite\"]} | {tests} | {icon} {sc[\"status\"]} |')
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No DR report found." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -2,54 +2,28 @@ import uuid
 
 from app.models.core.client import Client
 from app.models.core.client_feature_block import ClientFeatureBlock
-from app.models.rag.rag_document import RAGDocument
-from app.models.rag.rag_usage_event import RagUsageEvent
+from app.storage import resolve_storage_backend
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.quota import month_start
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_rag_usage_and_limits(session: AsyncSession, client: Client):
     effective_plan = await resolve_effective_plan_for_session(session, client)
-    
-    # Get current doc count and storage
-    docs_result = await session.execute(
-        select(
-            func.count(RAGDocument.id).label("doc_count"),
-            func.sum(RAGDocument.file_size_bytes).label("storage_bytes")
-        ).where(RAGDocument.client_id == client.id)
-    )
-    docs_row = docs_result.mappings().first()
-    doc_count = docs_row["doc_count"] or 0
-    storage_bytes = docs_row["storage_bytes"] or 0
+
+    backend = resolve_storage_backend(session)
+    summary = await backend.document_store.summarize_rag_documents(client.id)
+    doc_count = summary["documents_count"]
+    storage_bytes = summary["storage_bytes"]
     storage_mb = storage_bytes / (1024 * 1024)
 
-    # Get monthly usage (queries and pages)
     from datetime import date
     start_of_month = month_start(date.today())
-    
-    usage_result = await session.execute(
-        select(
-            RagUsageEvent.event_type,
-            func.sum(RagUsageEvent.quantity).label("total_quantity")
-        ).where(
-            RagUsageEvent.client_id == client.id,
-            RagUsageEvent.created_at >= start_of_month
-        ).group_by(RagUsageEvent.event_type)
-    )
-    
-    pages_processed = 0
-    queries_count = 0
-    tokens_used = 0
-    
-    for row in usage_result.mappings():
-        if row["event_type"] == "pages_processed":
-            pages_processed = row["total_quantity"]
-        elif row["event_type"] == "rag_query":
-            queries_count = row["total_quantity"]
-        elif row["event_type"] == "rag_query_tokens":
-            tokens_used = row["total_quantity"]
+    usage_summary = await backend.document_store.summarize_rag_usage_events(client.id, since=start_of_month)
+    pages_processed = usage_summary.get("pages_processed", 0)
+    queries_count = usage_summary.get("rag_query", 0)
+    tokens_used = usage_summary.get("rag_query_tokens", 0)
 
     # Check if blocked
     block_result = await session.execute(
@@ -105,14 +79,13 @@ async def record_rag_event(
     tokens: int | None = None,
     metadata_json: dict | None = None
 ):
-    event = RagUsageEvent(
+    backend = resolve_storage_backend(session)
+    await backend.document_store.add_rag_usage_event(
         client_id=client_id,
         event_type=event_type,
         quantity=quantity,
         document_id=document_id,
         storage_bytes=storage_bytes,
         tokens=tokens,
-        metadata_json=metadata_json
+        metadata_json=metadata_json,
     )
-    session.add(event)
-    await session.flush()

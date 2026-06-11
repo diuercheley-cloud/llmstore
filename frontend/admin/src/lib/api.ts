@@ -209,6 +209,13 @@ class APIClient {
   approveWinner = (id: string) => this.request<any>('POST', `/admin/agents/optimization/tournaments/${id}/approve-winner`)
   applyWinner = (id: string) => this.request<any>('POST', `/admin/agents/optimization/tournaments/${id}/apply-winner`)
 
+  // Agent Evaluation Framework
+  listAgentBenchmarks = () => this.request<any[]>('GET', '/admin/evaluation/agent-evaluation/benchmarks')
+  runAgentBenchmark = (payload: { agent_id: string; model_name: string; benchmark: string }) => this.request<any>('POST', '/admin/evaluation/agent-evaluation/runs', payload)
+  listAgentBenchmarkReports = () => this.request<any[]>('GET', '/admin/evaluation/agent-evaluation/runs')
+  exportAgentBenchmarkReport = (runId: string, benchmark: string, format: 'json' | 'csv' | 'md' = 'json') =>
+    this.request<any>('GET', `/admin/evaluation/agent-evaluation/runs/${runId}/export?benchmark=${encodeURIComponent(benchmark)}&format=${format}`)
+
   listFederationPeers = () => this.request<any[]>('GET', '/admin/governance/federation/peers')
   registerFederationPeer = (p: any) => this.request<any>('POST', '/admin/governance/federation/peers', p)
   getFederationStatus = () => this.request<any>('GET', '/admin/governance/federation/status')
@@ -230,6 +237,21 @@ class APIClient {
   listPlans = () => this.request<any[]>('GET', '/portal/plans')
   getProfile = () => this.request<any>('GET', '/portal/me')
   getUsageStats = () => this.request<any>('GET', '/portal/usage-stats')
+
+  // DLP Dashboard
+  listDlpViolations = (tenantId?: string) => this.client.get<any[]>(`/admin/agents/governance/dlp/violations${tenantId ? `?tenant_id=${tenantId}` : ''}`).then(res => res.data)
+  getDlpStats = (tenantId?: string) => this.client.get<any>(`/admin/agents/governance/dlp/stats${tenantId ? `?tenant_id=${tenantId}` : ''}`).then(res => res.data)
+
+  // Backups
+  listBackups = () => this.request<any[]>('GET', '/admin/backup')
+  getBackup = (id: string) => this.request<any>('GET', `/admin/backup/${id}`)
+  createLogicalAgentBackup = () => this.request<any>('POST', '/admin/backup', { scope: 'logical-agent-backup' })
+  createFullBackup = () => this.createLogicalAgentBackup() // Deprecated alias
+  verifyBackup = (id: string) => this.request<any>('POST', `/admin/backup/${id}/verify`)
+  restoreBackup = (id: string, dryRun: boolean = false) => this.request<any>('POST', `/admin/backup/${id}/restore`, { dry_run: dryRun })
+  createRestoreRequest = (backupId: string, dryRun: boolean) => this.request<any>('POST', '/admin/backup/restore-requests', { backup_id: backupId, dry_run: dryRun })
+  approveRestoreRequest = (id: string) => this.request<any>('POST', `/admin/backup/restore-requests/${id}/approve`)
+  executeRestoreRequest = (id: string, token: string) => this.request<any>('POST', `/admin/backup/restore-requests/${id}/execute`, { token })
 }
 
 const api = new APIClient()

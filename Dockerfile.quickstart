@@ -1,0 +1,132 @@
+FROM python:3.12-slim AS python-builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY control_plane/requirements.txt /build/requirements.txt
+RUN pip install --no-cache-dir -r /build/requirements.txt \
+    && pip install --no-cache-dir huggingface_hub
+
+COPY control_plane /build/control_plane
+COPY scripts /build/scripts
+COPY config /build/config
+COPY VERSION /build/VERSION
+RUN cd /build/control_plane && python -m compileall . -q 2>/dev/null || true
+
+
+FROM nvidia/cuda:12.6.3-devel-ubuntu24.04 AS llama-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /usr/local/cuda/lib64/stubs/libcuda.so /usr/lib/x86_64-linux-gnu/libcuda.so.1
+
+WORKDIR /build
+COPY .cache/llama.cpp /build/llama.cpp
+WORKDIR /build/llama.cpp
+RUN rm -rf build && \
+    cmake -S . -B build \
+    -DGGML_CUDA=ON \
+    -DLLAMA_BUILD_SERVER=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CUDA_ARCHITECTURES=89 && \
+    cmake --build build --config Release -j"$(nproc)" --target llama-server
+
+
+FROM nvidia/cuda:12.6.3-runtime-ubuntu24.04
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app:/app/control_plane" \
+    LD_LIBRARY_PATH="/opt/llama/bin:${LD_LIBRARY_PATH:-}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    curl \
+    libgomp1 \
+    python3 \
+    redis-server \
+    tini \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=python-builder /opt/venv /opt/venv
+COPY --from=llama-builder /build/llama.cpp/build/bin/ /opt/llama/bin/
+
+COPY docker/data-plane/entrypoint.sh /opt/quickstart/llama-entrypoint.sh
+COPY control_plane/app /app/app
+COPY control_plane/app /app/control_plane/app
+COPY control_plane/alembic /app/alembic
+COPY control_plane/alembic.ini /app/alembic.ini
+COPY scripts /app/scripts
+COPY config /config
+COPY VERSION /app/VERSION
+
+RUN chmod +x /opt/quickstart/llama-entrypoint.sh \
+    /app/scripts/deploy/quickstart-bootstrap.sh \
+    /app/scripts/deploy/quickstart-healthcheck.sh
+
+ENV OPERATIONAL_PROFILE=lite \
+    DEPLOYMENT_MODE=appliance \
+    LOCAL_APPLIANCE_MODE=true \
+    LOCALHOST_MODE=true \
+    PUBLIC_EXPOSURE=false \
+    DATABASE_URL=sqlite+aiosqlite:////data/quickstart/llmstack.db \
+    REDIS_URL=redis://127.0.0.1:6379/0 \
+    DATA_PLANE_BASE_URL=http://127.0.0.1:8081 \
+    CONTROL_PLANE_HOST=0.0.0.0 \
+    CONTROL_PLANE_PORT=8080 \
+    ADMIN_TOKEN=QuickstartAdminToken-ChangeMe-1234 \
+    JWT_SECRET=quickstart-jwt-secret-change-me \
+    MODEL_ID=bartowski/gemma-2-2b-it-GGUF \
+    MODEL_FILE=gemma-2-2b-it-Q4_K_M.gguf \
+    MODEL_REPO=bartowski/gemma-2-2b-it-GGUF \
+    MODELS_DIR=/models \
+    RAG_ENABLED=true \
+    TTS_ENABLED=false \
+    OBSERVABILITY_ENABLED=false \
+    OTLP_EXPORT_ENABLED=false \
+    PROVIDERS_ENABLED=local \
+    CLOUD_PROVIDERS_ENABLED=false \
+    MULTI_TENANT_ENABLED=false \
+    MARKETPLACE_ENABLED=false \
+    PLUGIN_MARKETPLACE_ENABLED=false \
+    PLUGIN_RUNTIME_ENABLED=false \
+    AGENT_RUNTIME_ENABLED=false \
+    AGENT_WORKER_ENABLED=false \
+    AGENT_EXECUTION_ENABLED=false \
+    AGENT_MEMORY_ENABLED=false \
+    KUBERNETES_MODE=false \
+    PROMETHEUS_ENABLED=false \
+    LOKI_ENABLED=false \
+    TEMPO_ENABLED=false
+
+VOLUME ["/models", "/data/quickstart"]
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=10 \
+  CMD ["/app/scripts/deploy/quickstart-healthcheck.sh"]
+
+ENTRYPOINT ["tini", "--", "/app/scripts/deploy/quickstart-bootstrap.sh"]

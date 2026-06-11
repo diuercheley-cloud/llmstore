@@ -31,3 +31,27 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
         if: always()
+
+  backup-dr:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: llm_inference_backup_dr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      BACKUP_TEST_POSTGRES_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_backup_dr
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run backup DR marker suite
+        run: pytest tests/backup -m backup_dr -q

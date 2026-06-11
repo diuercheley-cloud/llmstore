@@ -11,7 +11,6 @@ from app.core.config import get_settings
 from app.db.session import get_db_session, redis_client
 from app.models.core.client import Client
 from app.models.rag.rag_document import RAGDocument
-from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.schemas.rag import (
     RAGFileListResponse,
     RAGFileResponse,
@@ -19,6 +18,7 @@ from app.schemas.rag import (
     RAGQueryResponse,
     RAGSource,
 )
+from app.storage import resolve_storage_backend
 from app.services.auth import require_client
 from app.services.billing.core import resolve_effective_plan_for_session
 from app.services.embeddings import get_embedding_service
@@ -32,7 +32,6 @@ from app.services.rag_usage import (
 )
 from app.utils.token_estimator import estimate_tokens_from_text
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
@@ -78,6 +77,7 @@ async def upload_client_rag_document(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
+    backend = resolve_storage_backend(session)
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
 
@@ -145,7 +145,7 @@ async def upload_client_rag_document(
         storage_path=storage_path,
         status="uploaded"
     )
-    session.add(doc)
+    await backend.document_store.add_rag_document(doc)
     
     await record_rag_event(session, client.id, "document_uploaded", document_id=file_id, storage_bytes=file_size)
     
@@ -162,10 +162,8 @@ async def list_client_rag_documents(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    result = await session.execute(
-        select(RAGDocument).where(RAGDocument.client_id == client.id).order_by(RAGDocument.created_at.desc())
-    )
-    return {"data": result.scalars().all()}
+    backend = resolve_storage_backend(session)
+    return {"data": await backend.document_store.list_rag_documents(client.id)}
 
 @client_rag_router.get("/documents/{doc_id}", response_model=RAGFileResponse)
 async def get_client_rag_document(
@@ -173,10 +171,8 @@ async def get_client_rag_document(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
-    
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(doc_id, client_id=client.id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
@@ -187,10 +183,8 @@ async def delete_client_rag_document(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
-    
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(doc_id, client_id=client.id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     
@@ -231,6 +225,7 @@ async def upload_rag_file(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
+    backend = resolve_storage_backend(session)
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
 
@@ -291,7 +286,7 @@ async def upload_rag_file(
         storage_path=storage_path,
         status="uploaded"
     )
-    session.add(doc)
+    await backend.document_store.add_rag_document(doc)
     
     await record_rag_event(session, client.id, "document_uploaded", document_id=file_id, storage_bytes=file_size)
     
@@ -308,10 +303,8 @@ async def list_rag_files(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    result = await session.execute(
-        select(RAGDocument).where(RAGDocument.client_id == client.id).order_by(RAGDocument.created_at.desc())
-    )
-    return {"data": result.scalars().all()}
+    backend = resolve_storage_backend(session)
+    return {"data": await backend.document_store.list_rag_documents(client.id)}
 
 @router.get("/files/{file_id}", response_model=RAGFileResponse)
 async def get_rag_file(
@@ -319,10 +312,8 @@ async def get_rag_file(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == file_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
-    
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(file_id, client_id=client.id)
     if not doc:
         raise HTTPException(status_code=404, detail="File not found")
     return doc
@@ -333,10 +324,8 @@ async def delete_rag_file(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == file_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
-    
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(file_id, client_id=client.id)
     if not doc:
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -353,10 +342,8 @@ async def reprocess_rag_file(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == file_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
-    
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(file_id, client_id=client.id)
     if not doc:
         raise HTTPException(status_code=404, detail="File not found")
     
@@ -373,6 +360,7 @@ async def query_rag(
     session: AsyncSession = Depends(get_db_session),
     proxy = Depends(get_inference_proxy),
 ):
+    backend = resolve_storage_backend(session)
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
 
@@ -456,9 +444,7 @@ async def query_rag(
     query_embedding = await embedding_service.embed_text(payload.question)
     
     # 2. Search for similar chunks
-    from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
-    store = VectorStoreFactory.get_instance(session=session)
-    
+    store = backend.vector_store
     filters = {"client_id": client.id}
     if payload.file_ids:
         # For simplicity, we assume single file_id or handle it in provider
@@ -483,11 +469,20 @@ async def query_rag(
     sources = []
     for hit in hits:
         chunk_id = uuid.UUID(hit["id"])
-        chunk = (await session.execute(select(RAGDocumentChunk).where(RAGDocumentChunk.id == chunk_id))).scalar_one_or_none()
+    chunk_ids = [uuid.UUID(hit["id"]) for hit in hits]
+    chunks = await backend.document_store.get_rag_chunks(chunk_ids)
+    chunks_by_id = {chunk.id: chunk for chunk in chunks}
+    documents = await backend.document_store.get_rag_documents_by_ids([chunk.document_id for chunk in chunks])
+
+    for hit in hits:
+        chunk_id = uuid.UUID(hit["id"])
+        chunk = chunks_by_id.get(chunk_id)
         if not chunk:
             continue
-            
-        doc = (await session.execute(select(RAGDocument).where(RAGDocument.id == chunk.document_id))).scalar_one()
+
+        doc = documents.get(chunk.document_id)
+        if doc is None:
+            continue
         context_str += f"[fonte: {doc.original_filename}, página {chunk.page_number}]\n{chunk.content}\n\n"
         sources.append(RAGSource(
             file_id=chunk.document_id,

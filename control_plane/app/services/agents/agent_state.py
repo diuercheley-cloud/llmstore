@@ -97,6 +97,7 @@ async def create_agent_run(
     parent_run_id: Optional[uuid.UUID] = None,
     session_id: Optional[uuid.UUID] = None,
     multimodal_asset_id: Optional[uuid.UUID] = None,
+    is_simulation: bool = False,
 ) -> AgentRun:
     input_hash = compute_sha256(input_text)
     run = AgentRun(
@@ -114,11 +115,12 @@ async def create_agent_run(
         parent_run_id=parent_run_id,
         session_id=session_id,
         multimodal_asset_id=multimodal_asset_id,
+        is_simulation=is_simulation,
     )
     db.add(run)
     await db.commit()
     await db.refresh(run)
-    logger.info(f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash}, session_id: {session_id})")
+    logger.info(f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash}, session_id: {session_id}, is_simulation: {is_simulation})")
     return run
 
 async def get_agent_run(db: AsyncSession, run_id: uuid.UUID) -> Optional[AgentRun]:

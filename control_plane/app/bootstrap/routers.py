@@ -123,8 +123,10 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     app.include_router(agent_cicd_admin_router)
     from app.api.agents import router as agents_router
     from app.api.agents_v1 import router as agents_v1_router
+    from app.api.audit import router as audit_router
     app.include_router(agents_router)
     app.include_router(agents_v1_router)
+    app.include_router(audit_router)
 
     if _flag("agent_runtime_enabled") or _flag("agent_execution_enabled"):
         from app.api.agent_environments_admin import router as agent_environments_admin_router
@@ -168,6 +170,9 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     if _flag("agent_approval_portal_enabled"):
         from app.api.agent_approval_portal import router as agent_approval_portal_router
         app.include_router(agent_approval_portal_router)
+
+    from app.api.admin_critical_approvals import router as admin_critical_approvals_router
+    app.include_router(admin_critical_approvals_router)
 
     if _flag("agent_saas_connectors_enabled"):
         from app.api.agent_connectors_admin import router as agent_connectors_admin_router
@@ -373,3 +378,12 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.agent_knowledge_graph_admin import public_router as kg_public_router
         app.include_router(kg_admin_router)
         app.include_router(kg_public_router)
+
+    # Agent Graph (DAG-based orchestration)
+    from app.api.agent_graph_admin import router as agent_graph_router
+    app.include_router(agent_graph_router)
+
+    # Agent Compatibility Layer Router
+    from app.api.agent_compatibility_admin import router as agent_compatibility_admin_router
+    app.include_router(agent_compatibility_admin_router)
+

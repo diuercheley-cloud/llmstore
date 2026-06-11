@@ -464,12 +464,34 @@ def pytest_collection_modifyitems(config, items):
         "test_signing_service.py"
     }
 
+    release_gate_files = {
+        # smoke API
+        "test_smoke.py",
+        # auth
+        "test_api_key_authentication.py",
+        "test_auth_service.py",
+        # migrations
+        "test_alembic_heads.py",
+        "test_migrations_validation.py",
+        # backup verify
+        "test_admin_backup.py",
+        "test_backup_restore.py",
+        # config safety
+        "test_check_secrets.py",
+        "test_config_service.py",
+        # security hygiene
+        "test_security.py",
+        "test_admin_readiness_security_sanitization.py",
+        "test_internal_security_review.py"
+    }
+
     for item in items:
         path = str(item.fspath)
         filename = Path(path).name
         
-        # All tests are included in release
-        item.add_marker(pytest.mark.release)
+        # Release Gate marker
+        if filename in release_gate_files:
+            item.add_marker(pytest.mark.release_gate)
         
         # 1. Chaos marker
         if "/chaos/" in path or "chaos" in item.name.lower():
@@ -484,5 +506,5 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.quick)
             
         # 4. Slow marker
-        else:
+        elif "slow" in item.name.lower():
             item.add_marker(pytest.mark.slow)

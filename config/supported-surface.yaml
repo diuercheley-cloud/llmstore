@@ -1564,6 +1564,7 @@ capabilities:
   docs_url: docs/plugins
   feature_flag: PLUGIN_MARKETPLACE_ENABLED
   since_version: v1.7.0
+  removal_version: v3.0
   limitations: No real plugins marketplace active. Replaced by agent-marketplace (beta).
     Will be removed.
   test_coverage: 0%

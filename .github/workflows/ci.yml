@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [ main, 'release/*' ]
   workflow_dispatch:
+    inputs:
+      run_agent_benchmarks:
+        description: 'Run agent benchmark suite'
+        required: false
+        default: 'false'
 
 permissions:
   contents: read
@@ -28,6 +33,7 @@ jobs:
           - api
           - frontend-admin
           - frontend-client
+          - docker-quickstart
           - sdk
           - e2e
           - security
@@ -87,6 +93,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup Docker
+        if: matrix.target == 'docker-quickstart'
+        uses: ./.github/actions/setup-docker
+
       # --- Target: API ---
       - name: API Lint & Integrity
         if: matrix.target == 'api'
@@ -98,6 +108,13 @@ jobs:
           make maintenance-budgets
           bash scripts/validators/check-secrets.sh --all
 
+      - name: Surface Governance Validation
+        if: matrix.target == 'api'
+        run: |
+          make generate-route-surface
+          make validate-route-surface
+          make validate-deprecated-surface
+
       - name: API Database Migrations
         if: matrix.target == 'api'
         env:
@@ -106,15 +123,24 @@ jobs:
           cd control_plane
           alembic upgrade head
 
-      - name: API Backend Tests
+      - name: API Backend Tests (Release Gate)
         if: matrix.target == 'api'
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
           REDIS_URL: redis://localhost:6379/0
           PYTHONPATH: .:control_plane
         run: |
-          pytest tests/control_plane -m "not slow" --cov=app
-          pytest tests/integration/contracts tests/integration/quality tests/integration/security -m "not slow"
+          pytest tests/control_plane -m "release_gate" --cov=app --junitxml=artifacts/reports/api-release-gate.xml
+          pytest tests/integration/contracts tests/integration/quality tests/integration/security -m "release_gate"
+
+      - name: Backup Component Tests (fast, unit-level)
+        if: matrix.target == 'api'
+        env:
+          PYTHONPATH: .:control_plane
+          BACKUP_RESTORE_ENABLED: "true"
+        run: |
+          mkdir -p artifacts/reports
+          make test-backup-components
 
       # --- Target: Frontend Admin ---
       - name: Frontend Admin Lint, Typecheck & Test
@@ -132,6 +158,20 @@ jobs:
           cd frontend/client
           npm run lint
           npm run build
+
+      # --- Target: Docker Quickstart ---
+      - name: Build Quickstart Image
+        if: matrix.target == 'docker-quickstart'
+        run: |
+          docker build -f Dockerfile.quickstart -t llm-inference-stack/quickstart:ci .
+
+      - name: Run Agent Benchmarks
+        if: matrix.target == 'api' && github.event_name == 'workflow_dispatch' && inputs.run_agent_benchmarks == 'true'
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+          PYTHONPATH: .:control_plane
+        run: |
+          pytest tests/integration/agent_evals/test_eval_framework.py -q
 
       # --- Target: SDK ---
       - name: SDK Tests
@@ -179,10 +219,12 @@ jobs:
       - name: Docs Validation
         if: matrix.target == 'docs'
         run: |
+          pip install mkdocs mkdocs-material mike
           make validate-docs
+          make docs-build
 
       # --- Post Steps ---
-      - name: Upload Artifacts
+      - name: Upload Artifacts (E2E / SDK)
         if: always() && contains(fromJSON('["e2e", "sdk"]'), matrix.target)
         uses: actions/upload-artifact@v4
         with:
@@ -191,3 +233,23 @@ jobs:
             tests/e2e/e2e-playwright/playwright-report/
             sdk/python/dist/
           retention-days: 7
+
+      - name: Upload Surface Governance Artifacts
+        if: matrix.target == 'api' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surface-governance-reports
+          path: |
+            generated/route_surface_manifest.json
+            docs/generated/deprecated_surface_inventory.md
+            artifacts/reports/api-release-gate.xml
+          retention-days: 30
+
+      - name: Upload Docs Artifacts
+        if: matrix.target == 'docs' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-reports
+          path: |
+            docs/generated/
+          retention-days: 30

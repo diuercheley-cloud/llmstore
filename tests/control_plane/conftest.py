@@ -87,8 +87,7 @@ def pytest_collection_modifyitems(config, items):
         path = str(item.fspath)
         filename = Path(path).name
         
-        # All tests are included in release
-        item.add_marker(pytest.mark.release)
+        # All tests were previously marked as release here, but this is handled by release_gate now
         
         # 1. Chaos marker
         if "/chaos/" in path or "chaos" in item.name.lower():
@@ -103,5 +102,5 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.quick)
             
         # 4. Slow marker
-        else:
+        elif "slow" in item.name.lower():
             item.add_marker(pytest.mark.slow)

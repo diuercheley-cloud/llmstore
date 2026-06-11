@@ -4,22 +4,22 @@ import json
 import os
 import sys
 
-API_URL = os.environ.get("CONTROL_PLANE_URL", "http://localhost:8000")
+API_URL = os.environ.get("CONTROL_PLANE_URL", "http://localhost:8080")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "test-admin-token")
 
-def create_backup():
+def create_backup(scope: str = "full"):
     print(f"Triggering backup creation via API: {API_URL}")
     
     headers = {"X-Admin-Token": ADMIN_TOKEN}
+    payload = {"scope": scope} if scope != "full" else None
     try:
-        resp = httpx.post(f"{API_URL}/api/admin/backup/create", headers=headers, timeout=60.0)
+        resp = httpx.post(f"{API_URL}/admin/backup", headers=headers, json=payload, timeout=60.0)
         resp.raise_for_status()
         
         manifest = resp.json()
         print("Backup created successfully!")
         print(json.dumps(manifest, indent=2))
         
-        # Save manifest locally
         filename = f"backup_{manifest['backup_id']}.json"
         with open(filename, "w") as f:
             json.dump(manifest, f, indent=2)
@@ -30,4 +30,8 @@ def create_backup():
         sys.exit(1)
 
 if __name__ == "__main__":
-    create_backup()
+    parser = argparse.ArgumentParser(description="Create a system backup via API")
+    parser.add_argument("--scope", default="full", choices=["full", "logical-agent-backup"],
+                        help="Backup scope (default: full)")
+    args = parser.parse_args()
+    create_backup(scope=args.scope)

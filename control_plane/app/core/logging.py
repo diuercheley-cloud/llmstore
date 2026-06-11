@@ -14,10 +14,10 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "time": self.formatTime(record, self.datefmt),
         }
-        correlation_id = get_correlation_id()
+        correlation_id = getattr(record, "correlation_id", "") or get_correlation_id()
         if correlation_id:
             payload["correlation_id"] = correlation_id
-        if hasattr(record, "extra_data"):
+        if hasattr(record, "extra_data") and isinstance(record.extra_data, dict):
             payload.update(record.extra_data)
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
@@ -54,4 +54,3 @@ def configure_logging() -> None:
 
     # 4. Silence HTTPX logs unless they are WARNING or higher
     logging.getLogger("httpx").setLevel(logging.WARNING)
-

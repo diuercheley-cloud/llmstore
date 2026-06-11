@@ -10,8 +10,6 @@ class AgentSettings(BaseSettings):
     agent_bundle_signature_required: bool = Field(default=True, alias="AGENT_BUNDLE_SIGNATURE_REQUIRED")
     agent_internal_bundle_signature_required_in_production: bool = Field(default=True, alias="AGENT_INTERNAL_BUNDLE_SIGNATURE_REQUIRED_IN_PRODUCTION")
     allow_unsigned_internal_bundles: bool = Field(default=False, alias="ALLOW_UNSIGNED_INTERNAL_BUNDLES")
-    commercial_appliance_require_removable_media: bool = False
-
     # Owner: agent-platform
     # Status: beta
     agent_optimizer_enabled: bool = Field(default=False, alias="AGENT_OPTIMIZER_ENABLED")

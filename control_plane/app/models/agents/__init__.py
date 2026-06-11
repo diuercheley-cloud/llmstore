@@ -30,7 +30,7 @@ from .agent_wallet import AgentWallet, AgentWalletLedgerEntry, AgentSpendAuthori
 from .agent_workflows import AgentWorkflow, AgentWorkflowRun, AgentWorkflowEvent, AgentWorkflowTimer, AgentWorkflowSignal, AgentWorkflowWebhookWait, AgentWorkflowDefinition, AgentWorkflowNode, AgentWorkflowEdge, AgentWorkflowParallelGroup, AgentSubworkflowRun, AgentWorkflowLock
 from .agent_workflows_external import AgentWorkflowWebhookSubscription, AgentWorkflowPollingJob, AgentWorkflowExternalEvent
 from .agent_workspace import AgentWorkspace, AgentSharedArtifact, AgentArtifactVersion, AgentArtifactLock, AgentArtifactReview, AgentArtifactComment, AgentArtifactEvent
-from .agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent, AgentRunCheckpoint, AgentRunReceipt, AgentRegistryEntry, AgentVersion, AgentPromotion, AgentDeprecation, AgentLifecycleEvent, AgentTool, AgentToolVersion, AgentToolPermission, AgentToolInvocation, AgentToolSafetyReview, AgentApprovalRequest, AgentEvalSuite, AgentEvalCase, AgentEvalRun, AgentEvalResult, AgentEvalBaseline, AgentLLMJudgeRun, AgentRedTeamCase, AgentABEvalRun, AgentEvalPairwiseResult, AgentEvalDataset, AgentEvalDatasetVersion, AgentEvalGateResult, AgentEvalRegressionResult, AgentPromotionGateResult, AgentMemoryPolicy, AgentMemoryCollection, AgentMemoryItem, AgentMemoryAccessEvent, AgentMemoryRetentionJob, AgentPlan, AgentTask, AgentTaskDependency, AgentTaskAttempt, AgentCompensationAction, AgentHandoffPolicy, AgentCollaborationSession, AgentHandoffEvent, AgentMarketplaceEntry, AgentBundleVersion, AgentBundleInstall, AgentBundleTrustReport, AgentApprovalDecision, AgentApprovalPolicy, AgentMemoryConsent, AgentMemoryRetentionPolicy, AgentMemoryRedactionEvent, AgentMemoryIndex, AgentMemorySearchEvent, AgentMemoryDeleteRequest, AgentMemoryExportRequest, AgentIncident, AgentIncidentEvent, AgentRunMetrics, AgentRunCosts, AgentTraceSpan, AgentTimelineEvent, AgentPolicyDecision, AgentGuardrailEvent, AgentGuardrailDecision, AgentEvalFailure, AgentIncidentLink, AgentSLOWindow, AgentTraceLink, AgentEnvironmentPolicy, AgentEphemeralCredential, AgentRBACEvent, AgentPolicyException, AgentBundleSignature, AgentBundleProvenance, AgentBundleCompatibility, AgentAdapterPromotionReview, AgentPromptBaseline, AgentPromotionGate, AgentPublisherProfile, AgentPublicationReview, AgentCatalogItem, AgentCatalogVersion, AgentCatalogRollback, AgentDelegationPolicy, AgentSharedMemoryPolicy, AgentA2ARegistration, AgentStepCacheEntry, AgentPlanCostEstimate
+from .agents import AgentDefinition, AgentRun, AgentRunStep, AgentRunEvent, AgentRunCheckpoint, AgentRunReceipt, AgentRegistryEntry, AgentVersion, AgentPromotion, AgentDeprecation, AgentLifecycleEvent, AgentTool, AgentToolVersion, AgentToolPermission, AgentToolInvocation, AgentToolSafetyReview, AgentApprovalRequest, AgentEvalSuite, AgentEvalCase, AgentEvalRun, AgentEvalResult, AgentEvalBaseline, AgentLLMJudgeRun, AgentRedTeamCase, AgentABEvalRun, AgentEvalPairwiseResult, AgentEvalDataset, AgentEvalDatasetVersion, AgentEvalGateResult, AgentEvalRegressionResult, AgentPromotionGateResult, AgentMemoryPolicy, AgentMemoryCollection, AgentMemoryItem, AgentMemoryAccessEvent, AgentMemoryRetentionJob, AgentPlan, AgentTask, AgentTaskDependency, AgentTaskAttempt, AgentCompensationAction, AgentHandoffPolicy, AgentCollaborationSession, AgentHandoffEvent, AgentMarketplaceEntry, AgentBundleVersion, AgentBundleInstall, AgentBundleTrustReport, AgentApprovalDecision, AgentApprovalPolicy, AgentMemoryConsent, AgentMemoryRetentionPolicy, AgentMemoryRedactionEvent, AgentMemoryIndex, AgentMemorySearchEvent, AgentMemoryDeleteRequest, AgentMemoryExportRequest, AgentIncident, AgentIncidentEvent, AgentRunMetrics, AgentRunCosts, AgentTraceSpan, AgentTrace, AgentTimelineEvent, AgentPolicyDecision, AgentGuardrailEvent, AgentGuardrailDecision, AgentEvalFailure, AgentIncidentLink, AgentSLOWindow, AgentTraceLink, AgentEnvironmentPolicy, AgentEphemeralCredential, AgentRBACEvent, AgentPolicyException, AgentBundleSignature, AgentBundleProvenance, AgentBundleCompatibility, AgentAdapterPromotionReview, AgentPromptBaseline, AgentPromotionGate, AgentPublisherProfile, AgentPublicationReview, AgentCatalogItem, AgentCatalogVersion, AgentCatalogRollback, AgentDelegationPolicy, AgentSharedMemoryPolicy, AgentA2ARegistration, AgentStepCacheEntry, AgentPlanCostEstimate
 from .assistants import AssistantThread, AssistantMessage
 from .collab_chat import ChatChannel, ChatChannelMember, ChatMessage, ChatAgentParticipant, ChatPresenceEvent
 from .digital_twin import DigitalTwin, DigitalTwinState, DigitalTwinCommand, DigitalTwinSafetyEvent
@@ -38,6 +38,8 @@ from .evaluation import EvalDataset, EvalCase, EvalRun, EvalResult, ArenaMatch, 
 from .multi_agent import AgentTeam, AgentTeamMember, AgentTeamRun, AgentTeamMessage, AgentTeamDelegation, AgentSharedWorkspace, AgentTeamTrace
 from .prompts import PromptTemplate, PromptTemplateVersion, PromptExperiment, PromptPlaygroundRun, PromptTemplateVariable, PromptTemplateRenderEvent
 from .web_search import AgentWebSearchQuery, AgentWebSearchResult, AgentWebSearchCache, AgentWebSearchPolicyEvent
+from .dlp import AgentDLPViolation
+from .immutable_audit import ImmutableAuditLog
 
 __all__ = [
     "AgentA2ARegistration",
@@ -80,6 +82,8 @@ __all__ = [
     "AgentConversationThread",
     "AgentCostQualityProfile",
     "AgentCredentialAuditEvent",
+    "AgentDLPViolation",
+    "ImmutableAuditLog",
     "AgentDebugReplay",
     "AgentDebugSession",
     "AgentDebugStateEdit",
@@ -247,6 +251,7 @@ __all__ = [
     "AgentToolSelectionCandidate",
     "AgentToolSideEffect",
     "AgentToolVersion",
+    "AgentTrace",
     "AgentTraceLink",
     "AgentTraceSpan",
     "AgentUncertaintyEvent",

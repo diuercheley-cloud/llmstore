@@ -357,8 +357,25 @@ Consulte o [Guia Visual de Demonstração](docs/demo-visual-guide/README.md) par
 
 Documentação simplificada para clientes finais que desejam instalar o sistema sem se aprofundar na arquitetura interna:
 
+- Quickstart de container único:
+```bash
+docker run --gpus all -p 8080:8080 ghcr.io/llm-inference-stack/quickstart:latest
+```
+- Instalador interativo:
+```bash
+llmstack install
+llmstack install --non-interactive --target-dir ./deploy/generated
+```
+- Backup e recuperação:
+```bash
+llmstack backup --logical-agent-backup
+llmstack restore BACKUP_ID --dry-run
+llmstack restore BACKUP_ID --yes
+```
 - [Guia de Requisitos do Sistema](docs/CUSTOMER_REQUIREMENTS.md)
 - [Guia de Instalação](docs/CUSTOMER_INSTALL_GUIDE.md)
+- [Quickstart Mode](QUICKSTART.md)
+- [Install Wizard](docs/INSTALL_WIZARD.md)
 - [Quickstart (Caminho Curto)](docs/CUSTOMER_QUICKSTART.md)
 - [Solução de Problemas (Troubleshooting)](docs/CUSTOMER_TROUBLESHOOTING.md)
 - [Paid Implementation Checklist](docs/PAID_IMPLEMENTATION_CHECKLIST.md)

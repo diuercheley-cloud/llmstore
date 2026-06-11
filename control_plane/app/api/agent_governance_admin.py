@@ -89,3 +89,66 @@ async def list_recent_decisions(
 ) -> List[Dict[str, Any]]:
     # Placeholder for recent policy engine logs
     return []
+
+@router.get("/dlp/violations")
+async def list_dlp_violations(
+    tenant_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> List[Dict[str, Any]]:
+    from app.models.agents.dlp import AgentDLPViolation
+    stmt = select(AgentDLPViolation)
+    if tenant_id:
+        stmt = stmt.where(AgentDLPViolation.tenant_id == tenant_id)
+    stmt = stmt.order_by(AgentDLPViolation.created_at.desc())
+    
+    res = await db.execute(stmt)
+    violations = res.scalars().all()
+    return [
+        {
+            "id": str(v.id),
+            "run_id": str(v.run_id) if v.run_id else None,
+            "tenant_id": v.tenant_id,
+            "direction": v.direction,
+            "content_type": v.content_type,
+            "findings": v.findings,
+            "action_taken": v.action_taken,
+            "created_at": v.created_at.isoformat()
+        }
+        for v in violations
+    ]
+
+@router.get("/dlp/stats")
+async def get_dlp_stats(
+    tenant_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    from app.models.agents.dlp import AgentDLPViolation
+    stmt = select(AgentDLPViolation)
+    if tenant_id:
+        stmt = stmt.where(AgentDLPViolation.tenant_id == tenant_id)
+        
+    res = await db.execute(stmt)
+    violations = res.scalars().all()
+    
+    total = len(violations)
+    by_category = {}
+    by_direction = {"ingress": 0, "egress": 0}
+    by_action = {}
+    
+    for v in violations:
+        by_direction[v.direction] = by_direction.get(v.direction, 0) + 1
+        by_action[v.action_taken] = by_action.get(v.action_taken, 0) + 1
+        
+        findings = v.findings or []
+        for f in findings:
+            cat = f.get("type", "unknown")
+            by_category[cat] = by_category.get(cat, 0) + 1
+            
+    return {
+        "total_violations": total,
+        "by_category": by_category,
+        "by_direction": by_direction,
+        "by_action": by_action
+    }

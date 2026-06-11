@@ -319,6 +319,19 @@ async def approve_approval_request(
         metadata={"agent_run_id": str(run.id), "reason": reason}
     )
 
+    from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+    await AgentTraceService.create_trace(
+        db=db,
+        run_id=req.agent_run_id,
+        trace_type="review",
+        name=f"human_approval_approved",
+        input_data={"decision": "approved", "decided_by": decided_by, "reason": reason},
+        output_data={"status": "approved"},
+        status="success",
+        start_time=req.created_at,
+        end_time=utc_now()
+    )
+
     await db.commit()
     await db.refresh(req)
 
@@ -397,6 +410,19 @@ async def reject_approval_request(
         target_type="agent_approval_request",
         target_id=str(req.id),
         metadata={"agent_run_id": str(req.agent_run_id), "reason": reason}
+    )
+
+    from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+    await AgentTraceService.create_trace(
+        db=db,
+        run_id=req.agent_run_id,
+        trace_type="review",
+        name=f"human_approval_rejected",
+        input_data={"decision": "rejected", "decided_by": decided_by, "reason": reason},
+        output_data={"status": "rejected"},
+        status="success",
+        start_time=req.created_at,
+        end_time=utc_now()
     )
 
     await db.commit()

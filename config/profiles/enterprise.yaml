@@ -1,0 +1,43 @@
+name: enterprise
+description: Full platform profile with enterprise observability, tenancy, federation, and marketplace.
+settings:
+  OPERATIONAL_PROFILE: enterprise
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/llm_stack
+  OBSERVABILITY_ENABLED: true
+  OTLP_EXPORT_ENABLED: true
+  RAG_ENABLED: true
+  PROVIDERS_ENABLED: local,lmstudio,vllm,openai,anthropic,deepseek,openrouter
+  CLOUD_PROVIDERS_ENABLED: true
+  PLUGIN_RUNTIME_ENABLED: true
+  PLUGIN_MARKETPLACE_ENABLED: true
+  AGENT_MARKETPLACE_ENABLED: true
+  AGENT_REMOTE_MARKETPLACE_ENABLED: true
+  AGENT_CLUSTER_FEDERATION_ENABLED: true
+  COMMERCIAL_FEDERATION_ENABLED: true
+  COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED: true
+  MULTI_CLUSTER_ENABLED: true
+  DISTRIBUTED_RUNTIME_ENABLED: true
+  AGENT_MEMORY_ENABLED: true
+  AGENT_MEMORY_SEARCH_ENABLED: true
+  AGENT_TOOL_REGISTRY_ENABLED: true
+  AGENT_TOOL_EXECUTION_ENABLED: true
+  AGENT_STATEFUL_WORKFLOWS_ENABLED: true
+  AGENT_RUNTIME_ENABLED: true
+  AGENT_EXECUTION_ENABLED: true
+features:
+  sqlite: false
+  postgresql: true
+  inference_proxy: true
+  rag_basic: true
+  multi_model: true
+  observability_basic: true
+  prometheus: true
+  loki: true
+  tempo: true
+  multi_tenant: true
+  federation: true
+  marketplace: true
+  memory: true
+  tools: true
+  workflows: true
+  agents: true

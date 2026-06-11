@@ -67,6 +67,8 @@ class AgentRun(Base):
     correlation_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     session_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_sessions.id", ondelete="SET NULL"), nullable=True, index=True)
     multimodal_asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("multimodal_assets.id", ondelete="SET NULL"), nullable=True)
+    is_simulation: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    simulation_report: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     agent = relationship("AgentDefinition", back_populates="runs")
     steps = relationship("AgentRunStep", back_populates="run", cascade="all, delete-orphan")
@@ -1064,6 +1066,25 @@ class AgentTraceSpan(Base):
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     attributes_json: Mapped[dict] = mapped_column(JSON, default=dict)
     events_json: Mapped[list] = mapped_column(JSON, default=list)
+
+class AgentTrace(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_traces"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    trace_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    span_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    parent_span_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    trace_type: Mapped[str] = mapped_column(String(64), nullable=False) # reasoning_step, tool_call, memory_read, memory_write, retry, planning, review
+    status: Mapped[str] = mapped_column(String(32), default="success") # success, failed
+    input_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    output_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 class AgentTimelineEvent(Base):
     # Owner: agent-platform

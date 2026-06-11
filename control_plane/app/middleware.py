@@ -41,6 +41,25 @@ def resolve_source_ip(request: Request) -> str:
 
 
 async def request_context_middleware(request: Request, call_next):
+    from app.services.backup.restore_lock_service import MaintenanceMode
+    if MaintenanceMode.is_active():
+        path = request.url.path
+        is_allowed = (
+            path in {"/health", "/ready", "/operational-readiness", "/status"}
+            or path.startswith("/admin/backup")
+            or path.startswith("/api/admin/backup")
+            or path == "/admin/status"
+            or path == "/admin/health/deep"
+        )
+        if not is_allowed:
+            is_write = request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            is_sensitive = path.startswith("/admin/") or path.startswith("/api/admin/")
+            if is_write or is_sensitive:
+                return JSONResponse(
+                    {"detail": "Service Unavailable: system is undergoing maintenance restore"},
+                    status_code=503
+                )
+
     settings = get_settings()
 
     # Check payload size

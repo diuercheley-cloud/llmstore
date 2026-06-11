@@ -121,9 +121,24 @@ class AgentExecutor:
         if not run or run.status in ("completed", "failed", "cancelled", "paused", "waiting_approval"):
             return False
 
-        # Sanitize input text if present
+        # Sanitize input text if present (DLP Ingress Scan)
         if run.input_text:
-            run.input_text = pii_gateway.redact_text(run.input_text)
+            from app.services.security.dlp import dlp_service
+            try:
+                redacted_input, _ = await dlp_service.scan_text(
+                    db=self.db,
+                    text=run.input_text,
+                    run_id=run.id,
+                    tenant_id=run.tenant_id,
+                    direction="ingress",
+                    content_type="prompt",
+                    action="redact"
+                )
+                run.input_text = redacted_input
+            except Exception as e:
+                await self._fail_run(f"DLP Ingress Blocked: {str(e)}")
+                await self.db.commit()
+                return False
 
         agent_def = await agent_state.get_agent_definition(self.db, run.agent_id)
         if not agent_def:
@@ -227,6 +242,47 @@ class AgentExecutor:
         if decision is None:
             await self.db.commit()
             return False
+
+        # --- DLP Egress Scan on LLM decision ---
+        if decision:
+            from app.services.security.dlp import dlp_service
+            try:
+                async def redact_dict_dlp(d):
+                    if isinstance(d, dict):
+                        for k, v in list(d.items()):
+                            if isinstance(v, str):
+                                redacted_v, _ = await dlp_service.scan_text(
+                                    db=self.db,
+                                    text=v,
+                                    run_id=run.id,
+                                    tenant_id=run.tenant_id,
+                                    direction="egress",
+                                    content_type="response",
+                                    action="redact"
+                                )
+                                d[k] = redacted_v
+                            elif isinstance(v, (dict, list)):
+                                await redact_dict_dlp(v)
+                    elif isinstance(d, list):
+                        for i, item in enumerate(d):
+                            if isinstance(item, str):
+                                redacted_item, _ = await dlp_service.scan_text(
+                                    db=self.db,
+                                    text=item,
+                                    run_id=run.id,
+                                    tenant_id=run.tenant_id,
+                                    direction="egress",
+                                    content_type="response",
+                                    action="redact"
+                                )
+                                d[i] = redacted_item
+                            elif isinstance(item, (dict, list)):
+                                await redact_dict_dlp(item)
+                await redact_dict_dlp(decision)
+            except Exception as e:
+                await self._fail_run(f"DLP Egress Blocked: {str(e)}")
+                await self.db.commit()
+                return False
 
         # --- Output Guardrail Check ---
         # We check the raw response text if available, or convert the decision to string
@@ -354,7 +410,35 @@ class AgentExecutor:
 
         try:
             self._assert_llm_provider_mode_allowed()
-            decision = await self.reasoning_loop.execute(agent_def=agent_def, run=run, allowed_tools=agent_def.allowed_tools or [])
+            from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+            trace_start = utc_now()
+            try:
+                decision = await self.reasoning_loop.execute(agent_def=agent_def, run=run, allowed_tools=agent_def.allowed_tools or [])
+                await AgentTraceService.create_trace(
+                    db=self.db,
+                    run_id=run.id,
+                    trace_type="reasoning_step",
+                    name=f"reasoning_step_{step_number}",
+                    input_data={"instructions": agent_def.instructions, "input_text": run.input_text},
+                    output_data=decision if isinstance(decision, dict) else {"decision": str(decision)},
+                    status="success",
+                    start_time=trace_start,
+                    end_time=utc_now()
+                )
+            except Exception as e:
+                await AgentTraceService.create_trace(
+                    db=self.db,
+                    run_id=run.id,
+                    trace_type="reasoning_step",
+                    name=f"reasoning_step_{step_number}",
+                    input_data={"instructions": agent_def.instructions, "input_text": run.input_text},
+                    output_data={"error": str(e)},
+                    status="failed",
+                    error=str(e),
+                    start_time=trace_start,
+                    end_time=utc_now()
+                )
+                raise e
             latency_ms = int((time.time() - start_time) * 1000)
             await self.obs.record_model_call(self.run_id, "completed", latency_ms, decision.get("usage"))
 
@@ -504,6 +588,19 @@ class AgentExecutor:
             await self.obs.record_approval_request(self.run_id, tool_name, reason)
             await agent_state.update_run(self.db, self.run_id, status="waiting_approval")
             await create_approval_request(self.db, self.run_id, tool_name, tool_input, risk, reason, role, step_number)
+            
+            from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+            await AgentTraceService.create_trace(
+                db=self.db,
+                run_id=self.run_id,
+                trace_type="review",
+                name=f"human_approval_{tool_name}",
+                input_data={"tool_name": tool_name, "tool_input": tool_input, "reason": reason, "risk_level": risk},
+                output_data={"status": "pending_approval"},
+                status="success",
+                start_time=utc_now(),
+                end_time=utc_now()
+            )
             return False
         return await self._execute_tool_and_process(run, tool_name, tool_input, step_number + 1)
 
@@ -533,7 +630,11 @@ class AgentExecutor:
                 tool_callable = runner_wrapper
 
             policy_decision_id = None
-            exec_mode = self._resolve_executor_tool_mode()
+            if getattr(run, "is_simulation", False):
+                exec_mode = "simulation"
+            else:
+                exec_mode = self._resolve_executor_tool_mode()
+
             if exec_mode == "mock":
                 output = self._build_simulated_output(
                     mode="mock",
@@ -555,12 +656,12 @@ class AgentExecutor:
                     output.setdefault("reason", "AGENT_EXECUTOR_DRY_RUN_MODE=true")
                     output["policy_decision_id"] = policy_decision_id
             elif exec_mode == "simulation":
-                output = self._build_simulated_output(
-                    mode="simulation",
-                    tool_name=tool_name,
-                    reason="AGENT_EXECUTOR_ALLOW_SIMULATION=true and real execution disabled",
-                    policy_decision_id=policy_decision_id,
-                )
+                from app.services.agents.simulation import SimulationRuntime
+                category = SimulationRuntime.classify_tool(tool_name, tool.category if tool else None)
+                output = SimulationRuntime.simulate_tool_execution(tool_name, category, tool_input)
+                output["execution_mode"] = "simulation"
+                output["simulated"] = True
+                output["policy_decision_id"] = policy_decision_id
             else:
                 if not self.settings.agent_execution_enabled:
                     raise ExecutorSimulationError(
@@ -580,7 +681,45 @@ class AgentExecutor:
             error = None
         except Exception as e:
             output, error = {"error": str(e)}, str(e)
-        
+        # --- DLP Egress Scan on Tool output ---
+        if not error and output:
+            from app.services.security.dlp import dlp_service
+            try:
+                async def redact_dict_dlp(d):
+                    if isinstance(d, dict):
+                        for k, v in list(d.items()):
+                            if isinstance(v, str):
+                                redacted_v, _ = await dlp_service.scan_text(
+                                    db=self.db,
+                                    text=v,
+                                    run_id=run.id,
+                                    tenant_id=run.tenant_id,
+                                    direction="egress",
+                                    content_type="tool_output",
+                                    action="redact"
+                                )
+                                d[k] = redacted_v
+                            elif isinstance(v, (dict, list)):
+                                await redact_dict_dlp(v)
+                    elif isinstance(d, list):
+                        for i, item in enumerate(d):
+                            if isinstance(item, str):
+                                redacted_item, _ = await dlp_service.scan_text(
+                                    db=self.db,
+                                    text=item,
+                                    run_id=run.id,
+                                    tenant_id=run.tenant_id,
+                                    direction="egress",
+                                    content_type="tool_output",
+                                    action="redact"
+                                )
+                                d[i] = redacted_item
+                            elif isinstance(item, (dict, list)):
+                                await redact_dict_dlp(item)
+                await redact_dict_dlp(output)
+            except Exception as e:
+                output, error = {"error": f"DLP Egress Blocked: {str(e)}"}, f"DLP Egress Blocked: {str(e)}"
+
         # --- Tool Output Guardrail Check ---
         if not error:
             is_blocked, sanitized_output = await self._check_output_guardrails(run, str(output))
@@ -591,9 +730,26 @@ class AgentExecutor:
                 # If redacted, we'd ideally update the 'output' dict
                 pass
         # -----------------------------------
-
+ 
         latency = int((time.time() - start_time) * 1000)
         await self.obs.record_tool_call_result(self.run_id, tool_name, "failed" if error else "completed", latency, error)
+        
+        from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+        from datetime import datetime, timezone
+        await AgentTraceService.create_trace(
+            db=self.db,
+            run_id=self.run_id,
+            trace_type="tool_call",
+            name=tool_name,
+            input_data=tool_input if isinstance(tool_input, dict) else {"input": str(tool_input)},
+            output_data=output if isinstance(output, dict) else {"output": str(output)},
+            status="failed" if error else "success",
+            error=error,
+            duration_ms=float(latency),
+            start_time=datetime.fromtimestamp(start_time, tz=timezone.utc),
+            end_time=utc_now()
+        )
+        
         i_hash, o_hash = agent_state.compute_sha256(tool_input), agent_state.compute_sha256(output)
         await self.receipts.create_receipt(self.run_id, step_number, "tool_execution", i_hash, o_hash, success=not error, failure_reason=error)
         
@@ -606,6 +762,19 @@ class AgentExecutor:
                 "audit_event_id": output.get("audit_event_id"),
             }
 
+        if getattr(run, "is_simulation", False) and not error:
+            from app.services.agents.simulation import SimulationRuntime
+            category = SimulationRuntime.classify_tool(tool_name, tool.category if tool else None)
+            if step_meta is None:
+                step_meta = {}
+            step_meta.update({
+                "simulated": True,
+                "tool_name": tool_name,
+                "tool_input": tool_input,
+                "tool_output": output,
+                "simulation_category": category
+            })
+ 
         await agent_state.log_run_step(
             self.db,
             self.run_id,
@@ -654,6 +823,20 @@ class AgentExecutor:
         plan = await self.planner.create_plan(self.run_id, goal, tasks)
         await self.obs.record_plan_depth(run.agent_id, self.run_id, len(tasks))
         await agent_state.log_run_step(self.db, self.run_id, step_number, "planning", {"goal": goal}, {"plan_id": str(plan.id)}, "success")
+        
+        from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+        await AgentTraceService.create_trace(
+            db=self.db,
+            run_id=self.run_id,
+            trace_type="planning",
+            name="create_plan",
+            input_data={"goal": goal, "tasks": tasks},
+            output_data={"plan_id": str(plan.id) if plan else None},
+            status="success",
+            start_time=utc_now(),
+            end_time=utc_now()
+        )
+
         if plan.requires_approval and self.settings.agent_human_approval_enabled:
             await agent_state.update_run(self.db, self.run_id, status="waiting_approval")
             return False
@@ -665,6 +848,20 @@ class AgentExecutor:
     async def _handle_memory_op(self, run, decision, step_number, op):
         if self.is_replay: return True
         await self.obs.record_memory_op_detailed(self.run_id, op, decision.get("memory_type", "short_term"), True)
+        
+        from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+        await AgentTraceService.create_trace(
+            db=self.db,
+            run_id=self.run_id,
+            trace_type="memory_read" if op == "read" else "memory_write",
+            name=f"memory_{op}_{decision.get('memory_type', 'short_term')}",
+            input_data={"memory_type": decision.get("memory_type"), "decision": decision},
+            output_data={"status": "success"},
+            status="success",
+            start_time=utc_now(),
+            end_time=utc_now()
+        )
+
         await agent_state.log_run_step(self.db, self.run_id, step_number, f"memory_{op}", {"input_hash": run.input_hash}, {"op": op, "memory_type": decision.get("memory_type")})
         return True
 

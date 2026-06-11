@@ -1,0 +1,28 @@
+services:
+  quickstart:
+    build:
+      context: .
+      dockerfile: Dockerfile.quickstart
+    image: ghcr.io/llm-inference-stack/quickstart:latest
+    ports:
+      - "8080:8080"
+    environment:
+      OPERATIONAL_PROFILE: lite
+      DATABASE_URL: sqlite+aiosqlite:////data/quickstart/llmstack.db
+      REDIS_URL: redis://127.0.0.1:6379/0
+      DATA_PLANE_BASE_URL: http://127.0.0.1:8081
+      MODEL_ID: ${MODEL_ID:-bartowski/gemma-2-2b-it-GGUF}
+      MODEL_REPO: ${MODEL_REPO:-bartowski/gemma-2-2b-it-GGUF}
+      MODEL_FILE: ${MODEL_FILE:-gemma-2-2b-it-Q4_K_M.gguf}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-QuickstartAdminToken-ChangeMe-1234}
+      JWT_SECRET: ${JWT_SECRET:-quickstart-jwt-secret-change-me}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - quickstart_models:/models
+      - quickstart_data:/data/quickstart
+    gpus: all
+    restart: unless-stopped
+
+volumes:
+  quickstart_models:
+  quickstart_data:

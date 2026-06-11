@@ -45,3 +45,20 @@ class RecoveryVerificationResult(Base):
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
 
+
+class RestoreRequest(Base):
+    __tablename__ = "restore_requests"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    backup_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    requester: Mapped[str] = mapped_column(String(120), nullable=False)
+    approver: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    token: Mapped[str | None] = mapped_column(String(120), nullable=True, unique=True)
+    dry_run: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+

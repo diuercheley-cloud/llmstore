@@ -31,6 +31,7 @@ import {
   Share2,
   Cpu,
   Layers,
+  Layers3,
   Database,
   FastForward,
   ShieldEllipsis,
@@ -41,6 +42,8 @@ import {
   Eye,
   Calculator,
   ShoppingBag,
+  ClipboardCheck,
+  ArchiveRestore,
 } from 'lucide-react'
 
 export type RouteStatus = 'active' | 'beta' | 'coming_soon' | 'disabled'
@@ -173,6 +176,14 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Gestão de usuários, cargos e permissões administrativas.',
   },
+  {
+    label: 'Aprovações',
+    path: '/approvals',
+    icon: Inbox,
+    section: 'core',
+    status: 'active',
+    description: 'Central de aprovação humana para ações críticas.',
+  },
 
   // ── Agentic Platform ──────────────────────────────
   {
@@ -260,6 +271,14 @@ export const navConfig: NavRoute[] = [
     description: 'Tournaments e auto-otimização de prompts e modelos.',
   },
   {
+    label: 'Agent Evaluation',
+    path: '/agents/evaluation',
+    icon: ClipboardCheck,
+    section: 'agents',
+    status: 'active',
+    description: 'Framework de benchmark automático para AgentBench, GAIA e BFCL.',
+  },
+  {
     label: 'Chat Colaborativo',
     path: '/agents/chat',
     icon: MessageSquare,
@@ -303,6 +322,14 @@ export const navConfig: NavRoute[] = [
     description: 'Overview operacional, nós de runtime, readiness e remediação.',
   },
   {
+    label: 'Perfil Operacional',
+    path: '/operations/profile',
+    icon: Layers3,
+    section: 'operations',
+    status: 'active',
+    description: 'Perfil atual e recursos ativos ou desabilitados.',
+  },
+  {
     label: 'GPU Autoscaling',
     path: '/operations/gpu',
     icon: Cpu,
@@ -326,6 +353,14 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Advanced inference abstraction, vLLM/TGI status and routing.',
     featureFlag: 'ADVANCED_INFERENCE_ENABLED',
+  },
+  {
+    label: 'Backups',
+    path: '/operations/backups',
+    icon: ArchiveRestore,
+    section: 'operations',
+    status: 'active',
+    description: 'Backups completos, verificação automática e recuperação segura.',
   },
 
   // ── Developers ────────────────────────────────────
@@ -373,6 +408,14 @@ export const navConfig: NavRoute[] = [
     section: 'compliance',
     status: 'active',
     description: 'Preparação para SOC 2 e ISO 27001 com evidências auditáveis.',
+  },
+  {
+    label: 'DLP Dashboard',
+    path: '/compliance/dlp',
+    icon: ShieldAlert,
+    section: 'compliance',
+    status: 'active',
+    description: 'Monitoramento de Data Loss Prevention, logs de vazamento e estatísticas.',
   },
   {
     label: 'Policy Engine',

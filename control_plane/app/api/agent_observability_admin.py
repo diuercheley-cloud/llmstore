@@ -65,6 +65,12 @@ async def get_run_timeline(
     res_events = await db.execute(stmt_events)
     events = res_events.scalars().all()
 
+    # Fetch agent traces
+    from app.models.agents.agents import AgentTrace
+    stmt_traces = select(AgentTrace).where(AgentTrace.run_id == run_id).order_by(AgentTrace.start_time.asc())
+    res_traces = await db.execute(stmt_traces)
+    traces = res_traces.scalars().all()
+
     # Combine and sort
     timeline = []
     for step in steps:
@@ -84,6 +90,22 @@ async def get_run_timeline(
             "type": "event",
             "event_type": event.event_type,
             "payload": event.payload,
+        })
+
+    for trace in traces:
+        timeline.append({
+            "timestamp": trace.start_time.isoformat(),
+            "type": "step",
+            "step_number": 0,
+            "step_type": trace.trace_type,
+            "status": trace.status,
+            "latency_ms": int(trace.duration_ms) if trace.duration_ms else None,
+            "error": trace.error,
+            "payload": {
+                "name": trace.name,
+                "input": trace.input_data,
+                "output": trace.output_data
+            }
         })
     
     timeline.sort(key=lambda x: x["timestamp"])
@@ -206,3 +228,24 @@ async def get_telemetry_status(
         "otel_tracing_enabled": settings.agent_otel_tracing_enabled,
         "langsmith_export_enabled": settings.agent_langsmith_export_enabled,
     }
+
+@router.post("/runs/{run_id}/replay")
+async def replay_agent_run(
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    admin: Any = Depends(require_admin),
+) -> Dict[str, Any]:
+    """
+    Triggers a simulation/replay of a past agent run.
+    """
+    from app.services.agents.agent_runtime import replay_run as service_replay_run
+    
+    try:
+        res = await service_replay_run(db, run_id)
+        # Convert UUIDs to string
+        res["run_id"] = str(res["run_id"])
+        res["agent_id"] = str(res["agent_id"])
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

@@ -94,9 +94,44 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}/control-plane:${{ github.ref_name }},ghcr.io/${{ github.repository }}/control-plane:latest
 
+      - name: Build and Push Quickstart
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.quickstart
+          push: true
+          tags: ghcr.io/llm-inference-stack/quickstart:${{ github.ref_name }},ghcr.io/llm-inference-stack/quickstart:latest
+
+  publish-docs:
+    name: Publish Versioned Docs
+    needs: validate-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+        with:
+          extra-deps: ruff pytest pytest-asyncio pytest-cov mkdocs mkdocs-material mike
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build Generated Docs
+        run: |
+          python scripts/docs/generate_reference_docs.py
+          python scripts/docs/generate_docs_site.py
+          mkdocs build --strict
+      - name: Publish Versioned Docs
+        run: |
+          mike deploy --push --update-aliases "${{ github.ref_name }}" latest
+          mike set-default --push latest
+
   create-github-release:
     name: Create GitHub Release
-    needs: [publish-sdk, publish-docker]
+    needs: [publish-sdk, publish-docker, publish-docs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

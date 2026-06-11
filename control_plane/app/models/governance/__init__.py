@@ -8,6 +8,7 @@ from app.models.governance.human_governance import (
     GovernanceApprovalQuorum,
     GovernanceEscalation,
     GovernanceReviewWorkflow,
+    CriticalApproval,
 )
 from app.models.governance.policy_engine import (
     DeterministicPolicy,

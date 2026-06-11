@@ -40,10 +40,13 @@ This index is the source of truth for documentation classification inside `docs/
 
 | Path | Scope |
 | --- | --- |
-| [API_REFERENCE.md](API_REFERENCE.md) | Endpoint inventory generated from `config/api-surface.yaml` |
-| [CONFIGURATION_REFERENCE.md](CONFIGURATION_REFERENCE.md) | Runtime configuration inventory generated from `BaseAppConfig` |
-| [FLAGS_INVENTORY.md](FLAGS_INVENTORY.md) | Feature flag inventory generated from the registry and settings model |
-| [PRODUCT_SURFACE.md](PRODUCT_SURFACE.md) | Product capability matrix generated from `config/supported-surface.yaml` |
+| [generated/API_SURFACE.md](generated/API_SURFACE.md) | Endpoint inventory and classification |
+| [generated/CONFIGURATION_REFERENCE.md](generated/CONFIGURATION_REFERENCE.md) | Runtime configuration inventory generated from `BaseAppConfig` |
+| [generated/FLAGS_INVENTORY.md](generated/FLAGS_INVENTORY.md) | Feature flag inventory generated from the registry and settings model |
+| [generated/PROFILES_REFERENCE.md](generated/PROFILES_REFERENCE.md) | Operational profiles and characteristic feature sets |
+| [generated/STORAGE_BACKENDS.md](generated/STORAGE_BACKENDS.md) | Storage family capabilities and drivers |
+| [generated/BACKUP_CAPABILITIES.md](generated/BACKUP_CAPABILITIES.md) | Backup and restore coverage and constraints |
+| [generated/PRODUCT_SURFACE.md](generated/PRODUCT_SURFACE.md) | Product capability matrix generated from `config/supported-surface.yaml` |
 | [SCRIPTS_INVENTORY.md](SCRIPTS_INVENTORY.md) | Reference catalog for active and archived scripts |
 | [operations/script-governance.md](operations/script-governance.md) | Script lifecycle and ownership policy |
 
@@ -56,6 +59,12 @@ These docs support the canonical set but are not primary entrypoints.
 | [architecture/platform_overview.md](architecture/platform_overview.md) | Architecture summary and constraints |
 | [architecture/platform_guarantees_and_limitations.md](architecture/platform_guarantees_and_limitations.md) | Explicit limitations and claims policy support |
 | [architecture/platform_domain_map.md](architecture/platform_domain_map.md) | Structural reference |
+| [adr/README.md](adr/README.md) | ADR index and decision log entrypoint |
+| [adr/0007-route-surface-governance.md](adr/0007-route-surface-governance.md) | Governs explicit publication and classification of HTTP routes |
+| [adr/0008-generated-documentation-rebuildable-artifacts.md](adr/0008-generated-documentation-rebuildable-artifacts.md) | Defines generated docs as rebuildable, non-canonical source artifacts |
+| [adr/0009-backup-restore-component-architecture.md](adr/0009-backup-restore-component-architecture.md) | Establishes backup and restore component boundaries and precedence |
+| [adr/0010-domain-persistence-contracts.md](adr/0010-domain-persistence-contracts.md) | Formalizes repository contracts as the persistence boundary for domains |
+| [adr/0011-disaster-recovery-test-matrix.md](adr/0011-disaster-recovery-test-matrix.md) | Requires a formal validation matrix for disaster recovery coverage |
 | [architecture/platform_validation_workflows.md](architecture/platform_validation_workflows.md) | Validation flow reference |
 | [ci/github-actions.md](ci/github-actions.md) | CI implementation notes for supported jobs |
 

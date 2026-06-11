@@ -15,6 +15,7 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/saas': lazy(() => import('../pages/ManagedControlPlane')),
   '/api-keys': lazy(() => import('../pages/api-keys/ApiKeys')),
   '/rbac': lazy(() => import('../pages/rbac/RbacManagement')),
+  '/approvals': lazy(() => import('../pages/Approvals')),
   '/billing': lazy(() => import('../pages/billing/Billing')),
   '/billing/costs': lazy(() => import('../pages/billing/CostAttribution')),
   '/billing/reconciliation': lazy(() => import('../pages/billing/Reconciliation')),
@@ -27,6 +28,7 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
 
   '/modules': lazy(() => import('../pages/Hub')),
   '/compliance': lazy(() => import('../pages/compliance/ComplianceOverview')),
+  '/compliance/dlp': lazy(() => import('../pages/compliance/DlpDashboard')),
   '/governance/policy': lazy(() => import('../pages/governance/PolicyEngine')),
   '/security/abuse': lazy(() => import('../pages/security/AbuseMonitoring')),
   '/compliance/controls': lazy(() => import('../pages/compliance/ControlMap')),
@@ -58,13 +60,16 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/agents/deployments': lazy(() => import('../pages/agents/deployments/DeploymentsOverview')),
   '/agents/kg': lazy(() => import('../pages/agents/kg/KnowledgeGraph')),
   '/agents/optimization': lazy(() => import('../pages/agents/optimization/OptimizationTournaments')),
+  '/agents/evaluation': lazy(() => import('../pages/agents/AgentEvaluation')),
 
   '/operations': lazy(() => import('../pages/operations/OperationsOverview')),
+  '/operations/profile': lazy(() => import('../pages/operations/SystemProfile')),
   '/operations/gpu': lazy(() => import('../pages/operations/GPUAutoscaling')),
   '/operations/adapters': lazy(() => import('../pages/operations/AdapterRegistry')),
   '/operations/inference': lazy(() => import('../pages/operations/InferenceBackends')),
   '/operations/readiness': lazy(() => import('../pages/operations/Readiness')),
   '/operations/security': lazy(() => import('../pages/operations/SecurityPosture')),
+  '/operations/backups': lazy(() => import('../pages/operations/BackupDashboard')),
 
 
   '/ide': lazy(() => import('../pages/ide/WebIDE')),

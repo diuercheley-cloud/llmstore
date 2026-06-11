@@ -273,8 +273,9 @@ class GovernedPluginRuntime:
             archive = archives[-1]
             workdir = Path(tempfile.mkdtemp(prefix="plugin-runtime-"))
             try:
+                from app.utils.archive import safe_extract_zip
                 with zipfile.ZipFile(io.BytesIO(archive.read_bytes())) as zf:
-                    zf.extractall(workdir)
+                    safe_extract_zip(zf, workdir)
                 entrypoint_path = workdir / entrypoint
                 if not entrypoint_path.exists():
                     raise PluginExecutionError(f"Entrypoint '{entrypoint}' not found in plugin archive")

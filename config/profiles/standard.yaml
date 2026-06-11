@@ -1,0 +1,38 @@
+name: standard
+description: PostgreSQL profile with basic observability and multi-model inference.
+settings:
+  OPERATIONAL_PROFILE: standard
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/llm_stack
+  OBSERVABILITY_ENABLED: true
+  RAG_ENABLED: true
+  PROVIDERS_ENABLED: local,lmstudio,vllm
+  CLOUD_PROVIDERS_ENABLED: false
+  PLUGIN_MARKETPLACE_ENABLED: false
+  AGENT_MARKETPLACE_ENABLED: false
+  AGENT_REMOTE_MARKETPLACE_ENABLED: false
+  AGENT_CLUSTER_FEDERATION_ENABLED: false
+  COMMERCIAL_FEDERATION_ENABLED: false
+  COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED: false
+  MULTI_CLUSTER_ENABLED: false
+  AGENT_MEMORY_ENABLED: false
+  AGENT_TOOL_REGISTRY_ENABLED: false
+  AGENT_TOOL_EXECUTION_ENABLED: false
+  AGENT_STATEFUL_WORKFLOWS_ENABLED: false
+  AGENT_RUNTIME_ENABLED: false
+features:
+  sqlite: false
+  postgresql: true
+  inference_proxy: true
+  rag_basic: true
+  multi_model: true
+  observability_basic: true
+  prometheus: true
+  loki: false
+  tempo: false
+  multi_tenant: false
+  federation: false
+  marketplace: false
+  memory: false
+  tools: false
+  workflows: false
+  agents: false

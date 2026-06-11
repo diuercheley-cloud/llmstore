@@ -605,3 +605,118 @@ LLM_AGENT_TELEMETRY_BACKPRESSURE_ACTIVE = Gauge(
     ["tenant_id", "agent_id"],
 )
 
+# Backup and Restore Operational Metrics
+BACKUP_LAST_SUCCESS_TIMESTAMP = Gauge(
+    "backup_last_success_timestamp",
+    "Unix timestamp of the last successful backup"
+)
+BACKUP_AGE_SECONDS = Gauge(
+    "backup_age_seconds",
+    "Time in seconds since the last successful backup"
+)
+BACKUP_FAILURE_TOTAL = Counter(
+    "backup_failure_total",
+    "Total number of failed backup operations"
+)
+BACKUP_VERIFICATION_FAILURE_TOTAL = Counter(
+    "backup_verification_failure_total",
+    "Total number of backup verification failures",
+    ["reason"]
+)
+RESTORE_FAILURE_TOTAL = Counter(
+    "restore_failure_total",
+    "Total number of failed restore operations"
+)
+RESTORE_DURATION_SECONDS = Histogram(
+    "restore_duration_seconds",
+    "Duration of restore operations in seconds"
+)
+RESTORE_STAGING_DURATION_SECONDS = Histogram(
+    "restore_staging_duration_seconds",
+    "Duration of restore staging operations in seconds"
+)
+RESTORE_PROMOTION_DURATION_SECONDS = Histogram(
+    "restore_promotion_duration_seconds",
+    "Duration of restore promotion operations in seconds"
+)
+RESTORE_ROLLBACK_DURATION_SECONDS = Histogram(
+    "restore_rollback_duration_seconds",
+    "Duration of restore rollback operations in seconds"
+)
+RESTORE_LOCK_CONTENTION_TOTAL = Counter(
+    "restore_lock_contention_total",
+    "Total number of restore lock acquisition failures"
+)
+BACKUP_DURATION_SECONDS = Histogram(
+    "backup_duration_seconds",
+    "Duration of backup operations in seconds"
+)
+BACKUP_SIZE_BYTES = Gauge(
+    "backup_size_bytes",
+    "Size of the latest successful backup in bytes"
+)
+ESTIMATED_RPO_SECONDS = Gauge(
+    "estimated_rpo_seconds",
+    "Estimated Recovery Point Objective in seconds"
+)
+MEASURED_RTO_SECONDS = Gauge(
+    "measured_rto_seconds",
+    "Measured Recovery Time Objective of the last successful restore in seconds"
+)
+
+
+def update_dynamic_backup_metrics() -> None:
+    import os
+    import time
+    from pathlib import Path
+    from datetime import datetime, UTC
+    import json
+    from app.core.config import get_settings
+    
+    try:
+        settings = get_settings()
+        backup_root = Path(settings.disaster_recovery_backup_dir or "/tmp/agent-backups") / "system"
+        if not backup_root.exists():
+            return
+            
+        latest_time = None
+        latest_size = 0
+        
+        # Sort directories by creation time
+        manifests = sorted(backup_root.glob("backup-*/manifest.json"), key=os.path.getmtime, reverse=True)
+        for manifest_path in manifests:
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                payload_file = manifest.get("payload_file", "payload.tar.gz.enc")
+                payload_path = manifest_path.parent / payload_file
+                if payload_path.exists():
+                    created_at_str = manifest.get("created_at")
+                    if created_at_str:
+                        try:
+                            # Use datetime.fromisoformat replacing 'Z' with '+00:00'
+                            dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                            ts = dt.timestamp()
+                        except Exception:
+                            ts = os.path.getmtime(manifest_path)
+                    else:
+                        ts = os.path.getmtime(manifest_path)
+                        
+                    latest_time = ts
+                    latest_size = payload_path.stat().st_size
+                    break
+            except Exception:
+                continue
+                
+        if latest_time is not None:
+            now = time.time()
+            age = max(0.0, now - latest_time)
+            
+            BACKUP_LAST_SUCCESS_TIMESTAMP.set(latest_time)
+            BACKUP_SIZE_BYTES.set(latest_size)
+            BACKUP_AGE_SECONDS.set(age)
+            ESTIMATED_RPO_SECONDS.set(age)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to update dynamic backup metrics: {e}")
+
+

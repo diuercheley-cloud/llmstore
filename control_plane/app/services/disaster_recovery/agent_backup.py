@@ -1,6 +1,17 @@
 """
-Disaster Recovery and Backup for agent configurations, memory, and state.
-Supports full and incremental backups with restore validation.
+DEPRECATED — Disaster Recovery and Backup for agent configurations, memory, and state.
+
+⚠️  This module is **deprecated since v2.4** and will be removed in v3.0.
+
+Replaced by `BackupService` (`app.services.backup.backup_service`) with
+`scope=logical-agent-backup`.
+
+Migration:
+  1. Use POST /admin/backup with {"scope": "logical-agent-backup"} instead.
+  2. Restore via POST /admin/backup/{backup_id}/restore/dry-run (staging).
+  3. For scheduling, use cron + `llmstack backup --logical-agent-backup`.
+
+See docs/BACKUP_ARCHITECTURE.md for the full compatibility matrix.
 """
 
 import asyncio
@@ -12,12 +23,19 @@ import uuid
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import warnings
 
 from app.core.config import get_settings
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
+_DEPRECATION_MSG = (
+    "AgentBackupService is deprecated since v2.4 and will be removed in v3.0. "
+    "Use BackupService (app.services.backup.backup_service) with "
+    "scope=logical-agent-backup instead. See docs/BACKUP_ARCHITECTURE.md."
+)
 
 
 class BackupManifest:
@@ -52,9 +70,13 @@ class BackupManifest:
 class AgentBackupService:
     """
     Backup and restore service for agent configurations, executions, and state.
+
+    .. deprecated:: v2.4
+        Use `BackupService` with `scope=logical-agent-backup` instead.
     """
 
     def __init__(self, db: AsyncSession):
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self.db = db
         self.settings = get_settings()
         self._backup_dir = Path(self.settings.disaster_recovery_backup_dir or "/tmp/agent-backups")
@@ -63,6 +85,7 @@ class AgentBackupService:
 
     async def create_backup(self, agent_ids: List[str], backup_type: str = "full",
                             include_memory: bool = True, include_runs: bool = True) -> BackupManifest:
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backup_id = f"backup-{uuid.uuid4().hex[:12]}"
         manifest = BackupManifest(backup_id, agent_ids, backup_type)
 
@@ -98,6 +121,7 @@ class AgentBackupService:
             shutil.rmtree(str(tmp_dir), ignore_errors=True)
 
     async def restore_backup(self, backup_id: str, target_agent_ids: Optional[List[str]] = None) -> int:
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backup_path = self._backup_dir / f"{backup_id}.tar.gz"
         if not backup_path.exists():
             raise FileNotFoundError(f"Backup not found: {backup_id}")
@@ -106,8 +130,9 @@ class AgentBackupService:
         restored_count = 0
 
         try:
+            from app.utils.archive import safe_extract_tar
             with tarfile.open(str(backup_path), "r:gz") as tar:
-                tar.extractall(str(tmp_dir))
+                safe_extract_tar(tar, tmp_dir)
 
             manifest_data = json.loads((tmp_dir / backup_id / "manifest.json").read_text())
             manifest = BackupManifest.from_dict(manifest_data)
@@ -131,6 +156,7 @@ class AgentBackupService:
             shutil.rmtree(str(tmp_dir), ignore_errors=True)
 
     async def list_backups(self, agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backups = []
         for f in sorted(self._backup_dir.glob("backup-*.tar.gz"), reverse=True):
             try:
@@ -251,9 +277,17 @@ class AgentBackupService:
 class BackupScheduler:
     """
     Scheduled automatic backups for all active agents.
+
+    .. deprecated:: v2.4
+        Use cron + `llmstack backup --logical-agent-backup` instead.
     """
 
     def __init__(self, db: AsyncSession):
+        warnings.warn(
+            "BackupScheduler is deprecated since v2.4. "
+            "Use cron + `llmstack backup --logical-agent-backup` instead.",
+            DeprecationWarning, stacklevel=2,
+        )
         self.db = db
         self.service = AgentBackupService(db)
         self._task: Optional[asyncio.Task] = None

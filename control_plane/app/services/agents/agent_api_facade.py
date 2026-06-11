@@ -42,6 +42,7 @@ async def validate_and_start_run(
     correlation_id: Optional[str] = None,
     session_id: Optional[uuid.UUID] = None,
     is_admin: bool = False,
+    is_simulation: bool = False,
 ) -> Any:
     """
     Validates the agent and starts a run.
@@ -79,6 +80,7 @@ async def validate_and_start_run(
         user_id=user_id,
         correlation_id=correlation_id,
         session_id=session_id,
+        is_simulation=is_simulation,
     )
     return run
 

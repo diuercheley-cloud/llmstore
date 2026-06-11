@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.bootstrap.exceptions import register_exception_handlers
 from app.bootstrap.middleware import configure_middleware
 from app.bootstrap.routers import register_routers
 from app.bootstrap.lifecycle import lifespan
@@ -18,6 +19,7 @@ Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteam
         docs_url="/api-docs",
         redoc_url="/api-redoc",
     )
+    register_exception_handlers(app)
     
     configure_middleware(app, settings)
     register_routers(app, settings)

@@ -1,0 +1,86 @@
+site_name: LLM Inference Stack Docs
+site_description: Centralized documentation portal for the LLM Inference Stack
+docs_dir: docs-site/docs
+site_dir: site
+use_directory_urls: true
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Docs Migration Plan: migration-plan.md
+  - Getting Started:
+      - Overview: getting-started/index.md
+      - Quickstart: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Install Wizard: getting-started/install-wizard.md
+      - Operational Profiles: getting-started/operational-profiles.md
+  - Architecture:
+      - Overview: architecture/index.md
+      - Platform Overview: architecture/platform-overview.md
+      - Domain Map: architecture/domain-map.md
+  - Agents:
+      - Overview: agents/index.md
+      - Agent Runtime: agents/agent-runtime.md
+      - Tool Execution: agents/tool-execution.md
+  - RAG:
+      - Overview: rag/index.md
+      - Knowledge Base Ingestion: rag/knowledge-base-ingestion.md
+      - Vector DB Providers: rag/vector-db-providers.md
+  - Security:
+      - Overview: security/index.md
+      - Admin RBAC: security/admin-rbac.md
+      - Agent Spend Controls: security/agent-spend-controls.md
+  - Governance:
+      - Overview: governance/index.md
+      - Data Governance: governance/data-governance.md
+      - Supply Chain Governance: governance/supply-chain-governance.md
+  - Operations:
+      - Overview: operations/index.md
+      - Platform Runbook: operations/platform-runbook.md
+      - Profile Selection: operations/profile-selection.md
+  - API:
+      - Overview: api/index.md
+      - Supported Surface: api/supported-surface.md
+      - API Reference: reference/api-reference.md
+  - Releases:
+      - Overview: releases/index.md
+      - Latest Release Notes: releases/latest-release-notes.md
+      - Latest Release Manifest: releases/latest-release-manifest.md
+      - Release Process: releases/release-process.md
+  - Reference:
+      - Overview: reference/index.md
+      - Configuration Reference: reference/configuration-reference.md
+      - Feature Flags: reference/feature-flags.md
+      - Profiles Reference: reference/profiles.md
+      - Product Surface: reference/product-surface.md

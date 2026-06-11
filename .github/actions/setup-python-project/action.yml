@@ -25,12 +25,7 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        if [ -f "${{ inputs.requirements-file }}" ]; then
-          pip install -r ${{ inputs.requirements-file }}
-        fi
-        if [ -n "${{ inputs.extra-deps }}" ]; then
-          pip install ${{ inputs.extra-deps }}
-        fi
+        pip install -e ".[dev]"
         # Check for local sdk installation if we are in sdk tests
         if [ -f "sdk/python/pyproject.toml" ] && [[ "${{ github.job }}" == *"sdk"* ]]; then
           pip install -e "sdk/python/[dev]"

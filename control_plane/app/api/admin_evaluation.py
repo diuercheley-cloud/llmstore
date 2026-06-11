@@ -1,15 +1,71 @@
 import uuid
+import json
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
+from app.services.agents.agent_evaluation_framework import AgentEvaluationService
 from app.services.evaluation.service import EvaluationService
 from app.models.agents.evaluation import EvalRun, EvalResult, RedTeamFinding, EloRating
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/admin/evaluation", tags=["admin-evaluation"])
+
+
+@router.get("/agent-evaluation/benchmarks")
+async def list_agent_benchmarks(session: AsyncSession = Depends(get_db_session)):
+    service = AgentEvaluationService(session)
+    return service.list_benchmarks()
+
+
+@router.post("/agent-evaluation/runs")
+async def run_agent_evaluation(
+    agent_id: uuid.UUID,
+    model_name: str,
+    benchmark: str = Query(..., pattern=r"^(AgentBench|GAIA|BFCL)$"),
+    session: AsyncSession = Depends(get_db_session),
+):
+    service = AgentEvaluationService(session)
+    try:
+        report = await service.run_benchmark(agent_id=agent_id, model_name=model_name, benchmark=benchmark)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return report.to_dict()
+
+
+@router.get("/agent-evaluation/runs")
+async def list_agent_evaluation_reports(session: AsyncSession = Depends(get_db_session)):
+    service = AgentEvaluationService(session)
+    runs = []
+    for benchmark_dir in service.artifacts_dir.glob("*"):
+        if not benchmark_dir.is_dir():
+            continue
+        for run_dir in benchmark_dir.glob("*"):
+            report_file = run_dir / "report.json"
+            if report_file.exists():
+                try:
+                    runs.append(report_file.read_text())
+                except Exception:
+                    continue
+    return [json.loads(item) for item in runs]
+
+
+@router.get("/agent-evaluation/runs/{run_id}/export")
+async def export_agent_evaluation_run(
+    run_id: str,
+    benchmark: str = Query(..., pattern=r"^(AgentBench|GAIA|BFCL)$"),
+    format: str = Query("json", pattern=r"^(json|csv|md)$"),
+    session: AsyncSession = Depends(get_db_session),
+):
+    service = AgentEvaluationService(session)
+    report_file = service.artifacts_dir / benchmark / run_id / f"report.{format}"
+    if not report_file.exists():
+        raise HTTPException(status_code=404, detail="Report not found")
+    media_type = "application/json" if format == "json" else "text/csv" if format == "csv" else "text/markdown"
+    return Response(content=report_file.read_text(), media_type=media_type)
 
 
 @router.get("/rankings")

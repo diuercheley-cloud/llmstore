@@ -94,6 +94,7 @@ async def start_run(
     agent_id: uuid.UUID,
     input_text: str = Body(..., embed=True),
     session_id: Optional[uuid.UUID] = Body(None, embed=True),
+    is_simulation: bool = Body(False, embed=True),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
 ) -> Dict[str, Any]:
@@ -107,6 +108,7 @@ async def start_run(
             tenant_id=str(client.id),
             input_text=input_text,
             session_id=session_id,
+            is_simulation=is_simulation,
             is_admin=False
         )
     except agent_api_facade.PolicyDenialError as e:
@@ -132,7 +134,9 @@ async def start_run(
         "id": str(run.id),
         "session_id": str(run.session_id) if run.session_id else None,
         "status": run.status,
-        "started_at": run.started_at.isoformat()
+        "started_at": run.started_at.isoformat(),
+        "is_simulation": getattr(run, "is_simulation", False),
+        "simulation_report": getattr(run, "simulation_report", None),
     }
 
 @router.get("/runs/{run_id}")
@@ -155,7 +159,9 @@ async def get_run_status(
         "total_steps": run.total_steps,
         "started_at": run.started_at.isoformat(),
         "completed_at": run.completed_at.isoformat() if run.completed_at else None,
-        "failure_reason": run.failure_reason
+        "failure_reason": run.failure_reason,
+        "is_simulation": getattr(run, "is_simulation", False),
+        "simulation_report": getattr(run, "simulation_report", None),
     }
 
 @router.post("/runs/{run_id}/cancel")

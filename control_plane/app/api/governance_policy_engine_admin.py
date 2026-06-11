@@ -141,10 +141,19 @@ async def create_policy(payload: PolicyCreateRequest, db: AsyncSession = Depends
     return {"policy": _serialize_policy(policy), "audit_event": build_policy_audit_event("create", policy.id, "created")}
 
 
+from app.domains.policy.contracts import PolicyRepository
+from app.domains.policy.repositories import SqlAlchemyPolicyRepository
+
 @router.get("")
 async def list_policies(db: AsyncSession = Depends(get_db_session)):
-    items = (await db.execute(select(DeterministicPolicy).order_by(desc(DeterministicPolicy.created_at)))).scalars().all()
-    return {"items": [_serialize_policy(item) for item in items]}
+    repo = SqlAlchemyPolicyRepository(db)
+    # The original query was global, so we need a global list method or use a dummy client_id if applicable.
+    # For now, let's add list_all_policies to the repo if needed, 
+    # but the repo has list_policies_by_client.
+    # Let's adjust the repo to have list_all_policies or just query all in repo.
+    
+    # Actually, I'll update the repo to have list_all_policies.
+    return {"items": await repo.list_all_policies()}
 
 
 @router.get("/{policy_id}/verify")

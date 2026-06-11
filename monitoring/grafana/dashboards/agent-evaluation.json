@@ -1,0 +1,160 @@
+{
+  "title": "Agent Evaluation",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Success Rate (Last 10 Runs)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(LLM_AGENT_EVAL_SUCCESS_RATE)",
+          "legendFormat": "Avg Success Rate"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 0, "y": 0}
+    },
+    {
+      "title": "Tool Efficiency (Last 10 Runs)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(LLM_AGENT_EVAL_TOOL_EFFICIENCY)",
+          "legendFormat": "Tool Efficiency"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 4, "y": 0}
+    },
+    {
+      "title": "Hallucination Score (Last 10 Runs)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(LLM_AGENT_EVAL_HALLUCINATION_SCORE)",
+          "legendFormat": "Hallucination"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 4, "x": 8, "y": 0}
+    },
+    {
+      "title": "Avg Latency by Benchmark",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg by(benchmark) (LLM_AGENT_EVAL_LATENCY_MS)",
+          "legendFormat": "{{benchmark}}"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 6, "x": 0, "y": 8}
+    },
+    {
+      "title": "Success Rate by Benchmark",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg by(benchmark) (LLM_AGENT_EVAL_SUCCESS_RATE)",
+          "legendFormat": "{{benchmark}}"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 6, "x": 6, "y": 8}
+    },
+    {
+      "title": "Runs Over Time (Last 24h)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(LLM_AGENT_EVAL_RUNS_TOTAL[5m])",
+          "legendFormat": "Runs/s"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 18}
+    },
+    {
+      "title": "Avg Token Cost per Run (USD)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(LLM_AGENT_EVAL_TOKEN_COST)",
+          "legendFormat": "Avg Cost"
+        }
+      ],
+      "gridPos": {"h": 6, "w": 4, "x": 0, "y": 28}
+    },
+    {
+      "title": "Total Tasks Executed",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(LLM_AGENT_EVAL_TASKS_TOTAL)",
+          "legendFormat": "Total Tasks"
+        }
+      ],
+      "gridPos": {"h": 6, "w": 4, "x": 4, "y": 28}
+    },
+    {
+      "title": "Task Result Breakdown",
+      "type": "piechart",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(LLM_AGENT_EVAL_TASKS_TOTAL{status=\"pass\"})",
+          "legendFormat": "Pass"
+        },
+        {
+          "expr": "sum(LLM_AGENT_EVAL_TASKS_TOTAL{status=\"fail\"})",
+          "legendFormat": "Fail"
+        },
+        {
+          "expr": "sum(LLM_AGENT_EVAL_TASKS_TOTAL{status=\"timeout\"})",
+          "legendFormat": "Timeout"
+        }
+      ],
+      "gridPos": {"h": 12, "w": 4, "x": 8, "y": 28}
+    },
+    {
+      "title": "Latency Heatmap by Task",
+      "type": "heatmap",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "LLM_AGENT_EVAL_LATENCY_MS",
+          "legendFormat": "Latency"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 40}
+    },
+    {
+      "title": "Hallucination Score over Runs",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "LLM_AGENT_EVAL_HALLUCINATION_SCORE",
+          "legendFormat": "Hallucination Score"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 6, "x": 0, "y": 50}
+    },
+    {
+      "title": "Benchmark Comparison Radar",
+      "type": "grafana-pyroscope-app",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg by(benchmark) (LLM_AGENT_EVAL_SUCCESS_RATE)",
+          "legendFormat": "{{benchmark}}"
+        }
+      ],
+      "gridPos": {"h": 10, "w": 6, "x": 6, "y": 50}
+    }
+  ],
+  "tags": ["agent-evaluation", "benchmarks"],
+  "schemaVersion": 39
+}

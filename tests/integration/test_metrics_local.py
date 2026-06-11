@@ -69,3 +69,8 @@ def test_local_metrics_expose_expected_families():
     assert "llm_cache_misses_total" in metrics_text
     assert "llm_provider_failures_total" in metrics_text
     assert "llm_request_errors_total" in metrics_text
+    assert "backup_verification_failure_total" in metrics_text
+    assert "restore_lock_contention_total" in metrics_text
+    assert "restore_staging_duration_seconds" in metrics_text
+    assert "restore_promotion_duration_seconds" in metrics_text
+    assert "restore_rollback_duration_seconds" in metrics_text

@@ -7,7 +7,7 @@ from app.models.operations.compatibility_contracts import CompatibilityContract,
 from app.models.operations.compliance import ComplianceFramework, ComplianceControl, ComplianceEvidenceItem, ComplianceControlTest, ComplianceRiskItem, CompliancePolicyDocument
 from app.models.operations.correlation import OperationalCorrelation, CorrelatedOperationalEvent, OperationalTrustLink
 from app.models.operations.deterministic_events import DeterministicEventContract, DeterministicEventRecord, EventSchemaCompatibility
-from app.models.operations.disaster_recovery import SovereignBackupManifest, RecoveryPlan, RecoveryVerificationResult
+from app.models.operations.disaster_recovery import SovereignBackupManifest, RecoveryPlan, RecoveryVerificationResult, RestoreRequest
 from app.models.operations.failure_signals import FailureSignal, FailureForecast, FailureRiskAssessment
 from app.models.operations.federation_sync import SovereignFederationEnvironment, FederationSynchronizationSession, FederationSynchronizationBundle, FederationTrustNegotiation, FederationConflictResolution, FederationSynchronizationReceipt, FederationLineageLink
 from app.models.operations.model_runtime import ModelRuntimeInstance
@@ -133,6 +133,7 @@ __all__ = [
     "SignedAdapterRegistryEntry",
     "SourceArtifactLineage",
     "SovereignBackupManifest",
+    "RestoreRequest",
     "SovereignExecutionAttestation",
     "SovereignFederationEnvironment",
     "SovereignMetricRecord",

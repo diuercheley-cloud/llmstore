@@ -66,6 +66,8 @@ export default function DebuggerPanel({ runId }: DebuggerPanelProps) {
     return lines;
   }, [events]);
 
+  const hasActiveLogs = Boolean(runId) && formattedLogs.length > 0;
+
   return (
     <div className="flex flex-col h-full bg-[#050811] text-slate-300 font-mono text-[11px]">
       <div className="flex items-center justify-between px-4 h-10 border-b border-white/5 bg-white/[0.02]">
@@ -100,16 +102,22 @@ export default function DebuggerPanel({ runId }: DebuggerPanelProps) {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {error && (
-          <div className="flex items-center gap-2 text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10 mb-4">
+          <div
+            id="debugger-panel-warning"
+            className="flex items-center gap-2 text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10 mb-4"
+          >
             <WifiOff size={14} />
-            <span>Connection Error: {error}</span>
+            <span>Warning: WebSocket connection error - {error}</span>
           </div>
         )}
 
         {!runId ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-700 gap-2 opacity-40">
+          <div
+            id="debugger-panel-empty"
+            className="h-full flex flex-col items-center justify-center text-slate-700 gap-2 opacity-40"
+          >
             <Wifi size={24} strokeWidth={1} />
-            <p>No active session. Deploy a flow to start debugging.</p>
+            <p>No active debug run. Deploy a flow to start debugging.</p>
           </div>
         ) : formattedLogs.length === 0 ? (
           <div className="flex items-center gap-2 text-slate-600 animate-pulse">
@@ -117,20 +125,21 @@ export default function DebuggerPanel({ runId }: DebuggerPanelProps) {
             Awaiting streaming events from runtime...
           </div>
         ) : (
-          formattedLogs.map((log, i) => (
-            <div key={i} className="whitespace-pre-wrap leading-relaxed hover:bg-white/[0.02] px-1 rounded transition-colors">
-              <span className="text-slate-600 font-bold">{log.slice(0, 10)}</span>
-              <span className={log.includes('[reasoning]') ? 'text-blue-400' : 
-                              log.includes('[tool_call]') ? 'text-purple-400' : 
-                              log.includes('[system]') ? 'text-emerald-400' : 
-                              log.includes('[policy]') ? 'text-red-400' : 'text-slate-300'}>
-                {log.slice(10)}
-              </span>
-            </div>
-          ))
+          <div id={hasActiveLogs ? 'debugger-panel-active' : undefined}>
+            {formattedLogs.map((log, i) => (
+              <div key={i} className="whitespace-pre-wrap leading-relaxed hover:bg-white/[0.02] px-1 rounded transition-colors">
+                <span className="text-slate-600 font-bold">{log.slice(0, 10)}</span>
+                <span className={log.includes('[reasoning]') ? 'text-blue-400' : 
+                                log.includes('[tool_call]') ? 'text-purple-400' : 
+                                log.includes('[system]') ? 'text-emerald-400' : 
+                                log.includes('[policy]') ? 'text-red-400' : 'text-slate-300'}>
+                  {log.slice(10)}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
 }
-

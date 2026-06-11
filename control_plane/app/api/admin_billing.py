@@ -44,10 +44,13 @@ def _serialize_billing_plan_payload(payload: BillingPlanCreate) -> dict:
     return plan_data
 
 
+from app.domains.billing.contracts import BillingRepository
+from app.domains.billing.repositories import SqlAlchemyBillingRepository
+
 @router.get("/billing/plans", response_model=list[BillingPlanRead])
 async def list_billing_plans(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))
-    return result.scalars().all()
+    repo = SqlAlchemyBillingRepository(session)
+    return await repo.list_plans()
 
 
 @router.post("/billing/plans", response_model=BillingPlanRead, status_code=201)

@@ -8,12 +8,12 @@ from app.core.time import utc_now
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.models.rag.rag_document import RAGDocument
-from app.models.rag.rag_document_chunk import RAGDocumentChunk
+from app.storage import RAGChunkRecord, resolve_storage_backend
 from app.services.embeddings import get_embedding_service
 from app.services.rag_usage import get_rag_usage_and_limits, record_rag_event
 from app.utils.token_estimator import estimate_tokens_from_text
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
-    doc = (await session.execute(select(RAGDocument).where(RAGDocument.id == document_id))).scalar_one_or_none()
+    backend = resolve_storage_backend(session)
+    doc = await backend.document_store.get_rag_document(document_id)
     if not doc:
         logger.error(f"Document {document_id} not found for processing")
         return
@@ -101,17 +102,13 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         embeddings = await embedding_service.embed_batch(texts)
 
         # 4. Save chunks
-        from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
-        store = VectorStoreFactory.get_instance(session=session)
-        
+        store = backend.vector_store
+
         # Delete existing chunks if reprocessing
-        existing_chunk_ids = (await session.execute(
-            select(RAGDocumentChunk.id).where(RAGDocumentChunk.document_id == document_id)
-        )).scalars().all()
+        existing_chunk_ids = await backend.document_store.list_rag_chunk_ids(document_id)
         if existing_chunk_ids:
             await store.delete(collection_name="rag_chunks", ids=[str(cid) for cid in existing_chunk_ids])
-            await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document_id))
-        
+        chunk_records: list[RAGChunkRecord] = []
         for i, (chunk_data, embedding) in enumerate(zip(chunks_to_process, embeddings)):
             chunk_id = uuid.uuid4()
             # Store in Vector DB
@@ -125,27 +122,29 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
                     "content": chunk_data["content"]
                 }
             )
-            
-            # Keep in DB for metadata/fallback
-            chunk = RAGDocumentChunk(
-                id=chunk_id,
-                document_id=doc.id,
-                client_id=doc.client_id,
-                chunk_index=i,
-                page_number=chunk_data["page_number"],
-                content=chunk_data["content"],
-                token_count=estimate_tokens_from_text(chunk_data["content"]),
-                embedding=embedding,
+
+            chunk_records.append(
+                RAGChunkRecord(
+                    id=chunk_id,
+                    document_id=doc.id,
+                    client_id=doc.client_id,
+                    chunk_index=i,
+                    page_number=chunk_data["page_number"],
+                    content=chunk_data["content"],
+                    token_count=estimate_tokens_from_text(chunk_data["content"]),
+                    embedding=embedding,
+                )
             )
-            session.add(chunk)
+
+        await backend.document_store.replace_rag_document_chunks(document_id, chunk_records)
 
         doc.chunk_count = len(chunks_to_process)
         doc.status = "indexed"
         doc.processed_at = utc_now()
         doc.error_message = None
-        
+
         await record_rag_event(session, doc.client_id, "pages_processed", quantity=doc.page_count, document_id=doc.id)
-        
+
         await session.commit()
         logger.info(f"Document {document_id} processed successfully with {doc.chunk_count} chunks")
 
@@ -155,26 +154,20 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         doc.error_message = str(e)
         await session.commit()
 
+
 async def delete_rag_document(session: AsyncSession, document: RAGDocument):
-    # Delete chunks from Vector Store
-    from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
-    store = VectorStoreFactory.get_instance(session=session)
-    
-    chunk_ids = (await session.execute(
-        select(RAGDocumentChunk.id).where(RAGDocumentChunk.document_id == document.id)
-    )).scalars().all()
-    
+    backend = resolve_storage_backend(session)
+    store = backend.vector_store
+
+    chunk_ids = await backend.document_store.list_rag_chunk_ids(document.id)
+
     if chunk_ids:
         await store.delete(collection_name="rag_chunks", ids=[str(cid) for cid in chunk_ids])
-        
-    # Delete chunks from DB
-    await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id))
-    # Delete file
+
+    await backend.document_store.delete_rag_document(document)
     if os.path.exists(document.storage_path):
         try:
             os.remove(document.storage_path)
         except Exception as e:
             logger.error(f"Failed to delete file {document.storage_path}: {e}")
-    # Delete document record
-    await session.delete(document)
     await session.commit()

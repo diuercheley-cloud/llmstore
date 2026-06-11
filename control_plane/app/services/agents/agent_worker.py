@@ -414,6 +414,19 @@ class AgentWorkerService:
                 next_attempt_at=now
             )
 
+            from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+            await AgentTraceService.create_trace(
+                db=db,
+                run_id=job.agent_run_id,
+                trace_type="retry",
+                name=f"execution_retry_{job.attempt_count}",
+                input_data={"attempt": job.attempt_count, "max_attempts": job.max_attempts, "error_message": error_message},
+                output_data={"next_attempt_at": retry_record.next_attempt_at.isoformat() if retry_record.next_attempt_at else None},
+                status="success",
+                start_time=now,
+                end_time=now
+            )
+
             if job.attempt_count < job.max_attempts:
                 delay = job.initial_delay_seconds * (job.backoff_factor ** (job.attempt_count - 1))
                 next_attempt = now + timedelta(seconds=delay)

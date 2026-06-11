@@ -41,33 +41,96 @@ Executar validação completa:
 Backup:
 
 ```bash
-./scripts/backup/backup.sh
+llmstack backup --logical-agent-backup
 ```
 
-O backup completo inclui:
+O backup lógico de agentes inclui:
 
-- dump do PostgreSQL
-- cópia local do arquivo de ambiente com permissão preservada
-- `VERSION`
-- `docker-compose*.yml`
-- `models.manifest.json` sem copiar os blobs `.gguf` por padrão
-- `checksums.sha256`
+- banco lógico dos componentes suportados
+- configs (config/*.yml, config/*.yaml, VERSION. Nota: .env e .env.local são excluídos por segurança)
+- feature flags
+- agentes
+- workflows
+- embeddings metadata
+- criptografia do payload
+- assinatura HMAC-SHA256
+- checksum SHA-256 do pacote
+- verificação automática após criação
 
 Restore:
 
 ```bash
-./scripts/backup/restore.sh /caminho/para/backup-dir
+llmstack restore BACKUP_ID --dry-run
+llmstack restore BACKUP_ID --yes
 ```
 
-O restore valida `VERSION`, revisão de schema (`alembic`), checksums e exige confirmação explícita. O `.env.local` só é sobrescrito se você confirmar.
+O restore valida assinatura, checksum e hashes de cada componente antes de aplicar qualquer mudança. Se a verificação falhar, o restore fica bloqueado.
+O restore real também exige confirmação explícita com `--yes`.
+
+Dashboard:
+
+- Admin Dashboard: `/admin-dashboard/operations/backups`
+- Fluxos disponíveis: criar backup full, verificar integridade, simular restore e executar restore
+
+Monitoramento e Métricas Prometheus:
+
+O endpoint `/metrics` expõe as seguintes métricas operacionais para Backup e Restore:
+- `backup_last_success_timestamp`: Unix timestamp do último backup bem-sucedido.
+- `backup_age_seconds`: Tempo em segundos desde o último backup bem-sucedido.
+- `backup_size_bytes`: Tamanho do último backup bem-sucedido em bytes.
+- `backup_failure_total`: Contador total de falhas na criação de backup.
+- `restore_failure_total`: Contador total de falhas na restauração de backup.
+- `backup_duration_seconds`: Histograma de duração das operações de backup.
+- `restore_duration_seconds`: Histograma de duração das operações de restore.
+- `estimated_rpo_seconds`: RPO estimado com base na idade do último backup bem-sucedido.
+- `measured_rto_seconds`: RTO medido a partir da duração da última restauração bem-sucedida.
+
+Alertas sugeridos para Alertmanager/Prometheus:
+
+```yaml
+groups:
+  - name: DisasterRecoveryAlerts
+    rules:
+      - alert: BackupStale
+        expr: backup_age_seconds > 86400
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup stale for more than 24 hours"
+          description: "No successful backup has been recorded in the last 24 hours."
+
+      - alert: BackupFailureDetected
+        expr: rate(backup_failure_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup failures detected"
+          description: "Multiple backup operations have failed in the last 10 minutes."
+
+      - alert: RestoreFailureDetected
+        expr: rate(restore_failure_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Restore failures detected"
+          description: "Restore or rollback operations have failed in the last 10 minutes."
+```
 
 Teste de disaster recovery:
 
 ```bash
-./scripts/dev/dr-test.sh /caminho/para/backup-dir
+python3 -m pytest tests/api/test_admin_backup.py -q
 ```
 
-O script sobe uma stack temporária isolada, restaura o backup, valida `health` e `ready`, roda um chat de teste e grava um relatório em `artifacts/dr-tests/`.
+Cobertura atual:
+
+- backup
+- restore
+- integridade
+- corrupção
 
 ## Experiência de Produção Local
 

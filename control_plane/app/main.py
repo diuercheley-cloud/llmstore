@@ -27,11 +27,19 @@ app = create_app()
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Deprecation shim for legacy static admin UI
+import warnings
+
+# Deprecation shim for legacy static admin UI — REMOVAL v3.0 (2026-12-31)
 @app.get("/static/admin", include_in_schema=False)
 async def deprecate_legacy_admin():
-    logger.warning("Legacy Admin UI access detected. Use /admin instead.")
-    return {"message": "Deprecated. Please use the new Admin Dashboard at /admin"}
+    warnings.warn(
+        "Legacy Admin UI (/static/admin) is deprecated since v2.0 and will be removed in v3.0. "
+        "Use the new Admin Dashboard at /admin instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    logger.warning("Legacy Admin UI access detected (will be removed in v3.0). Use /admin instead.")
+    return {"message": "Deprecated (removal: v3.0). Please use the new Admin Dashboard at /admin"}
 
 if __name__ == "__main__":
     import uvicorn

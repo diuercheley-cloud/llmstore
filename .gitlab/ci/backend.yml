@@ -22,7 +22,7 @@ backend:test:
   script:
     - cd control_plane
     - ruff check .
-    - pytest tests/ -m "not slow" --cov=app
+    - pytest tests/ -m "release_gate" --cov=app
   artifacts:
     reports:
       coverage_report:

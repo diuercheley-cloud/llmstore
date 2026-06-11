@@ -40,6 +40,7 @@ async def start_run(
     session_id: Optional[uuid.UUID] = None,
     llm_provider: Optional[Any] = None,
     tool_runner: Optional[Any] = None,
+    is_simulation: bool = False,
 ) -> Any:
     """Initializes and starts an agent execution run."""
     _verify_runtime_enabled()
@@ -62,6 +63,7 @@ async def start_run(
         correlation_id=correlation_id,
         parent_run_id=parent_run_id,
         session_id=session_id,
+        is_simulation=is_simulation,
     )
     
     if llm_provider or tool_runner:
@@ -95,6 +97,7 @@ async def start_run(
 
     return run
 
+
 async def run_execution_loop(
     db: AsyncSession,
     run_id: uuid.UUID,
@@ -126,6 +129,16 @@ async def run_execution_loop(
                 
             # Yield control briefly
             await asyncio.sleep(0.01)
+
+        # Refresh run state
+        run = await agent_state.get_agent_run(db, run_id)
+        if run and run.status == "running":
+            await agent_state.update_run(db, run_id, status="completed", completed_at=utc_now())
+            run.status = "completed"
+
+        if run and run.is_simulation:
+            from app.services.agents.simulation import SimulationRuntime
+            await SimulationRuntime.generate_simulation_report(db, run_id)
             
         # Trigger deployment callback if applicable
         from app.services.agent_deployments.deployment_callback import DeploymentCallbackService

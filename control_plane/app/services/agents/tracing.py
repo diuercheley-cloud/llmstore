@@ -29,6 +29,7 @@ class TracingService:
             from app.services.observability.jaeger_exporter import JaegerExporterService
             from app.services.observability.otlp_exporter import OTLPExporter
             from app.services.observability.zipkin_exporter import ZipkinExporterService
+            from app.services.observability.tempo_exporter import TempoExporter
             
             if settings.otlp_export_enabled:
                 OTLPExporter().setup(provider)
@@ -39,7 +40,15 @@ class TracingService:
             if settings.zipkin_export_enabled:
                 ZipkinExporterService().setup(provider)
 
-            if not any([settings.otlp_export_enabled, settings.jaeger_export_enabled, settings.zipkin_export_enabled]):
+            if getattr(settings, "tempo_export_enabled", False):
+                TempoExporter().setup(provider)
+ 
+            if not any([
+                settings.otlp_export_enabled,
+                settings.jaeger_export_enabled,
+                settings.zipkin_export_enabled,
+                getattr(settings, "tempo_export_enabled", False)
+            ]):
                 # Default to console if none enabled but OTel is active
                 provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
         else:

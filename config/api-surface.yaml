@@ -30,6 +30,14 @@
   since_version: 1.0.0
   deprecation_version: null
   docs_url: /docs/api/supported-api-surface.md
+- endpoint: /api/system/profile
+  method: GET
+  owner: platform-ops
+  status: keep_supported
+  replacement: null
+  since_version: 2.3.0
+  deprecation_version: null
+  docs_url: /docs/PROFILES.md
 - endpoint: /admin-v2
   method: GET
   owner: platform-ops
@@ -814,6 +822,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/anomalies/run
   method: POST
   owner: billing-ops
@@ -822,6 +832,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/anomalies/{anomaly_id}/ack
   method: POST
   owner: billing-ops
@@ -830,6 +842,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/anomalies/{anomaly_id}/ignore
   method: POST
   owner: billing-ops
@@ -838,6 +852,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/anomalies/{anomaly_id}/resolve
   method: POST
   owner: billing-ops
@@ -846,6 +862,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/audit/validate-chain
   method: GET
   owner: billing-ops
@@ -854,6 +872,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/clients/{client_id}/invoice/preview
   method: GET
   owner: billing-ops
@@ -862,6 +882,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/disputes
   method: GET
   owner: billing-ops
@@ -870,6 +892,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/disputes/manual-credit
   method: POST
   owner: billing-ops
@@ -878,6 +902,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/disputes/{id}/reject
   method: POST
   owner: billing-ops
@@ -886,6 +912,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/disputes/{id}/resolve
   method: POST
   owner: billing-ops
@@ -894,6 +922,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/disputes/{id}/review
   method: POST
   owner: billing-ops
@@ -902,6 +932,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/forecast/overview
   method: GET
   owner: billing-ops
@@ -910,6 +942,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/forecast/records
   method: GET
   owner: billing-ops
@@ -918,6 +952,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/forecast/run
   method: POST
   owner: billing-ops
@@ -926,6 +962,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices
   method: GET
   owner: billing-ops
@@ -934,6 +972,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices/generate
   method: POST
   owner: billing-ops
@@ -942,6 +982,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices/preview
   method: GET
   owner: billing-ops
@@ -950,6 +992,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices/{invoice_id}/cancel
   method: PATCH
   owner: billing-ops
@@ -958,6 +1002,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices/{invoice_id}/mark-overdue
   method: PATCH
   owner: billing-ops
@@ -966,6 +1012,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/invoices/{invoice_id}/mark-paid
   method: PATCH
   owner: billing-ops
@@ -974,6 +1022,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/margins/summary
   method: GET
   owner: billing-ops
@@ -982,6 +1032,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/payments
   method: GET
   owner: billing-ops
@@ -990,6 +1042,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/payments
   method: POST
   owner: billing-ops
@@ -998,6 +1052,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/payments/{payment_id}/cancel
   method: PATCH
   owner: billing-ops
@@ -1006,6 +1062,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/plans
   method: GET
   owner: billing-ops
@@ -1014,6 +1072,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/plans
   method: POST
   owner: billing-ops
@@ -1022,6 +1082,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/plans/{plan_id}
   method: PATCH
   owner: billing-ops
@@ -1030,6 +1092,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/plans/{plan_id}/models
   method: PATCH
   owner: billing-ops
@@ -1038,6 +1102,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/pricing-rules
   method: GET
   owner: billing-ops
@@ -1046,6 +1112,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/pricing/simulate
   method: POST
   owner: billing-ops
@@ -1054,6 +1122,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/provider-costs
   method: GET
   owner: billing-ops
@@ -1062,6 +1132,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/export
   method: GET
   owner: billing-ops
@@ -1070,6 +1142,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/generate
   method: POST
   owner: billing-ops
@@ -1078,6 +1152,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/overview
   method: GET
   owner: billing-ops
@@ -1086,6 +1162,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/records
   method: GET
   owner: billing-ops
@@ -1094,6 +1172,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/{record_id}/attach-invoice
   method: POST
   owner: billing-ops
@@ -1102,6 +1182,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/qos/{record_id}/debit-wallet
   method: POST
   owner: billing-ops
@@ -1110,6 +1192,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/reconciliation/mismatches
   method: GET
   owner: billing-ops
@@ -1118,6 +1202,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/reconciliation/overview
   method: GET
   owner: billing-ops
@@ -1126,6 +1212,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/reconciliation/run
   method: POST
   owner: billing-ops
@@ -1134,6 +1222,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/reconciliation/{id}/resolve
   method: POST
   owner: billing-ops
@@ -1142,6 +1232,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/deliveries
   method: GET
   owner: billing-ops
@@ -1150,6 +1242,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/policies
   method: GET
   owner: billing-ops
@@ -1158,6 +1252,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/policies
   method: POST
   owner: billing-ops
@@ -1166,6 +1262,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/policies/{policy_id}
   method: PATCH
   owner: billing-ops
@@ -1174,6 +1272,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/retry/{delivery_id}
   method: POST
   owner: billing-ops
@@ -1182,6 +1282,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/status
   method: GET
   owner: billing-ops
@@ -1190,6 +1292,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-escalations/test
   method: POST
   owner: billing-ops
@@ -1198,6 +1302,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/actions
   method: GET
   owner: billing-ops
@@ -1206,6 +1312,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/actions/{action_id}/apply
   method: POST
   owner: billing-ops
@@ -1214,6 +1322,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/actions/{action_id}/revert
   method: POST
   owner: billing-ops
@@ -1222,6 +1332,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/evaluate
   method: POST
   owner: billing-ops
@@ -1230,6 +1342,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/policies
   method: GET
   owner: billing-ops
@@ -1238,6 +1352,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/policies
   method: POST
   owner: billing-ops
@@ -1246,6 +1362,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/policies/{policy_id}
   method: PATCH
   owner: billing-ops
@@ -1254,6 +1372,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/revenue-protection/status
   method: GET
   owner: billing-ops
@@ -1262,6 +1382,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/run-cycle
   method: POST
   owner: billing-ops
@@ -1270,6 +1392,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/usage-financials
   method: GET
   owner: billing-ops
@@ -1278,6 +1402,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/wallets
   method: GET
   owner: billing-ops
@@ -1286,6 +1412,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/wallets/{client_id}
   method: GET
   owner: billing-ops
@@ -1294,6 +1422,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/wallets/{client_id}/adjustment
   method: POST
   owner: billing-ops
@@ -1302,6 +1432,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/wallets/{client_id}/manual-credit
   method: POST
   owner: billing-ops
@@ -1310,6 +1442,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/billing/wallets/{client_id}/transactions
   method: GET
   owner: billing-ops
@@ -1318,6 +1452,8 @@
   since_version: 1.5.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/cache/entries
   method: GET
   owner: platform-ops
@@ -3214,6 +3350,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/runtime/activate/{instance_id}
   method: POST
   owner: model-ops
@@ -3222,6 +3360,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/runtime/load
   method: POST
   owner: model-ops
@@ -3230,6 +3370,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/runtime/rollback
   method: POST
   owner: model-ops
@@ -3238,6 +3380,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/runtime/unload/{instance_id}
   method: POST
   owner: model-ops
@@ -3246,6 +3390,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/runtime/{instance_id}/health
   method: GET
   owner: model-ops
@@ -3254,6 +3400,8 @@
   since_version: 1.8.0
   deprecation_version: 1.9.7
   docs_url: /docs/api/supported-api-surface.md
+  removal_version: v3.0
+  sunset_date: '2026-12-31'
 - endpoint: /admin/models/supply-chain/bundles
   method: GET
   owner: platform-ops

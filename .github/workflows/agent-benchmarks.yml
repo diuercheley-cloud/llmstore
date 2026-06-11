@@ -1,0 +1,87 @@
+name: Agent Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: 'Benchmark to run (AgentBench, GAIA, BFCL, or all)'
+        required: true
+        default: 'all'
+      agent_id:
+        description: 'Agent ID (UUID)'
+        required: false
+        default: '00000000-0000-0000-0000-000000000000'
+      model_name:
+        description: 'Model name to evaluate'
+        required: true
+        default: 'demo-model'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  agent-benchmarks:
+    name: ${{ github.event.inputs.benchmark || 'all' }} benchmark
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: llm_inference_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-project
+
+      - name: Database Migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+        run: |
+          cd control_plane
+          alembic upgrade head
+
+      - name: Run Agent Benchmarks
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
+          PYTHONPATH: .:control_plane
+          AGENT_EVAL_BENCHMARK: ${{ github.event.inputs.benchmark || 'all' }}
+          AGENT_EVAL_AGENT_ID: ${{ github.event.inputs.agent_id || '00000000-0000-0000-0000-000000000000' }}
+          AGENT_EVAL_MODEL: ${{ github.event.inputs.model_name || 'demo-model' }}
+        run: |
+          make run-agent-benchmarks
+
+      - name: Upload Benchmark Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-benchmark-reports
+          path: artifacts/agent-evaluations/
+          retention-days: 30
+
+      - name: Benchmark Summary
+        if: always()
+        run: |
+          echo "## Agent Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for report in artifacts/agent-evaluations/*/latest/report.md; do
+            if [ -f "$report" ]; then
+              echo "### $(basename $(dirname $(dirname $report)))" >> $GITHUB_STEP_SUMMARY
+              cat "$report" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done

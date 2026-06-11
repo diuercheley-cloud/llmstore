@@ -31,6 +31,7 @@ class AgentRunCreate(BaseModel):
     input_text: str
     user_id: Optional[str] = Field(None, max_length=128)
     correlation_id: Optional[str] = Field(None, max_length=128)
+    is_simulation: bool = False
 
 class AgentRunResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -49,6 +50,8 @@ class AgentRunResponse(BaseModel):
     completed_at: Optional[str] = None
     failure_reason: Optional[str] = None
     correlation_id: Optional[str] = None
+    is_simulation: bool = False
+    simulation_report: Optional[dict] = None
 
 class AgentRunStepResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -84,6 +87,8 @@ def to_run_response(run) -> AgentRunResponse:
         completed_at=format_datetime(run.completed_at),
         failure_reason=run.failure_reason,
         correlation_id=run.correlation_id,
+        is_simulation=getattr(run, "is_simulation", False),
+        simulation_report=getattr(run, "simulation_report", None),
     )
 
 def to_step_response(step) -> AgentRunStepResponse:
@@ -115,6 +120,7 @@ async def create_run(
             input_text=payload.input_text,
             user_id=payload.user_id,
             correlation_id=payload.correlation_id,
+            is_simulation=payload.is_simulation,
             is_admin=True,
         )
         return to_run_response(run)

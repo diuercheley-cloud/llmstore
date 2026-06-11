@@ -4,6 +4,11 @@ import json
 from app.services.backup.backup_service import BackupService
 from app.schemas.backup import BackupManifest
 
+@pytest.fixture(autouse=True)
+def setup_backup_keys(monkeypatch):
+    monkeypatch.setenv("BACKUP_ENCRYPTION_KEY", "a" * 32)
+    monkeypatch.setenv("BACKUP_SIGNING_KEY", "b" * 32)
+
 @pytest.mark.asyncio
 async def test_backup_creation_determinism(session):
     service = BackupService(session)
@@ -21,56 +26,67 @@ async def test_backup_verification_failure(session):
     manifest = await service.create_backup()
     
     # Verify valid
-    res = service.verify_backup(manifest)
-    assert res["status"] == "valid"
+    res = await service.verify_backup(manifest.backup_id)
+    assert res.status == "valid"
     
     # Tamper with a component hash
     manifest.components[0].data_hash = "tampered_hash_value"
     
+    # Save the tampered manifest back
+    manifest_path = service.backup_root / manifest.backup_id / "manifest.json"
+    manifest_path.write_text(manifest.model_dump_json(), encoding="utf-8")
+    
     # Verify should detect corruption
-    res_tampered = service.verify_backup(manifest)
-    assert res_tampered["status"] == "corrupted"
-    assert any(c["status"] == "mismatch" for c in res_tampered["component_verification"])
+    res_tampered = await service.verify_backup(manifest.backup_id)
+    assert res_tampered.status == "corrupted"
+    assert any(c.status == "mismatch" for c in res_tampered.component_verification)
 
 @pytest.mark.asyncio
 async def test_restore_dry_run_safety(session):
     service = BackupService(session)
     manifest = await service.create_backup()
     
-    res = await service.restore_dry_run(manifest)
-    assert res["status"] == "dry_run_complete"
-    assert res["side_effects_prevented"] is True
-    assert len(res["plan"]) == len(manifest.components)
+    from app.schemas.backup import BackupRestoreRequest
+    res = await service.restore_backup(manifest.backup_id, BackupRestoreRequest(dry_run=True))
+    assert res.status == "dry_run_complete"
+    assert res.details["side_effects_prevented"] is True
+    assert len(res.plan) == len(manifest.components)
 
 def test_backup_manifest_redaction():
     from app.schemas.backup import BackupComponent
-    # Create component with sensitive data in its "mocked data" (internal logic check)
-    # The hash should be derived from redacted data or data without secrets
-    # Our implementation uses a fixed string "REDACTED_API_KEY" in _create_mock_component
     
-    manifest = BackupManifest(encryption_status="redacted")
+    manifest = BackupManifest(
+        encryption_status="redacted",
+        archive_checksum="mock-checksum",
+        payload_file="mock-payload",
+        payload_signature="mock-signature"
+    )
     assert manifest.encryption_status == "redacted"
     
 @pytest.mark.asyncio
 async def test_backup_api_flow(admin_client, session):
-    headers = {"X-Admin-Token": "test-admin-token"}
+    from app.core.config import get_settings
+    settings = get_settings()
+    settings.backup_restore_enabled = True
+    token = settings.admin_super_token or settings.admin_token or "test-admin-token"
+    headers = {"X-Admin-Token": token}
     
     # 1. Create
-    resp = await admin_client.post("/api/admin/backup/create", headers=headers)
+    resp = await admin_client.post("/admin/backup/create", headers=headers)
     assert resp.status_code == 200
     backup_id = resp.json()["backup_id"]
     
     # 2. List
-    resp_list = await admin_client.get("/api/admin/backup/list", headers=headers)
+    resp_list = await admin_client.get("/admin/backup/list", headers=headers)
     assert resp_list.status_code == 200
     assert any(b["id"] == backup_id for b in resp_list.json())
     
     # 3. Verify
-    resp_verify = await admin_client.get(f"/api/admin/backup/{backup_id}/verify", headers=headers)
+    resp_verify = await admin_client.post(f"/admin/backup/{backup_id}/verify", headers=headers)
     assert resp_verify.status_code == 200
     assert resp_verify.json()["status"] == "valid"
     
     # 4. Dry-run Restore
-    resp_restore = await admin_client.post(f"/api/admin/backup/{backup_id}/restore/dry-run", headers=headers)
+    resp_restore = await admin_client.post(f"/admin/backup/{backup_id}/restore/dry-run", headers=headers)
     assert resp_restore.status_code == 200
-    assert resp_restore.json()["side_effects_prevented"] is True
+    assert resp_restore.json()["details"]["side_effects_prevented"] is True

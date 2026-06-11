@@ -138,3 +138,54 @@ No modo estrito, o timeout vira falha real:
 - O fluxo assume que a pasta `models/` continua disponível no host para o backend de inferência local.
 - Se o host não tiver GPU ou o backend local de modelo não subir, a validação de inferência vai falhar.
 - O arquivo `config/config.env` é um snapshot para auditoria; ele não é suficiente para reconstruir segredos.
+
+## Criptografia e Rotação de Chaves
+
+O stack de disaster recovery exige configuração explícita de chaves criptográficas para garantir a segurança dos backups. Os fallbacks antigos para segredos compartilhados (`JWT_SECRET` / `ADMIN_TOKEN`) foram totalmente removidos.
+
+### Chaves Necessárias
+
+As seguintes variáveis de ambiente devem estar configuradas no ambiente de execução:
+
+* **`BACKUP_ENCRYPTION_KEY`**: Chave de criptografia dos arquivos (mínimo de 32 caracteres).
+* **`BACKUP_SIGNING_KEY`**: Chave secreta de assinatura HMAC (mínimo de 32 caracteres).
+* **`BACKUP_KEY_ID`**: (Opcional) Identificador da chave. Se omitido, é derivado a partir do hash da chave de criptografia.
+
+### Rotação de Chaves
+
+Para efetuar a rotação de chaves:
+1. Gere novas chaves criptográficas com pelo menos 32 caracteres.
+2. Defina as novas chaves nas variáveis `BACKUP_ENCRYPTION_KEY` e `BACKUP_SIGNING_KEY`, opcionalmente configurando um novo `BACKUP_KEY_ID`.
+3. Backups futuros utilizarão automaticamente a nova chave e registrarão o novo identificador no manifesto.
+
+### Recuperação de Backups Antigos
+
+Ao verificar ou restaurar um backup:
+1. O manifesto do backup traz informações sobre qual `key_id` foi utilizado.
+2. Caso o `key_id` atual no ambiente seja diferente do registrado no backup, um aviso de segurança é gerado nos logs e no relatório de verificação para prevenir erros operacionais.
+3. Se a chave correspondente ao `key_id` do manifesto não estiver ativa no ambiente, o restore falhará na descriptografia. É necessário restabelecer temporariamente as chaves corretas para processar a restauração.
+
+## Exclusão de Segredos e Recuperação em Produção (Vault / KMS / .env Externo)
+
+Por motivos de segurança e conformidade, os arquivos `.env` e `.env.local` na raiz do repositório **são completamente excluídos do backup padrão**, e quaisquer chaves ou segredos em arquivos de configuração YAML/JSON são **redigidos** (substituídos por `"REDACTED"`) se corresponderem a chaves contendo `token`, `secret`, `password`, `key` ou `credential`.
+
+Para restabelecer e restaurar as configurações sensíveis da stack após um restore de desastre:
+
+### 1. Injeção dinâmica via Secret Manager (Recomendado)
+Configure as credenciais e segredos em um gerenciador externo, como:
+- HashiCorp Vault
+- AWS Secrets Manager
+- Google Secret Manager
+
+Ao provisionar e subir o contêiner ou processo do control plane pós-restore, configure o entrypoint do contêiner para ler esses segredos do gerenciador e injetá-los diretamente no ambiente operacional do processo.
+
+### 2. Restauração via Arquivo .env Externo Seguro
+Caso não use um Secret Manager:
+1. Mantenha uma cópia de segurança segura e criptografada do arquivo `.env` fora do repositório da stack.
+2. Execute o restore normal do backup utilizando o script `./scripts/backup/restore-local.sh`.
+3. Copie manualmente a cópia segura de volta para a raiz do stack restaurado:
+   ```bash
+   cp /caminho/seguro/para/backup.env /home/kleber/llm-inference-stack/.env
+   ```
+4. Reinicie os serviços da stack.
+

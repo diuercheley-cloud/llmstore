@@ -16,6 +16,47 @@ backend-test: ## Run backend tests
 backend-typecheck: ## Run backend type checking
 	@.venv/bin/mypy .
 
+generate-sbom: ## Generate CycloneDX SBOM for the Control Plane
+	@python3 scripts/generate_sbom.py
+
+generate-route-surface: ## Generate API route surface manifest
+	@PYTHONPATH=.:control_plane uv run python3 scripts/generate_route_surface_manifest.py
+
+validate-route-surface: ## Validate API route surface governance
+	@$(MAKE) generate-route-surface
+	@python3 scripts/validate_route_surface.py
+
+generate-docs: ## Generate all automated documentation
+	@$(MAKE) generate-route-surface
+	@PYTHONPATH=.:control_plane uv run python3 scripts/generate_docs.py
+
+validate-docs: ## Validate that generated docs are up to date
+	@$(MAKE) generate-docs
+	@python3 scripts/validate_generated_docs.py
+	@git diff --exit-code docs/generated || (echo "Error: Generated docs are out of sync. Commit the changes." && exit 1)
+
+validate-deprecated-surface: ## Validate all deprecated surfaces have owners, replacements, and removal deadlines
+	@python3 scripts/validate_deprecated_surface.py
+
+validate-all-surfaces: validate-route-surface validate-deprecated-surface ## Validate all surface governance
+
+validate-surface-governance: ## Validate route surface + deprecated surface governance (CI gate)
+	@$(MAKE) validate-route-surface
+	@$(MAKE) validate-deprecated-surface
+
+test-backup-components: ## Run fast backup/restore unit tests (SQLite, idempotency, redaction, no DR)
+	@PYTHONPATH=.:control_plane BACKUP_RESTORE_ENABLED=true .venv/bin/pytest \
+		tests/backup/test_backup_restore_sqlite.py \
+		tests/backup/test_idempotency.py \
+		-q --timeout=120 \
+		--junitxml=artifacts/reports/backup-components.xml
+
+test-backup-dr: ## Run full DR scenario tests (backup + restore + rollback, SQLite + Postgres)
+	@PYTHONPATH=.:control_plane BACKUP_RESTORE_ENABLED=true .venv/bin/pytest tests/backup_dr/ tests/backup/test_backup_restore_postgres.py -q --timeout=300 -m "backup_dr"
+
+generate-lockfile: ## Regenerate reproducible lockfile
+	@uv lock
+
 # Frontend (Node)
 frontend-lint: ## Run frontend linting
 	@npm run lint --workspaces --if-present
@@ -390,6 +431,8 @@ validate-architecture: ## Run the full architectural validation group in determi
 # These exclude long integration suites and are suitable for daily use.
 SMOKE_VALIDATION_TARGETS := \
 	validate-platform-documentation \
+	validate-route-surface \
+	validate-docs \
 	validate-makefile-governance \
 	validate-governance-documentation-foundation \
 	validate-domain-contracts \
@@ -509,11 +552,17 @@ validate-compatibility: ## Run compatibility validation targets in deterministic
 
 # --- Documentation Validation ---
 validate-platform-documentation: ## Validate platform documentation completeness and consistency
-	python3 ./scripts/docs/generate_reference_docs.py --check
+	@$(MAKE) validate-docs
+	python3 ./scripts/docs/generate_docs_site.py --check
 	python3 ./scripts/docs/check_links.py
 	python3 ./scripts/validators/validate_platform_documentation.py
 	python3 ./scripts/validators/check-doc-consistency.py
-	.venv/bin/python -m pytest tests/integration/docs/test_platform_documentation.py -q --tb=short
+	python3 -m pytest tests/integration/docs/test_platform_documentation.py -q --tb=short
+
+docs-build: ## Build centralized MkDocs portal
+	@$(MAKE) generate-docs
+	python3 ./scripts/docs/generate_docs_site.py
+	mkdocs build --strict
 
 validate-documentation: ## Run documentation validation targets in deterministic order
 	@echo "Running documentation validation group"
@@ -522,9 +571,6 @@ validate-documentation: ## Run documentation validation targets in deterministic
 		$(MAKE) --no-print-directory $$target; \
 	done
 	@echo "Documentation validation group passed"
-
-validate-docs: ## Compatibility alias for supported documentation validation
-	@$(MAKE) --no-print-directory validate-documentation
 
 # --- Security Validation ---
 validate-security: ## Run security validation targets in deterministic order
@@ -927,6 +973,39 @@ benchmark-llm-harness: ## Run performance benchmark for LLM Harness
 		.venv/bin/python3 scripts/dev/benchmark-llm-harness.py; \
 	else \
 		python3 scripts/dev/benchmark-llm-harness.py; \
+	fi
+
+run-agent-benchmarks: ## Run agent benchmark suite (AgentBench, GAIA, BFCL)
+	@echo "Running agent benchmarks..."
+	@if [ -f .venv/bin/python3 ]; then \
+		PYTHONPATH=.$${PYTHONPATH:+:$$PYTHONPATH}:control_plane \
+		.venv/bin/python3 -m pytest tests/unit/services/test_agent_evaluation_framework.py \
+		tests/unit/api/test_agent_evaluation_api.py -v --tb=short; \
+		.venv/bin/python3 -c "\
+import asyncio, uuid, os; \
+from app.services.agents.agent_evaluation_framework import AgentEvaluationService; \
+from app.db.session import AsyncSessionLocal; \
+\
+async def run(): \
+    async with AsyncSessionLocal() as db: \
+        svc = AgentEvaluationService(db); \
+        benchmarks = os.environ.get('AGENT_EVAL_BENCHMARK', 'all'); \
+        agent_id = uuid.UUID(os.environ.get('AGENT_EVAL_AGENT_ID', '00000000-0000-0000-0000-000000000000')); \
+        model = os.environ.get('AGENT_EVAL_MODEL', 'demo-model'); \
+        suite = ['AgentBench', 'GAIA', 'BFCL'] if benchmarks == 'all' else [benchmarks]; \
+        for b in suite: \
+            print(f'\\n=== Running {b} ==='); \
+            report = await svc.run_benchmark(agent_id, model, b); \
+            print(f'  Success rate: {report.metrics[\"success_rate\"]:.2%}'); \
+            print(f'  Tool efficiency: {report.metrics[\"tool_efficiency\"]:.2%}'); \
+            print(f'  Latency: {report.metrics[\"latency_ms\"]:.1f}ms'); \
+            print(f'  Token cost: \$${report.metrics[\"token_cost\"]:.6f}'); \
+            print(f'  Hallucination: {report.metrics[\"hallucination_score\"]:.4f}'); \
+        print('\\nDone.'); \
+asyncio.run(run()) \
+"; \
+	else \
+		echo "Virtual environment not found. Run 'make venv' first."; \
 	fi
 production-core-check-llm-harness: ## Validate LLM Harness Production Core readiness criteria
 	@if [ -f .venv/bin/python3 ]; then \

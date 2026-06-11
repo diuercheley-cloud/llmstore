@@ -1,0 +1,39 @@
+name: lite
+description: Local profile with the minimum services required for inference and basic RAG.
+settings:
+  OPERATIONAL_PROFILE: lite
+  DATABASE_URL: sqlite+aiosqlite:///./data/lite.db
+  CREATE_TABLES_ON_STARTUP: true
+  OBSERVABILITY_ENABLED: false
+  RAG_ENABLED: true
+  PROVIDERS_ENABLED: local
+  CLOUD_PROVIDERS_ENABLED: false
+  PLUGIN_MARKETPLACE_ENABLED: false
+  AGENT_MARKETPLACE_ENABLED: false
+  AGENT_REMOTE_MARKETPLACE_ENABLED: false
+  AGENT_CLUSTER_FEDERATION_ENABLED: false
+  COMMERCIAL_FEDERATION_ENABLED: false
+  COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED: false
+  MULTI_CLUSTER_ENABLED: false
+  AGENT_MEMORY_ENABLED: false
+  AGENT_TOOL_REGISTRY_ENABLED: false
+  AGENT_TOOL_EXECUTION_ENABLED: false
+  AGENT_STATEFUL_WORKFLOWS_ENABLED: false
+  AGENT_RUNTIME_ENABLED: false
+features:
+  sqlite: true
+  postgresql: false
+  inference_proxy: true
+  rag_basic: true
+  multi_model: false
+  observability_basic: false
+  prometheus: false
+  loki: false
+  tempo: false
+  multi_tenant: false
+  federation: false
+  marketplace: false
+  memory: false
+  tools: false
+  workflows: false
+  agents: false
