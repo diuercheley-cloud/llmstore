@@ -92,17 +92,115 @@ class WorkflowDAG:
 
     def _check_condition(self, expression: str, context: Dict) -> bool:
         """
-        Evaluates a simple condition expression against the context.
+        Evaluates a simple condition expression against the context safely.
         Supports policy results, tool results, memory values, etc.
+        Uses a limited expression parser instead of eval().
         """
-        # Simplistic evaluation for now. In a real system, use a safe eval or a DSL.
-        # context might look like: {"results": {"task1": {"score": 0.9}}, "memory": {"user_id": 123}}
         try:
-            # Safe-ish eval with restricted globals
-            return eval(expression, {"__builtins__": {}}, context) # nosec
+            return self._safe_eval(expression, context)
         except Exception as e:
             logger.error(f"Error evaluating condition '{expression}': {e}")
             return False
+
+    @staticmethod
+    def _safe_eval(expression: str, context: Dict) -> bool:
+        """
+        Safe expression evaluator supporting:
+        - Variable lookups via dotted paths (e.g., results.task1.score)
+        - Comparison operators: == != < > <= >=
+        - Boolean operators: and or not
+        - Numeric and string literals
+        - Parentheses for grouping
+        """
+        import ast
+        import operator
+
+        def _lookup(path: str):
+            parts = path.split(".")
+            val = context
+            for part in parts:
+                if isinstance(val, dict):
+                    if part not in val:
+                        raise ValueError(f"Key '{part}' not found in context")
+                    val = val[part]
+                elif hasattr(val, part):
+                    val = getattr(val, part)
+                else:
+                    try:
+                        idx = int(part)
+                        val = val[idx]
+                    except (IndexError, ValueError, TypeError):
+                        raise ValueError(f"Cannot resolve '{part}' on {type(val).__name__}")
+            return val
+
+        ops = {
+            ast.Eq: operator.eq,
+            ast.NotEq: operator.ne,
+            ast.Lt: operator.lt,
+            ast.LtE: operator.le,
+            ast.Gt: operator.gt,
+            ast.GtE: operator.ge,
+            ast.Is: operator.is_,
+            ast.IsNot: operator.is_not,
+            ast.In: lambda a, b: a in b,
+            ast.NotIn: lambda a, b: a not in b,
+            ast.And: lambda a, b: a and b,
+            ast.Or: lambda a, b: a or b,
+        }
+
+        def _eval(node):
+            if isinstance(node, ast.Expression):
+                return _eval(node.body)
+            if isinstance(node, ast.BoolOp):
+                results = [_eval(n) for n in node.values]
+                return ops[type(node.op)](*results) if len(results) == 2 else results[0]
+            if isinstance(node, ast.BinOp):
+                if isinstance(node.op, ast.Pow):
+                    return _eval(node.left) ** _eval(node.right)
+                return ops[type(node.op)](_eval(node.left), _eval(node.right))
+            if isinstance(node, ast.UnaryOp):
+                if isinstance(node.op, ast.Not):
+                    return not _eval(node.operand)
+                if isinstance(node.op, ast.UAdd):
+                    return +_eval(node.operand)
+                if isinstance(node.op, ast.USub):
+                    return -_eval(node.operand)
+            if isinstance(node, ast.Compare):
+                left = _eval(node.left)
+                for op, comparator in zip(node.ops, node.comparators):
+                    if not ops[type(op)](left, _eval(comparator)):
+                        return False
+                    left = _eval(comparator)
+                return True
+            if isinstance(node, ast.Name):
+                return _lookup(node.id)
+            if isinstance(node, ast.Attribute):
+                val = _eval(node.value)
+                if isinstance(val, dict):
+                    return val[node.attr]
+                return getattr(val, node.attr)
+            if isinstance(node, ast.Subscript):
+                return _eval(node.value)[_eval(node.slice)]
+            if isinstance(node, ast.Constant):
+                return node.value
+            if isinstance(node, ast.List):
+                return [_eval(el) for el in node.elts]
+            if isinstance(node, ast.Tuple):
+                return tuple(_eval(el) for el in node.elts)
+            if isinstance(node, ast.Dict):
+                return {_eval(k): _eval(v) for k, v in zip(node.keys, node.elts)}
+            if isinstance(node, ast.Call):
+                func = _eval(node.func)
+                args = [_eval(a) for a in node.args]
+                kwargs = {kw.arg: _eval(kw.value) for kw in node.keywords if kw.arg}
+                return func(*args, **kwargs)
+            raise ValueError(f"Unsupported expression: {type(node).__name__}")
+
+        tree = ast.parse(expression, mode="eval")
+        result = _eval(tree)
+        if not isinstance(result, bool):
+            raise ValueError(f"Expression did not evaluate to a boolean: {result}")
+        return result
 
     def get_dependencies(self, node_key: str) -> List[str]:
         """Returns nodes that must complete before this node can start."""

@@ -35,6 +35,11 @@ COPY --from=builder /build/llama.cpp/build/bin/ /opt/llama/bin/
 COPY docker/data-plane/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin -c "App user" appuser \
+    && chown -R appuser:appuser /app /opt/llama
+
+USER appuser
+
 EXPOSE 8081
 
 ENTRYPOINT ["/entrypoint.sh"]

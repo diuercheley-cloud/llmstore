@@ -29,9 +29,19 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_source_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for", "")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+    settings = get_settings()
+    trusted_proxies = getattr(settings, "trusted_proxies", None)
+    use_forwarded_for = getattr(settings, "trust_x_forwarded_for", False)
+
+    if use_forwarded_for:
+        forwarded_for = request.headers.get("x-forwarded-for", "")
+        if forwarded_for:
+            if trusted_proxies:
+                proxies = [p.strip() for p in forwarded_for.split(",")]
+                source_ip = proxies[-1] if len(proxies) > 1 else proxies[0]
+                return source_ip
+            return forwarded_for.split(",")[0].strip()
+
     real_ip = request.headers.get("x-real-ip", "").strip()
     if real_ip:
         return real_ip
@@ -155,18 +165,7 @@ async def request_context_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: blob:; "
-        "font-src 'self' data:; "
-        "connect-src 'self' ws: wss:; "
-        "frame-ancestors 'none'; "
-        "form-action 'self'; "
-        "base-uri 'self'; "
-        "object-src 'none'"
-    )
+    response.headers["Content-Security-Policy"] = settings.content_security_policy
     return response
 
 

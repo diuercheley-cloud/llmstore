@@ -312,6 +312,6 @@ async def enterprise_callback(provider: str, request: Request, session: AsyncSes
 
     frontend_url = settings.frontend_url or "http://localhost:5173"
     return RedirectResponse(
-        url=f"{frontend_url}/#/login?sso_token={token}&email={email}",
+        url=f"{frontend_url}/#/login#sso_token={token}&email={email}",
         status_code=302,
     )

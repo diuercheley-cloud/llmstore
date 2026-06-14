@@ -1,3 +1,4 @@
+import hmac
 import json
 from enum import Enum
 from functools import total_ordering
@@ -46,19 +47,19 @@ def get_admin_role(token: str) -> AdminRole | None:
     settings = get_settings()
     if not token:
         return None
-    
-    # Priority 1: Specific RBAC tokens
-    if settings.admin_super_token and token == settings.admin_super_token:
+
+    # Priority 1: Specific RBAC tokens (timing-safe comparison)
+    if settings.admin_super_token and hmac.compare_digest(token, settings.admin_super_token):
         return AdminRole.SUPER
-    if settings.admin_write_token and token == settings.admin_write_token:
+    if settings.admin_write_token and hmac.compare_digest(token, settings.admin_write_token):
         return AdminRole.WRITE
-    if settings.admin_read_token and token == settings.admin_read_token:
+    if settings.admin_read_token and hmac.compare_digest(token, settings.admin_read_token):
         return AdminRole.READ
-    
+
     # Priority 2: Fallback to old admin token if super token is not defined
-    if not settings.admin_super_token and token == settings.admin_token:
+    if not settings.admin_super_token and hmac.compare_digest(token, settings.admin_token):
         return AdminRole.SUPER
-        
+
     return None
 
 def _write_like_permissions() -> list[str]:

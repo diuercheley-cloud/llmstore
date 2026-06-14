@@ -200,7 +200,7 @@ async def callback_oauth(
 
     frontend_url = str(request.base_url).rstrip("/") + "/admin-dashboard/login"
     return RedirectResponse(
-        url=f"{frontend_url}?sso_token={session_token}&email={email}",
+        url=f"{frontend_url}#sso_token={session_token}&email={email}",
         status_code=302,
     )
 

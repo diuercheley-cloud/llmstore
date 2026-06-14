@@ -61,6 +61,11 @@ COPY VERSION /app/VERSION
 
 ENV PYTHONPATH="/app:/app/control_plane"
 
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin -c "App user" appuser \
+    && chown -R appuser:appuser /app /opt/venv
+
+USER appuser
+
 # Gunicorn configuration for production
 ENV WEB_CONCURRENCY=1 \
     GUNICORN_TIMEOUT=120 \

@@ -2,6 +2,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
+from app.services.auth import require_admin
 from app.services.runtime_dependencies import get_db_session
 from app.services.agents.connectors.audit import connector_audit
 from app.services.agents.connectors.connector_token_rotation import TokenRotationService
@@ -12,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/admin/agents/connectors", tags=["agent-connectors-admin"])
+router = APIRouter(prefix="/admin/agents/connectors", tags=["agent-connectors-admin"], dependencies=[Depends(require_admin)])
 
 # OAuth Schemas
 class OAuthClientCreate(BaseModel):

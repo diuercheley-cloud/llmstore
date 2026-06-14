@@ -6,6 +6,8 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
+      - id: detect-private-key
+        name: Detect private keys
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.4
@@ -13,6 +15,19 @@ repos:
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets in code
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: >
+          (?x)^(
+            tests/.*|
+            .pre-commit-config.yaml|
+            config/security-warning-allowlist.yaml
+          )$
 
   - repo: local
     hooks:
@@ -24,3 +39,16 @@ repos:
         files: ^(scripts/llm_harness/|tests/integration/llm_harness/)
         pass_filenames: false
         args: ["scripts/llm_harness", "tests/integration/llm_harness"]
+
+      - id: check-secrets
+        name: Check for hardcoded secrets
+        entry: bash -c '
+          grep -rn --include="*.py" --include="*.yaml" --include="*.yml" --include="*.toml"
+          -E "(sk-local-|sk-[a-z]+-)[A-Za-z0-9_-]{24,}"
+          control_plane/ scripts/ 2>/dev/null |
+          grep -v "test_" |
+          grep -v "security-warning-allowlist" |
+          { [ -z "$(cat)" ] && exit 0 || echo "Potential secrets found!" && exit 1; }'
+        language: system
+        types: [text]
+        pass_filenames: false

@@ -47,3 +47,33 @@ class SecurityConfig(BaseSettings):
     vault_addr: str = Field(default="http://localhost:8200", alias="VAULT_ADDR")
     vault_token: str = Field(default="", alias="VAULT_TOKEN")
     vault_kv_mount: str = Field(default="secret", alias="VAULT_KV_MOUNT")
+
+    trust_x_forwarded_for: bool = Field(
+        default=False, alias="TRUST_X_FORWARDED_FOR",
+        description="Enable to trust X-Forwarded-For header. "
+                    "Only enable when behind a trusted reverse proxy.",
+    )
+    trusted_proxies: str = Field(
+        default="", alias="TRUSTED_PROXIES",
+        description="Comma-separated list of trusted proxy IPs/CIDRs. "
+                    "When set, only X-Forwarded-For from these proxies is accepted.",
+    )
+
+    content_security_policy: str = Field(
+        default=(
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; "
+            "font-src 'self' data:; "
+            "connect-src 'self' ws: wss:; "
+            "frame-ancestors 'none'; "
+            "form-action 'self'; "
+            "base-uri 'self'; "
+            "object-src 'none'"
+        ),
+        alias="CONTENT_SECURITY_POLICY",
+        description="Content-Security-Policy header value. "
+                    "Set to a stricter policy for production, e.g. "
+                    "script-src 'self' with nonces or hashes.",
+    )

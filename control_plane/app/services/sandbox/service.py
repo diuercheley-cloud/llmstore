@@ -10,6 +10,7 @@ from app.services.sandbox.base import (
 )
 from app.services.sandbox.providers.noop_provider import (
     NoopSandboxProvider, 
+    ProcessSandboxProvider,
     WasiSandboxProvider, 
     GVisorSandboxProvider, 
     FirecrackerSandboxProvider
@@ -22,6 +23,7 @@ class SandboxService:
     def __init__(self):
         self.providers: List[SandboxProvider] = [
             NoopSandboxProvider(),
+            ProcessSandboxProvider(),
             WasiSandboxProvider(),
             GVisorSandboxProvider(),
             FirecrackerSandboxProvider()

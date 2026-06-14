@@ -19,8 +19,48 @@ echo "--- Admin Lab Financial Flow Test ---"
 
 json_get() {
   python3 - "$1" <<'PY'
-import json,sys
-print(eval(sys.argv[1], {"__builtins__": {}}, {"data": json.load(sys.stdin)}))
+import ast
+import json
+import sys
+import operator
+
+ALLOWED_OPS = {
+    ast.Add: operator.add, ast.Sub: operator.sub,
+    ast.Mult: operator.mul, ast.Div: operator.truediv,
+    ast.Eq: operator.eq, ast.NotEq: operator.ne,
+}
+
+data = json.load(sys.stdin)
+
+def safe_get(node):
+    if isinstance(node, ast.Expression):
+        return safe_get(node.body)
+    if isinstance(node, ast.Subscript):
+        return safe_get(node.value)[safe_get(node.slice)]
+    if isinstance(node, ast.Index):
+        return safe_get(node.value)
+    if isinstance(node, ast.Attribute):
+        return getattr(safe_get(node.value), node.attr)
+    if isinstance(node, ast.Name):
+        if node.id == "data":
+            return data
+        raise ValueError(f"Variable '{node.id}' not allowed")
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.BinOp):
+        return ALLOWED_OPS[type(node.op)](safe_get(node.left), safe_get(node.right))
+    if isinstance(node, ast.UnaryOp):
+        if isinstance(node.op, ast.USub):
+            return -safe_get(node.operand)
+        if isinstance(node.op, ast.UAdd):
+            return +safe_get(node.operand)
+    if isinstance(node, ast.List):
+        return [safe_get(el) for el in node.elts]
+    if isinstance(node, ast.Tuple):
+        return tuple(safe_get(el) for el in node.elts)
+    raise ValueError(f"Unsupported: {type(node).__name__}")
+
+print(safe_get(ast.parse(sys.argv[1], mode="eval")))
 PY
 }
 

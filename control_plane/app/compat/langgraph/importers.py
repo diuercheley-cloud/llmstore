@@ -1,14 +1,36 @@
 # Owner: platform-operations
 import importlib.util
+import logging
 import os
 import sys
 from typing import Any, Dict
 from app.compat.langgraph.adapters import StateGraph, CompiledStateGraph
 
+logger = logging.getLogger(__name__)
+
+MAX_CODE_LENGTH = 100_000
+BLOCKED_PATTERNS = [
+    "__import__", "os.", "subprocess", "sys.", "import ",
+    "open(", "eval(", "exec(", "__builtins__", "globals()",
+    "locals()", "getattr", "setattr", "delattr", "compile",
+    ".write(", ".read(", "socket", "ctypes", "threading",
+    "multiprocessing", "signal", "shutil",
+]
+
+
+def _validate_source(source_code: str):
+    if len(source_code) > MAX_CODE_LENGTH:
+        raise ValueError(f"Source code exceeds maximum length of {MAX_CODE_LENGTH}")
+    for pattern in BLOCKED_PATTERNS:
+        if pattern in source_code:
+            raise ValueError(f"Source code contains blocked pattern: '{pattern}'")
+
+
 def import_langgraph_from_source(source_code: str, target_variable: str = "graph") -> Any:
     """
     Dynamically executes LangGraph source code and extracts the StateGraph or CompiledStateGraph.
     """
+    _validate_source(source_code)
     local_vars: Dict[str, Any] = {}
     # Provide the mock StateGraph and CompiledStateGraph in the execution context
     global_vars = {
@@ -16,6 +38,7 @@ def import_langgraph_from_source(source_code: str, target_variable: str = "graph
         "CompiledStateGraph": CompiledStateGraph,
     }
     
+    logger.info("Executing LangGraph source code (len=%d)", len(source_code))
     exec(source_code, global_vars, local_vars)
     
     if target_variable in local_vars:

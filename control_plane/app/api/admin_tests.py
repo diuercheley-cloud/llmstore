@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -660,8 +661,7 @@ async def run_test_command(payload: TestRunRequest):
         env["BASE_URL"] = "http://localhost:8080"
 
         result = subprocess.run(
-            cmd_info["command"],
-            shell=True,
+            shlex.split(cmd_info["command"]),
             capture_output=True,
             text=True,
             timeout=60,

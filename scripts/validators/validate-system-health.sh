@@ -104,7 +104,9 @@ json_assert() {
   local expr="$2"
   local message="$3"
   python3 - "$file" "$expr" "$message" <<'PY'
+import ast
 import json
+import operator
 import sys
 from pathlib import Path
 
@@ -112,7 +114,57 @@ path = Path(sys.argv[1])
 expr = sys.argv[2]
 message = sys.argv[3]
 data = json.loads(path.read_text())
-if not eval(expr, {"data": data}):
+
+ALLOWED_OPS = {
+    ast.Eq: operator.eq, ast.NotEq: operator.ne,
+    ast.Lt: operator.lt, ast.LtE: operator.le,
+    ast.Gt: operator.gt, ast.GtE: operator.ge,
+    ast.In: lambda a, b: a in b,
+    ast.NotIn: lambda a, b: a not in b,
+    ast.And: lambda a, b: a and b,
+    ast.Or: lambda a, b: a or b,
+    ast.Add: operator.add, ast.Sub: operator.sub,
+    ast.Mult: operator.mul, ast.Div: operator.truediv,
+    ast.Not: lambda a: not a,
+    ast.UAdd: lambda a: +a,
+    ast.USub: lambda a: -a,
+    ast.Is: operator.is_,
+    ast.IsNot: operator.is_not,
+}
+
+def safe_eval(node):
+    if isinstance(node, ast.Expression):
+        return safe_eval(node.body)
+    if isinstance(node, ast.BoolOp):
+        return ALLOWED_OPS[type(node.op)](*[safe_eval(n) for n in node.values])
+    if isinstance(node, ast.BinOp):
+        return ALLOWED_OPS[type(node.op)](safe_eval(node.left), safe_eval(node.right))
+    if isinstance(node, ast.UnaryOp):
+        return ALLOWED_OPS[type(node.op)](safe_eval(node.operand))
+    if isinstance(node, ast.Compare):
+        left = safe_eval(node.left)
+        for op, comp in zip(node.ops, node.comparators):
+            if not ALLOWED_OPS[type(op)](left, safe_eval(comp)):
+                return False
+            left = safe_eval(comp)
+        return True
+    if isinstance(node, ast.Name):
+        if node.id == "data":
+            return data
+        if node.id in ("True", "False"):
+            return node.id == "True"
+        if node.id == "None":
+            return None
+        raise ValueError(f"Access to variable '{node.id}' not allowed")
+    if isinstance(node, ast.Attribute):
+        return getattr(safe_eval(node.value), node.attr)
+    if isinstance(node, ast.Subscript):
+        return safe_eval(node.value)[safe_eval(node.slice)]
+    if isinstance(node, ast.Constant):
+        return node.value
+    raise ValueError(f"Unsupported expression: {type(node).__name__}")
+
+if not safe_eval(ast.parse(expr, mode="eval")):
     raise SystemExit(message)
 PY
 }
