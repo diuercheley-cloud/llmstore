@@ -108,6 +108,9 @@ class BaseAppConfig(
         if not isinstance(data, dict):
             return data
 
+        def _get_val(key: str) -> Any:
+            return data.get(key) or data.get(key.lower()) or os.environ.get(key) or os.environ.get(key.lower())
+
         def _set_with_warning(key: str, value: Any, profile_name: str, profile_value: str):
             if key in data and data[key] != value:
                 # Individual flag is set and differs from profile default
@@ -121,7 +124,7 @@ class BaseAppConfig(
                 data[key] = value
 
         # 1. Map AGENT_TOOL_SET
-        tool_set = data.get("AGENT_TOOL_SET") or data.get("agent_tool_set") or "standard"
+        tool_set = _get_val("AGENT_TOOL_SET") or "standard"
         if tool_set == "minimal":
             _set_with_warning("AGENT_HTTP_TOOL_ENABLED", False, "AGENT_TOOL_SET", tool_set)
             _set_with_warning("AGENT_DB_READ_TOOL_ENABLED", False, "AGENT_TOOL_SET", tool_set)
@@ -139,7 +142,7 @@ class BaseAppConfig(
             _set_with_warning("AGENT_TOOL_ADAPTERS_ENABLED", True, "AGENT_TOOL_SET", tool_set)
 
         # 2. Map OBSERVABILITY_PROFILE
-        obs_profile = data.get("OBSERVABILITY_PROFILE") or data.get("observability_profile") or "basic"
+        obs_profile = _get_val("OBSERVABILITY_PROFILE") or "basic"
         if obs_profile == "off":
             _set_with_warning("OBSERVABILITY_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("AGENT_OBSERVABILITY_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
@@ -160,7 +163,7 @@ class BaseAppConfig(
             _set_with_warning("TEMPO_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
 
         # 3. Map COMMERCIAL_PROFILE
-        comm_profile = data.get("COMMERCIAL_PROFILE") or data.get("commercial_profile") or "off"
+        comm_profile = _get_val("COMMERCIAL_PROFILE") or "off"
         if comm_profile == "off":
             _set_with_warning("CLOUD_PROVIDERS_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
             _set_with_warning("COMMERCIAL_GUARDRAILS_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
@@ -175,7 +178,7 @@ class BaseAppConfig(
             _set_with_warning("PAYMENT_PROCESSING_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
 
         # 4. Map SECURITY_PROFILE
-        sec_profile = data.get("SECURITY_PROFILE") or data.get("security_profile") or "local"
+        sec_profile = _get_val("SECURITY_PROFILE") or "local"
         if sec_profile == "local":
             _set_with_warning("RBAC_ADMIN_ENABLED", False, "SECURITY_PROFILE", sec_profile)
             _set_with_warning("ENTERPRISE_SSO_ENABLED", False, "SECURITY_PROFILE", sec_profile)

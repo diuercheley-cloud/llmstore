@@ -6,9 +6,8 @@ import sys
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 import psutil
 from app.core.config import get_settings
@@ -23,8 +22,8 @@ from app.models.core.quota_counter import QuotaCounter
 from app.models.core.usage_record import UsageRecord
 from app.schemas.admin import TestCommand, TestRunRequest, TestRunResponse
 from app.core.security import verify_secret
-from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from app.services.auth import get_admin_role, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -562,7 +561,7 @@ async def tests_pytest_run(body: PytestRunRequest):
                 )
                 try:
                     stdout_bytes, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     proc.kill()
                     await proc.wait()
                     run_state["results"][filename] = {"status": "timeout", "output": f"Test timed out after {timeout}s", "duration": timeout}

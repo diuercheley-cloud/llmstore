@@ -23,6 +23,7 @@ SENSITIVE_KEYWORDS = {
 class ConfigRedactor:
     def __init__(self):
         self.redacted_keys: List[str] = []
+        self.excluded_files: List[str] = []
 
     def _should_redact(self, key: str) -> bool:
         key_lower = key.lower()

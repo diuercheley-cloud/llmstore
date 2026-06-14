@@ -18,7 +18,7 @@ def validate_internal_security():
         (r'api_key\s*=\s*["\'][^"\'_]{10,}["\']', "UNSAFE: Potential hardcoded API key (min 10 chars)")
     ]
     
-    root_dir = os.path.join(os.path.dirname(__file__), "..", "control_plane")
+    root_dir = os.path.join(os.path.dirname(__file__), "..", "..", "control_plane")
     issues = 0
     
     for root, dirs, files in os.walk(root_dir):

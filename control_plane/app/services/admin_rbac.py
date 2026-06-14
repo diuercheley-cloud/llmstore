@@ -257,8 +257,14 @@ async def authenticate_admin_token(
     if not token:
         return None
     
+    print(f"DEBUG auth_token: session bind url: {session.bind.url if session.bind else 'None'}")
+    prefix = short_prefix(token)
+    print(f"DEBUG auth_token: searching prefix: {prefix}")
     repo = SqlAlchemyAuthRepository(session)
-    users = await repo.get_user_by_token_prefix(short_prefix(token))
+    users = await repo.get_user_by_token_prefix(prefix)
+    print(f"DEBUG auth_token: found users count: {len(users)}")
+    for u in users:
+        print(f"DEBUG auth_token: user={u.username}, active={u.is_active}, prefix={u.token_prefix}")
     
     for user in users:
         if user.token_hash and verify_secret(token, user.token_hash):
@@ -286,7 +292,7 @@ async def record_admin_audit_event(
     source_ip = getattr(request.state, "source_ip", None) if request is not None else None
     backend = resolve_storage_backend(session)
     event = AdminAuditRecord(
-        admin_user_id=admin.user.id if admin is not None else None,
+        admin_user_id=admin.user.id if hasattr(admin, "user") else None,
         event_type=event_type,
         status=status,
         request_path=request.url.path if request is not None else None,
@@ -295,7 +301,7 @@ async def record_admin_audit_event(
         user_agent=request.headers.get("user-agent") if request is not None else None,
         target_type=target_type,
         target_id=target_id,
-        actor_identifier=actor_identifier or (admin.user.username if admin is not None else None),
+        actor_identifier=actor_identifier or (admin.user.username if hasattr(admin, "user") else (admin.get("username") if isinstance(admin, dict) else None)),
         metadata_json=metadata,
     )
     await backend.audit_store.record_admin_event(event, auto_commit=True)
@@ -427,6 +433,9 @@ async def sync_role_permissions(
 
 
 async def serialize_admin_user(session: AsyncSession, user: AdminUser) -> dict[str, Any]:
+    from sqlalchemy import inspect
+    state = inspect(user)
+    user_id = state.identity[0] if state.identity else user.id
     result = await session.execute(
         select(AdminUser)
         .options(
@@ -435,7 +444,7 @@ async def serialize_admin_user(session: AsyncSession, user: AdminUser) -> dict[s
             .selectinload(AdminRoleModel.permissions)
             .selectinload(AdminRolePermission.permission)
         )
-        .where(AdminUser.id == user.id)
+        .where(AdminUser.id == user_id)
     )
     fresh = result.scalar_one()
     role_ids = [link.role.id for link in fresh.roles]
@@ -464,10 +473,13 @@ async def serialize_admin_user(session: AsyncSession, user: AdminUser) -> dict[s
 
 
 async def serialize_role(session: AsyncSession, role: AdminRoleModel) -> dict[str, Any]:
+    from sqlalchemy import inspect
+    state = inspect(role)
+    role_id = state.identity[0] if state.identity else role.id
     result = await session.execute(
         select(AdminRoleModel)
         .options(selectinload(AdminRoleModel.permissions).selectinload(AdminRolePermission.permission))
-        .where(AdminRoleModel.id == role.id)
+        .where(AdminRoleModel.id == role_id)
     )
     fresh = result.scalar_one()
     return {

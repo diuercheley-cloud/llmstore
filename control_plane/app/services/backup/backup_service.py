@@ -76,6 +76,10 @@ class BackupService:
         self.verifier = verification_provider or BackupVerificationService(self.crypto)
         self.planner = planner_provider or RestorePlanner()
 
+    @property
+    def key_id(self) -> str:
+        return self.crypto.key_id
+
     def _log(self, level: int, msg: str, **kwargs):
         logging.getLogger(__name__).log(
             level,
@@ -162,7 +166,7 @@ class BackupService:
                 }
 
             components = self.manifest_service.build_components(payload_parts)
-            archive_bytes = self.archive_service.create(payload_parts)
+            archive_bytes = self._build_archive(payload_parts)
             encrypted_payload = self.crypto.encrypt(archive_bytes)
      
             manifest = BackupManifest(
@@ -171,6 +175,8 @@ class BackupService:
                 coverage="full" if scope == "full" else "partial",
                 included=["database", "configs", "feature_flags"] if scope == "full" else ["agents", "workflows", "embedding metadata", "configs", "feature_flags"],
                 excluded=[] if scope == "full" else ["auth", "tenants", "billing", "audit", "policies", "persisted config"],
+                excluded_sensitive_files=getattr(redactor, "excluded_files", []),
+                redacted_config_keys=redactor.get_redacted_keys(),
                 components=components,
                 archive_checksum=hashlib.sha256(encrypted_payload).hexdigest(),
                 payload_file="payload.tar.gz.enc",
@@ -208,6 +214,7 @@ class BackupService:
                 key_id=manifest.key_id, source="active_system", target=manifest.payload_file,
                 result="success", checksum=manifest.archive_checksum,
             )
+            await self.db.commit()
             return manifest
         except Exception as e:
             BACKUP_FAILURE_TOTAL.inc()
@@ -239,11 +246,18 @@ class BackupService:
             shutil.rmtree(backup_dir)
 
     async def get_backup(self, backup_id: str, actor: str = "system") -> BackupManifest:
-        return self.manifest_service.read(self.backup_root, backup_id)
+        manifest = self._read_manifest(backup_id)
+        await self.audit.log_immutable_event(
+            action="backup_downloaded", actor=actor, backup_id=backup_id,
+            key_id=manifest.key_id, source="active_system", target="download",
+            result="success", checksum=manifest.archive_checksum,
+        )
+        await self.db.commit()
+        return manifest
 
     async def verify_backup(self, backup_id: str, actor: str = "system") -> BackupVerificationResult:
         try:
-            manifest = self.manifest_service.read(self.backup_root, backup_id)
+            manifest = self._read_manifest(backup_id)
         except BackupManifestError as exc:
             from app.core.metrics import BACKUP_VERIFICATION_FAILURE_TOTAL
 
@@ -274,12 +288,13 @@ class BackupService:
             result=result.status,
             checksum=manifest.archive_checksum,
         )
+        await self.db.commit()
         return result
 
     async def restore_backup(self, backup_id: str, request: BackupRestoreRequest | None = None) -> BackupRestoreResult:
         # Legacy entry point, now mostly handled by RestoreStagingService for critical paths
         from .restore_staging_service import RestoreStagingService
-        service = RestoreStagingService(self.db)
+        service = RestoreStagingService(self.db, backup_service=self)
         return await service.restore_with_staging(backup_id, request)
 
     def _get_database_provider(self) -> Any:
@@ -346,8 +361,10 @@ class BackupService:
         archive_bytes = self.crypto.decrypt(encrypted_payload)
         return self.archive_service.extract(archive_bytes)
 
-    async def _build_payload_parts(self, redactor: ConfigRedactor) -> Dict[str, bytes]:
+    async def _build_payload_parts(self, redactor: Optional[ConfigRedactor] = None) -> Dict[str, bytes]:
         # Logical backup builder
+        if redactor is None:
+            redactor = ConfigRedactor()
         parts = {}
         models = self._database_models()
         db_data = {"tables": {}, "item_count": 0}
@@ -445,6 +462,10 @@ class BackupService:
 
     def _dump_configs(self, redactor: ConfigRedactor) -> Dict[str, Any]:
         configs = {"files": []}
+        if self.repo_root.exists():
+            for f in self.repo_root.iterdir():
+                if f.is_file() and f.name.startswith(".env") and not f.name.endswith(".example") and not f.name.endswith(".template"):
+                    redactor.excluded_files.append(f.name)
         config_dir = self.repo_root / "config"
         if config_dir.exists():
             for f in config_dir.glob("*.yaml"):

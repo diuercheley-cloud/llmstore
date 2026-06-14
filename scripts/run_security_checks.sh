@@ -97,7 +97,7 @@ header "PHASE 3: Internal Security Review (Static Analysis)"
 
 if [ -d "$ROOT_DIR/tests/integration/security" ]; then
     info "Running internal security review tests..."
-    PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+    PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
         $PYTHON -m pytest "$ROOT_DIR/tests/integration/security/test_internal_security_review.py" \
         -v --tb=short 2>&1 | tee "$REPORT_DIR/internal_security_review.txt" || EXIT_CODE=1
 else
@@ -120,7 +120,7 @@ for test_dir in "${SECURITY_TEST_DIRS[@]}"; do
         TEST_COUNT=$(find "$ROOT_DIR/$test_dir" -name "test_*.py" 2>/dev/null | wc -l)
         if [ "$TEST_COUNT" -gt 0 ]; then
             info "Running tests in $test_dir ($TEST_COUNT files)..."
-            PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+            PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
                 $PYTHON -m pytest "$ROOT_DIR/$test_dir" \
                 -v --tb=short --timeout=120 -q \
                 -o "asyncio_mode=auto" \
@@ -131,7 +131,7 @@ done
 
 # Additional security-specific test files
 info "Running security-marked tests..."
-PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
     $PYTHON -m pytest "$ROOT_DIR/tests/" \
     -m "security" \
     --tb=short --timeout=120 -q \
@@ -154,7 +154,7 @@ AUTH_TEST_FILES=(
 for test_file in "${AUTH_TEST_FILES[@]}"; do
     if [ -f "$ROOT_DIR/$test_file" ]; then
         info "Running $test_file..."
-        PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+        PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
             $PYTHON -m pytest "$ROOT_DIR/$test_file" \
             -v --tb=short --timeout=60 -q \
             2>&1 | tee "$REPORT_DIR/$(basename $test_file .py)_results.txt" || EXIT_CODE=1
@@ -180,7 +180,7 @@ SANDBOX_TEST_FILES=(
 for test_file in "${SANDBOX_TEST_FILES[@]}"; do
     if [ -f "$ROOT_DIR/$test_file" ]; then
         info "Running $test_file..."
-        PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+        PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
             $PYTHON -m pytest "$ROOT_DIR/$test_file" \
             -v --tb=short --timeout=60 -q \
             2>&1 | tee "$REPORT_DIR/$(basename $test_file .py)_results.txt" || EXIT_CODE=1
@@ -204,7 +204,7 @@ CRYPTO_TEST_FILES=(
 for test_file in "${CRYPTO_TEST_FILES[@]}"; do
     if [ -f "$ROOT_DIR/$test_file" ]; then
         info "Running $test_file..."
-        PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+        PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
             BACKUP_RESTORE_ENABLED=true \
             $PYTHON -m pytest "$ROOT_DIR/$test_file" \
             -v --tb=short --timeout=60 -q \
@@ -230,7 +230,7 @@ LLM_SEC_TEST_FILES=(
 for test_file in "${LLM_SEC_TEST_FILES[@]}"; do
     if [ -f "$ROOT_DIR/$test_file" ]; then
         info "Running $test_file..."
-        PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+        PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
             $PYTHON -m pytest "$ROOT_DIR/$test_file" \
             -v --tb=short --timeout=60 -q \
             2>&1 | tee "$REPORT_DIR/$(basename $test_file .py)_results.txt" || EXIT_CODE=1
@@ -246,7 +246,7 @@ header "PHASE 9: Custom Security Audit Script"
 
 if [ -f "$SCRIPT_DIR/security_audit.py" ]; then
     info "Running comprehensive security audit..."
-    PYTHONPATH="$ROOT_DIR/control_plane:$PYTHONPATH" \
+    PYTHONPATH="$ROOT_DIR/control_plane:$ROOT_DIR:${PYTHONPATH:-}" \
         $PYTHON "$SCRIPT_DIR/security_audit.py" 2>&1 | tee "$REPORT_DIR/security_audit.txt"
 else
     fail "security_audit.py not found"
@@ -259,7 +259,7 @@ header "PHASE 10: Secret Scanning"
 
 if [ -x "$ROOT_DIR/scripts/validators/check-secrets.sh" ]; then
     info "Running check-secrets.sh..."
-    "$ROOT_DIR/scripts/validators/check-secrets.sh" 2>&1 | tee "$REPORT_DIR/check_secrets.txt" || EXIT_CODE=1
+    "$ROOT_DIR/scripts/validators/check-secrets.sh" --all 2>&1 | tee "$REPORT_DIR/check_secrets.txt" || EXIT_CODE=1
 else
     warn "check-secrets.sh not found - scanning with grep instead"
     info "Scanning for potential secret patterns..."

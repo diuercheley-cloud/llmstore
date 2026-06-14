@@ -38,11 +38,12 @@ class RestoreStagingService:
         db: AsyncSession,
         staging_provider: Optional[StagingProvider] = None,
         promotion_provider: Optional[PromotionProvider] = None,
-        rollback_provider: Optional[RollbackProvider] = None
+        rollback_provider: Optional[RollbackProvider] = None,
+        backup_service: Optional[BackupService] = None
     ):
         self.db = db
         self.settings = get_settings()
-        self.backup_service = BackupService(db)
+        self.backup_service = backup_service or BackupService(db)
         self.staging_logic = staging_provider or StagingLogic(db, self.settings.database_url)
         self.promotion_service = promotion_provider or RestorePromotionService(db, self.backup_service.repo_root)
         self.rollback_service = rollback_provider or RestoreRollbackService(db)
@@ -136,6 +137,7 @@ class RestoreStagingService:
             key_id=manifest.key_id, source=manifest.payload_file,
             target="active_system", result="pending", checksum=manifest.archive_checksum,
         )
+        await self.db.commit()
 
         if verification.status != "valid":
             validation_report["manifest_valid"] = False
@@ -284,6 +286,13 @@ class RestoreStagingService:
             safety_backup = await self.backup_service.create_backup(BackupCreateRequest(scope=manifest.scope, backup_type="pre-restore-safety-backup"), actor=actor)
             safety_id = safety_backup.backup_id
 
+            await self.backup_service.log_immutable_event(
+                action="restore_started", actor=actor, backup_id=backup_id, result="started",
+                key_id=manifest.key_id, source=manifest.payload_file, target="active_system",
+                checksum=manifest.archive_checksum
+            )
+            await self.db.commit()
+
             try:
                 await self.promotion_service.promote_database(manifest.scope, parts, sqlite_file, self.backup_service._get_database_provider)
                 if "configs.json" in parts:
@@ -298,15 +307,39 @@ class RestoreStagingService:
                 
                 rollback_start = time.time()
                 try:
+                    await self.backup_service.log_immutable_event(
+                        action="rollback_started", actor=actor, backup_id=backup_id,
+                        result="started", key_id=manifest.key_id, source=manifest.payload_file,
+                        target="active_system", checksum=manifest.archive_checksum
+                    )
+                    await self.db.commit()
+
                     await self.rollback_service.perform_rollback(safety_id)
                     RESTORE_ROLLBACK_DURATION_SECONDS.observe(time.time() - rollback_start)
+
+                    await self.backup_service.log_immutable_event(
+                        action="rollback_completed", actor=actor, backup_id=backup_id,
+                        result="success", key_id=manifest.key_id, source=manifest.payload_file,
+                        target="active_system", checksum=manifest.archive_checksum
+                    )
+                    await self.db.commit()
+
                     return await self._fail_restore(backup_id, manifest, verification, plan, validation_report, f"Promotion failed: {e}", actor, safety_id, "success", error_code=RestorePromotionError.error_code)
                 except Exception as rb_err:
                     RESTORE_ROLLBACK_DURATION_SECONDS.observe(time.time() - rollback_start)
                     logger.critical(f"CRITICAL: Rollback failed after failed promotion: {rb_err}")
+
+                    await self.backup_service.log_immutable_event(
+                        action="rollback_completed", actor=actor, backup_id=backup_id,
+                        result=f"failed: {rb_err}", key_id=manifest.key_id, source=manifest.payload_file,
+                        target="active_system", checksum=manifest.archive_checksum
+                    )
+                    await self.db.commit()
+
                     return await self._fail_restore(backup_id, manifest, verification, plan, validation_report, f"Promotion failed: {e}. Rollback ALSO FAILED: {rb_err}", actor, safety_id, "failed", error_code=RestoreRollbackError.error_code)
 
             await self.backup_service.log_immutable_event(action="restore_completed", actor=actor, backup_id=backup_id, result="success", key_id=manifest.key_id, source=manifest.payload_file, target="active_system", checksum=manifest.archive_checksum)
+            await self.db.commit()
             self._write_restore_state(
                 {
                     "backup_id": backup_id,
@@ -335,4 +368,5 @@ class RestoreStagingService:
 
     async def _fail_restore(self, backup_id, manifest, verification, plan, report, reason, actor, safety_id=None, rollback_status="none", error_code=None):
         await self.backup_service.log_immutable_event(action="restore_failed", actor=actor, backup_id=backup_id, result=f"failed: {reason}", key_id=manifest.key_id, source=manifest.payload_file, target="active_system", checksum=manifest.archive_checksum)
+        await self.db.commit()
         return BackupRestoreResult(backup_id=backup_id, status="failed", verification=verification, plan=plan, details={"reason": reason, "validation_report": report, "pre_restore_backup_id": safety_id, "rollback_status": rollback_status}, error_code=error_code)

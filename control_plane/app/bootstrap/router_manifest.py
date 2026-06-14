@@ -320,3 +320,34 @@ ROUTING_ROUTERS = [
 AUTH_ROUTERS = [
     {"router": auth_router, "kwargs": {}},
 ]
+
+# Aggregate all routers to construct ROUTER_MANIFEST for compatibility and testing
+ROUTER_MANIFEST = []
+_seen_keys = set()
+for router_list in [
+    ADMIN_ROUTERS,
+    COMMERCIAL_ROUTERS,
+    OPERATIONS_ROUTERS,
+    PORTAL_ROUTERS,
+    CORE_ROUTERS,
+    CLIENT_ROUTERS,
+    RAG_ROUTERS,
+    ROUTING_ROUTERS,
+    AUTH_ROUTERS,
+]:
+    for entry in router_list:
+        router = entry["router"]
+        module = router.__module__
+        router_name = "router"
+        for k, v in list(globals().items()):
+            if v is router and k != "router":
+                router_name = k
+                break
+        key = (module, router_name)
+        if key not in _seen_keys:
+            _seen_keys.add(key)
+            ROUTER_MANIFEST.append({
+                "module": module,
+                "router_name": router_name,
+            })
+

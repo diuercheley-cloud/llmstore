@@ -101,11 +101,11 @@ exceptions:
     reason: "Alert remediation and webhook handlers."
 
   - path: "/admin/agents/connectors"
-    status: no_frontend
+    status: api_client_only
     reason: "Connector configuration currently via YAML/CLI."
 
   - path: "/admin/agents/event"
-    status: no_frontend
+    status: api_client_only
     reason: "Event trigger management in backlog."
 
   - path: "/admin/agents/execution"
@@ -121,11 +121,11 @@ exceptions:
     reason: "Covered by Sovereign Governance and Policy Center."
 
   - path: "/admin/workflows"
-    status: no_frontend
+    status: api_client_only
     reason: "Commercial Workflows engine is API-first."
 
   - path: "/admin/supply-chain"
-    status: no_frontend
+    status: api_client_only
     reason: "Model Supply Chain integrity is a background process."
 
   - path: "/api/admin/federation"
@@ -227,3 +227,2499 @@ exceptions:
   - path: "/runs"
     status: has_frontend
     reason: "Sandbox run tracking."
+
+  - path: "/actions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_supervisor_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/plans"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/plans/{plan_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/plans/{plan_id}/execute"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/tasks/{task_id}/compensate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/tasks/{task_id}/retry"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/agent-tasks/tasks/{task_id}/skip"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_tasks_admin.py awaiting frontend implementation."
+
+  - path: "/admin/approvals"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_critical_approvals.py awaiting frontend implementation."
+
+  - path: "/admin/approvals/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_critical_approvals.py awaiting frontend implementation."
+
+  - path: "/admin/approvals/{id}/approve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_critical_approvals.py awaiting frontend implementation."
+
+  - path: "/admin/approvals/{id}/reject"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_critical_approvals.py awaiting frontend implementation."
+
+  - path: "/admin/attestation/measurements"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/attestation/measurements/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/attestation/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/attestation/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/autoscaling/events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under gpu_autoscaling_admin.py awaiting frontend implementation."
+
+  - path: "/admin/autoscaling/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under gpu_autoscaling_admin.py awaiting frontend implementation."
+
+  - path: "/admin/benchmarks"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_benchmarks.py awaiting frontend implementation."
+
+  - path: "/admin/benchmarks/{model}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_benchmarks.py awaiting frontend implementation."
+
+  - path: "/admin/billing/anomalies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/anomalies/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/anomalies/{anomaly_id}/ack"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/anomalies/{anomaly_id}/ignore"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/anomalies/{anomaly_id}/resolve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/audit/validate-chain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/disputes"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/disputes/manual-credit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/disputes/{id}/reject"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/disputes/{id}/review"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/forecast/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/forecast/records"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/forecast/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_forecasting_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/margins/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/pricing/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/provider-costs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/reconciliation/{id}/resolve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_reconciliation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/deliveries"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/policies/{policy_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/retry/{delivery_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-escalations/test"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_escalations_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/actions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/actions/{action_id}/apply"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/actions/{action_id}/revert"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/evaluate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/policies/{policy_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/revenue-protection/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_revenue_protection_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/usage-financials"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under billing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/wallets"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under wallet_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/wallets/{client_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under wallet_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/wallets/{client_id}/adjustment"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under wallet_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/wallets/{client_id}/manual-credit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under wallet_admin.py awaiting frontend implementation."
+
+  - path: "/admin/billing/wallets/{client_id}/transactions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under wallet_admin.py awaiting frontend implementation."
+
+  - path: "/admin/cache/entries"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_cache.py awaiting frontend implementation."
+
+  - path: "/admin/cache/invalidate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_cache.py awaiting frontend implementation."
+
+  - path: "/admin/cache/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_cache.py awaiting frontend implementation."
+
+  - path: "/admin/cache/responses"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_cache.py awaiting frontend implementation."
+
+  - path: "/admin/cache/stats"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_cache.py awaiting frontend implementation."
+
+  - path: "/admin/capabilities"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin.py awaiting frontend implementation."
+
+  - path: "/admin/chaos/experiments"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under chaos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/chaos/runs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under chaos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/chaos/runs/{id}/abort"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under chaos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/chaos/runs/{id}/report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under chaos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/chaos/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under chaos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/{id}/drain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/{id}/maintenance"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/{id}/resume"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/clusters/{id}/sync-events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multi_cluster_admin.py awaiting frontend implementation."
+
+  - path: "/admin/commercial-guardrails/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/commercial-guardrails/runtime-status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/commercial-guardrails/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compat/analyze"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_compatibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compat/migrate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_compatibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/approval-chains"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/approval-chains/{chain_id}/approve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/approval-chains/{chain_id}/reject"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/attestations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/audit-pack/generate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/audit-pack/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/audit-report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/control-map"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/control-map/{framework}/{control_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/controls"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/evidence-packages"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/evidence/collect"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/evidence/collect-all"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/evidence/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/exceptions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/exceptions/{exception_id}/accept"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/exceptions/{exception_id}/remediate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/frameworks"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/gap-analysis"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/isms/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/isms/risk-register"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/isms/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/effectiveness"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/evidence"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/overdue"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/reviews"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/reviews/{id}/complete"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/operational-controls/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/readiness-report/{framework_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/soc2/access-review"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/soc2/access-reviews"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/compliance/soc2/exceptions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under compliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/config/detailed/{key}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_config.py awaiting frontend implementation."
+
+  - path: "/admin/config/effective"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_config.py awaiting frontend implementation."
+
+  - path: "/admin/distributed-runtime/clusters"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/distributed-runtime/jobs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/distributed-runtime/jobs/{job_id}/failover"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/distributed-runtime/nodes"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/enterprise/onboarding/tasks/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under enterprise_onboarding_admin.py awaiting frontend implementation."
+
+  - path: "/admin/evaluation/arena/match"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_evaluation.py awaiting frontend implementation."
+
+  - path: "/admin/evaluation/rankings"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_evaluation.py awaiting frontend implementation."
+
+  - path: "/admin/evaluation/red-team/findings"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_evaluation.py awaiting frontend implementation."
+
+  - path: "/admin/evaluation/runs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_evaluation.py awaiting frontend implementation."
+
+  - path: "/admin/evaluation/runs/{run_id}/results"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_evaluation.py awaiting frontend implementation."
+
+  - path: "/admin/executions/{run_id}/manifest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_executions.py awaiting frontend implementation."
+
+  - path: "/admin/executions/{run_id}/replay/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_executions.py awaiting frontend implementation."
+
+  - path: "/admin/executions/{run_id}/steps"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_executions.py awaiting frontend implementation."
+
+  - path: "/admin/export/clients"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/export/invoices"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/export/payments"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/export/request-logs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/export/security-events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/export/usage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/feature-flags"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under feature_flags_admin.py awaiting frontend implementation."
+
+  - path: "/admin/feature-flags/conflicts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under feature_flags_admin.py awaiting frontend implementation."
+
+  - path: "/admin/feature-flags/deprecated"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under feature_flags_admin.py awaiting frontend implementation."
+
+  - path: "/admin/feature-flags/validate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under feature_flags_admin.py awaiting frontend implementation."
+
+  - path: "/admin/feature-flags/{name}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under feature_flags_admin.py awaiting frontend implementation."
+
+  - path: "/admin/financials/margin-dashboard"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under financial_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies/bundles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies/conflicts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies/evaluate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies/replay-verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/deterministic-policies/{policy_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under governance_policy_engine_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/federation/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/federation/ingest-audit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/federation/ingest-policy"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/federation/sync"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/artifacts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/drift"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/drift/detect"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/{bundle_id}/activate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/{bundle_id}/publish"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/{bundle_id}/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/governance/policies/{bundle_id}/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_governance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/gpu/allocations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under gpu_autoscaling_admin.py awaiting frontend implementation."
+
+  - path: "/admin/gpu/capacity/{node_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under gpu_autoscaling_admin.py awaiting frontend implementation."
+
+  - path: "/admin/gpu/devices"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under gpu_autoscaling_admin.py awaiting frontend implementation."
+
+  - path: "/admin/guardrails/blast-radius"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_autonomous_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/guardrails/checkpoints"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_autonomous_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/guardrails/receipts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_autonomous_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/guardrails/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_autonomous_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/guardrails/violations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_autonomous_guardrails_admin.py awaiting frontend implementation."
+
+  - path: "/admin/harness/evals"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/evals/runs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/evals/runs/{eval_run_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/evals/runs/{eval_run_id}/events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/health"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/providers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/providers/{provider_name}/models"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/runs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/runs/{run_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/runs/{run_id}/cancel"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/runs/{run_id}/events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/harness/tools"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under harness.py awaiting frontend implementation."
+
+  - path: "/admin/health/deep"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/cache"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/financials"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/providers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/rag"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/routing"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/hybrid/wallets"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under hybrid_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/agents/executions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_agents_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/agents/profiles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_agents_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/agents/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_agents_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/agents/tool-executions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_agents_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/agents/tool-executions/{id}/approve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_agents_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/appliance/audit-packages"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_appliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/appliance/bundles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_appliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/appliance/manifests"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_appliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/appliance/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_appliance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/backends"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_inference.py awaiting frontend implementation."
+
+  - path: "/admin/inference/confidential-runtime/audit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_confidential_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/confidential-runtime/profiles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_confidential_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/confidential-runtime/sessions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_confidential_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/confidential-runtime/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_confidential_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/proofs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/proofs/generate/{receipt_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/proofs/{proof_id}/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/proofs/{proof_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/timelines"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/timelines/build"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/timelines/{timeline_id}/seal"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/proofs/timelines/{timeline_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_execution_proofs_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipt-ledger"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipt-verification-reports"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipts/validate-chain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipts/{receipt_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipts/{receipt_id}/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/receipts/{receipt_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/replay-events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/replay/{record_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/reproducibility"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/reproducibility/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/reproducibility/{record_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/routing/decisions/cleanup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_inference.py awaiting frontend implementation."
+
+  - path: "/admin/inference/routing/last-decision"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_inference.py awaiting frontend implementation."
+
+  - path: "/admin/inference/routing/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_inference.py awaiting frontend implementation."
+
+  - path: "/admin/inference/runtime-snapshots"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_inference_reproducibility_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/timelines/{timeline_id}/witness-quorum"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/timelines/{timeline_id}/witness-sign"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/checkpoints"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/gossip"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/ingest-checkpoint"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/peers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/split-view-alerts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/split-view-alerts/{alert_id}/resolve"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/transparency/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_transparency_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/witness-signatures"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/witness-status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/witnesses"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/witnesses/{witness_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/witnesses/{witness_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_witness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/workflows/definitions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/workflows/executions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/workflows/replays"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/workflows/reports"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/inference/workflows/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/jobs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/managed-control-plane/heartbeat"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane_admin.py awaiting frontend implementation."
+
+  - path: "/admin/managed-control-plane/link"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane_admin.py awaiting frontend implementation."
+
+  - path: "/admin/mesh/consensus"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_mesh_admin.py awaiting frontend implementation."
+
+  - path: "/admin/mesh/failover/{failed_node_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_mesh_admin.py awaiting frontend implementation."
+
+  - path: "/admin/mesh/nodes"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_mesh_admin.py awaiting frontend implementation."
+
+  - path: "/admin/mesh/nodes/{node_id}/health"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_mesh_admin.py awaiting frontend implementation."
+
+  - path: "/admin/mesh/replication"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_mesh_admin.py awaiting frontend implementation."
+
+  - path: "/admin/metrics/stream"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_metrics.py awaiting frontend implementation."
+
+  - path: "/admin/observability/agent-runs/{id}/timeline"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/anomalies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_observability.py awaiting frontend implementation."
+
+  - path: "/admin/observability/anomalies/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_observability.py awaiting frontend implementation."
+
+  - path: "/admin/observability/dashboard-links"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/error-budget"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/metrics"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_observability.py awaiting frontend implementation."
+
+  - path: "/admin/observability/metrics/derived"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/platform-health"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/slo"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/observability/timeline"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under observability_admin.py awaiting frontend implementation."
+
+  - path: "/admin/onboarding/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_onboarding.py awaiting frontend implementation."
+
+  - path: "/admin/performance/apply-profile"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/benchmark"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/benchmarks"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/current-profile"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/profiles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/recommendations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/performance/seed-profiles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under performance_admin.py awaiting frontend implementation."
+
+  - path: "/admin/platform/ga-readiness"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under platform_ga_admin.py awaiting frontend implementation."
+
+  - path: "/admin/platform/maturity-report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under platform_ga_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/install"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/installs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/marketplace"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{entry_id}/reviews"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{entry_id}/versions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{install_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{install_id}/disable"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{install_id}/enable"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{install_id}/trust-report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/plugins/{install_id}/upgrade"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under plugin_marketplace_admin.py awaiting frontend implementation."
+
+  - path: "/admin/policies/"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_policies.py awaiting frontend implementation."
+
+  - path: "/admin/policies/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_policies.py awaiting frontend implementation."
+
+  - path: "/admin/policies/evaluate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_policies.py awaiting frontend implementation."
+
+  - path: "/admin/policy/runtime/evaluate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/policy/runtime/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/policy/runtime/trace/{evaluation_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/policy/runtime/violations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_policy_runtime_admin.py awaiting frontend implementation."
+
+  - path: "/admin/providers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/providers/capabilities/all"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/providers/configuration"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/providers/cost-validation/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/providers/{provider_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/providers/{provider_id}/health"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under providers.py awaiting frontend implementation."
+
+  - path: "/admin/rag/lineage/{chunk_hash}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_rag_admin.py awaiting frontend implementation."
+
+  - path: "/admin/rag/receipts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_rag_admin.py awaiting frontend implementation."
+
+  - path: "/admin/rag/violations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_rag_admin.py awaiting frontend implementation."
+
+  - path: "/admin/readiness/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/readiness/{capability}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_readiness.py awaiting frontend implementation."
+
+  - path: "/admin/receipts/public-key"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/receipts/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/receipts/{id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cryptographic_receipts_admin.py awaiting frontend implementation."
+
+  - path: "/admin/reports/monthly"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_exports.py awaiting frontend implementation."
+
+  - path: "/admin/requests"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/analytics/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/calibration/report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/calibration/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/anomalies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/capture"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/forecast"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/rebuild-forecast"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/capacity/recommendations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_capacity_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/apply-recommendation"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/auto-apply-settings"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/auto-apply/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/auto-apply/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/canaries"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/canary-promotions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/canary/promotions/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/canary/auto-rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/canary/promote"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/canary/promote-step"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/canary/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/canary/slo"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial-configs/{config_id}/deactivate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/commercial/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/aggregates"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/cleanup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/cluster-overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/ingest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/nodes"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/distributed/rebuild-aggregates"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_distributed_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/events"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/anomalies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/export/preview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/recommendations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-deliveries"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-schedules"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-schedules/{schedule_id}/disable"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-schedules/{schedule_id}/enable"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-schedules/{schedule_id}/run-now"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/executive-dashboard/report-schedules/{schedule_id}/send-test-email"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/explain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_models.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/cleanup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/clusters"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/compare"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/ingest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/federation/sync/manual"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/ha/acquire"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_ha_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/ha/cluster-state"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_ha_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/ha/force-expire"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_ha_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/ha/leaders"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_ha_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/ha/release"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_ha_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/adapters"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/approvals"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/executions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/executions/{execution_id}/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/executions/{execution_id}/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/local-gpu/metrics"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/proxmox/capacity"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/safety-policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/safety-policies/{policy_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/simulations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/simulations/{simulation_id}/execute"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/infra/validate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_infra_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/last-decisions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/chargeback/calculate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/chargeback/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/chargeback/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/fairness/collect"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/fairness/inversions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/fairness/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/fairness/starvation"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/queue/jobs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/queue/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/rate-limits/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/rate-limits/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/tiers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/qos/tiers/{tier_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under routing_admin.py awaiting frontend implementation."
+
+  - path: "/admin/routing/test/force-local-failure"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under routing_test.py awaiting frontend implementation."
+
+  - path: "/admin/runtime-profiles"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under runtime_profiles_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime-profiles/apply"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under runtime_profiles_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime-profiles/current"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under runtime_profiles_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime-profiles/validate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under runtime_profiles_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/drift"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/drift/report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/fabric"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/fabric/heartbeat"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/healing"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/recovery"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/recovery/{plan_id}/execute"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/replay-repair/{drift_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_runtime_fabric_admin.py awaiting frontend implementation."
+
+  - path: "/admin/runtime/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/saas/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under saas_admin.py awaiting frontend implementation."
+
+  - path: "/admin/sales/leads"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sales/leads/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sales/leads/{id}/advance-stage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sales/leads/{id}/notes"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sales/monthly-report-preview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sales/quote-preview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under sales.py awaiting frontend implementation."
+
+  - path: "/admin/sandbox/dry-run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_sandbox.py awaiting frontend implementation."
+
+  - path: "/admin/sandbox/explain/{tool_name}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_sandbox.py awaiting frontend implementation."
+
+  - path: "/admin/sandbox/providers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_sandbox.py awaiting frontend implementation."
+
+  - path: "/admin/security/attestation/report"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under pki_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/attestation/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under pki_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/clients/{client_id}/suspend"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_clients.py awaiting frontend implementation."
+
+  - path: "/admin/security/clients/{client_id}/unsuspend"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_clients.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/audit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/classification"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/decrypt"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/encrypt"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/keys"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/keys/{key_id}/revoke"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/encryption/keys/{key_id}/rotate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_encryption_admin.py awaiting frontend implementation."
+
+  - path: "/admin/security/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/security/pki/init"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under pki_attestation_admin.py awaiting frontend implementation."
+
+  - path: "/admin/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/support/bundle"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under support_admin.py awaiting frontend implementation."
+
+  - path: "/admin/support/bundle/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under support_admin.py awaiting frontend implementation."
+
+  - path: "/admin/support/surface"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under supported_surface_admin.py awaiting frontend implementation."
+
+  - path: "/admin/support/surface/status/{status}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under supported_surface_admin.py awaiting frontend implementation."
+
+  - path: "/admin/support/surface/{id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under supported_surface_admin.py awaiting frontend implementation."
+
+  - path: "/admin/system/api-surface"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin.py awaiting frontend implementation."
+
+  - path: "/admin/system/backups/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/system/benchmarks/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/system/control-center"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/system/releases/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/system/reports/latest"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/admin/tenants/{tenant_id}/agentic-readiness"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under tenant_agentic_readiness_admin.py awaiting frontend implementation."
+
+  - path: "/admin/test/clients/{client_id}/reset-usage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/test/commands"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/test/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/audit"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/auth/whoami"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/plans"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/pytest/files"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/pytest/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/pytest/run/{run_id}/cancel"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/pytest/run/{run_id}/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/rag/clients/{client_id}/block"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/rag/clients/{client_id}/unblock"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/rag/clients/{client_id}/usage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/rag/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/system/resources"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/tokens/lookup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/block"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/plan"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/quota/override"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/quota/renew"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/quota/reset"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/quota/set"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/tests/users/{user_id}/unblock"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_tests.py awaiting frontend implementation."
+
+  - path: "/admin/usage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/usage/by-client"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/usage/by-model"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/usage/{client_id}/summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_usage.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/executions/{execution_id}/provenance"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/executions/{execution_id}/stages/{stage_key}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/consensus"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/consensus/{federated_execution_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/drift"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/executions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/executions/{federated_execution_id}/lease"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/peers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/reconcile/{federated_execution_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/replay"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/federation/replay/{federated_execution_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_federated_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/governance/executions/{execution_id}/stages/{stage_key}/rollback-policy"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/receipts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/receipts/{execution_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/receipts/{receipt_id}/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/admin/workflows/receipts/{receipt_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_workflows_admin.py awaiting frontend implementation."
+
+  - path: "/allowlist"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_registry_admin.py awaiting frontend implementation."
+
+  - path: "/api/admin/compliance/evidence"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_compliance_evidence.py awaiting frontend implementation."
+
+  - path: "/api/admin/compliance/evidence/collect"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_compliance_evidence.py awaiting frontend implementation."
+
+  - path: "/api/admin/compliance/evidence/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_compliance_evidence.py awaiting frontend implementation."
+
+  - path: "/api/admin/models/watermark/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under admin_model_provenance.py awaiting frontend implementation."
+
+  - path: "/api/backends/capabilities"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/api/system/profile"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/api/v1/admin/agents/analytics/dashboard"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_analytics_admin.py awaiting frontend implementation."
+
+  - path: "/attestation/status"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/lineage-consistency"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/receipt"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/retrieval-proof"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/retrieval-replay"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/timeline"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/attestation/verify/witness-quorum"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_attestation_public.py awaiting frontend implementation."
+
+  - path: "/auth/me"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under auth.py awaiting frontend implementation."
+
+  - path: "/blocklist"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_registry_admin.py awaiting frontend implementation."
+
+  - path: "/capabilities"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/circuit-breakers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cross_cluster_forwarding_admin.py awaiting frontend implementation."
+
+  - path: "/decisions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/developer-docs"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under developer_docs.py awaiting frontend implementation."
+
+  - path: "/examples"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/execute"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/explainability/{decision_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_supervisor_admin.py awaiting frontend implementation."
+
+  - path: "/export"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_billing_admin.py awaiting frontend implementation."
+
+  - path: "/federation-map"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/generate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_billing_admin.py awaiting frontend implementation."
+
+  - path: "/getting-started"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/governance-federation-summary"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/graph"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/harness"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/harness/{rest:path}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/hub"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/incidents"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_supervisor_admin.py awaiting frontend implementation."
+
+  - path: "/inference/receipts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/inference/receipts/{receipt_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/inference/receipts/{receipt_id}/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/inference/reproducibility"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/integrity"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/keys"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/kill-switch"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/lineage"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/managed/appliances"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/appliances/enroll"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/appliances/enrollment-token"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/appliances/{appliance_id}/heartbeat"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/appliances/{appliance_id}/revoke"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/organizations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/managed/workspaces"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under managed_control_plane.py awaiting frontend implementation."
+
+  - path: "/me"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/metrics"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/monitoring"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/onboarding/event"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/operational-readiness"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/opportunities"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_live_balancing_admin.py awaiting frontend implementation."
+
+  - path: "/overview"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_geo_routing_admin.py awaiting frontend implementation."
+
+  - path: "/plans"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/pocket-tts"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under pocket_tts.py awaiting frontend implementation."
+
+  - path: "/pocket-tts/{path:path}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under pocket_tts.py awaiting frontend implementation."
+
+  - path: "/policies"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/policies/draft"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_routing_admin.py awaiting frontend implementation."
+
+  - path: "/policies/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_routing_admin.py awaiting frontend implementation."
+
+  - path: "/policies/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_routing_admin.py awaiting frontend implementation."
+
+  - path: "/policies/{id}/health"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/policies/{id}/pause"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/policies/{id}/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/policies/{policy_id}/activate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_routing_admin.py awaiting frontend implementation."
+
+  - path: "/prepare"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/pricing"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/provider-settings"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/providers"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/public/branding"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/public/capabilities"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/public/plans"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/public/signup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/public/webhooks/local-payment"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/qos-billing"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/recommendations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_geo_routing_admin.py awaiting frontend implementation."
+
+  - path: "/records"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_billing_admin.py awaiting frontend implementation."
+
+  - path: "/reset-circuit-breaker"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cross_cluster_forwarding_admin.py awaiting frontend implementation."
+
+  - path: "/risk"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_governance_supervisor_admin.py awaiting frontend implementation."
+
+  - path: "/rotate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/runtime/nodes/"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_runtime.py awaiting frontend implementation."
+
+  - path: "/runtime/nodes/register"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_runtime.py awaiting frontend implementation."
+
+  - path: "/runtime/nodes/{node_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_runtime.py awaiting frontend implementation."
+
+  - path: "/runtime/nodes/{node_id}/drain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_runtime.py awaiting frontend implementation."
+
+  - path: "/runtime/nodes/{node_id}/heartbeat"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under distributed_runtime.py awaiting frontend implementation."
+
+  - path: "/sign"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/signup"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under public.py awaiting frontend implementation."
+
+  - path: "/simulate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_global_traffic_admin.py awaiting frontend implementation."
+
+  - path: "/simulate-payment/{invoice_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/snapshot"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/test"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_cross_cluster_forwarding_admin.py awaiting frontend implementation."
+
+  - path: "/test-chat"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/tests"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under system.py awaiting frontend implementation."
+
+  - path: "/trust-chain"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/trust-violations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_operations_center.py awaiting frontend implementation."
+
+  - path: "/upgrade"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/usage-stats"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under portal.py awaiting frontend implementation."
+
+  - path: "/v1/assistants"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under assistants_v1.py awaiting frontend implementation."
+
+  - path: "/v1/ide/files"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/ide/files/read"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/ide/files/write"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/ide/run"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/ide/validate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/ide/workspace"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under web_ide.py awaiting frontend implementation."
+
+  - path: "/v1/jobs/{job_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under client.py awaiting frontend implementation."
+
+  - path: "/v1/jobs/{job_id}/cancel"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under client.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/categories"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/items"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/items/{item_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/items/{item_id}/download"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/items/{item_id}/rate"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/items/{item_id}/reviews"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/my-items"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/publishers/me"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/marketplace/publishers/register"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under agent_marketplace_public.py awaiting frontend implementation."
+
+  - path: "/v1/models"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under client.py awaiting frontend implementation."
+
+  - path: "/v1/multimodal/assets"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multimodal.py awaiting frontend implementation."
+
+  - path: "/v1/multimodal/assets/{asset_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multimodal.py awaiting frontend implementation."
+
+  - path: "/v1/multimodal/speech-to-text"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multimodal.py awaiting frontend implementation."
+
+  - path: "/v1/multimodal/vision"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under multimodal.py awaiting frontend implementation."
+
+  - path: "/v1/responses"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under client.py awaiting frontend implementation."
+
+  - path: "/verify"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_crypto_admin.py awaiting frontend implementation."
+
+  - path: "/violations"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_sandbox_admin.py awaiting frontend implementation."
+
+  - path: "/workflows"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}/gates"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}/promote"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}/receipt"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}/rollback"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/workflows/{workflow_id}/transitions"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_adapter_promotion_admin.py awaiting frontend implementation."
+
+  - path: "/{execution_id}"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/{execution_id}/kill"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/{execution_id}/rollback-plan"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under operations_remediation_execution_admin.py awaiting frontend implementation."
+
+  - path: "/{record_id}/attach-invoice"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_billing_admin.py awaiting frontend implementation."
+
+  - path: "/{record_id}/debit-wallet"
+    status: api_client_only
+    reason: "Auto-exempted: Backend endpoint under commercial_qos_billing_admin.py awaiting frontend implementation."

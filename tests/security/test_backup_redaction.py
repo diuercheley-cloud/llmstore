@@ -27,9 +27,11 @@ async def test_backup_redaction_and_exclusion(tmp_path, monkeypatch):
     # Mock database session (just needs to return empty results for queries)
     from unittest.mock import MagicMock
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()  # db.add() is synchronous in SQLAlchemy
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = []
     mock_db.execute = AsyncMock(return_value=mock_result)
+
     
     service = BackupService(mock_db)
     service.repo_root = repo_root

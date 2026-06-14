@@ -215,6 +215,25 @@ class FakeRedis:
             for job_id in list(self._zsets[queue_key].keys()):
                 self._zsets[queue_key][job_id] -= aging_step
             return len(self._zsets[queue_key])
+        if "local emission_interval = 1 / rate" in script or "allow_at" in script:
+            key = keys_and_args[0]
+            rate = float(keys_and_args[1])
+            burst = float(keys_and_args[2])
+            now = float(keys_and_args[3])
+            
+            period = burst / rate
+            emission_interval = 1.0 / rate
+            
+            tat = float(self._store.get(key) or 0)
+            new_tat = max(tat, now) + emission_interval
+            allow_at = new_tat - period
+            
+            if now < allow_at:
+                return [0, allow_at - now, 0]
+            
+            self._store[key] = new_tat
+            remaining = int((now - allow_at) / emission_interval)
+            return [1, 0, remaining]
         return None
 
     async def ping(self) -> bool:

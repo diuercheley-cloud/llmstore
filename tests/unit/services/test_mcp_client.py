@@ -29,7 +29,13 @@ from app.services.agents.mcp.mcp_security import MCPSecurity
 from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_transport import MCPTransportError
 
-from .fake_mcp_server import FakeMCPServer
+try:
+    from .fake_mcp_server import FakeMCPServer
+except (ImportError, ModuleNotFoundError):
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent))
+    from fake_mcp_server import FakeMCPServer
 
 # ---------------------------------------------------------------------------
 # Helpers

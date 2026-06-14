@@ -163,15 +163,6 @@ class InferenceProxy:
         return "data plane unavailable"
 
 
-@lru_cache
-def get_inference_proxy() -> "InferenceProxy":
-    from app.services.backend_slot_manager import BackendSlotManager
-    from app.services.queue_manager import QueueManager
-
-    queue_manager = QueueManager(BackendSlotManager())
-    circuit_breaker = CircuitBreaker()
-    return InferenceProxy(queue_manager, circuit_breaker)
-
     def _normalize_openrouter_endpoint(self, backend_url: str, endpoint: str) -> str:
         normalized_url = (backend_url or "").rstrip("/")
         if not endpoint.startswith("/v1/"):
@@ -1097,3 +1088,13 @@ def get_inference_proxy() -> "InferenceProxy":
             "choices": [{"index": 0, "text": payload.get('response', ''), "finish_reason": None}],
         }
         return f"data: {json.dumps(chunk)}"
+
+
+@lru_cache
+def get_inference_proxy() -> "InferenceProxy":
+    from app.services.backend_slot_manager import BackendSlotManager
+    from app.services.queue_manager import QueueManager
+
+    queue_manager = QueueManager(BackendSlotManager())
+    circuit_breaker = CircuitBreaker()
+    return InferenceProxy(queue_manager, circuit_breaker)

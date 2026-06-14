@@ -29,7 +29,7 @@ class BackupSignatureError(BackupError):
     """Raised when signature verification fails."""
     error_code = "BACKUP_SIGNATURE_INVALID"
 
-class BackupKeyError(BackupCryptoError):
+class BackupKeyError(BackupCryptoError, ValueError):
     """Raised when backup encryption key is missing or invalid."""
     error_code = "BACKUP_KEY_MISSING"
 

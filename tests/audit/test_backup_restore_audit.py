@@ -200,11 +200,18 @@ async def test_restore_and_rollback_audit_logging(test_db, tmp_path, monkeypatch
 
     # 5. Simulate failure during promotion to trigger rollback audit logs
     # We expect: restore_failed, rollback_started, rollback_completed
+    restore_state_file = tmp_path / "backup-store" / "restore-state.json"
+    if restore_state_file.exists():
+        restore_state_file.unlink()
+    restore_state_file_alt = tmp_path / "backup-store" / "system" / "restore-state.json"
+    if restore_state_file_alt.exists():
+        restore_state_file_alt.unlink()
+
     should_fail = True
     original_write_text = Path.write_text
     def patched_write_text(self_path, content, *args, **kwargs):
         nonlocal should_fail
-        if should_fail and "repo/config" in str(self_path):
+        if should_fail and ("repo/config" in str(self_path) or "repo/VERSION" in str(self_path)):
             should_fail = False
             raise RuntimeError("Simulated config promotion failure")
         return original_write_text(self_path, content, *args, **kwargs)

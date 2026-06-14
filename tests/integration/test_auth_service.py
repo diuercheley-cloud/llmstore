@@ -9,9 +9,11 @@ def test_admin_role_ordering():
     assert AdminRole.READ < AdminRole.SUPER
 
 def test_get_admin_role_mapping(monkeypatch):
+    from control_plane.app.services.config_service import ConfigService
     monkeypatch.setenv("ADMIN_SUPER_TOKEN", "super")
     monkeypatch.setenv("ADMIN_WRITE_TOKEN", "write")
     monkeypatch.setenv("ADMIN_READ_TOKEN", "read")
+    ConfigService.reset_instance()
     get_settings.cache_clear()
     
     assert get_admin_role("super") == AdminRole.SUPER

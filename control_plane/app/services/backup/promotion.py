@@ -18,6 +18,33 @@ class RestorePromotionService:
     async def promote_database(self, manifest_scope: str, parts: Dict[str, Any], sqlite_staging_file: Path | None, provider_factory) -> None:
         try:
             db_url = str(self.db.bind.url) if getattr(self.db, "bind", None) is not None else ""
+            
+            # Fetch current audit logs to preserve them across restore
+            from sqlalchemy import select
+            from app.models.agents.immutable_audit import ImmutableAuditLog
+            existing_logs_data = []
+            try:
+                stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.asc())
+                res = await self.db.execute(stmt)
+                existing_logs = res.scalars().all()
+                logger.debug(f"promote_database: fetched existing logs count: {len(existing_logs)}")
+                existing_logs_data = [
+                    {
+                        "tenant_id": log.tenant_id,
+                        "action": log.action,
+                        "actor": log.actor,
+                        "payload": log.payload,
+                        "previous_hash": log.previous_hash,
+                        "hash": log.hash,
+                        "signature": log.signature,
+                        "created_at": log.created_at,
+                    }
+                    for log in existing_logs
+                ]
+            except Exception as e:
+                logger.error(f"promote_database: fetch failed: {e}")
+                pass
+
             if manifest_scope == "full":
                 if sqlite_staging_file:
                     if "mode=memory" in db_url:
@@ -25,9 +52,9 @@ class RestorePromotionService:
                         service = BackupService(self.db)
                         await service._restore_database(parts["database.json"])
                         await self.db.commit()
-                        return
-                    provider = SQLiteBackupProvider(self.db, str(self.db.bind.url))
-                    await provider.restore_database(sqlite_staging_file)
+                    else:
+                        provider = SQLiteBackupProvider(self.db, str(self.db.bind.url))
+                        await provider.restore_database(sqlite_staging_file)
                 else:
                     # PG full restore
                     tmp_dir = Path(tempfile.mkdtemp(prefix="db-restore-prod-"))
@@ -41,10 +68,34 @@ class RestorePromotionService:
             else:
                 # Logical restore
                 from .backup_service import BackupService
-                service = BackupService(self.db) # For _restore_database which I should probably also move
+                service = BackupService(self.db)
                 await service._restore_database(parts["database.json"])
                 await self.db.commit()
+
+            # Re-insert preserved audit logs that are not already present in the restored database
+            logger.debug(f"promote_database: existing_logs_data count to re-insert: {len(existing_logs_data)}")
+            if existing_logs_data:
+                try:
+                    await self.db.commit()
+                    self.db.expire_all()
+                    stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.asc())
+                    res = await self.db.execute(stmt)
+                    restored_logs = res.scalars().all()
+                    restored_hashes = {log.hash for log in restored_logs}
+                    
+                    inserted_count = 0
+                    for log_data in existing_logs_data:
+                        if log_data["hash"] not in restored_hashes:
+                            new_log = ImmutableAuditLog(**log_data)
+                            self.db.add(new_log)
+                            inserted_count += 1
+                    logger.debug(f"promote_database: adding {inserted_count} missing logs")
+                    await self.db.commit()
+                except Exception as e:
+                    logger.error(f"promote_database: re-insert failed: {e}")
+                    raise
         except Exception as e:
+            logger.error(f"promote_database: outer exception: {e}")
             raise RestorePromotionError(f"Database promotion failed: {e}")
 
     def promote_configs(self, configs_payload: Dict[str, Any], staging_config_dir: Path) -> None:

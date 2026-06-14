@@ -31,7 +31,7 @@ async def sync_federation_clusters_loop(stop_event: asyncio.Event) -> None:
             logging.getLogger(__name__).exception("federation sync loop failed", extra={"extra_data": {"error": str(exc)}})
         try:
             await asyncio.wait_for(stop_event.wait(), timeout=settings.commercial_federation_sync_interval_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             continue
 
 @asynccontextmanager

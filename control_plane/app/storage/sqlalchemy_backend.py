@@ -187,8 +187,15 @@ class SQLAlchemyAuditStore(AuditStore):
         self._session = session
 
     async def record_admin_event(self, record: AdminAuditRecord, *, auto_commit: bool = True) -> None:
+        admin_user_id = record.admin_user_id
+        if isinstance(admin_user_id, str):
+            import uuid
+            try:
+                admin_user_id = uuid.UUID(admin_user_id)
+            except ValueError:
+                pass
         event = AdminAuditEvent(
-            admin_user_id=record.admin_user_id,
+            admin_user_id=admin_user_id,
             event_type=record.event_type,
             status=record.status,
             request_path=record.request_path,
@@ -209,3 +216,4 @@ class SQLAlchemyAuditStore(AuditStore):
             await self._session.commit()
         except SQLAlchemyError:
             await self._session.rollback()
+            raise

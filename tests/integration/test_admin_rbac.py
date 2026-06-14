@@ -9,15 +9,42 @@ from app.services.admin_rbac import ensure_admin_rbac_seed
 from sqlalchemy import func, select
 
 
+def _reset_config():
+    # Reset ConfigService instances
+    try:
+        from control_plane.app.services.config_service import ConfigService as CPConfigService
+        CPConfigService.reset_instance()
+    except ImportError:
+        pass
+    try:
+        from app.services.config_service import ConfigService as AppConfigService
+        AppConfigService.reset_instance()
+    except ImportError:
+        pass
+
+    # Clear get_settings cache
+    try:
+        from control_plane.app.core.config import get_settings as cp_get_settings
+        cp_get_settings.cache_clear()
+    except ImportError:
+        pass
+    try:
+        from app.core.config import get_settings as app_get_settings
+        app_get_settings.cache_clear()
+    except ImportError:
+        pass
+
+
 @pytest_asyncio.fixture
 async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
+    monkeypatch.setenv("SECURITY_PROFILE", "standard")
     monkeypatch.setenv("RBAC_ADMIN_ENABLED", "true")
     # monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
 
-    from app.core.config import get_settings
-    get_settings.cache_clear()
+    _reset_config()
 
-    from app.db.session import get_db_session, get_redis
+    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session, get_redis as rtd_get_redis
+    from app.db.session import get_db_session as dbs_get_db_session, get_redis as dbs_get_redis
     from app.main import app
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -35,26 +62,30 @@ async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
         async with testing_session_local() as session:
             yield session
 
-    app.dependency_overrides[get_db_session] = override_get_db_session
-    app.dependency_overrides[get_redis] = lambda: fake_redis
+    app.dependency_overrides[rtd_get_db_session] = override_get_db_session
+    app.dependency_overrides[dbs_get_db_session] = override_get_db_session
+    app.dependency_overrides[rtd_get_redis] = lambda: fake_redis
+    app.dependency_overrides[dbs_get_redis] = lambda: fake_redis
 
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         yield {"client": client, "sessionmaker": testing_session_local}
 
     app.dependency_overrides.clear()
     await engine.dispose()
-    get_settings.cache_clear()
+    _reset_config()
 
 
 @pytest_asyncio.fixture
 async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
+    monkeypatch.setenv("SECURITY_PROFILE", "local")
     monkeypatch.setenv("RBAC_ADMIN_ENABLED", "false")
     # monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
+    # monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
 
-    from app.core.config import get_settings
-    get_settings.cache_clear()
+    _reset_config()
 
-    from app.db.session import get_db_session, get_redis
+    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session, get_redis as rtd_get_redis
+    from app.db.session import get_db_session as dbs_get_db_session, get_redis as dbs_get_redis
     from app.main import app
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -68,15 +99,17 @@ async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
         async with testing_session_local() as session:
             yield session
 
-    app.dependency_overrides[get_db_session] = override_get_db_session
-    app.dependency_overrides[get_redis] = lambda: fake_redis
+    app.dependency_overrides[rtd_get_db_session] = override_get_db_session
+    app.dependency_overrides[dbs_get_db_session] = override_get_db_session
+    app.dependency_overrides[rtd_get_redis] = lambda: fake_redis
+    app.dependency_overrides[dbs_get_redis] = lambda: fake_redis
 
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         yield client
 
     app.dependency_overrides.clear()
     await engine.dispose()
-    get_settings.cache_clear()
+    _reset_config()
 
 
 async def _create_admin_user(client: httpx.AsyncClient, payload: dict) -> dict:
@@ -164,6 +197,9 @@ async def test_admin_audit_events_are_recorded(rbac_env):
     assert denied.status_code == 403
 
     async with sessionmaker() as session:
+        result = await session.execute(select(AdminAuditEvent))
+        db_events = result.scalars().all()
+        print(f"\nDEBUG test audit: db_events: {[{'id': str(e.id), 'event_type': e.event_type, 'status': e.status} for e in db_events]}")
         result = await session.execute(select(AdminAuditEvent.event_type))
         event_types = [row[0] for row in result.all()]
 
