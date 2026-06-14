@@ -1,103 +1,149 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { BadgeCheck, BarChart3, Brain, Clock3, FileDown, PlayCircle, ShieldAlert, Sigma, Wrench } from 'lucide-react'
+import { BarChart3, Database, PlayCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { JsonPanel, MetricCard, SectionCard, inputClassName } from '../../components/admin/AdminSurface'
+import { LoadingCard } from '../../components/ui-feedback'
 import api from '../../lib/api'
 
 export default function AgentEvaluation() {
-  const benchmarks = useQuery({
-    queryKey: ['agent-evaluation-benchmarks'],
-    queryFn: async () => api.listAgentBenchmarks(),
+  const [agentId, setAgentId] = useState('')
+  const [datasetId, setDatasetId] = useState('')
+  const [datasetName, setDatasetName] = useState('')
+  const [datasetVersion, setDatasetVersion] = useState('v1')
+  const [modelName, setModelName] = useState('llama-3-70b')
+
+  const agentsQuery = useQuery({ queryKey: ['admin-agents'], queryFn: () => api.listAdminAgents() })
+  const benchmarksQuery = useQuery({ queryKey: ['agent-evaluation-benchmarks'], queryFn: () => api.listAgentBenchmarks() })
+  const reportsQuery = useQuery({ queryKey: ['agent-evaluation-reports'], queryFn: () => api.listAgentBenchmarkReports() })
+  const evalReportQuery = useQuery({
+    queryKey: ['agent-eval-report-admin', agentId],
+    queryFn: () => api.getAgentEvalReportAdmin(agentId),
+    enabled: Boolean(agentId),
   })
 
-  const reports = useQuery({
-    queryKey: ['agent-evaluation-reports'],
-    queryFn: async () => api.listAgentBenchmarkReports(),
+  const createDatasetMutation = useMutation({
+    mutationFn: () => api.createAgentEvalDataset({ agent_id: agentId, name: datasetName, description: `Dataset ${datasetName}` }),
+    onSuccess: (data) => {
+      setDatasetId(data.id)
+      toast.success('Dataset criado.')
+    },
+    onError: (error: any) => toast.error(error.message || 'Falha ao criar dataset.'),
+  })
+
+  const createVersionMutation = useMutation({
+    mutationFn: () =>
+      api.createAgentEvalDatasetVersion(datasetId, {
+        version: datasetVersion,
+        cases_json: [{ input: 'ping', expected: 'pong' }],
+      }),
+    onSuccess: () => toast.success('Versao de dataset criada.'),
+    onError: (error: any) => toast.error(error.message || 'Falha ao criar versao.'),
   })
 
   const runMutation = useMutation({
-    mutationFn: async (payload: { agent_id: string; model_name: string; benchmark: string }) => (await api.runAgentBenchmark(payload)).data,
+    mutationFn: () => api.runAgentEvalAdmin({ agent_id: agentId, dataset_id: datasetId, version: datasetVersion, metadata: { source: 'admin-dashboard' } }),
     onSuccess: () => {
-      toast.success('Benchmark executado.')
-      reports.refetch()
+      toast.success('Avaliacao iniciada.')
+      reportsQuery.refetch()
+      evalReportQuery.refetch()
     },
-    onError: (err: any) => toast.error(err?.message || 'Falha ao executar benchmark'),
+    onError: (error: any) => toast.error(error.message || 'Falha ao rodar avaliacao.'),
   })
 
-  const latestReport = useMemo(() => reports.data?.[0], [reports.data])
+  const benchmarkMutation = useMutation({
+    mutationFn: (benchmark: string) => api.runAgentBenchmark({ agent_id: agentId, model_name: modelName, benchmark }),
+    onSuccess: () => {
+      toast.success('Benchmark iniciado.')
+      reportsQuery.refetch()
+    },
+    onError: (error: any) => toast.error(error.message || 'Falha ao iniciar benchmark.'),
+  })
+
+  const latestReport = useMemo(() => (reportsQuery.data ?? [])[0], [reportsQuery.data])
+  const promotionGateMutation = useMutation({
+    mutationFn: () => {
+      const evalRunId = latestReport?.id || latestReport?.run_id
+      if (!evalRunId) throw new Error('Nenhum eval run disponivel')
+      return api.checkAgentPromotionGateAdmin(agentId, { eval_run_id: evalRunId, audit_override: false })
+    },
+    onSuccess: () => evalReportQuery.refetch(),
+    onError: (error: any) => toast.error(error.message || 'Falha no promotion gate.'),
+  })
+
+  if (agentsQuery.isLoading) return <LoadingCard />
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-8">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-foreground flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-primary" /> Agent Evaluation
-          </h1>
-          <p className="text-muted-foreground mt-1">Avaliação automática de agentes com AgentBench, GAIA e BFCL.</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Evaluation Admin</p>
+          <h1 className="mt-2 text-4xl font-black tracking-tight text-foreground">Agent Evaluation</h1>
+          <p className="mt-2 text-lg text-muted-foreground">Datasets versionados, runs reais, reports por agente e promotion gate.</p>
         </div>
-        <button
-          onClick={() => runMutation.mutate({ agent_id: '00000000-0000-0000-0000-000000000000', model_name: 'demo-model', benchmark: 'AgentBench' })}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-black"
-        >
-          <PlayCircle className="w-4 h-4" /> Run benchmark
-        </button>
+        <div className="rounded-3xl bg-primary/10 p-4 text-primary">
+          <BarChart3 className="h-8 w-8" />
+        </div>
+      </header>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <MetricCard label="Benchmarks" value={String((benchmarksQuery.data ?? []).length)} />
+        <MetricCard label="Reports" value={String((reportsQuery.data ?? []).length)} />
+        <MetricCard label="Selected Agent" value={agentId ? '1' : '0'} />
+        <MetricCard label="Dataset Ready" value={datasetId ? 'yes' : 'no'} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {[
-          ['Success rate', latestReport?.metrics?.success_rate],
-          ['Tool efficiency', latestReport?.metrics?.tool_efficiency],
-          ['Latency (ms)', latestReport?.metrics?.latency_ms],
-          ['Token cost', latestReport?.metrics?.token_cost],
-          ['Hallucination', latestReport?.metrics?.hallucination_score],
-        ].map(([label, value]) => (
-          <div key={label as string} className="p-5 rounded-2xl border border-border bg-card">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">{label}</div>
-            <div className="text-2xl font-black mt-2 text-primary">{value === undefined ? '—' : typeof value === 'number' && value < 1 ? `${(value as number * 100).toFixed(1)}%` : value}</div>
-          </div>
-        ))}
-      </div>
+      <SectionCard title="Run Evaluation" subtitle="Controle real sobre datasets e suites.">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <select value={agentId} onChange={event => setAgentId(event.target.value)} className={inputClassName}>
+            <option value="">Selecione um agente</option>
+            {(agentsQuery.data ?? []).map((agent: any) => (
+              <option key={agent.id} value={agent.id}>{agent.name}</option>
+            ))}
+          </select>
+          <input value={datasetName} onChange={event => setDatasetName(event.target.value)} className={inputClassName} placeholder="Nome do dataset" />
+          <input value={datasetVersion} onChange={event => setDatasetVersion(event.target.value)} className={inputClassName} placeholder="v1" />
+          <input value={modelName} onChange={event => setModelName(event.target.value)} className={inputClassName} placeholder="Model name" />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button onClick={() => createDatasetMutation.mutate()} className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Create Dataset</button>
+          <button onClick={() => createVersionMutation.mutate()} disabled={!datasetId} className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-50">Create Version</button>
+          <button onClick={() => runMutation.mutate()} disabled={!agentId || !datasetId} className="inline-flex items-center gap-2 rounded-2xl bg-foreground px-4 py-2 text-sm font-semibold text-background disabled:opacity-50">
+            <PlayCircle className="h-4 w-4" />
+            Run Eval
+          </button>
+          <button onClick={() => promotionGateMutation.mutate()} disabled={!agentId} className="rounded-2xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-50">
+            Promotion Gate
+          </button>
+        </div>
+      </SectionCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {benchmarks.data?.map((b: any) => (
-          <div key={b.name} className="p-6 rounded-3xl border border-border bg-card space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-black text-lg">{b.name}</h3>
-              <BadgeCheck className="w-5 h-5 text-emerald-500" />
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="p-3 rounded-xl bg-secondary/20"><div className="text-xs uppercase text-muted-foreground">Tasks</div><div className="font-black">{b.tasks}</div></div>
-              <div className="p-3 rounded-xl bg-secondary/20"><div className="text-xs uppercase text-muted-foreground">Vision</div><div className="font-black">{String(!!b.supports?.vision)}</div></div>
-              <div className="p-3 rounded-xl bg-secondary/20"><div className="text-xs uppercase text-muted-foreground">Tool calling</div><div className="font-black">{String(!!b.supports?.tool_calling)}</div></div>
-              <div className="p-3 rounded-xl bg-secondary/20"><div className="text-xs uppercase text-muted-foreground">Streaming</div><div className="font-black">{String(!!b.supports?.streaming)}</div></div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-card border border-border rounded-3xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-border font-black">Exportable Reports</div>
-        <div className="divide-y divide-border">
-          {reports.data?.map((r: any) => (
-            <div key={r.run_id} className="px-6 py-4 flex items-center justify-between gap-4">
-              <div>
-                <div className="font-bold">{r.benchmark} · {r.model_name}</div>
-                <div className="text-xs text-muted-foreground font-mono">{r.run_id}</div>
-              </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <SectionCard title="Benchmark Catalog" subtitle="Catalogo do framework atual.">
+          <div className="mb-4 flex flex-wrap gap-2">
+            {(benchmarksQuery.data ?? []).map((benchmark: any) => (
               <button
-                onClick={async () => {
-                  const res = await api.exportAgentBenchmarkReport(r.run_id, r.benchmark, 'json')
-                  navigator.clipboard.writeText(JSON.stringify(res.data, null, 2))
-                  toast.success('Relatório copiado para a área de transferência.')
-                }}
-                className="flex items-center gap-2 text-sm font-bold text-primary"
+                key={benchmark.name}
+                onClick={() => benchmarkMutation.mutate(benchmark.name)}
+                disabled={!agentId}
+                className="inline-flex items-center gap-2 rounded-2xl border border-border px-3 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-50"
               >
-                <FileDown className="w-4 h-4" /> Export
+                <Database className="h-4 w-4" />
+                {benchmark.name}
               </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <JsonPanel data={benchmarksQuery.data} />
+        </SectionCard>
+
+        <SectionCard title="Agent Eval Report" subtitle="Saida do backend de /admin/agent-evals/reports/{agent_id}.">
+          <JsonPanel data={evalReportQuery.data} empty="Selecione um agente para ver o report." />
+        </SectionCard>
       </div>
+
+      <SectionCard title="Legacy Benchmark Reports" subtitle="Compatibilidade com o framework anterior ainda exposto na UI.">
+        <JsonPanel data={reportsQuery.data} />
+      </SectionCard>
     </div>
   )
 }

@@ -8,7 +8,7 @@ import numpy as np
 from app.api.client import _chat_with_fallback
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
-from app.db.session import get_db_session, redis_client
+from app.services.runtime_dependencies import get_db_session, redis_client
 from app.models.core.client import Client
 from app.models.rag.rag_document import RAGDocument
 from app.schemas.rag import (

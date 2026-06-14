@@ -1,10 +1,1 @@
-{
-  "max_api_router_files": 210,
-  "max_service_files": 960,
-  "max_feature_flags": 580,
-  "max_main_lines": 850,
-  "max_settings_lines": 1550,
-  "min_collected_tests": 5600,
-  "max_untested_p0_services": 120,
-  "max_untested_p1_services": 0
-}
+{"max_api_router_files": 0, "max_service_files": 0, "max_feature_flags": 0, "max_main_lines": 0, "max_settings_lines": 0, "min_collected_tests": 1000000}

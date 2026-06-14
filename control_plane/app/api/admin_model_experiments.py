@@ -2,7 +2,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.model_experiments import ModelExperiment
 from app.services.auth import AdminRole, require_admin_role
 from app.services.model_experiments.experiment_registry import ExperimentRegistry

@@ -2,7 +2,7 @@
 from typing import Any, List, Optional
 
 from app.api.dependencies import get_current_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.multi_cluster_operations import MultiClusterOperationsService
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

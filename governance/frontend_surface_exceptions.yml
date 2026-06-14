@@ -1,0 +1,229 @@
+# Endpoints intentionally hidden from official frontends or yet to be implemented.
+# Type: has_frontend | api_client_only | no_frontend | intentionally_hidden | deprecated
+
+exceptions:
+  # System / Internal / Static
+  - path: "/health"
+    status: intentionally_hidden
+    reason: "Public health check endpoint."
+  
+  - path: "/admin/docs"
+    status: intentionally_hidden
+    reason: "Auto-generated OpenAPI docs."
+  
+  - path: "/docs"
+    status: intentionally_hidden
+    reason: "Public API documentation."
+
+  - path: "/admin-v2/{rest:path}"
+    status: intentionally_hidden
+    reason: "Static files for the admin dashboard itself."
+
+  - path: "/admin-dashboard/{rest:path}"
+    status: intentionally_hidden
+    reason: "Legacy admin redirect."
+
+  - path: "/client-portal/{rest:path}"
+    status: intentionally_hidden
+    reason: "Static files for the client portal."
+
+  - path: "/{page}.html"
+    status: intentionally_hidden
+    reason: "Static HTML pages."
+
+  - path: "/robots.txt"
+    status: intentionally_hidden
+    reason: "Standard crawler file."
+
+  - path: "/sitemap.xml"
+    status: intentionally_hidden
+    reason: "Standard SEO file."
+
+  # Developer / Tooling
+  - path: "/admin-lab"
+    status: intentionally_hidden
+    reason: "Internal developer lab."
+  
+  - path: "/admin-tests"
+    status: intentionally_hidden
+    reason: "E2E test dashboard."
+
+  # Auth Flow (Handled via redirect/browser)
+  - path: "/auth/login/{provider}"
+    status: api_client_only
+    reason: "Redirect-based OAuth login."
+  
+  - path: "/auth/callback/{provider}"
+    status: intentionally_hidden
+    reason: "OAuth callback handler."
+
+  - path: "/auth/enterprise/login/{provider}"
+    status: api_client_only
+    reason: "SSO redirect."
+
+  - path: "/auth/enterprise/callback/{provider}"
+    status: intentionally_hidden
+    reason: "SSO callback."
+
+  # Webhooks (External consumption)
+  - path: "/api/v1/alerts/grafana-webhook"
+    status: intentionally_hidden
+    reason: "Inbound webhook from Grafana."
+
+  - path: "/billing/webhooks/{provider}"
+    status: intentionally_hidden
+    reason: "Inbound webhook from payment providers."
+
+  - path: "/payments/webhooks/{provider}"
+    status: intentionally_hidden
+    reason: "Inbound webhook."
+
+  # Internal APIs / RPC
+  - path: "/v1/agents/runs/{run_id}/stream"
+    status: api_client_only
+    reason: "WebSocket streaming handled via internal helper."
+
+  - path: "/api/v1/a2a/jsonrpc"
+    status: intentionally_hidden
+    reason: "Agent-to-Agent internal RPC."
+
+  # Planned / In Progress / API-First Modules
+  - path: "/v1/threads"
+    status: api_client_only
+    reason: "Stateful thread management for Assistants API."
+
+  - path: "/api/v1/agent-service"
+    status: api_client_only
+    reason: "Headless invocation endpoints."
+
+  - path: "/api/v1/alerts"
+    status: api_client_only
+    reason: "Alert remediation and webhook handlers."
+
+  - path: "/admin/agents/connectors"
+    status: no_frontend
+    reason: "Connector configuration currently via YAML/CLI."
+
+  - path: "/admin/agents/event"
+    status: no_frontend
+    reason: "Event trigger management in backlog."
+
+  - path: "/admin/agents/execution"
+    status: has_frontend
+    reason: "Covered by Worker DLQ and Operations Dashboard."
+
+  - path: "/admin/agents/federated-memory"
+    status: api_client_only
+    reason: "Internal peer-to-peer sync."
+
+  - path: "/admin/agents/governance"
+    status: has_frontend
+    reason: "Covered by Sovereign Governance and Policy Center."
+
+  - path: "/admin/workflows"
+    status: no_frontend
+    reason: "Commercial Workflows engine is API-first."
+
+  - path: "/admin/supply-chain"
+    status: no_frontend
+    reason: "Model Supply Chain integrity is a background process."
+
+  - path: "/api/admin/federation"
+    status: has_frontend
+    reason: "Covered by Federation Overview."
+
+  - path: "/api/admin/marketplace"
+    status: has_frontend
+    reason: "Internal marketplace sync logic."
+
+  - path: "/api/admin/models/provenance"
+    status: api_client_only
+    reason: "Provenance verification helpers."
+
+  - path: "/api/audit"
+    status: api_client_only
+    reason: "Headless audit verification."
+
+  - path: "/api/multimodal"
+    status: api_client_only
+    reason: "Multimodal processing primitives."
+
+  - path: "/api/v1/a2a"
+    status: intentionally_hidden
+    reason: "Internal P2P routing."
+
+  - path: "/api/v1/admin/debugger"
+    status: intentionally_hidden
+    reason: "Remote debugger backend."
+
+  - path: "/api/v1/admin/kb"
+    status: has_frontend
+    reason: "Covered by RAG / Knowledge Graph pages."
+
+  - path: "/api/v1/admin/prompts"
+    status: has_frontend
+    reason: "Covered by Prompts page."
+
+  - path: "/v1/chat"
+    status: api_client_only
+    reason: "Standard OpenAI-compatible chat interface."
+
+  - path: "/v1/completions"
+    status: api_client_only
+    reason: "Legacy completion interface."
+
+  - path: "/v1/embeddings"
+    status: api_client_only
+    reason: "Standard embedding interface."
+
+  - path: "/v1/voice"
+    status: api_client_only
+    reason: "Real-time voice/WebRTC signaling."
+
+  - path: "/v1/mobile"
+    status: api_client_only
+    reason: "Mobile push and device registration."
+
+  - path: "/v1/batches"
+    status: api_client_only
+    reason: "Asynchronous batch processing."
+
+  - path: "/admin/operations"
+    status: has_frontend
+    reason: "Core operations center surface."
+
+  - path: "/portal"
+    status: has_frontend
+    reason: "Client portal surface."
+
+  - path: "/v1/rag"
+    status: has_frontend
+    reason: "RAG client interface."
+
+  - path: "/account"
+    status: has_frontend
+    reason: "Legacy account path, redirecting to /portal/me."
+
+  - path: "/wallet"
+    status: has_frontend
+    reason: "Legacy wallet path, redirecting to /portal/wallet."
+
+  - path: "/invoices"
+    status: has_frontend
+    reason: "Legacy invoices path."
+    
+  - path: "/audit"
+    status: has_frontend
+    reason: "Legacy audit path."
+
+  - path: "/entries"
+    status: has_frontend
+    reason: "Generic entries path for adapters."
+
+  - path: "/manifests"
+    status: has_frontend
+    reason: "Adapter manifest management."
+
+  - path: "/runs"
+    status: has_frontend
+    reason: "Sandbox run tracking."

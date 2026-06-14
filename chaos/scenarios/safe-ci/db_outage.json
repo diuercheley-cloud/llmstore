@@ -1,0 +1,10 @@
+{
+  "name": "PostgreSQL Temporary Outage",
+  "experiment_type": "db_outage",
+  "blast_radius": "high",
+  "injection_config": {"duration_seconds": 5},
+  "timeout_seconds": 60,
+  "assertions": [
+    {"name": "system_recovers", "type": "health_check", "condition": "healthy"}
+  ]
+}

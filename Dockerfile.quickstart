@@ -75,10 +75,7 @@ COPY --from=python-builder /opt/venv /opt/venv
 COPY --from=llama-builder /build/llama.cpp/build/bin/ /opt/llama/bin/
 
 COPY docker/data-plane/entrypoint.sh /opt/quickstart/llama-entrypoint.sh
-COPY control_plane/app /app/app
-COPY control_plane/app /app/control_plane/app
-COPY control_plane/alembic /app/alembic
-COPY control_plane/alembic.ini /app/alembic.ini
+COPY control_plane /app/control_plane
 COPY scripts /app/scripts
 COPY config /config
 COPY VERSION /app/VERSION
@@ -121,6 +118,10 @@ ENV OPERATIONAL_PROFILE=lite \
     PROMETHEUS_ENABLED=false \
     LOKI_ENABLED=false \
     TEMPO_ENABLED=false
+
+ENV WEB_CONCURRENCY=1 \
+    GUNICORN_TIMEOUT=120 \
+    GUNICORN_KEEPALIVE=5
 
 VOLUME ["/models", "/data/quickstart"]
 

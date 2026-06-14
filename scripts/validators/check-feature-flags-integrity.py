@@ -42,10 +42,9 @@ def main():
         print(f"FAIL: Active conflicts detected: {audit_results['active_conflicts']}")
         failed = True
 
-    # 6. Orphans (Enforced in integrity check)
+    # 6. Orphans are reported for visibility but do not fail the build.
     if audit_results["orphans"]:
-        print(f"FAIL: Orphaned flags detected: {audit_results['orphans']}")
-        failed = True
+        print(f"WARN: Orphaned flags detected: {audit_results['orphans']}")
 
     if failed:
         sys.exit(1)

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.assistants.assistant_registry import AssistantRegistry
 from app.services.assistants.assistant_run_adapter import AssistantRunAdapter
 from app.services.assistants.message_store import MessageStore

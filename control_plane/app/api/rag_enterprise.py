@@ -8,7 +8,7 @@ from typing import Optional
 from app.api.client import _chat_with_fallback
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.client import Client
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
@@ -880,7 +880,7 @@ async def admin_reindex(
     )).scalars().all()
 
     from app.api.rag import RAG_QUEUE_NAME
-    from app.db.session import redis_client
+    from app.services.runtime_dependencies import redis_client
 
     count = 0
     for doc in docs:

@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.agents.digital_twins.twin_registry import TwinRegistry
 from app.services.agents.digital_twins.twin_service import DigitalTwinService
 from fastapi import APIRouter, Depends, HTTPException

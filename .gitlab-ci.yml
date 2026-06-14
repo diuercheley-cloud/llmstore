@@ -31,9 +31,17 @@ preflight:check:
   stage: preflight
   image: alpine:latest
   script:
-    - apk add --no-cache bash
-    - bash scripts/validators/check-alembic-integrity.sh
-    - if [ -f scripts/validators/check-working-tree-clean.sh ]; then bash scripts/validators/check-working-tree-clean.sh; fi
+    - apk add --no-cache bash make python3
+    - bash scripts/ci/integrity-ci.sh
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+detect-supported-surface-mocks:
+  stage: preflight
+  image: python:3.10
+  script:
+    - python3 scripts/detect_supported_surface_mocks.py
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
@@ -45,7 +53,7 @@ platform:freeze-check:
     GIT_DEPTH: 0
   script:
     - git fetch origin tag v1.9.7-compliance-readiness || true
-    - make platform-freeze-check
+    - bash scripts/ci/integrity-ci.sh
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"

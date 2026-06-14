@@ -12,7 +12,7 @@ from typing import Annotated, Any, Dict
 import httpx
 from app.api.deps import get_inference_proxy
 from app.core.config import Settings, get_settings
-from app.db.session import get_db, get_db_session, get_redis
+from app.services.runtime_dependencies import get_db, get_db_session, get_redis
 from app.models.core.client import Client
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_registry import ModelRegistry
@@ -158,7 +158,7 @@ async def get_operational_readiness(
         
     # 2. Redis check
     try:
-        from app.db.session import redis_client
+        from app.services.runtime_dependencies import redis_client
         await redis_client.ping()
         checks["redis"] = "ok"
     except Exception as e:
@@ -395,6 +395,15 @@ async def system_status(
             "models_active": model_count
         }
     }
+
+
+@router.get("/admin/jobs", tags=["system"])
+async def admin_jobs_endpoint(
+    session: AsyncSession = Depends(get_db_session),
+    redis: Redis = Depends(get_redis),
+    _=Depends(require_admin),
+):
+    return await get_admin_job_snapshot(session, redis)
 
 
 @router.get("/admin/status", tags=["system"])
@@ -1002,7 +1011,22 @@ async def harness_page_catch_all(rest: str):
 
 @router.get("/{page}.html", include_in_schema=False)
 async def portal_html_pages(page: str):
-    allowed_pages = {"keys", "usage", "invoices", "wallet", "rag", "playground", "index", "index.legacy"}
+    allowed_pages = {
+        "keys",
+        "usage",
+        "invoices",
+        "wallet",
+        "rag",
+        "playground",
+        "models",
+        "plans",
+        "trust",
+        "audit",
+        "disputes",
+        "examples",
+        "index",
+        "index.legacy",
+    }
     if page in allowed_pages:
         static_file = Path(__file__).resolve().parents[1] / "static" / "portal" / f"{page}.html"
         return FileResponse(static_file)

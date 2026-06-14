@@ -20,6 +20,7 @@ settings:
   AGENT_TOOL_EXECUTION_ENABLED: false
   AGENT_STATEFUL_WORKFLOWS_ENABLED: false
   AGENT_RUNTIME_ENABLED: false
+  CHAOS_ENABLED: false
 features:
   sqlite: true
   postgresql: false

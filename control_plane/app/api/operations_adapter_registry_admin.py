@@ -121,7 +121,7 @@ async def register_registry_entry(
     await db.refresh(entry)
     
     return RegistryEntryRegisterResponse(
-        entry=RegistryEntryResponse.from_orm(entry),
+        entry=RegistryEntryResponse.model_validate(entry),
         policy_decision="Draft entry created",
         receipt_id=str(receipt.id)
     )

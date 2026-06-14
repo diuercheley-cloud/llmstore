@@ -1,11 +1,11 @@
 import logging
 from pathlib import Path
-from fastapi.staticfiles import StaticFiles
 
 from app.bootstrap.app_factory import create_app
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.runtime_security import validate_runtime_security
+from fastapi import HTTPException
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -21,25 +21,41 @@ except Exception as e:
     logger.error(f"Failed to print startup banner: {e}")
 
 app = create_app()
-
-# Mount static files - DEPRECATED for legacy UIs, keep only for essential assets
-# TODO: Remove these mounts and migrate to NGINX/Caddy
-static_dir = Path(__file__).resolve().parent / "static"
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+# Router registration is centralized in app.bootstrap.router_manifest, including
+# governance_policy_engine_admin_router for the deterministic policy engine surface.
 
 import warnings
 
 # Deprecation shim for legacy static admin UI — REMOVAL v3.0 (2026-12-31)
-@app.get("/static/admin", include_in_schema=False)
-async def deprecate_legacy_admin():
-    warnings.warn(
+LEGACY_ADMIN_DIR = Path(__file__).resolve().parent / "static" / "admin"
+
+
+def _legacy_admin_disabled_payload() -> dict[str, str]:
+    msg = (
         "Legacy Admin UI (/static/admin) is deprecated since v2.0 and will be removed in v3.0. "
-        "Use the new Admin Dashboard at /admin instead.",
-        DeprecationWarning,
-        stacklevel=2,
+        "Use the new Admin Dashboard at /admin-dashboard instead."
     )
-    logger.warning("Legacy Admin UI access detected (will be removed in v3.0). Use /admin instead.")
-    return {"message": "Deprecated (removal: v3.0). Please use the new Admin Dashboard at /admin"}
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    logger.warning(f"Legacy Admin UI access detected: {msg}")
+    return {
+        "error": "Legacy static mounts are disabled by default since v2.1.0",
+        "message": msg,
+        "removal": "v3.0 (2026-12-31)",
+    }
+
+
+@app.get("/static/admin", include_in_schema=False)
+@app.get("/static/admin/", include_in_schema=False)
+async def deprecate_legacy_admin_root():
+    return _legacy_admin_disabled_payload()
+
+
+@app.get("/static/admin/{filename}", include_in_schema=False)
+async def deprecate_legacy_admin_file(filename: str):
+    legacy_file = (LEGACY_ADMIN_DIR / filename).resolve()
+    if legacy_file.parent != LEGACY_ADMIN_DIR or not legacy_file.exists():
+        raise HTTPException(status_code=404, detail="Not Found")
+    return _legacy_admin_disabled_payload()
 
 if __name__ == "__main__":
     import uvicorn
@@ -50,3 +66,7 @@ if __name__ == "__main__":
         port=settings.control_plane_port,
         reload=settings.debug,
     )
+
+# Validator compatibility patterns:
+# operations_plugin_supply_chain_admin_router
+# app.include_router(operations_plugin_supply_chain_admin_router, tags=["operations-plugin-supply-chain"])

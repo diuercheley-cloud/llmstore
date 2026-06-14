@@ -30,3 +30,22 @@ class WebhookPayload(BaseModel):
     invoice_id: str = Field(min_length=36, max_length=36)
     status: str = Field(pattern=r"^(paid|failed)$")
     payment_reference: str | None = Field(default=None, max_length=120)
+
+
+class CapabilityItem(BaseModel):
+    id: str
+    name: str
+    status: str
+    capability_level: str
+    limitations: str = ""
+    docs_url: str = ""
+    since_version: str = ""
+    test_coverage: str | None = None
+
+
+class CapabilitiesResponse(BaseModel):
+    version: str
+    local_appliance_mode: bool
+    features: list[CapabilityItem]
+    limitations: list[str]
+    note: str

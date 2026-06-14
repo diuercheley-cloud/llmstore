@@ -98,66 +98,19 @@ jobs:
         uses: ./.github/actions/setup-docker
 
       # --- Target: API ---
-      - name: API Lint & Integrity
-        if: matrix.target == 'api'
-        run: |
-          ruff check control_plane/app --no-cache --select F821,F811,E722
-          make platform-freeze-check
-          make check-feature-flags-integrity
-          make check-supported-surface
-          make maintenance-budgets
-          bash scripts/validators/check-secrets.sh --all
-
-      - name: Surface Governance Validation
-        if: matrix.target == 'api'
-        run: |
-          make generate-route-surface
-          make validate-route-surface
-          make validate-deprecated-surface
-
-      - name: API Database Migrations
-        if: matrix.target == 'api'
-        env:
-          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
-        run: |
-          cd control_plane
-          alembic upgrade head
-
-      - name: API Backend Tests (Release Gate)
+      - name: Backend CI (Lint, Integrity, Tests)
         if: matrix.target == 'api'
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/llm_inference_test
           REDIS_URL: redis://localhost:6379/0
-          PYTHONPATH: .:control_plane
         run: |
-          pytest tests/control_plane -m "release_gate" --cov=app --junitxml=artifacts/reports/api-release-gate.xml
-          pytest tests/integration/contracts tests/integration/quality tests/integration/security -m "release_gate"
+          bash scripts/ci/backend-ci.sh
 
-      - name: Backup Component Tests (fast, unit-level)
-        if: matrix.target == 'api'
-        env:
-          PYTHONPATH: .:control_plane
-          BACKUP_RESTORE_ENABLED: "true"
+      # --- Target: Frontend Admin & Client ---
+      - name: Frontend CI (Lint, Build, Test)
+        if: matrix.target == 'frontend-admin' || matrix.target == 'frontend-client'
         run: |
-          mkdir -p artifacts/reports
-          make test-backup-components
-
-      # --- Target: Frontend Admin ---
-      - name: Frontend Admin Lint, Typecheck & Test
-        if: matrix.target == 'frontend-admin'
-        run: |
-          cd frontend/admin
-          npm run lint
-          npm run build
-          npm run test
-
-      # --- Target: Frontend Client ---
-      - name: Frontend Client Lint & Build
-        if: matrix.target == 'frontend-client'
-        run: |
-          cd frontend/client
-          npm run lint
-          npm run build
+          bash scripts/ci/frontend-ci.sh
 
       # --- Target: Docker Quickstart ---
       - name: Build Quickstart Image
@@ -174,20 +127,10 @@ jobs:
           pytest tests/integration/agent_evals/test_eval_framework.py -q
 
       # --- Target: SDK ---
-      - name: SDK Tests
+      - name: SDK CI
         if: matrix.target == 'sdk'
         run: |
-          cd sdk/python
-          pip install -e ".[dev]"
-          pytest --cov=kleberai
-
-      - name: SDK Build
-        if: matrix.target == 'sdk' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-        run: |
-          pip install build twine
-          cd sdk/python
-          python -m build
-          twine check dist/*
+          bash scripts/ci/sdk-ci.sh
 
       # --- Target: E2E ---
       - name: E2E Playwright Tests
@@ -201,19 +144,10 @@ jobs:
           npm run test:e2e
 
       # --- Target: Security ---
-      - name: Security Scans
+      - name: Security CI
         if: matrix.target == 'security'
-        uses: ./.github/actions/run-security-checks
-
-      - name: Dependency Scan (Trivy)
-        if: matrix.target == 'security'
-        uses: aquasecurity/trivy-action@0.30.0
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'HIGH,CRITICAL'
+        run: |
+          bash scripts/ci/security-ci.sh
 
       # --- Target: Docs ---
       - name: Docs Validation

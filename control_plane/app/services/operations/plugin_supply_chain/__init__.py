@@ -15,6 +15,10 @@ from app.services.operations.plugin_supply_chain.replay_verifier import (
 from app.services.operations.plugin_supply_chain.sbom_placeholder import (
     PluginSBOMPlaceholderService,
 )
+from app.services.operations.plugin_supply_chain.sbom_service import (
+    PluginSBOMService,
+    SBOMGenerationError,
+)
 
 __all__ = [
     "DEFAULT_ALLOWED_DEPENDENCY_CLASSES",
@@ -24,6 +28,9 @@ __all__ = [
     "PluginArtifactLineageService",
     "PluginProvenanceService",
     "PluginSBOMPlaceholderService",
+    "PluginSBOMService",
+    "SBOMGenerationError",
     "PluginSupplyChainReplayVerifier",
     "build_plugin_supply_chain_audit_event",
 ]
+

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.batches.batch_registry import BatchRegistry
 from app.services.batches.batch_result_store import BatchResultStore
 from app.services.batches.batch_scheduler import BatchScheduler

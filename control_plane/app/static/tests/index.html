@@ -135,6 +135,33 @@
 
         .api-key-input::placeholder { color: var(--text-dim); }
 
+        .api-key-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-clear-key {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .btn-clear-key:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
         /* ─── Buttons ─── */
         .btn {
             display: inline-flex;
@@ -788,8 +815,11 @@
                 </div>
             </div>
             <div class="header-actions">
+            <div class="api-key-wrapper">
                 <input type="password" class="api-key-input" id="apiKeyInput"
                        placeholder="Admin API Key" autocomplete="off">
+                <button class="btn-clear-key" id="btnClearKey" title="Limpar API Key">✕</button>
+            </div>
                 <button class="btn btn-primary" id="btnRunAll" disabled>
                     ▶ Executar Todos
                 </button>
@@ -929,6 +959,7 @@
 
         // ─── DOM refs ───
         const apiKeyInput = document.getElementById('apiKeyInput');
+        const btnClearKey = document.getElementById('btnClearKey');
         const btnRunAll = document.getElementById('btnRunAll');
         const btnStop = document.getElementById('btnStop');
         const searchInput = document.getElementById('searchInput');
@@ -1467,6 +1498,23 @@
 
         btnRunAll.addEventListener('click', runAllTests);
         btnStop.addEventListener('click', cancelRun);
+        btnClearKey.addEventListener('click', () => {
+            apiKeyInput.value = '';
+            localStorage.removeItem('test_runner_api_key');
+            skeletonLoading.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🔑</div>
+                    <h3>Insira sua Admin API Key</h3>
+                    <p>Digite sua chave de API no campo acima e pressione Enter para carregar os testes.</p>
+                </div>
+            `;
+            testList.innerHTML = '';
+            headerSubtitle.textContent = 'Aguardando chave...';
+            btnRunAll.disabled = true;
+            allTests = [];
+            updateStats();
+            showToast('API Key removida', 'info');
+        });
 
         btnSearch.addEventListener('click', renderTests);
         searchInput.addEventListener('input', renderTests);

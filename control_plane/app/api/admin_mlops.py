@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -42,19 +42,19 @@ class MLTrainingJobCreate(BaseModel):
 
 @router.get("/inference/backends/vllm/health")
 async def get_vllm_health():
-    from app.services.inference.backends.vllm_health import check_vllm_health
+    from app.services.inference_backends import check_vllm_health
     return await check_vllm_health()
 
 
 @router.get("/inference/backends/vllm/models")
 async def get_vllm_models():
-    from app.services.inference.backends.vllm_models import list_vllm_models
+    from app.services.inference_backends import list_vllm_models
     return await list_vllm_models()
 
 
 @router.post("/inference/backends/vllm/test")
 async def test_vllm(req: VllmTestRequest):
-    from app.services.inference.backends.vllm_backend import VllmBackendService
+    from app.services.inference_backends import VllmBackendService
     service = VllmBackendService()
     payload = {
         "model": req.model or service.settings.vllm_default_model,

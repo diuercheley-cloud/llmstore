@@ -60,6 +60,7 @@ from .commercial_trust_violation import CommercialTrustViolation
 from .commercial_witness import CommercialWitness, CommercialWitnessSignature, CommercialWitnessQuorumPolicy, CommercialWitnessAuditEvent
 from .commercial_workflows import CommercialWorkflowDefinition, CommercialWorkflowExecution, CommercialWorkflowStage, CommercialWorkflowCheckpoint, CommercialWorkflowReceipt, CommercialWorkflowReplay, CommercialWorkflowDeterminismReport, CommercialWorkflowPolicyBinding, CommercialWorkflowPolicySnapshot, CommercialWorkflowApproval, CommercialWorkflowGovernanceEvent, CommercialWorkflowReplaySession
 from .sales_lead import SalesLead, SalesLeadNote
+from .global_routing_policy import GlobalRoutingPolicyVersion
 
 __all__ = [
     "CommercialAIOpsRecommendation",
@@ -250,6 +251,7 @@ __all__ = [
     "EnterpriseOnboardingProject",
     "EnterpriseOnboardingTask",
     "EnterpriseTrainingSession",
+    "GlobalRoutingPolicyVersion",
     "KeyUsageStatus",
     "SalesLead",
     "SalesLeadNote",

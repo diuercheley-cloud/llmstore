@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,11 +10,11 @@ class SecurityConfig(BaseSettings):
         env_nested_delimiter="__",
     )
 
-    admin_token: str = Field(alias="ADMIN_TOKEN")
-    admin_read_token: str | None = Field(default=None, alias="ADMIN_READ_TOKEN")
-    admin_write_token: str | None = Field(default=None, alias="ADMIN_WRITE_TOKEN")
-    admin_super_token: str | None = Field(default=None, alias="ADMIN_SUPER_TOKEN")
-    jwt_secret: str = Field(..., alias="JWT_SECRET")
+    admin_token: str = Field(alias="ADMIN_TOKEN", validation_alias=AliasChoices("ADMIN_TOKEN", "ADMIN_TOKEN_FILE"))
+    admin_read_token: str | None = Field(default=None, alias="ADMIN_READ_TOKEN", validation_alias=AliasChoices("ADMIN_READ_TOKEN", "ADMIN_READ_TOKEN_FILE"))
+    admin_write_token: str | None = Field(default=None, alias="ADMIN_WRITE_TOKEN", validation_alias=AliasChoices("ADMIN_WRITE_TOKEN", "ADMIN_WRITE_TOKEN_FILE"))
+    admin_super_token: str | None = Field(default=None, alias="ADMIN_SUPER_TOKEN", validation_alias=AliasChoices("ADMIN_SUPER_TOKEN", "ADMIN_SUPER_TOKEN_FILE"))
+    jwt_secret: str = Field(..., alias="JWT_SECRET", validation_alias=AliasChoices("JWT_SECRET", "JWT_SECRET_FILE"))
     rbac_admin_enabled: bool = Field(default=True, alias="RBAC_ADMIN_ENABLED")
     admin_tests_rate_limit_enabled: bool = Field(default=True, alias="ADMIN_TESTS_RATE_LIMIT_ENABLED")
 

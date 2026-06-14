@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
 from app.models.commercial.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
 from app.services.auth import require_admin

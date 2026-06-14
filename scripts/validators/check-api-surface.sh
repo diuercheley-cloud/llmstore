@@ -15,4 +15,4 @@ elif [ -f "venv/bin/python3" ]; then
 fi
 
 echo "--- Starting API Surface Area Compliance Audit ---"
-PYTHONPATH="${ROOT_DIR}/control_plane" ${PYTHON_EXEC} scripts/legacy/check_api_surface.py
+PYTHONPATH="${ROOT_DIR}/control_plane" ${PYTHON_EXEC} scripts/check_api_surface.py

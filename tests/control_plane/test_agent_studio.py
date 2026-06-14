@@ -30,7 +30,14 @@ async def test_flow_validation_detects_high_risk_missing_approval():
                 "id": "n1", 
                 "node_type": "tool_call", 
                 "config": {"tool_name": "delete_database", "requires_approval": False}
+            },
+            {
+                "id": "n2",
+                "node_type": "final_response"
             }
+        ],
+        "edges": [
+            {"source": "n1", "target": "n2"}
         ]
     }
     
@@ -39,6 +46,7 @@ async def test_flow_validation_detects_high_risk_missing_approval():
     validator = FlowValidator()
     errors = validator.validate(version)
     
+    # Now that we have a terminal node, only the missing_approval error should remain.
     assert len(errors) == 1
     assert errors[0]["code"] == "missing_approval"
 

@@ -10,7 +10,7 @@ from app.api.client import _backend_errors_for_log, _chat_with_fallback, _error_
 from app.api.deps import get_inference_proxy
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
-from app.db.session import get_db_session, get_redis
+from app.services.runtime_dependencies import get_db_session, get_redis
 from app.models.billing.ai_wallet import AiWalletTransaction
 from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
@@ -97,7 +97,8 @@ from app.utils.token_estimator import estimate_tokens_from_text
 from app.utils.validation import validate_params_for_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, select
+from sqlalchemy import cast, desc, func, select
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.responses import HTMLResponse, JSONResponse
@@ -113,6 +114,17 @@ class PortalAuditReportGeneratePayload(BaseModel):
     period_end: date
     export_format: str = Field(default="json", pattern="^(json|csv|html|pdf)$")
     filters_json: dict | None = None
+
+
+def _portal_token_limit(limit: int) -> int | None:
+    return limit if limit > 0 else None
+
+
+def _portal_remaining_tokens(limit: int, used: int) -> int | None:
+    normalized = _portal_token_limit(limit)
+    if normalized is None:
+        return None
+    return max(normalized - used, 0)
 
 
 def _portal_request_identity(request: Request) -> dict[str, str | None]:
@@ -242,7 +254,7 @@ def _build_invoice_html(invoice: dict, client: Client) -> str:
       </div>
     </div>
     <h2>Consumo</h2>
-    <div>Tokens incluídos: {invoice['included_tokens']}</div>
+    <div>Tokens incluídos: {"Ilimitado" if invoice.get("included_tokens", 0) <= 0 else invoice["included_tokens"]}</div>
     <div>Tokens usados: {invoice['used_tokens']}</div>
     <div>Tokens excedentes: {invoice['overage_tokens']}</div>
     <div>Instruções de pagamento: {invoice.get('payment_instructions') or 'pagamento manual/local'}</div>
@@ -312,11 +324,11 @@ async def _portal_usage_customer_pricing(
     today_start = _start_of_day_utc()
     month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
     today_stmt = select(func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0)).where(
-        RequestFinancial.client_id == str(client_id),
+        cast(RequestFinancial.client_id, PGUUID(as_uuid=True)) == client_id,
         RequestFinancial.created_at >= today_start,
     )
     month_stmt = select(func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0)).where(
-        RequestFinancial.client_id == str(client_id),
+        cast(RequestFinancial.client_id, PGUUID(as_uuid=True)) == client_id,
         RequestFinancial.created_at >= month_start_dt,
     )
     today_total = float((await session.execute(today_stmt)).scalar() or 0.0)
@@ -845,6 +857,9 @@ async def portal_usage(
     )
     request_totals = await _portal_usage_request_totals(session, client.id)
     customer_pricing = await _portal_usage_customer_pricing(session, client.id, invoice_preview)
+    daily_quota = _portal_token_limit(effective_plan.daily_token_quota)
+    weekly_quota = _portal_token_limit(effective_plan.weekly_token_quota)
+    monthly_quota = _portal_token_limit(effective_plan.monthly_token_quota)
     return {
         "client_id": str(client.id),
         "billing_status": client.billing_status,
@@ -854,9 +869,9 @@ async def portal_usage(
         "tokens_month": request_totals["tokens_month"],
         "customer_pricing": customer_pricing,
         "quota_remaining": {
-            "daily_tokens": max(effective_plan.daily_token_quota - daily_used, 0),
-            "weekly_tokens": max(effective_plan.weekly_token_quota - weekly_used, 0),
-            "monthly_tokens": max(effective_plan.monthly_token_quota - monthly_used, 0),
+            "daily_tokens": _portal_remaining_tokens(effective_plan.daily_token_quota, daily_used),
+            "weekly_tokens": _portal_remaining_tokens(effective_plan.weekly_token_quota, weekly_used),
+            "monthly_tokens": _portal_remaining_tokens(effective_plan.monthly_token_quota, monthly_used),
             "requests_per_day": max(effective_plan.requests_per_day - request_totals["requests_today"], 0)
             if effective_plan.requests_per_day
             else None,
@@ -867,18 +882,18 @@ async def portal_usage(
         },
         "daily_usage": {
             "used_tokens": daily_used,
-            "remaining_tokens": max(effective_plan.daily_token_quota - daily_used, 0),
-            "quota": effective_plan.daily_token_quota,
+            "remaining_tokens": _portal_remaining_tokens(effective_plan.daily_token_quota, daily_used),
+            "quota": daily_quota,
         },
         "weekly_usage": {
             "used_tokens": weekly_used,
-            "remaining_tokens": max(effective_plan.weekly_token_quota - weekly_used, 0),
-            "quota": effective_plan.weekly_token_quota,
+            "remaining_tokens": _portal_remaining_tokens(effective_plan.weekly_token_quota, weekly_used),
+            "quota": weekly_quota,
         },
         "monthly_usage": {
             "used_tokens": monthly_used,
-            "remaining_tokens": max(effective_plan.monthly_token_quota - monthly_used, 0),
-            "quota": effective_plan.monthly_token_quota,
+            "remaining_tokens": _portal_remaining_tokens(effective_plan.monthly_token_quota, monthly_used),
+            "quota": monthly_quota,
         },
         "tts_usage": tts_info,
         "invoice_preview": invoice_preview,
@@ -1133,7 +1148,7 @@ async def portal_wallet(
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
     monthly_quota = effective_plan.monthly_token_quota
     overage_price = float(effective_plan.overage_price_per_1k_tokens)
-    if monthly_used > monthly_quota:
+    if monthly_quota > 0 and monthly_used > monthly_quota:
         overage_tokens = monthly_used - monthly_quota
         estimated_consumption_brl = (overage_tokens / 1000.0) * overage_price
     else:
@@ -1145,7 +1160,7 @@ async def portal_wallet(
         **balance,
         "consumption_estimate_brl": round(estimated_consumption_brl, 4),
         "monthly_used_tokens": monthly_used,
-        "monthly_quota_tokens": monthly_quota,
+        "monthly_quota_tokens": _portal_token_limit(monthly_quota),
         "low_balance_threshold_brl": round(low_balance_threshold_brl, 2),
         "low_balance": low_balance,
         "low_balance_message": (

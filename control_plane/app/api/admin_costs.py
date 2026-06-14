@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.billing.cost_event import CostEvent
 from app.schemas.costs import CostByAgent, CostByTenant, CostByTool, CostEventRead, CostSummary
 from fastapi import APIRouter, Depends, Query, Response

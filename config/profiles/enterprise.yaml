@@ -24,6 +24,8 @@ settings:
   AGENT_STATEFUL_WORKFLOWS_ENABLED: true
   AGENT_RUNTIME_ENABLED: true
   AGENT_EXECUTION_ENABLED: true
+  SEMANTIC_CACHE_ENABLED: true
+  CHAOS_ENABLED: false
 features:
   sqlite: false
   postgresql: true

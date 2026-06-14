@@ -5,7 +5,7 @@ import subprocess
 import uuid
 from typing import List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.client import Client
 from app.models.commercial.sales_lead import SalesLead, SalesLeadNote
 from app.schemas.sales import (

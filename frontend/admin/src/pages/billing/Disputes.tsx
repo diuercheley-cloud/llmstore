@@ -1,11 +1,32 @@
-import { Gavel, TrendingUp, Filter, Search, MoreHorizontal, User, AlertCircle, CheckCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Gavel, TrendingUp, Filter, Search, MoreHorizontal, AlertCircle } from 'lucide-react'
+import api from '../../lib/api'
 
 export default function Disputes() {
-  const disputes = [
-    { id: 'disp-101', client: 'Acme Corp', amount: 'R$ 1.250,00', status: 'pending', date: '2026-05-30', reason: 'Diferença de tokens medidos no modelo Llama-3' },
-    { id: 'disp-102', client: 'Global Systems', amount: 'R$ 450,00', status: 'under_review', date: '2026-05-29', reason: 'Cobrança duplicada em 15/05' },
-    { id: 'disp-103', client: 'Start-UP Tech', amount: 'R$ 2.100,00', status: 'resolved', date: '2026-05-28', reason: 'Ajuste de camada de precificação' },
-  ]
+  const [query, setQuery] = useState('')
+  const { data: disputes = [] } = useQuery({
+    queryKey: ['billing-disputes'],
+    queryFn: () => api.listBillingDisputes(),
+  })
+  const filteredDisputes = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return disputes
+    return disputes.filter((dispute: any) => {
+      const client = String(dispute.client_name || dispute.client || '').toLowerCase()
+      const id = String(dispute.id || '').toLowerCase()
+      const reason = String(dispute.reason || '').toLowerCase()
+      return client.includes(normalized) || id.includes(normalized) || reason.includes(normalized)
+    })
+  }, [disputes, query])
+  const summary = filteredDisputes.reduce(
+    (acc: Record<string, number>, dispute: any) => {
+      const status = String(dispute.status || 'pending')
+      acc[status] = (acc[status] || 0) + 1
+      return acc
+    },
+    {},
+  )
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -27,15 +48,15 @@ export default function Disputes() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Aguardando</span>
-                <span className="font-bold text-amber-600">5</span>
+                <span className="font-bold text-amber-600">{summary.pending || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Em Revisão</span>
-                <span className="font-bold text-primary">2</span>
+                <span className="font-bold text-primary">{summary.under_review || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Resolvidas (30d)</span>
-                <span className="font-bold text-emerald-600">24</span>
+                <span className="font-bold text-emerald-600">{summary.resolved || 0}</span>
               </div>
             </div>
           </div>
@@ -55,10 +76,16 @@ export default function Disputes() {
           <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
              <div className="p-4 border-b border-border flex items-center gap-4">
                 <Search className="w-5 h-5 text-muted-foreground" />
-                <input type="text" placeholder="Buscar por cliente ou ID da disputa..." className="flex-1 bg-transparent border-none outline-none text-sm" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Buscar por cliente ou ID da disputa..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm"
+                />
              </div>
              <div className="divide-y divide-border">
-                {disputes.map(dispute => (
+                {filteredDisputes.map((dispute: any) => (
                   <div key={dispute.id} className="p-6 hover:bg-muted/30 transition-all flex items-start justify-between">
                      <div className="flex items-start gap-4">
                         <div className={`p-3 rounded-2xl ${
@@ -69,15 +96,15 @@ export default function Disputes() {
                         </div>
                         <div>
                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-lg font-black text-foreground">{dispute.client}</h3>
+                              <h3 className="text-lg font-black text-foreground">{dispute.client_name || dispute.client || 'Cliente'}</h3>
                               <span className="text-[10px] font-mono text-muted-foreground">{dispute.id}</span>
                            </div>
                            <p className="text-sm text-muted-foreground font-medium mb-3">{dispute.reason}</p>
                            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              <span>{dispute.date}</span>
+                              <span>{new Date(dispute.created_at || dispute.date || Date.now()).toLocaleDateString()}</span>
                               <span className="flex items-center gap-1.5">
                                  <TrendingUp className="w-3 h-3" />
-                                 {dispute.amount}
+                                 {typeof dispute.amount_brl === 'number' ? `R$ ${dispute.amount_brl.toFixed(2)}` : dispute.amount || 'R$ 0,00'}
                               </span>
                            </div>
                         </div>
@@ -95,6 +122,9 @@ export default function Disputes() {
                      </div>
                   </div>
                 ))}
+                {filteredDisputes.length === 0 && (
+                  <div className="p-8 text-sm text-muted-foreground">Nenhuma disputa encontrada.</div>
+                )}
              </div>
           </div>
         </div>

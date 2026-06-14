@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, Optional
 
 from app.api.dependencies import get_current_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.compliance_control_mapper import ComplianceControlMapperService
 from app.services.compliance_evidence_collector import ComplianceEvidenceCollectorService
 from app.services.compliance_gap_analysis import ComplianceGapAnalysisService

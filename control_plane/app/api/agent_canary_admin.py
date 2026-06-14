@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.agents.agent_canary import AgentCanaryAssignment, AgentCanaryComparison, AgentShadowRun
 from app.services.agents.canary.canary_promotion_gate import CanaryPromotionGate
 from fastapi import APIRouter, Depends, HTTPException

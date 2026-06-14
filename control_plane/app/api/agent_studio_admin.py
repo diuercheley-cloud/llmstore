@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.agents.agent_studio import (
     AgentFlowDebugEvent,
     AgentFlowDebugSession,
@@ -11,6 +11,7 @@ from app.models.agents.agent_studio import (
 )
 from app.services.agents.studio.flow_compiler import FlowCompiler
 from app.services.agents.studio.flow_validator import FlowValidator
+from app.services.agents.studio.dry_run_runner import AgentGraphDryRunRunner
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -163,36 +164,17 @@ async def dry_run_flow(id: uuid.UUID, input_data: Dict[str, Any] = None, db: Asy
     if not version:
         raise HTTPException(status_code=404, detail="Active flow version not found")
 
-    # Mocking dry-run trace based on graph nodes
+    # Preliminary permission check (baseline)
     nodes = version.graph_json.get("nodes", [])
-    trace = []
-    side_effects = []
-    
     for node in nodes:
-        node_id = str(node.get("id"))
-        ntype = node.get("node_type", "unknown")
-        
-        # Check permissions logic mock
-        if ntype == "memory_write" and "memory:write" not in version.permissions:
-             raise HTTPException(status_code=403, detail=f"Node {node_id} blocked: missing memory:write permission.")
+        if node.get("node_type") == "memory_write" and "memory:write" not in version.permissions:
+             raise HTTPException(status_code=403, detail=f"Node {node.get('id')} blocked: missing memory:write permission.")
 
-        trace.append({
-            "node_id": node_id,
-            "status": "simulated",
-            "type": ntype,
-            "input": {"mocked_input": "yes"},
-            "output": {"mocked_output": "yes"},
-            "policy_decision": "allowed"
-        })
-        if ntype == "tool_call" or ntype == "memory_write":
-             side_effects.append(node_id)
-             
-    return DryRunResponse(
-        status="completed",
-        trace=trace,
-        final_output={"dry_run": True, "result": "simulated success"},
-        side_effects_prevented=side_effects
-    )
+    # Real dry-run execution
+    runner = AgentGraphDryRunRunner(db)
+    result = await runner.run_dry_run(version.graph_json, global_input=input_data)
+    
+    return DryRunResponse(**result)
 
 @router.get("/flows/runs/{run_id}/trace")
 async def get_flow_trace(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):

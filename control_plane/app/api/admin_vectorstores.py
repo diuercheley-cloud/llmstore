@@ -1,5 +1,5 @@
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import AdminRole, require_admin_role
 from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
 from app.services.vectorstores.vectorstore_health import (

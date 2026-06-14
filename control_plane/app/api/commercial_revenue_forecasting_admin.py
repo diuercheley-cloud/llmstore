@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, UTC
 from typing import Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
 from app.models.commercial.commercial_revenue_forecast import CommercialRevenueForecast
 from app.services.auth import require_admin

@@ -148,20 +148,29 @@
     </div>
 
     <script>
+      function formatRequestsPerDay(value) {
+        return Number(value) > 0 ? Number(value).toLocaleString() : "Unlimited";
+      }
+
+      function formatMonthlyTokens(value) {
+        if (value == null || Number(value) <= 0) return "Unlimited tokens/mo";
+        return `${(Number(value) / 1000).toLocaleString()}k tokens/mo`;
+      }
+
       async function loadPricing() {
         const host = document.getElementById("pricing");
         try {
           const response = await fetch("/public/plans");
           const data = await response.json();
           host.innerHTML = data.plans.map((plan) => `
-            <article class="plan ${plan.code === 'basic' ? "highlight" : ""}">
-              ${plan.code === 'basic' ? '<div class="badge">Most popular</div>' : ""}
+            <article class="plan ${plan.code === 'unlimited' || plan.code === 'basic' ? "highlight" : ""}">
+              ${plan.code === 'unlimited' ? '<div class="badge">Unlimited</div>' : plan.code === 'basic' ? '<div class="badge">Most popular</div>' : ""}
               <h2 style="margin:14px 0 0;font-size:24px;font-weight:700;">${plan.name}</h2>
               <div class="price">$${Number(plan.monthly_price).toFixed(0)}<span style="font-size:14px;color:var(--muted);font-weight:500;">/mo</span></div>
               <p>${plan.description || "Scalable LLM inference for your projects."}</p>
               <ul>
-                <li>${plan.rate_limit_per_minute} RPM / ${plan.requests_per_day.toLocaleString()} RPD</li>
-                <li>${(plan.monthly_token_quota/1000).toLocaleString()}k tokens/mo</li>
+                <li>${plan.rate_limit_per_minute} RPM / ${formatRequestsPerDay(plan.requests_per_day)} RPD</li>
+                <li>${formatMonthlyTokens(plan.monthly_token_quota)}</li>
                 <li>Context: ${plan.max_context_tokens.toLocaleString()} tokens</li>
                 <li>${plan.rag_enabled ? "RAG Support" : '<span style="text-decoration:line-through;opacity:0.6;">RAG Support</span>'}</li>
                 <li>${plan.tts_enabled ? "TTS Support" : '<span style="text-decoration:line-through;opacity:0.6;">TTS Support</span>'}</li>

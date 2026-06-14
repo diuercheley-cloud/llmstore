@@ -51,12 +51,33 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-COPY control_plane/app /app/app
-COPY control_plane/app /app/control_plane/app
-COPY control_plane/alembic /app/alembic
-COPY control_plane/alembic.ini /app/alembic.ini
+# Layout: /app/control_plane matches repository structure.
+# PYTHONPATH includes /app to allow 'import control_plane.app'
+# and /app/control_plane to allow 'import app' for backward compatibility.
+COPY control_plane /app/control_plane
 COPY scripts /app/scripts
 COPY examples /app/examples
 COPY VERSION /app/VERSION
 
-CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+ENV PYTHONPATH="/app:/app/control_plane"
+
+# Gunicorn configuration for production
+ENV WEB_CONCURRENCY=1 \
+    GUNICORN_TIMEOUT=120 \
+    GUNICORN_KEEPALIVE=5
+
+# We run alembic from the control_plane directory so it finds alembic.ini and the alembic/ folder.
+CMD ["sh", "-c", "\
+    cd control_plane && \
+    (alembic upgrade head 2>/dev/null || alembic stamp head 2>/dev/null || true) && \
+    cd .. && \
+    if [ \"$APP_ENV\" = \"production\" ] || [ \"$APP_ENV\" = \"enterprise-production\" ]; then \
+        gunicorn -k uvicorn.workers.UvicornWorker \
+                 -w ${WEB_CONCURRENCY:-$(nproc)} \
+                 --timeout $GUNICORN_TIMEOUT \
+                 --keep-alive $GUNICORN_KEEPALIFE \
+                 --bind 0.0.0.0:8080 \
+                 app.main:app; \
+    else \
+        python -m uvicorn app.main:app --host 0.0.0.0 --port 8080; \
+    fi"]

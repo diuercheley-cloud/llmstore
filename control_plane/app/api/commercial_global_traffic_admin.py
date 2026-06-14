@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session as get_db
+from app.services.runtime_dependencies import get_db_session as get_db
 from app.models.commercial.commercial_global_traffic import (
     CommercialGlobalTrafficDecision,
     CommercialGlobalTrafficPolicy,

@@ -5,10 +5,7 @@ frontend:test:
     paths:
       - frontend/admin/node_modules/
   script:
-    - cd frontend/admin
-    - npm ci
-    - npm run build
-    - npm run build-storybook
+    - bash scripts/ci/frontend-ci.sh
   artifacts:
     paths:
       - frontend/admin/dist/

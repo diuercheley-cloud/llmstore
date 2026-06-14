@@ -2,7 +2,7 @@ from typing import Optional
 
 from app.api import deps
 from app.core.config import get_settings
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.core.client import Client
 from app.services.mobile.device_registry import DeviceRegistryService
 from app.services.mobile.push_notifications import PushNotificationService

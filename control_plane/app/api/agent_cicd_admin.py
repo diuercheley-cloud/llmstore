@@ -68,7 +68,7 @@ def _serialize_rollback(rollback: AgentRollback) -> dict[str, Any]:
     }
 
 
-@router.post("/pipelines")
+@router.post("/pipelines", operation_id="agent_cicd_create_pipeline")
 async def create_pipeline(
     payload: PipelineCreateRequest,
     db: AsyncSession = Depends(get_db_session),
@@ -81,7 +81,7 @@ async def create_pipeline(
     return _serialize_pipeline(pipeline)
 
 
-@router.post("/pipelines/{pipeline_id}/run", response_model=PipelineRunResponse)
+@router.post("/pipelines/{pipeline_id}/run", response_model=PipelineRunResponse, operation_id="agent_cicd_run_pipeline")
 async def run_pipeline(
     pipeline_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -100,7 +100,7 @@ async def run_pipeline(
     return PipelineRunResponse(pipeline_id=str(pipeline.id), status=pipeline.status)
 
 
-@router.get("/pipelines/{pipeline_id}")
+@router.get("/pipelines/{pipeline_id}", operation_id="agent_cicd_get_pipeline")
 async def get_pipeline(
     pipeline_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -122,7 +122,7 @@ async def get_pipeline(
     }
 
 
-@router.post("/deployments/{deployment_id}/rollback")
+@router.post("/deployments/{deployment_id}/rollback", operation_id="agent_cicd_rollback_deployment")
 async def rollback_deployment(
     deployment_id: uuid.UUID,
     payload: RollbackRequest,

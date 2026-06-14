@@ -125,8 +125,8 @@ async def create_promotion_workflow(
     await db.refresh(workflow)
     
     return PromotionResultResponse(
-        workflow=WorkflowResponse.from_orm(workflow),
-        gate_results=[GateResultResponse.from_orm(gr) for gr in gate_results],
+        workflow=WorkflowResponse.model_validate(workflow),
+        gate_results=[GateResultResponse.model_validate(gr) for gr in gate_results],
         receipt_id=str(receipt.id)
     )
 
@@ -188,7 +188,7 @@ async def promote_adapter(
     db.add(receipt)
     
     await db.commit()
-    return {"transition": TransitionResponse.from_orm(transition), "workflow": WorkflowResponse.from_orm(wf), "receipt_id": str(receipt.id)}
+    return {"transition": TransitionResponse.model_validate(transition), "workflow": WorkflowResponse.model_validate(wf), "receipt_id": str(receipt.id)}
 
 @router.post("/workflows/{workflow_id}/rollback")
 async def rollback_promotion(
@@ -218,7 +218,7 @@ async def rollback_promotion(
     db.add(receipt)
     
     await db.commit()
-    return {"rollback": RollbackResponse.from_orm(rollback), "workflow": WorkflowResponse.from_orm(wf), "receipt_id": str(receipt.id)}
+    return {"rollback": RollbackResponse.model_validate(rollback), "workflow": WorkflowResponse.model_validate(wf), "receipt_id": str(receipt.id)}
 
 @router.get("/workflows/{workflow_id}/gates", response_model=List[GateResultResponse])
 async def list_gate_results(

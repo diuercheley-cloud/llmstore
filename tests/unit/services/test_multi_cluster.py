@@ -11,6 +11,10 @@ async def test_cluster_creation_and_status(db_session):
     assert cluster.status == "active"
     
     updated = await service.set_cluster_status(cluster.id, "maintenance", reason="Updating BIOS")
+    
+    # Reload with failover events
+    updated = await service.get_cluster(cluster.id)
+    
     assert updated.status == "maintenance"
     assert len(updated.failover_events) == 1
 

@@ -26,7 +26,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.agent_deployments.agent_api_deployment import (
     AgentApiDeploymentService,
     DeploymentNotFoundError,
@@ -354,7 +354,7 @@ async def _authenticate_deployment(request: Request, slug: str):
 
     svc = AgentApiDeploymentService(request.state._db if hasattr(request.state, '_db') else None)
     # We need the db session - use the request's state or create one
-    from app.db.session import SessionLocal
+    from app.services.runtime_dependencies import SessionLocal
     async with SessionLocal() as db:
         svc = AgentApiDeploymentService(db)
         result = await svc.validate_endpoint_key(raw_key, slug)

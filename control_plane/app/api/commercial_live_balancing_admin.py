@@ -1,7 +1,7 @@
 # Owner: commercial-ops
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
 from app.services.routing.commercial_live_balancer import CommercialLiveBalancer
 from fastapi import APIRouter, Depends

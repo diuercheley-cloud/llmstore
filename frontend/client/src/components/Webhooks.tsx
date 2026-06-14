@@ -1,65 +1,121 @@
-import { useState } from 'react';
-import { Plus, Trash2, Webhook as WebhookIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Loader2, Webhook as WebhookIcon } from 'lucide-react';
+import { api } from '../lib/api';
+import { toast } from 'sonner';
 
 export const Webhooks = () => {
-  const [webhooks] = useState([
-    { id: '1', url: 'https://api.mycompany.com/webhooks/billing', events: ['invoice.created', 'invoice.paid'], active: true },
-    { id: '2', url: 'https://api.mycompany.com/webhooks/usage', events: ['limit.reached'], active: true }
-  ]);
+  const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [url, setUrl] = useState('');
+  const [loadingAgents, setLoadingAgents] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [registration, setRegistration] = useState<{ webhook_id: string; secret: string } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadAgents = async () => {
+      try {
+        const items = await api.listAgents();
+        if (!mounted) return;
+        setAgents(items.map(agent => ({ id: agent.id, name: agent.name })));
+        setSelectedAgentId(items[0]?.id || '');
+      } catch (error) {
+        toast.error('Falha ao carregar agentes para registrar webhook.');
+      } finally {
+        if (mounted) {
+          setLoadingAgents(false);
+        }
+      }
+    };
+
+    loadAgents();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleRegister = async () => {
+    if (!selectedAgentId || !url.trim()) {
+      toast.error('Selecione um agente e informe a URL do endpoint.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await api.registerAgentCallback(selectedAgentId, url.trim());
+      setRegistration({ webhook_id: result.webhook_id, secret: result.secret });
+      setUrl('');
+      toast.success('Webhook registrado com sucesso.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao registrar webhook.';
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Webhooks</h1>
-        <button className="btn btn-primary w-full sm:w-auto">
-          <Plus size={18} /> Add Endpoint
+        <button className="btn btn-primary w-full sm:w-auto" onClick={handleRegister} disabled={submitting || loadingAgents}>
+          {submitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Add Endpoint
         </button>
       </div>
 
-      <div className="card !p-0 overflow-hidden">
-        <div className="resp-table-container">
-          <table className="resp-table">
-            <thead>
-              <tr>
-                <th>ENDPOINT URL</th>
-                <th>EVENTS</th>
-                <th>STATUS</th>
-                <th className="text-right">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {webhooks.map(wh => (
-                <tr key={wh.id}>
-                  <td data-label="URL" className="font-medium text-slate-900 truncate max-w-[300px]">
-                    <div className="flex items-center gap-2">
-                      <WebhookIcon size={14} className="text-slate-400" />
-                      {wh.url}
-                    </div>
-                  </td>
-                  <td data-label="EVENTS">
-                    <div className="flex flex-wrap gap-1">
-                      {wh.events.map(ev => (
-                        <span key={ev} className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">
-                          {ev}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td data-label="STATUS">
-                    <span className={`badge ${wh.active ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {wh.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td data-label="ACTIONS" className="md:text-right">
-                    <button className="btn btn-danger !p-2">
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="card space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="webhook-agent">
+            Agent
+          </label>
+          <select
+            id="webhook-agent"
+            value={selectedAgentId}
+            onChange={(event) => setSelectedAgentId(event.target.value)}
+            className="input-field"
+            disabled={loadingAgents || submitting}
+          >
+            <option value="">{loadingAgents ? 'Loading agents...' : 'Select an agent'}</option>
+            {agents.map(agent => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
         </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="webhook-url">
+            Callback URL
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              id="webhook-url"
+              type="url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://example.com/agent-callback"
+              className="input-field"
+              disabled={submitting}
+            />
+            <button className="btn btn-primary sm:w-auto" onClick={handleRegister} disabled={submitting || loadingAgents}>
+              {submitting ? <Loader2 size={18} className="animate-spin" /> : <WebhookIcon size={18} />}
+              Register
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          Este portal registra callbacks reais via API. A listagem e revogação de webhooks ainda não estão expostas no frontend.
+        </div>
+
+        {registration && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <div className="font-semibold">Webhook registrado</div>
+            <div className="mt-2 font-mono text-xs break-all">ID: {registration.webhook_id}</div>
+            <div className="mt-1 font-mono text-xs break-all">Secret: {registration.secret}</div>
+          </div>
+        )}
       </div>
     </div>
   );

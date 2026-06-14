@@ -1,51 +1,86 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Upload, FileText, Trash2, Eye, Database, Loader2 } from 'lucide-react';
 import { Progress } from './ui-feedback';
 import { toast } from 'sonner';
+import { api } from '../lib/api';
 
 export const RagDocs = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [docs, setDocs] = useState([
-    { id: '1', name: 'company_policy.pdf', size: '2.4 MB', chunks: 15, status: 'Processed' },
-    { id: '2', name: 'api_docs.md', size: '45 KB', chunks: 3, status: 'Processed' }
-  ]);
+  const [docs, setDocs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleUpload = () => {
+  const loadDocs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.listRagDocuments();
+      setDocs(response.data);
+    } catch (err) {
+      console.error('Failed to load RAG docs', err);
+      // Fallback or explicit unavailable state
+      toast.error("Serviço de RAG indisponível ou erro na conexão.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDocs();
+  }, [loadDocs]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10);
     
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          setDocs(prevDocs => [
-            { id: Date.now().toString(), name: 'new_document.pdf', size: '1.2 MB', chunks: 0, status: 'Processing' },
-            ...prevDocs
-          ]);
-          toast.success("Upload concluído!", {
-            description: "O documento está sendo processado para indexação RAG."
-          });
-          return 100;
-        }
-        return prev + 10;
+    try {
+      await api.uploadRagDocument(file);
+      setUploadProgress(100);
+      toast.success("Upload concluído!", {
+        description: "O documento está sendo processado para indexação RAG."
       });
-    }, 300);
+      loadDocs();
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Upload failed';
+      toast.error(errMsg);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteRagDocument(id);
+      toast.success("Documento removido.");
+      loadDocs();
+    } catch (err) {
+      toast.error("Falha ao remover documento.");
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">RAG Documents</h1>
-        <button 
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="btn btn-primary w-full sm:w-auto py-2.5 flex items-center justify-center gap-2"
-        >
-          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload size={18} />}
-          {isUploading ? 'Uploading...' : 'Upload New Document'}
-        </button>
+        <div className="relative">
+          <input
+            type="file"
+            id="rag-upload"
+            className="hidden"
+            onChange={handleFileUpload}
+            disabled={isUploading}
+          />
+          <label 
+            htmlFor="rag-upload"
+            className={`btn btn-primary w-full sm:w-auto py-2.5 flex items-center justify-center gap-2 cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload size={18} />}
+            {isUploading ? 'Uploading...' : 'Upload New Document'}
+          </label>
+        </div>
       </div>
 
       {isUploading && (
@@ -53,7 +88,7 @@ export const RagDocs = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <FileText className="text-primary w-5 h-5" />
-              <span className="font-bold">new_document.pdf</span>
+              <span className="font-bold">Processando...</span>
             </div>
             <span className="text-sm font-mono font-bold text-primary">{uploadProgress}%</span>
           </div>
@@ -62,44 +97,65 @@ export const RagDocs = () => {
       )}
 
       <div className="card !p-0 overflow-hidden">
-        <div className="resp-table-container">
-          <table className="resp-table">
-            <thead>
-              <tr>
-                <th>DOCUMENT NAME</th>
-                <th>SIZE</th>
-                <th>CHUNKS</th>
-                <th>STATUS</th>
-                <th className="text-right">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs.map(doc => (
-                <tr key={doc.id}>
-                  <td data-label="DOCUMENT" className="font-medium text-slate-900">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-slate-100 p-2 rounded-lg">
-                        <FileText size={18} className="text-slate-500"/>
-                      </div>
-                      <span className="truncate max-w-[200px]">{doc.name}</span>
-                    </div>
-                  </td>
-                  <td data-label="SIZE" className="text-slate-500">{doc.size}</td>
-                  <td data-label="CHUNKS" className="text-slate-500 font-mono text-xs">{doc.chunks}</td>
-                  <td data-label="STATUS">
-                    <span className="badge bg-emerald-100 text-emerald-700">{doc.status}</span>
-                  </td>
-                  <td data-label="ACTIONS" className="md:text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="btn btn-outline !p-2" title="View Chunks"><Eye size={16} /></button>
-                      <button className="btn btn-danger !p-2" title="Delete"><Trash2 size={16} /></button>
-                    </div>
-                  </td>
+        {loading && !docs.length ? (
+          <div className="p-12 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-slate-500">Carregando documentos...</p>
+          </div>
+        ) : (
+          <div className="resp-table-container">
+            <table className="resp-table">
+              <thead>
+                <tr>
+                  <th>DOCUMENT NAME</th>
+                  <th>SIZE</th>
+                  <th>CHUNKS</th>
+                  <th>STATUS</th>
+                  <th className="text-right">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {docs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-12 text-slate-400 italic">
+                      Nenhum documento encontrado. Faça upload para começar.
+                    </td>
+                  </tr>
+                ) : docs.map(doc => (
+                  <tr key={doc.id}>
+                    <td data-label="DOCUMENT" className="font-medium text-slate-900">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-slate-100 p-2 rounded-lg">
+                          <FileText size={18} className="text-slate-500"/>
+                        </div>
+                        <span className="truncate max-w-[200px]">{doc.original_filename}</span>
+                      </div>
+                    </td>
+                    <td data-label="SIZE" className="text-slate-500">{(doc.file_size_bytes / 1024).toFixed(1)} KB</td>
+                    <td data-label="CHUNKS" className="text-slate-500 font-mono text-xs">{doc.chunks || 0}</td>
+                    <td data-label="STATUS">
+                      <span className={`badge ${doc.status === 'Processed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {doc.status || 'Unknown'}
+                      </span>
+                    </td>
+                    <td data-label="ACTIONS" className="md:text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="btn btn-outline !p-2" title="View Chunks"><Eye size={16} /></button>
+                        <button 
+                          onClick={() => handleDelete(doc.id)}
+                          className="btn btn-danger !p-2" 
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       
       <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-4">

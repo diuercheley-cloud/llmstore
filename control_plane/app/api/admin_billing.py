@@ -4,9 +4,10 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from app.core.config import get_settings
+from app.api.admin_usage import get_usage_summary
 from app.api.deps import get_inference_proxy
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.billing import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
@@ -49,8 +50,8 @@ from app.domains.billing.repositories import SqlAlchemyBillingRepository
 
 @router.get("/billing/plans", response_model=list[BillingPlanRead])
 async def list_billing_plans(session: AsyncSession = Depends(get_db_session)):
-    repo = SqlAlchemyBillingRepository(session)
-    return await repo.list_plans()
+    result = await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))
+    return result.scalars().all()
 
 
 @router.post("/billing/plans", response_model=BillingPlanRead, status_code=201)

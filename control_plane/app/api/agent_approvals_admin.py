@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import require_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.admin_rbac import authenticate_admin_request, is_rbac_admin_enabled
 from app.services.agents.human_approval import (
     approve_approval_request,

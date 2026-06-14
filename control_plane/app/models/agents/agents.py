@@ -1464,3 +1464,30 @@ class AgentPlanCostEstimate(Base):
 
     plan = relationship("AgentPlan", back_populates="cost_estimates")
 
+
+class AgentMemoryQuarantine(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_memory_quarantines"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    target_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True) # memory_id or agent_id
+    target_type: Mapped[str] = mapped_column(String(64), nullable=False) # memory | agent
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    quarantined_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class AgentQueueThrottle(Base):
+    # Owner: agent-platform
+    __tablename__ = "agent_queue_throttles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    target_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True) # queue_id or agent_id
+    target_type: Mapped[str] = mapped_column(String(64), nullable=False) # queue | agent
+    rate_limit: Mapped[int] = mapped_column(Integer, nullable=False) # limit
+    throttled_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+

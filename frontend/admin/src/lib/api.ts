@@ -38,8 +38,41 @@ class APIClient {
     )
   }
 
-  private async request<T = any>(method: string, path: string, data?: unknown): Promise<T> {
-    const res = await this.client.request<T>({ method, url: path, data })
+  private async request<T = any>(
+    method: string,
+    path: string,
+    data?: any,
+    params?: any,
+    headers?: Record<string, string>,
+    extraConfig?: any,
+  ): Promise<T> {
+    const config: any = {
+      method,
+      url: path,
+      data,
+      headers,
+      ...extraConfig,
+    }
+
+    if (params) {
+      if (params instanceof URLSearchParams) {
+        config.params = params
+      } else {
+        const searchParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+              value.forEach((v) => searchParams.append(key, String(v)))
+            } else {
+              searchParams.append(key, String(value))
+            }
+          }
+        })
+        config.params = searchParams
+      }
+    }
+
+    const res = await this.client.request<T>(config)
     return res.data
   }
 
@@ -99,6 +132,19 @@ class APIClient {
   listBackends = () => this.request<any[]>('GET', '/admin/backends')
   createBackend = (b: any) => this.request<any>('POST', '/admin/backends', b)
   testConnection = (b: any) => this.request<any>('POST', '/admin/backends/test-connection', b)
+  updateBackend = (id: string, b: any) => this.request<any>('PATCH', `/admin/backends/${id}`, b)
+  listBackendModels = (b: any) => this.request<any>('POST', '/admin/backends/list-models', b)
+  getBackendsHealth = () => this.request<any>('GET', '/admin/backends/health')
+  getBackendHealth = (id: string) => this.request<any>('GET', `/admin/backends/${id}/health`)
+  getBackendLogs = (id: string) => this.request<any>('GET', `/admin/backends/${id}/logs`)
+  startBackend = (id: string) => this.request<any>('POST', `/admin/backends/${id}/start`)
+  stopBackend = (id: string) => this.request<any>('POST', `/admin/backends/${id}/stop`)
+  restartBackend = (id: string) => this.request<any>('POST', `/admin/backends/${id}/restart`)
+  reconcileBackend = (id: string) => this.request<any>('POST', `/admin/backends/${id}/lifecycle/reconcile`)
+  reconcileAllBackends = () => this.request<any>('POST', '/admin/backends/lifecycle/reconcile-all')
+  getBackendLifecycleObserved = (id: string) => this.request<any>('GET', `/admin/backends/${id}/lifecycle/observed`)
+  getBackendDriftHistory = () => this.request<any>('GET', '/admin/backends/lifecycle/drift-history')
+  resetBackendCircuitBreaker = () => this.request<any>('POST', '/admin/backends/circuit-breaker/reset')
 
   // Admin - Clients
   listClients = () => this.request<any[]>('GET', '/admin/clients')
@@ -116,12 +162,21 @@ class APIClient {
   // Admin - Usage & Billing
   getUsageSummary = () => this.request<any>('GET', '/admin/usage/summary')
   getRevenueSummary = () => this.request<any>('GET', '/admin/revenue/summary')
-  getCostsSummary = (params?: any) => this.request<any>('GET', '/api/admin/costs/summary', { params })
-  getCostsByAgent = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-agent', { params })
-  getCostsByTool = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-tool', { params })
-  getCostsByTenant = () => this.request<any[]>('GET', '/api/admin/costs/by-tenant')
-  exportCosts = (params: any) => this.request<any>('GET', '/api/admin/costs/export', { params, responseType: 'blob' })
+  getCostsSummary = (params?: any) => this.request<any>('GET', '/api/admin/costs/summary', undefined, params)
+  getCostsByAgent = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-agent', undefined, params)
+  getCostsByTool = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-tool', undefined, params)
+  getCostsByTenant = (params?: any) => this.request<any[]>('GET', '/api/admin/costs/by-tenant', undefined, params)
+  exportCosts = (params: any) => this.request<any>('GET', '/api/admin/costs/export', undefined, params, undefined, { responseType: 'blob' })
   listInvoices = () => this.request<any[]>('GET', '/admin/billing/invoices')
+  previewInvoices = () => this.request<any>('GET', '/admin/billing/invoices/preview')
+  previewClientInvoice = (clientId: string) => this.request<any>('GET', `/admin/billing/clients/${clientId}/invoice/preview`)
+  generateInvoices = (payload: any) => this.request<any>('POST', '/admin/billing/invoices/generate', payload)
+  runBillingCycle = () => this.request<any>('POST', '/admin/billing/run-cycle')
+  listBillingPlansAdmin = () => this.request<any[]>('GET', '/admin/billing/plans')
+  createBillingPlan = (payload: any) => this.request<any>('POST', '/admin/billing/plans', payload)
+  updateBillingPlan = (id: string, payload: any) => this.request<any>('PATCH', `/admin/billing/plans/${id}`, payload)
+  setBillingPlanModels = (id: string, allowedModels: string[]) => this.request<any>('PATCH', `/admin/billing/plans/${id}/models`, { allowed_models: allowedModels })
+  listPricingRules = () => this.request<any[]>('GET', '/admin/billing/pricing-rules')
   
   // Admin - Performance V2
   getPerformanceCapabilities = () => this.request<string[]>('GET', '/api/admin/performance/capabilities')
@@ -173,13 +228,44 @@ class APIClient {
   getAgent = (id: string) => this.request<any>('GET', `/v1/agents/${id}`)
   createAgent = (a: any) => this.request<any>('POST', '/v1/agents', a)
   getAgentRuns = (id: string) => this.request<any[]>('GET', `/v1/agents/${id}/runs`)
+  listAdminAgentRuns = (tenantId?: string) => this.request<any[]>('GET', '/agents/runs', undefined, tenantId ? { tenant_id: tenantId } : undefined)
+  getAdminAgentRun = (runId: string) => this.request<any>('GET', `/agents/runs/${runId}`)
+  getAdminAgentRunSteps = (runId: string) => this.request<any[]>('GET', `/agents/runs/${runId}/steps`)
+  cancelAdminAgentRun = (runId: string) => this.request<any>('POST', `/agents/runs/${runId}/cancel`)
+  pauseAdminAgentRun = (runId: string) => this.request<any>('POST', `/agents/runs/${runId}/pause`)
+  resumeAdminAgentRun = (runId: string) => this.request<any>('POST', `/agents/runs/${runId}/resume`)
 
   // Agent Analytics
   getAgentAnalytics = (id: string) => this.request<any>('GET', `/api/v1/admin/agents/analytics/${id}`)
+  listAdminAgents = (tenantId?: string) => this.request<any[]>('GET', '/admin/agents', undefined, tenantId ? { tenant_id: tenantId } : undefined)
+  createAdminAgent = (payload: any) => this.request<any>('POST', '/admin/agents', payload)
+  updateAdminAgent = (id: string, payload: any) => this.request<any>('PATCH', `/admin/agents/${id}`, payload)
+  activateAdminAgent = (id: string) => this.request<any>('POST', `/admin/agents/${id}/activate`)
+  deprecateAdminAgent = (id: string) => this.request<any>('POST', `/admin/agents/${id}/deprecate`)
+  getAdminAgentBudgets = () => this.request<any>('GET', '/admin/agents/budgets')
+  validateAdminAgentBudget = (agentId: string, runId: string) => this.request<any>('POST', '/admin/agents/budgets/validate', undefined, { agent_id: agentId, run_id: runId })
+  getAdminAgentSloClasses = () => this.request<any>('GET', '/admin/agents/slo/classes')
+  getAdminAgentSloReport = (agentId?: string) => this.request<any>('GET', '/admin/agents/slo/report', undefined, agentId ? { agent_id: agentId } : undefined)
+  listAdminAgentIncidentPlaybooks = () => this.request<any>('GET', '/admin/agents/incidents/playbooks')
+  runAdminAgentIncidentPlaybook = (id: string, payload: any) => this.request<any>('POST', `/admin/agents/incidents/${id}/run-playbook`, payload)
 
   // Studio
   listStudioFlows = () => this.request<any[]>('GET', '/admin/agents/studio/flows')
   createStudioFlow = (f: any) => this.request<any>('POST', '/admin/agents/studio/flows', f)
+  getStudioFlow = (id: string) => this.request<any>('GET', `/admin/agents/studio/flows/${id}`)
+  validateStudioFlow = (id: string) => this.request<any>('POST', `/admin/agents/studio/flows/${id}/validate`)
+  compileStudioFlow = (id: string) => this.request<any>('POST', `/admin/agents/studio/flows/${id}/compile`)
+  explainStudioFlow = (id: string) => this.request<any>('POST', `/admin/agents/studio/flows/${id}/explain`)
+  dryRunStudioFlow = (id: string, input?: any) => this.request<any>('POST', `/admin/agents/studio/flows/${id}/dry-run`, input || {})
+  listStudioTemplates = () => this.request<any>('GET', '/admin/agents/studio/templates')
+  getStudioTemplate = (id: string) => this.request<any>('GET', `/admin/agents/studio/templates/${id}`)
+  saveStudioFlowVersion = (flowId: string, payload: any) => this.request<any>('POST', `/admin/agents/studio/flows/${flowId}/versions`, payload)
+  getStudioVersionDag = (flowId: string, versionId: string) => this.request<any>('GET', `/admin/agents/studio/flows/${flowId}/versions/${versionId}/dag`)
+  validateStudioVersion = (versionId: string) => this.request<any>('POST', `/admin/agents/studio/versions/${versionId}/validate`)
+  compileStudioVersion = (versionId: string) => this.request<any>('POST', `/admin/agents/studio/versions/${versionId}/compile`)
+  deployStudioVersionReal = (versionId: string, inputData: any) => this.request<any>('POST', `/admin/agents/studio/versions/${versionId}/deploy-real`, inputData)
+  deployStudioFlow = (flowId: string, inputData?: any) => this.request<any>('POST', `/admin/agents/studio/flows/${flowId}/deploy`, inputData || {})
+  getStudioRunTrace = (runId: string) => this.request<any>('GET', `/admin/agents/studio/flows/runs/${runId}/trace`)
 
   // MCP
   listMcpServers = () => this.request<any[]>('GET', '/admin/agents/mcp/servers')
@@ -188,10 +274,62 @@ class APIClient {
   approveMcpTool = (id: string, tool: string) => this.request<any>('POST', `/admin/agents/mcp/servers/${id}/approve-tool`, { tool_name: tool })
   listMcpTools = () => this.request<any[]>('GET', '/admin/agents/mcp/tools')
   listMcpAudit = () => this.request<any[]>('GET', '/admin/agents/mcp/audit')
+  listProtocolMcpServers = (tenantId?: string) => this.request<any[]>('GET', '/admin/agents/protocols/mcp/servers', undefined, tenantId ? { tenant_id: tenantId } : undefined)
+  approveProtocolMcpTool = (serverId: string, toolName: string) => this.request<any>('POST', `/admin/agents/protocols/mcp/servers/${serverId}/approve-tool`, undefined, { tool_name: toolName })
+  listA2aPeers = (tenantId?: string) => this.request<any[]>('GET', '/admin/agents/protocols/a2a/peers', undefined, tenantId ? { tenant_id: tenantId } : undefined)
+  dryRunA2aHandshake = (peerUrl: string) => this.request<any>('POST', '/admin/agents/protocols/a2a/handshake/dry-run', undefined, { peer_url: peerUrl })
+  explainProtocolTrust = (protocol: string, entityId: string, action: string = 'access') => this.request<any>('GET', '/admin/agents/protocols/trust/explain', undefined, { protocol, entity_id: entityId, action })
 
   // Agent Approvals
   listPendingApprovals = () => this.request<{items: any[]}>('GET', '/admin/agents/approval-portal/pending')
+  getApprovalRequest = (id: string) => this.request<any>('GET', `/admin/agents/approval-portal/approvals/${id}`)
   decideApproval = (id: string, decision: string, reason?: string) => this.request<any>('POST', `/admin/agents/approval-portal/approvals/${id}/decide`, { decision, reason })
+  listAgentApprovalsAdmin = (params?: any) => this.request<any[]>('GET', '/admin/agent-approvals', undefined, params)
+  getAgentApprovalAdmin = (id: string) => this.request<any>('GET', `/admin/agent-approvals/${id}`)
+  approveAgentApprovalAdmin = (id: string, decisionReason?: string) => this.request<any>('POST', `/admin/agent-approvals/${id}/approve`, { decision_reason: decisionReason })
+  rejectAgentApprovalAdmin = (id: string, decisionReason?: string) => this.request<any>('POST', `/admin/agent-approvals/${id}/reject`, { decision_reason: decisionReason })
+  requestChangesAgentApprovalAdmin = (id: string, decisionReason?: string) => this.request<any>('POST', `/admin/agent-approvals/${id}/request-changes`, { decision_reason: decisionReason })
+
+  // Agent Memory
+  listAgentMemoryItems = (tenantId: string, agentId?: string) => this.request<any[]>('GET', '/admin/agents/memory/items', undefined, { tenant_id: tenantId, ...(agentId ? { agent_id: agentId } : {}) })
+  listAgentMemoryAccessEvents = (tenantId: string, agentId?: string, limit: number = 100) => this.request<any[]>('GET', '/admin/agents/memory/access-events', undefined, { tenant_id: tenantId, limit, ...(agentId ? { agent_id: agentId } : {}) })
+  listAgentMemoryPolicies = (tenantId: string) => this.request<any[]>('GET', '/admin/agents/memory/policies', undefined, { tenant_id: tenantId })
+  createAgentMemoryPolicy = (payload: any) => this.request<any>('POST', '/admin/agents/memory/policies', payload)
+  listAgentMemoryConsents = (tenantId: string) => this.request<any[]>('GET', '/admin/agents/memory/consents', undefined, { tenant_id: tenantId })
+  createAgentMemoryConsent = (payload: any) => this.request<any>('POST', '/admin/agents/memory/consents', payload)
+  searchAgentMemory = (payload: any) => this.request<any[]>('POST', '/admin/agents/memory/search', payload)
+  explainAgentMemory = (memoryId: string) => this.request<any>('GET', `/admin/agents/memory/explain/${memoryId}`)
+  summarizeAgentMemory = (payload: any) => this.request<any>('POST', '/admin/agents/memory/summarize', payload)
+  exportAgentMemory = (payload: any) => this.request<any[]>('POST', '/admin/agents/memory/export', payload)
+  createAgentMemoryDeleteRequest = (payload: any) => this.request<any>('POST', '/admin/agents/memory/delete-request', payload)
+  runAgentMemoryRetention = () => this.request<any>('POST', '/admin/agents/memory/retention/run')
+  deleteAgentMemoryItem = (itemId: string, tenantId: string) => this.request<any>('DELETE', `/admin/agents/memory/items/${itemId}`, undefined, { tenant_id: tenantId })
+
+  // Agent Tools
+  listAgentToolsAdmin = (params?: any) => this.request<any[]>('GET', '/admin/agent-tools', undefined, params)
+  createAgentToolAdmin = (payload: any) => this.request<any>('POST', '/admin/agent-tools', payload)
+  updateAgentToolAdmin = (id: string, payload: any) => this.request<any>('PATCH', `/admin/agent-tools/${id}`, payload)
+  enableAgentToolAdmin = (id: string) => this.request<any>('POST', `/admin/agent-tools/${id}/enable`)
+  disableAgentToolAdmin = (id: string) => this.request<any>('POST', `/admin/agent-tools/${id}/disable`)
+  listAgentToolInvocations = (id: string) => this.request<any[]>('GET', `/admin/agent-tools/${id}/invocations`)
+  dryRunAgentTool = (id: string, parameters: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agent-tools/${id}/dry-run`, { parameters }, { tenant_id: tenantId })
+  executeAgentToolAdmin = (id: string, parameters: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agent-tools/${id}/execute`, { parameters }, { tenant_id: tenantId })
+  rollbackAgentToolInvocation = (id: string, tenantId: string = 'default') => this.request<any>('POST', `/admin/agent-tools/invocations/${id}/rollback`, undefined, { tenant_id: tenantId })
+  listAgentToolSideEffects = (tenantId: string = 'default') => this.request<any[]>('GET', '/admin/agent-tools/side-effects', undefined, { tenant_id: tenantId })
+  listAgentToolCredentials = (tenantId: string = 'default') => this.request<any[]>('GET', '/admin/agent-tools/credentials', undefined, { tenant_id: tenantId })
+  createAgentToolCredential = (payload: any) => this.request<any>('POST', '/admin/agent-tools/credentials', payload)
+  revokeAgentToolCredential = (id: string, tenantId: string = 'default') => this.request<any>('POST', `/admin/agent-tools/credentials/${id}/revoke`, undefined, { tenant_id: tenantId })
+  listAgentToolQuotas = (tenantId: string = 'default') => this.request<any[]>('GET', '/admin/agent-tools/quotas', undefined, { tenant_id: tenantId })
+
+  // Agent Observability
+  getAgentObservabilityOverview = () => this.request<any>('GET', '/admin/agents/observability/overview')
+  getAgentObservabilityMetricsSummary = (agentId?: string) => this.request<any>('GET', '/admin/agents/observability/metrics/summary', undefined, agentId ? { agent_id: agentId } : undefined)
+  getAgentRunTimeline = (runId: string) => this.request<any[]>('GET', `/admin/agents/observability/runs/${runId}/timeline`)
+  getAgentRunTrace = (runId: string) => this.request<any>('GET', `/admin/agents/observability/runs/${runId}/trace`)
+  getAgentRunTraceCompat = (runId: string) => this.request<any>('GET', `/admin/agents/observability/traces/${runId}`)
+  exportAgentTrace = (payload: any) => this.request<any>('POST', '/admin/agents/observability/traces/export', payload)
+  getAgentTelemetryStatus = () => this.request<any>('GET', '/admin/agents/observability/telemetry/status')
+  replayAgentRun = (runId: string) => this.request<any>('POST', `/admin/agents/observability/runs/${runId}/replay`)
 
   // Agent Deployments
   listDeployments = () => this.request<any[]>('GET', '/admin/agents/deployments')
@@ -211,10 +349,174 @@ class APIClient {
 
   // Agent Evaluation Framework
   listAgentBenchmarks = () => this.request<any[]>('GET', '/admin/evaluation/agent-evaluation/benchmarks')
-  runAgentBenchmark = (payload: { agent_id: string; model_name: string; benchmark: string }) => this.request<any>('POST', '/admin/evaluation/agent-evaluation/runs', payload)
+  runAgentBenchmark = (payload: { agent_id: string; model_name: string; benchmark: string }) => 
+    this.request<any>('POST', '/admin/evaluation/agent-evaluation/runs', undefined, payload)
   listAgentBenchmarkReports = () => this.request<any[]>('GET', '/admin/evaluation/agent-evaluation/runs')
   exportAgentBenchmarkReport = (runId: string, benchmark: string, format: 'json' | 'csv' | 'md' = 'json') =>
-    this.request<any>('GET', `/admin/evaluation/agent-evaluation/runs/${runId}/export?benchmark=${encodeURIComponent(benchmark)}&format=${format}`)
+    this.request<any>('GET', `/admin/evaluation/agent-evaluation/runs/${runId}/export`, undefined, { benchmark, format })
+  createAgentEvalDataset = (payload: any) => this.request<any>('POST', '/admin/agent-evals/datasets', payload)
+  createAgentEvalDatasetVersion = (id: string, payload: any) => this.request<any>('POST', `/admin/agent-evals/datasets/${id}/versions`, payload)
+  runAgentEvalAdmin = (payload: any) => this.request<any>('POST', '/admin/agent-evals/run', payload)
+  getAgentEvalReportAdmin = (agentId: string) => this.request<any>('GET', `/admin/agent-evals/reports/${agentId}`)
+  checkAgentPromotionGateAdmin = (agentId: string, payload: any) => this.request<any>('POST', `/admin/agent-evals/promotion-check/${agentId}`, payload)
+
+  // MLOps
+  listDatasets = () => this.request<any[]>('GET', '/admin/mlops/datasets')
+  createDataset = (d: any) => this.request<any>('POST', '/admin/mlops/datasets', d)
+  approveDataset = (id: string) => this.request<any>('POST', `/admin/mlops/datasets/${id}/approve`)
+  createDatasetVersion = (id: string, v: any) => this.request<any>('POST', `/admin/mlops/datasets/${id}/versions`, v)
+  listExperiments = () => this.request<any[]>('GET', '/admin/mlops/experiments')
+  getFineTuningJob = (id: string) => this.request<any>('GET', `/admin/mlops/fine-tuning/jobs/${id}`)
+  createFineTuningJob = (j: any) => this.request<any>('POST', '/admin/mlops/fine-tuning/jobs', j)
+  getModelLineage = (modelId: string) => this.request<any>('GET', `/admin/mlops/model-lineage/${modelId}`)
+  
+  // Inference Backends (vLLM)
+  getVllmHealth = () => this.request<any>('GET', '/admin/inference/backends/vllm/health')
+  listVllmModels = () => this.request<any[]>('GET', '/admin/inference/backends/vllm/models')
+  testVllm = (req: { prompt: string, model?: string, stream?: boolean }) => this.request<any>('POST', '/admin/inference/backends/vllm/test', req)
+
+  // Vector Stores
+  listVectorStores = () => this.request<any>('GET', '/admin/vectorstores/health')
+  getVectorStoreProvider = () => this.request<any>('GET', '/admin/vectorstores/provider')
+  testVectorStoreConnection = (provider: string) => this.request<any>('POST', `/admin/vectorstores/test?provider=${provider}`)
+
+  // Worker DLQ
+  listDlqMessages = () => this.request<any[]>('GET', '/admin/agents/worker/dlq')
+  retryDlqItem = (id: string) => this.request<any>('POST', `/admin/agents/worker/dlq/${id}/retry`)
+  deleteDlqItem = (id: string) => this.request<any>('DELETE', `/admin/agents/worker/dlq/${id}`)
+  getWorkerStatus = () => this.request<any>('GET', '/admin/agents/worker/status')
+
+  // Code Interpreter
+  runCode = (payload: { code: string, agent_id?: string, tenant_id?: string }) => this.request<any>('POST', '/admin/agents/code-interpreter/run', payload)
+  getCodeRun = (id: string) => this.request<any>('GET', `/admin/agents/code-interpreter/runs/${id}`)
+  getCodeArtifact = (id: string) => this.request<any>('GET', `/admin/agents/code-interpreter/artifacts/${id}`)
+  cancelCodeRun = (id: string) => this.request<any>('POST', `/admin/agents/code-interpreter/runs/${id}/cancel`)
+
+  // Agent Workspaces / Artifacts
+  listAgentWorkspaces = (tenantId: string = 'default') => this.request<any[]>('GET', '/admin/agents/workspaces', undefined, { tenant_id: tenantId })
+  createAgentWorkspace = (payload: any) => this.request<any>('POST', '/admin/agents/workspaces', payload)
+  listWorkspaceArtifacts = (workspaceId: string, tenantId: string = 'default') => this.request<any[]>('GET', `/admin/agents/workspaces/${workspaceId}/artifacts`, undefined, { tenant_id: tenantId })
+  createWorkspaceArtifact = (workspaceId: string, payload: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agents/workspaces/${workspaceId}/artifacts`, payload, { tenant_id: tenantId })
+  getAgentArtifact = (id: string, tenantId: string = 'default') => this.request<any>('GET', `/admin/agents/artifacts/${id}`, undefined, { tenant_id: tenantId })
+  listAgentArtifactVersions = (id: string, tenantId: string = 'default') => this.request<any[]>('GET', `/admin/agents/artifacts/${id}/versions`, undefined, { tenant_id: tenantId })
+  getAgentArtifactDiff = (id: string, fromVersion: number, toVersion: number, tenantId: string = 'default') => this.request<any>('GET', `/admin/agents/artifacts/${id}/diff`, undefined, { from_version: fromVersion, to_version: toVersion, tenant_id: tenantId })
+  lockAgentArtifact = (id: string, payload: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agents/artifacts/${id}/lock`, payload, { tenant_id: tenantId })
+  unlockAgentArtifact = (id: string, holderId: string, tenantId: string = 'default') => this.request<any>('POST', `/admin/agents/artifacts/${id}/unlock`, undefined, { holder_id: holderId, tenant_id: tenantId })
+  reviewAgentArtifact = (id: string, payload: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agents/artifacts/${id}/review`, payload, { tenant_id: tenantId })
+  commentAgentArtifact = (id: string, payload: any, tenantId: string = 'default') => this.request<any>('POST', `/admin/agents/artifacts/${id}/comments`, payload, { tenant_id: tenantId })
+  exportAgentArtifact = (id: string, tenantId: string = 'default') => this.request<any>('GET', `/admin/agents/artifacts/${id}/export`, undefined, { tenant_id: tenantId })
+  listAgentArtifactEvents = (id: string, tenantId: string = 'default') => this.request<any[]>('GET', `/admin/agents/artifacts/${id}/events`, undefined, { tenant_id: tenantId })
+
+  // Agent Routing
+  listAgentRoutingCapabilities = () => this.request<any[]>('GET', '/admin/agents/routing/capabilities')
+  createAgentRoutingPolicy = (payload: any) => this.request<any>('POST', '/admin/agents/routing/policies', payload)
+  simulateAgentRouting = (payload: any) => this.request<any>('POST', '/admin/agents/routing/simulate', payload)
+  listAgentRoutingDecisions = (runId?: string) => this.request<any[]>('GET', '/admin/agents/routing/decisions', undefined, runId ? { run_id: runId } : undefined)
+
+  // Agent Readiness
+  getAgentReadiness = () => this.request<any>('GET', '/admin/agents/readiness')
+  runAgentReadiness = () => this.request<any>('POST', '/admin/agents/readiness/run')
+
+  // Agent Teams
+  listAgentTeams = () => this.request<any[]>('GET', '/admin/agents/teams')
+  createAgentTeam = (payload: any) => this.request<any>('POST', '/admin/agents/teams', payload)
+  runAgentTeam = (id: string, payload: any) => this.request<any>('POST', `/admin/agents/teams/${id}/runs`, payload)
+  getAgentTeamTrace = (runId: string) => this.request<any[]>('GET', `/admin/agents/teams/runs/${runId}/trace`)
+
+  // Agent Workflows
+  createAgentWorkflow = (payload: any) => this.request<any>('POST', '/admin/agents/workflows', payload)
+  runAgentWorkflow = (id: string, payload: any) => this.request<any>('POST', `/admin/agents/workflows/${id}/run`, payload)
+  getAgentWorkflowRun = (id: string, runId: string) => this.request<any>('GET', `/admin/agents/workflows/${id}/run/${runId}`)
+  signalAgentWorkflow = (id: string, runId: string, payload: any) => this.request<any>('POST', `/admin/agents/workflows/${id}/run/${runId}/signal`, payload)
+  cancelAgentWorkflow = (id: string, runId: string) => this.request<any>('POST', `/admin/agents/workflows/${id}/run/${runId}/cancel`)
+  createAgentWorkflowWebhookWait = (id: string, runId: string) => this.request<any>('POST', `/admin/agents/workflows/${id}/run/${runId}/webhook-wait`)
+  createAgentWorkflowPollingJob = (id: string, runId: string, payload: any) => this.request<any>('POST', `/admin/agents/workflows/${id}/run/${runId}/polling-job`, payload)
+  listAgentWorkflowExternalEvents = (id: string, runId: string) => this.request<any[]>('GET', `/admin/agents/workflows/${id}/run/${runId}/external-events`)
+
+  // Sovereign/Airgap Governance
+  listAirgapPackages = () => this.request<any[]>('GET', '/admin/governance/airgap/packages')
+  createAirgapPackage = (p: any) => this.request<any>('POST', '/admin/governance/airgap/packages', p)
+  exportAirgapPackage = (id: string, payload: any) => this.request<any>('POST', `/admin/governance/airgap/packages/${id}/export`, payload)
+  importAirgapPackage = (bundle: any) => this.request<any>('POST', '/admin/governance/airgap/packages/import', { package_bundle: bundle })
+  verifyAirgapPackage = (id: string) => this.request<any>('POST', `/admin/governance/airgap/packages/${id}/verify`)
+  rejectAirgapPackage = (id: string, reason: string) => this.request<any>('POST', `/admin/governance/airgap/packages/${id}/reject`, { reason })
+  
+  // Operational Attestation (Runtime)
+  listAttestations = () => this.request<any[]>('GET', '/admin/attestation/runtime')
+  getAttestationDetail = (id: string) => this.request<any>('GET', `/admin/attestation/runtime/${id}`)
+  verifyAttestation = (id: string) => this.request<any>('POST', `/admin/attestation/runtime/${id}/verify`)
+  getAttestationSummary = () => this.request<any>('GET', '/admin/attestation/runtime/summary')
+  listAttestationEvidence = () => this.request<any[]>('GET', '/admin/attestation/evidence')
+  listAttestationChallenges = () => this.request<any[]>('GET', '/admin/attestation/challenges')
+  issueAttestationChallenge = (payload: any) => this.request<any>('POST', '/admin/attestation/challenges', payload)
+  respondAttestationChallenge = (id: string, payload: any) => this.request<any>('POST', `/admin/attestation/challenges/${id}/respond`, payload)
+  listAttestationDrift = () => this.request<any[]>('GET', '/admin/attestation/drift')
+  detectAttestationDrift = (id: string, payload: any) => this.request<any>('POST', `/admin/attestation/runtime/${id}/drift`, payload)
+  revokeAttestation = (id: string, payload: any) => this.request<any>('POST', `/admin/attestation/runtime/${id}/revoke`, payload)
+  computeAttestationTrustScore = (id: string) => this.request<any>('POST', `/admin/attestation/runtime/${id}/trust-score`)
+
+  // AIOps
+  getAIOpsStatus = () => this.request<any>('GET', '/admin/aiops/status')
+  getAIOpsForecasts = (limit: number = 50) => this.request<any[]>('GET', '/admin/aiops/forecasts', undefined, { limit })
+  getAIOpsAnomalies = (limit: number = 50) => this.request<any[]>('GET', '/admin/aiops/anomalies', undefined, { limit })
+  getAIOpsRecommendations = (limit: number = 50) => this.request<any[]>('GET', '/admin/aiops/recommendations', undefined, { limit })
+  getAIOpsRiskTrends = (limit: number = 50) => this.request<any[]>('GET', '/admin/aiops/risk-trends', undefined, { limit })
+  runAIOpsCycle = () => this.request<any>('POST', '/admin/aiops/run-cycle')
+
+  // Commercial Workflows
+  getWorkflowGovernanceStatus = () => this.request<any>('GET', '/admin/workflows/status')
+  listWorkflowDefinitions = () => this.request<any>('GET', '/admin/workflows/definitions')
+  createWorkflowDefinition = (payload: any) => this.request<any>('POST', '/admin/workflows/definitions', payload)
+  listWorkflowExecutions = (tenantId?: string) => this.request<any>('GET', '/admin/workflows/executions', undefined, tenantId ? { tenant_id: tenantId } : undefined)
+  createWorkflowExecution = (payload: any) => this.request<any>('POST', '/admin/workflows/executions', payload)
+  getWorkflowExecution = (id: string) => this.request<any>('GET', `/admin/workflows/executions/${id}`)
+  pauseWorkflowExecution = (id: string) => this.request<any>('POST', `/admin/workflows/executions/${id}/pause`)
+  resumeWorkflowExecution = (id: string, resumeToken?: string) => this.request<any>('POST', `/admin/workflows/executions/${id}/resume`, undefined, resumeToken ? { resume_token: resumeToken } : undefined)
+  rollbackWorkflowExecution = (id: string, checkpointId: string) => this.request<any>('POST', `/admin/workflows/executions/${id}/rollback`, { checkpoint_id: checkpointId })
+  getWorkflowGovernanceExecution = (id: string) => this.request<any>('GET', `/admin/workflows/governance/executions/${id}`)
+  getWorkflowGovernanceLedger = (id: string) => this.request<any>('GET', `/admin/workflows/governance/executions/${id}/ledger`)
+  getWorkflowGovernanceSnapshots = (id: string) => this.request<any>('GET', `/admin/workflows/governance/executions/${id}/snapshots`)
+  listWorkflowCheckpoints = (id: string) => this.request<any>('GET', `/admin/workflows/executions/${id}/checkpoints`)
+  listWorkflowApprovals = (executionId?: string) => this.request<any>('GET', '/admin/workflows/approvals', undefined, executionId ? { execution_id: executionId } : undefined)
+  requestWorkflowApproval = (executionId: string, stageKey: string, payload: any) => this.request<any>('POST', `/admin/workflows/approvals/executions/${executionId}/stages/${stageKey}/request`, payload)
+  decideWorkflowApproval = (chainId: string, payload: any) => this.request<any>('POST', `/admin/workflows/approvals/${chainId}/decide`, payload)
+  listWorkflowReplaySessions = (executionId?: string) => this.request<any>('GET', '/admin/workflows/replay-sessions', undefined, executionId ? { execution_id: executionId } : undefined)
+  createWorkflowReplaySession = (payload: any) => this.request<any>('POST', '/admin/workflows/replay-sessions', payload)
+  completeWorkflowReplaySession = (id: string) => this.request<any>('POST', `/admin/workflows/replay-sessions/${id}/complete`)
+  listWorkflowReplays = () => this.request<any>('GET', '/admin/workflows/replays')
+  createWorkflowReplay = (executionId: string) => this.request<any>('POST', `/admin/workflows/replay/${executionId}`)
+  attachWorkflowReplayExecution = (replayId: string, replayExecutionId: string) => this.request<any>('POST', `/admin/workflows/replay/${replayId}/attach/${replayExecutionId}`)
+  verifyWorkflowReplay = (replayId: string) => this.request<any>('POST', `/admin/workflows/replay/${replayId}/verify`)
+  listWorkflowReports = () => this.request<any>('GET', '/admin/workflows/reports')
+
+  // Model Supply Chain
+  getSupplyChainRegistry = () => this.request<any>('GET', '/supply-chain/registry')
+  registerSupplyChainModel = (payload: any) => this.request<any>('POST', '/supply-chain/register', payload)
+  verifySupplyChainEntry = (id: string) => this.request<any>('POST', `/supply-chain/${id}/verify`)
+  approveSupplyChainEntry = (id: string, payload: any) => this.request<any>('POST', `/supply-chain/${id}/approve`, payload)
+  quarantineSupplyChainEntry = (id: string, payload: any) => this.request<any>('POST', `/supply-chain/${id}/quarantine`, payload)
+  revokeSupplyChainEntry = (id: string, payload: any) => this.request<any>('POST', `/supply-chain/${id}/revoke`, payload)
+  getSupplyChainProvenance = () => this.request<any>('GET', '/supply-chain/provenance')
+  createSupplyChainProvenance = (payload: any) => this.request<any>('POST', '/supply-chain/provenance', payload)
+  getSupplyChainBundles = () => this.request<any>('GET', '/supply-chain/bundles')
+  createSupplyChainBundle = (payload: any) => this.request<any>('POST', '/supply-chain/bundles', payload)
+  verifySupplyChainBundle = (id: string) => this.request<any>('POST', `/supply-chain/bundles/${id}/verify`)
+  promoteSupplyChainBundle = (id: string) => this.request<any>('POST', `/supply-chain/bundles/${id}/promote`)
+  rejectSupplyChainBundle = (id: string, payload: any) => this.request<any>('POST', `/supply-chain/bundles/${id}/reject`, payload)
+  getSupplyChainStatus = () => this.request<any>('GET', '/supply-chain/status')
+  getIntegrityScans = (limit: number = 100) => this.request<any>('GET', '/integrity/scans', undefined, { limit })
+  runIntegrityScan = (payload: any) => this.request<any>('POST', '/integrity/scan', payload)
+  getIntegrityEvents = (limit: number = 100) => this.request<any>('GET', '/integrity/events', undefined, { limit })
+  getIntegrityAttestations = (limit: number = 100) => this.request<any>('GET', '/integrity/attestations', undefined, { limit })
+  quarantineIntegrityEntry = (id: string) => this.request<any>('POST', `/integrity/quarantine/${id}`)
+  reverifyIntegrityEntry = (id: string) => this.request<any>('POST', `/integrity/reverify/${id}`)
+  getIntegrityStatus = () => this.request<any>('GET', '/integrity/status')
+
+  // Security / Offline CRL / Hardware Attestation
+  listOfflineCrl = () => this.request<any[]>('GET', '/admin/security/offline-crl')
+  applyOfflineCrl = (id: string) => this.request<any>('POST', `/admin/security/offline-crl/${id}/apply`)
+  listHardwareAttestations = () => this.request<any>('GET', '/admin/security/hardware-attestation')
+  verifyHardwareAttestation = (recordId: string) => this.request<any>('POST', '/admin/security/hardware-attestation/verify', { record_id: recordId })
 
   listFederationPeers = () => this.request<any[]>('GET', '/admin/governance/federation/peers')
   registerFederationPeer = (p: any) => this.request<any>('POST', '/admin/governance/federation/peers', p)

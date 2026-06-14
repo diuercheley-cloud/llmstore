@@ -5,13 +5,14 @@ import uuid
 from typing import Optional
 
 from app.core.config import get_settings
-from app.db.session import SessionLocal, get_db_session
+from app.services.runtime_dependencies import SessionLocal, get_db_session
 from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.voice.stt_stream_service import STTStreamService
 from app.services.voice.tts_stream_service import TTSStreamService
 from app.services.voice.turn_detection import TurnDetectionService
 from app.services.voice.voice_agent_bridge import VoiceAgentBridge
+from app.services.voice.voice_turn_service import VoiceTurnService
 from app.services.voice.voice_session_service import VoiceSessionService
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -250,6 +251,7 @@ async def voice_websocket_stream(
         tts = TTSStreamService(provider=voice_session.tts_provider)
         vad = TurnDetectionService()
         bridge = VoiceAgentBridge(db)
+        turn_svc = VoiceTurnService(db)
 
         turn_number = 0
         current_turn = None
@@ -297,19 +299,28 @@ async def voice_websocket_stream(
                             # User finished speaking - get agent response
                             await websocket.send_json({"type": "agent_thinking"})
 
-                            # For now, generate a mock agent response
-                            # Real implementation would call agent_runtime
-                            agent_text = f"Entendi: '{current_turn.user_text}'. Processando sua solicitacao."
+                            # Real implementation calling agent_runtime via VoiceTurnService
+                            from app.core.request_context import get_correlation_id
+                            correlation_id = get_correlation_id() or str(uuid.uuid4())
 
-                            current_turn = await bridge.complete_agent_turn(
-                                current_turn, agent_text
+                            turn_result = await turn_svc.process_turn(
+                                voice_session=voice_session,
+                                turn_number=turn_number,
+                                transcript_text=current_turn.user_text,
+                                correlation_id=correlation_id
                             )
-                            await db.commit()
+                            
+                            agent_text = turn_result["text"]
+                            agent_run_id = turn_result["agent_run_id"]
 
                             await websocket.send_json({
                                 "type": "agent_response",
                                 "text": agent_text,
                                 "turn_number": turn_number,
+                                "agent_run_id": agent_run_id,
+                                "correlation_id": correlation_id,
+                                "trace_id": correlation_id,
+                                "fallback": turn_result["fallback"]
                             })
 
                             # TTS streaming

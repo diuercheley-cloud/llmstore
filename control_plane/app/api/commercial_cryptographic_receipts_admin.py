@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,

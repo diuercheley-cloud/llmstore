@@ -18,6 +18,7 @@ venv/
 .mypy_cache/
 .ruff_cache/
 .coverage
+coverage/
 htmlcov/
 coverage.xml
 
@@ -45,6 +46,8 @@ exports/
 logs/
 downloads/
 *.log
+*.bak
+.env.local.bak*
 *.wav
 *.docx
 control_plane/*.backup

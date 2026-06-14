@@ -178,6 +178,14 @@ is_allowed_fixture() {
     local path="$1"
     local file="$2"
 
+    if [[ "$path" == tests/* ]]; then
+        return 0
+    fi
+
+    if [[ "$path" == "Dockerfile.quickstart" ]]; then
+        return 0
+    fi
+
     if [[ "$path" == *"tests/control_plane/"* ]]; then
         if grep -qE "FAKE (TEST KEY|SECRET)" "$file" 2>/dev/null; then
             return 0
@@ -185,7 +193,11 @@ is_allowed_fixture() {
         return 1
     fi
 
-    if [[ "$path" == *"releases/"* ]] || [[ "$path" == *"docs/"* ]] || [[ "$path" == *"control_plane/"* ]]; then
+    if [[ "$path" == *"releases/"* ]] || [[ "$path" == *"docs/"* ]] || [[ "$path" == *"control_plane/app/static/"* ]]; then
+        return 0
+    fi
+
+    if [[ "$path" == *"control_plane/"* ]]; then
         return 1
     fi
     if [[ "$path" != *"tests/fixtures/"* ]] && [[ "$path" != *"scripts/validate-"* ]] && [[ "$path" != *"tests/test_"* ]]; then
@@ -205,6 +217,10 @@ classify_path() {
     local file="$2"
 
     if is_allowed_fixture "$path" "$file"; then
+        __RET_CLASSIFICATION='fixture_expected'
+    elif [[ "$path" == *"control_plane/app/static/"* ]] || [[ "$path" == *"docs/"* ]]; then
+        __RET_CLASSIFICATION='generated_artifact'
+    elif [[ "$path" == "Dockerfile.quickstart" ]]; then
         __RET_CLASSIFICATION='fixture_expected'
     elif [[ "$path" == *"releases/"* ]]; then
         __RET_CLASSIFICATION='obsolete_release_file'

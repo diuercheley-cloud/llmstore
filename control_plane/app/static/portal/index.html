@@ -56,6 +56,8 @@
       <h3>Plugin Supply-Chain Provenance &amp; SBOM Placeholder Framework</h3>
       <div id="portalPluginSupplyChainProvenanceRecordCount">0</div>
       <p>placeholder SBOM only</p>
+      <p>no real artifact signing</p>
+      <p>offline-first provenance only</p>
     </div>
     <div id="phase81-reproducible-builds-marker" style="display:none;">
       <h3>Reproducible Build &amp; Artifact Verification Framework</h3>
@@ -93,6 +95,12 @@
         <a class="nav-item" data-page-link="wallet" href="wallet.html">Wallet</a>
         <a class="nav-item" data-page-link="rag" href="rag.html">RAG</a>
         <a class="nav-item" data-page-link="playground" href="playground.html">Playground</a>
+        <a class="nav-item" data-page-link="models" href="models.html">Modelos</a>
+        <a class="nav-item" data-page-link="plans" href="plans.html">Planos</a>
+        <a class="nav-item" data-page-link="trust" href="trust.html">Trust</a>
+        <a class="nav-item" data-page-link="audit" href="audit.html">Audit</a>
+        <a class="nav-item" data-page-link="disputes" href="disputes.html">Disputas</a>
+        <a class="nav-item" data-page-link="examples" href="examples.html">Examples</a>
       </nav>
       <div class="sidebar-footer">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
@@ -122,7 +130,7 @@
           </div>
 
           <h2>Bem-vindo, <span id="welcomeName">-</span></h2>
-          <p class="page-lead">Use este hub para navegar pelas páginas especializadas do portal. Recursos avançados ainda não extraídos permanecem acessíveis no portal legado.</p>
+          <p class="page-lead">Use este hub para navegar pelas páginas especializadas do portal. O backend de billing, trust, audit e model access agora está exposto diretamente neste portal.</p>
 
           <div id="overviewQuickStats" class="summary-grid"></div>
 
@@ -133,6 +141,12 @@
             <a class="hub-link" href="wallet.html"><strong>Wallet</strong><span>Saldo, reserva, transações e recarga manual.</span></a>
             <a class="hub-link" href="rag.html"><strong>RAG</strong><span>Documentos, limites e consultas à base.</span></a>
             <a class="hub-link" href="playground.html"><strong>Playground</strong><span>Teste prompts com os modelos habilitados.</span></a>
+            <a class="hub-link" href="models.html"><strong>Modelos</strong><span>Veja trust-state, contexto e attestation dos modelos liberados.</span></a>
+            <a class="hub-link" href="plans.html"><strong>Planos</strong><span>Compare planos e execute upgrade sem sair do portal.</span></a>
+            <a class="hub-link" href="trust.html"><strong>Trust & Receipts</strong><span>Receipts, proofs, reproducibility, correlations e replay.</span></a>
+            <a class="hub-link" href="audit.html"><strong>Audit & Federation</strong><span>Approval chains, evidence, attestations, exceptions e reports.</span></a>
+            <a class="hub-link" href="disputes.html"><strong>Disputas</strong><span>Abra e acompanhe disputas de invoice, wallet e QoS billing.</span></a>
+            <a class="hub-link" href="examples.html"><strong>Examples</strong><span>Snippets prontos com a base URL e autenticação do tenant.</span></a>
           </div>
 
           <div class="card-grid">
@@ -154,8 +168,8 @@
 
           <section>
             <h3>Portal legado preservado</h3>
-            <p class="muted">As áreas ainda não separadas nesta etapa continuam em <code>index.legacy.html</code>, sem alteração de endpoints ou autenticação.</p>
-            <p class="muted">Exemplos de integração e áreas não extraídas continuam acessíveis no legado. Endpoint OpenAI-compatible preservado: <code>/v1/chat/completions</code>.</p>
+            <p class="muted">O legado continua disponível para troubleshooting e superfícies históricas, mas billing, trust, audit, plans e examples já estão expostos nesta navegação principal.</p>
+            <p class="muted">Endpoint OpenAI-compatible preservado: <code>/v1/chat/completions</code>.</p>
             <a href="index.legacy.html"><button class="secondary">Abrir portal legado</button></a>
           </section>
 

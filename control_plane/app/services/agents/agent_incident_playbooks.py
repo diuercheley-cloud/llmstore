@@ -59,7 +59,8 @@ class AgentIncidentPlaybookService:
         incident_id: uuid.UUID,
         playbook_id: str,
         performed_by: str,
-        confirmation: bool = False
+        confirmation: bool = False,
+        dry_run: bool = False,
     ) -> Dict[str, Any]:
         incident = await self.db.get(AgentIncident, incident_id)
         if not incident:
@@ -84,56 +85,77 @@ class AgentIncidentPlaybookService:
             "after": {}
         }
 
+        from app.services.agents.incident_action_executor import IncidentActionExecutor
+        executor = IncidentActionExecutor(self.db)
+
         # Playbook logic
         if playbook_id == "runaway-agent":
             if incident.run_id:
-                await agent_state.update_run(self.db, incident.run_id, status="failed", failure_reason="Terminated by runaway-agent playbook")
-                report["actions"].append(f"Killed run {incident.run_id}")
+                if not dry_run:
+                    await agent_state.update_run(self.db, incident.run_id, status="failed", failure_reason="Terminated by runaway-agent playbook")
+                    report["actions"].append(f"Killed run {incident.run_id}")
+                else:
+                    report["actions"].append(f"Killed run {incident.run_id} (dry run)")
             else:
                 report["actions"].append("No run_id associated with incident")
 
         elif playbook_id == "tool-cascade-failure":
             tool_name = incident.details_json.get("tool_name")
             if tool_name:
-                # In a real system, we'd update a global tool state
-                report["actions"].append(f"Disabled tool {tool_name} (simulated)")
+                action_report = await executor.disable_tool(tool_id=tool_name, performed_by=performed_by, dry_run=dry_run)
+                report["actions"].append(action_report)
             else:
                 report["actions"].append("No tool_name found in incident details")
 
         elif playbook_id == "memory-poisoning":
-            # Logic to move items to tombstone
-            report["actions"].append(f"Quarantined memory for agent {incident.agent_id} (simulated)")
+            action_report = await executor.quarantine_memory(
+                target_id=str(incident.agent_id),
+                reason=f"Quarantined by memory-poisoning playbook due to incident {incident_id}",
+                performed_by=performed_by,
+                dry_run=dry_run
+            )
+            report["actions"].append(action_report)
 
         elif playbook_id == "stuck-approvals":
-            # Logic to expire approvals
-            report["actions"].append("Expired stale approvals (simulated)")
+            action_report = await executor.expire_approvals(
+                agent_id_or_scope=str(incident.agent_id),
+                performed_by=performed_by,
+                dry_run=dry_run
+            )
+            report["actions"].append(action_report)
 
         elif playbook_id == "queue-saturation":
-            # Logic to throttle
-            report["actions"].append("Applied queue throttle limit (simulated)")
+            limit = incident.details_json.get("limit", 5) if incident.details_json else 5
+            action_report = await executor.throttle_queue(
+                target_id=str(incident.agent_id),
+                limit=limit,
+                performed_by=performed_by,
+                dry_run=dry_run
+            )
+            report["actions"].append(action_report)
 
         # Audit Event
         await record_admin_audit_event(
             self.db,
             event_type=f"agent.playbook.{playbook_id}",
-            status="success",
+            status="success" if not dry_run else "dry_run",
             actor_identifier=performed_by,
             target_type="agent_incident",
             target_id=str(incident_id),
             metadata={"report": report}
         )
 
-        # Update Incident
-        incident.status = "resolved"
-        incident.resolved_by = performed_by
-        incident.resolution_notes = f"Playbook {playbook_id} executed by {performed_by}."
-        incident.updated_at = utc_now()
-        
-        await self.db.commit()
+        if not dry_run:
+            # Update Incident
+            incident.status = "resolved"
+            incident.resolved_by = performed_by
+            incident.resolution_notes = f"Playbook {playbook_id} executed by {performed_by}."
+            incident.updated_at = utc_now()
+            await self.db.commit()
 
         report["after"] = {
             "incident_status": incident.status,
-            "resolved_at": incident.updated_at.isoformat()
+            "resolved_at": incident.updated_at.isoformat() if incident.updated_at else None
         }
 
         return report

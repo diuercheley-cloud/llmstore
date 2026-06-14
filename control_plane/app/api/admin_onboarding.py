@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 
 from app.api.deps import require_admin
-from app.db.session import get_redis
+from app.services.runtime_dependencies import get_redis
 from app.schemas.admin import OnboardingStatusRead, OnboardingStatusUpdate
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis

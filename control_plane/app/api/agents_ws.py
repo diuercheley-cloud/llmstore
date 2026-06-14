@@ -3,7 +3,7 @@ import logging
 import uuid
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.agents.agents import AgentRun
 from app.services.agents import agent_runtime
 from app.services.agents.agent_cancellation import AgentCancellationService

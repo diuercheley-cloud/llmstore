@@ -1,0 +1,10 @@
+{
+  "name": "Redis Connection Failure",
+  "experiment_type": "redis_failure",
+  "blast_radius": "medium",
+  "injection_config": {"error_type": "ConnectionError", "ratio": 1.0},
+  "timeout_seconds": 60,
+  "assertions": [
+    {"name": "no_500_errors", "type": "status_code", "condition": "not 500"}
+  ]
+}

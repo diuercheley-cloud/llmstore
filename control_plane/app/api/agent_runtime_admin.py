@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.agents import agent_state
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -216,6 +216,7 @@ class PlaybookRunPayload(BaseModel):
     playbook_id: str
     confirmation: bool = False
     performed_by: str
+    dry_run: bool = False
 
 @router.post("/incidents/{id}/run-playbook", dependencies=[Depends(verify_runtime_active)])
 async def run_playbook(
@@ -230,7 +231,8 @@ async def run_playbook(
             id, 
             payload.playbook_id, 
             payload.performed_by, 
-            payload.confirmation
+            payload.confirmation,
+            payload.dry_run
         )
         return report
     except ValueError as e:

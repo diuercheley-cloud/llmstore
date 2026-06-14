@@ -5,51 +5,32 @@ ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_PY = ROOT / "control_plane" / "app" / "api" / "public.py"
 
 
-def test_json_response_structure():
+def test_uses_dynamic_registry_instead_of_hardcoded_features():
     content = PUBLIC_PY.read_text()
-    assert '"version":' in content or "'version':" in content
-    assert '"local_appliance_mode":' in content or "'local_appliance_mode':" in content
-    assert '"features":' in content or "'features':" in content
-    assert '"limitations":' in content or "'limitations':" in content
-    assert '"note":' in content or "'note':" in content
+    assert "from app.services.feature_registry import" in content or "get_public_capabilities" in content
 
 
-def test_version_field():
+def test_uses_pydantic_response_model():
     content = PUBLIC_PY.read_text()
-    assert "project_version" in content
+    assert "response_model=CapabilitiesResponse" in content
 
 
-def test_features_is_list():
+def test_each_feature_has_required_fields_via_schema():
     content = PUBLIC_PY.read_text()
-    assert '"features"' in content or "'features'" in content
+    assert "capability_level" in content
+    assert "limitations" in content
+    assert "docs_url" in content
 
 
-def test_each_feature_has_name_status_stage():
+def test_no_hardcoded_feature_list_in_endpoint():
     content = PUBLIC_PY.read_text()
-    assert '"name":' in content or "'name':" in content
-    assert '"status":' in content or "'status':" in content
-    assert '"stage":' in content or "'stage':" in content
-
-
-def test_tools_partial_noted():
-    content = PUBLIC_PY.read_text()
-    assert "Tools" in content or "tools" in content
-    assert "unsupported" in content or "partial" in content
-
-
-def test_limitations_include_psp():
-    content = PUBLIC_PY.read_text()
-    assert "PSP" in content or "psp" in content
-
-
-def test_limitations_include_pix():
-    content = PUBLIC_PY.read_text()
-    assert "PIX" in content or "pix" in content
-
-
-def test_limitations_include_https():
-    content = PUBLIC_PY.read_text()
-    assert "HTTPS" in content or "https" in content
+    endpoint_start = content.index('async def public_capabilities():')
+    endpoint_body = content[endpoint_start:]
+    has_hardcoded = '"name":' in endpoint_body or "'name':" in endpoint_body
+    assert not has_hardcoded, (
+        "Endpoint should not contain hardcoded feature list. "
+        "Use FeatureRegistry.get_public_capabilities() instead."
+    )
 
 
 def test_limitations_include_hardware():
@@ -57,9 +38,9 @@ def test_limitations_include_hardware():
     assert "hardware" in content
 
 
-def test_no_secrets_in_json_response():
+def test_no_secrets_in_source():
     content = PUBLIC_PY.read_text()
-    assert "secrets" in content.lower() and "expostos" in content.lower()
+    assert "secrets" in content.lower()
 
 
 def test_json_does_not_leak_env_values():
@@ -76,21 +57,9 @@ def test_json_does_not_leak_env_values():
             assert False, f"Env pattern leaked in JSON endpoint: {m}"
 
 
-def test_has_ga_beta_and_partial():
-    content = PUBLIC_PY.read_text()
-    assert "ga" in content.lower()
-    assert "beta" in content.lower()
-    assert "future" in content.lower()
-
-
 def test_limitations_not_empty():
     content = PUBLIC_PY.read_text()
     assert "limitations" in content
-
-
-def test_features_not_empty():
-    content = PUBLIC_PY.read_text()
-    assert "features" in content
 
 
 def test_no_api_keys_in_route():
@@ -104,7 +73,33 @@ def test_no_api_keys_in_route():
                 assert False, f"Possible secret in route: {line.strip()[:80]}"
 
 
-def test_local_paths_not_in_json():
+def test_local_paths_not_in_source():
     content = PUBLIC_PY.read_text()
     for bad in ["/home/", "/root/", "/var/", "/etc/"]:
-        assert bad not in content, f"Local path exposed in JSON: {bad}"
+        assert bad not in content, f"Local path exposed in source: {bad}"
+
+
+def test_version_field_references_settings():
+    content = PUBLIC_PY.read_text()
+    assert "project_version" in content
+
+
+def test_capability_levels_defined():
+    content = PUBLIC_PY.read_text()
+    assert "capability_level" in content
+
+
+def test_feature_registry_service_exists():
+    registry_path = ROOT / "control_plane" / "app" / "services" / "feature_registry.py"
+    assert registry_path.exists(), "Feature registry service must exist"
+    content = registry_path.read_text()
+    assert "get_public_capabilities" in content
+    assert "_resolve_flag" in content
+
+
+def test_supported_surface_yaml_exists():
+    yaml_path = ROOT / "config" / "supported-surface.yaml"
+    assert yaml_path.exists(), "supported-surface.yaml must exist"
+    content = yaml_path.read_text()
+    assert "capabilities:" in content
+    assert "production_core" in content

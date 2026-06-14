@@ -1,4 +1,16 @@
-import type { Agent, AgentDetail, Session, SessionMessage, RunResponse } from './types';
+import type { 
+  Agent, 
+  AgentDetail, 
+  Session, 
+  SessionMessage, 
+  RunResponse,
+  PortalProfile,
+  ApiKey,
+  Invoice,
+  Wallet,
+  RagUsage,
+  RagDocument
+} from './types';
 
 export function getAuthToken(): string | null {
   try {
@@ -22,7 +34,7 @@ function getBaseUrl(): string {
 
 function authHeaders(): Record<string, string> {
   const token = getAuthToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -31,9 +43,20 @@ function authHeaders(): Record<string, string> {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${getBaseUrl()}${path}`;
+  const headers = new Headers(authHeaders());
+  if (init?.headers) {
+    const initHeaders = new Headers(init.headers);
+    initHeaders.forEach((value, key) => headers.set(key, value));
+  }
+  
+  // Only set application/json if body is not FormData and not already set
+  if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
   const res = await fetch(url, {
     ...init,
-    headers: { ...authHeaders(), ...init?.headers },
+    headers,
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
@@ -51,6 +74,11 @@ export const api = {
     request<Session>(`/v1/agents/${agentId}/sessions`, {
       method: 'POST',
       body: JSON.stringify({ title: title || null }),
+    }),
+
+  registerAgentCallback: (agentId: string, url: string) =>
+    request<{ status: string; webhook_id: string; secret: string }>(`/api/v1/agent-service/${agentId}/callbacks?url=${encodeURIComponent(url)}`, {
+      method: 'POST',
     }),
 
   // Mobile & PWA
@@ -119,6 +147,33 @@ export const api = {
 
   cancelRun: (runId: string) =>
     request<{ status: string }>(`/v1/agents/runs/${runId}/cancel`, { method: 'POST' }),
+
+  // Portal & Billing
+  getPortalProfile: () => request<PortalProfile>('/portal/me'),
+  listPortalApiKeys: () => request<ApiKey[]>('/portal/api-keys'),
+  createPortalApiKey: (name: string) => request<any>('/portal/api-keys', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  }),
+  deletePortalApiKey: (keyId: string) => request<void>(`/portal/api-keys/${keyId}`, { method: 'DELETE' }),
+  listPortalInvoices: () => request<{ invoices: Invoice[]; payments: any[] }>('/portal/invoices'),
+  getPortalUsageStats: () => request<any>('/portal/usage-stats'),
+  getPortalUsage: () => request<any>('/portal/usage'),
+  getWallet: () => request<Wallet>('/portal/wallet'),
+
+  // RAG
+  getRagUsage: () => request<RagUsage>('/client/rag/usage'),
+  listRagDocuments: () => request<{ data: RagDocument[] }>('/client/rag/documents'),
+  uploadRagDocument: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<RagDocument>('/client/rag/documents', {
+      method: 'POST',
+      body: formData,
+      // Note: Don't set Content-Type header manually for FormData, fetch will do it with boundary
+    });
+  },
+  deleteRagDocument: (docId: string) => request<void>(`/client/rag/documents/${docId}`, { method: 'DELETE' }),
 };
 
 export function buildWebSocketUrl(runId: string): string {

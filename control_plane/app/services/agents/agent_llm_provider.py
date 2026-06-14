@@ -7,12 +7,11 @@ import uuid
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
 from app.models.agents.agents import AgentDefinition, AgentRun
 from app.models.billing.billing_plan import BillingPlan
 from app.services.billing import estimate_request_cost, resolve_effective_plan
-from app.services.inference_proxy import ForwardResult, InferenceProxy
+from app.services.inference_proxy import ForwardResult, InferenceProxy, get_inference_proxy
 from app.services.model_policy import (
     plan_routing_order,
     resolve_effective_backend_url,

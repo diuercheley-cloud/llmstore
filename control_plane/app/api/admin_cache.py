@@ -3,7 +3,7 @@ import uuid
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session, get_redis
+from app.services.runtime_dependencies import get_db_session, get_redis
 from app.services.auth import require_admin
 from app.services.cache.intelligent_cache import (
     cache_stats as intelligent_cache_stats,

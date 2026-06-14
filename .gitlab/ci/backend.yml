@@ -20,9 +20,7 @@ backend:test:
     - pip install -r control_plane/requirements.txt
     - pip install pytest pytest-asyncio pytest-cov ruff
   script:
-    - cd control_plane
-    - ruff check .
-    - pytest tests/ -m "release_gate" --cov=app
+    - bash scripts/ci/backend-ci.sh
   artifacts:
     reports:
       coverage_report:

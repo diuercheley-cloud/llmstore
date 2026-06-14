@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import require_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.agents import agent_lifecycle as lifecycle_service
 from app.services.agents import agent_registry as reg_service
 from fastapi import APIRouter, Body, Depends, HTTPException, status

@@ -1,0 +1,41 @@
+# Mock/placeholder/simulated exceptions for supported/core endpoints.
+# Only endpoints in this file are allowed to contain mock data in production
+# supported/core surface without a feature flag, dry_run gate, or simulated status.
+#
+# Each entry must include:
+#   - file:       relative path from repo root
+#   - owner:      team responsible
+#   - deadline:   version or date when the mock must be removed
+#   - reason:     why the exception exists
+#   - status:     experimental | beta | technical_debt | deprecated
+
+exceptions:
+  - file: control_plane/app/services/embeddings_mock.py
+    owner: core-team
+    deadline: "v3.0"
+    reason: "Deterministic mock embeddings for local dev and tests. Not loaded in production unless MOCK_EMBEDDINGS=true."
+    status: technical_debt
+
+  - file: control_plane/app/services/payment_adapters/mock.py
+    owner: billing-team
+    deadline: "v2.5"
+    reason: "Mock payment adapter for sandbox testing. Only active when PAYMENT_MODE=mock."
+    status: experimental
+
+  - file: control_plane/app/services/chaos_engineering.py
+    owner: platform-ops
+    deadline: "v3.0"
+    reason: "Chaos engineering uses simulated providers. Gated behind CHAOS_ENABLED feature flag (experimental)."
+    status: beta
+
+  - file: control_plane/app/api/hybrid_admin.py
+    owner: platform-ops
+    deadline: "v2.3"
+    reason: "Hybrid admin dashboard uses mock data for demo mode. Gated behind DEMO_MODE env var."
+    status: technical_debt
+
+  - file: control_plane/app/api/portal.py
+    owner: platform-ops
+    deadline: "v2.5"
+    reason: "Portal fallback responses use placeholders for unconfigured modules. Flagged with TODO and behind feature checks."
+    status: technical_debt

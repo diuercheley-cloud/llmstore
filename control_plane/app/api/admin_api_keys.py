@@ -4,7 +4,7 @@ import uuid
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from app.models.core.security_event import SecurityEvent

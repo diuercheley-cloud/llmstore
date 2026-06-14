@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.routing.commercial_cluster_aggregates import (
     cleanup_old_analytics,

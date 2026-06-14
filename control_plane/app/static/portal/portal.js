@@ -8,8 +8,30 @@
     invoices: 'invoices.html',
     wallet: 'wallet.html',
     rag: 'rag.html',
-    playground: 'playground.html'
+    playground: 'playground.html',
+    models: 'models.html',
+    plans: 'plans.html',
+    trust: 'trust.html',
+    audit: 'audit.html',
+    disputes: 'disputes.html',
+    examples: 'examples.html'
   };
+
+  const navEntries = [
+    ['home', 'Hub'],
+    ['keys', 'API Keys'],
+    ['usage', 'Uso'],
+    ['invoices', 'Faturas'],
+    ['wallet', 'Wallet'],
+    ['rag', 'RAG'],
+    ['playground', 'Playground'],
+    ['models', 'Modelos'],
+    ['plans', 'Planos'],
+    ['trust', 'Trust'],
+    ['audit', 'Audit'],
+    ['disputes', 'Disputas'],
+    ['examples', 'Examples']
+  ];
 
   const state = {
     apiKey: '',
@@ -31,10 +53,9 @@
     overviewAccountDetails: document.getElementById('overviewAccountDetails'),
     overviewBillingDetails: document.getElementById('overviewBillingDetails'),
     overviewUsageSnapshot: document.getElementById('overviewUsageSnapshot'),
-    viewInvoicesBtn: document.getElementById('viewInvoicesBtn'),
     overviewQuickStats: document.getElementById('overviewQuickStats'),
+    viewInvoicesBtn: document.getElementById('viewInvoicesBtn'),
     demoModeNotice: document.getElementById('demoModeNotice'),
-    apiKeysList: document.getElementById('apiKeysList'),
     createNewKey: document.getElementById('createNewKey'),
     newKeyModal: document.getElementById('newKeyModal'),
     newKeyName: document.getElementById('newKeyName'),
@@ -42,27 +63,6 @@
     cancelNewKey: document.getElementById('cancelNewKey'),
     keyDisplayArea: document.getElementById('keyDisplayArea'),
     newKeySecret: document.getElementById('newKeySecret'),
-    usageRequestsTodayMonth: document.getElementById('usageRequestsTodayMonth'),
-    usageTokensTodayMonth: document.getElementById('usageTokensTodayMonth'),
-    usageMonthlyTokens: document.getElementById('usageMonthlyTokens'),
-    usageMonthlyLimit: document.getElementById('usageMonthlyLimit'),
-    usageMonthlyProgress: document.getElementById('usageMonthlyProgress'),
-    usageQuotaRemaining: document.getElementById('usageQuotaRemaining'),
-    usagePricingSummary: document.getElementById('usagePricingSummary'),
-    usageRateLimit: document.getElementById('usageRateLimit'),
-    dailyUsageChart: document.getElementById('dailyUsageChart'),
-    modelUsageList: document.getElementById('modelUsageList'),
-    qosUsageTableBody: document.getElementById('qosUsageTableBody'),
-    invoicesSummary: document.getElementById('invoicesSummary'),
-    invoicesList: document.getElementById('invoicesList'),
-    walletWarning: document.getElementById('walletWarning'),
-    walletBalance: document.getElementById('walletBalance'),
-    walletAvailable: document.getElementById('walletAvailable'),
-    walletReserved: document.getElementById('walletReserved'),
-    walletConsumptionEstimate: document.getElementById('walletConsumptionEstimate'),
-    walletRechargeAmount: document.getElementById('walletRechargeAmount'),
-    walletRequestRecharge: document.getElementById('walletRequestRecharge'),
-    walletTransactions: document.getElementById('walletTransactions'),
     pgModelSelect: document.getElementById('pgModelSelect'),
     pgMaxTokens: document.getElementById('pgMaxTokens'),
     pgPrompt: document.getElementById('pgPrompt'),
@@ -72,19 +72,16 @@
     pgStats: document.getElementById('pgStats'),
     btnRagUpload: document.getElementById('btnRagUpload'),
     ragFileUpload: document.getElementById('ragFileUpload'),
-    ragFilesList: document.getElementById('ragFilesList'),
-    ragStatsDocs: document.getElementById('ragStatsDocs'),
-    ragProgressDocsFill: document.getElementById('ragProgressDocsFill'),
-    ragStatsStorage: document.getElementById('ragStatsStorage'),
-    ragProgressStorageFill: document.getElementById('ragProgressStorageFill'),
-    ragStatsQueries: document.getElementById('ragStatsQueries'),
-    ragProgressQueriesFill: document.getElementById('ragProgressQueriesFill'),
-    ragQueryInput: document.getElementById('ragQueryInput'),
     btnRagQuery: document.getElementById('btnRagQuery'),
+    ragQueryInput: document.getElementById('ragQueryInput'),
     ragQueryResponse: document.getElementById('ragQueryResponse'),
     ragQuerySources: document.getElementById('ragQuerySources'),
     toast: document.getElementById('toast')
   };
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
 
   function esc(str) {
     const div = document.createElement('div');
@@ -101,23 +98,80 @@
     }, 2000);
   }
 
+  function formatDateTime(value) {
+    if (!value) return '-';
+    return new Date(value).toLocaleString();
+  }
+
+  function formatDate(value) {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString();
+  }
+
+  function formatMoney(currency, amount) {
+    const numeric = Number(amount || 0);
+    return `${esc(currency || 'BRL')} ${numeric.toFixed(2)}`;
+  }
+
+  function toNumber(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  }
+
+  function percent(part, total) {
+    if (!total) return 0;
+    return Math.min(100, (part / total) * 100);
+  }
+
+  function formatTokenLimit(value) {
+    return value == null ? 'Ilimitado' : Number(value).toLocaleString();
+  }
+
+  function formatTokenUsage(used, quota) {
+    return quota == null
+      ? `${Number(used || 0).toLocaleString()} / Ilimitado`
+      : `${Number(used || 0).toLocaleString()} / ${Number(quota).toLocaleString()} tokens`;
+  }
+
+  function renderEmpty(message, colSpan) {
+    if (colSpan) {
+      return `<tr><td colspan="${colSpan}" class="muted-cell">${esc(message)}</td></tr>`;
+    }
+    return `<div class="empty-state">${esc(message)}</div>`;
+  }
+
   function goToPage(pageKey) {
     const next = pageRoutes[pageKey];
     if (next) window.location.href = next;
   }
-
-  window.switchTab = goToPage;
-  window.copyToClipboard = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    navigator.clipboard.writeText(el.textContent).then(() => showToast('Copiado!'));
-  };
 
   function activateNav() {
     document.querySelectorAll('[data-page-link]').forEach((item) => {
       item.classList.toggle('active', item.dataset.pageLink === page);
     });
   }
+
+  function enhanceNavigation() {
+    const nav = document.querySelector('aside nav');
+    if (!nav) return;
+    const seen = new Set(Array.from(nav.querySelectorAll('[data-page-link]')).map((item) => item.dataset.pageLink));
+    navEntries.forEach(([key, label]) => {
+      if (seen.has(key)) return;
+      const link = document.createElement('a');
+      link.className = 'nav-item';
+      link.dataset.pageLink = key;
+      link.href = pageRoutes[key];
+      link.textContent = label;
+      nav.appendChild(link);
+    });
+  }
+
+  window.switchTab = goToPage;
+  window.copyToClipboard = (id) => {
+    const el = byId(id);
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent).then(() => showToast('Copiado!'));
+  };
 
   function extractErrorMessage(payload, fallbackText) {
     if (!payload) return fallbackText;
@@ -131,6 +185,9 @@
   function portalFriendlyError(status, payload, fallbackText) {
     const message = extractErrorMessage(payload, fallbackText);
     const normalized = (message || '').toLowerCase();
+    if (status === 403 && normalized.includes('not allowed for this api key')) {
+      return `Esta API key esta restrita por IP. O backend recusou o acesso do IP atual. Detalhe: ${message}`;
+    }
     if (status === 402 || normalized.includes('billing_suspended')) {
       return 'Seu acesso foi bloqueado por faturamento pendente. Regularize as faturas para voltar a usar a API.';
     }
@@ -251,21 +308,23 @@
         <div class="field"><div class="field-label">ID do Cliente</div><div class="field-value"><code>${esc(me.id)}</code></div></div>
         <div class="field"><div class="field-label">Plano Atual</div><div class="field-value"><strong>${esc(me.plan.name)}</strong></div></div>
         <div class="field"><div class="field-label">Status da Conta</div><div class="field-value">${esc(me.billing_status.toUpperCase())}</div></div>
+        <div class="field"><div class="field-label">Modelos Habilitados</div><div class="field-value">${state.models.length}</div></div>
       `;
     }
     if (els.overviewBillingDetails) {
       els.overviewBillingDetails.innerHTML = `
-        <div class="field"><div class="field-label">Preço Mensal</div><div class="field-value">${esc(me.plan.currency)} ${Number(me.plan.monthly_price).toFixed(2)}</div></div>
-        <div class="field"><div class="field-label">Próxima Fatura (Est.)</div><div class="field-value">${esc(usage.invoice_preview.currency)} ${Number(usage.invoice_preview.total_estimated).toFixed(2)}</div></div>
+        <div class="field"><div class="field-label">Preco Mensal</div><div class="field-value">${formatMoney(me.plan.currency, me.plan.monthly_price)}</div></div>
+        <div class="field"><div class="field-label">Proxima Fatura (Est.)</div><div class="field-value">${formatMoney(usage.invoice_preview.currency, usage.invoice_preview.total_estimated)}</div></div>
+        <div class="field"><div class="field-label">Wallet</div><div class="field-value">${formatMoney('BRL', usage.wallet_balance_brl || 0)}</div></div>
       `;
     }
     if (els.overviewUsageSnapshot) {
       const m = usage.monthly_usage;
-      const pct = Math.min(100, (m.used_tokens / m.quota) * 100);
+      const pct = percent(m.used_tokens, m.quota);
       els.overviewUsageSnapshot.innerHTML = `
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
-          <span>${m.used_tokens.toLocaleString()} / ${m.quota.toLocaleString()} tokens</span>
-          <span>${pct.toFixed(1)}%</span>
+        <div class="split-row">
+          <span>${formatTokenUsage(m.used_tokens, m.quota)}</span>
+          <span>${m.quota == null ? 'sem teto' : `${pct.toFixed(1)}%`}</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       `;
@@ -277,12 +336,16 @@
           <div class="usage-num">${usage.requests_today.toLocaleString()}</div>
         </div>
         <div class="summary-card">
-          <div class="field-label">Tokens no Mês</div>
+          <div class="field-label">Tokens no Mes</div>
           <div class="usage-num">${usage.tokens_month.toLocaleString()}</div>
         </div>
         <div class="summary-card">
           <div class="field-label">Quota Restante</div>
-          <div class="usage-num">${usage.quota_remaining.monthly_tokens.toLocaleString()}</div>
+          <div class="usage-num">${usage.quota_remaining.monthly_tokens == null ? 'Ilimitado' : usage.quota_remaining.monthly_tokens.toLocaleString()}</div>
+        </div>
+        <div class="summary-card">
+          <div class="field-label">Modelos</div>
+          <div class="usage-num">${state.models.length}</div>
         </div>
       `;
     }
@@ -303,65 +366,75 @@
     if (page === 'wallet') return loadWallet();
     if (page === 'rag') return loadRagFiles();
     if (page === 'playground') return refreshPlaygroundEstimate();
+    if (page === 'models') return loadModelsPage();
+    if (page === 'plans') return loadPlansPage();
+    if (page === 'trust') return loadTrustPage();
+    if (page === 'audit') return loadAuditPage();
+    if (page === 'disputes') return loadDisputesPage();
+    if (page === 'examples') return loadExamplesPage();
   }
 
   async function loadApiKeys() {
-    if (!els.apiKeysList) return;
+    const tbody = byId('apiKeysList');
+    if (!tbody) return;
     const keys = await apiFetch('/portal/api-keys');
-    els.apiKeysList.innerHTML = keys.map((k) => `
+    tbody.innerHTML = keys.length ? keys.map((k) => `
       <tr>
         <td><strong>${esc(k.name)}</strong></td>
         <td><code>${esc(k.masked_key)}</code></td>
-        <td>${new Date(k.created_at).toLocaleDateString()}</td>
-        <td>${k.last_used_at ? new Date(k.last_used_at).toLocaleString() : 'Nunca'}</td>
+        <td>${formatDate(k.created_at)}</td>
+        <td>${k.last_used_at ? formatDateTime(k.last_used_at) : 'Nunca'}</td>
         <td>
           <button class="secondary" onclick="copyApiExample()">Copiar Exemplo</button>
           ${k.revoked_at ? '<span class="badge badge-blocked">Revogada</span>' : `<button class="danger" onclick="revokeKey('${k.id}')">Revogar</button>`}
         </td>
       </tr>
-    `).join('');
+    `).join('') : renderEmpty('Nenhuma chave criada.', 5);
   }
 
   async function loadUsageStats() {
-    if (!els.usageRequestsTodayMonth) return;
+    const usageRequests = byId('usageRequestsTodayMonth');
+    if (!usageRequests) return;
     const [usage, stats] = await Promise.all([
       apiFetch('/portal/usage'),
       apiFetch('/portal/usage-stats')
     ]);
     const m = usage.monthly_usage;
-    els.usageRequestsTodayMonth.textContent = `${usage.requests_today.toLocaleString()} / ${usage.requests_month.toLocaleString()}`;
-    els.usageTokensTodayMonth.textContent = `${usage.tokens_today.toLocaleString()} / ${usage.tokens_month.toLocaleString()}`;
-    els.usageMonthlyTokens.textContent = m.used_tokens.toLocaleString();
-    els.usageMonthlyLimit.textContent = `limite: ${m.quota.toLocaleString()}`;
-    els.usageMonthlyProgress.style.width = `${Math.min(100, (m.used_tokens / m.quota) * 100)}%`;
-    els.usageQuotaRemaining.textContent = usage.quota_remaining.monthly_tokens.toLocaleString();
-    els.usagePricingSummary.innerHTML = `
-      <div class="field"><div class="field-label">Hoje</div><div class="field-value">${usage.customer_pricing.today_amount === null ? 'indisponível' : `${usage.customer_pricing.currency} ${usage.customer_pricing.today_amount.toFixed(2)}`}</div></div>
-      <div class="field"><div class="field-label">Mês</div><div class="field-value">${usage.customer_pricing.currency} ${usage.customer_pricing.month_amount.toFixed(2)}</div></div>
+    byId('usageRequestsTodayMonth').textContent = `${usage.requests_today.toLocaleString()} / ${usage.requests_month.toLocaleString()}`;
+    byId('usageTokensTodayMonth').textContent = `${usage.tokens_today.toLocaleString()} / ${usage.tokens_month.toLocaleString()}`;
+    byId('usageMonthlyTokens').textContent = m.used_tokens.toLocaleString();
+    byId('usageMonthlyLimit').textContent = `limite: ${formatTokenLimit(m.quota)}`;
+    byId('usageMonthlyProgress').style.width = `${percent(m.used_tokens, m.quota)}%`;
+    byId('usageQuotaRemaining').textContent = usage.quota_remaining.monthly_tokens == null ? 'Ilimitado' : usage.quota_remaining.monthly_tokens.toLocaleString();
+    byId('usagePricingSummary').innerHTML = `
+      <div class="field"><div class="field-label">Hoje</div><div class="field-value">${usage.customer_pricing.today_amount === null ? 'indisponivel' : `${usage.customer_pricing.currency} ${usage.customer_pricing.today_amount.toFixed(2)}`}</div></div>
+      <div class="field"><div class="field-label">Mes</div><div class="field-value">${usage.customer_pricing.currency} ${usage.customer_pricing.month_amount.toFixed(2)}</div></div>
       <div class="field"><div class="field-label">Origem</div><div class="field-value">${esc(usage.customer_pricing.source)}</div></div>
     `;
-    els.usageRateLimit.innerHTML = `
+    byId('usageRateLimit').innerHTML = `
       <div class="field"><div class="field-label">RPM</div><div class="field-value">${usage.rate_limit.requests_per_minute}</div></div>
-      <div class="field"><div class="field-label">RPD</div><div class="field-value">${usage.rate_limit.requests_per_day || 'sem limite específico'}</div></div>
+      <div class="field"><div class="field-label">RPD</div><div class="field-value">${usage.rate_limit.requests_per_day || 'sem limite especifico'}</div></div>
     `;
     renderChart(stats.daily_usage || []);
-    els.modelUsageList.innerHTML = (stats.model_usage || []).map((r) => `
+    const modelUsageList = byId('modelUsageList');
+    modelUsageList.innerHTML = (stats.model_usage || []).length ? (stats.model_usage || []).map((r) => `
       <tr>
         <td><code>${esc(r.model)}</code></td>
         <td>${r.requests.toLocaleString()}</td>
         <td>${r.tokens.toLocaleString()}</td>
       </tr>
-    `).join('');
+    `).join('') : renderEmpty('Nenhum consumo por modelo encontrado.', 3);
   }
 
   function renderChart(data) {
-    if (!els.dailyUsageChart) return;
+    const chart = byId('dailyUsageChart');
+    if (!chart) return;
     if (!data.length) {
-      els.dailyUsageChart.innerHTML = '<div class="muted">Sem uso recente.</div>';
+      chart.innerHTML = '<div class="muted">Sem uso recente.</div>';
       return;
     }
     const maxTokens = Math.max(...data.map((d) => d.tokens), 1);
-    els.dailyUsageChart.innerHTML = data.map((d) => {
+    chart.innerHTML = data.map((d) => {
       const height = (d.tokens / maxTokens) * 100;
       return `
         <div class="chart-bar" style="height:${height}%" data-label="${esc(d.day.substring(5))}">
@@ -372,64 +445,100 @@
   }
 
   async function loadQosUsage() {
-    if (!els.qosUsageTableBody) return;
+    const tbody = byId('qosUsageTableBody');
+    if (!tbody) return [];
     const records = await apiFetch('/portal/qos-billing');
-    if (!records || !records.length) {
-      els.qosUsageTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhum consumo de QoS registrado no período.</td></tr>';
-      return;
-    }
-    els.qosUsageTableBody.innerHTML = records.map((r) => `
+    tbody.innerHTML = records.length ? records.map((r) => `
       <tr>
-        <td>${new Date(r.period_start).toLocaleDateString()}</td>
+        <td>${formatDate(r.period_start)}</td>
         <td>${esc(r.qos_tier)}</td>
-        <td>${r.compute_seconds.toFixed(2)}s</td>
-        <td>${r.priority_slots_consumed.toFixed(2)}</td>
-        <td><strong>R$ ${r.billable_amount_brl.toFixed(4)}</strong></td>
+        <td>${toNumber(r.compute_seconds).toFixed(2)}s</td>
+        <td>${toNumber(r.priority_slots_consumed).toFixed(2)}</td>
+        <td><strong>R$ ${toNumber(r.billable_amount_brl).toFixed(4)}</strong></td>
         <td>${esc(r.status)}</td>
       </tr>
-    `).join('');
+    `).join('') : renderEmpty('Nenhum consumo de QoS registrado no periodo.', 6);
+    return records;
   }
 
   async function loadInvoices() {
-    if (!els.invoicesList) return;
+    const invoicesList = byId('invoicesList');
+    if (!invoicesList) return;
     const data = await apiFetch('/portal/invoices');
     const invoices = data.invoices || [];
-    els.invoicesSummary.textContent = data.local_billing_message
-      ? `Modo de cobrança: ${data.local_billing_message}.`
-      : 'Sem mensagem adicional de cobrança.';
-    els.invoicesList.innerHTML = invoices.length ? invoices.map((invoice) => `
+    const payments = data.payments || [];
+    const summary = byId('invoicesSummary');
+    if (summary) {
+      summary.textContent = data.local_billing_message
+        ? `Modo de cobranca: ${data.local_billing_message}.`
+        : 'Sem mensagem adicional de cobranca.';
+    }
+    invoicesList.innerHTML = invoices.length ? invoices.map((invoice) => `
       <tr>
         <td><code>${esc(invoice.id.slice(0, 8))}</code></td>
         <td><span class="badge ${invoice.status === 'paid' ? 'badge-active' : invoice.status === 'pending' ? 'badge-warning' : 'badge-blocked'}">${esc(invoice.status)}</span></td>
         <td>${esc(invoice.period_start)} a ${esc(invoice.period_end)}</td>
         <td>${esc(invoice.currency)} ${Number(invoice.total_amount).toFixed(2)}</td>
-        <td>${invoice.due_at ? new Date(invoice.due_at).toLocaleDateString() : '-'}</td>
-        <td>
+        <td>${invoice.due_at ? formatDate(invoice.due_at) : '-'}</td>
+        <td class="inline-actions">
           <button class="secondary" onclick="downloadInvoice('${invoice.id}', 'json')">JSON</button>
           <button class="secondary" onclick="downloadInvoice('${invoice.id}', 'html')">HTML</button>
+          ${invoice.status !== 'paid' ? `<button class="secondary" onclick="simulateInvoicePayment('${invoice.id}')">Simular Pagto</button>` : ''}
         </td>
       </tr>
-    `).join('') : '<tr><td colspan="6">Nenhuma fatura encontrada.</td></tr>';
+    `).join('') : renderEmpty('Nenhuma fatura encontrada.', 6);
+
+    const paymentsTable = byId('invoicePaymentsList');
+    if (paymentsTable) {
+      paymentsTable.innerHTML = payments.length ? payments.map((payment) => `
+        <tr>
+          <td><code>${esc(payment.id.slice(0, 8))}</code></td>
+          <td>${payment.invoice_id ? `<code>${esc(payment.invoice_id.slice(0, 8))}</code>` : '-'}</td>
+          <td>${esc(payment.status)}</td>
+          <td>${formatMoney(payment.currency, payment.amount)}</td>
+          <td>${esc(payment.payment_method || '-')}</td>
+          <td>${payment.paid_at ? formatDateTime(payment.paid_at) : '-'}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum pagamento registrado.', 6);
+    }
   }
 
   async function loadWallet() {
-    if (!els.walletBalance) return;
-    const wallet = await apiFetch('/portal/wallet');
-    els.walletBalance.textContent = `BRL ${wallet.balance_brl.toFixed(2)}`;
-    els.walletAvailable.textContent = `disponível: BRL ${wallet.available_brl.toFixed(2)}`;
-    els.walletReserved.textContent = `BRL ${wallet.reserved_brl.toFixed(2)}`;
-    els.walletConsumptionEstimate.textContent = `consumo estimado: BRL ${wallet.consumption_estimate_brl.toFixed(2)}`;
-    els.walletWarning.style.display = wallet.low_balance ? 'block' : 'none';
-    els.walletWarning.textContent = wallet.low_balance_message || '';
-    els.walletTransactions.innerHTML = (wallet.transactions || []).length ? wallet.transactions.map((tx) => `
+    const balance = byId('walletBalance');
+    if (!balance) return;
+    const [wallet, topups] = await Promise.all([
+      apiFetch('/portal/wallet'),
+      apiFetch('/portal/wallet/topups')
+    ]);
+    balance.textContent = `BRL ${toNumber(wallet.balance_brl).toFixed(2)}`;
+    byId('walletAvailable').textContent = `disponivel: BRL ${toNumber(wallet.available_brl).toFixed(2)}`;
+    byId('walletReserved').textContent = `BRL ${toNumber(wallet.reserved_brl).toFixed(2)}`;
+    byId('walletConsumptionEstimate').textContent = `consumo estimado: BRL ${toNumber(wallet.consumption_estimate_brl).toFixed(2)}`;
+    const warning = byId('walletWarning');
+    warning.style.display = wallet.low_balance ? 'block' : 'none';
+    warning.textContent = wallet.low_balance_message || '';
+    byId('walletTransactions').innerHTML = (wallet.transactions || []).length ? wallet.transactions.map((tx) => `
       <tr>
-        <td>${tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}</td>
+        <td>${tx.created_at ? formatDateTime(tx.created_at) : '-'}</td>
         <td>${esc(tx.type)}</td>
         <td>BRL ${Number(tx.amount_brl).toFixed(2)}</td>
         <td>BRL ${Number(tx.balance_after_brl).toFixed(2)}</td>
         <td>${tx.reference_type ? `${esc(tx.reference_type)}:${esc(tx.reference_id || '-')}` : '-'}</td>
       </tr>
-    `).join('') : '<tr><td colspan="5">Nenhuma transação registrada.</td></tr>';
+    `).join('') : renderEmpty('Nenhuma transacao registrada.', 5);
+
+    const topupTable = byId('walletTopups');
+    if (topupTable) {
+      topupTable.innerHTML = topups.length ? topups.map((item) => `
+        <tr>
+          <td><code>${esc(String(item.id || '').slice(0, 8))}</code></td>
+          <td>BRL ${toNumber(item.amount_brl).toFixed(2)}</td>
+          <td>${esc(item.status || '-')}</td>
+          <td>${esc(item.idempotency_key || '-')}</td>
+          <td>${formatDateTime(item.created_at)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma recarga estruturada encontrada.', 5);
+    }
   }
 
   function estimateTokensFromPrompt(prompt) {
@@ -439,35 +548,387 @@
   async function refreshPlaygroundEstimate() {
     if (!els.pgEstimate || !els.pgPrompt || !els.pgMaxTokens) return;
     const promptTokens = estimateTokensFromPrompt(els.pgPrompt.value);
-    els.pgEstimate.textContent = `Estimativa: ~${promptTokens} tokens de prompt + até ${Number(els.pgMaxTokens.value || 0)} de saída`;
+    els.pgEstimate.textContent = `Estimativa: ~${promptTokens} tokens de prompt + ate ${Number(els.pgMaxTokens.value || 0)} de saida`;
   }
 
   async function loadRagFiles() {
-    if (!els.ragFilesList) return;
-    const [files, usage] = await Promise.all([
+    const table = byId('ragFilesList');
+    if (!table) return;
+    const [files, usage, vault, history, holds, trust] = await Promise.all([
       apiFetch('/client/rag/documents'),
-      apiFetch('/client/rag/usage')
+      apiFetch('/client/rag/usage'),
+      apiFetch('/portal/rag/vault'),
+      apiFetch('/portal/rag/retrieval-history'),
+      apiFetch('/portal/rag/legal-holds'),
+      apiFetch('/portal/rag/trust-status')
     ]);
-    els.ragFilesList.innerHTML = (files.data || []).map((f) => `
+    table.innerHTML = (files.data || []).length ? (files.data || []).map((f) => `
       <tr>
         <td><strong>${esc(f.original_filename)}</strong><br><small>${(f.file_size_bytes / 1024).toFixed(1)}KB</small></td>
         <td><span class="badge ${f.status === 'indexed' ? 'badge-active' : (f.status === 'failed' ? 'badge-blocked' : 'badge-warning')}">${esc(f.status)}</span></td>
         <td>${f.page_count || '-'}</td>
         <td><button class="danger" onclick="deleteFile('${f.id}')">Excluir</button></td>
       </tr>
-    `).join('') || '<tr><td colspan="4">Nenhum documento enviado.</td></tr>';
+    `).join('') : renderEmpty('Nenhum documento enviado.', 4);
     const u = usage.usage;
     const l = usage.limits;
-    els.ragStatsDocs.textContent = `${u.documents_count} / ${l.max_documents || '∞'}`;
-    els.ragProgressDocsFill.style.width = l.max_documents ? `${Math.min(100, (u.documents_count / l.max_documents) * 100)}%` : '0%';
-    els.ragStatsStorage.textContent = `${u.storage_mb.toFixed(1)} / ${l.max_storage_mb || '∞'}`;
-    els.ragProgressStorageFill.style.width = l.max_storage_mb ? `${Math.min(100, (u.storage_mb / l.max_storage_mb) * 100)}%` : '0%';
-    els.ragStatsQueries.textContent = `${u.queries_month} / ${l.max_queries_per_month || '∞'}`;
-    els.ragProgressQueriesFill.style.width = l.max_queries_per_month ? `${Math.min(100, (u.queries_month / l.max_queries_per_month) * 100)}%` : '0%';
+    byId('ragStatsDocs').textContent = `${u.documents_count} / ${l.max_documents || '∞'}`;
+    byId('ragProgressDocsFill').style.width = l.max_documents ? `${percent(u.documents_count, l.max_documents)}%` : '0%';
+    byId('ragStatsStorage').textContent = `${u.storage_mb.toFixed(1)} / ${l.max_storage_mb || '∞'}`;
+    byId('ragProgressStorageFill').style.width = l.max_storage_mb ? `${percent(u.storage_mb, l.max_storage_mb)}%` : '0%';
+    byId('ragStatsQueries').textContent = `${u.queries_month} / ${l.max_queries_per_month || '∞'}`;
+    byId('ragProgressQueriesFill').style.width = l.max_queries_per_month ? `${percent(u.queries_month, l.max_queries_per_month)}%` : '0%';
+
+    const vaultSummary = byId('ragVaultSummary');
+    if (vaultSummary) {
+      vaultSummary.innerHTML = `
+        <div class="field"><div class="field-label">Vault</div><div class="field-value">${esc(vault.vault_name || 'nao provisionado')}</div></div>
+        <div class="field"><div class="field-label">Documentos Assinados</div><div class="field-value">${vault.signed_documents || 0}</div></div>
+        <div class="field"><div class="field-label">Legal Holds Ativos</div><div class="field-value">${vault.active_legal_holds || 0}</div></div>
+      `;
+    }
+    const historyTable = byId('ragRetrievalHistory');
+    if (historyTable) {
+      historyTable.innerHTML = history.length ? history.map((item) => `
+        <tr>
+          <td>${formatDateTime(item.created_at)}</td>
+          <td>${esc(item.query_text || '-')}</td>
+          <td>${esc(item.retrieval_mode || '-')}</td>
+          <td>${esc(item.retrieved_documents_count || 0)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum retrieval audit encontrado.', 4);
+    }
+    const holdsTable = byId('ragLegalHolds');
+    if (holdsTable) {
+      holdsTable.innerHTML = holds.length ? holds.map((item) => `
+        <tr>
+          <td>${esc(item.document_id || 'vault')}</td>
+          <td>${esc(item.reason || '-')}</td>
+          <td>${item.active ? 'ativo' : 'inativo'}</td>
+          <td>${formatDateTime(item.created_at)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum legal hold ativo.', 4);
+    }
+    const trustTable = byId('ragTrustStatus');
+    if (trustTable) {
+      trustTable.innerHTML = trust.length ? trust.map((item) => `
+        <tr>
+          <td>${esc(item.document_title || '-')}</td>
+          <td>${item.signed_document ? 'assinado' : 'sem assinatura'}</td>
+          <td>${esc(item.trust_state || 'unknown')}</td>
+          <td>${formatDateTime(item.created_at)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum documento com trust-status retornado.', 4);
+    }
+  }
+
+  async function loadModelsPage() {
+    const table = byId('modelsTableBody');
+    if (!table) return;
+    const models = state.models.length ? state.models : await apiFetch('/portal/models');
+    const summary = byId('modelsSummary');
+    if (summary) {
+      const attested = models.filter((model) => model.attestation_summary).length;
+      summary.innerHTML = `
+        <div class="summary-card"><div class="field-label">Modelos Visiveis</div><div class="usage-num">${models.length}</div></div>
+        <div class="summary-card"><div class="field-label">Com Attestation</div><div class="usage-num">${attested}</div></div>
+        <div class="summary-card"><div class="field-label">Plano</div><div class="usage-num">${esc(state.client.plan.name)}</div></div>
+      `;
+    }
+    table.innerHTML = models.length ? models.map((model) => `
+      <tr>
+        <td><strong>${esc(model.display_name)}</strong><br><code>${esc(model.id)}</code></td>
+        <td>${esc(model.provider || '-')}</td>
+        <td>${esc(model.context_length || '-')}</td>
+        <td>${esc(model.trust_state_runtime || 'unknown')}</td>
+        <td>${model.attestation_summary ? esc(model.attestation_summary.attestation_status || 'available') : '-'}</td>
+      </tr>
+    `).join('') : renderEmpty('Nenhum modelo habilitado para este cliente.', 5);
+  }
+
+  async function loadPlansPage() {
+    const plans = await apiFetch('/portal/plans');
+    const table = byId('plansTableBody');
+    if (!table) return;
+    const currentPlan = state.client ? state.client.plan : null;
+    table.innerHTML = plans.length ? plans.map((plan) => `
+      <tr>
+        <td><strong>${esc(plan.name)}</strong><br><code>${esc(plan.code)}</code></td>
+        <td>${formatMoney(plan.currency, plan.monthly_price)}</td>
+        <td>${plan.rate_limit_rpm || '-'}</td>
+        <td>${formatTokenLimit(plan.monthly_token_quota)}</td>
+        <td>${currentPlan && currentPlan.code === plan.code ? '<span class="badge badge-active">Atual</span>' : `<button onclick="upgradePlan('${plan.code}')">Migrar</button>`}</td>
+      </tr>
+    `).join('') : renderEmpty('Nenhum plano ativo encontrado.', 5);
+  }
+
+  async function loadTrustPage() {
+    const [
+      reproducibility,
+      receipts,
+      proofs,
+      correlations,
+      trustGraph,
+      workflowExecutions,
+      replaySessions
+    ] = await Promise.all([
+      apiFetch('/portal/inference/reproducibility'),
+      apiFetch('/portal/inference/receipts'),
+      apiFetch('/portal/inference/proofs/proofs'),
+      apiFetch('/portal/operations/correlations/'),
+      apiFetch('/portal/operations/correlations/trust-graph'),
+      apiFetch('/portal/workflows/governance/executions'),
+      apiFetch('/portal/workflows/replay/sessions')
+    ]);
+
+    const summary = byId('trustSummary');
+    if (summary) {
+      summary.innerHTML = `
+        <div class="summary-card"><div class="field-label">Receipts</div><div class="usage-num">${(receipts.items || []).length}</div></div>
+        <div class="summary-card"><div class="field-label">Proofs</div><div class="usage-num">${proofs.count || 0}</div></div>
+        <div class="summary-card"><div class="field-label">Correlations</div><div class="usage-num">${correlations.length}</div></div>
+        <div class="summary-card"><div class="field-label">Replay Sessions</div><div class="usage-num">${(replaySessions.items || []).length}</div></div>
+      `;
+    }
+
+    const reproTable = byId('reproducibilityTableBody');
+    if (reproTable) {
+      reproTable.innerHTML = reproducibility.items?.length ? reproducibility.items.map((item) => `
+        <tr>
+          <td>${formatDateTime(item.created_at)}</td>
+          <td>${esc(item.model_name || '-')}</td>
+          <td>${esc(item.backend_name || '-')}</td>
+          <td>${item.replay_supported ? 'sim' : 'nao'}</td>
+          <td>${esc(item.runtime_provenance_summary?.runtime_engine || '-')}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum registro de reproducibility encontrado.', 5);
+    }
+
+    const receiptsTable = byId('receiptsTableBody');
+    if (receiptsTable) {
+      receiptsTable.innerHTML = receipts.items?.length ? receipts.items.map((item) => `
+        <tr>
+          <td><code>${esc(item.id.slice(0, 8))}</code></td>
+          <td>${formatDateTime(item.created_at)}</td>
+          <td>${esc(item.model_name || '-')}</td>
+          <td>${esc(item.backend_name || '-')}</td>
+          <td>${esc(item.verification_status || '-')}</td>
+          <td><button class="secondary" onclick="verifyReceipt('${item.id}')">Verificar</button></td>
+        </tr>
+      `).join('') : renderEmpty('Nenhum receipt encontrado.', 6);
+    }
+
+    const proofsTable = byId('proofsTableBody');
+    if (proofsTable) {
+      proofsTable.innerHTML = proofs.items?.length ? proofs.items.map((item) => `
+        <tr>
+          <td><code>${esc(item.id.slice(0, 8))}</code></td>
+          <td>${esc(item.proof_type)}</td>
+          <td><code>${esc((item.proof_hash || '').slice(0, 16))}</code></td>
+          <td>${esc(item.verification_status || '-')}</td>
+          <td>${formatDateTime(item.created_at)}</td>
+          <td><button class="secondary" onclick="verifyProof('${item.id}')">Verificar</button></td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma proof encontrada.', 6);
+    }
+
+    const correlationsTable = byId('correlationsTableBody');
+    if (correlationsTable) {
+      correlationsTable.innerHTML = correlations.length ? correlations.map((item) => `
+        <tr>
+          <td>${formatDateTime(item.created_at)}</td>
+          <td>${esc(item.correlation_type || '-')}</td>
+          <td>${esc((item.involved_domains || []).join(', ') || '-')}</td>
+          <td>${toNumber(item.correlation_score).toFixed(2)}</td>
+          <td>${toNumber(item.confidence).toFixed(2)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma correlation disponivel.', 5);
+    }
+
+    const graph = byId('trustGraphSummary');
+    if (graph) {
+      graph.innerHTML = `<pre class="code-block">${esc(JSON.stringify(trustGraph, null, 2))}</pre>`;
+    }
+
+    const workflowsTable = byId('workflowGovernanceTableBody');
+    if (workflowsTable) {
+      workflowsTable.innerHTML = workflowExecutions.items?.length ? workflowExecutions.items.map((item) => `
+        <tr>
+          <td><code>${esc(item.id.slice(0, 8))}</code></td>
+          <td>${esc(item.status || '-')}</td>
+          <td>${esc(item.governance_status || '-')}</td>
+          <td>${esc(item.replay_status || '-')}</td>
+          <td><code>${esc((item.governance_ledger_hash || '').slice(0, 16) || '-')}</code></td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma execucao de workflow encontrada.', 5);
+    }
+
+    const replayTable = byId('replaySessionsTableBody');
+    if (replayTable) {
+      replayTable.innerHTML = replaySessions.items?.length ? replaySessions.items.map((item) => `
+        <tr>
+          <td><code>${esc(item.id.slice(0, 8))}</code></td>
+          <td><code>${esc(item.original_execution_id.slice(0, 8))}</code></td>
+          <td>${esc(item.session_status || '-')}</td>
+          <td>${item.mismatch_detected || item.policy_mismatch_detected ? 'sim' : 'nao'}</td>
+          <td><code>${esc((item.report_hash || '').slice(0, 16) || '-')}</code></td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma replay session encontrada.', 5);
+    }
+  }
+
+  async function loadAuditPage() {
+    const [
+      chains,
+      evidence,
+      attestations,
+      exceptions,
+      reports,
+      logs,
+      federation
+    ] = await Promise.all([
+      apiFetch('/portal/audit/approval-chains'),
+      apiFetch('/portal/audit/evidence-packages'),
+      apiFetch('/portal/audit/attestations'),
+      apiFetch('/portal/audit/exceptions'),
+      apiFetch('/portal/audit/reports'),
+      apiFetch('/portal/audit/access-logs'),
+      apiFetch('/portal/governance-federation-summary')
+    ]);
+
+    const summary = byId('auditSummary');
+    if (summary) {
+      summary.innerHTML = `
+        <div class="summary-card"><div class="field-label">Approval Chains</div><div class="usage-num">${(chains.items || []).length}</div></div>
+        <div class="summary-card"><div class="field-label">Evidence</div><div class="usage-num">${(evidence.items || []).length}</div></div>
+        <div class="summary-card"><div class="field-label">Attestations</div><div class="usage-num">${(attestations.items || []).length}</div></div>
+        <div class="summary-card"><div class="field-label">Exceptions</div><div class="usage-num">${(exceptions.items || []).length}</div></div>
+      `;
+    }
+
+    const federationBox = byId('federationSummary');
+    if (federationBox) {
+      federationBox.innerHTML = `
+        <div class="field"><div class="field-label">Policies Replicadas</div><div class="field-value">${federation.policies_replicated || 0}</div></div>
+        <div class="field"><div class="field-label">Eventos Federados</div><div class="field-value">${federation.audit_events_federated || 0}</div></div>
+        <div class="field"><div class="field-label">Consistency</div><div class="field-value">${esc(federation.consistency_status || '-')}</div></div>
+        <div class="field"><div class="field-label">Regions</div><div class="field-value">${federation.region_coverage || 0}</div></div>
+      `;
+    }
+
+    renderAuditTable('approvalChainsTableBody', chains.items, (item) => `
+      <tr>
+        <td>${esc(item.control_area || '-')}</td>
+        <td>${esc(item.status || '-')}</td>
+        <td>${esc(item.actor_email || item.actor_name || '-')}</td>
+        <td>${formatDateTime(item.created_at)}</td>
+      </tr>
+    `, 4, 'Nenhuma approval chain encontrada.');
+    renderAuditTable('evidencePackagesTableBody', evidence.items, (item) => `
+      <tr>
+        <td>${esc(item.evidence_type || '-')}</td>
+        <td>${esc(item.control_area || '-')}</td>
+        <td>${esc(item.status || '-')}</td>
+        <td>${formatDateTime(item.created_at)}</td>
+      </tr>
+    `, 4, 'Nenhum evidence package encontrado.');
+    renderAuditTable('attestationsTableBody', attestations.items, (item) => `
+      <tr>
+        <td>${esc(item.attestation_type || '-')}</td>
+        <td>${esc(item.status || '-')}</td>
+        <td>${esc(item.control_area || '-')}</td>
+        <td>${formatDateTime(item.created_at)}</td>
+      </tr>
+    `, 4, 'Nenhuma attestation encontrada.');
+    renderAuditTable('exceptionsTableBody', exceptions.items, (item) => `
+      <tr>
+        <td>${esc(item.exception_type || '-')}</td>
+        <td>${esc(item.severity || '-')}</td>
+        <td>${esc(item.status || '-')}</td>
+        <td>${formatDateTime(item.created_at)}</td>
+      </tr>
+    `, 4, 'Nenhuma exception encontrada.');
+    renderAuditTable('reportsTableBody', reports.items, (item) => `
+      <tr>
+        <td>${esc(item.report_type || '-')}</td>
+        <td>${esc(item.export_format || '-')}</td>
+        <td><code>${esc((item.immutable_hash || '').slice(0, 16) || '-')}</code></td>
+        <td>${formatDateTime(item.created_at)}</td>
+        <td><button class="secondary" onclick="downloadAuditReport('${item.id}')">Download</button></td>
+      </tr>
+    `, 5, 'Nenhum report gerado.');
+    renderAuditTable('accessLogsTableBody', logs.items, (item) => `
+      <tr>
+        <td>${formatDateTime(item.created_at)}</td>
+        <td>${esc(item.actor_email || item.actor_name || '-')}</td>
+        <td>${esc(item.action || '-')}</td>
+        <td>${esc(item.resource_type || '-')}</td>
+      </tr>
+    `, 4, 'Nenhum access-log disponivel.');
+  }
+
+  function renderAuditTable(id, items, renderRow, colSpan, emptyMessage) {
+    const table = byId(id);
+    if (!table) return;
+    table.innerHTML = items?.length ? items.map(renderRow).join('') : renderEmpty(emptyMessage, colSpan);
+  }
+
+  async function loadDisputesPage() {
+    const [disputes, invoiceData, qosRecords, wallet] = await Promise.all([
+      apiFetch('/portal/billing/disputes'),
+      apiFetch('/portal/invoices'),
+      apiFetch('/portal/qos-billing'),
+      apiFetch('/portal/wallet')
+    ]);
+
+    const table = byId('disputesTableBody');
+    if (table) {
+      table.innerHTML = disputes.length ? disputes.map((item) => `
+        <tr>
+          <td><code>${esc(item.id.slice(0, 8))}</code></td>
+          <td>${esc(item.dispute_type)}</td>
+          <td>${formatMoney('BRL', item.claimed_amount_brl)}</td>
+          <td>${esc(item.status)}</td>
+          <td>${formatDateTime(item.created_at)}</td>
+        </tr>
+      `).join('') : renderEmpty('Nenhuma disputa aberta.', 5);
+    }
+
+    const invoiceSelect = byId('disputeInvoiceId');
+    if (invoiceSelect) {
+      invoiceSelect.innerHTML = '<option value="">Nenhuma</option>' + (invoiceData.invoices || []).map((invoice) => `<option value="${invoice.id}">${invoice.id.slice(0, 8)} · ${invoice.status} · ${invoice.currency} ${Number(invoice.total_amount).toFixed(2)}</option>`).join('');
+    }
+    const qosSelect = byId('disputeQosRecordId');
+    if (qosSelect) {
+      qosSelect.innerHTML = '<option value="">Nenhuma</option>' + qosRecords.map((record) => `<option value="${record.id || ''}">${record.qos_tier} · R$ ${toNumber(record.billable_amount_brl).toFixed(4)}</option>`).join('');
+    }
+    const walletSelect = byId('disputeWalletTransactionId');
+    if (walletSelect) {
+      walletSelect.innerHTML = '<option value="">Nenhuma</option>' + (wallet.transactions || []).map((tx) => `<option value="${tx.id}">${tx.type} · BRL ${Number(tx.amount_brl).toFixed(2)} · ${formatDateTime(tx.created_at)}</option>`).join('');
+    }
+  }
+
+  async function loadExamplesPage() {
+    const container = byId('examplesContent');
+    if (!container) return;
+    const examples = await apiFetch('/portal/examples');
+    const entries = Object.entries(examples.snippets || {});
+    container.innerHTML = `
+      <section>
+        <h3>Base URL</h3>
+        <pre class="code-block">${esc(examples.base_url || '/v1')}</pre>
+      </section>
+      ${entries.map(([name, snippet]) => `
+        <section>
+          <h3>${esc(name)}</h3>
+          <pre class="code-block">${esc(snippet)}</pre>
+        </section>
+      `).join('')}
+    `;
   }
 
   window.revokeKey = async (id) => {
-    if (!confirm('Tem certeza que deseja revogar esta chave? Esta ação é irreversível.')) return;
+    if (!confirm('Tem certeza que deseja revogar esta chave? Esta acao e irreversivel.')) return;
     await apiFetch(`/portal/api-keys/${id}`, { method: 'DELETE' });
     showToast('Chave revogada.');
     await loadApiKeys();
@@ -491,10 +952,49 @@
     URL.revokeObjectURL(url);
   };
 
+  window.simulateInvoicePayment = async (invoiceId) => {
+    await apiFetch(`/portal/simulate-payment/${invoiceId}`, { method: 'POST' });
+    showToast('Pagamento simulado com sucesso.');
+    await loadInvoices();
+  };
+
   window.deleteFile = async (id) => {
     if (!confirm('Excluir documento?')) return;
     await apiFetch(`/client/rag/documents/${id}`, { method: 'DELETE' });
     await loadRagFiles();
+  };
+
+  window.upgradePlan = async (planCode) => {
+    await apiFetch('/portal/upgrade', {
+      method: 'POST',
+      body: JSON.stringify({ plan_code: planCode })
+    });
+    showToast('Plano atualizado.');
+    await initPortal();
+  };
+
+  window.verifyReceipt = async (receiptId) => {
+    const result = await apiFetch(`/portal/inference/receipts/${receiptId}/verify`, { method: 'POST' });
+    showToast(`Receipt ${result.valid ? 'valido' : 'invalido'}.`);
+    await loadTrustPage();
+  };
+
+  window.verifyProof = async (proofId) => {
+    const result = await apiFetch(`/portal/inference/proofs/proofs/${proofId}/verify`, { method: 'POST' });
+    showToast(`Proof ${result.valid ? 'valida' : 'invalida'}.`);
+    await loadTrustPage();
+  };
+
+  window.downloadAuditReport = async (reportId) => {
+    const result = await apiFetchBlob(`/portal/audit/reports/${reportId}/download`);
+    const url = URL.createObjectURL(result.blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   if (els.doLogin) {
@@ -504,7 +1004,7 @@
       try {
         await attemptLogin(key, { persist: Boolean(els.rememberMe && els.rememberMe.checked) });
       } catch (err) {
-        alert('Chave inválida ou erro de conexão: ' + err.message);
+        alert('Falha ao autenticar no portal: ' + err.message);
       }
     });
   }
@@ -559,17 +1059,36 @@
     });
   }
 
-  if (els.walletRequestRecharge) {
-    els.walletRequestRecharge.addEventListener('click', async () => {
+  const walletRequestRecharge = byId('walletRequestRecharge');
+  if (walletRequestRecharge) {
+    walletRequestRecharge.addEventListener('click', async () => {
       await apiFetch('/portal/wallet/recharge-request', {
         method: 'POST',
         body: JSON.stringify({
-          amount_brl: els.walletRechargeAmount.value ? Number(els.walletRechargeAmount.value) : null,
-          note: 'Solicitação iniciada pelo portal do cliente'
+          amount_brl: byId('walletRechargeAmount').value ? Number(byId('walletRechargeAmount').value) : null,
+          note: 'Solicitacao iniciada pelo portal do cliente'
         })
       });
-      showToast('Solicitação de recarga registrada.');
-      els.walletRechargeAmount.value = '';
+      showToast('Solicitacao de recarga registrada.');
+      byId('walletRechargeAmount').value = '';
+    });
+  }
+
+  const walletCreateTopup = byId('walletCreateTopup');
+  if (walletCreateTopup) {
+    walletCreateTopup.addEventListener('click', async () => {
+      const amount = Number(byId('walletTopupAmount').value || 0);
+      if (!amount) return;
+      await apiFetch('/portal/wallet/topups', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount_brl: amount,
+          idempotency_key: `portal-${Date.now()}`
+        })
+      });
+      showToast('Intent de top-up criada.');
+      byId('walletTopupAmount').value = '';
+      await loadWallet();
     });
   }
 
@@ -595,7 +1114,7 @@
         const latency = (performance.now() - start).toFixed(0);
         const usage = result.usage || {};
         els.pgResponse.textContent = result.text;
-        els.pgStats.textContent = `Latência: ${latency}ms | Modelo: ${result.model} | Tokens: ${usage.total_tokens || 0}`;
+        els.pgStats.textContent = `Latencia: ${latency}ms | Modelo: ${result.model} | Tokens: ${usage.total_tokens || 0}`;
       } catch (err) {
         els.pgResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${esc(err.message)}</span>`;
       } finally {
@@ -614,7 +1133,7 @@
       els.btnRagUpload.disabled = true;
       try {
         await apiFetch('/client/rag/documents', { method: 'POST', body: fd });
-        showToast('Upload concluído!');
+        showToast('Upload concluido!');
         await loadRagFiles();
       } finally {
         els.btnRagUpload.disabled = false;
@@ -637,7 +1156,7 @@
         });
         els.ragQueryResponse.textContent = result.answer;
         if (result.sources && result.sources.length) {
-          els.ragQuerySources.innerHTML = '<strong>Fontes:</strong><br>' + result.sources.map((s) => `${esc(s.filename)} (pág ${s.page}) - Score: ${s.score.toFixed(2)}`).join('<br>');
+          els.ragQuerySources.innerHTML = '<strong>Fontes:</strong><br>' + result.sources.map((s) => `${esc(s.filename)} (pag ${s.page}) - Score: ${s.score.toFixed(2)}`).join('<br>');
         }
       } catch (err) {
         els.ragQueryResponse.innerHTML = `<span style="color: var(--danger);">Erro: ${esc(err.message)}</span>`;
@@ -647,6 +1166,48 @@
     });
   }
 
+  const auditGenerate = byId('generateAuditReport');
+  if (auditGenerate) {
+    auditGenerate.addEventListener('click', async () => {
+      const payload = {
+        report_type: byId('auditReportType').value,
+        period_start: byId('auditPeriodStart').value,
+        period_end: byId('auditPeriodEnd').value,
+        export_format: byId('auditExportFormat').value
+      };
+      await apiFetch('/portal/audit/reports/generate', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast('Relatorio solicitado.');
+      await loadAuditPage();
+    });
+  }
+
+  const disputeCreate = byId('createDispute');
+  if (disputeCreate) {
+    disputeCreate.addEventListener('click', async () => {
+      const payload = {
+        dispute_type: byId('disputeType').value,
+        claimed_amount_brl: Number(byId('disputeAmount').value || 0),
+        disputed_reason: byId('disputeReason').value.trim(),
+        invoice_id: byId('disputeInvoiceId').value || null,
+        qos_billing_record_id: byId('disputeQosRecordId').value || null,
+        wallet_transaction_id: byId('disputeWalletTransactionId').value || null
+      };
+      if (!payload.claimed_amount_brl || !payload.disputed_reason) return;
+      await apiFetch('/portal/billing/disputes', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast('Disputa registrada.');
+      byId('disputeReason').value = '';
+      byId('disputeAmount').value = '';
+      await loadDisputesPage();
+    });
+  }
+
+  enhanceNavigation();
   activateNav();
 
   const urlKey = readApiKeyFromUrl();

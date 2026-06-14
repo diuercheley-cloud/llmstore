@@ -3,7 +3,7 @@
 import uuid
 
 from app.api.dependencies.auth import get_current_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.runtime.distributed_runtime import DistributedAgentJob, RuntimeCluster, RuntimeNode
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select

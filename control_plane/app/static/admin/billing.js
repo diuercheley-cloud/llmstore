@@ -60,6 +60,10 @@
         return "R$ " + num(value).toFixed(2);
       }
 
+      function formatTokenLimit(value) {
+        return Number(value) > 0 ? Number(value).toLocaleString("pt-BR") : "Ilimitado";
+      }
+
       function setConnected(connected) {
         els.billingApp.classList.toggle("hidden", !connected);
         els.loginPrompt.classList.toggle("hidden", connected);
@@ -142,9 +146,9 @@
               <td><span class="pill ${plan.is_active === false ? "pill-warning" : "pill-success"}">${plan.is_active === false ? "inactive" : "active"}</span></td>
               <td>${num(plan.rate_limit_per_minute).toLocaleString("pt-BR")}/min</td>
               <td>
-                dia ${num(plan.daily_token_quota).toLocaleString("pt-BR")}<br />
-                semana ${num(plan.weekly_token_quota).toLocaleString("pt-BR")}<br />
-                mes ${num(plan.monthly_token_quota).toLocaleString("pt-BR")}
+                dia ${formatTokenLimit(plan.daily_token_quota)}<br />
+                semana ${formatTokenLimit(plan.weekly_token_quota)}<br />
+                mes ${formatTokenLimit(plan.monthly_token_quota)}
               </td>
               <td>${formatTimestamp(plan.updated_at || plan.created_at)}</td>
             </tr>

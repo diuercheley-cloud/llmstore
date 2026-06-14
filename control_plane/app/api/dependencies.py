@@ -1,13 +1,13 @@
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session as get_db_session_dependency
 from app.services.auth import require_admin, require_admin_role, require_client
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_db() -> AsyncSession:
-    async for session in get_db_session():
+    async for session in get_db_session_dependency():
         yield session
 
 async def get_current_admin(admin: Any = Depends(require_admin)) -> Any:

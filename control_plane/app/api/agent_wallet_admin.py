@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import uuid
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.agents.wallets.agent_wallet import AgentWalletService
 from app.services.agents.wallets.spend_authorization import SpendAuthorization
 from fastapi import APIRouter, Depends, HTTPException

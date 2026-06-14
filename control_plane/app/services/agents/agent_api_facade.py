@@ -71,8 +71,11 @@ async def validate_and_start_run(
         if agent.status == "deprecated":
             raise ValueError("Cannot execute a deprecated agent definition.")
 
-    from app.services.agents import agent_runtime
-    run = await agent_runtime.start_run(
+    from app.services.agents.agent_runtime_client import get_agent_runtime_client
+    from types import SimpleNamespace
+    
+    client = get_agent_runtime_client()
+    run = await client.start_run(
         db=db,
         agent_id=agent_id,
         tenant_id=str(tenant_id),
@@ -82,6 +85,10 @@ async def validate_and_start_run(
         session_id=session_id,
         is_simulation=is_simulation,
     )
+    
+    # Simple wrapper for remote dict response to match expected object interface
+    if isinstance(run, dict):
+        return SimpleNamespace(**run)
     return run
 
 async def validate_and_cancel_run(
@@ -103,9 +110,14 @@ async def validate_and_cancel_run(
         if run.status in ["completed", "failed", "cancelled"]:
             return run
             
-    from app.services.agents import agent_runtime
-    run = await agent_runtime.cancel_run(db, run_id)
-    return run
+    from app.services.agents.agent_runtime_client import get_agent_runtime_client
+    client = get_agent_runtime_client()
+    res = await client.cancel_run(db, run_id)
+    if isinstance(res, dict):
+        # We need to return the run object/namespace
+        run.status = res.get("status", "cancelled")
+        return run
+    return res
 
 async def validate_and_pause_run(
     db: AsyncSession,
@@ -123,8 +135,13 @@ async def validate_and_pause_run(
     if not is_admin and run.tenant_id != str(tenant_id):
         raise ValueError("Agent run not found")
             
-    from app.services.agents import agent_runtime
-    return await agent_runtime.pause_run(db, run_id)
+    from app.services.agents.agent_runtime_client import get_agent_runtime_client
+    client = get_agent_runtime_client()
+    res = await client.pause_run(db, run_id)
+    if isinstance(res, dict):
+        run.status = res.get("status", "paused")
+        return run
+    return res
 
 async def validate_and_resume_run(
     db: AsyncSession,
@@ -142,8 +159,13 @@ async def validate_and_resume_run(
     if not is_admin and run.tenant_id != str(tenant_id):
         raise ValueError("Agent run not found")
             
-    from app.services.agents import agent_runtime
-    return await agent_runtime.resume_run(db, run_id)
+    from app.services.agents.agent_runtime_client import get_agent_runtime_client
+    client = get_agent_runtime_client()
+    res = await client.resume_run(db, run_id)
+    if isinstance(res, dict):
+        run.status = res.get("status", "running")
+        return run
+    return res
 
 async def validate_and_replay_run(
     db: AsyncSession,

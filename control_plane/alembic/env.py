@@ -40,6 +40,8 @@ DefaultImpl.version_table_impl = _version_table_impl_128
 
 
 def ensure_alembic_version_width(connection) -> None:
+    if connection.dialect.name != "postgresql":
+        return
     result = connection.execute(
         text(
             """

@@ -6,9 +6,10 @@ from time import perf_counter
 
 from app.api.deps import EmbeddingService, get_embedding_service, get_inference_proxy
 from app.core.config import get_settings
-from app.core.request_context import get_correlation_id
-from app.db.session import get_db_session, get_redis
+from app.core.request_context import get_correlation_id, get_tenant_id
+from app.services.runtime_dependencies import get_db_session, get_redis
 from app.models.core.client import Client
+from app.services.runtime_dependencies import get_semantic_cache
 from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
 from app.models.core.model_backend_route import ModelBackendRoute
 from app.schemas.inference import (
@@ -68,7 +69,8 @@ from app.services.quota import (
     record_embedding_usage,
     record_usage,
 )
-from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit, enforce_rate_limit
+from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit
+from app.services.rate_limit_service import apply_api_rate_limit
 from app.services.response_cache import (
     build_chat_cache_key,
     build_completion_cache_key,
@@ -645,6 +647,7 @@ async def list_models(
 async def embeddings(
     payload: EmbeddingsRequest,
     request: Request,
+    response: Response,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
@@ -680,7 +683,16 @@ async def embeddings(
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
-        await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
+        
+        await apply_api_rate_limit(
+            redis=redis,
+            session=session,
+            client=client,
+            endpoint="/v1/embeddings",
+            limit=effective_plan.rate_limit_per_minute,
+            response=response
+        )
+
         await ensure_embeddings_quota(
             session, 
             client.id, 
@@ -785,6 +797,7 @@ async def embeddings(
 async def chat_completions(
     payload: ChatCompletionRequest,
     request: Request,
+    response: Response,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
@@ -799,6 +812,7 @@ async def chat_completions(
     return await _process_chat_completion(
         payload=payload,
         request=request,
+        response=response,
         client=client,
         session=session,
         redis=redis,
@@ -899,6 +913,7 @@ async def responses(
 async def _process_chat_completion(
     payload: ChatCompletionRequest,
     request: Request,
+    response: Response,
     client: Client,
     session: AsyncSession,
     redis,
@@ -925,6 +940,7 @@ async def _process_chat_completion(
         client=client,
         requested_model=payload.model,
     )
+    endpoint = request.url.path
     
     # Phase 18: Cross-Cluster Forwarding
     if endpoint in ["/v1/chat/completions", "/v1/completions"]:
@@ -1020,10 +1036,20 @@ async def _process_chat_completion(
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
-        await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
+
+        await apply_api_rate_limit(
+            redis=redis,
+            session=session,
+            client=client,
+            endpoint=request.url.path, # Will automatically handle /v1/chat/completions or /v1/completions
+            limit=effective_plan.rate_limit_per_minute,
+            response=response
+        )
+
         await ensure_quota(
-            session, 
-            client.id, 
+            session,
+            client.id,
+ 
             effective_plan.daily_token_quota, 
             effective_plan.weekly_token_quota, 
             effective_plan.monthly_token_quota, 
@@ -1121,6 +1147,25 @@ async def _process_chat_completion(
                 request_hash=cache_key,
                 plan_code=effective_plan.code,
             )
+            
+            # Semantic Cache Fallback
+            if not cached.hit and settings.semantic_cache_enabled:
+                sem_cache = get_semantic_cache(redis)
+                # Combine messages into a single string for semantic lookup
+                prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in payload.messages])
+                sem_hit = await sem_cache.get(
+                    tenant_id=get_tenant_id(),
+                    client_id=str(client.id),
+                    model=selected_model.model_id,
+                    prompt=prompt_text
+                )
+                if sem_hit:
+                    cached.hit = True
+                    cached.payload = sem_hit
+                    # Estimate tokens for semantic hit (simple approximation or use tokenizer)
+                    cached.prompt_tokens = prompt_tokens
+                    cached.completion_tokens = 0 # Will be updated if available in payload
+
             if cached.hit and cached.payload is not None:
                 if not proxy._chat_response_has_visible_output(
                     cached.payload,
@@ -1293,6 +1338,17 @@ async def _process_chat_completion(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
+
+        if settings.semantic_cache_enabled:
+            sem_cache = get_semantic_cache(redis)
+            prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in payload.messages])
+            await sem_cache.set(
+                tenant_id=get_tenant_id(),
+                client_id=str(client.id),
+                model=selected_model.model_id,
+                prompt=prompt_text,
+                response=response_payload
+            )
         await record_usage(
             session, 
             client.id, 
@@ -1493,6 +1549,7 @@ async def cancel_generation_job(
 async def completions(
     payload: CompletionRequest,
     request: Request,
+    response: Response,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
@@ -1506,6 +1563,7 @@ async def completions(
         client=client,
         requested_model=payload.model,
     )
+    endpoint = request.url.path
     
     logger.debug(
         "completions request resolved",
@@ -1550,10 +1608,20 @@ async def completions(
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
-        await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
+
+        await apply_api_rate_limit(
+            redis=redis,
+            session=session,
+            client=client,
+            endpoint=request.url.path, # Will automatically handle /v1/chat/completions or /v1/completions
+            limit=effective_plan.rate_limit_per_minute,
+            response=response
+        )
+
         await ensure_quota(
-            session, 
-            client.id, 
+            session,
+            client.id,
+ 
             effective_plan.daily_token_quota, 
             effective_plan.weekly_token_quota, 
             effective_plan.monthly_token_quota, 
@@ -1631,12 +1699,29 @@ async def completions(
         if not payload.stream:
             cached = await lookup_exact_cache(
                 session,
-                endpoint="/v1/completions",
+                endpoint=endpoint,
                 model=selected_model.model_id,
                 request_hash=cache_key,
                 plan_code=effective_plan.code,
             )
+
+            # Semantic Cache Fallback
+            if not cached.hit and settings.semantic_cache_enabled:
+                sem_cache = get_semantic_cache(redis)
+                sem_hit = await sem_cache.get(
+                    tenant_id=get_tenant_id(),
+                    client_id=str(client.id),
+                    model=selected_model.model_id,
+                    prompt=payload.prompt
+                )
+                if sem_hit:
+                    cached.hit = True
+                    cached.payload = sem_hit
+                    cached.prompt_tokens = prompt_tokens
+                    cached.completion_tokens = 0
+
             if cached.hit and cached.payload is not None:
+
                 latency_ms = int((perf_counter() - started) * 1000)
                 await record_usage(
                     session, 
@@ -1731,6 +1816,16 @@ async def completions(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
+
+        if settings.semantic_cache_enabled:
+            sem_cache = get_semantic_cache(redis)
+            await sem_cache.set(
+                tenant_id=get_tenant_id(),
+                client_id=str(client.id),
+                model=selected_model.model_id,
+                prompt=payload.prompt,
+                response=response_payload
+            )
         await record_usage(
             session, 
             client.id, 

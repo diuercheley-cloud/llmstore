@@ -3,7 +3,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.admin_rbac import record_admin_audit_event
 from app.services.auth import require_admin
 from app.services.runtime_profiles import RuntimeProfilesService

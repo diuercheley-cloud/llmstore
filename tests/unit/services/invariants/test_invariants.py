@@ -18,7 +18,7 @@ from app.services.invariants.trust_invariants import (
     validate_signed_artifact_has_signature_metadata,
 )
 
-ROOT_DIR = Path(__file__).resolve().parents[4]s[3]
+ROOT_DIR = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = ROOT_DIR / "scripts" / "validate_invariants.py"
 
 

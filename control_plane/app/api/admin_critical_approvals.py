@@ -2,7 +2,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import require_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.admin_rbac import authenticate_admin_request, is_rbac_admin_enabled
 from app.services.approval_service import ApprovalService, approvals_ws_manager
 from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin_role

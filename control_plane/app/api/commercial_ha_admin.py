@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_leader_lease import CommercialLeaderLease
 from app.services.auth import require_admin

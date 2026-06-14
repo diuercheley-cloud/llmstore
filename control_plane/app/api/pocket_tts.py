@@ -3,7 +3,7 @@ from pathlib import Path
 
 import httpx
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.billing.core import resolve_effective_plan_for_session
@@ -28,8 +28,7 @@ async def pocket_tts_ui():
     return FileResponse(ui_file)
 
 
-@router.api_route("/{path:path}", methods=["GET", "POST"])
-async def proxy_pocket_tts(
+async def _proxy_pocket_tts(
     request: Request, 
     path: str,
     client: Client = Depends(require_client),
@@ -118,3 +117,23 @@ async def proxy_pocket_tts(
             return response
         except httpx.RequestError as exc:
             raise HTTPException(status_code=503, detail=f"Pocket-TTS service unreachable: {exc}")
+
+
+@router.get("/{path:path}", operation_id="proxy_pocket_tts_get")
+async def proxy_pocket_tts_get(
+    request: Request,
+    path: str,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    return await _proxy_pocket_tts(request, path, client, session)
+
+
+@router.post("/{path:path}", operation_id="proxy_pocket_tts_post")
+async def proxy_pocket_tts_post(
+    request: Request,
+    path: str,
+    client: Client = Depends(require_client),
+    session: AsyncSession = Depends(get_db_session),
+):
+    return await _proxy_pocket_tts(request, path, client, session)

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ..api.deps import get_admin_user
-from ..db.session import get_db
+from app.services.runtime_dependencies import get_db
 from ..models.commercial.commercial_witness import (
     CommercialWitness,
     CommercialWitnessSignature,

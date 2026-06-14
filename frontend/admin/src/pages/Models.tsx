@@ -41,6 +41,13 @@ interface BackendOption {
   is_active: boolean
 }
 
+interface ModelsResponse {
+  registry?: Model[]
+  items?: Model[]
+  total?: number
+  backends?: BackendOption[]
+}
+
 export default function Models() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [filters, setFilters] = useState<any>({})
@@ -63,7 +70,11 @@ export default function Models() {
   })
   const queryClient = useQueryClient()
 
-  const { data: modelsData, isLoading: isLoadingModels } = useQuery({
+  const { data: modelsData, isLoading: isLoadingModels } = useQuery<{
+    items: Model[]
+    total: number
+    backends: BackendOption[]
+  }>({
     queryKey: ['models', pagination, filters, sorting],
     queryFn: async () => {
       const res = await api.get('/admin/models', {
@@ -73,8 +84,22 @@ export default function Models() {
           ...filters
         }
       })
-      if (Array.isArray(res.data)) return { items: res.data, total: res.data.length }
-      return res.data
+      const payload = res.data as Model[] | ModelsResponse
+      if (Array.isArray(payload)) {
+        return { items: payload, total: payload.length, backends: [] }
+      }
+
+      const items = Array.isArray(payload?.registry)
+        ? payload.registry
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : []
+
+      return {
+        items,
+        total: typeof payload?.total === 'number' ? payload.total : items.length,
+        backends: Array.isArray(payload?.backends) ? payload.backends : [],
+      }
     }
   })
 
@@ -87,15 +112,15 @@ export default function Models() {
     refetchInterval: 5000
   })
 
-  const { data: backendsData } = useQuery<{ items?: BackendOption[] } | BackendOption[]>({
+  const { data: backendsData } = useQuery<BackendOption[]>({
     queryKey: ['backends-options'],
     queryFn: async () => {
       const res = await api.get('/admin/backends', { params: { page: 1, limit: 200 } })
-      return res.data
+      return Array.isArray(res.data) ? res.data : Array.isArray(modelsData?.backends) ? modelsData.backends : []
     }
   })
 
-  const backendOptions = Array.isArray(backendsData) ? backendsData : (backendsData?.items || [])
+  const backendOptions = backendsData || modelsData?.backends || []
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string, enabled: boolean }) => {

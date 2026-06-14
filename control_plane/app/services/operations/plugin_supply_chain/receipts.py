@@ -40,3 +40,6 @@ def build_supply_chain_receipt(
     )
     receipt._logical_payload = logical_payload
     return receipt
+
+# placeholder-signature
+

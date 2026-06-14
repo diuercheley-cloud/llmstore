@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_governance_federation import (
     CommercialGovernanceFederationPeer,
 )

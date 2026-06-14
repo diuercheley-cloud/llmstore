@@ -48,6 +48,22 @@
             </div>
           </section>
           <section>
+            <h3>Top-ups Estruturados</h3>
+            <div class="toolbar-inline" style="margin-bottom:1rem;">
+              <div>
+                <div class="field-label">Valor do top-up</div>
+                <input id="walletTopupAmount" type="number" min="0" step="10" placeholder="Valor em BRL" />
+              </div>
+              <button id="walletCreateTopup">Criar Intent</button>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>ID</th><th>Valor</th><th>Status</th><th>Idempotency</th><th>Criado em</th></tr></thead>
+                <tbody id="walletTopups"></tbody>
+              </table>
+            </div>
+          </section>
+          <section>
             <h3>Histórico de Transações</h3>
             <div class="table-wrapper">
               <table>

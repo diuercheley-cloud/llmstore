@@ -393,6 +393,9 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     import app.models
+    import app.models.core.model_health
+    import app.models.core.inference_routing_decision
+    import app.models.commercial.global_routing_policy
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -416,6 +419,9 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     import app.models
+    import app.models.core.model_health
+    import app.models.core.inference_routing_decision
+    import app.models.commercial.global_routing_policy
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -427,11 +433,17 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
         await ensure_admin_rbac_seed(session)
         await session.commit()
 
+    from app.services.runtime_dependencies import get_db_session as get_db_session_dep
+
     async def override_get_db_session():
         async with testing_session_local() as session:
             yield session
 
+    from app.api.deps import get_db_session as get_db_session_api
+
     fastapi_app.dependency_overrides[get_db_session] = override_get_db_session
+    fastapi_app.dependency_overrides[get_db_session_dep] = override_get_db_session
+    fastapi_app.dependency_overrides[get_db_session_api] = override_get_db_session
     fastapi_app.dependency_overrides[get_redis] = lambda: fake_redis
 
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://testserver") as client:

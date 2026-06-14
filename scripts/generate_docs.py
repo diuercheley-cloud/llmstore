@@ -8,7 +8,8 @@ from typing import Any
 
 # Add control_plane to sys.path
 root_dir = Path(__file__).parent.parent
-sys.path.append(str(root_dir / "control_plane"))
+sys.path.insert(0, str(root_dir))
+sys.path.insert(0, str(root_dir / "control_plane"))
 
 # Mocking some imports that might fail due to missing env or dependencies
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"

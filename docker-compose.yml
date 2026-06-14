@@ -115,6 +115,8 @@ services:
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
       DEMO_MODE: ${DEMO_MODE:-false}
+      PYTHONPATH: /app:/app/control_plane
+      # ADMIN_TOKEN_FILE: /run/secrets/admin_token
     depends_on:
       postgres:
         condition: service_healthy
@@ -125,10 +127,7 @@ services:
     ports:
       - "${HOST_PORT:-8080}:8080"
     volumes:
-      - ./control_plane/app:/app/app
-      - ./control_plane/app:/app/control_plane/app
-      - ./control_plane/alembic:/app/alembic
-      - ./control_plane/alembic.ini:/app/alembic.ini
+      - ./control_plane:/app/control_plane
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./models:/models:ro
@@ -157,7 +156,8 @@ services:
       REDIS_URL: ${REDIS_URL}
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
       DEMO_MODE: ${DEMO_MODE:-false}
-    command: ["sh", "-c", "/opt/venv/bin/python -m alembic upgrade head && /opt/venv/bin/python -m app.workers.generation_worker"]
+      # ADMIN_TOKEN_FILE: /run/secrets/admin_token
+    command: ["sh", "-c", "cd control_plane && alembic upgrade head && cd .. && python -m app.workers.generation_worker"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -166,16 +166,13 @@ services:
       data-plane-gemma:
         condition: service_started
     volumes:
-      - ./control_plane/app:/app/app
-      - ./control_plane/app:/app/control_plane/app
-      - ./control_plane/alembic:/app/alembic
-      - ./control_plane/alembic.ini:/app/alembic.ini
+      - ./control_plane:/app/control_plane
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./models:/models:ro
       - ./data:/data
       - ./config:/config:ro
-    restart: unless-stopped
+      - ./tests:/app/tests
     networks:
       - control_net
 
@@ -188,15 +185,14 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
-    command: ["bash", "-lc", "/opt/venv/bin/python -m app.workers.rag_worker"]
+    command: ["bash", "-lc", "python -m app.workers.rag_worker"]
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
-      - ./control_plane/app:/app/app
-      - ./control_plane/app:/app/control_plane/app
+      - ./control_plane:/app/control_plane
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./data:/data
@@ -217,7 +213,7 @@ services:
       AGENT_EXECUTION_PLANE_ENABLED: "true"
       AGENT_WORKER_ENABLED: "true"
       AGENT_RUNTIME_ENABLED: "true"
-    command: ["bash", "-lc", "/opt/venv/bin/python -m app.workers.agent_worker"]
+    command: ["bash", "-lc", "python -m app.workers.agent_worker"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,8 +227,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./control_plane/app:/app/app
-      - ./control_plane/app:/app/control_plane/app
+      - ./control_plane:/app/control_plane
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./data:/data

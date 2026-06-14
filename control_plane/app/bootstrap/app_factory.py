@@ -3,6 +3,7 @@ from app.bootstrap.exceptions import register_exception_handlers
 from app.bootstrap.middleware import configure_middleware
 from app.bootstrap.routers import register_routers
 from app.bootstrap.lifecycle import lifespan
+from app.bootstrap.static import mount_static_files
 from app.core.config import get_settings
 
 def create_app() -> FastAPI:
@@ -22,6 +23,7 @@ Oferece compatibilidade com a API OpenAI, gestão de cotas, faturamento e roteam
     register_exception_handlers(app)
     
     configure_middleware(app, settings)
+    mount_static_files(app, settings.enable_legacy_static)
     register_routers(app, settings)
     
     return app

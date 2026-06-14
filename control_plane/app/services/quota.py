@@ -28,11 +28,11 @@ async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekl
     if requests_per_day_limit > 0 and daily.used_requests + 1 > requests_per_day_limit:
         raise QuotaExceeded("daily request quota exceeded")
         
-    if daily.used_tokens + incoming_tokens > daily_limit:
+    if daily_limit > 0 and daily.used_tokens + incoming_tokens > daily_limit:
         raise QuotaExceeded("daily token quota exceeded")
-    if weekly.used_tokens + incoming_tokens > weekly_limit:
+    if weekly_limit > 0 and weekly.used_tokens + incoming_tokens > weekly_limit:
         raise QuotaExceeded("weekly token quota exceeded")
-    if monthly.used_tokens + incoming_tokens > monthly_limit:
+    if monthly_limit > 0 and monthly.used_tokens + incoming_tokens > monthly_limit:
         raise QuotaExceeded("monthly token quota exceeded")
 
 

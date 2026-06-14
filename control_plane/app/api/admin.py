@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.request_log import RequestLog
 from app.schemas.admin import CapabilityRead
 from app.services.auth import require_admin

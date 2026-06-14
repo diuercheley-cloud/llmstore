@@ -2,7 +2,7 @@
 import uuid
 
 from app.core.config import get_settings
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.agents.sab.sab_exporter import SABExporter
 from app.services.agents.sab.sab_importer import SABImporter
 from app.services.agents.sab.sab_manifest import AgentSABManifest

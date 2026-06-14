@@ -10,6 +10,14 @@ from app.contracts.base import (
     ContractValidationError,
 )
 from app.contracts.event import EventCapabilities, EventContract, PlatformEvent
+from app.contracts.backend_lifecycle import (
+    BackendDesiredState,
+    BackendLifecycleCapabilities,
+    BackendLifecycleContract,
+    BackendObservedState,
+    DriftRecord,
+    LifecycleActionResult,
+)
 from app.contracts.model_runtime import (
     ModelInstance,
     ModelRuntimeCapabilities,
@@ -66,4 +74,10 @@ __all__ = [
     "ModelRuntimeContract",
     "ModelInstance",
     "ModelRuntimeCapabilities",
+    "BackendLifecycleContract",
+    "BackendLifecycleCapabilities",
+    "BackendDesiredState",
+    "BackendObservedState",
+    "DriftRecord",
+    "LifecycleActionResult",
 ]

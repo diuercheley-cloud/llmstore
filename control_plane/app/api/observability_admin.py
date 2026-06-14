@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, List
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.platform_slo import PlatformSLOService
 from app.services.visual_observability import VisualObservabilityService
 from fastapi import APIRouter, Depends, HTTPException

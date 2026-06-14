@@ -2,7 +2,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.billing.wallet_service import (
     adjustment,

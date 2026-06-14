@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_policy_runtime import (
     CommercialPolicyEvaluation,
     CommercialPolicyViolation,

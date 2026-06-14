@@ -2,7 +2,7 @@
 import json
 from uuid import UUID
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.governance.policy_engine import (
     DeterministicPolicy,
     PolicyBundle,

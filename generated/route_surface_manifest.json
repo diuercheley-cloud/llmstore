@@ -259,9 +259,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_config_detailed_key",
@@ -271,9 +271,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_models",
@@ -535,9 +535,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/backend-lifecycle.md"
   },
   {
     "route_id": "POST_admin_backends_backend_id_stop",
@@ -547,9 +547,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/backend-lifecycle.md"
   },
   {
     "route_id": "POST_admin_backends_backend_id_restart",
@@ -559,9 +559,57 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/backend-lifecycle.md"
+  },
+  {
+    "route_id": "GET_admin_backends_backend_id_lifecycle_observed",
+    "path": "/admin/backends/{backend_id}/lifecycle/observed",
+    "method": "GET",
+    "router_module": "app.api.admin_backends",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "platform-ops",
+    "doc_link": "/docs/operations/backend-lifecycle.md"
+  },
+  {
+    "route_id": "POST_admin_backends_backend_id_lifecycle_reconcile",
+    "path": "/admin/backends/{backend_id}/lifecycle/reconcile",
+    "method": "POST",
+    "router_module": "app.api.admin_backends",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "platform-ops",
+    "doc_link": "/docs/operations/backend-lifecycle.md"
+  },
+  {
+    "route_id": "POST_admin_backends_lifecycle_reconcile-all",
+    "path": "/admin/backends/lifecycle/reconcile-all",
+    "method": "POST",
+    "router_module": "app.api.admin_backends",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "platform-ops",
+    "doc_link": "/docs/operations/backend-lifecycle.md"
+  },
+  {
+    "route_id": "GET_admin_backends_lifecycle_drift-history",
+    "path": "/admin/backends/lifecycle/drift-history",
+    "method": "GET",
+    "router_module": "app.api.admin_backends",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "platform-ops",
+    "doc_link": "/docs/operations/backend-lifecycle.md"
   },
   {
     "route_id": "POST_admin_backends_circuit-breaker_reset",
@@ -849,7 +897,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_readiness_latest",
@@ -885,7 +933,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_usage_summary",
@@ -897,7 +945,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_usage_by-client",
@@ -909,7 +957,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_usage_by-model",
@@ -921,7 +969,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_revenue_summary",
@@ -957,7 +1005,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_export_clients",
@@ -993,7 +1041,7 @@
     "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/admin/usage-dashboard.md"
   },
   {
     "route_id": "GET_admin_export_payments",
@@ -1051,9 +1099,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_inference_backends_vllm_models",
@@ -1063,9 +1111,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_inference_backends_vllm_test",
@@ -1075,9 +1123,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_mlops_datasets",
@@ -1087,9 +1135,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_mlops_datasets",
@@ -1099,9 +1147,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_mlops_datasets_id_approve",
@@ -1111,9 +1159,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_mlops_datasets_id_versions",
@@ -1123,9 +1171,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_mlops_fine-tuning_jobs",
@@ -1135,9 +1183,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_mlops_fine-tuning_jobs_id",
@@ -1147,9 +1195,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_mlops_experiments",
@@ -1159,9 +1207,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_mlops_model-lineage_model_id",
@@ -1171,9 +1219,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_benchmarks",
@@ -1315,9 +1363,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_inference_routing_last-decision",
@@ -1327,9 +1375,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_inference_routing_simulate",
@@ -1339,9 +1387,21 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "DELETE_admin_inference_routing_decisions_cleanup",
+    "path": "/admin/inference/routing/decisions/cleanup",
+    "method": "DELETE",
+    "router_module": "app.api.admin_inference",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_executions_run_id_manifest",
@@ -1351,9 +1411,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_executions_run_id_replay_dry-run",
@@ -1363,9 +1423,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_executions_run_id_steps",
@@ -1375,9 +1435,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_agent-evaluation_benchmarks",
@@ -1387,9 +1447,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_evaluation_agent-evaluation_runs",
@@ -1399,9 +1459,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_agent-evaluation_runs",
@@ -1411,9 +1471,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_agent-evaluation_runs_run_id_export",
@@ -1423,9 +1483,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_rankings",
@@ -1435,9 +1495,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_evaluation_runs",
@@ -1447,9 +1507,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_runs_run_id_results",
@@ -1459,9 +1519,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_evaluation_red-team_findings",
@@ -1471,9 +1531,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_evaluation_arena_match",
@@ -1483,9 +1543,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_costs_summary",
@@ -1495,9 +1555,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_costs_by-agent",
@@ -1507,9 +1567,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_costs_by-tool",
@@ -1519,9 +1579,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_costs_by-tenant",
@@ -1531,9 +1591,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_costs_export",
@@ -1543,9 +1603,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_federation_peers",
@@ -1555,9 +1615,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_federation_sync_export",
@@ -1567,9 +1627,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_federation_sync_import",
@@ -1579,9 +1639,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_federation_sync_dry-run",
@@ -1591,9 +1651,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup",
@@ -1603,9 +1663,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_create",
@@ -1615,9 +1675,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_backup",
@@ -1627,9 +1687,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_backup_list",
@@ -1639,9 +1699,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_backup_backup_id",
@@ -1651,9 +1711,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_backup_backup_id_verify",
@@ -1663,9 +1723,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_backup_id_verify",
@@ -1675,9 +1735,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_backup_id_restore",
@@ -1687,9 +1747,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_backup_id_restore_dry-run",
@@ -1699,9 +1759,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_backup_backup_id_status",
@@ -1711,9 +1771,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_audit_verify",
@@ -1723,9 +1783,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_restore-requests",
@@ -1735,9 +1795,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_restore-requests_id_approve",
@@ -1747,9 +1807,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_backup_restore-requests_id_execute",
@@ -1759,9 +1819,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_compliance_evidence",
@@ -1771,9 +1831,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_compliance_evidence_collect",
@@ -1783,9 +1843,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_compliance_evidence_export",
@@ -1795,9 +1855,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_marketplace_agents",
@@ -1807,9 +1867,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_marketplace_validate",
@@ -1819,9 +1879,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_marketplace_install_dry-run",
@@ -1831,9 +1891,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_marketplace_install_approve",
@@ -1843,9 +1903,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_performance_capabilities",
@@ -1855,9 +1915,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_performance_backends",
@@ -1867,9 +1927,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_performance_recommendations",
@@ -1879,9 +1939,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_performance_simulate",
@@ -1891,9 +1951,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_admin_models_provenance",
@@ -1903,9 +1963,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_models_provenance_verify_record_id",
@@ -1915,9 +1975,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_admin_models_watermark_verify",
@@ -1927,9 +1987,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_agents_agent_id_memory",
@@ -2011,9 +2071,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_observability_anomalies",
@@ -2023,9 +2083,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_observability_anomalies_dry-run",
@@ -2035,9 +2095,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_models_experiments",
@@ -2047,9 +2107,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_models_experiments",
@@ -2059,9 +2119,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_models_experiments_experiment_id_promote",
@@ -2071,9 +2131,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_models_experiments_experiment_id_rollback",
@@ -2083,9 +2143,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_models_runtime",
@@ -2251,9 +2311,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_policies_dry-run",
@@ -2263,9 +2323,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_policies",
@@ -2275,9 +2335,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_rbac_users",
@@ -2431,9 +2491,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_sandbox_dry-run",
@@ -2443,9 +2503,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_sandbox_explain_tool_name",
@@ -2455,9 +2515,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_vectorstores_health",
@@ -2467,9 +2527,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_vectorstores_provider",
@@ -2479,9 +2539,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_vectorstores_test",
@@ -2491,9 +2551,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_chaos_experiments",
@@ -2515,9 +2575,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_chaos_runs",
@@ -2527,9 +2587,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_chaos_runs",
@@ -3043,9 +3103,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_harness_runs",
@@ -3055,9 +3115,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_runs_run_id",
@@ -3067,9 +3127,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_runs_run_id_events",
@@ -3079,9 +3139,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_harness_runs_run_id_cancel",
@@ -3091,9 +3151,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_runs",
@@ -3103,9 +3163,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "DELETE_admin_harness_runs_run_id",
@@ -3115,9 +3175,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_providers",
@@ -3127,9 +3187,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_providers_provider_name_models",
@@ -3139,9 +3199,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_tools",
@@ -3151,9 +3211,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_evals",
@@ -3163,9 +3223,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_harness_evals_runs",
@@ -3175,9 +3235,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_evals_runs_eval_run_id_events",
@@ -3187,9 +3247,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_harness_evals_runs_eval_run_id",
@@ -3199,9 +3259,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_clusters",
@@ -3235,9 +3295,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_clusters_id",
@@ -4627,9 +4687,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_keys",
@@ -4639,9 +4699,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_keys_key_id_rotate",
@@ -4651,9 +4711,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_keys_key_id_revoke",
@@ -4663,9 +4723,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_encrypt",
@@ -4675,9 +4735,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_decrypt",
@@ -4687,9 +4747,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_security_encryption_admin_security_encryption_audit",
@@ -4699,9 +4759,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_security_encryption_admin_security_encryption_classification",
@@ -4711,9 +4771,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_inference_proofs_timelines",
@@ -7291,9 +7351,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "core",
-    "owner": "core-team",
-    "doc_link": "docs/OPENAI_COMPATIBILITY.md"
+    "status": "beta",
+    "owner": "voice-agent",
+    "doc_link": "/docs/realtime/voice.md"
   },
   {
     "route_id": "GET_v1_voice_sessions",
@@ -7303,9 +7363,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "core",
-    "owner": "core-team",
-    "doc_link": "docs/OPENAI_COMPATIBILITY.md"
+    "status": "beta",
+    "owner": "voice-agent",
+    "doc_link": "/docs/realtime/voice.md"
   },
   {
     "route_id": "GET_v1_voice_sessions_session_id",
@@ -7315,9 +7375,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "core",
-    "owner": "core-team",
-    "doc_link": "docs/OPENAI_COMPATIBILITY.md"
+    "status": "beta",
+    "owner": "voice-agent",
+    "doc_link": "/docs/realtime/voice.md"
   },
   {
     "route_id": "DELETE_v1_voice_sessions_session_id",
@@ -7327,9 +7387,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "core",
-    "owner": "core-team",
-    "doc_link": "docs/OPENAI_COMPATIBILITY.md"
+    "status": "beta",
+    "owner": "voice-agent",
+    "doc_link": "/docs/realtime/voice.md"
   },
   {
     "route_id": "POST_v1_voice_webrtc_offer",
@@ -7339,9 +7399,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "core",
-    "owner": "core-team",
-    "doc_link": "docs/OPENAI_COMPATIBILITY.md"
+    "status": "simulated",
+    "owner": "voice-agent",
+    "doc_link": "/docs/realtime/voice.md"
   },
   {
     "route_id": "GET_v1_ide_workspace",
@@ -7867,9 +7927,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_operations_admin_operations_attestations",
@@ -7879,9 +7939,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_operations_admin_operations_attestations_attestation_id",
@@ -7891,9 +7951,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestations_attestation_id_verify",
@@ -7903,9 +7963,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestations_attestation_id_revoke",
@@ -7915,9 +7975,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestation-bundles",
@@ -7927,9 +7987,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_operations_admin_operations_attestation-bundles",
@@ -7939,9 +7999,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestation-bundles_import",
@@ -7951,9 +8011,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestation-bundles_bundle_id_verify",
@@ -7963,9 +8023,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_operations_admin_operations_attestation-chains_attestation_id",
@@ -7975,9 +8035,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_admin_operations_attestations_attestation_id_receipt",
@@ -7987,9 +8047,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_compatibility_contracts",
@@ -8112,76 +8172,76 @@
     "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "POST_admin_operations_correlations_admin_operations_correlations_run",
-    "path": "/admin/operations/correlations/admin/operations/correlations/run",
+    "route_id": "POST_admin_operations_correlations_run",
+    "path": "/admin/operations/correlations/run",
     "method": "POST",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "GET_admin_operations_correlations_admin_operations_correlations",
-    "path": "/admin/operations/correlations/admin/operations/correlations/",
+    "route_id": "GET_admin_operations_correlations",
+    "path": "/admin/operations/correlations/",
     "method": "GET",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "POST_admin_operations_correlations_admin_operations_correlations_trust-graph_build",
-    "path": "/admin/operations/correlations/admin/operations/correlations/trust-graph/build",
+    "route_id": "POST_admin_operations_correlations_trust-graph_build",
+    "path": "/admin/operations/correlations/trust-graph/build",
     "method": "POST",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "GET_admin_operations_correlations_admin_operations_correlations_trust-graph",
-    "path": "/admin/operations/correlations/admin/operations/correlations/trust-graph",
+    "route_id": "GET_admin_operations_correlations_trust-graph",
+    "path": "/admin/operations/correlations/trust-graph",
     "method": "GET",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "GET_admin_operations_correlations_admin_operations_correlations_correlation_id",
-    "path": "/admin/operations/correlations/admin/operations/correlations/{correlation_id}",
+    "route_id": "GET_admin_operations_correlations_correlation_id",
+    "path": "/admin/operations/correlations/{correlation_id}",
     "method": "GET",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "POST_admin_operations_correlations_admin_operations_correlations_correlation-risk-analysis",
-    "path": "/admin/operations/correlations/admin/operations/correlations/correlation-risk-analysis",
+    "route_id": "POST_admin_operations_correlations_correlation-risk-analysis",
+    "path": "/admin/operations/correlations/correlation-risk-analysis",
     "method": "POST",
     "router_module": "app.api.operations_correlation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_federation_environments",
@@ -8503,9 +8563,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_provenance",
@@ -8515,9 +8575,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_provenance_provenance_id",
@@ -8527,9 +8587,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_verify",
@@ -8539,9 +8599,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_revoke",
@@ -8551,9 +8611,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_sbom",
@@ -8563,9 +8623,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_sbom",
@@ -8575,9 +8635,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_dependency-verify",
@@ -8587,9 +8647,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_dependency-verifications",
@@ -8599,9 +8659,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_lineage",
@@ -8611,9 +8671,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_lineage",
@@ -8623,9 +8683,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_replay-verify",
@@ -8635,9 +8695,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_sign-placeholder",
@@ -8647,9 +8707,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "simulated",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "POST_admin_operations_plugin-supply-chain_provenance_provenance_id_receipt",
@@ -8659,9 +8719,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_receipts",
@@ -8671,9 +8731,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
   },
   {
     "route_id": "GET_admin_operations_plugin-supply-chain_dashboard",
@@ -8683,81 +8743,81 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
+    "status": "beta",
+    "owner": "platform-ops",
+    "doc_link": "/docs/plugins/plugin-supply-chain.md"
+  },
+  {
+    "route_id": "POST_admin_operations_remediation-plans_propose",
+    "path": "/admin/operations/remediation-plans/propose",
+    "method": "POST",
+    "router_module": "app.api.operations_remediation_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
     "status": "supported",
     "owner": "platform-ops",
     "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
-    "route_id": "POST_admin_operations_remediation-plans_admin_operations_remediation-plans_propose",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/propose",
+    "route_id": "GET_admin_operations_remediation-plans",
+    "path": "/admin/operations/remediation-plans/",
+    "method": "GET",
+    "router_module": "app.api.operations_remediation_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_operations_remediation-plans_plan_id",
+    "path": "/admin/operations/remediation-plans/{plan_id}",
+    "method": "GET",
+    "router_module": "app.api.operations_remediation_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_operations_remediation-plans_plan_id_steps",
+    "path": "/admin/operations/remediation-plans/{plan_id}/steps",
+    "method": "GET",
+    "router_module": "app.api.operations_remediation_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_operations_remediation-plans_plan_id_approvals",
+    "path": "/admin/operations/remediation-plans/{plan_id}/approvals",
+    "method": "GET",
+    "router_module": "app.api.operations_remediation_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_operations_remediation-plans_plan_id_receipt",
+    "path": "/admin/operations/remediation-plans/{plan_id}/receipt",
     "method": "POST",
     "router_module": "app.api.operations_remediation_admin",
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
-  },
-  {
-    "route_id": "GET_admin_operations_remediation-plans_admin_operations_remediation-plans",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/",
-    "method": "GET",
-    "router_module": "app.api.operations_remediation_admin",
-    "domain": "admin",
-    "profile": "admin",
-    "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
-  },
-  {
-    "route_id": "GET_admin_operations_remediation-plans_admin_operations_remediation-plans_plan_id",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/{plan_id}",
-    "method": "GET",
-    "router_module": "app.api.operations_remediation_admin",
-    "domain": "admin",
-    "profile": "admin",
-    "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
-  },
-  {
-    "route_id": "GET_admin_operations_remediation-plans_admin_operations_remediation-plans_plan_id_steps",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/{plan_id}/steps",
-    "method": "GET",
-    "router_module": "app.api.operations_remediation_admin",
-    "domain": "admin",
-    "profile": "admin",
-    "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
-  },
-  {
-    "route_id": "GET_admin_operations_remediation-plans_admin_operations_remediation-plans_plan_id_approvals",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/{plan_id}/approvals",
-    "method": "GET",
-    "router_module": "app.api.operations_remediation_admin",
-    "domain": "admin",
-    "profile": "admin",
-    "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
-  },
-  {
-    "route_id": "POST_admin_operations_remediation-plans_admin_operations_remediation-plans_plan_id_receipt",
-    "path": "/admin/operations/remediation-plans/admin/operations/remediation-plans/{plan_id}/receipt",
-    "method": "POST",
-    "router_module": "app.api.operations_remediation_admin",
-    "domain": "admin",
-    "profile": "admin",
-    "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "supported",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_operations_remediation-executions_prepare",
@@ -8767,9 +8827,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "POST_admin_operations_remediation-executions_execute",
@@ -8779,9 +8839,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "simulated",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "GET_admin_operations_remediation-executions",
@@ -8791,9 +8851,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "POST_admin_operations_remediation-executions_kill-switch",
@@ -8803,9 +8863,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "GET_admin_operations_remediation-executions_kill-switch",
@@ -8815,9 +8875,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "GET_admin_operations_remediation-executions_execution_id",
@@ -8827,9 +8887,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "POST_admin_operations_remediation-executions_execution_id_kill",
@@ -8839,9 +8899,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "GET_admin_operations_remediation-executions_execution_id_rollback-plan",
@@ -8851,9 +8911,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "supported",
+    "status": "beta",
     "owner": "platform-ops",
-    "doc_link": "/docs/api/supported-api-surface.md"
+    "doc_link": "/docs/operations/remediation_execution.md"
   },
   {
     "route_id": "POST_admin_operations_reproducible-builds_manifests",
@@ -9823,9 +9883,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_getting-started",
@@ -9955,9 +10015,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_operational-readiness",
@@ -10123,9 +10183,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin-dashboard",
@@ -10147,9 +10207,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin-v2",
@@ -10171,9 +10231,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin-lab",
@@ -10231,9 +10291,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_harness",
@@ -10243,9 +10303,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_tests",
@@ -10255,9 +10315,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_harness_rest:path",
@@ -10267,9 +10327,9 @@
     "domain": "core",
     "profile": "core",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_page.html",
@@ -11035,9 +11095,9 @@
     "domain": "auth",
     "profile": "auth",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_auth_callback_provider",
@@ -11047,9 +11107,9 @@
     "domain": "auth",
     "profile": "auth",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_auth_me",
@@ -11059,9 +11119,9 @@
     "domain": "auth",
     "profile": "auth",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts",
@@ -11071,9 +11131,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_prompts_api_v1_admin_prompts",
@@ -11083,9 +11143,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_template_id_versions",
@@ -11095,9 +11155,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_template_id_playground",
@@ -11107,9 +11167,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_template_id_experiments",
@@ -11119,9 +11179,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_template_id_versions_version_id_promote",
@@ -11131,9 +11191,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates",
@@ -11143,9 +11203,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_prompts_api_v1_admin_prompts_templates",
@@ -11155,9 +11215,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_variables",
@@ -11167,9 +11227,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_versions",
@@ -11179,9 +11239,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_render",
@@ -11191,9 +11251,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_playground",
@@ -11203,9 +11263,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_versions_version_id_promote",
@@ -11215,9 +11275,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_rollback",
@@ -11227,9 +11287,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_prompts_api_v1_admin_prompts_validate",
@@ -11239,9 +11299,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_prompts_api_v1_admin_prompts_templates_template_id_render-events",
@@ -11251,9 +11311,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_overview",
@@ -11263,9 +11323,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_agent_id",
@@ -11275,9 +11335,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_agent_id_costs",
@@ -11287,9 +11347,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_agent_id_latency",
@@ -11299,9 +11359,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_agent_id_tools",
@@ -11311,9 +11371,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_analytics_api_v1_admin_agents_analytics_dashboard",
@@ -11323,9 +11383,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_kb_api_v1_admin_kb",
@@ -11335,9 +11395,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_kb_api_v1_admin_kb_kb_id_documents",
@@ -11347,9 +11407,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_kb_api_v1_admin_kb_kb_id_ingest-url",
@@ -11359,9 +11419,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_kb_api_v1_admin_kb_kb_id_reindex",
@@ -11371,9 +11431,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_kb_api_v1_admin_kb_kb_id_documents",
@@ -11383,9 +11443,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_agent-service_api_v1_agent-service_agent_id_invoke",
@@ -11395,9 +11455,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_agent-service_api_v1_agent-service_agent_id_invoke-sync",
@@ -11407,9 +11467,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_agent-service_api_v1_agent-service_agent_id_callbacks",
@@ -11419,9 +11479,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_agent-service_api_v1_agent-service_runs_run_id",
@@ -11431,9 +11491,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_agents_agent_id_deployments",
@@ -11587,9 +11647,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_agents_slug_invoke-sync",
@@ -11599,9 +11659,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_agents_slug_runs_run_id",
@@ -11611,9 +11671,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_api_v1_alerts_grafana-webhook",
@@ -11623,9 +11683,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_api_v1_alerts_test-pagerduty",
@@ -11635,9 +11695,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_api_v1_alerts_resolve",
@@ -11647,9 +11707,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_agents_readiness",
@@ -12223,9 +12283,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_billing_webhooks_stripe",
@@ -12235,9 +12295,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_billing_payments_pix",
@@ -12247,9 +12307,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_billing_payments_card",
@@ -12259,9 +12319,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_billing_webhooks_provider",
@@ -12271,9 +12331,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_billing_payments_id",
@@ -12283,9 +12343,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_v1_multimodal_assets",
@@ -12343,9 +12403,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_multimodal_video_analyze",
@@ -12355,9 +12415,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_multimodal_capabilities",
@@ -12367,9 +12427,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_agents_cicd_pipelines",
@@ -12607,9 +12667,9 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_audit_export",
@@ -12619,9 +12679,441 @@
     "domain": "unknown",
     "profile": "unknown",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_agents",
+    "path": "/admin/agents",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents",
+    "path": "/admin/agents",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "PATCH_admin_agents_id",
+    "path": "/admin/agents/{id}",
+    "method": "PATCH",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_id_activate",
+    "path": "/admin/agents/{id}/activate",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_id_deprecate",
+    "path": "/admin/agents/{id}/deprecate",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_slo_classes",
+    "path": "/admin/agents/slo/classes",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_slo_report",
+    "path": "/admin/agents/slo/report",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_budgets",
+    "path": "/admin/agents/budgets",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_budgets_validate",
+    "path": "/admin/agents/budgets/validate",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_incidents_playbooks",
+    "path": "/admin/agents/incidents/playbooks",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "/docs/agents/agentic-incident-response.md"
+  },
+  {
+    "route_id": "POST_admin_agents_incidents_id_run-playbook",
+    "path": "/admin/agents/incidents/{id}/run-playbook",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "/docs/agents/agentic-incident-response.md"
+  },
+  {
+    "route_id": "GET_admin_agents_catalog",
+    "path": "/admin/agents/catalog",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_catalog_id_versions",
+    "path": "/admin/agents/catalog/{id}/versions",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_catalog_id_promote",
+    "path": "/admin/agents/catalog/{id}/promote",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_catalog_id_rollback",
+    "path": "/admin/agents/catalog/{id}/rollback",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_delegation-policies",
+    "path": "/admin/agents/delegation-policies",
+    "method": "POST",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_collaboration-sessions",
+    "path": "/admin/agents/collaboration-sessions",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agents_collaboration-sessions_id_trace",
+    "path": "/admin/agents/collaboration-sessions/{id}/trace",
+    "method": "GET",
+    "router_module": "app.api.agent_runtime_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "GET_admin_agent-registry",
+    "path": "/admin/agent-registry",
+    "method": "GET",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry",
+    "path": "/admin/agent-registry",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_agent-registry_id",
+    "path": "/admin/agent-registry/{id}",
+    "method": "GET",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "PATCH_admin_agent-registry_id",
+    "path": "/admin/agent-registry/{id}",
+    "method": "PATCH",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_submit-review",
+    "path": "/admin/agent-registry/{id}/submit-review",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_approve",
+    "path": "/admin/agent-registry/{id}/approve",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_activate",
+    "path": "/admin/agent-registry/{id}/activate",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_pause",
+    "path": "/admin/agent-registry/{id}/pause",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_deprecate",
+    "path": "/admin/agent-registry/{id}/deprecate",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_archive",
+    "path": "/admin/agent-registry/{id}/archive",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_agent-registry_id_versions",
+    "path": "/admin/agent-registry/{id}/versions",
+    "method": "GET",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_agent-registry_id_policy-diff",
+    "path": "/admin/agent-registry/{id}/policy-diff",
+    "method": "GET",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_agent-registry_id_lineage",
+    "path": "/admin/agent-registry/{id}/lineage",
+    "method": "GET",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_agent-registry_id_promote",
+    "path": "/admin/agent-registry/{id}/promote",
+    "method": "POST",
+    "router_module": "app.api.agent_registry_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_tenants_tenant_id_agentic-readiness",
+    "path": "/admin/tenants/{tenant_id}/agentic-readiness",
+    "method": "GET",
+    "router_module": "app.api.tenant_agentic_readiness_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "agent_runtime_enabled",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/tenant-readiness.md"
+  },
+  {
+    "route_id": "GET_admin_agents_agent_id_environments",
+    "path": "/admin/agents/{agent_id}/environments",
+    "method": "GET",
+    "router_module": "app.api.agent_environments_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_agent_id_promote",
+    "path": "/admin/agents/{agent_id}/promote",
+    "method": "POST",
+    "router_module": "app.api.agent_environments_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
+  },
+  {
+    "route_id": "POST_admin_agents_agent_id_rollback",
+    "path": "/admin/agents/{agent_id}/rollback",
+    "method": "POST",
+    "router_module": "app.api.agent_environments_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": "AGENT_COGNITIVE_LOOPBACK_ENABLED",
+    "status": "beta",
+    "owner": "agent-platform",
+    "doc_link": "docs/agents/cognitive-loopback.md"
   },
   {
     "route_id": "POST_admin_agents_studio_flows",
@@ -12643,9 +13135,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "GET_admin_agents_studio_flows_id",
@@ -12655,9 +13147,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "POST_admin_agents_studio_flows_id_validate",
@@ -12667,9 +13159,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "POST_admin_agents_studio_flows_id_compile",
@@ -12679,9 +13171,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "POST_admin_agents_studio_flows_id_explain",
@@ -12691,9 +13183,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "POST_admin_agents_studio_flows_id_dry-run",
@@ -12703,9 +13195,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "simulated",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "GET_admin_agents_studio_flows_runs_run_id_trace",
@@ -12715,9 +13207,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": "agent_studio_enabled",
-    "status": "supported",
+    "status": "beta",
     "owner": "agent-platform",
-    "doc_link": "docs/agents/agent-studio.md"
+    "doc_link": "/docs/agents/agent-studio.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_flows",
@@ -12727,9 +13219,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_flows_flow_id_versions",
@@ -12739,9 +13231,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_versions_version_id_validate",
@@ -12751,9 +13243,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_versions_version_id_compile",
@@ -12763,9 +13255,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_versions_version_id_deploy-real",
@@ -12775,9 +13267,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_studio_templates",
@@ -12787,9 +13279,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_studio_templates_template_id",
@@ -12799,9 +13291,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_api_v1_admin_agents_studio_flows_flow_id_deploy",
@@ -12811,9 +13303,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_api_v1_admin_agents_studio_flows_flow_id_versions_version_id_dag",
@@ -12823,9 +13315,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_agent-approvals",
@@ -12907,9 +13399,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_approvals",
@@ -12919,9 +13411,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_approvals_id",
@@ -12931,9 +13423,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_approvals_id_approve",
@@ -12943,9 +13435,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_approvals_id_reject",
@@ -12955,9 +13447,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_agents_observability_overview",
@@ -13207,9 +13699,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_mcp_tools",
@@ -13219,9 +13711,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_mcp_resources",
@@ -13231,9 +13723,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_mcp_prompts",
@@ -13243,9 +13735,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_mcp_call",
@@ -13255,9 +13747,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_agents_workspaces",
@@ -14131,9 +14623,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_compliance_audit-pack_id",
@@ -14143,9 +14635,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "GET_admin_billing_revenue-protection_policies",
@@ -14424,6 +14916,198 @@
     "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
+    "route_id": "GET_admin_routing_global-router_overview",
+    "path": "/admin/routing/global-router/overview",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-router_recommendations",
+    "path": "/admin/routing/global-router/recommendations",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-router_simulate",
+    "path": "/admin/routing/global-router/simulate",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "simulated",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-router_export",
+    "path": "/admin/routing/global-router/export",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-router_policies_simulate",
+    "path": "/admin/routing/global-router/policies/simulate",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "simulated",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-router_policies_draft",
+    "path": "/admin/routing/global-router/policies/draft",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-router_policies_policy_id_activate",
+    "path": "/admin/routing/global-router/policies/{policy_id}/activate",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-router_policies_rollback",
+    "path": "/admin/routing/global-router/policies/rollback",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-router_policies",
+    "path": "/admin/routing/global-router/policies",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_routing_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "beta",
+    "owner": "commercial-ops",
+    "doc_link": "/docs/COMMERCIAL_GLOBAL_ROUTING_DRY_RUN.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-traffic_policies",
+    "path": "/admin/routing/global-traffic/policies",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-traffic_policies",
+    "path": "/admin/routing/global-traffic/policies",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-traffic_policies_id_pause",
+    "path": "/admin/routing/global-traffic/policies/{id}/pause",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-traffic_policies_id_rollback",
+    "path": "/admin/routing/global-traffic/policies/{id}/rollback",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-traffic_policies_id_health",
+    "path": "/admin/routing/global-traffic/policies/{id}/health",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "POST_admin_routing_global-traffic_simulate",
+    "path": "/admin/routing/global-traffic/simulate",
+    "method": "POST",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
+    "route_id": "GET_admin_routing_global-traffic_decisions",
+    "path": "/admin/routing/global-traffic/decisions",
+    "method": "GET",
+    "router_module": "app.api.commercial_global_traffic_admin",
+    "domain": "admin",
+    "profile": "admin",
+    "feature_flag_required": null,
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
+  },
+  {
     "route_id": "POST_admin_agents_tool-synthesis_admin_agents_tool-synthesis_generate",
     "path": "/admin/agents/tool-synthesis/admin/agents/tool-synthesis/generate",
     "method": "POST",
@@ -14575,9 +15259,9 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   },
   {
     "route_id": "POST_admin_compat_migrate",
@@ -14587,8 +15271,8 @@
     "domain": "admin",
     "profile": "admin",
     "feature_flag_required": null,
-    "status": "unclassified",
-    "owner": "unknown",
-    "doc_link": null
+    "status": "internal",
+    "owner": "platform-ops",
+    "doc_link": "/docs/api/supported-api-surface.md"
   }
 ]

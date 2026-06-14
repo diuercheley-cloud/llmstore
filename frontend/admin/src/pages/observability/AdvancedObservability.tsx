@@ -24,11 +24,36 @@ export default function AdvancedObservability() {
     }
   })
 
+  const summary = metricsData?.summary || {}
   const cards = [
-    { title: 'Latência Avg', value: '450ms', icon: <Zap className="w-5 h-5 text-primary" />, trend: '+5%', status: 'nominal' },
-    { title: 'Custo Est.', value: '$12.40', icon: <DollarSign className="w-5 h-5 text-primary" />, trend: '-2%', status: 'nominal' },
-    { title: 'Tokens/Min', value: '1.2M', icon: <Brain className="w-5 h-5 text-primary" />, trend: '+12%', status: 'nominal' },
-    { title: 'Anomalias', value: anomalies?.length || '0', icon: <AlertTriangle className="w-5 h-5 text-destructive" />, trend: 'new', status: anomalies?.length > 0 ? 'warning' : 'nominal' }
+    {
+      title: 'Latência Avg',
+      value: `${Math.round(summary.average_latency_ms || 0)}ms`,
+      icon: <Zap className="w-5 h-5 text-primary" />,
+      trend: `${metricsData?.metrics?.length || 0} métricas`,
+      status: (summary.average_latency_ms || 0) > 2000 ? 'warning' : 'nominal',
+    },
+    {
+      title: 'Custo Est.',
+      value: `$${Number(summary.estimated_cost_usd || 0).toFixed(2)}`,
+      icon: <DollarSign className="w-5 h-5 text-primary" />,
+      trend: `${summary.cost_window || 'atual'}`,
+      status: 'nominal',
+    },
+    {
+      title: 'Tokens/Min',
+      value: Number(summary.tokens_per_minute || 0).toLocaleString(),
+      icon: <Brain className="w-5 h-5 text-primary" />,
+      trend: `${summary.token_window || 'atual'}`,
+      status: 'nominal',
+    },
+    {
+      title: 'Anomalias',
+      value: String(anomalies?.length || 0),
+      icon: <AlertTriangle className="w-5 h-5 text-destructive" />,
+      trend: anomalies?.length ? 'ativas' : 'estável',
+      status: anomalies?.length > 0 ? 'warning' : 'nominal',
+    },
   ]
 
   return (

@@ -51,8 +51,8 @@ class MockEvalProvider(BaseEvalProvider):
 class GatewayEvalProvider(BaseEvalProvider):
     """Provider utilizing the internal AgentRuntime execution loop."""
     async def resolve_llm_provider(self, db: AsyncSession, mock_responses: list) -> Any:
-        from app.api.deps import get_inference_proxy
         from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
+        from app.services.inference_proxy import get_inference_proxy
         proxy = get_inference_proxy()
         return GatewayAgentLLMProvider(db, proxy)
 
@@ -67,8 +67,8 @@ class RealProviderEvalProvider(BaseEvalProvider):
         settings = get_settings()
         if not settings.agent_eval_real_provider_enabled:
             raise ValueError("Real provider evals are disabled. Set AGENT_EVAL_REAL_PROVIDER_ENABLED=true to enable.")
-        from app.api.deps import get_inference_proxy
         from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
+        from app.services.inference_proxy import get_inference_proxy
         proxy = get_inference_proxy()
         return GatewayAgentLLMProvider(db, proxy)
 

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.schemas.routing import (
     CommercialCalibrationSimulateRequest,
     CommercialCalibrationSimulateResponse,

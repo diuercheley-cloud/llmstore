@@ -3,7 +3,7 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityEvent,
     CommercialModelIntegrityScan,

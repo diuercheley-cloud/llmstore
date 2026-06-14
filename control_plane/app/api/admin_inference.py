@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
-from app.services.inference.backends.base import Capability
+from app.services.inference_backends import Capability
 from app.services.inference.router import InferenceRouter
-from app.services.inference.backends.vllm_backend import VLLMBackend
-from app.services.inference.backends.tgi_backend import TGIBackend
-from app.services.inference.backends.openai_compatible_backend import OpenAICompatibleBackend
+from app.services.inference_backends import VLLMBackend
+from app.services.inference_backends import TGIBackend
+from app.services.inference_backends import OpenAICompatibleBackend
 from app.models.core.inference_backend import InferenceBackend
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,11 +47,37 @@ async def list_inference_backends(session: AsyncSession = Depends(get_db_session
     return output
 
 
+from app.models.core.inference_routing_decision import InferenceRoutingDecision
+
+
 @router.get("/routing/last-decision")
 async def get_last_routing_decision(session: AsyncSession = Depends(get_db_session)):
-    inference_router = InferenceRouter(session)
-    # This won't work across requests without persistence, but for demo purposes:
-    return {"message": "In-memory routing log only available in current session", "log": inference_router.routing_log}
+    stmt = select(InferenceRoutingDecision).order_by(InferenceRoutingDecision.created_at.desc()).limit(100)
+    result = await session.execute(stmt)
+    decisions = result.scalars().all()
+    
+    output = []
+    for d in decisions:
+        output.append({
+            "id": str(d.id),
+            "request_id": d.request_id,
+            "tenant_id": d.tenant_id,
+            "client_id": d.client_id,
+            "selected_backend": d.selected_backend,
+            "selected_model": d.selected_model,
+            "candidate_backends": d.candidate_backends,
+            "routing_policy_version": d.routing_policy_version,
+            "reason": d.reason,
+            "latency_ms": d.latency_ms,
+            "success": d.success,
+            "error_code": d.error_code,
+            "created_at": d.created_at.isoformat() if d.created_at else None
+        })
+        
+    return {
+        "log": output,
+        "last_decision": output[0] if output else None
+    }
 
 
 @router.post("/routing/simulate")
@@ -62,10 +88,29 @@ async def simulate_routing(
     session: AsyncSession = Depends(get_db_session)
 ):
     inference_router = InferenceRouter(session)
-    adapter, reason = await inference_router.get_best_backend(model, capability, tenant_id)
+    adapter, reason = await inference_router.get_best_backend(
+        model, 
+        capability, 
+        tenant_id,
+        request_id="simulation-req",
+        client_id="admin-client",
+        success=True
+    )
+    await session.commit()
     
     return {
         "selected_backend": adapter.name if adapter else None,
         "reason": reason,
         "decision_log": inference_router.get_last_decision()
     }
+
+
+@router.delete("/routing/decisions/cleanup")
+async def cleanup_routing_decisions(
+    retention_days: Optional[int] = None,
+    session: AsyncSession = Depends(get_db_session)
+):
+    inference_router = InferenceRouter(session)
+    deleted_count = await inference_router.cleanup_old_decisions(retention_days)
+    await session.commit()
+    return {"deleted_count": deleted_count}

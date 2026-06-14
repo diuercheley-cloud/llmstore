@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RemediationExecutionGate:
@@ -6,22 +7,36 @@ class RemediationExecutionGate:
     Verifies if a remediation plan can be executed based on various safety gates.
     """
 
-    def verify_approval(self, plan: Dict[str, Any], approvals: List[Dict[str, Any]]) -> bool:
+    async def verify_approval(self, db: AsyncSession, plan: Dict[str, Any], approvals_payload: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Ensures all required approvals are present for a given plan.
+        In production, we check the CriticalApproval table.
         """
         requires_approval = plan.get("requires_approval", False)
         if not requires_approval:
-            return True
+            return {"verified": True, "approved_by": None}
         
-        # In this phase, we look for a simple 'approved' flag in the approvals list
-        # or check if the approvals list matches the required roles.
-        # For simplicity, we assume an approval is verified if the list is not empty
-        # and contains at least one approval from a relevant role.
-        if not approvals:
-            return False
+        # Check if we have a valid approval in the database
+        from app.models.governance.human_governance import CriticalApproval
+        from app.core.time import utc_now
+        from sqlalchemy import select
+
+        stmt = select(CriticalApproval).where(
+            CriticalApproval.action_type == "ops_remediation_execution",
+            CriticalApproval.status == "approved",
+            CriticalApproval.expires_at > utc_now()
+        )
+        
+        # We look for an approval that matches this plan_id in its payload
+        res = await db.execute(stmt)
+        active_approvals = res.scalars().all()
+        
+        for app in active_approvals:
+            app_payload = app.payload or {}
+            if str(app_payload.get("plan_id")) == str(plan.get("id")):
+                return {"verified": True, "approved_by": app.decided_by}
             
-        return any(a.get("status") == "approved" for a in approvals)
+        return {"verified": False, "approved_by": None}
 
     def verify_blast_radius(self, plan: Dict[str, Any]) -> bool:
         """
@@ -51,7 +66,7 @@ class RemediationExecutionGate:
             
         return not kill_switch_state.get("enabled", False)
 
-    def can_execute(self, plan: Dict[str, Any], approvals: List[Dict[str, Any]], 
+    async def can_execute(self, db: AsyncSession, plan: Dict[str, Any], approvals_payload: List[Dict[str, Any]], 
                     rollback_plan: Optional[Dict[str, Any]], 
                     kill_switch_state: Optional[Dict[str, Any]], 
                     dry_run: bool = True) -> Dict[str, Any]:
@@ -60,7 +75,8 @@ class RemediationExecutionGate:
         """
         reasons = []
         
-        approval_ok = dry_run or self.verify_approval(plan, approvals)
+        approval_res = {"verified": True, "approved_by": "dry_run_system"} if dry_run else await self.verify_approval(db, plan, approvals_payload)
+        approval_ok = approval_res["verified"]
         if not approval_ok:
             reasons.append("Missing required approvals for non-dry-run execution.")
             
@@ -81,6 +97,7 @@ class RemediationExecutionGate:
         return {
             "can_execute": can_exec,
             "approval_verified": approval_ok,
+            "approved_by": approval_res["approved_by"],
             "blast_radius_checked": blast_radius_ok,
             "rollback_plan_present": rollback_ok,
             "kill_switch_checked": kill_switch_safe,

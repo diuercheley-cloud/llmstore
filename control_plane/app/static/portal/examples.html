@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Client Portal - Examples</title>
+    <script src="/static/www/branding-init.js"></script>
+    <link rel="stylesheet" href="/static/portal/portal.css" />
+  </head>
+  <body data-page="examples">
+    <div id="loginOverlay"><div class="login-box"><h1>Client Portal</h1><p>Acesse seu painel com sua chave de API</p><div style="text-align:left;margin-bottom:1.5rem;"><div class="field-label">API Key</div><input id="loginKey" type="password" placeholder="sk-..." /><div style="margin-top:1rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="rememberMe" checked /><label for="rememberMe" style="font-size:0.875rem;color:var(--muted);">Lembrar neste navegador</label></div></div><button id="doLogin" style="width:100%;">Conectar</button></div></div>
+    <aside>
+      <div class="sidebar-header"><h1>Client Portal</h1><p data-brand="company_name">LLM Inference Stack</p></div>
+      <nav>
+        <a class="nav-item" data-page-link="home" href="index.html">Hub</a>
+        <a class="nav-item" data-page-link="examples" href="examples.html">Examples</a>
+      </nav>
+      <div class="sidebar-footer"><div style="display:flex;align-items:center;justify-content:space-between;"><span id="sidebarClientName">-</span><button id="logout" class="secondary" style="padding:2px 8px;font-size:0.7rem;">Sair</button></div></div>
+    </aside>
+    <main>
+      <header>
+        <div class="header-copy"><h1>Integration Examples</h1><p>Snippets reais gerados pelo backend com a base URL certa para este appliance.</p></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;"><span class="badge badge-active" id="headerStatusBadge">Ativo</span><span id="headerPlanName">-</span></div>
+      </header>
+      <div class="content-area">
+        <div class="page">
+          <div id="examplesContent" class="stack-grid"></div>
+        </div>
+      </div>
+    </main>
+    <div id="toast" class="toast">Copiado!</div>
+    <script src="/static/portal/portal.js"></script>
+  </body>
+</html>

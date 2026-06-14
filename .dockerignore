@@ -3,6 +3,8 @@
 .venv-download
 __pycache__
 *.pyc
+*.db
+*.db.backup
 logs
 models
 *.gguf

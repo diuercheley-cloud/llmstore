@@ -1,7 +1,7 @@
 # Owner: commercial-ops
 
 from app.core.config import get_settings
-from app.db.session import get_db_session as get_db
+from app.services.runtime_dependencies import get_db_session as get_db
 from app.services.auth import require_admin as get_admin_user
 from app.services.routing.commercial_cross_cluster_forwarder import (
     CommercialCrossClusterForwarder,

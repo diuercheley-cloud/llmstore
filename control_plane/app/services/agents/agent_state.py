@@ -87,6 +87,43 @@ async def update_agent_definition(db: AsyncSession, agent_id: uuid.UUID, data: d
     logger.info(f"Updated agent definition: {agent_def.id}")
     return agent_def
 
+async def check_queue_throttling(db: AsyncSession, agent_id: uuid.UUID, tenant_id: str) -> None:
+    from app.models.agents.agents import AgentQueueThrottle, AgentRun
+    from sqlalchemy import select, func
+
+    stmt = select(AgentQueueThrottle).where(AgentQueueThrottle.is_active == True)
+    res = await db.execute(stmt)
+    active_throttles = res.scalars().all()
+
+    for throttle in active_throttles:
+        applies = False
+        count_stmt = select(func.count(AgentRun.id)).where(AgentRun.status == "queued")
+        
+        if throttle.target_type == "agent" and throttle.target_id == str(agent_id):
+            applies = True
+            count_stmt = count_stmt.where(AgentRun.agent_id == agent_id)
+        elif throttle.target_type == "queue":
+            if throttle.target_id == tenant_id:
+                applies = True
+                count_stmt = count_stmt.where(AgentRun.tenant_id == tenant_id)
+            elif throttle.target_id in ("default", "global"):
+                applies = True
+            else:
+                try:
+                    target_uuid = uuid.UUID(throttle.target_id)
+                    if target_uuid == agent_id:
+                        applies = True
+                        count_stmt = count_stmt.where(AgentRun.agent_id == agent_id)
+                except ValueError:
+                    applies = True
+                    count_stmt = count_stmt.where(AgentRun.tenant_id == tenant_id)
+
+        if applies:
+            count_res = await db.execute(count_stmt)
+            queued_count = count_res.scalar() or 0
+            if queued_count >= throttle.rate_limit:
+                raise ValueError(f"Queue throttle limit exceeded: limit of {throttle.rate_limit} queued runs.")
+
 async def create_agent_run(
     db: AsyncSession,
     agent_id: uuid.UUID,
@@ -99,6 +136,7 @@ async def create_agent_run(
     multimodal_asset_id: Optional[uuid.UUID] = None,
     is_simulation: bool = False,
 ) -> AgentRun:
+    await check_queue_throttling(db, agent_id, tenant_id)
     input_hash = compute_sha256(input_text)
     run = AgentRun(
         agent_id=agent_id,

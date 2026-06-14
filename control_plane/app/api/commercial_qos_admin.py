@@ -5,8 +5,8 @@ import logging
 import uuid
 from typing import Any, List
 
-from app.db.redis import get_redis
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_redis
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_qos_tier import CommercialQoSTier
 from app.schemas.routing import (
     CommercialQoSChargebackSummary,
@@ -219,7 +219,7 @@ async def get_qos_overview(
     }
 
 from app.core.config import get_settings
-from app.db.session import redis_client
+from app.services.runtime_dependencies import redis_client
 from app.models.core.generation_job import GenerationJob
 from app.services.routing.qos_priority_queue import QoSPriorityQueue
 from app.services.routing.qos_rate_limiter import QoSRateLimiter

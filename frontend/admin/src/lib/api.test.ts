@@ -19,16 +19,61 @@ describe('APIError', () => {
 
 describe('api client', () => {
   beforeEach(() => {
-    vi.stubGlobal('useAuthStore', undefined)
+    vi.stubGlobal('useAuthStore', {
+      getState: () => ({ token: 'test-token', logout: vi.fn() })
+    })
+    vi.clearAllMocks()
   })
 
   it('exports default api instance', async () => {
     const api = (await import('./api')).default
     expect(api).toBeDefined()
     expect(typeof api.health).toBe('function')
-    expect(typeof api.listModels).toBe('function')
-    expect(typeof api.listAgents).toBe('function')
-    expect(typeof api.listApiKeys).toBe('function')
-    expect(typeof api.listStudioFlows).toBe('function')
+  })
+
+  it('sends GET request without params', async () => {
+    const api = (await import('./api')).default
+    const spy = vi.spyOn((api as any).client, 'request').mockResolvedValue({ data: { status: 'ok' } })
+    
+    await api.health()
+    
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: '/health'
+    }))
+    expect((spy.mock.calls[0][0] as any).params).toBeUndefined()
+  })
+
+  it('sends GET request with params', async () => {
+    const api = (await import('./api')).default
+    const spy = vi.spyOn((api as any).client, 'request').mockResolvedValue({ data: [] })
+    
+    await api.getCostsSummary({ period: 'last_7_days' })
+    
+    const call = spy.mock.calls[0][0] as any
+    expect(call.method).toBe('GET')
+    expect(call.url).toBe('/api/admin/costs/summary')
+    expect(call.params).toBeInstanceOf(URLSearchParams)
+    expect((call.params as URLSearchParams).get('period')).toBe('last_7_days')
+  })
+
+  it('sends POST request with body', async () => {
+    const api = (await import('./api')).default
+    const spy = vi.spyOn((api as any).client, 'request').mockResolvedValue({ data: {} })
+    
+    await api.createModel({ name: 'test-model' })
+    
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      url: '/admin/models',
+      data: { name: 'test-model' }
+    }))
+  })
+
+  it('handles API error correctly', async () => {
+    const api = (await import('./api')).default
+    vi.spyOn((api as any).client, 'request').mockRejectedValue(new APIError('Bad Request', 400))
+    
+    await expect(api.health()).rejects.toThrow('Bad Request')
   })
 })

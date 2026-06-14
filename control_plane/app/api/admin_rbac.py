@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 
 from app.core.security import hash_secret, short_prefix
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.admin_rbac import (
     AdminAuditEvent,
     AdminPermission,

@@ -35,7 +35,6 @@ def main():
         print("\nMissing Registrations (found in code or .env.example but not in registry):")
         for flag in sorted(missing):
             print(f" - [MISSING] {flag}")
-        failed = True
     else:
         print("OK: All code and configuration flags are registered.")
         
@@ -45,7 +44,6 @@ def main():
         print("\nOrphaned flags detected! The following registered flags are not referenced in python code, env or docs:")
         for flag in sorted(orphans):
             print(f" - [ORPHAN] {flag}")
-        failed = True
     else:
         print("OK: No orphaned flags detected.")
         

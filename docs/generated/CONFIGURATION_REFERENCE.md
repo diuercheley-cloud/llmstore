@@ -199,6 +199,9 @@ This document lists all environment variables used to configure the platform.
 | `AGENT_REPLAY_FROM_STEP_ENABLED` | bool | `false` | No |
 | `AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION` | bool | `true` | No |
 | `AGENT_RUNTIME_ENABLED` | bool | `false` | No |
+| `AGENT_RUNTIME_SERVICE_REMOTE` | bool | `false` | No |
+| `AGENT_RUNTIME_SERVICE_TOKEN` | str | <redacted> | Yes |
+| `AGENT_RUNTIME_SERVICE_URL` | str | `http://agent-runtime:8080` | No |
 | `AGENT_SAAS_CONNECTORS_ENABLED` | bool | `false` | No |
 | `AGENT_SAB_ENABLED` | bool | `true` | No |
 | `AGENT_SAB_EXPORT_ENABLED` | bool | `false` | No |
@@ -226,6 +229,7 @@ This document lists all environment variables used to configure the platform.
 | `AGENT_TOOL_REGISTRY_ENABLED` | bool | `false` | No |
 | `AGENT_TOOL_ROLLBACK_ENABLED` | bool | `true` | No |
 | `AGENT_TOOL_SANDBOX_ENABLED` | bool | `true` | No |
+| `AGENT_TOOL_SET` | str | `standard` | No |
 | `AGENT_TRACE_EXPORT_ENABLED` | bool | `false` | No |
 | `AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED` | bool | `false` | No |
 | `AGENT_UNCERTAINTY_DETECTION_ENABLED` | bool | `true` | No |
@@ -351,6 +355,14 @@ This document lists all environment variables used to configure the platform.
 | Env Var | Type | Default | Secret |
 | --- | --- | --- | --- |
 | `CARD_PAYMENT_ENABLED` | bool | `false` | No |
+
+## `chaos`
+
+| Env Var | Type | Default | Secret |
+| --- | --- | --- | --- |
+| `CHAOS_ALLOW_PRODUCTION` | bool | `false` | No |
+| `CHAOS_ENABLED` | bool | `false` | No |
+| `CHAOS_ENVIRONMENT` | str | `test` | No |
 
 ## `circuit`
 
@@ -608,6 +620,7 @@ This document lists all environment variables used to configure the platform.
 | `COMMERCIAL_OPERATIONAL_CONTROLS_ENABLED` | bool | `true` | No |
 | `COMMERCIAL_OPERATIONAL_CONTROLS_MODE` | str | `report_only` | No |
 | `COMMERCIAL_P95_LATENCY_ALERT_MS` | int | `5000` | No |
+| `COMMERCIAL_PROFILE` | str | `off` | No |
 | `COMMERCIAL_PROXMOX_ALLOWED_CT_IDS` | str | `-` | No |
 | `COMMERCIAL_PROXMOX_ALLOWED_VM_IDS` | str | `-` | No |
 | `COMMERCIAL_PROXMOX_API_URL` | str | `-` | No |
@@ -708,6 +721,7 @@ This document lists all environment variables used to configure the platform.
 | `COMMERCIAL_REVENUE_WEBHOOK_ENABLED` | bool | `false` | No |
 | `COMMERCIAL_REVENUE_WEBHOOK_SIGNING_SECRET` | str | `-` | Yes |
 | `COMMERCIAL_REVENUE_WEBHOOK_URL` | str | `-` | No |
+| `COMMERCIAL_ROUTING_DECISION_RETENTION_DAYS` | int | `30` | No |
 | `COMMERCIAL_ROUTING_DEFAULT_POLICY` | str | `disabled` | No |
 | `COMMERCIAL_ROUTING_ENABLED` | bool | `false` | No |
 | `COMMERCIAL_RUNTIME_ATTESTATION_BLOCK_UNTRUSTED` | bool | `false` | No |
@@ -874,6 +888,12 @@ This document lists all environment variables used to configure the platform.
 | --- | --- | --- | --- |
 | `EMBEDDINGS_BACKEND` | str | `local` | No |
 | `EMBEDDINGS_ENABLED` | bool | `true` | No |
+
+## `enable`
+
+| Env Var | Type | Default | Secret |
+| --- | --- | --- | --- |
+| `ENABLE_LEGACY_STATIC` | bool | `false` | No |
 
 ## `enterprise`
 
@@ -1179,6 +1199,7 @@ This document lists all environment variables used to configure the platform.
 | Env Var | Type | Default | Secret |
 | --- | --- | --- | --- |
 | `OBSERVABILITY_ENABLED` | bool | `true` | No |
+| `OBSERVABILITY_PROFILE` | str | `basic` | No |
 
 ## `ollama`
 
@@ -1278,6 +1299,7 @@ This document lists all environment variables used to configure the platform.
 | --- | --- | --- | --- |
 | `PLUGIN_MARKETPLACE_ENABLED` | bool | `false` | No |
 | `PLUGIN_RUNTIME_ENABLED` | bool | `false` | No |
+| `PLUGIN_SBOM_POLICY_DECISION` | str | `block` | No |
 | `PLUGIN_SIGNATURE_REQUIRED` | bool | `false` | No |
 
 ## `project`
@@ -1448,11 +1470,20 @@ This document lists all environment variables used to configure the platform.
 | --- | --- | --- | --- |
 | `SECRETS_MANAGER_PROVIDER` | str | <redacted> | Yes |
 
+## `security`
+
+| Env Var | Type | Default | Secret |
+| --- | --- | --- | --- |
+| `SECURITY_PROFILE` | str | `local` | No |
+
 ## `semantic`
 
 | Env Var | Type | Default | Secret |
 | --- | --- | --- | --- |
 | `SEMANTIC_CACHE_ENABLED` | bool | `false` | No |
+| `SEMANTIC_CACHE_MAX_SIZE` | int | `10000` | No |
+| `SEMANTIC_CACHE_THRESHOLD` | float | `0.9` | No |
+| `SEMANTIC_CACHE_TTL_SECONDS` | int | `3600` | No |
 
 ## `sendgrid`
 

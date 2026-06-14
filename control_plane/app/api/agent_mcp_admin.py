@@ -5,7 +5,7 @@ from typing import Any
 
 from app.api.deps import require_admin
 from app.core.config import Settings, get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.agents.mcp.mcp_audit import MCPAuditLog
 from app.services.agents.mcp.mcp_client import MCPClient
 from app.services.agents.mcp.mcp_oauth import (

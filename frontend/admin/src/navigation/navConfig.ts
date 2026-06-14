@@ -28,6 +28,7 @@ import {
   Briefcase,
   History,
   CheckCircle,
+  FolderOpen,
   Share2,
   Cpu,
   Layers,
@@ -195,6 +196,22 @@ export const navConfig: NavRoute[] = [
     description: 'Agentes IA, registry, runs, tools e políticas.',
   },
   {
+    label: 'Registry',
+    path: '/agents/registry',
+    icon: Layers,
+    section: 'agents',
+    status: 'active',
+    description: 'Catálogo e definições de agentes no sistema.',
+  },
+  {
+    label: 'Shared Workspaces',
+    path: '/agents/workspaces',
+    icon: FolderOpen,
+    section: 'agents',
+    status: 'active',
+    description: 'Ambientes colaborativos para agentes e humanos.',
+  },
+  {
     label: 'Marketplace',
     path: '/agents/marketplace',
     icon: ShoppingBag,
@@ -221,6 +238,54 @@ export const navConfig: NavRoute[] = [
     layout: 'full',
   },
   {
+    label: 'Agent Memory',
+    path: '/agents/memory',
+    icon: Database,
+    section: 'agents',
+    status: 'active',
+    description: 'Itens de memoria, politicas, consentimentos e retention.',
+  },
+  {
+    label: 'Agent Tools',
+    path: '/agents/tools',
+    icon: Wrench,
+    section: 'agents',
+    status: 'active',
+    description: 'Catalogo de ferramentas, quotas, credentials e invocacoes.',
+  },
+  {
+    label: 'Agent Routing',
+    path: '/agents/routing',
+    icon: Network,
+    section: 'agents',
+    status: 'active',
+    description: 'Capabilities, policies e simulacao de roteamento entre modelos.',
+  },
+  {
+    label: 'Agent Readiness',
+    path: '/agents/readiness',
+    icon: CheckCircle,
+    section: 'agents',
+    status: 'active',
+    description: 'Readiness consolidado do runtime agentic.',
+  },
+  {
+    label: 'Agent Teams',
+    path: '/agents/teams',
+    icon: Users,
+    section: 'agents',
+    status: 'active',
+    description: 'Times multiagente, topologias e traces de execucao.',
+  },
+  {
+    label: 'Agent Workflows',
+    path: '/agents/workflow-ops',
+    icon: GitBranch,
+    section: 'agents',
+    status: 'active',
+    description: 'Workflows agentic com signal, polling, webhook e eventos externos.',
+  },
+  {
     label: 'Model Context Protocol',
     path: '/agents/mcp',
     icon: Network,
@@ -236,6 +301,14 @@ export const navConfig: NavRoute[] = [
     section: 'agents',
     status: 'active',
     description: 'Métricas de latência, custo e uso de ferramentas dos agentes.',
+  },
+  {
+    label: 'Agent Runs',
+    path: '/agents/runs',
+    icon: History,
+    section: 'agents',
+    status: 'active',
+    description: 'Historico operacional, status e investigacao de execucoes.',
   },
   {
     label: 'Approval Portal',
@@ -303,6 +376,22 @@ export const navConfig: NavRoute[] = [
     status: 'beta',
     description: 'Histórico de versões e linhagem de agentes.',
   },
+  {
+    label: 'Code Interpreter',
+    path: '/agents/code-interpreter',
+    icon: Code2,
+    section: 'agents',
+    status: 'beta',
+    description: 'Sandbox para execução segura de código gerado por agentes.',
+  },
+  {
+    label: 'Worker DLQ',
+    path: '/agents/worker-dlq',
+    icon: Inbox,
+    section: 'agents',
+    status: 'active',
+    description: 'Dead Letter Queue management for background workers.',
+  },
 
   // ── Operations ────────────────────────────────────
   {
@@ -320,6 +409,14 @@ export const navConfig: NavRoute[] = [
     section: 'operations',
     status: 'active',
     description: 'Overview operacional, nós de runtime, readiness e remediação.',
+  },
+  {
+    label: 'Runtime Nodes',
+    path: '/operations/runtime-nodes',
+    icon: Server,
+    section: 'operations',
+    status: 'active',
+    description: 'Gestão de infraestrutura de execução e balanceamento de carga.',
   },
   {
     label: 'Perfil Operacional',
@@ -361,6 +458,46 @@ export const navConfig: NavRoute[] = [
     section: 'operations',
     status: 'active',
     description: 'Backups completos, verificação automática e recuperação segura.',
+  },
+  {
+    label: 'MLOps',
+    path: '/operations/mlops',
+    icon: FlaskConical,
+    section: 'operations',
+    status: 'beta',
+    description: 'Registry de datasets, fine-tuning jobs e linhagem de modelos.',
+  },
+  {
+    label: 'AIOps',
+    path: '/operations/aiops',
+    icon: Activity,
+    section: 'operations',
+    status: 'active',
+    description: 'Anomalias, forecasts e recomendacoes do ciclo preditivo.',
+  },
+  {
+    label: 'Workflow Governance',
+    path: '/operations/workflow-governance',
+    icon: Layers3,
+    section: 'operations',
+    status: 'active',
+    description: 'Governanca e replay de workflows deterministas.',
+  },
+  {
+    label: 'Model Supply Chain',
+    path: '/operations/model-supply-chain',
+    icon: ArchiveRestore,
+    section: 'operations',
+    status: 'active',
+    description: 'Integridade, bundles e proveniencia da cadeia de modelos.',
+  },
+  {
+    label: 'Vector Stores',
+    path: '/rag/vectorstores',
+    icon: Database,
+    section: 'operations',
+    status: 'active',
+    description: 'Health e configuração de provedores de busca vetorial.',
   },
 
   // ── Developers ────────────────────────────────────
@@ -469,6 +606,14 @@ export const navConfig: NavRoute[] = [
     description: 'Evidências sanitizadas e pacotes de auditoria.',
     hidden: true,
   },
+  {
+    label: 'Attestation',
+    path: '/compliance/attestation',
+    icon: ShieldCheck,
+    section: 'compliance',
+    status: 'active',
+    description: 'Operational and hardware attestation for secure runtime.',
+  },
 
   // ── Observability ─────────────────────────────────
   {
@@ -523,6 +668,14 @@ export const navConfig: NavRoute[] = [
   },
 
   // ── Enterprise ────────────────────────────────────
+  {
+    label: 'Sovereign Governance',
+    path: '/governance/sovereign',
+    icon: Gavel,
+    section: 'enterprise',
+    status: 'beta',
+    description: 'Airgap sync and sovereign cluster governance.',
+  },
   {
     label: 'Onboarding',
     path: '/enterprise/onboarding',

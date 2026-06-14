@@ -1,7 +1,7 @@
 # Owner: commercial-ops
 from __future__ import annotations
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.commercial_guardrails import (
     build_commercial_guardrails_overview,

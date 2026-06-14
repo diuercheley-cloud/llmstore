@@ -1,0 +1,10 @@
+{
+  "name": "Data Plane Latency Spike",
+  "experiment_type": "data_plane_latency",
+  "blast_radius": "medium",
+  "injection_config": {"latency_ms": 5000, "ratio": 0.3},
+  "timeout_seconds": 60,
+  "assertions": [
+    {"name": "p95_latency_under_10s", "type": "metric", "condition": "latency_seconds < 10"}
+  ]
+}

@@ -139,15 +139,23 @@ class FeatureFlagRegistryService:
         """
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 
-        from app.core.config import Settings
+        settings_model = type(get_settings())
+        model_fields = getattr(settings_model, "model_fields", None) or getattr(settings_model, "__fields__", {})
         settings_keys = set()
         bool_settings_keys = set()
         alias_to_field = {}
-        for field_name, field_info in Settings.model_fields.items():
+        for field_name, field_info in model_fields.items():
             settings_keys.add(field_name.upper())
-            field_type = field_info.annotation
+            field_type = getattr(field_info, "annotation", None) or getattr(field_info, "type_", None)
             if "bool" in str(field_type).lower():
                 bool_settings_keys.add(field_name.upper())
+            alias = getattr(field_info, "alias", None)
+            if alias:
+                alias_upper = str(alias).upper()
+                alias_to_field[alias_upper] = field_name.upper()
+                settings_keys.add(alias_upper)
+                if "bool" in str(field_type).lower():
+                    bool_settings_keys.add(alias_upper)
             validation_alias = getattr(field_info, "validation_alias", None)
             if validation_alias is not None:
                 alias_repr = str(validation_alias)

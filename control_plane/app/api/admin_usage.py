@@ -8,7 +8,7 @@ from app.api.deps import get_inference_proxy
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session, get_redis
+from app.services.runtime_dependencies import get_db_session, get_redis
 from app.models.billing import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
@@ -35,6 +35,7 @@ from redis.asyncio import Redis
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from app.services.model_health import ModelHealthService
 
 router = APIRouter(prefix="/admin", tags=["admin-usage"], dependencies=[Depends(require_admin)])
 settings = get_settings()
@@ -217,16 +218,12 @@ async def get_usage_summary(
         health_results = await asyncio.gather(*[proxy.health_url(b.backend_url, b.healthcheck_path) for b in backend_rows])
         backends_online = sum(1 for ok in health_results if ok)
 
-    model_registry_rows = (await session.execute(select(ModelRegistry))).scalars().all()
-    models_total = len(model_registry_rows)
-    models_online = 0
-    # A model is "online" if it has at least one healthy route
-    for m in model_registry_rows:
-        # Simple heuristic: if backends_online > 0 and models_total > 0, we assume some models are online
-        # Or more accurately, we could check routes, but that's expensive.
-        # Let's just say if backends_online > 0, then active models are likely online.
-        if backends_online > 0 and m.id: # Just a placeholder condition
-            models_online += 1
+    health_service = ModelHealthService(session)
+    health_summary = await health_service.get_model_health_summary()
+    online_models_count = health_summary["online_models_count"]
+    degraded_models_count = health_summary["degraded_models_count"]
+    offline_models_count = health_summary["offline_models_count"]
+    health_source = health_summary["source"]
     
     # RAG Usage Summary
     rag_usage_all = await get_admin_rag_usage(session)
@@ -312,8 +309,12 @@ async def get_usage_summary(
             "pending_invoices": summary["invoices_pending"], # Alias for frontend
             "backends_online": backends_online,
             "backends_total": backends_total,
-            "models_online": models_online,
-            "models_total": models_total,
+            "models_online": online_models_count,
+            "models_total": online_models_count + degraded_models_count + offline_models_count,
+            "online_models_count": online_models_count,
+            "degraded_models_count": degraded_models_count,
+            "offline_models_count": offline_models_count,
+            "source": health_source,
         },
         "plans": plans,
         "clients": [] if compact else clients,
@@ -373,10 +374,6 @@ async def get_revenue_summary(session: AsyncSession = Depends(get_db_session)):
 
 @router.get("/rag/usage")
 async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
-    from datetime import date
-
-    from app.models.rag import RAGDocument
-    from app.models.rag import RagUsageEvent
     from app.services.quota import month_start
     
     # Usage by client
@@ -442,10 +439,6 @@ async def get_admin_rag_usage(session: AsyncSession = Depends(get_db_session)):
 @router.get("/usage/{client_id}/summary")
 async def get_client_usage_summary(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     import datetime
-
-    from app.models.core.client import Client
-    from app.models.core.usage_record import UsageRecord
-    from sqlalchemy.orm import selectinload
     
     result = await session.execute(
         select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == client_id)

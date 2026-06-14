@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_merkle_timelines import CommercialExecutionProof
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select

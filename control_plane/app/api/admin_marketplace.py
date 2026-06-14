@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.agents.agent_marketplace import MarketplaceItem
 from app.schemas.marketplace import (
     AgentManifest, ApproveInstallRequest, InstallDryRunRequest, InstallDryRunResponse, MarketplaceAgentRead

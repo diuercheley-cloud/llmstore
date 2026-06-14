@@ -1,0 +1,5 @@
+# Frontend mock exceptions for official admin/client surfaces.
+# Keep this file small. Exceptions should only cover explicitly labeled
+# demo/simulation experiences that are intentionally non-production.
+
+exceptions: []

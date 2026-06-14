@@ -1,7 +1,7 @@
 from typing import List
 
 from app.api.dependencies import get_current_admin
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.schemas.performance import (
     BackendPerformanceProfile,
     PerformanceCapability,

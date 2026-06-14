@@ -1,13 +1,45 @@
 # Supported Surface Area
 
-This document defines how support claims are made. It does not enumerate capability status manually.
+This document defines how support claims are made. Capability status is sourced from the
+canonical machine-readable registry and must not be duplicated manually.
 
 ## Source Of Truth
 
-- Capability status and support level live in [../PRODUCT_SURFACE.md](../PRODUCT_SURFACE.md).
-- The underlying machine-readable source is `config/supported-surface.yaml`.
-- The comprehensive API route surface is automatically generated at `generated/route_surface_manifest.json` and must not be edited manually.
-- `README.md`, this page, and `docs/platform/supported-surface.md` must not restate per-capability status lists manually.
+| Artifact | Location | Purpose |
+|---|---|---|
+| Capability registry | `config/supported-surface.yaml` | Machine-readable capability definitions with status, flags, limitations |
+| Feature flag registry | `config/feature-flags.yaml` | Every feature flag with defaults, owner, area, risk, dependencies |
+| Public API endpoint | `GET /public/capabilities` | Dynamically serves registry data, filtered by enabled feature flags |
+| Auto-generated docs | `docs/generated/PRODUCT_SURFACE.md` | Compact matrix of capability ID, status, support, owner |
+| Human-readable docs | `docs/PRODUCT_SURFACE.md` | Status summary, lifecycle tiers, capability matrix |
+
+No per-capability status list exists in `README.md`, this page, or `docs/platform/supported-surface.md`.
+The `GET /public/capabilities` endpoint is the canonical live view of the supported surface area.
+
+## Lifecycle Tiers
+
+Status values in `config/supported-surface.yaml` and the `capability_level` field in API responses:
+
+| Tier | `capability_level` | `status` (API) | Meaning |
+|---|---|---|---|
+| `production_core` | `core` | `supported` | No mock in critical path. Enabled by default or production-gated. |
+| `production_optional` | `supported` | `supported` | Production-quality but opt-in. Mock-safe defaults. Gated behind flags. |
+| `beta` | `beta` | `beta` | Feature-complete but evolving. Not unconditional production claim. |
+| `experimental` | `experimental` | `experimental` | Early stage. Heavy mock usage. May change without notice. |
+| `internal` | *(excluded from public)* | *(excluded)* | Internal tools. Not customer-facing. |
+| `deprecated` | `deprecated` | `deprecated` | No longer maintained. Will be removed in future releases. |
+
+## Feature Flag Enforcement
+
+The `GET /public/capabilities` endpoint:
+
+1. Loads all capabilities from `config/supported-surface.yaml`.
+2. Excludes capabilities with `status: internal`.
+3. Checks each capability's `feature_flag` and `additional_flags` against current settings.
+4. **Omits** capabilities whose feature flag(s) resolve to `false`.
+5. Returns each capability with accurate `status`, `capability_level`, `limitations`, `docs_url`.
+
+This ensures that **no partial or disabled feature is advertised as `supported` or `core`**.
 
 ## Readiness Criteria
 
@@ -39,31 +71,31 @@ Supported only for migration or historical compatibility until removal.
 
 Every deprecated surface **MUST** have a documented removal timeline:
 
-| Field | Obrigatório | Descrição |
+| Field | Required | Description |
 |---|---|---|
-| `owner` | Sim | Time responsável pela superfície |
-| `replacement` | Sim | Caminho de migração ou substituto |
-| `sunset_date` | Sim (ou `removal_version`) | Data alvo para remoção (formato `YYYY-MM-DD`) |
-| `removal_version` | Sim (ou `sunset_date`) | Versão alvo para remoção (ex: `v3.0`) |
+| `owner` | Yes | Team responsible for the surface |
+| `replacement` | Yes | Migration path or replacement |
+| `sunset_date` | Yes (or `removal_version`) | Target removal date (`YYYY-MM-DD`) |
+| `removal_version` | Yes (or `sunset_date`) | Target removal version (e.g. `v3.0`) |
 
-### Validação CI
+### CI Validation
 
-Toda nova superfície marcada como `deprecated` **sem prazo definido** será bloqueada pelo validador:
+Every new surface marked as `deprecated` **without a defined deadline** will be blocked by the validator:
 
 ```bash
 python3 scripts/validate_deprecated_surface.py
 ```
 
-O inventário completo de superfícies deprecadas é mantido em:
+The complete inventory of deprecated surfaces is maintained in:
 
-- `docs/generated/deprecated_surface_inventory.md` (auto-gerado)
+- `docs/generated/deprecated_surface_inventory.md` (auto-generated)
 - `config/api-surface.yaml` (endpoints)
 - `config/supported-surface.yaml` (capabilities)
 - `config/feature-flags.yaml` (feature flags)
 
-### Critérios de Aprovação para Extensão de Prazo
+### Extension Approval Criteria
 
-1. Justificativa por escrito do owner.
-2. Nova data não pode exceder 2 releases além da original.
-3. Aprovação do `platform-ops` via PR review.
-4. Atualização do inventário e do prazo no YAML correspondente.
+1. Written justification from the owner.
+2. New date must not exceed 2 releases beyond the original.
+3. Approval from `platform-ops` via PR review.
+4. Update of inventory and deadline in the corresponding YAML.

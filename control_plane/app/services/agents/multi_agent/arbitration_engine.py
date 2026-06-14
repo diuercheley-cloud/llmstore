@@ -180,7 +180,7 @@ class ArbitrationEngine:
             else:
                 # Real critic review via model provider
                 if self.settings.agent_multi_agent_critic_review_enabled:
-                    from app.api.deps import get_inference_proxy
+                    from app.services.inference_proxy import get_inference_proxy
                     try:
                         proxy = get_inference_proxy()
                     except Exception:
@@ -403,7 +403,7 @@ class ArbitrationEngine:
                 final_score *= 0.95
             else:
                 if self.settings.agent_multi_agent_critic_review_enabled:
-                    from app.api.deps import get_inference_proxy
+                    from app.services.inference_proxy import get_inference_proxy
                     try:
                         proxy = get_inference_proxy()
                     except Exception:

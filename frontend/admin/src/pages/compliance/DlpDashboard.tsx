@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   ShieldAlert, ShieldCheck, ArrowDownLeft, ArrowUpRight, Slash, 
   RefreshCw, Database, Eye, Terminal, Mail, Key, Globe, FileText, 
-  Trash2, AlertTriangle, AlertCircle, Sparkles
+  Trash2, AlertTriangle, AlertCircle
 } from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
@@ -105,84 +105,6 @@ export default function DlpDashboard() {
     }
   };
 
-  // Pre-populate mock database data for demo/onboarding
-  const handleGenerateMockData = async () => {
-    toast.info('Gerando incidentes de exemplo no banco...');
-    try {
-      // Direct call to trigger background mock population (or simulate on screen)
-      const mockViolations: DLPViolation[] = [
-        {
-          id: 'v1',
-          run_id: '827a4d51-1402-4bf1-bf63-8a033010b91d',
-          tenant_id: 't-enterprise-01',
-          direction: 'ingress',
-          content_type: 'prompt',
-          findings: [
-            { type: 'cpf', value: '123.***.***-45', start: 15, end: 29, method: 'regex_rules' },
-            { type: 'email', value: 'admin@***.com', start: 45, end: 59, method: 'regex_rules' }
-          ],
-          action_taken: 'redacted',
-          created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'v2',
-          run_id: '1c491290-a541-477d-bb91-ce0bde40a7a0',
-          tenant_id: 't-corp-beta',
-          direction: 'egress',
-          content_type: 'tool_output',
-          findings: [
-            { type: 'aws_secret_key', value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEX***', start: 12, end: 52, method: 'regex_rules' }
-          ],
-          action_taken: 'blocked',
-          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'v3',
-          run_id: 'ffb35e29-cb90-410a-8bf3-339c94aa82c0',
-          tenant_id: 't-developer-free',
-          direction: 'ingress',
-          content_type: 'prompt',
-          findings: [
-            { type: 'credit_card', value: '4532-****-****-8824', start: 8, end: 27, method: 'regex_rules' }
-          ],
-          action_taken: 'redacted',
-          created_at: new Date(Date.now() - 120 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'v4',
-          run_id: '2024b42b-5b5c-4d5e-8fbf-4fb115321ab9',
-          tenant_id: 't-internal-ops',
-          direction: 'egress',
-          content_type: 'response',
-          findings: [
-            { type: 'jwt', value: 'eyJhbGciOi***.eyJzdWIiOi***.***', start: 104, end: 254, method: 'regex_rules' }
-          ],
-          action_taken: 'redacted',
-          created_at: new Date(Date.now() - 240 * 60 * 1000).toISOString()
-        }
-      ];
-
-      const mockStats: DLPStats = {
-        total_violations: 4,
-        by_category: {
-          cpf: 1,
-          email: 1,
-          aws_secret_key: 1,
-          credit_card: 1,
-          jwt: 1
-        },
-        by_direction: { ingress: 2, egress: 2 },
-        by_action: { redacted: 3, blocked: 1 }
-      };
-
-      setViolations(mockViolations);
-      setStats(mockStats);
-      toast.success('Incidentes de teste gerados com sucesso!');
-    } catch (err) {
-      toast.error('Erro ao gerar dados simulados.');
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-[#020617] text-slate-100 font-sans p-6 overflow-y-auto">
       
@@ -197,12 +119,6 @@ export default function DlpDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={handleGenerateMockData}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded-lg text-xs font-semibold hover:bg-indigo-500/20 transition-all"
-          >
-            <Sparkles size={14} /> Simulate Incidents
-          </button>
           <button 
             onClick={fetchDlpData}
             disabled={loading}

@@ -3,7 +3,7 @@ import uuid
 from decimal import Decimal
 from typing import Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
 from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
 from app.services.auth import require_admin

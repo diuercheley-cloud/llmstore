@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 import uuid
 from dataclasses import dataclass
@@ -8,7 +9,9 @@ from dataclasses import dataclass
 from app.core.config import get_settings
 from app.core.metrics import ASYNC_JOB_COUNTER, ASYNC_QUEUE_DEPTH
 from app.core.time import utc_now
+from app.core.request_context import get_tenant_id
 from app.db.session import redis_client
+from app.services.cache.semantic_cache_redis import get_semantic_cache
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.models.core.generation_job import GenerationJob
@@ -42,6 +45,9 @@ from redis.asyncio import Redis
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 @dataclass
@@ -417,6 +423,22 @@ async def process_generation_job(
         request_hash=cache_key,
         plan_code=effective_plan.code,
     )
+    
+    # Semantic Cache Fallback
+    if not cached.hit and settings.semantic_cache_enabled:
+        sem_cache = get_semantic_cache(redis_client)
+        prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])])
+        sem_hit = await sem_cache.get(
+            tenant_id=get_tenant_id(),
+            client_id=str(job.client_id),
+            model=job.resolved_model,
+            prompt=prompt_text
+        )
+        if sem_hit:
+            cached.hit = True
+            cached.payload = sem_hit
+            cached.completion_tokens = 0
+
     selected_model = job.model_registry
     if cached.hit and cached.payload is not None:
         now = utc_now()
@@ -539,6 +561,17 @@ async def process_generation_job(
             prompt_tokens=job.prompt_tokens_estimated,
             completion_tokens=completion_tokens,
         )
+
+        if settings.semantic_cache_enabled:
+            sem_cache = get_semantic_cache(redis_client)
+            prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])])
+            await sem_cache.set(
+                tenant_id=get_tenant_id(),
+                client_id=str(job.client_id),
+                model=job.resolved_model,
+                prompt=prompt_text,
+                response=response_payload
+            )
         await record_usage(
             session, 
             job.client_id, 

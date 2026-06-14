@@ -4,14 +4,7 @@ release:validate:
   variables:
     GIT_DEPTH: 0
   script:
-    - git fetch origin tag v1.9.7-compliance-readiness || true
-    - make stabilization-check
-    - make operational-readiness
-    - make validate-quick
-    - make release-gate TAG=$CI_COMMIT_TAG
-    - make verify-release-artifacts TAG=$CI_COMMIT_TAG
-    - bash scripts/release/generate-sbom.sh $CI_COMMIT_TAG
-    - bash scripts/release/sign-release-artifacts.sh $CI_COMMIT_TAG $RELEASE_SIGNING_KEY
+    - bash scripts/ci/release-ci.sh $CI_COMMIT_TAG
   artifacts:
     paths:
       - artifacts/releases/

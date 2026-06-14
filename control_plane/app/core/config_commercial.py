@@ -211,6 +211,7 @@ class CommercialSettings(BaseSettings):
     commercial_node_heartbeat_interval_seconds: int = Field(default=30, alias="COMMERCIAL_NODE_HEARTBEAT_INTERVAL_SECONDS")
     commercial_node_offline_after_seconds: int = Field(default=120, alias="COMMERCIAL_NODE_OFFLINE_AFTER_SECONDS")
     commercial_analytics_retention_days: int = Field(default=90, alias="COMMERCIAL_ANALYTICS_RETENTION_DAYS")
+    commercial_routing_decision_retention_days: int = Field(default=30, alias="COMMERCIAL_ROUTING_DECISION_RETENTION_DAYS")
     commercial_analytics_aggregation_bucket_minutes: int = Field(default=5, alias="COMMERCIAL_ANALYTICS_AGGREGATION_BUCKET_MINUTES")
     commercial_analytics_dedupe_enabled: bool = Field(default=True, alias="COMMERCIAL_ANALYTICS_DEDUPE_ENABLED")
     # Commercial Global Routing Phase 16

@@ -7,6 +7,18 @@ status: consolidated
 
 This document describes the Global Traffic Routing implementation in dry-run mode.
 
+## Surface Status
+
+- `GET /admin/routing/global-router/overview`: `beta`
+- `GET /admin/routing/global-router/recommendations`: `beta`
+- `POST /admin/routing/global-router/simulate`: `simulated`
+- `GET /admin/routing/global-router/export`: `beta`
+- `GET /admin/routing/global-router/policies`: `beta`
+- `POST /admin/routing/global-router/policies/draft`: `beta`
+- `POST /admin/routing/global-router/policies/{policy_id}/activate`: `beta`
+- `POST /admin/routing/global-router/policies/rollback`: `beta`
+- `POST /admin/routing/global-router/policies/simulate`: `simulated`
+
 ## Architecture
 
 The Global Router uses data from the Federation layer to calculate routing recommendations between multiple clusters. In this phase, it operates as a **simulator and recommender**, never moving real traffic or altering the OpenAI-compatible flow.
@@ -50,6 +62,8 @@ COMMERCIAL_GLOBAL_ROUTING_MAX_LATENCY_MS=5000
 - `GET /admin/routing/global-router/recommendations`: Best recommendations based on current global state.
 - `POST /admin/routing/global-router/simulate`: Simulate a specific request to see which cluster would be chosen.
 - `GET /admin/routing/global-router/export?format=json|csv|html`: Export routing data.
+
+The overview, recommendation, export, draft, activate, rollback, and policy listing surfaces are real control-plane APIs. The two `simulate` endpoints remain intentionally `simulated` because they evaluate routing decisions without moving live traffic.
 
 ## Simulation Payload
 

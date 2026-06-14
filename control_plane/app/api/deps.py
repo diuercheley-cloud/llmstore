@@ -1,6 +1,5 @@
 from functools import lru_cache
 
-from app.db.session import get_db_session
 from app.services.auth import (
     AdminRole,
     admin_key_scheme,
@@ -12,9 +11,14 @@ from app.services.auth import (
     require_superadmin,
 )
 from app.services.embeddings import EmbeddingService
+from app.services.runtime_dependencies import get_db_session as get_db_session_dependency
+from app.services.runtime_dependencies import get_redis as get_redis_dependency
+from app.services.runtime_dependencies import get_semantic_cache as get_semantic_cache_dependency
+from app.services.backend_lifecycle.manager import BackendLifecycleManager
+from app.services.backend_lifecycle.providers import LocalProcessProvider
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
-from app.services.inference_proxy import InferenceProxy
+from app.services.inference_proxy import InferenceProxy, get_inference_proxy
 from app.services.queue_manager import QueueManager
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,30 +40,25 @@ def get_circuit_breaker() -> CircuitBreaker:
 
 
 @lru_cache
-def get_inference_proxy() -> InferenceProxy:
-    return InferenceProxy(get_queue_manager(), get_circuit_breaker())
-
-
-@lru_cache
 def get_embedding_service() -> EmbeddingService:
     return EmbeddingService()
 
 
 async def get_db(
-    session: AsyncSession = Depends(get_db_session),
+    session: AsyncSession = Depends(get_db_session_dependency),
 ) -> AsyncSession:
     return session
 
 
 async def get_admin_db(
-    session: AsyncSession = Depends(get_db_session),
+    session: AsyncSession = Depends(get_db_session_dependency),
     _role=Depends(require_admin_permission("system:read")),
 ) -> AsyncSession:
     return session
 
 
 async def get_super_admin_db(
-    session: AsyncSession = Depends(get_db_session),
+    session: AsyncSession = Depends(get_db_session_dependency),
     _role=Depends(require_superadmin),
 ) -> AsyncSession:
     return session
@@ -111,3 +110,20 @@ async def get_current_user(
     return client
 
 
+async def get_db_session():
+    async for session in get_db_session_dependency():
+        yield session
+
+
+async def get_redis():
+    return await get_redis_dependency()
+
+
+def get_semantic_cache(redis):
+    return get_semantic_cache_dependency(redis)
+
+
+async def get_lifecycle_manager(
+    session: AsyncSession = Depends(get_db_session_dependency),
+) -> BackendLifecycleManager:
+    return BackendLifecycleManager(db=session, provider=LocalProcessProvider())

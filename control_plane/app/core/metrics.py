@@ -158,6 +158,31 @@ LLM_CACHE_MISSES_TOTAL = Counter(
     "Total cache misses",
     ["model", "endpoint"],
 )
+SEMANTIC_CACHE_HIT_TOTAL = Counter(
+    "semantic_cache_hit_total",
+    "Total semantic cache hits",
+    ["model", "tenant_id", "client_id"],
+)
+SEMANTIC_CACHE_MISS_TOTAL = Counter(
+    "semantic_cache_miss_total",
+    "Total semantic cache misses",
+    ["model", "tenant_id", "client_id"],
+)
+SEMANTIC_CACHE_LATENCY_SECONDS = Histogram(
+    "semantic_cache_latency_seconds",
+    "Latency of semantic cache lookups",
+    ["model", "tenant_id", "client_id"],
+)
+RATE_LIMIT_EXCEEDED_TOTAL = Counter(
+    "rate_limit_exceeded_total",
+    "Total requests rejected by rate limiting",
+    ["tenant_id", "client_id", "endpoint"],
+)
+RATE_LIMIT_LATENCY_SECONDS = Histogram(
+    "rate_limit_latency_seconds",
+    "Latency of rate limit checks",
+    ["tenant_id", "client_id", "endpoint"],
+)
 LLM_COST_ESTIMATED_BRL_TOTAL = Counter(
     "llm_cost_estimated_brl_total",
     "Estimated cost in BRL",
@@ -464,6 +489,26 @@ def record_cache_result(
         LLM_CACHE_HITS_TOTAL.labels(**labels).inc()
     else:
         LLM_CACHE_MISSES_TOTAL.labels(**labels).inc()
+
+
+def record_semantic_cache_result(
+    *,
+    hit: bool,
+    model: str | None,
+    tenant_id: str | None,
+    client_id: str | None,
+    latency_seconds: float,
+) -> None:
+    labels = {
+        "model": _label(model),
+        "tenant_id": _label(tenant_id),
+        "client_id": _label(client_id),
+    }
+    if hit:
+        SEMANTIC_CACHE_HIT_TOTAL.labels(**labels).inc()
+    else:
+        SEMANTIC_CACHE_MISS_TOTAL.labels(**labels).inc()
+    SEMANTIC_CACHE_LATENCY_SECONDS.labels(**labels).observe(max(latency_seconds, 0.0))
 
 
 def record_backend_error(

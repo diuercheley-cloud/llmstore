@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from datetime import time as dt_time
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.billing.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.dispute_management import DisputeManagementService

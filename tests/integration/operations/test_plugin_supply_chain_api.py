@@ -67,16 +67,32 @@ async def test_plugin_supply_chain_api_flow(session):
         )
         assert verified.status_code == 200
 
-        sbom = await ac.post(
-            f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/sbom",
-            json={
-                "client_id": str(client.id),
-                "dependency_summary_json": {"dependency_classes": ["local_static_module"]},
-                "denied_dependencies_json": [],
-            },
-        )
-        assert sbom.status_code == 200
-        assert sbom.json()["validation"]["signature_only"] is True
+        import tempfile
+        from pathlib import Path
+        from app.services.operations.plugin_supply_chain.sbom_service import PluginSBOMService
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            pyproject_file = temp_path / "pyproject.toml"
+            pyproject_file.write_text(
+                "[project]\nname = \"test-plugin\"\nversion = \"1.0.0\"\ndependencies = [\"requests>=2.20.0\"]\nlicense = \"MIT\"\n",
+                encoding="utf-8"
+            )
+            
+            service = PluginSBOMService()
+            pkg_hash = service.calculate_package_hash(temp_path)
+            
+            sbom = await ac.post(
+                f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/sbom",
+                json={
+                    "client_id": str(client.id),
+                    "plugin_path": str(temp_path),
+                    "expected_hash": pkg_hash,
+                },
+            )
+            assert sbom.status_code == 200
+            assert sbom.json()["validation"]["signature_only"] is True
+
 
         verification = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/dependency-verify",

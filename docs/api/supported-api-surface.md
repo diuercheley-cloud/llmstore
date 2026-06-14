@@ -17,23 +17,19 @@ The platform divides its routes into governance categories:
    
 2. **`beta`**:
    - Functional but subject to rapid evolutionary changes. Safe for pilot deployments.
-   - Example: New agentic endpoints like `/v1/agents`.
+   - Example: opt-in operator surfaces such as voice session management or backend lifecycle controls.
 
-3. **`deprecated`**:
+3. **`experimental`**:
+   - Early-stage, opt-in capabilities with incomplete operational guarantees.
+   - Example: evolving control surfaces that are available for evaluation but may still change quickly.
+
+4. **`simulated`**:
+   - Endpoints that intentionally execute dry-run or placeholder behavior with no real side effects.
+   - Example: simulation-only remediation execution or WebRTC signaling placeholders.
+
+5. **`deprecated`**:
    - Outdated endpoints slated for eventual removal. Operators are encouraged to migrate to replacements.
    - Example: Legacy `/admin/models/runtime` routes (replaced by `/admin/models/lifecycle`).
-
-4. **`internal`**:
-   - Operations-specific endpoints used exclusively by internal services and operators. No external compatibility guarantees. Requires RBAC/admin auth and is not listed in public API docs.
-   - Example: `/openapi.json`, `/metrics`.
-
-5. **`experimental`**:
-   - Early-stage, opt-in capabilities. Experimental routes *must* declare a `docs_url` link in `config/api-surface.yaml` to ensure compliance.
-   - Example: New/unstable trial interfaces.
-
-6. **`removed_candidate`**:
-   - Dead endpoints that have been removed from the active registry and no longer exist in the codebase.
-   - Example: Unreferenced legacy beta endpoints.
 
 ## Response Headers
 

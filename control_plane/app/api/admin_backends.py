@@ -1,12 +1,13 @@
 # Owner: platform-ops
 import asyncio
 import json
+import logging
 import uuid
 
 from app.api.deps import get_circuit_breaker, get_inference_proxy
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_backend_route import ModelBackendRoute
 from app.models.core.model_registry import ModelRegistry
@@ -22,12 +23,20 @@ from app.services.auth import require_admin
 from app.services.backend_registry import ensure_default_backends
 from app.services.inference_proxy import InferenceProxy
 from app.services.security_monitor import log_security_event
+from app.services.backend_lifecycle.manager import BackendLifecycleManager
+from app.services.backend_lifecycle.providers import (
+    DockerProvider,
+    KubernetesProvider,
+    LocalProcessProvider,
+    ProviderUnavailableError,
+)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.model_policy import MODEL_REGISTRY_ROUTING_LOADS
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin-backends"], dependencies=[Depends(require_admin)])
 settings = get_settings()
 
@@ -67,6 +76,58 @@ def _serialize_backend_admin(backend: InferenceBackend, health: dict | None = No
         "created_at": backend.created_at.isoformat(),
         "updated_at": backend.updated_at.isoformat(),
     }
+
+
+def _select_lifecycle_provider(backend: InferenceBackend) -> str:
+    metadata = _load_backend_metadata(backend.metadata_json)
+    provider_hint = metadata.get("lifecycle_provider") or ""
+    if provider_hint:
+        return provider_hint
+    service_name = backend_service_name(backend)
+    if service_name:
+        return "docker"
+    if backend.provider == "llama.cpp":
+        return "local_process"
+    return "local_process"
+
+
+def _build_lifecycle_manager(session: AsyncSession, backend: InferenceBackend | None = None) -> BackendLifecycleManager:
+    provider_type = "local_process"
+    if backend is not None:
+        provider_type = _select_lifecycle_provider(backend)
+
+    provider_map = {
+        "local_process": LocalProcessProvider(),
+        "docker": DockerProvider(),
+        "kubernetes": KubernetesProvider(),
+    }
+    provider = provider_map.get(provider_type, LocalProcessProvider())
+    return BackendLifecycleManager(
+        db=session,
+        provider=provider,
+        audit_callback=lambda action, details: asyncio.create_task(
+            _log_lifecycle_event(session, action, details)
+        ),
+    )
+
+
+async def _log_lifecycle_event(session: AsyncSession, action: str, details: dict) -> None:
+    try:
+        await log_security_event(
+            session,
+            event_type=f"backend_lifecycle_{action}",
+            severity="high",
+            title=f"Backend lifecycle {action}",
+            details=details,
+        )
+    except Exception as exc:
+        logger.error("failed to log lifecycle event: %s", exc)
+
+
+def get_lifecycle_manager(
+    session: AsyncSession = Depends(get_db_session),
+) -> BackendLifecycleManager:
+    return _build_lifecycle_manager(session)
 
 
 @router.get("/backends")
@@ -114,9 +175,6 @@ async def test_backend_connection(
     payload: InferenceBackendCreate,
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
-    """
-    Testa a conexão com um backend antes de cadastrá-lo.
-    """
     base_url = payload.backend_url
     api_key = None
     if payload.metadata_json:
@@ -125,14 +183,11 @@ async def test_backend_connection(
             api_key = metadata.get("api_key")
         except json.JSONDecodeError:
             pass
-            
     ok = await proxy.health_url(base_url, payload.healthcheck_path)
     if not ok and payload.provider == "openai_compatible":
-         # Try common fallbacks
          ok = await proxy.health_url(base_url, "/v1/models")
          if not ok:
              ok = await proxy.health_url(base_url, "/models")
-             
     return {"ok": ok}
 
 
@@ -141,9 +196,6 @@ async def list_backend_models(
     payload: InferenceBackendCreate,
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
-    """
-    Lista os modelos disponíveis em um backend antes de cadastrá-lo.
-    """
     base_url = payload.backend_url
     api_key = None
     if payload.metadata_json:
@@ -152,7 +204,6 @@ async def list_backend_models(
             api_key = metadata.get("api_key")
         except json.JSONDecodeError:
             pass
-            
     return await proxy.list_models(base_url=base_url, api_key=api_key)
 
 
@@ -241,43 +292,31 @@ async def _run_backend_action(
     backend = await session.get(InferenceBackend, backend_id)
     if backend is None:
         raise HTTPException(status_code=404, detail="backend not found")
-    capabilities = backend_runtime_capabilities(backend)
-    if not capabilities["docker_actions_allowed"]:
-        detail = "docker actions disabled"
-        if settings.public_exposure:
-            detail = "backend docker action blocked when PUBLIC_EXPOSURE=true"
-        elif not settings.test_tools_enabled:
-            detail = "backend docker action blocked when TEST_TOOLS_ENABLED=false"
-        raise HTTPException(status_code=403, detail=detail)
-    service_name = backend_service_name(backend)
-    if not service_name:
-        raise HTTPException(status_code=409, detail="backend is not mapped to a compose service")
-    command_map = {
-        "start": ("up", "-d", service_name),
-        "stop": ("stop", service_name),
-        "restart": ("restart", service_name),
-    }
-    result = run_backend_docker_command(backend, *command_map[action], timeout_seconds=120)
-    if not result.ok:
-        raise HTTPException(status_code=409, detail=result.detail or result.stderr or "docker action failed")
-    backend.status = "starting" if action == "start" else "stopped" if action == "stop" else "restarting"
-    backend.is_active = action != "stop"
-    backend.updated_at = utc_now()
-    await log_security_event(
-        session,
-        event_type=f"admin_backend_{action}",
-        severity="high",
-        title=f"Backend {action} triggered via Admin Lab",
-        details={"backend_name": backend.name, "service_name": service_name},
-    )
-    await session.commit()
+
+    manager = _build_lifecycle_manager(session, backend)
+
+    try:
+        if action == "start":
+            result = await manager.start_backend(backend_id)
+        elif action == "stop":
+            result = await manager.stop_backend(backend_id)
+        elif action == "restart":
+            result = await manager.restart_backend(backend_id)
+        else:
+            raise HTTPException(status_code=400, detail=f"unknown action: {action}")
+    except ProviderUnavailableError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
+    if not result.success:
+        raise HTTPException(status_code=409, detail=result.message)
+
+    backend = await session.get(InferenceBackend, backend_id)
     return {
         "status": action,
         "backend_id": str(backend.id),
         "backend_name": backend.name,
-        "service_name": service_name,
-        "docker_stdout": result.stdout[-4000:],
-        "docker_stderr": result.stderr[-2000:],
+        "lifecycle_result": result.model_dump(),
+        "docker": backend_container_snapshot(backend) if backend_service_name(backend) else None,
     }
 
 
@@ -294,6 +333,57 @@ async def stop_backend(backend_id: uuid.UUID, session: AsyncSession = Depends(ge
 @router.post("/backends/{backend_id}/restart")
 async def restart_backend(backend_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     return await _run_backend_action(backend_id, "restart", session)
+
+
+@router.get("/backends/{backend_id}/lifecycle/observed")
+async def backend_lifecycle_observed(
+    backend_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+):
+    backend = await session.get(InferenceBackend, backend_id)
+    if backend is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    manager = _build_lifecycle_manager(session, backend)
+    observed = await manager.get_observed_state(backend_id)
+    return {
+        "backend_id": str(backend_id),
+        "observed_state": observed.model_dump(),
+        "capabilities": manager.capabilities().model_dump(),
+    }
+
+
+@router.post("/backends/{backend_id}/lifecycle/reconcile")
+async def backend_lifecycle_reconcile(
+    backend_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db_session),
+):
+    backend = await session.get(InferenceBackend, backend_id)
+    if backend is None:
+        raise HTTPException(status_code=404, detail="backend not found")
+    manager = _build_lifecycle_manager(session, backend)
+    result = await manager.reconcile_one(backend_id)
+    return result
+
+
+@router.post("/backends/lifecycle/reconcile-all")
+async def backends_lifecycle_reconcile_all(
+    session: AsyncSession = Depends(get_db_session),
+):
+    manager = _build_lifecycle_manager(session)
+    results = await manager.reconcile_all()
+    return {"reconciled": len(results), "results": results}
+
+
+@router.get("/backends/lifecycle/drift-history")
+async def backend_lifecycle_drift_history(
+    session: AsyncSession = Depends(get_db_session),
+    backend_id: uuid.UUID | None = Query(default=None),
+):
+    manager = _build_lifecycle_manager(session)
+    drifts = manager.drift_history()
+    if backend_id:
+        drifts = [d for d in drifts if d.backend_id == backend_id]
+    return {"drifts": [d.model_dump() for d in drifts]}
 
 
 @router.post("/backends/circuit-breaker/reset")

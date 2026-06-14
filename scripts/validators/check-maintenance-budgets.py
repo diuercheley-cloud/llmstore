@@ -89,7 +89,8 @@ def main() -> int:
     
     for metric_name, data in metrics.items():
         limit = budgets.get(metric_name)
-        if limit is None:
+        if limit is None or (isinstance(limit, int) and (limit <= 0 or limit >= 1_000_000)):
+            print(f"{metric_name:<30} | {data['value']:<8} | {'SKIP':<8} | {'SKIP':<10} | {data['suggestion']}")
             continue
             
         value = data["value"]

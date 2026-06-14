@@ -16,6 +16,40 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger(__name__)
 
 
+class OverriddenSettings:
+    def __init__(self, original_settings, overrides: dict[str, Any]):
+        self._original = original_settings
+        self._overrides = overrides
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._overrides:
+            return self._overrides[name]
+        return getattr(self._original, name)
+
+
+async def resolve_routing_settings(db: AsyncSession, settings: Settings | None = None) -> Any:
+    if settings is not None:
+        return settings
+    cfg = get_settings()
+    
+    import json
+    from app.models.commercial.global_routing_policy import GlobalRoutingPolicyVersion
+    from sqlalchemy import select
+    
+    try:
+        stmt = select(GlobalRoutingPolicyVersion).where(GlobalRoutingPolicyVersion.status == "active").order_by(GlobalRoutingPolicyVersion.version.desc())
+        res = await db.execute(stmt)
+        active_policy = res.scalars().first()
+        if active_policy:
+            overrides = json.loads(active_policy.policy_json)
+            if overrides:
+                return OverriddenSettings(cfg, overrides)
+    except Exception as e:
+        logger.warning(f"Failed to load active global routing policy from DB: {e}")
+        
+    return cfg
+
+
 def score_cluster(
     cluster_data: dict[str, Any],
     *,
@@ -140,7 +174,7 @@ async def rank_clusters(
     settings: Settings | None = None,
     qos_tier: Any | None = None,
 ) -> dict[str, Any]:
-    cfg = settings or get_settings()
+    cfg = await resolve_routing_settings(db, settings)
     overview = await summarize_federated_overview(db, settings=cfg)
     clusters = overview.get("clusters", [])
     
@@ -218,7 +252,7 @@ async def simulate_global_route(
     estimated_tokens: int = 0,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    cfg = settings or get_settings()
+    cfg = await resolve_routing_settings(db, settings)
     ranking = await rank_clusters(db, tenant_id=tenant_id, region_preference=region_preference, settings=cfg)
     
     recommended = ranking["ranked_clusters"][0] if ranking["ranked_clusters"] else None
@@ -254,7 +288,7 @@ async def get_global_router_overview(
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    cfg = settings or get_settings()
+    cfg = await resolve_routing_settings(db, settings)
     ranking = await rank_clusters(db, settings=cfg)
     
     return sanitize_report_payload({

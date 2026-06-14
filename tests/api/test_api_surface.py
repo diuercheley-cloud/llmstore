@@ -34,7 +34,7 @@ async def test_api_surface_supported_endpoint(async_client: AsyncClient, admin_t
     response = await async_client.get("/admin/system/api-surface", headers=admin_token_headers)
     assert response.status_code == 200
     
-    assert response.headers.get("X-API-Surface-Status") == "keep_supported"
+    assert response.headers.get("X-API-Surface-Status") == "supported"
     assert "X-Deprecated-Endpoint" not in response.headers
     assert "X-Replacement-Endpoint" not in response.headers
 
@@ -69,7 +69,7 @@ def test_api_surface_check_fails_on_unclassified(monkeypatch, tmp_path):
             "endpoint": "/",
             "method": "GET",
             "owner": "platform-ops",
-            "status": "keep_supported",
+            "status": "supported",
             "replacement": None,
             "since_version": "1.0.0",
             "deprecation_version": None,

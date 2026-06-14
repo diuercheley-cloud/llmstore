@@ -214,8 +214,7 @@ def derive_compose(
                 "depends_on": ["redis", "data-plane-gemma"],
                 "ports": ["${HOST_PORT:-18080}:8080"],
                 "volumes": [
-                    f"{rel_root}/control_plane/app:/app/app",
-                    f"{rel_root}/control_plane/alembic:/app/alembic",
+                    f"{rel_root}/control_plane:/app/control_plane",
                     f"{rel_root}/config:/config:ro",
                     f"{rel_root}/data:/data",
                 ],
@@ -230,11 +229,10 @@ def derive_compose(
                 "command": [
                     "sh",
                     "-c",
-                    "/opt/venv/bin/python -m alembic upgrade head && /opt/venv/bin/python -m app.workers.generation_worker",
+                    "cd control_plane && alembic upgrade head && cd .. && python -m app.workers.generation_worker",
                 ],
                 "volumes": [
-                    f"{rel_root}/control_plane/app:/app/app",
-                    f"{rel_root}/control_plane/alembic:/app/alembic",
+                    f"{rel_root}/control_plane:/app/control_plane",
                     f"{rel_root}/config:/config:ro",
                     f"{rel_root}/data:/data",
                 ],
@@ -246,9 +244,9 @@ def derive_compose(
                 },
                 "env_file": [".env"],
                 "depends_on": ["redis"],
-                "command": ["bash", "-lc", "/opt/venv/bin/python -m app.workers.rag_worker"],
+                "command": ["bash", "-lc", "python -m app.workers.rag_worker"],
                 "volumes": [
-                    f"{rel_root}/control_plane/app:/app/app",
+                    f"{rel_root}/control_plane:/app/control_plane",
                     f"{rel_root}/data:/data",
                 ],
             },
@@ -285,9 +283,9 @@ def derive_compose(
             },
             "env_file": [".env"],
             "depends_on": ["control-plane", "redis"],
-            "command": ["bash", "-lc", "/opt/venv/bin/python -m app.workers.agent_worker"],
+            "command": ["bash", "-lc", "python -m app.workers.agent_worker"],
             "volumes": [
-                f"{rel_root}/control_plane/app:/app/app",
+                f"{rel_root}/control_plane:/app/control_plane",
                 f"{rel_root}/config:/config:ro",
                 f"{rel_root}/data:/data",
             ],

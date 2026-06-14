@@ -46,6 +46,25 @@ class AgentMemoryService:
         if not self.settings.agent_memory_enabled:
             raise MemoryDisabledError("Agent memory is disabled globally.")
 
+    async def _check_quarantine(self, agent_id: Optional[uuid.UUID], collection_id: Optional[uuid.UUID] = None, memory_id: Optional[uuid.UUID] = None):
+        from app.models.agents.agents import AgentMemoryQuarantine
+        targets = []
+        if agent_id:
+            targets.append(str(agent_id))
+        if collection_id:
+            targets.append(str(collection_id))
+        if memory_id:
+            targets.append(str(memory_id))
+
+        if not targets:
+            return
+
+        stmt = select(AgentMemoryQuarantine).where(AgentMemoryQuarantine.target_id.in_(targets))
+        result = await self.db.execute(stmt)
+        quarantine = result.scalars().first()
+        if quarantine:
+            raise ValueError(f"Access denied: memory target {quarantine.target_id} is quarantined (reason: {quarantine.reason})")
+
     def _contains_secrets(self, text: str) -> bool:
         patterns = ["sk-", "api_", "key_", "passwd", "password", "secret"]
         for p in patterns:
@@ -75,6 +94,7 @@ class AgentMemoryService:
         collection_id: Optional[uuid.UUID] = None
     ) -> AgentMemoryItem:
         self._check_enabled()
+        await self._check_quarantine(agent_id=agent_id, collection_id=collection_id)
         
         # 0. Policy Engine Check (v2)
         from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
@@ -159,6 +179,7 @@ class AgentMemoryService:
         run_id: Optional[uuid.UUID] = None
     ) -> List[AgentMemoryItem]:
         self._check_enabled()
+        await self._check_quarantine(agent_id=agent_id, collection_id=collection_id)
 
         stmt = select(AgentMemoryItem).where(
             AgentMemoryItem.tenant_id == tenant_id,
@@ -234,6 +255,7 @@ class AgentMemoryService:
 
     async def search_memory(self, tenant_id: str, agent_id: uuid.UUID, query: str, limit: int = 10) -> List[AgentMemoryItem]:
         self._check_enabled()
+        await self._check_quarantine(agent_id=agent_id)
         if not self.settings.agent_memory_search_enabled:
             raise MemoryDisabledError("Memory search is disabled.")
 
@@ -251,6 +273,7 @@ class AgentMemoryService:
         score_threshold: float = 0.0,
     ) -> List[Dict[str, Any]]:
         self._check_enabled()
+        await self._check_quarantine(agent_id=agent_id)
         results = await self.retriever.retrieve(
             tenant_id=tenant_id,
             agent_id=agent_id,
@@ -274,6 +297,7 @@ class AgentMemoryService:
         score_threshold: float = 0.0,
     ) -> Dict[str, Any]:
         self._check_enabled()
+        await self._check_quarantine(agent_id=agent_id)
         return await self.context_builder.build_context(
             tenant_id=tenant_id,
             agent_id=agent_id,

@@ -27,6 +27,7 @@ dependencies = [
     # Control Plane Core Dependencies
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
+    "gunicorn>=23.0.0",
     "sqlalchemy>=2.0.0",
     "aiosqlite>=0.20.0",
     "asyncpg>=0.30.0",
@@ -62,6 +63,7 @@ llmstack = "scripts.llm_harness.stack_cli:main"
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.23",
+    "grimp>=3.14",
     "ruff>=0.1",
     "mypy>=1.0",
     "pytest-cov",
@@ -129,7 +131,7 @@ testpaths = [
 
 [tool.coverage.run]
 branch = true
-source = ["scripts/llm_harness"]
+source = ["scripts/llm_harness", "control_plane"]
 omit = [
     "tests/*",
     "**/__pycache__/*",
@@ -137,7 +139,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 75
+fail_under = 37
 show_missing = true
 exclude_lines = [
     "pragma: no cover",

@@ -13,11 +13,13 @@ from .deterministic_execution import ExecutionRun, ExecutionStep, ToolCallRecord
 from .federation_mesh import MeshMergePolicy, ClusterNode, FederationPeer, SyncCommit, ConflictRecord
 from .generation_job import GenerationJob
 from .inference_backend import InferenceBackend
+from .inference_routing_decision import InferenceRoutingDecision
 from .managed_control_plane import ManagedOrganization, ManagedWorkspace, ManagedAppliance, ApplianceEnrollment, ApplianceHeartbeat, ManagedBillingAccount, ManagedSupportCase, ManagedControlPlaneLink, ManagedPolicySyncEvent
 from .mlops import MLDataset, MLDatasetVersion, MLTrainingJob, MLExperiment, MLExperimentRun, MLModelLineage, MLEvalArtifact
 from .mobile import MobileDevice, MobileSession, PushSubscription, PushNotificationEvent
 from .model_backend_route import ModelBackendRoute
 from .model_experiments import ModelExperiment, ModelExperimentVariant, ModelExperimentAssignment, ModelExperimentMetric
+from .model_health import ModelHealthStatus
 from .model_provenance import ModelProvenanceRecord
 from .model_registry import ModelRegistry
 from .multimodal import MultimodalAsset, MultimodalRequest, MultimodalUsageEvent, MultimodalPolicyEvent, MultimodalAnalysisEvent
@@ -63,6 +65,7 @@ __all__ = [
     "FederationPeer",
     "GenerationJob",
     "InferenceBackend",
+    "InferenceRoutingDecision",
     "MLDataset",
     "MLDatasetVersion",
     "MLEvalArtifact",
@@ -85,6 +88,7 @@ __all__ = [
     "ModelExperimentAssignment",
     "ModelExperimentMetric",
     "ModelExperimentVariant",
+    "ModelHealthStatus",
     "ModelProvenanceRecord",
     "ModelRegistry",
     "ModelVersionRecord",

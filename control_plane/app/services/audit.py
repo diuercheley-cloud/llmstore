@@ -49,8 +49,8 @@ async def log_request(
         endpoint=endpoint,
         prompt_tokens_estimated=prompt_tokens,
         completion_tokens_estimated=completion_tokens,
-        # TODO: Add token_count_method and tokens_estimated to RequestLog model if needed
-        # but for now we follow instructions and they were only requested for usage_record and request_financials.
+        token_count_method=token_count_method,
+        tokens_estimated=tokens_estimated if tokens_estimated is not None else True,
         latency_ms=latency_ms,
         http_status=status_code,
         is_stream=is_stream,

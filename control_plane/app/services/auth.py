@@ -7,6 +7,7 @@ from app.core.security import verify_secret
 from app.core.time import utc_now
 from app.db.session import get_db_session, get_redis
 from app.models.core.api_key import ApiKey
+from app.models.core.auth import UserSession
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.services.admin_rbac import (
@@ -19,7 +20,7 @@ from app.services.admin_rbac import (
 )
 from app.services.security_monitor import enforce_client_ip_policy, record_invalid_api_key_attempt
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import APIKeyHeader, HTTPBearer
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -76,20 +77,51 @@ def _role_from_permissions(permission_codes: set[str]) -> AdminRole:
     return AdminRole.READ
 
 
+async def _is_valid_sso_session(session: AsyncSession, token: str) -> bool:
+    if not token:
+        return False
+    result = await session.execute(
+        select(UserSession).where(
+            UserSession.session_token == token,
+            UserSession.is_active == True,
+            UserSession.expires_at > utc_now(),
+        )
+    )
+    return result.scalar_one_or_none() is not None
+
+
 async def require_admin(
     request: Request,
     x_admin_token: str = Depends(admin_key_scheme),
     session: AsyncSession = Depends(get_db_session),
 ):
-    if not is_rbac_admin_enabled():
-        role = get_admin_role(x_admin_token or "")
-        if not role or role < AdminRole.SUPER:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
-        request.state.admin_role_names = [role.value]
-        request.state.admin_permission_codes = []
-        return {"role": role.value, "legacy": True}
+    token = x_admin_token or ""
 
-    admin = await authenticate_admin_request(session=session, request=request, token=x_admin_token or "")
+    if not is_rbac_admin_enabled():
+        role = get_admin_role(token)
+        if role and role >= AdminRole.SUPER:
+            request.state.admin_role_names = [role.value]
+            request.state.admin_permission_codes = []
+            return {"role": role.value, "legacy": True}
+        # Fallback: check UserSession (SSO token)
+        if await _is_valid_sso_session(session, token):
+            request.state.admin_role_names = [AdminRole.SUPER.value]
+            request.state.admin_permission_codes = []
+            return {"role": AdminRole.SUPER.value, "sso": True}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+
+    try:
+        admin = await authenticate_admin_request(session=session, request=request, token=token)
+    except HTTPException as e:
+        if e.status_code != 401:
+            raise
+        # Fallback: check UserSession (SSO token)
+        if await _is_valid_sso_session(session, token):
+            request.state.admin_role_names = [AdminRole.SUPER.value]
+            request.state.admin_permission_codes = []
+            return {"role": AdminRole.SUPER.value, "sso": True}
+        raise
+
     required_permission = resolve_admin_permission_from_request(request)
     if required_permission and not admin.has_permission(required_permission):
         await record_admin_audit_event(
@@ -201,7 +233,7 @@ def require_admin_role(required_role: AdminRole):
 
 
 async def require_client(
-    auth_creds: str = Depends(bearer_scheme),
+    auth_creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     request: Request = None,
     session: AsyncSession = Depends(get_db_session),
     redis: Redis = Depends(get_redis),

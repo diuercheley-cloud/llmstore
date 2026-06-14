@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.security.immutable_audit import ImmutableAuditStore
 
 logger = logging.getLogger(__name__)

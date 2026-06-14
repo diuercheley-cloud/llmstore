@@ -8,6 +8,9 @@ async def test_enterprise_project_creation(db_session):
     customer = await service.create_customer("Enterprise Corp", "admin@enterprise.com")
     project = await service.create_project(customer.id, "Pilot Q3 2026")
     
+    # Reload with tasks
+    project = await service.get_project(project.id)
+    
     assert project.name == "Pilot Q3 2026"
     assert project.status == "discovery"
     assert len(project.tasks) == 10 # Default tasks
@@ -17,6 +20,9 @@ async def test_task_completion_lifecycle(db_session):
     service = EnterpriseOnboardingService(db_session)
     customer = await service.create_customer("Test Client", "test@client.com")
     project = await service.create_project(customer.id, "Test Project")
+    
+    # Reload with tasks
+    project = await service.get_project(project.id)
     
     task = project.tasks[0]
     updated_task = await service.update_task_status(task.id, "completed", notes="Workshop done")

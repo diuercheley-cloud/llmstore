@@ -1,2 +1,2 @@
 #!/bin/bash
-./scripts/check-secrets.sh --staged
+./scripts/validators/check-secrets.sh --staged

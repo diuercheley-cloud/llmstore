@@ -52,9 +52,10 @@ This document maps logical system modules to their physical locations in the cod
 - **Simulation**: `control_plane/app/services/infra/simulation.py`
 
 ## 8. Frontend & Portals
-- **Admin Dashboard**: `control_plane/app/static/admin/`
-- **Client Portal**: `control_plane/app/static/portal/`
-- **Enterprise Audit**: `control_plane/app/static/enterprise-audit/` (if enabled)
+- **Admin Dashboard**: `frontend/admin/` (Route: `/admin`)
+- **Client Portal**: `frontend/client/` (Route: `/`)
+- **Legacy Mounts**: `control_plane/app/static/` (Route: `/static/*`, **Disabled by default**)
+- **Enterprise Audit**: `control_plane/app/static/enterprise-audit/` (Disabled)
 
 ## 9. Tools & Utilities
 - **CLI Verifier**: `tools/public_verifier/verifier_cli.py`

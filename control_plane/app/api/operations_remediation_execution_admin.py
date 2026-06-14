@@ -1,6 +1,6 @@
 # Owner: platform-ops
 import uuid
-from typing import Any
+from typing import Any, List, Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.remediation_execution import (
@@ -37,11 +37,13 @@ class RemediationExecutionPrepareRequest(BaseModel):
     client_id: uuid.UUID
     plan_id: uuid.UUID
     dry_run: bool = True
+    idempotency_key: Optional[str] = None
 
 class RemediationExecutionRequest(BaseModel):
     client_id: uuid.UUID
     execution_id: uuid.UUID
     dry_run: bool = True
+    # In real execution, dry_run should match what was prepared, but we allow override if safe.
 
 class RemediationKillSwitchUpdateRequest(BaseModel):
     client_id: uuid.UUID
@@ -70,7 +72,14 @@ async def prepare_remediation_execution(
     steps = (await db.execute(stmt_steps)).scalars().all()
     
     # 2. Prepare via executor
-    execution = await EXECUTOR.prepare_execution(db, plan, list(steps), dry_run=payload.dry_run)
+    execution = await EXECUTOR.prepare_execution(
+        db, 
+        plan, 
+        list(steps), 
+        requested_by=_admin.get("username", "system"),
+        dry_run=payload.dry_run,
+        idempotency_key=payload.idempotency_key
+    )
     await db.commit()
     
     # 3. Generate pre-execution receipt
@@ -122,17 +131,20 @@ async def execute_remediation(
     steps = (await db.execute(stmt_steps)).scalars().all()
     
     stmt_approvals = select(RemediationApprovalRequirement).where(RemediationApprovalRequirement.plan_id == plan.id)
-    approvals = (await db.execute(stmt_approvals)).scalars().all()
-    # In a real system, we'd check against a separate approvals table. 
-    # For Phase 72, we'll assume they are approved if the user calls /execute.
-    # But executor will still check the 'requires_approval' logic.
-    mock_approvals = [{"status": "approved"}] if not execution.dry_run else []
-
+    approvals_reqs = (await db.execute(stmt_approvals)).scalars().all()
+    
+    # In real execution, we don't pass mock_approvals. 
+    # The executor's gate will check the CriticalApproval table.
+    # We pass approvals_reqs just in case it needs the requirement definitions.
+    
     stmt_ks = select(RemediationKillSwitchState).where(RemediationKillSwitchState.client_id == payload.client_id)
     ks_state = (await db.execute(stmt_ks)).scalar_one_or_none()
     
     # 3. Execute
-    result = await EXECUTOR.execute(db, execution, plan, list(steps), mock_approvals, ks_state)
+    # Ensure dry_run consistency if not overridden explicitly in payload
+    execution.dry_run = payload.dry_run
+    
+    result = await EXECUTOR.execute(db, execution, plan, list(steps), [r.__dict__ for r in approvals_reqs], ks_state)
     
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])

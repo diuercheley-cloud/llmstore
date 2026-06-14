@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.routing.commercial_config_store import CommercialConfigStore
 from sqlalchemy.ext.asyncio import AsyncSession
 

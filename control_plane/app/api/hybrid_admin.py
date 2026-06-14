@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.billing.ai_wallet import AiWallet
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,

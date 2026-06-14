@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.agents.agent_federated_memory import FederatedMemoryPeer
 from app.services.agents.federated_memory.memory_summary_sync import MemorySummarySync
 from app.services.agents.federated_memory.remote_memory_reference import (

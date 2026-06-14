@@ -135,7 +135,6 @@ def include_optional_routers(app: FastAPI, settings) -> None:
         from app.api.tenant_agentic_readiness_admin import (
             router as tenant_agentic_readiness_admin_router,
         )
-        app.include_router(agent_cicd_admin_router)
         app.include_router(agent_runtime_admin_router)
         app.include_router(agent_registry_admin_router)
         app.include_router(tenant_agentic_readiness_admin_router)
@@ -386,4 +385,3 @@ def include_optional_routers(app: FastAPI, settings) -> None:
     # Agent Compatibility Layer Router
     from app.api.agent_compatibility_admin import router as agent_compatibility_admin_router
     app.include_router(agent_compatibility_admin_router)
-

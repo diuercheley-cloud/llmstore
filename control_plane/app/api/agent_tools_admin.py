@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.agents.agents import AgentToolInvocation
 from app.services.agents import tool_registry as tool_service
 from fastapi import APIRouter, Depends, HTTPException, status

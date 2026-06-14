@@ -1,0 +1,43 @@
+name: Chaos Engineering
+
+on:
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: 'Chaos experiment to run'
+        required: true
+        default: 'data_plane_latency'
+        type: choice
+        options:
+          - data_plane_latency
+          - redis_failure
+          - db_outage
+          - provider_timeout
+      environment:
+        description: 'Environment to run chaos in'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - integration-test
+
+jobs:
+  chaos:
+    name: Run Chaos Experiment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Environment
+        uses: ./.github/actions/setup-python-project
+
+      - name: Run Chaos Scenario
+        env:
+          CHAOS_ENABLED: "true"
+          CHAOS_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          CHAOS_EXPERIMENT_TYPE: ${{ github.event.inputs.experiment }}
+        run: |
+          echo "Starting chaos experiment: $CHAOS_EXPERIMENT_TYPE in $CHAOS_ENVIRONMENT"
+          # This would ideally call a script that triggers the API or runs a specialized test
+          .venv/bin/python -m pytest tests/integration/test_chaos_engineering.py -m chaos -v

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import httpx
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.auth import OAuthState, UserSession
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse

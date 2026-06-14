@@ -322,9 +322,10 @@ async def audit_log(
     try:
         log = AdminActionLog(
             action=event_type,
-            admin_id=None, # System or anonymous admin
-            target_id=client_id,
-            details_json=details or {},
+            admin_role="admin",
+            target_user_id=client_id,
+            payload_json=details or {},
+            status="success",
         )
         db.add(log)
         await db.flush()

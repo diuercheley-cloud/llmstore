@@ -1,7 +1,7 @@
 # Owner: platform-ops
 import uuid
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.security import (
     acknowledge_action,

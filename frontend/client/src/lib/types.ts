@@ -80,3 +80,81 @@ export interface ChatAttachment {
   preview?: string;
   mimeType: string;
 }
+
+export interface PortalProfile {
+  id: string;
+  name: string;
+  billing_status: string;
+  is_blocked: boolean;
+  demo_mode: boolean;
+  plan: {
+    code: string;
+    name: string;
+    monthly_price: number;
+    currency: string;
+    rag_enabled: boolean;
+    tts_enabled: boolean;
+    // ... rest of plan fields
+  };
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  masked_key: string;
+  is_active: boolean;
+  created_at: string;
+  last_used_at: string | null;
+  expires_at: string | null;
+}
+
+export interface Invoice {
+  id: string;
+  status: string;
+  total_amount: number;
+  currency: string;
+  period_start: string;
+  period_end: string;
+  due_at: string | null;
+  paid_at: string | null;
+}
+
+export interface Wallet {
+  balance_brl: number;
+  available_brl: number;
+  low_balance: boolean;
+  transactions: WalletTransaction[];
+}
+
+export interface WalletTransaction {
+  id: string;
+  type: string;
+  amount_brl: number;
+  balance_after_brl: number;
+  created_at: string;
+}
+
+export interface RagUsage {
+  rag_enabled: boolean;
+  plan: string;
+  usage: {
+    documents_count: number;
+    storage_mb: number;
+    queries_month: number;
+  };
+  limits: {
+    max_documents: number | null;
+    max_storage_mb: number | null;
+    max_queries_per_month: number | null;
+  };
+}
+
+export interface RagDocument {
+  id: string;
+  original_filename: string;
+  content_type: string;
+  file_size_bytes: number;
+  status: string;
+  created_at: string;
+}

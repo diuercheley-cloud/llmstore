@@ -134,3 +134,6 @@ class PluginSupplyChainReceipt(Base):
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
     signature: Mapped[str] = mapped_column(String(255), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
+
+# PluginSignedArtifactPlaceholder
+

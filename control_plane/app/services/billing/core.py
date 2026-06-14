@@ -155,6 +155,33 @@ DEFAULT_BILLING_PLANS = [
         "embeddings_tokens_per_month": 100000000,
         "embeddings_max_inputs_per_request": 128,
     },
+    {
+        "code": "unlimited",
+        "name": "Unlimited",
+        "description": "Premier plan with unlimited token quotas for always-on production workloads.",
+        "rate_limit_per_minute": 240,
+        "daily_token_quota": 0,
+        "weekly_token_quota": 0,
+        "monthly_token_quota": 0,
+        "max_output_tokens": 32768,
+        "allow_streaming": True,
+        "rag_enabled": True,
+        "rag_max_documents": None,
+        "rag_max_storage_mb": None,
+        "rag_max_pages_per_month": None,
+        "rag_max_queries_per_month": None,
+        "tts_enabled": True,
+        "tts_chars_per_request": 10000,
+        "tts_chars_per_day": 100000,
+        "tts_chars_per_month": 1000000,
+        "embeddings_enabled": True,
+        "embeddings_requests_per_month": 50000,
+        "embeddings_tokens_per_month": 100000000,
+        "embeddings_max_inputs_per_request": 128,
+        "tools_enabled": True,
+        "export_enabled": True,
+        "support_level": "Premier",
+    },
 ]
 
 DEFAULT_PRICING_RULES = {
@@ -181,6 +208,12 @@ DEFAULT_PRICING_RULES = {
         "monthly_price": Decimal("399.0000"),
         "overage_price_per_1k_tokens": Decimal("0.025000"),
         "description": "Dedicated enterprise rollout.",
+    },
+    "unlimited": {
+        "currency": "USD",
+        "monthly_price": Decimal("999.0000"),
+        "overage_price_per_1k_tokens": Decimal("0.000000"),
+        "description": "Unlimited token plan with zero token overage charges.",
     },
 }
 
@@ -461,6 +494,8 @@ async def get_current_usage_snapshot(session: AsyncSession, client_id) -> dict[s
 
 
 def estimate_request_cost(monthly_tokens_used_before: int, request_tokens: int, included_monthly_tokens: int, overage_price_per_1k_tokens: Decimal) -> Decimal:
+    if included_monthly_tokens <= 0:
+        return Decimal("0")
     before_overage = max(monthly_tokens_used_before - included_monthly_tokens, 0)
     after_overage = max(monthly_tokens_used_before + request_tokens - included_monthly_tokens, 0)
     marginal_overage_tokens = max(after_overage - before_overage, 0)
@@ -473,9 +508,14 @@ def estimate_request_cost(monthly_tokens_used_before: int, request_tokens: int, 
 
 def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens: int, monthly_used_tts_chars: int = 0, monthly_used_embeddings_requests: int = 0, monthly_used_embeddings_tokens: int = 0) -> dict:
     included_tokens = effective_plan.monthly_token_quota
-    overage_tokens = max(monthly_used_tokens - included_tokens, 0)
-    overage_cost = ((Decimal(overage_tokens) / Decimal(1000)) * effective_plan.overage_price_per_1k_tokens).quantize(
-        Decimal("0.000001"), rounding=ROUND_HALF_UP
+    tokens_unlimited = included_tokens <= 0
+    overage_tokens = max(monthly_used_tokens - included_tokens, 0) if not tokens_unlimited else 0
+    overage_cost = (
+        ((Decimal(overage_tokens) / Decimal(1000)) * effective_plan.overage_price_per_1k_tokens).quantize(
+            Decimal("0.000001"), rounding=ROUND_HALF_UP
+        )
+        if not tokens_unlimited
+        else Decimal("0")
     )
     
     # Simulated TTS overage (just for show in preview for now)
@@ -493,6 +533,7 @@ def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens:
         "currency": effective_plan.currency,
         "monthly_price": float(effective_plan.monthly_price),
         "included_tokens": included_tokens,
+        "tokens_unlimited": tokens_unlimited,
         "used_tokens": monthly_used_tokens,
         "overage_tokens": overage_tokens,
         "overage_price_per_1k_tokens": float(effective_plan.overage_price_per_1k_tokens),

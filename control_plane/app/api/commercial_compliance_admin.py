@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlAttestation,

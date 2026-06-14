@@ -26,6 +26,20 @@ O script:
 - cria `.env.local` a partir de `.env.example` se necessário
 - aplica permissão `chmod 600` no arquivo de ambiente local
 
+## Configuração Modular de Ambiente
+
+O arquivo `.env.example` na raiz contém apenas o essencial para um appliance local básico. Para cenários avançados, utilize os exemplos em `env/`:
+
+- `env/commercial.env.example`: Faturamento, cotas e provedores cloud.
+- `env/agentic.env.example`: Runtime de agentes, ferramentas e memória.
+- `env/enterprise.env.example`: Multi-cluster, federação e air-gap.
+- `env/observability.env.example`: Prometheus, Grafana e tracing.
+
+Você pode ativar essas configurações adicionando-as ao seu `.env.local`:
+```bash
+cat env/commercial.env.example >> .env.local
+```
+
 ## Primeira execução
 
 ```bash

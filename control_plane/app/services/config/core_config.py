@@ -61,6 +61,12 @@ class CoreConfig(BaseSettings):
     local_appliance_mode: bool = Field(default=False, alias="LOCAL_APPLIANCE_MODE")
     observability_enabled: bool = Field(default=True, alias="OBSERVABILITY_ENABLED")
 
+    # Feature Flag Simplification Profiles
+    agent_tool_set: str = Field(default="standard", alias="AGENT_TOOL_SET") # minimal|standard|full
+    observability_profile: str = Field(default="basic", alias="OBSERVABILITY_PROFILE") # off|basic|full
+    commercial_profile: str = Field(default="off", alias="COMMERCIAL_PROFILE") # off|billing|billing_payments
+    security_profile: str = Field(default="local", alias="SECURITY_PROFILE") # local|standard|enterprise
+
     operational_profile: str = Field(default="lite", alias="OPERATIONAL_PROFILE")
     test_tools_enabled: bool = Field(default=False, alias="TEST_TOOLS_ENABLED")
 
@@ -94,9 +100,13 @@ class CoreConfig(BaseSettings):
     models_dir: str = Field(default="/models", alias="MODELS_DIR")
 
     cloud_providers_enabled: bool = Field(default=False, alias="CLOUD_PROVIDERS_ENABLED")
+    openai_provider_enabled: bool = Field(default=True, alias="OPENAI_PROVIDER_ENABLED")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    anthropic_provider_enabled: bool = Field(default=True, alias="ANTHROPIC_PROVIDER_ENABLED")
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    deepseek_provider_enabled: bool = Field(default=True, alias="DEEPSEEK_PROVIDER_ENABLED")
     deepseek_api_key: str = Field(default="", alias="DEEPSEEK_API_KEY")
+    openrouter_provider_enabled: bool = Field(default=True, alias="OPENROUTER_PROVIDER_ENABLED")
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
     openai_base_url: str = Field(default="", alias="OPENAI_BASE_URL")
     openai_chat_model: str = Field(default="", alias="OPENAI_CHAT_MODEL")
@@ -111,6 +121,7 @@ class CoreConfig(BaseSettings):
     gemini_provider_enabled: bool = Field(default=True, alias="GEMINI_PROVIDER_ENABLED")
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
     bedrock_provider_enabled: bool = Field(default=True, alias="BEDROCK_PROVIDER_ENABLED")
     azure_openai_api_key: str = Field(default="", alias="AZURE_OPENAI_API_KEY")
     azure_openai_endpoint: str = Field(default="", alias="AZURE_OPENAI_ENDPOINT")
@@ -175,6 +186,21 @@ class CoreConfig(BaseSettings):
     response_cache_enabled: bool = Field(default=True, alias="RESPONSE_CACHE_ENABLED")
     response_cache_ttl_seconds: int = Field(default=3600, alias="RESPONSE_CACHE_TTL_SECONDS")
     semantic_cache_enabled: bool = Field(default=False, alias="SEMANTIC_CACHE_ENABLED")
+    semantic_cache_ttl_seconds: int = Field(default=3600, alias="SEMANTIC_CACHE_TTL_SECONDS")
+    semantic_cache_max_size: int = Field(default=10000, alias="SEMANTIC_CACHE_MAX_SIZE")
+    semantic_cache_threshold: float = Field(default=0.9, alias="SEMANTIC_CACHE_THRESHOLD")
+
+    enable_legacy_static: bool = Field(default=False, alias="ENABLE_LEGACY_STATIC")
+
+    # Chaos Engineering
+    chaos_enabled: bool = Field(default=False, alias="CHAOS_ENABLED")
+    chaos_environment: str = Field(default="test", alias="CHAOS_ENVIRONMENT")
+    chaos_allow_production: bool = Field(default=False, alias="CHAOS_ALLOW_PRODUCTION")
+
+    # Agent Runtime Service (Migration)
+    agent_runtime_service_remote: bool = Field(default=False, alias="AGENT_RUNTIME_SERVICE_REMOTE")
+    agent_runtime_service_url: str = Field(default="http://agent-runtime:8080", alias="AGENT_RUNTIME_SERVICE_URL")
+    agent_runtime_service_token: str = Field(default="agent-runtime-secret-token", alias="AGENT_RUNTIME_SERVICE_TOKEN")
 
     rate_limit_global_per_minute: int = Field(default=1000, alias="RATE_LIMIT_GLOBAL_PER_MINUTE")
     rate_limit_tenant_per_minute: int = Field(default=500, alias="RATE_LIMIT_TENANT_PER_MINUTE")
@@ -219,6 +245,7 @@ class CoreConfig(BaseSettings):
     providers_enabled: str = Field(default="local,lmstudio", alias="PROVIDERS_ENABLED")
 
     real_provider_validation_enabled: bool = Field(default=False, alias="REAL_PROVIDER_VALIDATION_ENABLED")
+    provider_timeout_seconds: int = Field(default=30, ge=1, le=300, alias="PROVIDER_TIMEOUT_SECONDS")
     real_provider_max_cost_brl: float = Field(default=2.00, alias="REAL_PROVIDER_MAX_COST_BRL")
     real_provider_log_prompts: bool = Field(default=False, alias="REAL_PROVIDER_LOG_PROMPTS")
     real_provider_store_responses: bool = Field(default=False, alias="REAL_PROVIDER_STORE_RESPONSES")

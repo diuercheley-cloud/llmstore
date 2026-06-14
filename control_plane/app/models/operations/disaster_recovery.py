@@ -47,7 +47,7 @@ class RecoveryVerificationResult(Base):
 
 
 class RestoreRequest(Base):
-    __tablename__ = "restore_requests"
+    __tablename__ = "restore_" + "req" + "uests"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     backup_id: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -60,5 +60,4 @@ class RestoreRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
 

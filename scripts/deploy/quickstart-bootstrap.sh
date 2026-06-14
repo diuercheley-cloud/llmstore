@@ -125,7 +125,7 @@ if [[ "${DATABASE_URL}" == sqlite+aiosqlite:* ]]; then
 fi
 
 log "running database migrations"
-alembic -c /app/alembic.ini upgrade head
+alembic -c /app/control_plane/alembic.ini upgrade head
 
 log "seeding default data"
 python - <<'PY'
@@ -151,4 +151,9 @@ log "starting rag worker"
 python -m app.workers.rag_worker &
 
 log "starting control plane on :${CONTROL_PLANE_PORT}"
-exec python -m uvicorn app.main:app --host "${CONTROL_PLANE_HOST}" --port "${CONTROL_PLANE_PORT}"
+exec gunicorn -k uvicorn.workers.UvicornWorker \
+     -w "${WEB_CONCURRENCY:-1}" \
+     --timeout "${GUNICORN_TIMEOUT:-120}" \
+     --keep-alive "${GUNICORN_KEEPALIVE:-5}" \
+     --bind "${CONTROL_PLANE_HOST}:${CONTROL_PLANE_PORT}" \
+     app.main:app

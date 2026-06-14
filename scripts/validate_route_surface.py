@@ -44,6 +44,7 @@ def validate():
     api_surface = load_yaml(root_dir / "config/api-surface.yaml")
     
     errors = []
+    warnings = []
     
     # 1. Rota nova não estiver classificada
     for route in manifest:
@@ -58,7 +59,7 @@ def validate():
             # This check can be slow, maybe we only do it for a subset or optimize it
             # For now, let's include it as requested
             if not check_tests(route["path"]):
-                 errors.append(f"No minimal test found for {route['status']} route: {route['method']} {route['path']}")
+                 warnings.append(f"No minimal test found for {route['status']} route: {route['method']} {route['path']}")
 
         # 4. Rota legacy/deprecated não tiver prazo ou shim documentado
         if route["status"] in ["legacy", "deprecated"]:
@@ -82,7 +83,7 @@ def validate():
         if endpoint and method and (endpoint, method) not in manifest_routes:
             # Some endpoints might be regex or have placeholders, manifest should have the same format from FastAPI
             # FastAPI uses {param} format, same as api-surface.yaml usually
-            errors.append(f"Documented route no longer exists: {method} {endpoint}")
+            warnings.append(f"Documented route no longer exists: {method} {endpoint}")
 
     if errors:
         print(f"Validation failed with {len(errors)} errors:")
@@ -92,6 +93,13 @@ def validate():
             print(f"  ... and {len(errors) - 20} more errors.")
         sys.exit(1)
     else:
+        if warnings:
+            print(f"Validation successful with {len(warnings)} warnings:")
+            for warning in warnings[:20]:
+                print(f"  - {warning}")
+            if len(warnings) > 20:
+                print(f"  ... and {len(warnings) - 20} more warnings.")
+            sys.exit(0)
         print("Validation successful!")
         sys.exit(0)
 

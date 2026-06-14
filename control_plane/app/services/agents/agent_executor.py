@@ -66,7 +66,7 @@ class AgentExecutor:
         if llm_provider:
             self.llm_provider = llm_provider
         else:
-            from app.api.deps import get_inference_proxy
+            from app.services.inference_proxy import get_inference_proxy
             try:
                 proxy = get_inference_proxy()
             except Exception:

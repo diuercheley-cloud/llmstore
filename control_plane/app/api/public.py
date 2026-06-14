@@ -4,11 +4,20 @@ from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.customer_payment import CustomerPayment
-from app.schemas.public import PublicSignupRequest, PublicSignupResponse, WebhookPayload
-from app.services.billing import refresh_billing_statuses
+from app.schemas.public import (
+    CapabilitiesResponse,
+    PublicSignupRequest,
+    PublicSignupResponse,
+    WebhookPayload,
+)
+from app.services.billing import (
+    ensure_default_billing_plans,
+    ensure_default_pricing_rules,
+    refresh_billing_statuses,
+)
 from app.services.public_onboarding import create_public_signup, list_public_plans
 from app.services.public_seo import (
     PUBLIC_PAGES,
@@ -77,46 +86,24 @@ async def robots_txt(request: Request):
     return Response(content=generate_robots_txt(request=request, settings=settings), media_type="text/plain")
 
 
-@router.get("/public/capabilities")
+@router.get("/public/capabilities", response_model=CapabilitiesResponse)
 async def public_capabilities():
-    features = [
-        {"name": "OpenAI-compatible API", "status": "supported", "stage": "ga"},
-        {"name": "Chat Completions", "status": "supported", "stage": "ga"},
-        {"name": "Streaming", "status": "supported", "stage": "ga"},
-        {"name": "Models API", "status": "supported", "stage": "ga"},
-        {"name": "Embeddings", "status": "supported", "stage": "ga", "note": "Local and OpenAI-compatible backends"},
-        {"name": "Responses API", "status": "supported", "stage": "beta", "note": "Without streaming"},
-        {"name": "Tools / Function Calling", "status": "supported", "stage": "ga", "note": "Native for supported backends (OpenAI, Anthropic, etc.)"},
-        {"name": "RAG", "status": "supported", "stage": "ga"},
-        {"name": "TTS", "status": "supported", "stage": "ga"},
-        {"name": "Plugin Runtime", "status": "supported", "stage": "production", "note": "Sandboxed local execution"},
-        {"name": "Client Portal", "status": "supported", "stage": "ga"},
-        {"name": "Admin Dashboard", "status": "supported", "stage": "ga"},
-        {"name": "Admin Lab", "status": "supported", "stage": "ga"},
-        {"name": "Billing Local / Manual", "status": "supported", "stage": "ga"},
-        {"name": "PSP/PIX Real Adapter", "status": "partial", "stage": "future", "note": "Opt-in placeholder; mock available locally"},
-        {"name": "Security Report", "status": "supported", "stage": "ga"},
-        {"name": "Production Readiness", "status": "supported", "stage": "ga"},
-        {"name": "Backup / Restore", "status": "supported", "stage": "ga"},
-        {"name": "Upgrade / Rollback", "status": "supported", "stage": "ga"},
-        {"name": "Demo Pack", "status": "supported", "stage": "ga"},
-    ]
-    return {
-        "version": settings.project_version,
-        "local_appliance_mode": settings.local_appliance_mode,
-        "features": features,
-        "limitations": [
-            "PSP real opt-in — PAYMENT_PROVIDER=disabled por padrao; mock local disponivel",
-            "PIX real opt-in — fluxo real permanece desativado por padrao",
-            "Tools / Function Calling — depende da compatibilidade do backend/modelo",
-            "Modelos dependem do hardware local — qualidade varia conforme GPU/CPU",
-            "Plugin Runtime local — execucao isolada em sandbox",
-            "Sem secrets no output público",
-            "HTTPS opcional em localhost — producao deve configurar TLS",
-            "Nao prometemos seguranca absoluta — consulte equipe de compliance",
+    from app.services.feature_registry import get_public_capabilities
+    capabilities = get_public_capabilities()
+    return CapabilitiesResponse(
+        version=settings.project_version,
+        local_appliance_mode=settings.local_appliance_mode,
+        features=capabilities,
+        limitations=[
+            "Resources depend on local hardware — quality varies with GPU/CPU",
+            "No secrets in public output",
+            "HTTPS optional on localhost — production must configure TLS",
+            "No absolute security guarantee — consult compliance team",
         ],
-        "note": "Dados ficticios para demonstracao. Sem secrets expostos.",
-    }
+        note="Capability data sourced from config/supported-surface.yaml. "
+             "Each feature includes its capability_level, limitations, and docs_url. "
+             "Features gated behind disabled feature flags are omitted.",
+    )
 
 
 @router.get("/public/branding")
@@ -127,6 +114,9 @@ async def public_branding():
 
 @router.get("/public/plans")
 async def public_plans(session: AsyncSession = Depends(get_db_session)):
+    plans = await ensure_default_billing_plans(session)
+    await ensure_default_pricing_rules(session, plans)
+    await session.commit()
     return {"brand_name": settings.public_brand_name, "plans": await list_public_plans(session)}
 
 
@@ -138,6 +128,9 @@ async def public_signup(
 ):
     if not settings.public_signup_enabled:
         raise HTTPException(status_code=404, detail="public signup disabled")
+    plans = await ensure_default_billing_plans(session)
+    await ensure_default_pricing_rules(session, plans)
+    await session.commit()
     client, plan, api_key, plaintext = await create_public_signup(session, payload)
     base_url = _base_url(request)
     return PublicSignupResponse(

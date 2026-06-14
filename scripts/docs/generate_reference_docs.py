@@ -59,12 +59,11 @@ def md(value: Any) -> str:
 
 def status_rank(value: str) -> tuple[int, str]:
     order = {
-        "production_core": 0,
-        "production_optional": 1,
-        "beta": 2,
-        "experimental": 3,
-        "internal": 4,
-        "deprecated": 5,
+        "supported": 0,
+        "beta": 1,
+        "experimental": 2,
+        "simulated": 3,
+        "deprecated": 4,
     }
     return (order.get(value, 99), value)
 
@@ -83,7 +82,7 @@ def generate_api_reference() -> str:
     entries = load_yaml(REPO_ROOT / "config" / "api-surface.yaml")
     status_counts = Counter(entry["status"] for entry in entries)
     rows = []
-    for entry in sorted(entries, key=lambda item: (item["status"], item["endpoint"], item["method"])):
+    for entry in sorted(entries, key=lambda item: (status_rank(item["status"]), item["endpoint"], item["method"])):
         rows.append(
             [
                 entry["endpoint"],

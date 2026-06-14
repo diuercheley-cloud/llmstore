@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import get_settings
-from ..db.session import get_db
+from app.services.runtime_dependencies import get_db
 from ..services.inference import public_attestation_gateway
 
 router = APIRouter(prefix="/attestation", tags=["Public Attestation"])

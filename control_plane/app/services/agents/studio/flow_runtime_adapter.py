@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .flow_compiler import FlowCompiler
 from .flow_validator import FlowValidator
+from .dry_run_runner import AgentGraphDryRunRunner
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,12 @@ class FlowRuntimeAdapter:
         if errors:
             return {"status": "failed", "stage": "validation", "errors": errors}
 
-        # 2. Compile
+        if is_dry_run:
+            # REAL DRY-RUN via AgentGraphDryRunRunner
+            runner = AgentGraphDryRunRunner(self.db)
+            return await runner.run_dry_run(version.graph_json, global_input=input_data)
+
+        # 2. Compile (for Real Deployment only)
         plan = self.compiler.compile(version)
         
         # 3. Create Session

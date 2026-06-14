@@ -488,6 +488,34 @@
         </section>
 
         <section class="panel footer-note">
+          <h3>Runtime Inventory</h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:0.75rem;border-bottom:1px solid var(--line);">Provider</th>
+                  <th style="text-align:left;padding:0.75rem;border-bottom:1px solid var(--line);">Tipo</th>
+                  <th style="text-align:left;padding:0.75rem;border-bottom:1px solid var(--line);">Enabled</th>
+                  <th style="text-align:left;padding:0.75rem;border-bottom:1px solid var(--line);">Configured</th>
+                  <th style="text-align:left;padding:0.75rem;border-bottom:1px solid var(--line);">Capabilities</th>
+                </tr>
+              </thead>
+              <tbody id="providerRuntimeTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel footer-note">
+          <h3>Capabilities Snapshot</h3>
+          <pre id="providerCapabilities" style="margin:0;white-space:pre-wrap;overflow:auto;background:rgba(28,25,23,0.06);padding:1rem;border-radius:16px;">Aguardando carregamento...</pre>
+        </section>
+
+        <section class="panel footer-note">
+          <h3>Latest Cost Validation</h3>
+          <pre id="providerCostValidation" style="margin:0;white-space:pre-wrap;overflow:auto;background:rgba(28,25,23,0.06);padding:1rem;border-radius:16px;">Aguardando carregamento...</pre>
+        </section>
+
+        <section class="panel footer-note">
           <h3>Sem pegadinha</h3>
           <p>
             `REAL_PROVIDER_VALIDATION_ENABLED=false` mantém os providers preparados, mas bloqueia chamadas reais.
@@ -874,6 +902,53 @@
         });
       }
 
+      function renderProviderInventory(items) {
+        const tbody = $('providerRuntimeTable');
+        if (!tbody) return;
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;color:var(--muted);text-align:center;">Nenhum provider retornado.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = items.map((item) => `
+          <tr>
+            <td style="padding:0.75rem;border-bottom:1px solid var(--line);"><strong>${item.provider_id}</strong></td>
+            <td style="padding:0.75rem;border-bottom:1px solid var(--line);">${item.provider_type}</td>
+            <td style="padding:0.75rem;border-bottom:1px solid var(--line);">${item.enabled ? 'sim' : 'nao'}</td>
+            <td style="padding:0.75rem;border-bottom:1px solid var(--line);">${item.configured ? 'sim' : 'nao'}</td>
+            <td style="padding:0.75rem;border-bottom:1px solid var(--line);">${Object.keys(item.capabilities || {}).filter((key) => item.capabilities[key]).join(', ') || '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      async function loadProviderInsights() {
+        const headers = tokenHeaders();
+        const [inventoryRes, capsRes, costRes] = await Promise.all([
+          fetch('/admin/providers', { headers }),
+          fetch('/admin/providers/capabilities/all', { headers }),
+          fetch('/admin/providers/cost-validation/latest', { headers })
+        ]);
+
+        if (inventoryRes.ok) {
+          renderProviderInventory(await inventoryRes.json());
+        } else {
+          renderProviderInventory([]);
+        }
+
+        if (capsRes.ok) {
+          const caps = await capsRes.json();
+          $('providerCapabilities').textContent = JSON.stringify(caps, null, 2);
+        } else {
+          $('providerCapabilities').textContent = 'Falha ao carregar capabilities.';
+        }
+
+        if (costRes.ok) {
+          const cost = await costRes.json();
+          $('providerCostValidation').textContent = JSON.stringify(cost, null, 2);
+        } else {
+          $('providerCostValidation').textContent = 'Nenhum relatório de cost validation encontrado.';
+        }
+      }
+
       function providerPayload(providerKey, spec) {
         const payload = {
           enabled: !!$(providerFieldId(providerKey, 'enabled'))?.checked
@@ -903,6 +978,7 @@
         }
         const data = await res.json();
         renderConfig(data);
+        await loadProviderInsights();
         setMessage('Configuracao carregada.', 'ok');
       }
 
@@ -935,6 +1011,7 @@
         }
         const data = await res.json();
         renderConfig(data.configuration);
+        await loadProviderInsights();
         setMessage('Configuracao salva e runtime recarregado.', 'ok');
       }
 

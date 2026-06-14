@@ -9,7 +9,11 @@ from app.services.inference.backends.vllm_backend import VLLMBackend
 from app.services.inference.backends.llama_cpp_backend import LlamaCppBackend
 from app.services.runtime.hardware_detection import detect_hardware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from app.models.core.inference_routing_decision import InferenceRoutingDecision
+from datetime import timedelta
+from app.core.time import utc_now
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +28,13 @@ class InferenceRouter:
         self, 
         model_name: str, 
         capability: Capability, 
-        tenant_id: Optional[str] = None
+        tenant_id: Optional[str] = None,
+        request_id: Optional[str] = None,
+        client_id: Optional[str] = None,
+        routing_policy_version: Optional[int] = None,
+        latency_ms: Optional[int] = None,
+        success: bool = True,
+        error_code: Optional[str] = None
     ) -> Tuple[Optional[InferenceBackendBase], str]:
         """
         Selects the best backend for the given request.
@@ -38,6 +48,24 @@ class InferenceRouter:
         if not backends:
             reason = "No active backends found"
             self._log_decision(model_name, capability, None, reason)
+            
+            # Persist failure decision
+            decision_record = InferenceRoutingDecision(
+                request_id=request_id,
+                tenant_id=tenant_id,
+                client_id=client_id,
+                selected_backend=None,
+                selected_model=model_name,
+                candidate_backends={"backends": []},
+                routing_policy_version=routing_policy_version,
+                reason=reason,
+                latency_ms=latency_ms,
+                success=False,
+                error_code=error_code or "NO_ACTIVE_BACKENDS"
+            )
+            self.session.add(decision_record)
+            await self.session.flush()
+            
             return None, reason
 
         # 2. Filter by model and capability
@@ -52,12 +80,30 @@ class InferenceRouter:
                 
             if adapter.supports_capability(capability):
                 # Check if model is supported (simplified)
-                # In a real system, we'd check ModelRegistry or call adapter.list_models()
+                # In a system like this, we'd check ModelRegistry or call adapter.list_models()
                 candidates.append((b, adapter))
 
         if not candidates:
             reason = f"No backend supports capability {capability}"
             self._log_decision(model_name, capability, None, reason)
+            
+            # Persist failure decision
+            decision_record = InferenceRoutingDecision(
+                request_id=request_id,
+                tenant_id=tenant_id,
+                client_id=client_id,
+                selected_backend=None,
+                selected_model=model_name,
+                candidate_backends={"backends": []},
+                routing_policy_version=routing_policy_version,
+                reason=reason,
+                latency_ms=latency_ms,
+                success=False,
+                error_code=error_code or "UNSUPPORTED_CAPABILITY"
+            )
+            self.session.add(decision_record)
+            await self.session.flush()
+            
             return None, reason
 
         # 3. Simple selection logic (prioritize vLLM if available, then TGI, then others)
@@ -68,6 +114,24 @@ class InferenceRouter:
         reason = f"Selected {selected_backend.name} ({selected_backend.provider}) based on priority"
         
         self._log_decision(model_name, capability, selected_backend.name, reason)
+        
+        # Persist success/custom decision
+        decision_record = InferenceRoutingDecision(
+            request_id=request_id,
+            tenant_id=tenant_id,
+            client_id=client_id,
+            selected_backend=selected_backend.name,
+            selected_model=model_name,
+            candidate_backends={"backends": [b.name for b, _ in candidates]},
+            routing_policy_version=routing_policy_version,
+            reason=reason,
+            latency_ms=latency_ms,
+            success=success,
+            error_code=error_code
+        )
+        self.session.add(decision_record)
+        await self.session.flush()
+        
         return selected_adapter, reason
 
     def _get_adapter(self, backend: InferenceBackend) -> Optional[InferenceBackendBase]:
@@ -118,3 +182,17 @@ class InferenceRouter:
 
     def get_last_decision(self) -> Optional[Dict[str, Any]]:
         return self.routing_log[-1] if self.routing_log else None
+
+    async def cleanup_old_decisions(self, retention_days: Optional[int] = None) -> int:
+        """
+        Deletes decisions older than the configured retention days.
+        Returns the number of deleted records.
+        """
+        cfg = get_settings()
+        days = retention_days if retention_days is not None else getattr(cfg, "commercial_routing_decision_retention_days", 30)
+        
+        cutoff = utc_now() - timedelta(days=days)
+        stmt = delete(InferenceRoutingDecision).where(InferenceRoutingDecision.created_at < cutoff)
+        result = await self.session.execute(stmt)
+        await self.session.flush()
+        return result.rowcount or 0

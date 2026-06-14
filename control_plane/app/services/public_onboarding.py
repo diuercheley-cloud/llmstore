@@ -38,6 +38,11 @@ PUBLIC_PLAN_FEATURES = {
         "Custom quotas and routing",
         "Priority support channel",
     ],
+    "unlimited": [
+        "Unlimited token usage",
+        "Zero token overage charges",
+        "Premier production support",
+    ],
 }
 
 

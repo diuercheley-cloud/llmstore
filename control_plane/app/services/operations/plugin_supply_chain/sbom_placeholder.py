@@ -2,9 +2,10 @@ from typing import Any
 
 from app.models.operations.plugin_supply_chain import PluginSBOMPlaceholder
 from app.services.operations.plugin_supply_chain.hash_utils import compute_sbom_hash, sha256_hex
+from app.services.operations.plugin_supply_chain.sbom_service import PluginSBOMService, SBOMGenerationError
 
 
-class PluginSBOMPlaceholderService:
+class PluginSBOMPlaceholderService(PluginSBOMService):
     def generate_sbom_placeholder(
         self,
         provenance_record: Any,
@@ -71,7 +72,7 @@ class PluginSBOMPlaceholderService:
             "replayed_hash": replay_hash,
         }
 
-    def explain_sbom(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
+    def explain_sbom_placeholder(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
         return {
             "sbom_format": placeholder.sbom_format,
             "signature_only": True,
@@ -84,3 +85,10 @@ class PluginSBOMPlaceholderService:
                 "deterministic metadata only",
             ],
         }
+
+    def explain_sbom(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
+        if placeholder.sbom_format == "cyclonedx_json":
+            return super().explain_sbom(placeholder)
+        return self.explain_sbom_placeholder(placeholder)
+
+

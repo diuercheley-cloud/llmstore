@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, List, Optional
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.agents.multi_agent import AgentTeamTrace
 from app.services.agents.multi_agent.debate_runtime import DebateRuntime
 from app.services.agents.multi_agent.dynamic_runtime import DynamicRoutingRuntime

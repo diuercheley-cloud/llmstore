@@ -4,7 +4,7 @@ from typing import Any
 
 from app.api.dependencies import get_current_admin
 from app.core.time import utc_now
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.operations.failure_signals import (
     FailureForecast,
     FailureRiskAssessment,

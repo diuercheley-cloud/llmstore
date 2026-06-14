@@ -29,8 +29,8 @@ from app.services.operations.plugin_supply_chain.receipts import build_supply_ch
 from app.services.operations.plugin_supply_chain.replay_verifier import (
     PluginSupplyChainReplayVerifier,
 )
-from app.services.operations.plugin_supply_chain.sbom_placeholder import (
-    PluginSBOMPlaceholderService,
+from app.services.operations.plugin_supply_chain.sbom_service import (
+    PluginSBOMService,
 )
 from app.utils.crypto_signer import sign_payload
 from fastapi import APIRouter, Depends, HTTPException
@@ -41,7 +41,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter()
 
 PROVENANCE_SERVICE = PluginProvenanceService()
-SBOM_SERVICE = PluginSBOMPlaceholderService()
+SBOM_SERVICE = PluginSBOMService()
 DEPENDENCY_SERVICE = DependencyGovernanceService()
 LINEAGE_SERVICE = PluginArtifactLineageService()
 REPLAY_VERIFIER = PluginSupplyChainReplayVerifier()
@@ -64,6 +64,10 @@ class SBOMRequest(BaseModel):
     denied_dependencies_json: list[str] = Field(default_factory=list)
     reproducible_build: bool = True
     offline_verifiable: bool = True
+    plugin_path: str | None = None
+    expected_hash: str | None = None
+    signature: str | None = None
+
 
 
 class DependencyVerificationRequest(BaseModel):
@@ -282,26 +286,131 @@ async def revoke_provenance(
 
 
 @router.post("/admin/operations/plugin-supply-chain/provenance/{provenance_id}/sbom")
-async def generate_sbom_placeholder(
+async def generate_sbom(
     provenance_id: str,
     request: SBOMRequest,
     db: AsyncSession = Depends(get_db),
     _admin: Any = Depends(get_current_admin),
 ):
     from app.core.config import get_settings
-    if get_settings().app_env == "production":
-        raise HTTPException(status_code=400, detail="Placeholder SBOM is blocked in production mode.")
-        
+    from fastapi.responses import JSONResponse
+    from pathlib import Path
+    
     provenance = await _get_provenance(db, provenance_id, request.client_id)
+    
+    # Try to resolve plugin path
+    plugin_path_str = request.plugin_path
+    if not plugin_path_str:
+        # Resolve from contract
+        contract = (
+            await db.execute(
+                select(PluginABIContract).where(
+                    PluginABIContract.id == provenance.plugin_contract_id,
+                    PluginABIContract.client_id == request.client_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if contract:
+            from app.models.plugins.marketplace import PluginInstall, PluginVersion, PluginMarketplaceEntry
+            row = (
+                await db.execute(
+                    select(PluginInstall)
+                    .join(PluginVersion, PluginVersion.id == PluginInstall.current_version_id)
+                    .join(PluginMarketplaceEntry, PluginMarketplaceEntry.id == PluginInstall.plugin_entry_id)
+                    .where(
+                        PluginMarketplaceEntry.name == contract.plugin_name,
+                        PluginVersion.version == contract.plugin_version,
+                        PluginInstall.is_enabled.is_(True),
+                    )
+                )
+            ).scalar_one_or_none()
+            if row:
+                plugin_path_str = row.install_path
+                
+    policy_decision = getattr(get_settings(), "plugin_sbom_policy_decision", "block")
+    
+    if not plugin_path_str:
+        reason = "Could not resolve plugin package install path or directory."
+        if policy_decision == "block":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "block",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "warn",
+                },
+            )
+            
+    plugin_path = Path(plugin_path_str)
+    if not plugin_path.exists() or not plugin_path.is_dir():
+        reason = f"Plugin path does not exist or is not a directory: {plugin_path_str}"
+        if policy_decision == "block":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "block",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "warn",
+                },
+            )
+            
     try:
-        placeholder = SBOM_SERVICE.generate_sbom_placeholder(provenance, **request.model_dump(exclude={"client_id"}))
+        sbom_record = SBOM_SERVICE.generate_sbom(
+            provenance,
+            plugin_path=plugin_path,
+            expected_hash=request.expected_hash,
+            signature=request.signature,
+            reproducible_build=request.reproducible_build,
+            offline_verifiable=request.offline_verifiable,
+        )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-        
-    db.add(placeholder)
-    event = build_plugin_supply_chain_audit_event("sbom_generated", str(request.client_id), {"provenance_id": provenance.id, "sbom_id": placeholder.id})
+        reason = str(e)
+        if policy_decision == "block":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "block",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "sbom_status": "unavailable",
+                    "reason": reason,
+                    "policy_decision": "warn",
+                },
+            )
+            
+    db.add(sbom_record)
+    event = build_plugin_supply_chain_audit_event("sbom_generated", str(request.client_id), {"provenance_id": provenance.id, "sbom_id": sbom_record.id})
     await db.commit()
-    return {"sbom": _serialize_sbom(placeholder), "validation": SBOM_SERVICE.validate_sbom_placeholder(placeholder), "audit_event": event}
+    return {
+        "sbom": _serialize_sbom(sbom_record),
+        "validation": SBOM_SERVICE.validate_sbom(sbom_record, expected_hash=request.expected_hash, signature=request.signature),
+        "audit_event": event,
+    }
+
 
 
 @router.get("/admin/operations/plugin-supply-chain/sbom")

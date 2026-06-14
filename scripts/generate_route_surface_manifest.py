@@ -6,7 +6,16 @@ from pathlib import Path
 
 # Add control_plane to sys.path
 root_dir = Path(__file__).parent.parent
-sys.path.append(str(root_dir / "control_plane"))
+sys.path.insert(0, str(root_dir))
+sys.path.insert(0, str(root_dir / "control_plane"))
+
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("JWT_SECRET", "static-secret-for-surface-generation-only")
+os.environ.setdefault("ADMIN_TOKEN", "static-token-for-surface-generation-only")
+os.environ.setdefault("AGENT_RUNTIME_ENABLED", "true")
+os.environ.setdefault("AGENT_EXECUTION_ENABLED", "true")
+os.environ.setdefault("COMMERCIAL_GLOBAL_ROUTING_ENABLED", "true")
 
 from fastapi.routing import APIRoute
 from app.bootstrap.app_factory import create_app
@@ -28,6 +37,50 @@ def generate_manifest():
     capabilities = supported_surface.get("capabilities", []) if isinstance(supported_surface, dict) else []
     
     manifest = []
+
+    def fallback_surface(path: str, module: str):
+        internal_prefixes = (
+            "/admin",
+            "/api/admin",
+            "/api/v1/admin",
+            "/api/v1/agent-service",
+            "/api/v1/alerts",
+            "/api/agents",
+            "/api/audit",
+            "/api/backends",
+            "/api/multimodal",
+            "/auth",
+            "/billing",
+            "/mcp",
+            "/hub",
+            "/harness",
+            "/tests",
+            "/examples",
+            "/admin-dashboard",
+            "/admin-v2",
+            "/client-portal",
+        )
+        internal_module_markers = (
+            ".admin",
+            "_admin",
+            "app.api.system",
+            "app.api.auth",
+            "app.api.billing_payments",
+            "app.api.alert_webhooks",
+            "app.api.multimodal_v2",
+            "app.api.audit",
+            "app.api.agent_service",
+            "app.api.agent_deployments",
+            "app.api.agent_mcp_admin",
+        )
+        if path.startswith(internal_prefixes) or any(marker in module for marker in internal_module_markers):
+            return {
+                "status": "internal",
+                "owner": "platform-ops",
+                "doc_link": "/docs/api/supported-api-surface.md",
+                "feature_flag": None,
+            }
+        return None
     
     for route in app.routes:
         if not isinstance(route, APIRoute):
@@ -89,15 +142,21 @@ def generate_manifest():
                     doc_link = matched_capability.get("docs_url", doc_link)
                 feature_flag = matched_capability.get("feature_flag")
 
-            # Map statuses to requested set
-            # requested: core, supported, beta, experimental, legacy, deprecated, internal
+            if status == "unclassified":
+                fallback = fallback_surface(path, module)
+                if fallback:
+                    status = fallback["status"]
+                    owner = fallback["owner"]
+                    doc_link = fallback["doc_link"]
+                    feature_flag = fallback["feature_flag"]
+
+            # Normalize route statuses for generated docs and governance checks.
             status_map = {
                 "production_core": "core",
                 "production_optional": "supported",
-                "keep_supported": "supported",
                 "beta": "beta",
-                "keep_beta": "beta",
                 "experimental": "experimental",
+                "simulated": "simulated",
                 "deprecated": "deprecated",
                 "internal": "internal"
             }

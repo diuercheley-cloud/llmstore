@@ -55,6 +55,31 @@
         font-weight: 600;
       }
       button:hover { background: var(--accent-hover); }
+      .btn-clear-key {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+      }
+      .btn-clear-key:hover {
+        background: rgba(244, 63, 94, 0.15);
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .token-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
       
       main {
         padding: 2rem;
@@ -104,6 +129,28 @@
       .status-item { display: flex; align-items: center; gap: 0.5rem; }
       .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
       .dot-active { background: var(--success); }
+      .kv {
+        display: grid;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+      }
+      .kv-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        padding-bottom: 0.4rem;
+      }
+      pre {
+        margin: 0;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        background: rgba(15, 23, 42, 0.5);
+        color: var(--ink);
+        overflow: auto;
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
     </style>
   </head>
   <body>
@@ -112,7 +159,10 @@
         <h1>System Monitoring</h1>
       </div>
       <div class="auth-box">
-        <input type="password" id="adminToken" placeholder="Admin Token" />
+        <div class="token-wrapper">
+          <input type="password" id="adminToken" placeholder="Admin Token" />
+          <button class="btn-clear-key" id="btnClearKey" title="Limpar Token">✕</button>
+        </div>
         <button id="connect">Connect</button>
         <button id="refresh" class="hidden">Refresh</button>
       </div>
@@ -163,6 +213,30 @@
         </div>
       </section>
 
+      <section>
+        <div class="chart-header">
+          <h2>Operational Readiness</h2>
+          <span id="readinessValue" class="value-display">--</span>
+        </div>
+        <div id="readinessChecks" class="kv"></div>
+      </section>
+
+      <section>
+        <div class="chart-header">
+          <h2>Admin Deep Health</h2>
+          <span id="deepHealthValue" class="value-display">--</span>
+        </div>
+        <div id="adminStatusSummary" class="kv"></div>
+      </section>
+
+      <section style="grid-column: 1 / -1;">
+        <div class="chart-header">
+          <h2>Admin Status Snapshot</h2>
+          <span id="adminStatusValue" class="value-display">--</span>
+        </div>
+        <pre id="adminStatusJson">Aguardando conexão...</pre>
+      </section>
+
       <div class="status-bar" style="grid-column: 1 / -1; justify-content: center; margin-top: 1rem;">
         <div class="status-item"><div class="dot dot-active"></div> Real-time updates (every 2s)</div>
         <div id="uptimeDisplay" class="status-item">Uptime: --</div>
@@ -184,9 +258,16 @@
         adminToken: document.getElementById('adminToken'),
         connect: document.getElementById('connect'),
         refresh: document.getElementById('refresh'),
+        btnClearKey: document.getElementById('btnClearKey'),
         adminContent: document.getElementById('adminContent'),
         loginPrompt: document.getElementById('loginPrompt'),
-        uptime: document.getElementById('uptimeDisplay')
+        uptime: document.getElementById('uptimeDisplay'),
+        readinessValue: document.getElementById('readinessValue'),
+        readinessChecks: document.getElementById('readinessChecks'),
+        deepHealthValue: document.getElementById('deepHealthValue'),
+        adminStatusSummary: document.getElementById('adminStatusSummary'),
+        adminStatusValue: document.getElementById('adminStatusValue'),
+        adminStatusJson: document.getElementById('adminStatusJson')
       };
 
       const savedToken = localStorage.getItem('adminToken');
@@ -198,6 +279,16 @@
       elements.connect.addEventListener('click', () => {
         localStorage.setItem('adminToken', elements.adminToken.value.trim());
         startMonitoring();
+      });
+
+      elements.btnClearKey.addEventListener('click', () => {
+        elements.adminToken.value = '';
+        localStorage.removeItem('adminToken');
+        if (interval) clearInterval(interval);
+        interval = null;
+        elements.adminContent.classList.add('hidden');
+        elements.loginPrompt.classList.remove('hidden');
+        elements.refresh.classList.add('hidden');
       });
 
       function createChart(canvas, color) {
@@ -262,14 +353,35 @@
         charts.disk = createChart(document.getElementById('diskChart'), '#fbbf24');
       }
 
+      function adminHeaders() {
+        return { 'X-Admin-Token': elements.adminToken.value.trim() };
+      }
+
+      function renderKeyValueRows(container, entries) {
+        container.innerHTML = entries.map(([label, value]) => `
+          <div class="kv-row">
+            <span>${label}</span>
+            <strong>${value}</strong>
+          </div>
+        `).join('');
+      }
+
       async function fetchData() {
         const token = elements.adminToken.value.trim();
         try {
-          const response = await fetch('/admin/tests/system/resources', {
-            headers: { 'X-Admin-Token': token }
-          });
-          if (!response.ok) throw new Error('Unauthorized');
-          return await response.json();
+          const [resourcesRes, readinessRes, adminStatusRes, deepHealthRes] = await Promise.all([
+            fetch('/admin/tests/system/resources', { headers: { 'X-Admin-Token': token } }),
+            fetch('/operational-readiness'),
+            fetch('/admin/status', { headers: adminHeaders() }),
+            fetch('/admin/health/deep', { headers: adminHeaders() })
+          ]);
+          if (!resourcesRes.ok || !adminStatusRes.ok || !deepHealthRes.ok) throw new Error('Unauthorized');
+          return {
+            resources: await resourcesRes.json(),
+            readiness: readinessRes.ok ? await readinessRes.json() : null,
+            adminStatus: await adminStatusRes.json(),
+            deepHealth: await deepHealthRes.json()
+          };
         } catch (err) {
           console.error(err);
           return null;
@@ -278,49 +390,78 @@
 
       function updateCharts(data) {
         if (!data) return;
+        const resources = data.resources || {};
 
         const now = new Date().toLocaleTimeString();
         history.labels.push(now);
         if (history.labels.length > MAX_DATA_POINTS) history.labels.shift();
 
         // Update CPU
-        charts.cpu.data.push(data.cpu_percent);
+        const cpuVal = resources.cpu_percent || 0;
+        charts.cpu.data.push(cpuVal);
         if (charts.cpu.data.length > MAX_DATA_POINTS) charts.cpu.data.shift();
         charts.cpu.update();
-        document.getElementById('cpuValue').textContent = `${data.cpu_percent.toFixed(1)}%`;
+        document.getElementById('cpuValue').textContent = `${cpuVal.toFixed(1)}%`;
 
         // Update RAM
-        charts.ram.data.push(data.memory.percent);
+        const ramPercent = resources.memory?.percent || 0;
+        const ramUsedMb = resources.memory?.used ? (resources.memory.used / 1024 / 1024) : 0;
+        const ramTotalMb = resources.memory?.total ? (resources.memory.total / 1024 / 1024) : 0;
+        charts.ram.data.push(ramPercent);
         if (charts.ram.data.length > MAX_DATA_POINTS) charts.ram.data.shift();
         charts.ram.update();
-        document.getElementById('ramValue').textContent = `${(data.memory.used_mb / 1024).toFixed(1)} / ${(data.memory.total_mb / 1024).toFixed(1)} GB (${data.memory.percent}%)`;
+        document.getElementById('ramValue').textContent = `${ramUsedMb.toFixed(1)} / ${ramTotalMb.toFixed(1)} GB (${ramPercent}%)`;
 
         // Update GPU
-        const gpuVal = data.gpu?.available ? data.gpu.utilization_percent : 0;
+        const gpuDevice = resources.gpu?.devices?.[0];
+        const gpuVal = gpuDevice ? gpuDevice.utilization : 0;
         charts.gpu.data.push(gpuVal);
         if (charts.gpu.data.length > MAX_DATA_POINTS) charts.gpu.data.shift();
         charts.gpu.update();
-        if (data.gpu?.available) {
-          document.getElementById('gpuValue').textContent = `${data.gpu.utilization_percent}% (VRAM: ${data.gpu.vram_used_mb} MB)`;
+        if (gpuDevice) {
+          document.getElementById('gpuValue').textContent = `${gpuDevice.utilization}% (VRAM: ${gpuDevice.memory_used} MB)`;
         } else {
           document.getElementById('gpuValue').textContent = 'N/A';
         }
 
         // Update Disk
-        charts.disk.data.push(data.disk.percent);
+        const diskPercent = resources.disk?.percent || 0;
+        const diskUsedGb = resources.disk?.used ? (resources.disk.used / 1024 / 1024 / 1024) : 0;
+        const diskTotalGb = resources.disk?.total ? (resources.disk.total / 1024 / 1024 / 1024) : 0;
+        charts.disk.data.push(diskPercent);
         if (charts.disk.data.length > MAX_DATA_POINTS) charts.disk.data.shift();
         charts.disk.update();
-        document.getElementById('diskValue').textContent = `${data.disk.used_gb} / ${data.disk.total_gb} GB (${data.disk.percent}%)`;
+        document.getElementById('diskValue').textContent = `${diskUsedGb.toFixed(1)} / ${diskTotalGb.toFixed(1)} GB (${diskPercent}%)`;
 
-        // Uptime
-        const uptimeHrs = (data.uptime_seconds / 3600).toFixed(1);
-        elements.uptime.textContent = `Uptime: ${uptimeHrs}h`;
+        if (data.readiness) {
+          elements.readinessValue.textContent = data.readiness.status || '--';
+          renderKeyValueRows(elements.readinessChecks, Object.entries(data.readiness.checks || {}).slice(0, 8).map(([key, value]) => [key, typeof value === 'object' ? JSON.stringify(value) : String(value)]));
+        }
+
+        if (data.deepHealth) {
+          elements.deepHealthValue.textContent = data.deepHealth.status || '--';
+          const deps = data.deepHealth.dependencies || {};
+          renderKeyValueRows(elements.adminStatusSummary, [
+            ['postgres', deps.postgres?.ok ? 'ok' : deps.postgres?.error || 'down'],
+            ['redis', deps.redis?.ok ? 'ok' : deps.redis?.error || 'down'],
+            ['data_plane', deps.data_plane?.ok ? 'ok' : 'down'],
+            ['queues', JSON.stringify((data.deepHealth.queues || {}).summary || {})]
+          ]);
+        }
+
+        if (data.adminStatus) {
+          elements.adminStatusValue.textContent = data.adminStatus.status || '--';
+          elements.adminStatusJson.textContent = JSON.stringify(data.adminStatus, null, 2);
+        }
+
+        elements.uptime.textContent = `Uptime: ${data.adminStatus?.timestamp || '--'}`;
       }
 
       let interval;
       async function startMonitoring() {
         if (!elements.adminToken.value.trim()) return;
-        
+        if (interval) clearInterval(interval);
+
         // Initial test fetch
         const data = await fetchData();
         if (!data) {

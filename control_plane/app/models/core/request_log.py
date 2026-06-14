@@ -17,6 +17,8 @@ class RequestLog(Base):
     endpoint: Mapped[str] = mapped_column(String(64), nullable=False)
     prompt_tokens_estimated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens_estimated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    token_count_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tokens_estimated: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     http_status: Mapped[int] = mapped_column(Integer, nullable=False)
     is_stream: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

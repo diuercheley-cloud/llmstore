@@ -5,7 +5,7 @@ from datetime import date, datetime
 from app.api.deps import get_db_session
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.db.session import get_db_session as get_db
+from app.services.runtime_dependencies import get_db_session as get_db
 from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan

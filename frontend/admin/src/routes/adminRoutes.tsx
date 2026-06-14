@@ -50,9 +50,19 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/agents': lazy(() => import('../pages/agents/AgentsOverview')),
   '/agents/protocols': lazy(() => import('../pages/agents/AgentProtocols')),
   '/agents/studio': lazy(() => import('../pages/agents/studio/AgentStudio')),
+  '/agents/memory': lazy(() => import('../pages/agents/AgentMemory')),
+  '/agents/tools': lazy(() => import('../pages/agents/AgentTools')),
+  '/agents/routing': lazy(() => import('../pages/agents/AgentRouting')),
+  '/agents/readiness': lazy(() => import('../pages/agents/AgentReadiness')),
+  '/agents/teams': lazy(() => import('../pages/agents/AgentTeams')),
+  '/agents/workflow-ops': lazy(() => import('../pages/agents/AgentWorkflowOps')),
+  '/agents/runs': lazy(() => import('../pages/agents/AgentRuns')),
   '/agents/marketplace': lazy(() => import('../pages/marketplace/Marketplace')),
   '/agents/analytics': lazy(() => import('../pages/agents/analytics/AgentAnalyticsDashboard')),
   '/agents/approvals': lazy(() => import('../pages/agents/approvals/ApprovalPortal')),
+  '/agents/runs/:id': lazy(() => import('../pages/agents/AgentRunTimeline')),
+  '/agents/workspaces/:id': lazy(() => import('../pages/agents/AgentArtifactBrowser')),
+  '/agents/workspaces/:id/artifacts/:artifactId': lazy(() => import('../pages/agents/AgentArtifactDetail')),
   '/agents/chat': lazy(() => import('../pages/chat/CollaborativeChat')),
   '/agents/promotion': lazy(() => import('../pages/agents/AgentPromotion')),
   '/agents/lineage': lazy(() => import('../pages/agents/AgentLineage')),
@@ -61,8 +71,11 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/agents/kg': lazy(() => import('../pages/agents/kg/KnowledgeGraph')),
   '/agents/optimization': lazy(() => import('../pages/agents/optimization/OptimizationTournaments')),
   '/agents/evaluation': lazy(() => import('../pages/agents/AgentEvaluation')),
+  '/agents/registry': lazy(() => import('../pages/agents/AgentRegistry')),
+  '/agents/workspaces': lazy(() => import('../pages/agents/AgentWorkspaces')),
 
   '/operations': lazy(() => import('../pages/operations/OperationsOverview')),
+  '/operations/runtime-nodes': lazy(() => import('../pages/operations/RuntimeNodes')),
   '/operations/profile': lazy(() => import('../pages/operations/SystemProfile')),
   '/operations/gpu': lazy(() => import('../pages/operations/GPUAutoscaling')),
   '/operations/adapters': lazy(() => import('../pages/operations/AdapterRegistry')),
@@ -70,6 +83,9 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/operations/readiness': lazy(() => import('../pages/operations/Readiness')),
   '/operations/security': lazy(() => import('../pages/operations/SecurityPosture')),
   '/operations/backups': lazy(() => import('../pages/operations/BackupDashboard')),
+  '/operations/aiops': lazy(() => import('../pages/operations/AIOpsDashboard')),
+  '/operations/workflow-governance': lazy(() => import('../pages/operations/WorkflowGovernance')),
+  '/operations/model-supply-chain': lazy(() => import('../pages/operations/ModelSupplyChain')),
 
 
   '/ide': lazy(() => import('../pages/ide/WebIDE')),
@@ -80,6 +96,14 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/multicluster': lazy(() => import('../pages/multicluster/MultiClusterOverview')),
   '/advanced/federation': lazy(() => import('../pages/advanced/FederationOverview')),
   '/chaos': lazy(() => import('../pages/chaos/ChaosDashboard')),
+
+  // New modules
+  '/operations/mlops': lazy(() => import('../pages/mlops/MLOpsDashboard')),
+  '/rag/vectorstores': lazy(() => import('../pages/rag/VectorStores')),
+  '/agents/worker-dlq': lazy(() => import('../pages/agents/WorkerDLQ')),
+  '/agents/code-interpreter': lazy(() => import('../pages/agents/CodeInterpreterAdmin')),
+  '/compliance/attestation': lazy(() => import('../pages/compliance/Attestation')),
+  '/governance/sovereign': lazy(() => import('../pages/governance/SovereignGovernance')),
 }
 
 export { type RouteStatus } from '../navigation/navConfig'
@@ -101,6 +125,36 @@ export const routes: RouteConfig[] = navConfig.map(nav => ({
     description: 'Checklist de prontidão para produção Enterprise.',
     hidden: true,
     component: componentMap['/enterprise/checklist']!,
+  },
+  {
+    label: 'Agent Run',
+    path: '/agents/runs/:id',
+    icon: navConfig.find(route => route.path === '/agents/runs')?.icon || LayoutDashboard,
+    section: 'agents',
+    status: 'active',
+    description: 'Detalhes operacionais de uma execucao de agente.',
+    hidden: true,
+    component: componentMap['/agents/runs/:id']!,
+  },
+  {
+    label: 'Workspace Artifacts',
+    path: '/agents/workspaces/:id',
+    icon: navConfig.find(route => route.path === '/agents/workspaces')?.icon || LayoutDashboard,
+    section: 'agents',
+    status: 'active',
+    description: 'Artefatos de um workspace compartilhado.',
+    hidden: true,
+    component: componentMap['/agents/workspaces/:id']!,
+  },
+  {
+    label: 'Artifact Detail',
+    path: '/agents/workspaces/:id/artifacts/:artifactId',
+    icon: navConfig.find(route => route.path === '/agents/workspaces')?.icon || LayoutDashboard,
+    section: 'agents',
+    status: 'active',
+    description: 'Detalhes, diff e revisao de artefato.',
+    hidden: true,
+    component: componentMap['/agents/workspaces/:id/artifacts/:artifactId']!,
   },
 ])
 

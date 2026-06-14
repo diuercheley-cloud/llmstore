@@ -14,6 +14,17 @@ Agent Studio is a low-code visual environment for building, testing, and debuggi
 - **Flow Compiler**: Automatically transform visual flows into executable `AgentPlan` or `AgentWorkflow` objects.
 - **Integrated Debugger**: Inspect agent traces, tool calls, and policy decisions in real-time or via replay.
 
+## Surface Status
+
+- `POST /admin/agents/studio/flows`: `beta`
+- `GET /admin/agents/studio/flows`: `beta`
+- `GET /admin/agents/studio/flows/{id}`: `beta`
+- `POST /admin/agents/studio/flows/{id}/validate`: `beta`
+- `POST /admin/agents/studio/flows/{id}/compile`: `beta`
+- `POST /admin/agents/studio/flows/{id}/explain`: `beta`
+- `POST /admin/agents/studio/flows/{id}/dry-run`: `simulated`
+- `GET /admin/agents/studio/flows/runs/{run_id}/trace`: `beta`
+
 ## Core Concepts
 
 ### Nodes
@@ -29,6 +40,8 @@ Agent Studio enforces all platform security rules:
 - **Tenant Boundary**: Flows are strictly isolated by tenant.
 - **Policy Check**: High-risk tools require explicit approval nodes.
 - **Budget Control**: Flow execution is limited by the agent's defined budget.
+
+The dry-run endpoint uses the simulation runtime. It records trace/debug artifacts and blocks side effects, but it does not execute real model calls or external tools.
 
 ## Configuration
 

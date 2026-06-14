@@ -4,7 +4,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.config import get_settings
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.schemas.managed_control_plane import (
     ApplianceEnrollmentToken,
     ApplianceEnrollRequest,

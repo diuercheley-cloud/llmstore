@@ -13,7 +13,7 @@ from uuid import UUID
 
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_cryptographic_receipts import CommercialInferenceReceipt
 from app.models.commercial.commercial_merkle_timelines import (
     CommercialExecutionProof,

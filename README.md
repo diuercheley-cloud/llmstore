@@ -266,36 +266,14 @@ O **Local AI Appliance** é uma stack completa de infraestrutura de IA on-premis
 # 1. Pré-requisitos: Docker, docker compose, git, curl, jq, python3
 # 2. Configure o ambiente
 cp .env.example .env.local
-# Edite ADMIN_TOKEN, POSTGRES_PASSWORD, MODEL_FILE
-# Mantenha os gates enterprise em false a menos que queira habilitar explicitamente:
-# KUBERNETES_MODE=false
-# DISTRIBUTED_RUNTIME_ENABLED=false
-# GPU_AUTOSCALING_ENABLED=false
-# PLUGIN_MARKETPLACE_ENABLED=false
-# MANAGED_CONTROL_PLANE_ENABLED=false
-# Mantenha a superfície agentic em modo seguro por padrão:
-# AGENT_RUNTIME_ENABLED=false
-# AGENT_REAL_LLM_ENABLED=false
-# AGENT_LLM_PROVIDER=mock
-# AGENT_EXECUTION_ENABLED=false
-# AGENT_TOOL_ADAPTERS_ENABLED=false
-# AGENT_TOOL_EXECUTION_ENABLED=false
-# AGENT_MEMORY_ENABLED=false
-# AGENT_MEMORY_SEMANTIC_SEARCH_ENABLED=false
-# AGENT_MEMORY_CONTEXT_INJECTION_ENABLED=false
-# AGENT_WORKER_ENABLED=false
-# AGENT_EVALS_ENABLED=false
-# AGENT_HUMAN_APPROVAL_ENABLED=true
-# AGENT_SAAS_CONNECTORS_ENABLED=false
-# AGENT_CONNECTOR_WRITE_ENABLED=false
-# AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false
-# AGENT_STATEFUL_WORKFLOWS_ENABLED=false
-# AGENT_REASONING_LOOP_ENABLED=false
-# AGENT_REACT_LOOP_ENABLED=false
-# AGENT_MULTI_AGENT_ENABLED=false
-# AGENT_STUDIO_ENABLED=false
-# AGENT_VISUAL_BUILDER_ENABLED=false
-# AGENT_MARKETPLACE_ENABLED=false
+
+# Para funcionalidades avançadas (opcional), concatene os exemplos desejados:
+# cat env/commercial.env.example >> .env.local
+# cat env/agentic.env.example >> .env.local
+# cat env/enterprise.env.example >> .env.local
+# cat env/observability.env.example >> .env.local
+
+# Edite ADMIN_TOKEN, POSTGRES_PASSWORD, MODEL_FILE no .env.local
 
 # 3. Instale o appliance com dados de demonstração
 make install-local

@@ -48,6 +48,6 @@ def test_quickstart_bootstrap_configures_embedded_services() -> None:
     assert 'export DATABASE_URL="${DATABASE_URL:-sqlite+aiosqlite:////data/quickstart/llmstack.db}"' in script
     assert 'redis-server \\' in script
     assert '/opt/quickstart/llama-entrypoint.sh &' in script
-    assert 'alembic -c /app/alembic.ini upgrade head' in script
+    assert 'alembic -c /app/control_plane/alembic.ini upgrade head' in script
     assert 'python -m app.workers.generation_worker &' in script
     assert 'python -m app.workers.rag_worker &' in script

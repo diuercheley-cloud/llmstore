@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.db.session import get_db_session
+from app.services.runtime_dependencies import get_db_session
 from app.models.core.client import Client
 from app.models.commercial.commercial_agents import (
     CommercialAgentAction,

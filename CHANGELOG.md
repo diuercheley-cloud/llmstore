@@ -1,5 +1,16 @@
 # Changelog
 
+## [v2.1.1-surface-classification-refresh] - 2026-06-12
+
+### Changed
+- **API surface taxonomy normalized**: endpoint classifications now use `supported`, `beta`, `experimental`, `simulated`, and `deprecated` consistently in `config/api-surface.yaml`.
+- **Simulated surfaces are documented honestly**: voice WebRTC offer, remediation execution, Agent Studio dry-run, plugin placeholder signing, and global routing simulation endpoints are now marked as `simulated` instead of production-like statuses.
+- **Operator docs aligned with runtime behavior**: voice runtime, remediation execution, Agent Studio, plugin supply chain, incident response playbooks, usage dashboard, global routing, and backend lifecycle guides now describe the current implementation posture explicitly.
+
+### Fixed
+- **API surface validation entrypoint restored**: `scripts/check_api_surface.py` now backs the surface audit and replaces the stale legacy path used by validators.
+- **Generated API references reflect the current taxonomy**: reference-doc generation and route-surface manifest normalization now understand `simulated` and no longer depend on `keep_*` status aliases.
+
 ## [v2.x-agentic-ux-completion] - 2026-05-30
 
 ### Added

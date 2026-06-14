@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass
+from functools import lru_cache
 from time import perf_counter
 
 import httpx
@@ -160,6 +161,16 @@ class InferenceProxy:
                 "backend_response": backend_response,
             }
         return "data plane unavailable"
+
+
+@lru_cache
+def get_inference_proxy() -> "InferenceProxy":
+    from app.services.backend_slot_manager import BackendSlotManager
+    from app.services.queue_manager import QueueManager
+
+    queue_manager = QueueManager(BackendSlotManager())
+    circuit_breaker = CircuitBreaker()
+    return InferenceProxy(queue_manager, circuit_breaker)
 
     def _normalize_openrouter_endpoint(self, backend_url: str, endpoint: str) -> str:
         normalized_url = (backend_url or "").rstrip("/")
@@ -399,6 +410,20 @@ class InferenceProxy:
         plan_code: str = "free",
         is_admin: bool = False,
     ):
+        from app.services.chaos.injection import inject_chaos
+        # Chaos Injection: Data Plane Latency
+        await inject_chaos("data_plane_latency")
+
+        # Chaos Injection: Provider Timeout
+        try:
+            await inject_chaos("provider_timeout")
+        except asyncio.TimeoutError:
+            raise httpx.ReadTimeout("Simulated chaos provider timeout", request=None)
+        except Exception as e:
+            if "timeout" in str(e).lower():
+                raise httpx.ReadTimeout(str(e), request=None)
+            raise
+
         try:
             await self.circuit_breaker.before_call()
             if manage_slot:
@@ -1072,4 +1097,3 @@ class InferenceProxy:
             "choices": [{"index": 0, "text": payload.get('response', ''), "finish_reason": None}],
         }
         return f"data: {json.dumps(chunk)}"
-

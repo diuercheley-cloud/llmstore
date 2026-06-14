@@ -1,142 +1,165 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../lib/api';
-import ApprovalDetail from './ApprovalDetail';
-import { LoadingCard } from '../../../components/ui-feedback';
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Inbox, Search } from 'lucide-react'
+import { toast } from 'sonner'
+import ApprovalDetail from './ApprovalDetail'
+import { AgentStatusBadge } from '../../../components/agents/AgentStatusBadge'
+import { LoadingCard } from '../../../components/ui-feedback'
+import api from '../../../lib/api'
 
-interface ApprovalRequest {
-  id: string;
-  agent_run_id: string;
-  risk_level: 'low' | 'medium' | 'high' | 'critical';
-  reason: string;
-  requested_by: string;
-  status: string;
-  expires_at: string;
-  tenant_id: string;
-  agent_name: string;
-}
+type ApprovalAction = 'approve' | 'reject' | 'request_changes'
+
+const inputClassName = 'rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary'
 
 export default function ApprovalPortal() {
-  const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filterTenant, setFilterTenant] = useState('all');
+  const queryClient = useQueryClient()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('pending')
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['agent-approvals'],
-    queryFn: () => api.listPendingApprovals()
-  });
+  const approvalsQuery = useQuery({
+    queryKey: ['agent-approvals-admin', status],
+    queryFn: () => api.listAgentApprovalsAdmin(status ? { status, limit: 100 } : { limit: 100 }),
+  })
 
-  const requests: ApprovalRequest[] = data?.items || [];
+  const approvals = approvalsQuery.data ?? []
+  const filteredApprovals = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return approvals
+    return approvals.filter((approval: any) =>
+      [
+        approval.id,
+        approval.agent_run_id,
+        approval.requested_by,
+        approval.reason,
+        approval.risk_level,
+        approval.status,
+        approval.sanitized_context?.tool_name,
+      ].some(value => String(value ?? '').toLowerCase().includes(term)),
+    )
+  }, [approvals, search])
 
-  const decideMutation = useMutation({
-    mutationFn: async ({ id, decision }: { id: string, decision: string }) => {
-      return api.decideApproval(id, decision);
+  useEffect(() => {
+    if (!filteredApprovals.length) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !filteredApprovals.some((approval: any) => approval.id === selectedId)) {
+      setSelectedId(filteredApprovals[0].id)
+    }
+  }, [filteredApprovals, selectedId])
+
+  const detailQuery = useQuery({
+    queryKey: ['agent-approval-admin', selectedId],
+    queryFn: () => api.getAgentApprovalAdmin(selectedId!),
+    enabled: Boolean(selectedId),
+  })
+
+  const actionMutation = useMutation({
+    mutationFn: async ({ id, action, reason }: { id: string; action: ApprovalAction; reason: string }) => {
+      if (action === 'approve') return api.approveAgentApprovalAdmin(id, reason)
+      if (action === 'reject') return api.rejectAgentApprovalAdmin(id, reason)
+      return api.requestChangesAgentApprovalAdmin(id, reason)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agent-approvals'] });
-      setSelectedId(null);
-    }
-  });
+    onSuccess: (_, variables) => {
+      toast.success(`Approval ${variables.action} executado.`)
+      queryClient.invalidateQueries({ queryKey: ['agent-approvals-admin'] })
+      queryClient.invalidateQueries({ queryKey: ['agent-approval-admin'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Falha ao processar a aprovacao.')
+    },
+  })
 
-  const handleDecision = (id: string, decision: string) => {
-    decideMutation.mutate({ id, decision });
-  };
+  const selectedApproval = detailQuery.data || filteredApprovals.find((approval: any) => approval.id === selectedId)
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    height: '100vh',
-    backgroundColor: '#0b0f19',
-    color: '#f3f4f6',
-    fontFamily: '"Outfit", "Inter", sans-serif',
-  };
-
-  const listAreaStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '32px',
-    overflowY: 'auto',
-    borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-  };
-
-  const headerStyle: React.CSSProperties = {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    marginBottom: '24px',
-    background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  };
-
-  const cardStyle = (req: ApprovalRequest): React.CSSProperties => ({
-    background: 'rgba(15, 23, 42, 0.6)',
-    border: selectedId === req.id ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: '10px',
-    padding: '20px',
-    marginBottom: '16px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  });
-
-  const riskBadge = (risk: string): React.CSSProperties => {
-    let color = '#ef4444';
-    let bg = 'rgba(239, 68, 68, 0.1)';
-    if (risk === 'critical') {
-      color = '#dc2626';
-      bg = 'rgba(220, 38, 38, 0.2)';
-    } else if (risk === 'medium') {
-      color = '#f59e0b';
-      bg = 'rgba(245, 158, 11, 0.1)';
-    }
-
-    return {
-      fontSize: '11px',
-      fontWeight: 'bold',
-      color,
-      backgroundColor: bg,
-      padding: '2px 8px',
-      borderRadius: '12px',
-      textTransform: 'uppercase',
-    };
-  };
-
-  const selectedRequest = requests.find(r => r.id === selectedId);
-
-  if (isLoading) return <LoadingCard />;
+  if (approvalsQuery.isLoading) return <LoadingCard />
 
   return (
-    <div style={containerStyle}>
-      <div style={listAreaStyle}>
-        <h1 style={headerStyle}>Human-in-the-Loop Approval Inbox</h1>
-        <div>
-          {requests.length === 0 ? (
-            <p style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: '40px' }}>
-              No pending approval requests. All systems clear!
-            </p>
-          ) : (
-            requests.map(req => (
-              <div key={req.id} style={cardStyle(req)} onClick={() => setSelectedId(req.id)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '15px' }}>{req.agent_name}</span>
-                  <span style={riskBadge(req.risk_level)}>{req.risk_level}</span>
+    <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Human In The Loop</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">Approval Portal</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Inbox operacional para aprovar, rejeitar ou pedir ajustes.</p>
+          </div>
+          <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+            <Inbox className="h-6 w-6" />
+          </div>
+        </header>
+
+        <div className="grid gap-3">
+          <label className="grid gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Search</span>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                className={`${inputClassName} w-full pl-11`}
+                placeholder="ID, tool, run, requested by..."
+              />
+            </div>
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status</span>
+            <select value={status} onChange={event => setStatus(event.target.value)} className={inputClassName}>
+              <option value="pending">pending</option>
+              <option value="approved">approved</option>
+              <option value="rejected">rejected</option>
+              <option value="changes_requested">changes_requested</option>
+              <option value="">all</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {filteredApprovals.map((approval: any) => (
+            <button
+              key={approval.id}
+              onClick={() => setSelectedId(approval.id)}
+              className={`w-full rounded-2xl border p-4 text-left transition-colors ${
+                selectedId === approval.id ? 'border-primary bg-primary/5' : 'border-border bg-background/70 hover:bg-muted/40'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-mono text-xs text-muted-foreground">{approval.id}</div>
+                  <div className="mt-2 line-clamp-2 text-sm font-semibold text-foreground">{approval.reason}</div>
+                  <div className="mt-2 text-xs text-muted-foreground">{approval.sanitized_context?.tool_name || 'tool unavailable'}</div>
                 </div>
-                <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>{req.reason}</p>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                  <span>Tenant: {req.tenant_id}</span>
-                  <span>Expires: {new Date(req.expires_at).toLocaleString()}</span>
-                </div>
+                <AgentStatusBadge status={approval.status || 'unknown'} />
               </div>
-            ))
+              <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>{approval.risk_level || 'unknown'}</span>
+                <span>{approval.created_at ? new Date(approval.created_at).toLocaleString() : 'N/A'}</span>
+              </div>
+            </button>
+          ))}
+
+          {!filteredApprovals.length && (
+            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              Nenhuma aprovacao encontrada para o filtro atual.
+            </div>
           )}
         </div>
-      </div>
-      <div style={{ width: '450px', background: 'rgba(10, 17, 32, 0.95)', display: 'flex', flexDirection: 'column' }}>
-        {selectedRequest ? (
-          <ApprovalDetail approval={selectedRequest} />
+      </section>
+
+      <section>
+        {selectedApproval ? (
+          <ApprovalDetail
+            approval={selectedApproval}
+            busyAction={actionMutation.isPending ? actionMutation.variables?.action ?? null : null}
+            onAction={(action, reason) => actionMutation.mutate({ id: selectedApproval.id, action, reason })}
+          />
         ) : (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
-            Select a request to review details
+          <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
+            Selecione uma aprovacao para revisar os detalhes.
           </div>
         )}
-      </div>
+      </section>
     </div>
-  );
+  )
 }

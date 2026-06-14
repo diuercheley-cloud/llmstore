@@ -2,7 +2,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from app.db.session import get_db
+from app.services.runtime_dependencies import get_db
 from app.services.agents.cognitive_loopback.fewshot_curator import FewShotCurator
 from app.services.agents.cognitive_loopback.learning_candidate_registry import (
     LearningCandidateRegistry,

@@ -10,15 +10,21 @@ SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSe
 redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
 
 
+from app.services.chaos.injection import inject_chaos, inject_chaos_db
+
+
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    await inject_chaos_db()
     async with SessionLocal() as session:
         yield session
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    await inject_chaos_db()
     async with SessionLocal() as session:
         yield session
 
 
 async def get_redis() -> Redis:
+    await inject_chaos("redis_failure")
     return redis_client
