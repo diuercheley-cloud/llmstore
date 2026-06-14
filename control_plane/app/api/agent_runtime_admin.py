@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional
 
 from app.core.config import get_settings
+from app.services.auth import require_admin
 from app.services.runtime_dependencies import get_db_session
 from app.services.agents import agent_state
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,7 +11,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/admin/agents", tags=["agent-runtime-admin"])
+router = APIRouter(
+    prefix="/admin/agents",
+    tags=["agent-runtime-admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 def verify_runtime_active():
     settings = get_settings()

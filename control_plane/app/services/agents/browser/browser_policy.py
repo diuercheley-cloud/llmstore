@@ -1,41 +1,48 @@
 # Owner: agent-platform
+import ipaddress
 import socket
 from urllib.parse import urlparse
 
 from app.core.config import get_settings
 
 
-def check_browser_url_policy(url: str) -> None:
+def check_browser_url_policy(url: str, *, check_feature_flags: bool = True) -> None:
     settings = get_settings()
     
     # Check if tool is enabled
-    if not getattr(settings, "agent_browser_tool_enabled", False):
+    if check_feature_flags and not getattr(settings, "agent_browser_tool_enabled", False):
         raise ValueError("Browser tool is disabled by feature flag.")
         
     parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https", "mock", "test"}:
+        raise ValueError(f"URL scheme '{parsed.scheme}' is not allowed.")
     hostname = parsed.hostname
     if not hostname:
         raise ValueError("Invalid URL: no hostname found.")
         
     hostname_lower = hostname.lower()
+    is_mock = parsed.scheme in ("mock", "test") or hostname_lower.endswith(".test") or hostname_lower == "mock"
+    if is_mock:
+        return
     
-    # Block localhost / internal metadata
-    blocked_hosts = {"localhost", "127.0.0.1", "0.0.0.0", "169.254.169.254"}
-    if hostname_lower in blocked_hosts:
+    # Hostnames and every resolved address must be globally routable.
+    blocked_hosts = {"localhost", "metadata.google.internal"}
+    if hostname_lower in blocked_hosts or hostname_lower.endswith(".localhost"):
         raise ValueError(f"Access to internal host '{hostname}' is blocked.")
-        
+
     try:
-        ip = socket.gethostbyname(hostname)
-        if ip in blocked_hosts or ip.startswith("127.") or ip.startswith("169.254."):
+        addresses = {item[4][0] for item in socket.getaddrinfo(hostname, None)}
+    except socket.gaierror as exc:
+        raise ValueError(f"Could not resolve URL hostname '{hostname}'.") from exc
+
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if not ip.is_global:
             raise ValueError(f"Access to internal IP '{ip}' is blocked.")
-    except Exception:
-        pass
 
     # Check external network flag
     is_external_enabled = getattr(settings, "agent_browser_external_network_enabled", False)
-    is_mock = parsed.scheme in ("mock", "test") or hostname_lower.endswith(".test") or hostname_lower == "mock"
-    
-    if not is_mock and not is_external_enabled:
+    if check_feature_flags and not is_mock and not is_external_enabled:
         raise ValueError("External network access is disabled for the browser tool.")
         
     # Check domain allowlist

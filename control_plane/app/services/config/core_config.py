@@ -53,6 +53,7 @@ class CoreConfig(BaseSettings):
     public_plausible_src: str = Field(default="https://plausible.io/js/script.js", alias="PUBLIC_PLAUSIBLE_SRC")
     public_base_url: str = Field(default="", alias="PUBLIC_BASE_URL")
     public_api_enabled: bool = Field(default=False, alias="PUBLIC_API_ENABLED")
+    public_signup_rate_limit_per_minute: int = Field(default=5, ge=1, le=60, alias="PUBLIC_SIGNUP_RATE_LIMIT_PER_MINUTE")
 
     deployment_mode: str = Field(default="appliance", alias="DEPLOYMENT_MODE")
     kubernetes_mode: bool = Field(default=False, alias="KUBERNETES_MODE")

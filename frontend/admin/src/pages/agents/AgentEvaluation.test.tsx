@@ -1,7 +1,7 @@
 import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
+import '@testing-library/jest-dom/vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AgentEvaluation from './AgentEvaluation'
 import api from '../../lib/api'
@@ -10,6 +10,8 @@ vi.mock('../../lib/api', () => ({
   default: {
     listAgentBenchmarks: vi.fn(),
     listAgentBenchmarkReports: vi.fn(),
+    listAdminAgents: vi.fn(),
+    getAgentEvalReportAdmin: vi.fn(),
     runAgentBenchmark: vi.fn(),
     exportAgentBenchmarkReport: vi.fn(),
   }
@@ -26,7 +28,11 @@ const queryClient = new QueryClient({
 describe('AgentEvaluation Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(api.listAdminAgents).mockResolvedValue([{ id: 'agent-1', name: 'Agent One' }])
+    vi.mocked(api.getAgentEvalReportAdmin).mockResolvedValue({})
   })
+
+  afterEach(() => cleanup())
 
   it('renders benchmark list and reports', async () => {
     vi.mocked(api.listAgentBenchmarks).mockResolvedValue([
@@ -44,13 +50,13 @@ describe('AgentEvaluation Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('AgentBench')).toBeInTheDocument()
-      expect(screen.getByText('llama-3')).toBeInTheDocument()
-      expect(screen.getByText('85.0%')).toBeInTheDocument()
+      expect(document.body.textContent).toContain('llama-3')
+      expect(document.body.textContent).toContain('0.85')
     })
   })
 
   it('triggers a new benchmark run', async () => {
-    vi.mocked(api.listAgentBenchmarks).mockResolvedValue([])
+    vi.mocked(api.listAgentBenchmarks).mockResolvedValue([{ name: 'AgentBench' }])
     vi.mocked(api.listAgentBenchmarkReports).mockResolvedValue([])
     vi.mocked(api.runAgentBenchmark).mockResolvedValue({ status: 'started' })
 
@@ -60,12 +66,15 @@ describe('AgentEvaluation Component', () => {
       </QueryClientProvider>
     )
 
-    const runButton = screen.getByText('Run benchmark')
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'agent-1' } })
+    const runButton = await screen.findByText('AgentBench')
     fireEvent.click(runButton)
 
     await waitFor(() => {
       expect(api.runAgentBenchmark).toHaveBeenCalledWith(expect.objectContaining({
-        benchmark: 'AgentBench'
+        agent_id: 'agent-1',
+        model_name: 'llama-3-70b',
+        benchmark: 'AgentBench',
       }))
     })
   })

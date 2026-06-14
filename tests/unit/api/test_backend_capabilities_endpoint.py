@@ -17,6 +17,7 @@ async def test_backend_capabilities_endpoint(async_client, monkeypatch):
     from app.api.deps import get_inference_proxy
     from app.db.base import Base
     from app.db.session import get_db_session
+    from app.services.runtime_dependencies import get_db_session as get_runtime_db_session
     from app.main import app
     from app.models.core.inference_backend import InferenceBackend
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -41,11 +42,13 @@ async def test_backend_capabilities_endpoint(async_client, monkeypatch):
             yield session
 
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_runtime_db_session] = override_get_db_session
     app.dependency_overrides[get_inference_proxy] = lambda: DummyProxy()
     try:
         response = await async_client.get("/api/backends/capabilities")
     finally:
         app.dependency_overrides.pop(get_db_session, None)
+        app.dependency_overrides.pop(get_runtime_db_session, None)
         app.dependency_overrides.pop(get_inference_proxy, None)
         await engine.dispose()
 

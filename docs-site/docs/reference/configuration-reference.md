@@ -208,6 +208,9 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | AGENT_REPLAY_FROM_STEP_ENABLED | agent_replay_from_step_enabled | bool | false | no |
 | AGENT_REQUIRE_REAL_LLM_FOR_PRODUCTION | agent_require_real_llm_for_production | bool | true | no |
 | AGENT_RUNTIME_ENABLED | agent_runtime_enabled | bool | false | no |
+| AGENT_RUNTIME_SERVICE_REMOTE | agent_runtime_service_remote | bool | false | no |
+| AGENT_RUNTIME_SERVICE_TOKEN | agent_runtime_service_token | str | <redacted> | yes |
+| AGENT_RUNTIME_SERVICE_URL | agent_runtime_service_url | str | http://agent-runtime:8080 | no |
 | AGENT_SAAS_CONNECTORS_ENABLED | agent_saas_connectors_enabled | bool | false | no |
 | AGENT_SAB_ENABLED | agent_sab_enabled | bool | true | no |
 | AGENT_SAB_EXPORT_ENABLED | agent_sab_export_enabled | bool | false | no |
@@ -235,6 +238,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | AGENT_TOOL_REGISTRY_ENABLED | agent_tool_registry_enabled | bool | false | no |
 | AGENT_TOOL_ROLLBACK_ENABLED | agent_tool_rollback_enabled | bool | true | no |
 | AGENT_TOOL_SANDBOX_ENABLED | agent_tool_sandbox_enabled | bool | true | no |
+| AGENT_TOOL_SET | agent_tool_set | str | standard | no |
 | AGENT_TRACE_EXPORT_ENABLED | agent_trace_export_enabled | bool | false | no |
 | AGENT_UNCERTAINTY_AUTO_RESEARCH_ENABLED | agent_uncertainty_auto_research_enabled | bool | false | no |
 | AGENT_UNCERTAINTY_DETECTION_ENABLED | agent_uncertainty_detection_enabled | bool | true | no |
@@ -336,6 +340,12 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | AZURE_OPENAI_ENDPOINT | azure_openai_endpoint | str | - | no |
 | AZURE_OPENAI_PROVIDER_ENABLED | azure_openai_provider_enabled | bool | true | no |
 
+## `backup`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| BACKUP_RESTORE_ENABLED | backup_restore_enabled | bool | false | no |
+
 ## `bedrock`
 
 | Env | Field | Type | Default | Secret |
@@ -355,6 +365,14 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | Env | Field | Type | Default | Secret |
 | --- | --- | --- | --- | --- |
 | CARD_PAYMENT_ENABLED | card_payment_enabled | bool | false | no |
+
+## `chaos`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| CHAOS_ALLOW_PRODUCTION | chaos_allow_production | bool | false | no |
+| CHAOS_ENABLED | chaos_enabled | bool | false | no |
+| CHAOS_ENVIRONMENT | chaos_environment | str | test | no |
 
 ## `circuit`
 
@@ -612,6 +630,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | COMMERCIAL_OPERATIONAL_CONTROLS_ENABLED | commercial_operational_controls_enabled | bool | true | no |
 | COMMERCIAL_OPERATIONAL_CONTROLS_MODE | commercial_operational_controls_mode | str | report_only | no |
 | COMMERCIAL_P95_LATENCY_ALERT_MS | commercial_p95_latency_alert_ms | int | 5000 | no |
+| COMMERCIAL_PROFILE | commercial_profile | str | off | no |
 | COMMERCIAL_PROXMOX_ALLOWED_CT_IDS | commercial_proxmox_allowed_ct_ids | str | - | no |
 | COMMERCIAL_PROXMOX_ALLOWED_VM_IDS | commercial_proxmox_allowed_vm_ids | str | - | no |
 | COMMERCIAL_PROXMOX_API_URL | commercial_proxmox_api_url | str | - | no |
@@ -712,6 +731,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | COMMERCIAL_REVENUE_WEBHOOK_ENABLED | commercial_revenue_webhook_enabled | bool | false | no |
 | COMMERCIAL_REVENUE_WEBHOOK_SIGNING_SECRET | commercial_revenue_webhook_signing_secret | str | <empty> | yes |
 | COMMERCIAL_REVENUE_WEBHOOK_URL | commercial_revenue_webhook_url | str | - | no |
+| COMMERCIAL_ROUTING_DECISION_RETENTION_DAYS | commercial_routing_decision_retention_days | int | 30 | no |
 | COMMERCIAL_ROUTING_DEFAULT_POLICY | commercial_routing_default_policy | str | disabled | no |
 | COMMERCIAL_ROUTING_ENABLED | commercial_routing_enabled | bool | false | no |
 | COMMERCIAL_RUNTIME_ATTESTATION_BLOCK_UNTRUSTED | commercial_runtime_attestation_block_untrusted | bool | false | no |
@@ -879,6 +899,12 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | EMBEDDINGS_BACKEND | embeddings_backend | str | local | no |
 | EMBEDDINGS_ENABLED | embeddings_enabled | bool | true | no |
+
+## `enable`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| ENABLE_LEGACY_STATIC | enable_legacy_static | bool | false | no |
 
 ## `enterprise`
 
@@ -1184,6 +1210,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | Env | Field | Type | Default | Secret |
 | --- | --- | --- | --- | --- |
 | OBSERVABILITY_ENABLED | observability_enabled | bool | true | no |
+| OBSERVABILITY_PROFILE | observability_profile | str | basic | no |
 
 ## `ollama`
 
@@ -1285,6 +1312,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | PLUGIN_MARKETPLACE_ENABLED | plugin_marketplace_enabled | bool | false | no |
 | PLUGIN_RUNTIME_ENABLED | plugin_runtime_enabled | bool | false | no |
+| PLUGIN_SBOM_POLICY_DECISION | plugin_sbom_policy_decision | str | block | no |
 | PLUGIN_SIGNATURE_REQUIRED | plugin_signature_required | bool | false | no |
 
 ## `project`
@@ -1307,6 +1335,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | PROVIDER_FAIL_CLOSED | provider_fail_closed | bool | true | no |
 | PROVIDER_MAX_RETRIES | provider_max_retries | int | 2 | no |
+| PROVIDER_TIMEOUT_SECONDS | provider_timeout_seconds | int | 30 | no |
 
 ## `providers`
 
@@ -1326,6 +1355,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | PUBLIC_PLAUSIBLE_DOMAIN | public_plausible_domain | str | - | no |
 | PUBLIC_PLAUSIBLE_SRC | public_plausible_src | str | https://plausible.io/js/script.js | no |
 | PUBLIC_SIGNUP_ENABLED | public_signup_enabled | bool | true | no |
+| PUBLIC_SIGNUP_RATE_LIMIT_PER_MINUTE | public_signup_rate_limit_per_minute | int | 5 | no |
 | PUBLIC_SUPPORT_EMAIL | public_support_email | str | sales@example.com | no |
 
 ## `pulsar`
@@ -1455,11 +1485,20 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | SECRETS_MANAGER_PROVIDER | secrets_manager_provider | str | <redacted> | yes |
 
+## `security`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| SECURITY_PROFILE | security_profile | str | local | no |
+
 ## `semantic`
 
 | Env | Field | Type | Default | Secret |
 | --- | --- | --- | --- | --- |
 | SEMANTIC_CACHE_ENABLED | semantic_cache_enabled | bool | false | no |
+| SEMANTIC_CACHE_MAX_SIZE | semantic_cache_max_size | int | 10000 | no |
+| SEMANTIC_CACHE_THRESHOLD | semantic_cache_threshold | float | 0.9 | no |
+| SEMANTIC_CACHE_TTL_SECONDS | semantic_cache_ttl_seconds | int | 3600 | no |
 
 ## `sendgrid`
 
@@ -1496,6 +1535,12 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | STRIPE_PAYMENT_ENABLED | stripe_payment_enabled | bool | false | no |
 | STRIPE_SECRET_KEY | stripe_secret_key | str | <empty> | yes |
 | STRIPE_WEBHOOK_SECRET | stripe_webhook_secret | str | <empty> | yes |
+
+## `tempo`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| TEMPO_ENDPOINT | tempo_endpoint | str | http://localhost:4317 | no |
 
 ## `test`
 

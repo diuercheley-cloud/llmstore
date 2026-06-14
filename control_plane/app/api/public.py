@@ -19,6 +19,8 @@ from app.services.billing import (
     refresh_billing_statuses,
 )
 from app.services.public_onboarding import create_public_signup, list_public_plans
+from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit
+from app.services.runtime_dependencies import get_redis
 from app.services.public_seo import (
     PUBLIC_PAGES,
     generate_robots_txt,
@@ -125,9 +127,21 @@ async def public_signup(
     payload: PublicSignupRequest,
     request: Request,
     session: AsyncSession = Depends(get_db_session),
+    redis=Depends(get_redis),
 ):
     if not settings.public_signup_enabled:
         raise HTTPException(status_code=404, detail="public signup disabled")
+    source_ip = getattr(request.state, "source_ip", None)
+    if not source_ip and request.client:
+        source_ip = request.client.host
+    try:
+        await enforce_ip_rate_limit(
+            redis,
+            f"signup:{source_ip or 'unknown'}",
+            settings.public_signup_rate_limit_per_minute,
+        )
+    except RateLimitExceeded:
+        raise HTTPException(status_code=429, detail="signup rate limit exceeded")
     plans = await ensure_default_billing_plans(session)
     await ensure_default_pricing_rules(session, plans)
     await session.commit()

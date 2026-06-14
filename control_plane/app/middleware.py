@@ -64,8 +64,15 @@ async def request_context_middleware(request: Request, call_next):
 
     # Check payload size
     content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.max_request_body_size_bytes:
-        return JSONResponse({"detail": "request body too large"}, status_code=413)
+    if content_length:
+        try:
+            parsed_content_length = int(content_length)
+        except ValueError:
+            return JSONResponse({"detail": "invalid content-length header"}, status_code=400)
+        if parsed_content_length < 0:
+            return JSONResponse({"detail": "invalid content-length header"}, status_code=400)
+        if parsed_content_length > settings.max_request_body_size_bytes:
+            return JSONResponse({"detail": "request body too large"}, status_code=413)
 
     # SaaS Protection: Block dangerous endpoints
     if settings.deployment_mode == "saas":

@@ -10,5 +10,4 @@ class AgentsConfig(BaseSettings):
         env_nested_delimiter="__",
     )
 
-    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
     cluster_region: str = Field(default="default", alias="CLUSTER_REGION")

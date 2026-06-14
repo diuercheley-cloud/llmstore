@@ -3,6 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.services.runtime_dependencies import get_db
+from app.services.auth import require_admin
 from app.models.commercial.commercial_policy_runtime import (
     CommercialPolicyEvaluation,
     CommercialPolicyViolation,
@@ -11,7 +12,7 @@ from app.services.governance.policy_evaluator import PolicyEvaluator
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-router = APIRouter(tags=["Policy Runtime Admin"])
+router = APIRouter(tags=["Policy Runtime Admin"], dependencies=[Depends(require_admin)])
 
 @router.post("/admin/policy/runtime/evaluate")
 def evaluate_policy(

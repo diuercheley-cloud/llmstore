@@ -3,6 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
+from app.services.auth import require_admin
 from app.services.runtime_dependencies import get_db_session
 from app.models.agents.agents import AgentToolInvocation
 from app.services.agents import tool_registry as tool_service
@@ -11,7 +12,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/admin/agent-tools", tags=["agent-tools-admin"])
+router = APIRouter(
+    prefix="/admin/agent-tools",
+    tags=["agent-tools-admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 def verify_tool_registry_active():
     settings = get_settings()

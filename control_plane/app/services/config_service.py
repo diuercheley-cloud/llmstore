@@ -1,5 +1,6 @@
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Self
 
@@ -18,6 +19,11 @@ from control_plane.app.services.config.billing_config import BillingConfig
 from control_plane.app.services.config.agents_config import AgentsConfig
 
 logger = logging.getLogger(__name__)
+
+@dataclass(frozen=True)
+class ConfigDetail:
+    value: Any
+    source: str
 
 
 def _read_dotenv_keys() -> set[str]:
@@ -193,6 +199,13 @@ class BaseAppConfig(
         if tool_set == "full" and sec_profile == "local":
             raise ValueError(f"Incompatible Profiles: AGENT_TOOL_SET='full' (includes Shell access) requires SECURITY_PROFILE='standard' or 'enterprise' (current: '{sec_profile}').")
 
+        local_appliance_mode = data.get("LOCAL_APPLIANCE_MODE", data.get("local_appliance_mode", False))
+        if local_appliance_mode:
+            data["LOCALHOST_MODE"] = True
+            data["PUBLIC_EXPOSURE"] = False
+            data["PUBLIC_SIGNUP_ENABLED"] = False
+            data["LOCAL_BILLING_MODE"] = "manual"
+
         return data
 
     @model_validator(mode='after')
@@ -227,7 +240,9 @@ class BaseAppConfig(
                         if is_production:
                             raise RuntimeError(f"SECURITY BREACH: {field.upper()} is using an insecure default value in a production environment ({self.app_env}).")
                         else:
-                            raise ValueError(f"{field.upper()} must be set to a secure, unique value.")
+                            raise ValueError(f"{field.upper()}: Default value is insecure; set a secure, unique value.")
+                    if field == "jwt_secret" and len(value) < 32:
+                        raise ValueError("JWT_SECRET is too short. Minimum 32 characters required.")
                     if is_production and len(value) < 32:
                         raise RuntimeError(f"SECURITY BREACH: {field.upper()} is too short for production. Minimum 32 characters required.")
         return self
@@ -326,9 +341,82 @@ class ConfigService:
             or "lite"
         )
         self.profile_config = load_config_profile(self.profile)
+        self._runtime_overrides: Dict[str, Any] = {}
+        self._feature_flags = self.profile_config.get("features", {})
+        self._file_configs: Dict[str, Dict[str, Any]] = {}
         settings = _profile_settings(self.profile_config)
         settings.setdefault("OPERATIONAL_PROFILE", self.profile)
         self.settings = BaseAppConfig(**settings)
+
+    def clear_runtime_overrides(self) -> None:
+        self._runtime_overrides.clear()
+
+    def set_runtime_override(self, key: str, value: Any) -> None:
+        self._runtime_overrides[key.upper()] = value
+
+    def _file_value(self, key: str) -> tuple[Any, str] | None:
+        normalized = key.lower()
+
+        def visit(mapping: Dict[str, Any], prefix: str = "") -> Any:
+            for name, value in mapping.items():
+                path = f"{prefix}_{name}".strip("_").lower()
+                if path == normalized:
+                    return value
+                if isinstance(value, dict):
+                    found = visit(value, path)
+                    if found is not None:
+                        return found
+            return None
+
+        for filename, config in self._file_configs.items():
+            value = visit(config)
+            if value is not None:
+                return value, f"file:{filename}"
+        return None
+
+    def get_detailed(self, key: str) -> ConfigDetail:
+        normalized = key.upper()
+        if normalized in self._runtime_overrides:
+            return ConfigDetail(self._runtime_overrides[normalized], "runtime")
+        if normalized in os.environ:
+            field_name = next(
+                (name for name, field in type(self.settings).model_fields.items()
+                 if (field.alias or name.upper()) == normalized),
+                None,
+            )
+            if field_name:
+                value = type(getattr(self.settings, field_name))(os.environ[normalized])
+                if isinstance(getattr(self.settings, field_name), bool):
+                    value = os.environ[normalized].lower() in {"1", "true", "yes", "on"}
+                return ConfigDetail(value, "env")
+            return ConfigDetail(os.environ[normalized], "env")
+        if normalized in self._feature_flags:
+            return ConfigDetail(self._feature_flags[normalized], "file:feature-flags.yaml")
+        file_value = self._file_value(normalized)
+        if file_value:
+            return ConfigDetail(*file_value)
+        field_name = next(
+            (name for name, field in type(self.settings).model_fields.items()
+             if (field.alias or name.upper()) == normalized),
+            None,
+        )
+        if field_name:
+            return ConfigDetail(getattr(self.settings, field_name), "default")
+        return ConfigDetail(None, "default")
+
+    def get_effective_config(self, *, redact: bool = True) -> List[Dict[str, Any]]:
+        keys = {
+            (field.alias or name.upper())
+            for name, field in type(self.settings).model_fields.items()
+        } | set(self._runtime_overrides) | set(self._feature_flags)
+        result = []
+        for key in sorted(keys):
+            detail = self.get_detailed(key)
+            value = detail.value
+            if redact and any(marker in key for marker in ("PASSWORD", "SECRET", "TOKEN", "API_KEY")) and value:
+                value = "********"
+            result.append({"key": key, "value": value, "source": detail.source})
+        return result
 
     def get_profile_summary(self) -> Dict[str, Any]:
         features = self.profile_config.get("features", {})

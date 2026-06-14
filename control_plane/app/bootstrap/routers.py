@@ -1,5 +1,7 @@
 import logging
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.routing import APIRoute
+from app.services.auth import require_admin
 from .router_manifest import (
     ADMIN_ROUTERS,
     COMMERCIAL_ROUTERS,
@@ -14,7 +16,32 @@ from .router_manifest import (
 
 logger = logging.getLogger(__name__)
 
+def _is_admin_path(path: str) -> bool:
+    return path.startswith(("/admin", "/api/admin", "/api/v1/admin"))
+
+
+def _secure_include_router(app: FastAPI):
+    original_include_router = app.include_router
+
+    def include_router(router, **kwargs):
+        include_prefix = kwargs.get("prefix", "")
+        paths = [
+            f"{include_prefix}{route.path}"
+            for route in router.routes
+            if isinstance(route, APIRoute)
+        ]
+        if paths and all(_is_admin_path(path) for path in paths):
+            dependencies = list(kwargs.get("dependencies") or [])
+            if not any(getattr(dep, "dependency", None) is require_admin for dep in dependencies):
+                dependencies.append(Depends(require_admin))
+            kwargs["dependencies"] = dependencies
+        return original_include_router(router, **kwargs)
+
+    return include_router
+
+
 def register_routers(app: FastAPI, settings) -> None:
+    app.include_router = _secure_include_router(app)
     all_router_lists = [
         ADMIN_ROUTERS,
         COMMERCIAL_ROUTERS,

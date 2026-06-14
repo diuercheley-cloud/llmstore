@@ -28,7 +28,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
-    }
+    },
+    dedupe: ['react', 'react-dom', '@tanstack/react-query']
+  },
+  optimizeDeps: {
+    include: ['@testing-library/jest-dom/vitest']
   },
   build: {
     outDir: '../../control_plane/app/static/admin-v2',

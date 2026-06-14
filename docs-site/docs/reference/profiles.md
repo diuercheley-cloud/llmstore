@@ -85,6 +85,7 @@ Full platform profile with enterprise observability, tenancy, federation, and ma
 - `AGENT_STATEFUL_WORKFLOWS_ENABLED` = `True`
 - `AGENT_TOOL_EXECUTION_ENABLED` = `True`
 - `AGENT_TOOL_REGISTRY_ENABLED` = `True`
+- `CHAOS_ENABLED` = `False`
 - `CLOUD_PROVIDERS_ENABLED` = `True`
 - `COMMERCIAL_FEDERATION_ENABLED` = `True`
 - `COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED` = `True`
@@ -98,6 +99,7 @@ Full platform profile with enterprise observability, tenancy, federation, and ma
 - `PLUGIN_RUNTIME_ENABLED` = `True`
 - `PROVIDERS_ENABLED` = `local,lmstudio,vllm,openai,anthropic,deepseek,openrouter`
 - `RAG_ENABLED` = `True`
+- `SEMANTIC_CACHE_ENABLED` = `True`
 
 ### Feature Matrix
 
@@ -135,6 +137,7 @@ Local profile with the minimum services required for inference and basic RAG.
 - `AGENT_STATEFUL_WORKFLOWS_ENABLED` = `False`
 - `AGENT_TOOL_EXECUTION_ENABLED` = `False`
 - `AGENT_TOOL_REGISTRY_ENABLED` = `False`
+- `CHAOS_ENABLED` = `False`
 - `CLOUD_PROVIDERS_ENABLED` = `False`
 - `COMMERCIAL_FEDERATION_ENABLED` = `False`
 - `COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED` = `False`
@@ -183,6 +186,7 @@ PostgreSQL profile with basic observability and multi-model inference.
 - `AGENT_STATEFUL_WORKFLOWS_ENABLED` = `False`
 - `AGENT_TOOL_EXECUTION_ENABLED` = `False`
 - `AGENT_TOOL_REGISTRY_ENABLED` = `False`
+- `CHAOS_ENABLED` = `False`
 - `CLOUD_PROVIDERS_ENABLED` = `False`
 - `COMMERCIAL_FEDERATION_ENABLED` = `False`
 - `COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED` = `False`

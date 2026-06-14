@@ -46,8 +46,8 @@ async def test_output_watermarking_determinism():
     assert res1["watermark_id"] != res3["watermark_id"]
 
 @pytest.mark.asyncio
-async def test_model_provenance_api_flow(admin_client, session):
-    headers = {"X-Admin-Token": "test-admin-token"}
+async def test_model_provenance_api_flow(admin_client, session, admin_token_headers):
+    headers = admin_token_headers
     service = ModelProvenanceService(session)
     
     record = await service.register_model(
@@ -93,8 +93,8 @@ async def test_file_hash_change_affects_verification(session):
     assert re_verified.signature_status == "failed"
 
 @pytest.mark.asyncio
-async def test_watermark_verify_api(admin_client):
-    headers = {"X-Admin-Token": "test-admin-token"}
+async def test_watermark_verify_api(admin_client, admin_token_headers):
+    headers = admin_token_headers
     payload = {"text": "Suspicious text to check for watermark"}
     
     resp = await admin_client.post("/api/admin/models/watermark/verify", json=payload, headers=headers)

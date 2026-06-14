@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import httpx
 from app.core.config import get_settings
+from app.services.agents.browser.browser_policy import check_browser_url_policy
 from app.services.agents.tool_adapter_contract import ToolAdapterContract
 
 
@@ -54,15 +55,11 @@ class HttpGetToolAdapter(ToolAdapterContract):
         url = kwargs["url"]
         timeout = kwargs.get("timeout", 10)
         
-        # 1. Block Metadata and Internal IPs
-        blocked_patterns = {
-            "169.254.169.254", # AWS/GCP Metadata
-            "127.0.0.1", "localhost",
-            "0.0.0.0",
-            "10.", "192.168.", "172.16." # Private ranges
-        }
-        if any(p in url for p in blocked_patterns):
-             raise ValueError("Access to metadata or internal services is strictly prohibited.")
+        # Apply the same DNS-aware SSRF policy used by the browser tool.
+        try:
+            check_browser_url_policy(url, check_feature_flags=False)
+        except ValueError as exc:
+            raise ValueError("Access to metadata or internal services is strictly prohibited.") from exc
 
         # 2. Domain Allowlist (optional but recommended)
         # For this stack, let's assume we allow everything NOT internal unless a specific list exists

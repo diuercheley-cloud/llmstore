@@ -19257,6 +19257,7 @@
         "type": "object"
       },
       "PublicSignupRequest": {
+        "additionalProperties": false,
         "properties": {
           "company": {
             "anyOf": [
@@ -19384,6 +19385,27 @@
           "published_by"
         ],
         "title": "PublishPayload",
+        "type": "object"
+      },
+      "PytestRunRequest": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "timeout": {
+            "default": 120,
+            "title": "Timeout",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "PytestRunRequest",
         "type": "object"
       },
       "QuarantineModelPayload": {
@@ -25519,6 +25541,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Agent Registry",
         "tags": [
           "agent-registry-admin"
@@ -25558,6 +25585,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25601,6 +25633,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25652,6 +25689,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Update Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25695,6 +25737,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Activate Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25748,6 +25795,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Approve Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25791,6 +25843,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Archive Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25844,6 +25901,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Deprecate Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -25936,6 +25998,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Pause Agent Registry Entry",
         "tags": [
           "agent-registry-admin"
@@ -26087,6 +26154,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Submit Agent Review",
         "tags": [
           "agent-registry-admin"
@@ -26134,6 +26206,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Agent Registry Versions",
         "tags": [
           "agent-registry-admin"
@@ -26223,6 +26300,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Agent Tools",
         "tags": [
           "agent-tools-admin"
@@ -26262,6 +26344,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Register Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26329,6 +26416,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Credentials",
         "tags": [
           "agent-tools-admin"
@@ -26368,6 +26460,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Credential",
         "tags": [
           "agent-tools-admin"
@@ -26419,6 +26516,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Revoke Tool Credential",
         "tags": [
           "agent-tools-admin"
@@ -26470,6 +26572,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Rollback Invocation",
         "tags": [
           "agent-tools-admin"
@@ -26537,6 +26644,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Quotas",
         "tags": [
           "agent-tools-admin"
@@ -26604,6 +26716,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Side Effects",
         "tags": [
           "agent-tools-admin"
@@ -26657,6 +26774,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Update Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26700,6 +26822,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Disable Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26761,6 +26888,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Dry Run Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26804,6 +26936,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Enable Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26865,6 +27002,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Execute Agent Tool",
         "tags": [
           "agent-tools-admin"
@@ -26932,6 +27074,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Tool Invocations",
         "tags": [
           "agent-tools-admin"
@@ -26984,6 +27131,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Agents",
         "tags": [
           "agent-runtime-admin"
@@ -27022,6 +27174,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Agent",
         "tags": [
           "agent-runtime-admin"
@@ -28090,6 +28247,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Budgets",
         "tags": [
           "agent-runtime-admin"
@@ -28140,6 +28302,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Validate Budget",
         "tags": [
           "agent-runtime-admin"
@@ -28424,6 +28591,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Catalog",
         "tags": [
           "agent-runtime-admin"
@@ -28474,6 +28646,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Promote Catalog Item",
         "tags": [
           "agent-runtime-admin"
@@ -28524,6 +28701,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Rollback Catalog Item",
         "tags": [
           "agent-runtime-admin"
@@ -28564,6 +28746,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Catalog Versions",
         "tags": [
           "agent-runtime-admin"
@@ -28793,6 +28980,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Collaboration Sessions",
         "tags": [
           "agent-runtime-admin"
@@ -28833,6 +29025,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Collaboration Trace",
         "tags": [
           "agent-runtime-admin"
@@ -28882,6 +29079,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Delegation Policy",
         "tags": [
           "agent-runtime-admin"
@@ -29813,6 +30015,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Playbooks",
         "tags": [
           "agent-runtime-admin"
@@ -29863,6 +30070,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Run Playbook",
         "tags": [
           "agent-runtime-admin"
@@ -31158,6 +31370,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "A2A Handshake Dry Run",
         "tags": [
           "admin-agent-protocols"
@@ -31198,6 +31415,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List A2A Peers",
         "tags": [
           "admin-agent-protocols"
@@ -31238,6 +31460,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Mcp Servers",
         "tags": [
           "admin-agent-protocols"
@@ -31287,6 +31514,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Approve Mcp Tool",
         "tags": [
           "admin-agent-protocols"
@@ -31345,6 +31577,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Explain Trust Decision",
         "tags": [
           "admin-agent-protocols"
@@ -31441,6 +31678,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Export Agent Sab",
         "tags": [
           "Standardized Agent Bundle (SAB)"
@@ -31490,6 +31732,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Import Agent Sab",
         "tags": [
           "Standardized Agent Bundle (SAB)"
@@ -31528,6 +31775,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Verify Agent Sab",
         "tags": [
           "Standardized Agent Bundle (SAB)"
@@ -31616,6 +31868,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Slo Classes",
         "tags": [
           "agent-runtime-admin"
@@ -31663,6 +31920,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Slo Report",
         "tags": [
           "agent-runtime-admin"
@@ -31687,6 +31949,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Flows",
         "tags": [
           "agent-studio-admin"
@@ -31725,6 +31992,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Flow",
         "tags": [
           "agent-studio-admin"
@@ -31765,6 +32037,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Flow Trace",
         "tags": [
           "agent-studio-admin"
@@ -31805,6 +32082,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Flow",
         "tags": [
           "agent-studio-admin"
@@ -31845,6 +32127,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Compile Flow",
         "tags": [
           "agent-studio-admin"
@@ -31898,6 +32185,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Dry Run Flow",
         "tags": [
           "agent-studio-admin"
@@ -31940,6 +32232,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Explain Flow",
         "tags": [
           "agent-studio-admin"
@@ -31980,6 +32277,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Validate Flow",
         "tags": [
           "agent-studio-admin"
@@ -32533,6 +32835,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Canary Comparisons",
         "tags": [
           "Agent Shadow & Canary"
@@ -32608,6 +32915,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Promote Canary",
         "tags": [
           "Agent Shadow & Canary"
@@ -32669,6 +32981,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Start Canary Assignment",
         "tags": [
           "Agent Shadow & Canary"
@@ -32831,6 +33148,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Submit Agent Feedback",
         "tags": [
           "Agent Cognitive Loopback"
@@ -32890,6 +33212,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Activate Fewshot Example",
         "tags": [
           "Agent Cognitive Loopback"
@@ -32939,6 +33266,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Learning Candidates",
         "tags": [
           "Agent Cognitive Loopback"
@@ -33014,6 +33346,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Approve Learning Candidate",
         "tags": [
           "Agent Cognitive Loopback"
@@ -33064,6 +33401,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Evaluate Learning Candidate",
         "tags": [
           "Agent Cognitive Loopback"
@@ -33120,6 +33462,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Agent Memory",
         "tags": [
           "admin-agent-memory"
@@ -33172,6 +33519,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Compaction Dry Run",
         "tags": [
           "admin-agent-memory"
@@ -33212,6 +33564,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Memory Events",
         "tags": [
           "admin-agent-memory"
@@ -33262,6 +33619,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Forget Agent Memory",
         "tags": [
           "admin-agent-memory"
@@ -33321,6 +33683,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Redact Agent Memory",
         "tags": [
           "admin-agent-memory"
@@ -33471,6 +33838,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Uncertainty Events",
         "tags": [
           "Agent Epistemic Uncertainty"
@@ -33523,6 +33895,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Update Uncertainty Policy",
         "tags": [
           "Agent Epistemic Uncertainty"
@@ -33575,6 +33952,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Patch Agent",
         "tags": [
           "agent-runtime-admin"
@@ -33617,6 +33999,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Activate Agent",
         "tags": [
           "agent-runtime-admin"
@@ -33659,6 +34046,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Deprecate Agent",
         "tags": [
           "agent-runtime-admin"
@@ -40670,6 +41062,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Analyze Compatibility",
         "tags": [
           "agent-compatibility-admin"
@@ -40709,6 +41106,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Migrate Agent",
         "tags": [
           "agent-compatibility-admin"
@@ -42649,6 +43051,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Agent Benchmarks",
         "tags": [
           "admin-evaluation"
@@ -42667,6 +43074,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Agent Evaluation Reports",
         "tags": [
           "admin-evaluation"
@@ -42724,6 +43136,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Run Agent Evaluation",
         "tags": [
           "admin-evaluation"
@@ -42784,6 +43201,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Export Agent Evaluation Run",
         "tags": [
           "admin-evaluation"
@@ -42860,6 +43282,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Record Arena Match",
         "tags": [
           "admin-evaluation"
@@ -42878,6 +43305,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Elo Rankings",
         "tags": [
           "admin-evaluation"
@@ -42924,6 +43356,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Red Team Findings",
         "tags": [
           "admin-evaluation"
@@ -42983,6 +43420,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Evaluation Run",
         "tags": [
           "admin-evaluation"
@@ -43023,6 +43465,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Run Results",
         "tags": [
           "admin-evaluation"
@@ -43063,6 +43510,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Execution Manifest",
         "tags": [
           "admin-executions"
@@ -43103,6 +43555,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Replay Dry Run",
         "tags": [
           "admin-executions"
@@ -43143,6 +43600,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Execution Steps",
         "tags": [
           "admin-executions"
@@ -46606,6 +47068,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Inference Backends",
         "tags": [
           "admin-inference"
@@ -48026,6 +48493,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Cleanup Routing Decisions",
         "tags": [
           "admin-inference"
@@ -48044,6 +48516,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Last Routing Decision",
         "tags": [
           "admin-inference"
@@ -48107,6 +48584,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Simulate Routing",
         "tags": [
           "admin-inference"
@@ -48852,6 +49334,29 @@
         ]
       }
     },
+    "/admin/jobs": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Admin Jobs Endpoint",
+        "tags": [
+          "system"
+        ]
+      }
+    },
     "/admin/mesh/consensus": {
       "get": {
         "parameters": [
@@ -49124,6 +49629,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Stream Metrics",
         "tags": [
           "admin-metrics"
@@ -52721,6 +53231,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Agent Run Timeline",
         "tags": [
           "observability"
@@ -52740,6 +53255,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Detected Anomalies",
         "tags": [
           "admin-observability"
@@ -52804,6 +53324,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Anomaly Detection Dry Run",
         "tags": [
           "admin-observability"
@@ -52831,6 +53356,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Dashboard Links",
         "tags": [
           "observability"
@@ -52853,6 +53383,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Error Budget",
         "tags": [
           "observability"
@@ -52872,6 +53407,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Observability Metrics",
         "tags": [
           "admin-observability"
@@ -52894,6 +53434,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Metrics Derived",
         "tags": [
           "observability"
@@ -52917,6 +53462,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Platform Health",
         "tags": [
           "observability"
@@ -52940,6 +53490,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Slo Report",
         "tags": [
           "observability"
@@ -52984,6 +53539,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Observability Timeline",
         "tags": [
           "observability"
@@ -60709,6 +61269,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Ga Readiness",
         "tags": [
           "Platform GA Readiness"
@@ -60728,6 +61293,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Maturity Report",
         "tags": [
           "Platform GA Readiness"
@@ -60947,6 +61517,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Policies",
         "tags": [
           "admin-policies"
@@ -60986,6 +61561,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Policy Dry Run",
         "tags": [
           "admin-policies"
@@ -61039,6 +61619,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Evaluate Policy",
         "tags": [
           "admin-policies"
@@ -65635,6 +66220,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Post Federation Ingest",
         "tags": [
           "Commercial Federation"
@@ -66558,6 +67148,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Adapters",
         "tags": [
           "commercial-infra-simulation"
@@ -66789,6 +67384,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Local Gpu Metrics",
         "tags": [
           "commercial-infra-simulation"
@@ -66807,6 +67407,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Proxmox Capacity",
         "tags": [
           "commercial-infra-simulation"
@@ -69025,6 +69630,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Sandbox Dry Run",
         "tags": [
           "admin-sandbox"
@@ -69074,6 +69684,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Explain Sandbox Requirement",
         "tags": [
           "admin-sandbox"
@@ -69093,6 +69708,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Sandbox Providers",
         "tags": [
           "admin-sandbox"
@@ -69664,6 +70284,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Classify Payload",
         "tags": [
           "commercial_encryption",
@@ -70786,6 +71411,874 @@
         ]
       }
     },
+    "/admin/tests/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Audit Logs",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/auth/whoami": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Whoami",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/plans": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests List Plans",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/pytest/files": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Pytest Files",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/pytest/run": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PytestRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Pytest Run",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/pytest/run/{run_id}/cancel": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Pytest Cancel",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/pytest/run/{run_id}/status": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Pytest Status",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/rag/clients/{client_id}/block": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "default": {},
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Rag Block",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/rag/clients/{client_id}/unblock": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Rag Unblock",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/rag/clients/{client_id}/usage": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Rag Client Usage",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/rag/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Rag Status",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/system/resources": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests System Resources",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/tokens/lookup": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Token Lookup",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Get User",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/block": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Block User",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/plan": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Set User Plan",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/quota/override": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Delete Quota Override",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/quota/renew": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Renew Quota",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/quota/reset": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Reset Quota",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/quota/set": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Set Quota",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
+    "/admin/tests/users/{user_id}/unblock": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Tests Unblock User",
+        "tags": [
+          "admin-tests"
+        ]
+      }
+    },
     "/admin/usage": {
       "get": {
         "responses": {
@@ -71643,6 +73136,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Evidence",
         "tags": [
           "admin-compliance"
@@ -71687,6 +73185,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Collect Evidence",
         "tags": [
           "admin-compliance"
@@ -71726,6 +73229,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Export Evidence",
         "tags": [
           "admin-compliance"
@@ -71778,6 +73286,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Costs By Agent",
         "tags": [
           "admin-costs"
@@ -71802,6 +73315,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Costs By Tenant",
         "tags": [
           "admin-costs"
@@ -71854,6 +73372,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Costs By Tool",
         "tags": [
           "admin-costs"
@@ -71911,6 +73434,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Export Costs",
         "tags": [
           "admin-costs"
@@ -71993,6 +73521,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Costs Summary",
         "tags": [
           "admin-costs"
@@ -72011,6 +73544,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Peers",
         "tags": [
           "admin-federation-mesh"
@@ -72051,6 +73589,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Dry Run Sync Bundle",
         "tags": [
           "admin-federation-mesh"
@@ -72097,6 +73640,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Export Sync Bundle",
         "tags": [
           "admin-federation-mesh"
@@ -72137,6 +73685,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Import Sync Bundle",
         "tags": [
           "admin-federation-mesh"
@@ -72155,6 +73708,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Marketplace Agents",
         "tags": [
           "admin-marketplace"
@@ -72193,6 +73751,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Approve Installation",
         "tags": [
           "admin-marketplace"
@@ -72233,6 +73796,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Install Dry Run",
         "tags": [
           "admin-marketplace"
@@ -72273,6 +73841,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Validate Marketplace Package",
         "tags": [
           "admin-marketplace"
@@ -72297,6 +73870,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Model Provenance",
         "tags": [
           "admin-models-provenance"
@@ -72339,6 +73917,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Verify Model Provenance",
         "tags": [
           "admin-models-provenance"
@@ -72379,6 +73962,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Verify Output Watermark",
         "tags": [
           "admin-models-provenance"
@@ -72403,6 +73991,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Backend Performance",
         "tags": [
           "performance-v2"
@@ -72421,6 +74014,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Performance Capabilities",
         "tags": [
           "performance-v2"
@@ -72445,6 +74043,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Performance Recommendations",
         "tags": [
           "performance-v2"
@@ -72485,6 +74088,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Simulate Performance",
         "tags": [
           "performance-v2"
@@ -73388,6 +74996,9 @@
         },
         "security": [
           {
+            "APIKeyHeader": []
+          },
+          {
             "HTTPBearer": []
           }
         ],
@@ -73451,6 +75062,9 @@
         },
         "security": [
           {
+            "APIKeyHeader": []
+          },
+          {
             "HTTPBearer": []
           }
         ],
@@ -73505,6 +75119,9 @@
           }
         },
         "security": [
+          {
+            "APIKeyHeader": []
+          },
           {
             "HTTPBearer": []
           }
@@ -73561,6 +75178,9 @@
         },
         "security": [
           {
+            "APIKeyHeader": []
+          },
+          {
             "HTTPBearer": []
           }
         ],
@@ -73582,6 +75202,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "List Templates",
         "tags": [
           "Agent Studio GA"
@@ -73621,6 +75246,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Template",
         "tags": [
           "Agent Studio GA"
@@ -73662,6 +75292,9 @@
           }
         },
         "security": [
+          {
+            "APIKeyHeader": []
+          },
           {
             "HTTPBearer": []
           }
@@ -73720,6 +75353,9 @@
         },
         "security": [
           {
+            "APIKeyHeader": []
+          },
+          {
             "HTTPBearer": []
           }
         ],
@@ -73764,6 +75400,9 @@
           }
         },
         "security": [
+          {
+            "APIKeyHeader": []
+          },
           {
             "HTTPBearer": []
           }

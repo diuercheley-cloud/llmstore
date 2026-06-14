@@ -1,12 +1,38 @@
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PublicSignupRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
     full_name: str = Field(min_length=3, max_length=120)
     email: str = Field(min_length=5, max_length=255)
     company: str | None = Field(default=None, max_length=120)
     plan_code: str = Field(default="free", min_length=2, max_length=32, pattern=r"^[a-z0-9_-]+$")
     use_case: str | None = Field(default=None, max_length=500)
+
+    @field_validator("full_name", "company", "use_case")
+    @classmethod
+    def reject_control_characters(cls, value: str | None) -> str | None:
+        if value is not None and re.search(r"[\x00-\x1f\x7f]", value):
+            raise ValueError("control characters are not allowed")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def normalize_and_validate_email(cls, value: str) -> str:
+        normalized = value.lower()
+        if normalized.count("@") != 1:
+            raise ValueError("invalid email")
+        local, domain = normalized.split("@", 1)
+        if not local or not domain or "." not in domain:
+            raise ValueError("invalid email")
+        if len(local) > 64 or len(domain) > 253:
+            raise ValueError("invalid email")
+        if re.search(r"[\x00-\x20\x7f]", normalized):
+            raise ValueError("invalid email")
+        return normalized
 
 
 class PublicSignupResponse(BaseModel):

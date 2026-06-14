@@ -23,7 +23,7 @@ export function Signup({ onComplete }: { onComplete: (result: SignupResult) => v
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
+          full_name: form.name,
           email: form.email,
           company: form.company || undefined,
         }),
@@ -105,6 +105,8 @@ export function Signup({ onComplete }: { onComplete: (result: SignupResult) => v
             <input
               type="text"
               required
+              minLength={3}
+              maxLength={120}
               placeholder="Your name"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
               value={form.name}
@@ -116,6 +118,8 @@ export function Signup({ onComplete }: { onComplete: (result: SignupResult) => v
             <input
               type="email"
               required
+              minLength={5}
+              maxLength={255}
               placeholder="you@example.com"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
               value={form.email}
@@ -126,6 +130,7 @@ export function Signup({ onComplete }: { onComplete: (result: SignupResult) => v
             <label className="block text-sm font-semibold mb-1">Company (optional)</label>
             <input
               type="text"
+              maxLength={120}
               placeholder="Your company"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
               value={form.company}

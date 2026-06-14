@@ -126,7 +126,7 @@ async def test_dry_run(mock_db, sample_graph):
     mock_db.get = AsyncMock(return_value=version)
 
     result = await adapter.dry_run(version_id, {"input": "Hello"})
-    assert result["status"] == "success"
+    assert result["status"] == "completed"
 
 @pytest.mark.asyncio
 async def test_dry_run_version_not_found(mock_db):

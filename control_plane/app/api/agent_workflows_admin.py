@@ -3,6 +3,7 @@ import uuid
 from typing import Any, Dict
 
 from app.services.runtime_dependencies import get_db_session
+from app.services.auth import require_admin
 from app.models.agents.agent_workflows import AgentWorkflow, AgentWorkflowRun
 from app.models.agents.agent_workflows_external import AgentWorkflowExternalEvent
 from app.services.agents.workflows.workflow_engine import WorkflowEngine
@@ -12,7 +13,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/admin/agents/workflows", tags=["agent-workflows-admin"])
+router = APIRouter(
+    prefix="/admin/agents/workflows",
+    tags=["agent-workflows-admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 # External Schemas
 class PollingJobCreate(BaseModel):

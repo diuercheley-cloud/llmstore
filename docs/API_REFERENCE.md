@@ -727,7 +727,7 @@ This document is generated from `config/api-surface.yaml`. Update the YAML, then
 | /admin/usage/summary | GET | supported | platform-ops | 1.0.0 | - | [admin/usage-dashboard.md](admin/usage-dashboard.md) |
 | /admin/usage/{client_id}/summary | GET | supported | platform-ops | 1.0.0 | - | [admin/usage-dashboard.md](admin/usage-dashboard.md) |
 | /agents/tools/generated/agents/tools/generated/{tool_id}/execute | POST | supported | platform-ops | 1.0.0 | - | [api/supported-api-surface.md](api/supported-api-surface.md) |
-| /api/system/profile | GET | supported | platform-ops | 2.3.0 | - | `/docs/PROFILES.md` |
+| /api/system/profile | GET | supported | platform-ops | 2.3.0 | - | [PROFILES.md](PROFILES.md) |
 | /attestation/status | GET | supported | security-ops | 1.0.0 | - | [api/supported-api-surface.md](api/supported-api-surface.md) |
 | /attestation/verify/lineage-consistency | POST | supported | security-ops | 1.0.0 | - | [api/supported-api-surface.md](api/supported-api-surface.md) |
 | /attestation/verify/receipt | POST | supported | security-ops | 1.0.0 | - | [api/supported-api-surface.md](api/supported-api-surface.md) |

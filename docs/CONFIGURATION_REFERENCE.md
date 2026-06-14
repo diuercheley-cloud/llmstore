@@ -278,6 +278,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | ANTHROPIC_API_KEY | anthropic_api_key | str | <empty> | yes |
 | ANTHROPIC_BASE_URL | anthropic_base_url | str | - | no |
 | ANTHROPIC_MODEL | anthropic_model | str | - | no |
+| ANTHROPIC_PROVIDER_ENABLED | anthropic_provider_enabled | bool | true | no |
 
 ## `api`
 
@@ -821,6 +822,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | DEEPSEEK_API_KEY | deepseek_api_key | str | <empty> | yes |
 | DEEPSEEK_BASE_URL | deepseek_base_url | str | - | no |
 | DEEPSEEK_CHAT_MODEL | deepseek_chat_model | str | - | no |
+| DEEPSEEK_PROVIDER_ENABLED | deepseek_provider_enabled | bool | true | no |
 
 ## `default`
 
@@ -1220,6 +1222,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | OPENAI_BASE_URL | openai_base_url | str | - | no |
 | OPENAI_CHAT_MODEL | openai_chat_model | str | - | no |
 | OPENAI_EMBEDDINGS_MODEL | openai_embeddings_model | str | - | no |
+| OPENAI_PROVIDER_ENABLED | openai_provider_enabled | bool | true | no |
 
 ## `openrouter`
 
@@ -1227,6 +1230,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | OPENROUTER_API_KEY | openrouter_api_key | str | <empty> | yes |
 | OPENROUTER_BASE_URL | openrouter_base_url | str | - | no |
+| OPENROUTER_PROVIDER_ENABLED | openrouter_provider_enabled | bool | true | no |
 
 ## `operational`
 
@@ -1327,6 +1331,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | PROVIDER_FAIL_CLOSED | provider_fail_closed | bool | true | no |
 | PROVIDER_MAX_RETRIES | provider_max_retries | int | 2 | no |
+| PROVIDER_TIMEOUT_SECONDS | provider_timeout_seconds | int | 30 | no |
 
 ## `providers`
 
@@ -1346,6 +1351,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | PUBLIC_PLAUSIBLE_DOMAIN | public_plausible_domain | str | - | no |
 | PUBLIC_PLAUSIBLE_SRC | public_plausible_src | str | https://plausible.io/js/script.js | no |
 | PUBLIC_SIGNUP_ENABLED | public_signup_enabled | bool | true | no |
+| PUBLIC_SIGNUP_RATE_LIMIT_PER_MINUTE | public_signup_rate_limit_per_minute | int | 5 | no |
 | PUBLIC_SUPPORT_EMAIL | public_support_email | str | sales@example.com | no |
 
 ## `pulsar`

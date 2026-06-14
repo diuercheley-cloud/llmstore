@@ -4,6 +4,8 @@ from control_plane.app.services.config.security_config import SecurityConfig
 def test_security_config_reads_environment(monkeypatch):
     monkeypatch.setenv("ADMIN_TOKEN", "admin-token")
     monkeypatch.setenv("JWT_SECRET", "jwt-secret")
+    monkeypatch.setenv("RBAC_ADMIN_ENABLED", "true")
+    monkeypatch.setenv("ADMIN_TESTS_RATE_LIMIT_ENABLED", "true")
 
     config = SecurityConfig()
 
